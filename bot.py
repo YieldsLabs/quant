@@ -6,18 +6,19 @@ from broker import Broker, MarginMode, PositionMode
 from strategy.AwesomeOscillatorBBStrategy import AwesomeOscillatorBBStrategy
 from strategy.ExtremeEuphoriaBBStrategy import ExtremeEuphoriaBBStrategy
 from strategy.PSARZeroLagEMAStrategy import PSARZeroLagEMAStrategy
+from strategy.SwingIndicatorStrategy import SwingIndicatorStrategy
 from trader import Trader
 
 from risk_management.riskmanager import RiskManager
 from risk_management.stop_loss import ATRStopLossFinder, LowHighStopLossFinder, SimpleStopLossFinder, TrailingStopLossFinder
-from risk_management.take_profit import RiskRewardTakeProfitFinder, SimpleTakeProfitFinder
+from risk_management.take_profit import EmptyTakeProfitFinder, RiskRewardTakeProfitFinder, SimpleTakeProfitFinder
 
 from strategy.EngulfingSMA import EngulfingSMA
 from strategy.BollingerEngulfing import BollingerEngulfing
 
 load_dotenv()
 
-symbol = 'ETHUSDT'
+symbol = 'LPTUSDT'
 timeframe = '1'
 leverage = 1
 channels = [f"kline.{timeframe}.{symbol}"]
@@ -25,7 +26,7 @@ channels = [f"kline.{timeframe}.{symbol}"]
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 
-atr_multi = 0.88
+atr_multi = 1.2
 risk_reward_ratio = 1.5
 risk_per_trade = 0.0001
 stop_loss_pct = 0.002
@@ -37,9 +38,10 @@ broker.set_position_mode(symbol, PositionMode.ONE_WAY)
 broker.set_margin_mode(symbol, mode=MarginMode.ISOLATED, leverage=leverage)
 
 ohlcv = broker.get_historical_data(symbol, f"{timeframe}m")
-# stop_loss_finder = ATRStopLossFinder(multiplier=atr_multi)
-stop_loss_finder = TrailingStopLossFinder()
+stop_loss_finder = ATRStopLossFinder(multiplier=atr_multi)
+#stop_loss_finder = TrailingStopLossFinder()
 take_profit_finder = RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+#take_profit_finder = EmptyTakeProfitFinder()
 rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade)
 strategy = EngulfingSMA()
 trader = Trader(broker, rm)

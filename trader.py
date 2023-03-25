@@ -86,8 +86,6 @@ class Trader:
                 pnl = self.calculate_pnl(current_row)
                 self.update_statistics(pnl)
                 self.reset_position_values()
-            
-                self.broker.place_market_order(order_close_side.value, symbol, self.position_size)
 
 
     def execute_long_trade(self, symbol, current_row, balance):
@@ -115,7 +113,7 @@ class Trader:
         print(f"Stop loss {stop_loss_price}")
         print(f"Take profit {take_profit_price}")
 
-        self.broker.place_market_order(market_order_side.value, symbol, self.position_size, stop_loss_price=stop_loss_price)
+        self.broker.place_market_order(market_order_side.value, symbol, self.position_size, stop_loss_price=stop_loss_price, take_profit_price=take_profit_price)
 
     def reset_position_values(self):
         self.position_side = None
