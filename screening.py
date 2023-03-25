@@ -18,6 +18,7 @@ from strategy.SmoothVWMAScalpingContrarian import SmoothVWMAScalpingContrarian
 from strategy.StructuredDurationStrategy import StructuredDurationStrategy
 from strategy.SwingIndicatorStrategy import SwingIndicatorStrategy
 from strategy.UTBotAlertsBBStrategy import UTBotAlertsBBStrategy
+from strategy.BollingerEngulfing import BollingerEngulfing
 from tradetype import TradeType
 
 from risk_management.riskmanager import RiskManager
@@ -30,31 +31,30 @@ API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 
 broker = Broker(API_KEY, API_SECRET)
-symbols = ['LPTUSDT']
+symbols = ['LPTUSDT', 'XRPUSDT', 'ETHUSDT', 'SOLUSDT', 'UNFIUSDT']
 timeframes = ['1m']
-row_number = 1000
+row_number = 2000
 lookback_period = 30
 risk_reward_ratio = 1.5
-multiplier = 0.89
+multiplier = 1.2
 
 strategies = [
     EngulfingSMA(),
-    # ExtremeEuphoriaBBStrategy(),
-    # SwingIndicatorStrategy(),
-    # StructuredDurationStrategy(),
+    ExtremeEuphoriaBBStrategy(),
+    SwingIndicatorStrategy(),
+    StructuredDurationStrategy(),
     KangarooTailStrategy(),
     AwesomeOscillatorBBStrategy(),
-    SmoothVWMAScalpingContrarian()
-    # FalseBreakoutStrategy()
-    # BollingerEngulfing(),
+    SmoothVWMAScalpingContrarian(),
+    BollingerEngulfing(),
 ]
 stop_loss_finders = [
     TrailingStopLossFinder(lookback_period=lookback_period),
     ATRStopLossFinder(multiplier=multiplier)
 ]
 take_profit_finders = [
-    RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
-    # EmptyTakeProfitFinder()
+    RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
+    EmptyTakeProfitFinder()
 ]
 combinations = list(itertools.product(symbols, timeframes, strategies, stop_loss_finders, take_profit_finders))
 results_list = []
@@ -74,11 +74,13 @@ for symbol, timeframe, strategy, stop_loss_finder, take_profit_finder in combina
         'take_profit_finder': take_profit_finder,
         'win_rate': result['win_rate'] * 100
     })
+
     results_list.append(result)
+    
     print(f"{symbol} orders for strategy: {strategy}, TimeFrame: {timeframe}, StopLossFinder: {stop_loss_finder}, TakeProfitFinder: {take_profit_finder}")
     print(backtester.get_orders().head())
 
 results_df = pd.DataFrame(results_list)
 sorded_results = results_df.sort_values(by="total_pnl", ascending=False)
 
-print(sorded_results[['strategy', 'stop_loss_finder', 'total_pnl', 'win_rate']])
+print(sorded_results[['strategy', 'take_profit_finder', 'stop_loss_finder', 'total_pnl', 'win_rate', 'symbol']])
