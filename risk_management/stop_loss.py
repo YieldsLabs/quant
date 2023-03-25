@@ -95,10 +95,7 @@ class TrailingStopLossFinder:
         current_price = current_row['close']
 
         risk = abs(entry_price - initial_stop_loss)
-        reward = abs(current_price - entry_price)
-        
-        if reward == 0:
-            reward = risk
+        reward = abs(current_price * 0.002 - entry_price)
         
         risk_reward = risk / reward
 
