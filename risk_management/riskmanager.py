@@ -19,6 +19,7 @@ class RiskManager:
         stop_loss_price, take_profit_price = self.calculate_prices(entry_trade_type, entry_price)
         
         if self.should_exit(entry_trade_type, stop_loss_price, take_profit_price, current_row):
+            self.stop_loss_finder.reset_stop_loss()
             return True
 
         return False

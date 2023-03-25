@@ -71,21 +71,13 @@ class Trader:
             self.entry_price = float(current_position['entryPrice'])
             self.position_size = float(current_position['info']['size'])
 
-        if self.position_side:
-            stop_loss_price, _ = self.rm.calculate_prices(self.position_side, self.entry_price)
-
-            if stop_loss_price < self.stop_loss_price:
-                print(f'Update a stop_loss_price={stop_loss_price}')
-                self.entry_price = self.stop_loss_price
-                self.stop_loss_price = stop_loss_price
-
-            if self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
-                print("Close position")
-                order_close_side = OrderSide.BUY if self.position_side.value == TradeSide.SHORT.value else OrderSide.SELL
-                self.broker.place_market_order(order_close_side.value, symbol, self.position_size)
-                pnl = self.calculate_pnl(current_row)
-                self.update_statistics(pnl)
-                self.reset_position_values()
+        if self.position_side and self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
+            print("Close position")
+            order_close_side = OrderSide.BUY if self.position_side.value == TradeSide.SHORT.value else OrderSide.SELL
+            self.broker.place_market_order(order_close_side.value, symbol, self.position_size)
+            pnl = self.calculate_pnl(current_row)
+            self.update_statistics(pnl)
+            self.reset_position_values()
 
 
     def execute_long_trade(self, symbol, current_row, balance):
