@@ -6,8 +6,7 @@ class ZeroLagEMAIndicator:
         self.window = window
         self.ma = MovingAverageIndicator(window=window)
 
-    def zero_lag_ema(self, data):
-        series = data['close']
+    def zero_lag_ema(self, series):
         ema = self.ma.ema(series)
         lag = (self.window - 1) // 2
         shifted_series = series.shift(-lag)
