@@ -78,14 +78,16 @@ class ATRStopLossFinder:
         return f'ATRStopLossFinder(multiplier={self.multiplier}, atr_period={self.atr_indicator.period})'
 
 class TrailingStopLossFinder:
-    def __init__(self, atr_multiplier=1.2, risk_reward_ratio=1.1):
+    def __init__(self, atr_multiplier=1.2, risk_reward_ratio=1.1, max_adjustments=20):
         self.low_high_stop_loss = ATRStopLossFinder(multiplier=atr_multiplier)
         self.risk_reward_ratio = risk_reward_ratio
         self.data = []
         self.reset_stop_loss()
+        self.max_adjustments = max_adjustments
 
     def reset_stop_loss(self):
         self.current_stop_loss = { TradeType.LONG.value: None, TradeType.SHORT.value: None }
+        self.adjustments = { TradeType.LONG.value: 0, TradeType.SHORT.value: 0 }
 
     def set_ohlcv(self, data):
         self.data = data
@@ -94,14 +96,24 @@ class TrailingStopLossFinder:
     def calculate_stop_loss_price(self, trade_type, entry_price):
         if len(self.data) == 0:
             raise ValueError('Add ohlcv data')
-
+        
         self.current_stop_loss[trade_type.value] = self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price)
+        self.adjustments[trade_type.value] = 0
 
-        ajusted_stop_loss = self._adjust_stop_loss(trade_type, entry_price)
-        
-        print(f'Initial stop_loss={self.current_stop_loss[trade_type.value]}, ajusted_stop_loss={ajusted_stop_loss}')
-        
-        return ajusted_stop_loss if ajusted_stop_loss else self.current_stop_loss[trade_type.value]
+        while True:
+            adjusted_stop_loss = self._adjust_stop_loss(trade_type, entry_price)
+            if adjusted_stop_loss:
+                print(f'Adjusted stop_loss={adjusted_stop_loss}')
+                
+                self.current_stop_loss[trade_type.value] = adjusted_stop_loss
+                self.adjustments[trade_type.value] += 1
+            else:
+                break
+
+            if self.adjustments[trade_type.value] >= self.max_adjustments:
+                break
+
+        return self.current_stop_loss[trade_type.value]
 
     def _adjust_stop_loss(self, trade_type, entry_price):
         current_row = self.data.iloc[-1]
@@ -116,13 +128,16 @@ class TrailingStopLossFinder:
             risk_reward = 0
 
         if trade_type.value == TradeType.LONG.value and risk_reward > self.risk_reward_ratio:
-            self.current_stop_loss[TradeType.LONG.value] = max(entry_price, self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price))
+            new_stop_loss = max(entry_price, self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price))
         elif trade_type.value == TradeType.SHORT.value and risk_reward > self.risk_reward_ratio:
-           self.current_stop_loss[TradeType.SHORT.value] = min(entry_price, self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price))
+            new_stop_loss = max(entry_price, self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price))
         else:
             return
         
-        return self.current_stop_loss[trade_type.value]
+        if new_stop_loss >= self.current_stop_loss[trade_type.value]:
+            return None
+        
+        return new_stop_loss
 
     def __str__(self) -> str:
         return f'TrailingStopLossFinder()'
