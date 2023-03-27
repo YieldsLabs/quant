@@ -1,5 +1,6 @@
 from buy_sell.MoneyFlowIndexAlerts import MoneyFlowIndexAlerts
 from indicators.ZeroLagEMAIndicator import ZeroLagEMAIndicator
+from patters.HaramiPattern import HaramiPattern
 from strategy.AbstractStrategy import AbstractStrategy
 from patters.EngulfingPattern import EngulfingPattern
 
@@ -19,6 +20,9 @@ class EngulfingSMA(AbstractStrategy):
 
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)
         data['bearish_engulfing'] = EngulfingPattern.bearish(data)
+
+        data['bullish_harami'] = HaramiPattern.bullish(data)
+        data['bearish_harami'] = HaramiPattern.bearish(data)
 
         data['mfi_buy'], data['mfi_sell'] = self.mfi.alert(data)
 
@@ -48,13 +52,13 @@ class EngulfingSMA(AbstractStrategy):
 
         buy_signal = (
             buy_confirmation and
-            current_row['bullish_engulfing'] and
+            (current_row['bullish_engulfing'] or current_row['bullish_harami'])  and
             current_row['mfi_buy']
         )
 
         sell_signal = (
             sell_confirmation and
-            current_row['bearish_engulfing'] and
+            (current_row['bearish_engulfing'] or current_row['bearish_harami']) and
             current_row['mfi_sell']
         )
 
