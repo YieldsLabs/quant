@@ -23,16 +23,21 @@ class Broker:
         try:
             market_info = self.exchange.fetch_markets()
             symbol_info = [market for market in market_info if market['id'] == symbol and market['linear'] == True][0]
-
+            
             position_precision = symbol_info.get('precision', {}).get('amount', 0)
             price_precision = symbol_info.get('precision', {}).get('price', 0)
+            trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
+
             return {
+                'trading_fee': trading_fee,
                 'position_precision': int(abs(math.log10(position_precision))),
                 'price_precision': int(abs(math.log10(price_precision)))
             }
         except Exception as e:
             print(e)
+            
             return {
+                'trading_fee': None,
                 'position_precision': None,
                 'price_precision': None
             }
