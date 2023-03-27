@@ -1,5 +1,6 @@
 from enum import Enum
 import ccxt
+import math
 import pandas as pd
 
 class PositionMode(Enum):
@@ -18,6 +19,24 @@ class Broker:
         balance = self.exchange.fetch_balance()
         return float(balance['total']['USDT'])
 
+    def get_symbol_info(self, symbol):
+        try:
+            market_info = self.exchange.fetch_markets()
+            symbol_info = [market for market in market_info if market['id'] == symbol and market['linear'] == True][0]
+
+            position_precision = symbol_info.get('precision', {}).get('amount', 0)
+            price_precision = symbol_info.get('precision', {}).get('price', 0)
+            return {
+                'position_precision': int(abs(math.log10(position_precision))),
+                'price_precision': int(abs(math.log10(price_precision)))
+            }
+        except Exception as e:
+            print(e)
+            return {
+                'position_precision': None,
+                'price_precision': None
+            }
+    
     def set_leverage(self, symbol, leverage=3):
         try:
             self.exchange.set_leverage(leverage, symbol)
@@ -77,6 +96,15 @@ class Broker:
 
     def has_open_positions(self, symbol):
         return len(self.get_open_positions(symbol)) > 0
+
+    def close_position(self, symbol):
+        open_positions = self.get_open_positions(symbol)
+        
+        if len(open_positions) == 0:
+            return
+        
+        for position in open_positions:
+            self.create_order('market', 'sell' if position['side'] == 'buy' else 'buy', symbol, abs(float(position['info']['size'])))
 
     def get_open_positions(self, symbol):
         positions = self.exchange.fetch_positions(symbol)

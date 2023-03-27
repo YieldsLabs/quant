@@ -11,7 +11,7 @@ class SimpleTakeProfitFinder:
         elif trade_type.value == TradeType.SHORT.value :
             take_profit_price = entry_price * (1.0 - self.take_profit_pct)
         
-        return round(take_profit_price, 2)
+        return take_profit_price
     
     def __str__(self) -> str:
         return f'SimpleTakeProfitFinder(take_profit_pct={self.take_profit_pct})'
@@ -37,7 +37,7 @@ class RiskRewardTakeProfitFinder:
         elif trade_type.value == TradeType.SHORT.value:
             take_profit_price = entry_price - self.risk_reward_ratio * risk
 
-        return round(take_profit_price, 2)
+        return take_profit_price
     
     def __str__(self) -> str:
         return f'RiskRewardTakeProfitFinder(risk_reward_ratio={self.risk_reward_ratio})'

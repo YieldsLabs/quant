@@ -73,8 +73,7 @@ class Trader:
 
         if self.position_side and self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print("Close position")
-            order_close_side = OrderSide.BUY if self.position_side.value == TradeSide.SHORT.value else OrderSide.SELL
-            self.broker.place_market_order(order_close_side.value, symbol, self.position_size)
+            self.broker.close_position(symbol)
             pnl = self.calculate_pnl(current_row)
             self.update_statistics(pnl)
             self.reset_position_values()
