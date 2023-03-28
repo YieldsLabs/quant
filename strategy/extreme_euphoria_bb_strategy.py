@@ -9,7 +9,7 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
         self.bb_indicator = BBIndicator(sma_period, multiplier)
         self.extreme_euphoria_finder = ExtremeEuphoriaPattern()
 
-    def add_indicators(self, data):
+    def _add_indicators(self, data):
         data = data.copy()
         data['upper_band'], data['lower_band'] = self.bb_indicator.bb(data)
         data['bullish_extreme_euphoria'] = self.extreme_euphoria_finder.bullish(
@@ -22,7 +22,8 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
         if len(data) < 6:
             return False, False
 
-        data = self.add_indicators(data)
+        data = self._add_indicators(data)
+
         last_row = data.iloc[-1]
 
         buy_signal = last_row['bullish_extreme_euphoria'] and (

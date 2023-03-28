@@ -92,11 +92,30 @@ class FuturesBybitBroker(AbstractBroker):
         self.create_order(**order_params)
 
     def place_take_profit_order(self, side, symbol, position_size, take_profit_price):
-        self.create_order('limit', side, symbol,
-                          position_size, take_profit_price)
+        order_params = {
+            'order_type': 'limit',
+            'symbol': symbol,
+            'side': side,
+            'position_size': position_size,
+            'extra_params': {
+                'takeProfit': str(take_profit_price)
+            }
+        }
+
+        self.create_order(**order_params)
         
     def place_stop_loss_order(self, side, symbol, position_size, stop_loss_price):
-        self.create_order('limit', side, symbol, position_size, stop_loss_price)
+        order_params = {
+            'order_type': 'limit',
+            'symbol': symbol,
+            'side': side,
+            'position_size': position_size,
+            'extra_params': {
+                'stopLoss': str(stop_loss_price)
+            }
+        }
+
+        self.create_order(**order_params)
 
     def has_open_positions(self, symbol):
         return len(self.get_open_positions(symbol)) > 0

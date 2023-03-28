@@ -20,12 +20,12 @@ class SimpleTrader:
     def trade(self, strategy, symbol, timeframe):
         ohlcv = self.broker.get_historical_data(symbol, timeframe)
         self.rm.stop_loss_finder.set_ohlcv(ohlcv)
-        current_row = ohlcv.iloc[-1]
         buy_signal, sell_signal = strategy.entry(ohlcv)
         
         print(f"buy_signal={buy_signal}, sell_signal={sell_signal}")
         
         balance = self.broker.get_account_balance()
+        current_row = ohlcv.iloc[-1]
 
         self.sync_and_update_positions(symbol, current_row)
         self.check_and_execute_trades(strategy, symbol, timeframe, current_row, buy_signal, sell_signal, balance)
@@ -98,7 +98,9 @@ class SimpleTrader:
         print(f"Stop loss {stop_loss_price}")
         print(f"Take profit {take_profit_price}")
 
-        self.broker.place_market_order(market_order_side.value, symbol, self.position_size, stop_loss_price=stop_loss_price, take_profit_price=take_profit_price)
+        self.broker.place_market_order(market_order_side.value, symbol, self.position_size)
+        self.broker.place_take_profit_order(market_order_side.value, symbol, self.position_size, self.take_profit_price)
+        self.broker.place_stop_loss_order(market_order_side.value, symbol, self.position_size, self.stop_loss_price)
 
     def reset_position_values(self):
         self.position_side = None

@@ -5,10 +5,6 @@ class AbstractStrategy(ABC):
         pass
 
     @abstractmethod
-    def add_indicators(self, ohlcv):
-        pass
-
-    @abstractmethod
     def entry(self, ohlcv):
         pass
 

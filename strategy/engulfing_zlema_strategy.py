@@ -15,8 +15,9 @@ class EngulfingSMA(AbstractStrategy):
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct
 
-    def add_indicators(self, data):
+    def _add_indicators(self, data):
         data = data.copy()
+        
         data['sma_slow'] = self.zlema.zero_lag_ema(data['close'])
 
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)
@@ -29,7 +30,7 @@ class EngulfingSMA(AbstractStrategy):
 
         return data
     
-    def check_confirmation_candle(self, current_row, previous_row):
+    def _check_confirmation_candle(self, current_row, previous_row):
         buy_confirmation = (
             previous_row['close'] > current_row['sma_slow']
             and abs(previous_row['close'] - current_row['sma_slow']) / current_row['sma_slow'] <= self.tolerance
@@ -46,11 +47,12 @@ class EngulfingSMA(AbstractStrategy):
         if len(data) < 3:
             return False, False
 
-        data = self.add_indicators(data)
+        data = self._add_indicators(data)
+
         current_row = data.iloc[-1]
         previous_row = data.iloc[-2]
 
-        buy_confirmation, sell_confirmation = self.check_confirmation_candle(current_row, previous_row)
+        buy_confirmation, sell_confirmation = self._check_confirmation_candle(current_row, previous_row)
 
         buy_signal = (
             buy_confirmation and

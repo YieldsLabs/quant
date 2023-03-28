@@ -7,10 +7,10 @@ class BollingerEngulfing(AbstractStrategy):
         super().__init__()
         self.bb = BBIndicator(sma_period=bb_period, multiplier=bb_std_dev)
 
-    def add_indicators(self, data):
+    def _add_indicators(self, data):
         data = data.copy()
+        
         data['upper_band'], data['lower_band'] = self.bb.bb(data)
-
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)
         data['bearish_engulfing'] = EngulfingPattern.bearish(data)
 
@@ -20,8 +20,10 @@ class BollingerEngulfing(AbstractStrategy):
         if len(data) < 2:
             return False, False
 
-        data = self.add_indicators(data)
+        data = self._add_indicators(data)
+
         current_row = data.iloc[-1]
+
 
         buy_signal = (
             current_row['close'] <= current_row['lower_band'] and
@@ -33,6 +35,6 @@ class BollingerEngulfing(AbstractStrategy):
         )
 
         return buy_signal, sell_signal
-    
+
     def __str__(self) -> str:
         return 'BollingerEngulfing'

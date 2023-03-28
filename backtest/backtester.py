@@ -34,10 +34,7 @@ class Backtester:
 
 
     def run(self, trade_type=TradeType.BOTH):
-        data_with_indicators = self.strategy.add_indicators(
-            self.historical_data)
-        long_signals, short_signals = self.generate_signals(
-            data_with_indicators)
+        long_signals, short_signals = self.generate_signals(self.historical_data)
         
         return self.calculate_performance(long_signals, short_signals, trade_type=trade_type)
 

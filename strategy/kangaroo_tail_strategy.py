@@ -9,7 +9,7 @@ class KangarooTailStrategy(AbstractStrategy):
         self.sma_period = sma_period
         self.ma = MovingAverageIndicator(sma_period)
 
-    def add_indicators(self, data):
+    def _add_indicators(self, data):
         data = data.copy()
         data['sma'] = self.ma.smma(data['close'])
         data['bullish_kangaroo_tail'] = KangarooTailPattern.bullish(data, self.lookback)
@@ -21,7 +21,8 @@ class KangarooTailStrategy(AbstractStrategy):
         if len(data) < max(3, self.sma_period):
             return False, False
 
-        data = self.add_indicators(data)
+        data = self._add_indicators(data)
+
         current_row = data.iloc[-1]
 
         buy_signal = (
