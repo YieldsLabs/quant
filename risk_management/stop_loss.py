@@ -103,8 +103,7 @@ class TrailingStopLossFinder:
         while True:
             adjusted_stop_loss = self._adjust_stop_loss(trade_type, entry_price)
             if adjusted_stop_loss:
-                print(f'Adjusted stop_loss={adjusted_stop_loss}')
-                
+                print(f'Trade {trade_type.value}, Current stop_loss={self.current_stop_loss[trade_type.value]}, Adjusted stop_loss={adjusted_stop_loss}')
                 self.current_stop_loss[trade_type.value] = adjusted_stop_loss
                 self.adjustments[trade_type.value] += 1
             else:
@@ -127,7 +126,7 @@ class TrailingStopLossFinder:
         if trade_type.value == TradeType.LONG.value and risk_reward > self.risk_reward_ratio:
             new_stop_loss = max(entry_price, self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price))
         elif trade_type.value == TradeType.SHORT.value and risk_reward > self.risk_reward_ratio:
-            new_stop_loss = max(entry_price, self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price))
+            new_stop_loss = min(entry_price, self.low_high_stop_loss.calculate_stop_loss_price(trade_type, entry_price))
         else:
             return
         
