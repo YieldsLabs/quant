@@ -1,4 +1,4 @@
-class TheThreeCandlesPatterns:
+class TheThreeCandlesPattern:
     @staticmethod
     def three_white_soldiers(data):
         body = (data['close'] - data['open']).abs()

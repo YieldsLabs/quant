@@ -1,18 +1,19 @@
-from buy_sell.MoneyFlowIndexAlerts import MoneyFlowIndexAlerts
+from alerts.MoneyFlowIndexAlerts import MoneyFlowIndexAlerts
 from indicators.ZeroLagEMAIndicator import ZeroLagEMAIndicator
-from patters.HaramiPattern import HaramiPattern
+from patterns.EngulfingPattern import EngulfingPattern
+from patterns.HaramiPattern import HaramiPattern
 from strategy.AbstractStrategy import AbstractStrategy
-from patters.EngulfingPattern import EngulfingPattern
 
 
 class EngulfingSMA(AbstractStrategy):
-    def __init__(self, slow_sma_period=100, upper_barrier=80, lower_barrier=20, tolerance=0.02):
+    def __init__(self, slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
         super().__init__()
         self.zlema = ZeroLagEMAIndicator(window=slow_sma_period)
         self.mfi = MoneyFlowIndexAlerts(overbought_level=upper_barrier, oversold_level=lower_barrier)
         self.upper_barrier = upper_barrier
         self.lower_barrier = lower_barrier
         self.tolerance = tolerance
+        self.retracement_pct = retracement_pct
 
     def add_indicators(self, data):
         data = data.copy()
@@ -33,6 +34,7 @@ class EngulfingSMA(AbstractStrategy):
             previous_row['close'] > current_row['sma_slow']
             and abs(previous_row['close'] - current_row['sma_slow']) / current_row['sma_slow'] <= self.tolerance
         )
+
         sell_confirmation = (
             previous_row['close'] < current_row['sma_slow']
             and abs(previous_row['close'] - current_row['sma_slow']) / current_row['sma_slow'] <= self.tolerance
@@ -52,14 +54,16 @@ class EngulfingSMA(AbstractStrategy):
 
         buy_signal = (
             buy_confirmation and
-            (current_row['bullish_engulfing'] or current_row['bullish_harami'])  and
-            current_row['mfi_buy']
+            (current_row['bullish_engulfing'] or current_row['bullish_harami']) and
+            current_row['mfi_buy'] and
+            (current_row['close'] >= current_row['sma_slow'] * (1 - self.retracement_pct))
         )
 
         sell_signal = (
             sell_confirmation and
             (current_row['bearish_engulfing'] or current_row['bearish_harami']) and
-            current_row['mfi_sell']
+            current_row['mfi_sell'] and
+            (current_row['close'] <= current_row['sma_slow'] * (1 + self.retracement_pct))
         )
 
         return buy_signal, sell_signal

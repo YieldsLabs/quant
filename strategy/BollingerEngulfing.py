@@ -1,7 +1,6 @@
+from patterns.EngulfingPattern import EngulfingPattern
 from ta.BBIndicator import BBIndicator
 from strategy.AbstractStrategy import AbstractStrategy
-from patters.EngulfingPattern import EngulfingPattern
-
 
 class BollingerEngulfing(AbstractStrategy):
     def __init__(self, bb_period=20, bb_std_dev=2):

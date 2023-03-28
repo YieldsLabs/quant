@@ -1,5 +1,5 @@
 from ta.MovingAverageIndicator import MovingAverageIndicator
-from patters.KangarooTailPattern import KangarooTailPattern
+from patterns.KangarooTailPattern import KangarooTailPattern
 from strategy.AbstractStrategy import AbstractStrategy
 
 class KangarooTailStrategy(AbstractStrategy):

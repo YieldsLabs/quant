@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class SplitCandlestickPattern:
     @staticmethod
     def bullish(data):

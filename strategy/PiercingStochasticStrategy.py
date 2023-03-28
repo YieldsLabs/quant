@@ -1,5 +1,5 @@
 from strategy.AbstractStrategy import AbstractStrategy
-from patters.PiercingPattern import PiercingPattern
+from patterns.PiercingPattern import PiercingPattern
 from oscillators.stochastic import StochasticOscillator
 
 class PiercingStochasticStrategy(AbstractStrategy):

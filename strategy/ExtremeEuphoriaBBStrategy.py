@@ -1,4 +1,4 @@
-from patters.ExtremeEuphoriaPattern import ExtremeEuphoriaPattern
+from patterns.ExtremeEuphoriaPattern import ExtremeEuphoriaPattern
 from strategy.AbstractStrategy import AbstractStrategy
 from ta.BBIndicator import BBIndicator
 

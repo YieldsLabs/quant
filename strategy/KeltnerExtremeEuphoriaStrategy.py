@@ -1,6 +1,6 @@
 from indicators.KeltnerChannelsIndicator import KeltnerChannelsIndicator
 from ta.MovingAverageIndicator import MovingAverageIndicator
-from patters.ExtremeEuphoriaPattern import ExtremeEuphoriaPattern
+from patterns.ExtremeEuphoriaPattern import ExtremeEuphoriaPattern
 from strategy.AbstractStrategy import AbstractStrategy
 
 class KeltnerExtremeEuphoriaStrategy(AbstractStrategy):
