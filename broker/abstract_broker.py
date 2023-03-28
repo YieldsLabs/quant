@@ -1,0 +1,56 @@
+from abc import ABC, abstractmethod
+from broker.margin_mode import MarginMode
+from broker.position_mode import PositionMode
+
+class AbstractBroker(ABC):
+    @abstractmethod
+    def set_leverage(self, symbol, leverage=3):
+        pass
+
+    @abstractmethod
+    def set_position_mode(self, symbol, mode=PositionMode):
+        pass
+
+    @abstractmethod
+    def set_margin_mode(self, symbol, mode=MarginMode, leverage=1):
+        pass
+
+    @abstractmethod
+    def get_account_balance(self):
+        pass
+
+    @abstractmethod
+    def get_symbol_info(self):
+        pass
+
+    @abstractmethod
+    def get_open_positions(self, symbol):
+       pass
+
+    @abstractmethod
+    def get_symbols(self):
+        pass
+    
+    @abstractmethod
+    def get_historical_data(self, symbol, timeframe, limit=1000):
+        pass
+
+    @abstractmethod
+    def place_market_order(self, side, symbol, position_size, stop_loss_price=None, take_profit_price=None):
+        pass
+
+    @abstractmethod
+    def place_take_profit_order(self, side, symbol, position_size, take_profit_price):
+        pass
+    
+    @abstractmethod
+    def place_stop_loss_order(self, side, symbol, position_size, stop_loss_price):
+        pass
+    
+    @abstractmethod
+    def has_open_positions(self, symbol):
+        pass
+
+    @abstractmethod
+    def close_positions(self, symbol):
+        pass
