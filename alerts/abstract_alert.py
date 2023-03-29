@@ -3,5 +3,5 @@ from abc import ABC, abstractmethod
 
 class AbstractAlert(ABC):
     @abstractmethod
-    def alert():
+    def alert(self, data):
         pass

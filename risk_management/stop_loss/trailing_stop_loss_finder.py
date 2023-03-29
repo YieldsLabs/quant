@@ -1,8 +1,8 @@
+from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from shared.trade_type import TradeType
 
-
-class TrailingStopLossFinder:
+class TrailingStopLossFinder(AbstractStopLoss):
     def __init__(self, atr_multiplier=1.2, risk_reward_ratio=1.1, max_adjustments=20):
         super().__init__()
         self.low_high_stop_loss = ATRStopLossFinder(multiplier=atr_multiplier)

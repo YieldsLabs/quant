@@ -3,13 +3,13 @@ from abc import ABC, abstractmethod
 
 class AbstractStopLoss(ABC):
     @abstractmethod
-    def set_ohlcv():
+    def set_ohlcv(self, data):
         pass
 
     @abstractmethod
-    def next():
+    def next(self, entry_trade_type, entry_price):
         pass
 
     @abstractmethod
-    def reset():
+    def reset(self):
         pass

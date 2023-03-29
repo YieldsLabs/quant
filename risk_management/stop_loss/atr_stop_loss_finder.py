@@ -1,8 +1,9 @@
+from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
 from ta.atr_indicator import ATRIndicator
 from shared.trade_type import TradeType
 
 
-class ATRStopLossFinder:
+class ATRStopLossFinder(AbstractStopLoss):
     def __init__(self, multiplier=1.5, atr_period=14):
         super().__init__()
         self.atr_indicator = ATRIndicator(atr_period)

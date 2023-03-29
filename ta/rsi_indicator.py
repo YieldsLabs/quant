@@ -3,8 +3,8 @@ class RSIIndicator:
     def __init__(self, period=14):
         self.period = period
 
-    def rsi(self, series):
-        delta = series.diff()
+    def rsi(self, data, column='close'):
+        delta = data[column].diff()
         gain, loss = delta.copy(), delta.copy()
         gain[gain < 0] = 0
         loss[loss > 0] = 0

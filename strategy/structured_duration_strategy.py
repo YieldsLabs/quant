@@ -3,7 +3,7 @@ from ta.rsi_indicator import RSIIndicator
 from strategy.abstract_strategy import AbstractStrategy
 
 class StructuredDurationStrategy(AbstractStrategy):
-    def __init__(self, upper_barrier=80, lower_barrier=20, lookback_rsi=5, lookback_order_block=5):
+    def __init__(self, upper_barrier=80, lower_barrier=20, lookback_rsi=15, lookback_order_block=15):
         super().__init__()
         self.upper_barrier = upper_barrier
         self.lower_barrier = lower_barrier
@@ -15,16 +15,17 @@ class StructuredDurationStrategy(AbstractStrategy):
 
     def _add_indicators(self, data):
         data = data.copy()
-        data['rsi'] = self.rsi_indicator.rsi(data['close'])
+        
+        data['rsi'] = self.rsi_indicator.rsi(data)
         data['order_block_high'], data['order_block_low'] = self.order_block_indicator.find_order_blocks(data)
-        data.fillna(method='ffill', inplace=True)
+
         return data
 
     def entry(self, data):
         if len(data) < max(self.lookback_rsi + 1, self.lookback_order_block):
             return False, False
         
-        self._add_indicators(data)
+        data = self._add_indicators(data)
 
         last_row = data.iloc[-1]
         previous_rows = data.iloc[-self.lookback_rsi-1:-1]

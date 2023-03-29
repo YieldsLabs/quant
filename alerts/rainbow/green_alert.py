@@ -11,7 +11,7 @@ class GreenAlert(AbstractAlert):
     def alert(self, ohlcv):
         data = ohlcv.copy()
 
-        data['rsi'] =  self.rsi.rsi(data['close'])
+        data['rsi'] =  self.rsi.rsi(data)
         data['rsi_slope'] = (
             data['rsi'] - data['rsi'].shift(self.lookback)) / self.lookback
 

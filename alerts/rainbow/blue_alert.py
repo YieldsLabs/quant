@@ -12,7 +12,7 @@ class BlueAlert(AbstractAlert):
         data = ohlcv.copy()
 
         data['slope'] = (data['close'] - data['close'].shift(self.lookback)) / self.lookback
-        data['indicator'] = self.rsi.rsi(data['slope'])
+        data['indicator'] = self.rsi.rsi(data, 'slope')
 
         buy = (
             (data['indicator'] > 30) &

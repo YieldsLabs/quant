@@ -18,7 +18,7 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
 
-        data['sma'] = self.sma.zero_lag_ema(data['close'])
+        data['sma'] = self.sma.zero_lag_ema(data)
         data['ao'] =  self.ao.ao(data)
         data['upper_band'], data['lower_band'] = self.bb.bb(data)
         data['mfi'] = self.mfi.mfi(data)

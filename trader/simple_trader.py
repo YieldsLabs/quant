@@ -67,7 +67,7 @@ class SimpleTrader:
 
         if self.position_side and self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print("Close position")
-            self.broker.close_position(symbol)
+            self.broker.close_positions(symbol)
             pnl = self.calculate_pnl(current_row)
             self.update_statistics(pnl)
             self.reset_position_values()
@@ -99,8 +99,9 @@ class SimpleTrader:
         print(f"Take profit {take_profit_price}")
 
         self.broker.place_market_order(market_order_side.value, symbol, self.position_size)
-        self.broker.place_take_profit_order(market_order_side.value, symbol, self.position_size, self.take_profit_price)
         self.broker.place_stop_loss_order(market_order_side.value, symbol, self.position_size, self.stop_loss_price)
+        
+        self.broker.place_take_profit_order(market_order_side.value, symbol, self.position_size, self.take_profit_price)
 
     def reset_position_values(self):
         self.position_side = None

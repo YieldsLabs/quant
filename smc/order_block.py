@@ -2,17 +2,17 @@ import pandas as pd
 
 
 class OrderBlockIndicator:
-    def __init__(self, lookback=5):
+    def __init__(self, lookback=25):
         self.lookback = lookback
 
     def find_order_blocks(self, data):
-        order_blocks = []
-        for i in range(len(data) - self.lookback):
-            high = data['high'][i:i + self.lookback].max()
-            low = data['low'][i:i + self.lookback].min()
-            order_blocks.append((high, low))
+        high_rolling = data['high'].rolling(self.lookback, min_periods=self.lookback)
+        low_rolling = data['low'].rolling(self.lookback, min_periods=self.lookback)
 
-        # Add NaN values for the first lookback rows
-        order_blocks = [(None, None)] * self.lookback + order_blocks
+        order_blocks = list(zip(high_rolling.max(), low_rolling.min()))
+        
         df = pd.DataFrame(order_blocks, columns=['order_block_high', 'order_block_low'], index=data.index)
+        
+        df.iloc[:self.lookback] = None
+        
         return df['order_block_high'], df['order_block_low']

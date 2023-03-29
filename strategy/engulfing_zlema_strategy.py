@@ -18,7 +18,7 @@ class EngulfingSMA(AbstractStrategy):
     def _add_indicators(self, data):
         data = data.copy()
         
-        data['sma_slow'] = self.zlema.zero_lag_ema(data['close'])
+        data['sma_slow'] = self.zlema.zero_lag_ema(data)
 
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)
         data['bearish_engulfing'] = EngulfingPattern.bearish(data)

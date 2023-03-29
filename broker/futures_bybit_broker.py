@@ -79,7 +79,7 @@ class FuturesBybitBroker(AbstractBroker):
             'symbol': symbol,
             'side': side,
             'position_size': position_size,
-            'extra_params': None
+            'extra_params': None,
         }
 
         if stop_loss_price and not take_profit_price:
@@ -97,9 +97,7 @@ class FuturesBybitBroker(AbstractBroker):
             'symbol': symbol,
             'side': side,
             'position_size': position_size,
-            'extra_params': {
-                'takeProfit': str(take_profit_price)
-            }
+            'price': take_profit_price
         }
 
         self.create_order(**order_params)
@@ -110,9 +108,7 @@ class FuturesBybitBroker(AbstractBroker):
             'symbol': symbol,
             'side': side,
             'position_size': position_size,
-            'extra_params': {
-                'stopLoss': str(stop_loss_price)
-            }
+            'price': stop_loss_price
         }
 
         self.create_order(**order_params)

@@ -18,7 +18,7 @@ class UTBotAlerts(AbstractAlert):
         nloss = self.sensitivity * data['atr']
 
         data['slope'] = (data['close'] - data['close'].shift(self.ema_period)) / self.ema_period
-        data['rsi'] = self.rsi_indicator.rsi(data['slope'])
+        data['rsi'] = self.rsi_indicator.rsi(data, 'slope')
 
         buy = (
             (data['rsi'] > 30) &
