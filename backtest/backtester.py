@@ -86,14 +86,14 @@ class Backtester:
             position_size = self.risk_management.calculate_position_size(self.initial_account_size, entry_price, stop_loss_price)
 
             if entry_trade[0] == TradeType.LONG:
-                exit_price = min(exit_price, take_profit_price)
-                exit_price = max(exit_price, stop_loss_price) 
+                exit_price = min(exit_price, take_profit_price if take_profit_price else exit_price)
+                exit_price = max(exit_price, stop_loss_price if stop_loss_price else stop_loss_price) 
 
                 profit = (exit_price - entry_price) * position_size
 
             elif entry_trade[0] == TradeType.SHORT:
-                exit_price = max(exit_price, take_profit_price)
-                exit_price = min(exit_price, stop_loss_price)
+                exit_price = max(exit_price, take_profit_price if take_profit_price else exit_price)
+                exit_price = min(exit_price, stop_loss_price if stop_loss_price else stop_loss_price)
                 
                 profit = (entry_price - exit_price) * position_size
                 
