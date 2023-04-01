@@ -1,23 +1,15 @@
+from shared.order import Order
 from trader.trade_side import TradeSide
 from trader.order_side import OrderSide
 
 
 class SimpleTrader:
-    def __init__(self, broker, rm):
+    def __init__(self, broker, rm, analytics):
         self.broker = broker
         self.rm = rm
+        self.analytics = analytics
+        self.completed_orders = []
         self.reset_position_values()
-        self.initialize_statistics()
-
-    def initialize_statistics(self):
-        self.pln = 0
-        self.total_trades = 0
-        self.win_ratio = 0
-        self.max_consecutive_wins = 0
-        self.max_consecutive_losses = 0
-        self.max_drawdown = 0
-        self.current_wins = 0
-        self.current_losses = 0
 
     def trade(self, strategy, symbol, timeframe):
         ohlcv = self.broker.get_historical_data(symbol, timeframe)
@@ -64,7 +56,7 @@ class SimpleTrader:
         self.print_trade_summary(self.position_side, self.entry_price,
                                  self.position_size, self.stop_loss_price, self.take_profit_price)
 
-        self.broker.place_limit_order(market_order_side.value, symbol, self.entry_price, self.position_size,
+        self.current_order_id = self.broker.place_limit_order(market_order_side.value, symbol, self.entry_price, self.position_size,
                                       stop_loss_price=self.stop_loss_price, take_profit_price=self.take_profit_price)
 
     def print_trade_summary(self, position_side, entry_price, position_size, stop_loss_price, take_profit_price):
@@ -94,17 +86,18 @@ class SimpleTrader:
         if not self.position_side:
             return
         
+        close_price = current_row['close']
+
         if not self.broker.has_open_position(symbol):
-            pnl = self.calculate_pnl(current_row)
-            self.update_statistics(pnl)
+            pnl = self._calculate_pnl(current_row)
+            self.completed_orders.append(Order(self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
             self.reset_position_values()
         elif self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print("Close position")
             self.broker.close_position(symbol)
-            pnl = self.calculate_pnl(current_row)
-            self.update_statistics(pnl)
+            pnl = self._calculate_pnl(current_row)
+            self.completed_orders.append(Order(self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
             self.reset_position_values()
-
 
     def reset_position_values(self):
         self.position_side = None
@@ -114,37 +107,11 @@ class SimpleTrader:
         self.take_profit_price = None
         self.current_order_id = None
 
-
-    def update_statistics(self, pnl):
-        self.pln += pnl
-        self.total_trades += 1
-        self.win_ratio = (self.current_wins / self.total_trades) * 100
-        if pnl > 0:
-            self.current_wins += 1
-            self.current_losses = 0
-            self.max_consecutive_wins = max(
-                self.max_consecutive_wins, self.current_wins)
-        else:
-            self.current_losses += 1
-            self.current_wins = 0
-            self.max_consecutive_losses = max(
-                self.max_consecutive_losses, self.current_losses)
-
-        drawdown = self.calculate_drawdown()
-        self.max_drawdown = min(self.max_drawdown, drawdown)
-
-
-    def calculate_drawdown(self):
-        return self.pln / self.total_trades if self.total_trades > 0 else 0
-
-
-    def calculate_pnl(self, current_row):
+    def _calculate_pnl(self, current_row):
         if self.position_side.value == TradeSide.LONG.value:
-            pnl = (current_row['close'] - self.entry_price) * self.position_size
-        else:
-            pnl = (self.entry_price - current_row['close']) * self.position_size
-        return pnl
+            return (current_row['close'] - self.entry_price) * self.position_size
 
+        return (self.entry_price - current_row['close']) * self.position_size
 
     def print_trade_info(self, strategy, symbol, timeframe, current_row):
         print(f"-------------------------------------------->")
@@ -164,9 +131,16 @@ class SimpleTrader:
             print(f"Current size: {self.position_size}")
             print(f"Current stop loss: {self.stop_loss_price}")
             print(f"Current take profit: {self.take_profit_price}")
-        print(f"Total trades: {self.total_trades}")
-        print(f"Profit/Loss: {self.pln:.2f}")
-        print(f"Win ratio: {self.win_ratio:.2f}%")
-        print(f"Max consecutive wins: {self.max_consecutive_wins}")
-        print(f"Max consecutive losses: {self.max_consecutive_losses}")
-        print(f"Max drawdown: {self.max_drawdown:.2f}")
+        
+        stats = self.analytics.calculate(self.completed_orders)
+
+        print(f"Total trades: {stats['total_trades']}")
+        print(f"Successful trades: {stats['successful_trades']}")
+        print(f"Win rate: {stats['win_rate']:.2%}")
+        print(f"Rate of return: {stats['rate_of_return']:.2%}")
+        print(f"Total PnL: {stats['total_pnl']:.2f}")
+        print(f"Average PnL: {stats['average_pnl']:.2f}")
+        print(f"Sharpe ratio: {stats['sharpe_ratio']:.2f}")
+        print(f"Max consecutive wins: {stats['max_consecutive_wins']}")
+        print(f"Max consecutive losses: {stats['max_consecutive_losses']}")
+        print(f"Max drawdown: {stats['max_drawdown']:.2%}")

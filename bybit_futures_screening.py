@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 import itertools
 import pandas as pd
+from analytics.performance import PerformanceStats
 
 from backtest.backtester import Backtester
 from broker.futures_bybit_broker import FuturesBybitBroker
@@ -27,10 +28,13 @@ API_SECRET = os.getenv('API_SECRET')
 broker = FuturesBybitBroker(API_KEY, API_SECRET)
 symbols = ['ETHUSDT', 'UNFIUSDT', 'SOLUSDT', 'XRPUSDT']
 timeframes = ['1m']
-row_number = 1000
-lookback_period = 30
-risk_reward_ratio = 1.5
-atr_multi = 1.3
+
+row_number = 8000
+lookback_period = 50
+atr_multi = 2
+risk_reward_ratio = 2
+slow_sma_period = 100
+initial_account_size = 1000
 
 strategies = [
     EngulfingSMA(),
@@ -50,6 +54,8 @@ take_profit_finders = [
     NoopTakeProfitFinder()
 ]
 
+analytics = PerformanceStats(initial_account_size)
+
 combinations = list(itertools.product(symbols, timeframes, strategies, stop_loss_finders, take_profit_finders))
 results_list = []
 
@@ -59,7 +65,7 @@ for symbol, timeframe, strategy, stop_loss_finder, take_profit_finder in combina
     market = broker.get_symbol_info(symbol)
 
     rm = RiskManager(stop_loss_finder, take_profit_finder, trading_fee=market['trading_fee'], price_precision=market['price_precision'], position_precision=market['position_precision'])
-    backtester = Backtester(strategy, rm, ohlcv)
+    backtester = Backtester(strategy, rm, analytics, ohlcv, initial_account_size=initial_account_size)
     
     result = backtester.run(trade_type=TradeType.BOTH)
     
