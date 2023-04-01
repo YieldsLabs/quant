@@ -57,7 +57,7 @@ class FuturesBybitBroker(AbstractBroker):
         except Exception as e:
             print(e)
 
-    def create_order(self, order_type, side, symbol, position_size, price=None, extra_params=None):
+    def _create_order(self, order_type, side, symbol, position_size, price=None, extra_params=None):
         order_params = {
             'symbol': symbol,
             'type': order_type,
@@ -73,45 +73,44 @@ class FuturesBybitBroker(AbstractBroker):
 
         return self.exchange.create_order(**order_params)
 
-    def place_market_order(self, side, symbol, position_size, stop_loss_price=None, take_profit_price=None):
-        order_params = {
-            'order_type': 'market',
+    def _create_order_params(self, order_type, side, symbol, position_size):
+        return {
+            'order_type': order_type,
             'symbol': symbol,
             'side': side,
             'position_size': position_size,
             'extra_params': None,
         }
 
-        if stop_loss_price and not take_profit_price:
-            order_params['extra_params'] = {'stopLoss': str(stop_loss_price) }
-        elif take_profit_price and not stop_loss_price:
-            order_params['extra_params'] = { 'takeProfit': str(take_profit_price) }
-        elif take_profit_price and stop_loss_price:
-            order_params['extra_params'] = { 'stopLoss': str(stop_loss_price), 'takeProfit': str(take_profit_price) }
-
-        self.create_order(**order_params)
-
-    def place_take_profit_order(self, side, symbol, position_size, take_profit_price):
-        order_params = {
-            'order_type': 'limit',
-            'symbol': symbol,
-            'side': side,
-            'position_size': position_size,
-            'price': take_profit_price
-        }
-
-        self.create_order(**order_params)
+    def _create_extra_params(self, stop_loss_price, take_profit_price):
+        extra_params = {}
         
-    def place_stop_loss_order(self, side, symbol, position_size, stop_loss_price):
-        order_params = {
-            'order_type': 'limit',
-            'symbol': symbol,
-            'side': side,
-            'position_size': position_size,
-            'price': stop_loss_price
-        }
+        if stop_loss_price:
+            extra_params['stopLoss'] = str(stop_loss_price)
+            
+        if take_profit_price:
+            extra_params['takeProfit'] = str(take_profit_price)
+            
+        if extra_params:
+            extra_params['timeInForce'] = 'GTC'
+        
+        return extra_params if extra_params else None
 
-        self.create_order(**order_params)
+    def place_market_order(self, side, symbol, position_size, stop_loss_price=None, take_profit_price=None):
+        order_params = self._create_order_params('market', side, symbol, position_size)
+        order_params['extra_params'] = self._create_extra_params(stop_loss_price, take_profit_price)
+        
+        self._create_order(**order_params)
+
+    def place_limit_order(self, side, symbol, price, position_size, stop_loss_price=None, take_profit_price=None):
+        order_params = self._create_order_params('limit', side, symbol, position_size)
+        order_params.update({
+            'price': price,
+            'extra_params': self._create_extra_params(stop_loss_price, take_profit_price)
+        })
+        
+        res = self._create_order(**order_params)
+        return res['result']['orderId']
 
     def has_open_positions(self, symbol):
         return len(self.get_open_positions(symbol)) > 0
@@ -127,8 +126,9 @@ class FuturesBybitBroker(AbstractBroker):
 
     def get_open_positions(self, symbol):
         positions = self.exchange.fetch_positions(symbol)
+
         return [
-            position for position in positions if float(position['info']['size']) != 0
+            position for position in positions if float(position['info']['size']) != 0.0
         ]
 
     def get_symbols(self):
