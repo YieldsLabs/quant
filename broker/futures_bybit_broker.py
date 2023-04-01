@@ -5,6 +5,7 @@ import pandas as pd
 from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
+from trader.trade_side import TradeSide
 
 class FuturesBybitBroker(AbstractBroker):
     def __init__(self, api_key, secret):
@@ -112,24 +113,34 @@ class FuturesBybitBroker(AbstractBroker):
         res = self._create_order(**order_params)
         return res['result']['orderId']
 
-    def has_open_positions(self, symbol):
-        return len(self.get_open_positions(symbol)) > 0
+    def has_open_position(self, symbol):
+        return self.get_open_position(symbol) is not None
 
-    def close_positions(self, symbol):
-        open_positions = self.get_open_positions(symbol)
-        
-        if len(open_positions) == 0:
+    def close_position(self, symbol):
+        if not self.has_open_position(symbol):
             return
         
-        for position in open_positions:
-            self.create_order('market', 'sell' if position['side'] == 'buy' else 'buy', symbol, abs(float(position['info']['size'])))
+        open_position = self.get_open_position(symbol)
 
-    def get_open_positions(self, symbol):
+        self.create_order('market', 'sell' if open_position['position_side'] == TradeSide.LONG else 'buy', symbol, open_position['position_size'])
+
+    def get_open_position(self, symbol):
         positions = self.exchange.fetch_positions(symbol)
 
-        return [
-            position for position in positions if float(position['info']['size']) != 0.0
-        ]
+        open_positions = [position for position in positions if float(position['info']['size']) != 0.0]
+
+        if len(open_positions) > 0:
+            current_position = open_positions[0]
+
+            return {
+                'position_side': TradeSide.LONG if current_position['side'] == 'long' else TradeSide.SHORT,
+                'entry_price': float(current_position['entryPrice']),
+                'position_size': float(current_position['info']['size']),
+                'stop_loss_price':  float(current_position['info']['stopLoss']),
+                'take_profit_price':  float(current_position['info']['takeProfit']),
+            }
+
+        return None
 
     def get_symbols(self):
         markets = self.exchange.fetch_markets()
