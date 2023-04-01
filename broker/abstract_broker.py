@@ -24,7 +24,7 @@ class AbstractBroker(ABC):
         pass
 
     @abstractmethod
-    def get_open_positions(self, symbol):
+    def get_open_position(self, symbol):
        pass
 
     @abstractmethod
