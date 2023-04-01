@@ -90,13 +90,13 @@ class SimpleTrader:
 
         if not self.broker.has_open_position(symbol):
             pnl = self._calculate_pnl(current_row)
-            self.completed_orders.append(Order(self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
+            self.completed_orders.append(Order(current_row['timestamp'], self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
             self.reset_position_values()
         elif self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print("Close position")
             self.broker.close_position(symbol)
             pnl = self._calculate_pnl(current_row)
-            self.completed_orders.append(Order(self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
+            self.completed_orders.append(Order(current_row['timestamp'], self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
             self.reset_position_values()
 
     def reset_position_values(self):

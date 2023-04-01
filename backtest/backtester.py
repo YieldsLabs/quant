@@ -49,23 +49,24 @@ class Backtester:
         for index, row in self.historical_data.iterrows():
             signal_row = combined_signals.loc[combined_signals.index == index]
 
-            if not signal_row.empty and active_trade is None:
+            if not signal_row.empty:
                 signal_type = signal_row.iloc[0]['signal']
 
-                if signal_type == 'long' and (trade_type == TradeType.BOTH or trade_type == TradeType.LONG):
-                    active_trade = (TradeType.LONG, row)
+                if active_trade is None:
+                    if signal_type == 'long' and (trade_type == TradeType.BOTH or trade_type == TradeType.LONG):
+                        active_trade = (TradeType.LONG, row)
 
-                if signal_type == 'short' and (trade_type == TradeType.BOTH or trade_type == TradeType.SHORT):
-                    active_trade = (TradeType.SHORT, row)
+                    if signal_type == 'short' and (trade_type == TradeType.BOTH or trade_type == TradeType.SHORT):
+                        active_trade = (TradeType.SHORT, row)
 
-            if active_trade is not None:
-                entry_trade_type, entry_row = active_trade
-                entry_price = entry_row['close']
+                else:
+                    entry_trade_type, entry_row = active_trade
+                    entry_price = entry_row['close']
 
-                if self.risk_management.check_exit_conditions(entry_trade_type, entry_price, row):
-                    trades.append(active_trade)
-                    trades.append(('exit', row))
-                    active_trade = None
+                    if self.risk_management.check_exit_conditions(entry_trade_type, entry_price, row):
+                        trades.append(active_trade)
+                        trades.append(('exit', row))
+                        active_trade = None
 
         if active_trade is not None:
             trades.append(active_trade)
@@ -97,7 +98,7 @@ class Backtester:
                 
                 profit = (entry_price - exit_price) * position_size
                 
-            self.orders.append(Order(side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, profit=profit))
+            self.orders.append(Order(timestamp=exit_trade[1]['timestamp'], side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, profit=profit))
 
         return self.analytics.calculate(self.orders)
 
