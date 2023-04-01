@@ -38,10 +38,10 @@ class SimpleTrader:
         if self.position_side is None:
             self.print_trade_info(strategy, symbol, timeframe, current_row)
 
-        if buy_signal and not self.broker.has_open_positions(symbol):
+        if buy_signal and not self.broker.has_open_position(symbol):
             self.execute_trade(TradeSide.LONG, symbol, current_row, balance)
 
-        if sell_signal and not self.broker.has_open_positions(symbol):
+        if sell_signal and not self.broker.has_open_position(symbol):
             self.execute_trade(TradeSide.SHORT, symbol, current_row, balance)
 
     def execute_trade(self, trade_side, symbol, current_row, balance):
@@ -75,31 +75,32 @@ class SimpleTrader:
         print(f"Take profit {take_profit_price}")
 
     def sync_and_update_positions(self, symbol, current_row):
-        if self.position_side is None and self.broker.has_open_positions(symbol):
+        if self.position_side is None and self.broker.has_open_position(symbol):
             self.sync_position_with_broker(symbol)
         else:
             self.update_positions(symbol, current_row)
 
     def sync_position_with_broker(self, symbol):
         print('Sync position with broker')
-        positions = self.broker.get_open_positions(symbol)
-        current_position = positions[0]
-        self.position_side = TradeSide.LONG if current_position['side'] == 'long' else TradeSide.SHORT
-        self.entry_price = float(current_position['entryPrice'])
-        self.position_size = float(current_position['info']['size'])
+        current_position = self.broker.get_open_position(symbol)
+        self.position_side = current_position['position_side']
+        self.entry_price = current_position['entry_price']
+        self.position_size = current_position['position_size']
+        self.stop_loss_price = current_position['stop_loss_price']
+        self.take_profit_price = current_position['take_profit_price']
 
 
     def update_positions(self, symbol, current_row):
         if not self.position_side:
             return
         
-        if not self.broker.has_open_positions(symbol):
+        if not self.broker.has_open_position(symbol):
             pnl = self.calculate_pnl(current_row)
             self.update_statistics(pnl)
             self.reset_position_values()
         elif self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print("Close position")
-            self.broker.close_positions(symbol)
+            self.broker.close_position(symbol)
             pnl = self.calculate_pnl(current_row)
             self.update_statistics(pnl)
             self.reset_position_values()

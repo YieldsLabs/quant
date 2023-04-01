@@ -38,19 +38,15 @@ class AbstractBroker(ABC):
     @abstractmethod
     def place_market_order(self, side, symbol, position_size, stop_loss_price=None, take_profit_price=None):
         pass
-
-    @abstractmethod
-    def place_take_profit_order(self, side, symbol, position_size, take_profit_price):
-        pass
     
     @abstractmethod
-    def place_stop_loss_order(self, side, symbol, position_size, stop_loss_price):
-        pass
-    
-    @abstractmethod
-    def has_open_positions(self, symbol):
+    def place_limit_order(self, side, symbol, price, position_size, stop_loss_price=None, take_profit_price=None):
         pass
 
     @abstractmethod
-    def close_positions(self, symbol):
+    def has_open_position(self, symbol):
+        pass
+
+    @abstractmethod
+    def close_position(self, symbol):
         pass
