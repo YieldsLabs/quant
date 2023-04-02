@@ -1,12 +1,10 @@
-from typing import Type
-from shared.ohlcv_context import OhlcvContext
 from ta.ma_indicator import MovingAverageIndicator
 from patterns.kangaroo_tail_pattern import KangarooTailPattern
 from strategy.abstract_strategy import AbstractStrategy
 
 class KangarooTailStrategy(AbstractStrategy):
-    def __init__(self, ohlcv: Type[OhlcvContext], lookback=200, sma_period=100):
-        super().__init__(ohlcv)
+    def __init__(self, lookback=200, sma_period=100):
+        super().__init__()
         self.lookback = lookback
         self.sma_period = sma_period
         self.ma = MovingAverageIndicator(sma_period)
@@ -18,13 +16,11 @@ class KangarooTailStrategy(AbstractStrategy):
 
         return data
 
-    def entry(self, data):
-        data = self.ohlcv_context.ohlcv
-
-        if len(data) < max(3, self.sma_period):
+    def entry(self, ohlcv):
+        if len(ohlcv) < max(3, self.sma_period):
             return False, False
 
-        data = self._add_indicators(data)
+        data = self._add_indicators(daohlcvta)
 
         current_row = data.iloc[-1]
 

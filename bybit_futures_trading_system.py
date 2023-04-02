@@ -13,11 +13,12 @@ from shared.ohlcv_context import OhlcvContext
 from strategy.aobb_strategy import AwesomeOscillatorBBStrategy
 
 from risk_management.risk_manager import RiskManager
+from strategy.bollinger_engulfing_strategy import BollingerEngulfing
 from trader.simple_trader import SimpleTrader
 
 load_dotenv()
 
-symbol = 'SPELLUSDT'
+symbol = 'SOLUSDT'
 timeframe = '1'
 leverage = 1
 channels = [f"kline.{timeframe}.{symbol}"]
@@ -50,7 +51,7 @@ rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_t
 analytics = PerformanceStats(initial_balance)
 trader = SimpleTrader(broker, rm, analytics, ohlcv_context)
 wss = 'wss://stream.bybit.com/v5/public/linear'
-strategy = AwesomeOscillatorBBStrategy(ohlcv_context, sma_period=slow_sma_period)
+strategy = BollingerEngulfing()
 
 def on_open(ws):
     print("WebSocket connection opened")

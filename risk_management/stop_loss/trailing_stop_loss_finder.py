@@ -11,10 +11,6 @@ class TrailingStopLossFinder(AbstractStopLoss):
         self.max_adjustments = max_adjustments
         self.reset()
 
-    def reset(self):
-        self.current_stop_loss = { TradeType.LONG.value: None, TradeType.SHORT.value: None }
-        self.adjustments = { TradeType.LONG.value: 0, TradeType.SHORT.value: 0 }
-    
     def next(self, trade_type, entry_price):
         data = self.ohlcv_context.ohlcv
 
@@ -59,6 +55,11 @@ class TrailingStopLossFinder(AbstractStopLoss):
         
         return new_stop_loss
 
+    def reset(self):
+        self.stop_loss_finder.reset()
+        self.current_stop_loss = { TradeType.LONG.value: None, TradeType.SHORT.value: None }
+        self.adjustments = { TradeType.LONG.value: 0, TradeType.SHORT.value: 0 }
+    
     def __str__(self) -> str:
         return f'TrailingStopLossFinder(stop_loss_finder={self.stop_loss_finder})'
 

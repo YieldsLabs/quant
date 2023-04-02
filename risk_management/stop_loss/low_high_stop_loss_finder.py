@@ -10,8 +10,6 @@ class LowHighStopLossFinder(AbstractStopLoss):
         super().__init__(ohlcv)
         self.stop_loss_finder = stop_loss_finder
         self.lookback_period = lookback_period
-        self.data = []
-
 
     def next(self, trade_type, entry_price=0):
         data = self.ohlcv_context.ohlcv
@@ -24,5 +22,8 @@ class LowHighStopLossFinder(AbstractStopLoss):
 
         return self.stop_loss_finder.next(trade_type, entry_price)
     
+    def reset(self):
+        self.stop_loss_finder.reset()
+
     def __str__(self) -> str:
         return f'LowHighStopLossFinder(stop_loss_finder={self.stop_loss_finder}, lookback_period={self.lookback_period})'

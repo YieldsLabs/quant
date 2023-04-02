@@ -1,12 +1,10 @@
-from typing import Type
-from shared.ohlcv_context import OhlcvContext
 from smc.order_block import OrderBlockIndicator
 from ta.rsi_indicator import RSIIndicator
 from strategy.abstract_strategy import AbstractStrategy
 
 class StructuredDurationStrategy(AbstractStrategy):
-    def __init__(self, ohlcv: Type[OhlcvContext], upper_barrier=80, lower_barrier=20, lookback_rsi=15, lookback_order_block=15):
-        super().__init__(ohlcv)
+    def __init__(self, upper_barrier=80, lower_barrier=20, lookback_rsi=15, lookback_order_block=15):
+        super().__init__()
         self.upper_barrier = upper_barrier
         self.lower_barrier = lower_barrier
         self.lookback_rsi = lookback_rsi

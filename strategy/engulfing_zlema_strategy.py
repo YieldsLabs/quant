@@ -1,15 +1,12 @@
-from typing import Type
 from alerts.mfi_alerts import MoneyFlowIndexAlerts
-from shared.ohlcv_context import OhlcvContext
 from ta.zlema_indicator import ZeroLagEMAIndicator
 from patterns.engulfing_pattern import EngulfingPattern
 from patterns.harami_pattern import HaramiPattern
 from strategy.abstract_strategy import AbstractStrategy
 
-
 class EngulfingSMA(AbstractStrategy):
-    def __init__(self, ohlcv: Type[OhlcvContext], slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
-        super().__init__(ohlcv)
+    def __init__(self, slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
+        super().__init__()
         self.slow_sma = ZeroLagEMAIndicator(window=slow_sma_period)
         self.mfi = MoneyFlowIndexAlerts(overbought_level=upper_barrier, oversold_level=lower_barrier)
         self.upper_barrier = upper_barrier
@@ -43,13 +40,11 @@ class EngulfingSMA(AbstractStrategy):
         
         return buy_confirmation, sell_confirmation
 
-    def entry(self):
-        data = self.ohlcv_context.ohlcv
-
-        if len(data) < 3:
+    def entry(self, ohlcv):
+        if len(ohlcv) < 3:
             return False, False
 
-        data = self._add_indicators(data)
+        data = self._add_indicators(ohlcv)
 
         current_row = data.iloc[-1]
         previous_row = data.iloc[-2]

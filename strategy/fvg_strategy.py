@@ -1,14 +1,12 @@
-from typing import Type
 from alerts.mfi_alerts import MoneyFlowIndexAlerts
-from shared.ohlcv_context import OhlcvContext
 from smc.fair_value_gap import FairValueGapIndicator
 from strategy.abstract_strategy import AbstractStrategy
 from ta.zlema_indicator import ZeroLagEMAIndicator
 
 
 class FairValueGapStrategy(AbstractStrategy):
-    def __init__(self, ohlcv: Type[OhlcvContext], lookback=40, overbought=70, oversold=30, fair_value=0.5, slow_sma_period=100, tolerance=0.02):
-        super().__init__(ohlcv)
+    def __init__(self, lookback=40, overbought=70, oversold=30, fair_value=0.5, slow_sma_period=100, tolerance=0.02):
+        super().__init__()
         self.lookback = lookback
         self.fair_value = fair_value
         self.tolerance = tolerance
@@ -36,13 +34,11 @@ class FairValueGapStrategy(AbstractStrategy):
         
         return buy_confirmation, sell_confirmation
 
-    def entry(self):
-        data = self.ohlcv_context.ohlcv
-
-        if len(data) < self.lookback:
+    def entry(self, ohlcv):
+        if len(ohlcv) < self.lookback:
             return False, False
 
-        data = self._add_indicators(data)
+        data = self._add_indicators(ohlcv)
         
         last_row = data.iloc[-1]
         previous_row = data.iloc[-2]

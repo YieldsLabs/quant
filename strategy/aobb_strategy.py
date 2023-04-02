@@ -1,5 +1,3 @@
-from typing import Type
-from shared.ohlcv_context import OhlcvContext
 from ta.zlema_indicator import ZeroLagEMAIndicator
 from ta.bb_indicator import BBIndicator
 from oscillators.awesome import AwesomeOscillator
@@ -7,8 +5,8 @@ from strategy.abstract_strategy import AbstractStrategy
 from ta.mfi_indicator import MoneyFlowIndexIndicator
 
 class AwesomeOscillatorBBStrategy(AbstractStrategy):
-    def __init__(self, ohlcv: Type[OhlcvContext], ao_short_period=5, ao_long_period=34, bb_period=25, bb_std_dev=2, sma_period=50, mfi_period=14, mfi_buy_level=40, mfi_sell_level=60):
-        super().__init__(ohlcv)
+    def __init__(self, ao_short_period=5, ao_long_period=34, bb_period=25, bb_std_dev=2, sma_period=50, mfi_period=14, mfi_buy_level=40, mfi_sell_level=60):
+        super().__init__()
         self.mfi_buy_level = mfi_buy_level
         self.mfi_sell_level = mfi_sell_level
         
@@ -26,13 +24,11 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
 
         return data
 
-    def entry(self):
-        data = self.ohlcv_context.ohlcv
-
-        if len(data) < 2:
+    def entry(self, ohlcv):
+        if len(ohlcv) < 2:
             return False, False
 
-        data = self._add_indicators(data)
+        data = self._add_indicators(ohlcv)
 
         buy_signal = self._generate_buy_signal(data)
         sell_signal = self._generate_sell_signal(data)

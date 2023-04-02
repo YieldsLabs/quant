@@ -10,7 +10,7 @@ from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
 
 class Backtester(AbstractTrader):
-    def __init__(self, risk_management: Type[AbstractRiskManager], analytics: Type[PerformanceStats], ohlcv: Type[OhlcvContext], trade_type=TradeType.BOTH, initial_account_size=1000):
+    def __init__(self, ohlcv: Type[OhlcvContext], risk_management: Type[AbstractRiskManager], analytics: Type[PerformanceStats], trade_type=TradeType.BOTH, initial_account_size=1000):
         super().__init__(ohlcv)
         self.risk_management = risk_management
         self.initial_account_size = initial_account_size
@@ -23,13 +23,12 @@ class Backtester(AbstractTrader):
         
         return self._calculate_performance(long_signals, short_signals)
 
-    def _generate_signals(self, strategy, data):
+    def _generate_signals(self, strategy):
         go_long = []
         go_short = []
-
         for index, row in self.ohlcv_context.ohlcv.iterrows():
-            long_signal, short_signal = strategy.entry(
-                data.iloc[:index])
+            long_signal, short_signal = strategy.entry(self.ohlcv_context.ohlcv[:index])
+            
             if long_signal:
                 go_long.append(row)
             if short_signal:

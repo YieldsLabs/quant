@@ -1,13 +1,11 @@
-from typing import Type
 from patterns.extreme_euphoria_pattern import ExtremeEuphoriaPattern
-from shared.ohlcv_context import OhlcvContext
 from strategy.abstract_strategy import AbstractStrategy
 from ta.bb_indicator import BBIndicator
 
 
 class ExtremeEuphoriaBBStrategy(AbstractStrategy):
-    def __init__(self, ohlcv: Type[OhlcvContext], sma_period=20, multiplier=2):
-        super().__init__(ohlcv)
+    def __init__(self, sma_period=20, multiplier=2):
+        super().__init__()
         self.bb_indicator = BBIndicator(sma_period, multiplier)
         self.extreme_euphoria_finder = ExtremeEuphoriaPattern()
 
@@ -19,13 +17,11 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
             data)
         return data
 
-    def entry(self):
-        data = self.ohlcv_context.ohlcv
-
-        if len(data) < 6:
+    def entry(self, ohlcv):
+        if len(ohlcv) < 6:
             return False, False
 
-        data = self._add_indicators(data)
+        data = self._add_indicators(ohlcv)
 
         last_row = data.iloc[-1]
 

@@ -29,5 +29,8 @@ class ATRStopLossFinder(AbstractStopLoss):
 
         return stop_loss_price
     
+    def reset(self):
+        pass
+    
     def __str__(self) -> str:
         return f'ATRStopLossFinder(multiplier={self.multiplier}, atr_period={self.atr_indicator.period})'

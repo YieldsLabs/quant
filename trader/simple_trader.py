@@ -20,12 +20,14 @@ class SimpleTrader(AbstractTrader):
         self.reset_position_values()
 
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str) -> None:
-        buy_signal, sell_signal = strategy.entry()
+        data = self.ohlcv_context.ohlcv
+
+        buy_signal, sell_signal = strategy.entry(data)
 
         print(f"buy_signal={buy_signal}, sell_signal={sell_signal}")
 
         balance = self.broker.get_account_balance()
-        current_row = self.ohlcv_context.ohlcv.iloc[-1]
+        current_row = data.iloc[-1]
 
         self.sync_and_update_positions(symbol, current_row)
         self.check_and_execute_trades(

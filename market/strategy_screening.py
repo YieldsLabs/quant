@@ -46,7 +46,7 @@ class StrategyScreening(AbstractScreening):
                 position_precision=position_precision,
             )
 
-            backtester = Backtester(self.broker, rm, self.analytics, self.ohlcv_context)
+            backtester = Backtester(self.ohlcv_context, rm, self.analytics)
 
             result = backtester.trade(strategy, symbol, timeframe)
 
