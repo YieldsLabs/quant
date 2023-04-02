@@ -2,6 +2,7 @@ from typing import List, Type
 from analytics.abstract_performace import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
 from risk_management.abstract_risk_manager import AbstractRiskManager
+from shared.ohlcv_context import OhlcvContext
 from shared.order import Order
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
@@ -9,8 +10,8 @@ from trader.trade_side import TradeSide
 from trader.order_side import OrderSide
 
 class SimpleTrader(AbstractTrader):
-    def __init__(self, broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], lookback=100):
-        super().__init__()
+    def __init__(self, broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], ohlcv: Type[OhlcvContext], lookback=100):
+        super().__init__(ohlcv)
         self.broker = broker
         self.rm = rm
         self.analytics = analytics
@@ -19,14 +20,12 @@ class SimpleTrader(AbstractTrader):
         self.reset_position_values()
 
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str) -> None:
-        ohlcv = self.broker.get_historical_data(symbol, timeframe, self.lookback)
-        self.rm.stop_loss_finder.set_ohlcv(ohlcv)
-        buy_signal, sell_signal = strategy.entry(ohlcv)
+        buy_signal, sell_signal = strategy.entry()
 
         print(f"buy_signal={buy_signal}, sell_signal={sell_signal}")
 
         balance = self.broker.get_account_balance()
-        current_row = ohlcv.iloc[-1]
+        current_row = self.ohlcv_context.ohlcv.iloc[-1]
 
         self.sync_and_update_positions(symbol, current_row)
         self.check_and_execute_trades(

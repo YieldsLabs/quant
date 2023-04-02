@@ -159,13 +159,13 @@ class FuturesBybitBroker(AbstractBroker):
         markets = self.exchange.fetch_markets()
         return [market_info['id'] for market_info in markets if market_info['linear']]
 
-    def get_historical_data(self, symbol, timeframe, limit=1000):
+    def get_historical_data(self, symbol, timeframe, lookback=1000):
         ohlcv = []
-        start_time = self.exchange.milliseconds() - limit * \
+        start_time = self.exchange.milliseconds() - lookback * \
             self.exchange.parse_timeframe(timeframe) * 1000
 
-        while len(ohlcv) < limit:
-            current_limit = min(limit - len(ohlcv), 1000)
+        while len(ohlcv) < lookback:
+            current_limit = min(lookback - len(ohlcv), 1000)
             current_ohlcv = self.exchange.fetch_ohlcv(
                 symbol, timeframe, since=start_time, limit=current_limit)
             ohlcv += current_ohlcv

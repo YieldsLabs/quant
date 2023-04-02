@@ -1,3 +1,5 @@
+from typing import Type
+from shared.ohlcv_context import OhlcvContext
 from ta.zlema_indicator import ZeroLagEMAIndicator
 from ta.bb_indicator import BBIndicator
 from oscillators.awesome import AwesomeOscillator
@@ -5,8 +7,8 @@ from strategy.abstract_strategy import AbstractStrategy
 from ta.mfi_indicator import MoneyFlowIndexIndicator
 
 class AwesomeOscillatorBBStrategy(AbstractStrategy):
-    def __init__(self, ao_short_period=5, ao_long_period=34, bb_period=25, bb_std_dev=2, sma_period=50, mfi_period=14, mfi_buy_level=40, mfi_sell_level=60):
-        super().__init__()
+    def __init__(self, ohlcv: Type[OhlcvContext], ao_short_period=5, ao_long_period=34, bb_period=25, bb_std_dev=2, sma_period=50, mfi_period=14, mfi_buy_level=40, mfi_sell_level=60):
+        super().__init__(ohlcv)
         self.mfi_buy_level = mfi_buy_level
         self.mfi_sell_level = mfi_sell_level
         
@@ -15,8 +17,7 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
         self.sma = ZeroLagEMAIndicator(window=sma_period)
         self.mfi = MoneyFlowIndexIndicator(period=mfi_period)
 
-    def _add_indicators(self, ohlcv):
-        data = ohlcv.copy()
+    def _add_indicators(self, data):
 
         data['sma'] = self.sma.zero_lag_ema(data)
         data['ao'] =  self.ao.ao(data)
@@ -25,7 +26,9 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
 
         return data
 
-    def entry(self, data):
+    def entry(self):
+        data = self.ohlcv_context.ohlcv
+
         if len(data) < 2:
             return False, False
 
@@ -39,7 +42,6 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
     def _generate_buy_signal(self, data):
         last_row = data.iloc[-1]
         second_last_row = data.iloc[-2]
-
 
         lower_high_price = second_last_row['close'] < last_row['close']
         higher_low_ao = second_last_row['ao'] > last_row['ao']

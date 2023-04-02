@@ -3,7 +3,6 @@ class VWAPIndicator:
         self.window = window
 
     def vwap(self, data):
-        data = data.copy()
         volume = data['volume'].values
         price = (data['high'] + data['low'] + data['close']) / 3
         vwap = (price * volume).rolling(window=self.window).sum() / \

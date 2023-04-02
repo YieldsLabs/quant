@@ -5,7 +5,6 @@ class ATRIndicator:
         self.period = period
 
     def atr(self, data, smoothing='rma'):
-        data = data.copy()
         data['previous_close'] = data['close'].shift(1)
 
         true_range = pd.DataFrame()

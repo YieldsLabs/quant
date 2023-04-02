@@ -1,16 +1,17 @@
+from typing import Type
 from patterns.extreme_euphoria_pattern import ExtremeEuphoriaPattern
+from shared.ohlcv_context import OhlcvContext
 from strategy.abstract_strategy import AbstractStrategy
 from ta.bb_indicator import BBIndicator
 
 
 class ExtremeEuphoriaBBStrategy(AbstractStrategy):
-    def __init__(self, sma_period=20, multiplier=2):
-        super().__init__()
+    def __init__(self, ohlcv: Type[OhlcvContext], sma_period=20, multiplier=2):
+        super().__init__(ohlcv)
         self.bb_indicator = BBIndicator(sma_period, multiplier)
         self.extreme_euphoria_finder = ExtremeEuphoriaPattern()
 
     def _add_indicators(self, data):
-        data = data.copy()
         data['upper_band'], data['lower_band'] = self.bb_indicator.bb(data)
         data['bullish_extreme_euphoria'] = self.extreme_euphoria_finder.bullish(
             data)
@@ -18,7 +19,9 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
             data)
         return data
 
-    def entry(self, data):
+    def entry(self):
+        data = self.ohlcv_context.ohlcv
+
         if len(data) < 6:
             return False, False
 
