@@ -20,7 +20,7 @@ class KangarooTailStrategy(AbstractStrategy):
         if len(ohlcv) < max(3, self.sma_period):
             return False, False
 
-        data = self._add_indicators(daohlcvta)
+        data = self._add_indicators(ohlcv)
 
         current_row = data.iloc[-1]
 
