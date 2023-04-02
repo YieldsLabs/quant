@@ -1,4 +1,4 @@
-from argon2 import Type
+from typing import Type
 from patterns.engulfing_pattern import EngulfingPattern
 from shared.ohlcv_context import OhlcvContext
 from ta.bb_indicator import BBIndicator
