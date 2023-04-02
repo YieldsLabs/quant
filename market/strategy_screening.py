@@ -31,7 +31,7 @@ class StrategyScreening(AbstractScreening):
             self.symbols, self.timeframes, self.strategies, self.stop_loss_finders, self.take_profit_finders
         ):
             self.ohlcv_context.ohlcv = self.broker.get_historical_data(
-                symbol, timeframe, limit=self.lookback)
+                symbol, timeframe, lookback=self.lookback)
             
             market = self.broker.get_symbol_info(symbol)
             
