@@ -13,3 +13,6 @@ class BBIndicator:
         upper_band = sma + (std_dev * self.multiplier)
         lower_band = sma - (std_dev * self.multiplier)
         return upper_band, lower_band
+    
+    def __str__(self) -> str:
+        return f'BBIndicator(multiplier={self.multiplier}, sma_period={self.sma_period})'

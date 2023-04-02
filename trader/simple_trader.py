@@ -1,18 +1,25 @@
+from typing import List, Type
+from analytics.abstract_performace import AbstractPerformance
+from broker.abstract_broker import AbstractBroker
+from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.order import Order
+from strategy.abstract_strategy import AbstractStrategy
+from trader.abstract_trader import AbstractTrader
 from trader.trade_side import TradeSide
 from trader.order_side import OrderSide
 
-
-class SimpleTrader:
-    def __init__(self, broker, rm, analytics):
+class SimpleTrader(AbstractTrader):
+    def __init__(self, broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], lookback=100):
+        super().__init__()
         self.broker = broker
         self.rm = rm
         self.analytics = analytics
-        self.completed_orders = []
+        self.completed_orders: List[Order] = []
+        self.lookback = lookback
         self.reset_position_values()
 
-    def trade(self, strategy, symbol, timeframe):
-        ohlcv = self.broker.get_historical_data(symbol, timeframe)
+    def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str) -> None:
+        ohlcv = self.broker.get_historical_data(symbol, timeframe, self.lookback)
         self.rm.stop_loss_finder.set_ohlcv(ohlcv)
         buy_signal, sell_signal = strategy.entry(ohlcv)
 
@@ -81,12 +88,13 @@ class SimpleTrader:
         self.stop_loss_price = current_position['stop_loss_price']
         self.take_profit_price = current_position['take_profit_price']
 
-
     def update_positions(self, symbol, current_row):
         if not self.position_side:
             return
         
         close_price = current_row['close']
+
+        self.update_trailing_stop_loss(symbol)
 
         if not self.broker.has_open_position(symbol):
             pnl = self._calculate_pnl(current_row)
@@ -99,6 +107,14 @@ class SimpleTrader:
             self.completed_orders.append(Order(current_row['timestamp'], self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
             self.reset_position_values()
 
+    def update_trailing_stop_loss(self, symbol):
+        stop_loss_price, _ = self.rm.calculate_prices(self.position_side, self.entry_price)
+
+        if self.stop_loss_price != stop_loss_price:
+            print(f"A new stop_loss={stop_loss_price}")
+            self.broker.update_stop_loss(self.current_order_id, symbol, self.position_side, stop_loss_price)
+            self.stop_loss_price = stop_loss_price
+    
     def reset_position_values(self):
         self.position_side = None
         self.entry_price = None
@@ -122,7 +138,6 @@ class SimpleTrader:
                 side, current_row['close'])
             print(
                 f"Side {side.value} stop_loss_price={stop_loss_price}, take_profit_price={take_profit_price}")
-
 
     def print_statistics(self):
         if self.position_side:

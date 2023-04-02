@@ -7,7 +7,7 @@ class SimpleTakeProfitFinder(AbstractTakeProfit):
         super().__init__()
         self.take_profit_pct = take_profit_pct
 
-    def next(self, trade_type, entry_price, stop_loss_price=0):
+    def next(self, trade_type, entry_price, stop_loss_price=0.0):
         if trade_type.value == TradeType.LONG.value :
             take_profit_price = entry_price * (1.0 + self.take_profit_pct)
         elif trade_type.value == TradeType.SHORT.value :

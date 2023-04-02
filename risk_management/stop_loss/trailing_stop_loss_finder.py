@@ -1,11 +1,11 @@
+from typing import Type
 from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
-from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from shared.trade_type import TradeType
 
 class TrailingStopLossFinder(AbstractStopLoss):
-    def __init__(self, atr_multiplier=1.2, risk_reward_ratio=1.1, max_adjustments=20):
+    def __init__(self, stop_loss_finder: Type[AbstractStopLoss], risk_reward_ratio=1.1, max_adjustments=20):
         super().__init__()
-        self.low_high_stop_loss = ATRStopLossFinder(multiplier=atr_multiplier)
+        self.stop_loss_finder = stop_loss_finder
         self.risk_reward_ratio = risk_reward_ratio
         self.data = []
         self.max_adjustments = max_adjustments
@@ -17,13 +17,13 @@ class TrailingStopLossFinder(AbstractStopLoss):
 
     def set_ohlcv(self, data):
         self.data = data
-        self.low_high_stop_loss.set_ohlcv(data)
+        self.stop_loss_finder.set_ohlcv(data)
 
     def next(self, trade_type, entry_price):
         if len(self.data) == 0:
             raise ValueError('Add ohlcv data')
         
-        self.current_stop_loss[trade_type.value] = self.low_high_stop_loss.next(trade_type, entry_price)
+        self.current_stop_loss[trade_type.value] = self.stop_loss_finder.next(trade_type, entry_price)
         self.adjustments[trade_type.value] = 0
 
         while True:
@@ -50,9 +50,9 @@ class TrailingStopLossFinder(AbstractStopLoss):
         risk_reward = risk / reward if reward != 0 else 0
 
         if trade_type.value == TradeType.LONG.value and risk_reward > self.risk_reward_ratio:
-            new_stop_loss = max(entry_price, self.low_high_stop_loss.next(trade_type, entry_price))
+            new_stop_loss = max(entry_price, self.stop_loss_finder.next(trade_type, entry_price))
         elif trade_type.value == TradeType.SHORT.value and risk_reward > self.risk_reward_ratio:
-            new_stop_loss = min(entry_price, self.low_high_stop_loss.next(trade_type, entry_price))
+            new_stop_loss = min(entry_price, self.stop_loss_finder.next(trade_type, entry_price))
         else:
             return
         
@@ -62,5 +62,5 @@ class TrailingStopLossFinder(AbstractStopLoss):
         return new_stop_loss
 
     def __str__(self) -> str:
-        return f'TrailingStopLossFinder()'
+        return f'TrailingStopLossFinder(stop_loss_finder={self.stop_loss_finder})'
 

@@ -1,29 +1,37 @@
 
+from typing import Type
 import pandas as pd
+from analytics.performance import PerformanceStats
+from broker.abstract_broker import AbstractBroker
+from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.order import Order
 from shared.trade_type import TradeType
+from strategy.abstract_strategy import AbstractStrategy
+from trader.abstract_trader import AbstractTrader
 
-class Backtester:
-    def __init__(self, strategy, risk_management, analytics, historical_data, initial_account_size=1000, leverage=1):
-        self.strategy = strategy
-        self.historical_data = historical_data
+class Backtester(AbstractTrader):
+    def __init__(self, broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[PerformanceStats], trade_type=TradeType.BOTH, initial_account_size=1000, lookback=1000):
+        super().__init__()
+        self.broker = broker
         self.initial_account_size = initial_account_size
-        self.leverage = leverage
         self.risk_management = risk_management
         self.analytics = analytics
+        self.trade_type = trade_type
+        self.lookback = lookback
         self.orders = []
 
-    def run(self, trade_type=TradeType.BOTH):
-        long_signals, short_signals = self.generate_signals(self.historical_data)
+    def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str):
+        ohlcv = self.broker.get_historical_data(symbol, timeframe, limit=self.lookback)
+        long_signals, short_signals = self._generate_signals(strategy, ohlcv)
         
-        return self.calculate_performance(long_signals, short_signals, trade_type=trade_type)
+        return self._calculate_performance(ohlcv, long_signals, short_signals)
 
-    def generate_signals(self, data):
+    def _generate_signals(self, strategy, data):
         go_long = []
         go_short = []
 
         for index, row in data.iterrows():
-            long_signal, short_signal = self.strategy.entry(
+            long_signal, short_signal = strategy.entry(
                 data.iloc[:index])
             if long_signal:
                 go_long.append(row)
@@ -32,10 +40,10 @@ class Backtester:
 
         return pd.DataFrame(go_long), pd.DataFrame(go_short)
 
-    def calculate_performance(self, long_signals, short_signals, trade_type=TradeType.BOTH):
-        if trade_type == TradeType.LONG:
+    def _calculate_performance(self, ohlcv, long_signals, short_signals):
+        if self.trade_type == TradeType.LONG:
             short_signals = pd.DataFrame()
-        elif trade_type == TradeType.SHORT:
+        elif self.trade_type == TradeType.SHORT:
             long_signals = pd.DataFrame()
 
         long_signals['signal'] = 'long'
@@ -46,17 +54,17 @@ class Backtester:
         trades = []
         active_trade = None
 
-        for index, row in self.historical_data.iterrows():
+        for index, row in ohlcv.iterrows():
             signal_row = combined_signals.loc[combined_signals.index == index]
 
             if not signal_row.empty:
                 signal_type = signal_row.iloc[0]['signal']
 
                 if active_trade is None:
-                    if signal_type == 'long' and (trade_type == TradeType.BOTH or trade_type == TradeType.LONG):
+                    if signal_type == 'long' and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.LONG):
                         active_trade = (TradeType.LONG, row)
 
-                    if signal_type == 'short' and (trade_type == TradeType.BOTH or trade_type == TradeType.SHORT):
+                    if signal_type == 'short' and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.SHORT):
                         active_trade = (TradeType.SHORT, row)
 
                 else:
@@ -70,7 +78,7 @@ class Backtester:
 
         if active_trade is not None:
             trades.append(active_trade)
-            trades.append(('exit', self.historical_data.iloc[-1]))
+            trades.append(('exit', ohlcv.iloc[-1]))
 
         return self._evaluate_trades(trades)
 
@@ -102,11 +110,6 @@ class Backtester:
 
         return self.analytics.calculate(self.orders)
 
-    def get_signals(self):
-        data_with_indicators = self.strategy.add_indicators(
-            self.historical_data)
-        return self.generate_signals(
-            data_with_indicators)
 
     def get_orders(self):
         return pd.DataFrame.from_records([order.to_dict() for order in self.orders])

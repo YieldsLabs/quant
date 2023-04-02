@@ -17,3 +17,6 @@ class RSIIndicator:
         rsi = 100 - (100 / (1 + rs))
 
         return rsi
+    
+    def __str__(self) -> str:
+        return f'RSIIndicator(period={self.period})'

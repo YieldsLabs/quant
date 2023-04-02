@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from shared.trade_type import TradeType
+
 
 class AbstractStopLoss(ABC):
     @abstractmethod
@@ -7,7 +9,7 @@ class AbstractStopLoss(ABC):
         pass
 
     @abstractmethod
-    def next(self, entry_trade_type, entry_price):
+    def next(self, entry_trade_type: TradeType, entry_price: float):
         pass
 
     @abstractmethod

@@ -1,5 +1,8 @@
+from trader.order_side import OrderSide
+
+
 class Order:
-    def __init__(self, timestamp, side, entry_price, exit_price, stop_loss, take_profit, profit):
+    def __init__(self, timestamp: int, side: OrderSide, entry_price: float, exit_price: float, stop_loss: float, take_profit: float, profit: float):
         self.id = None
         self.timestamp = timestamp
         self.side = side

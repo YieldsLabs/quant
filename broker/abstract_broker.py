@@ -44,9 +44,17 @@ class AbstractBroker(ABC):
         pass
 
     @abstractmethod
+    def update_stop_loss(self, order_id, symbol, side, stop_loss_price):
+        pass
+
+    @abstractmethod
     def has_open_position(self, symbol):
         pass
 
     @abstractmethod
     def close_position(self, symbol):
+        pass
+
+    @abstractmethod
+    def close_order(self, order_id, symbol):
         pass

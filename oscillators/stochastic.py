@@ -2,6 +2,7 @@ class StochasticOscillator:
     def __init__(self, stochastic_period=14, k_period=3, d_period=3):
         self.stochastic_period = stochastic_period
         self.k_period = k_period
+        self.d_period = d_period
 
     def st(self, data):
         high_low_range = data['high'].rolling(

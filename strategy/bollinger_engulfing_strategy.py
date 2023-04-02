@@ -3,9 +3,9 @@ from ta.bb_indicator import BBIndicator
 from strategy.abstract_strategy import AbstractStrategy
 
 class BollingerEngulfing(AbstractStrategy):
-    def __init__(self, bb_period=20, bb_std_dev=2):
+    def __init__(self, sma_period=20, multiplier=2):
         super().__init__()
-        self.bb = BBIndicator(sma_period=bb_period, multiplier=bb_std_dev)
+        self.bb = BBIndicator(sma_period=sma_period, multiplier=multiplier)
 
     def _add_indicators(self, data):
         data = data.copy()
@@ -37,4 +37,4 @@ class BollingerEngulfing(AbstractStrategy):
         return buy_signal, sell_signal
 
     def __str__(self) -> str:
-        return 'BollingerEngulfing'
+        return f'BollingerEngulfing(bb={self.bb})'

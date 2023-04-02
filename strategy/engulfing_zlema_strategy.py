@@ -8,7 +8,7 @@ from strategy.abstract_strategy import AbstractStrategy
 class EngulfingSMA(AbstractStrategy):
     def __init__(self, slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
         super().__init__()
-        self.zlema = ZeroLagEMAIndicator(window=slow_sma_period)
+        self.slow_sma = ZeroLagEMAIndicator(window=slow_sma_period)
         self.mfi = MoneyFlowIndexAlerts(overbought_level=upper_barrier, oversold_level=lower_barrier)
         self.upper_barrier = upper_barrier
         self.lower_barrier = lower_barrier
@@ -18,7 +18,7 @@ class EngulfingSMA(AbstractStrategy):
     def _add_indicators(self, data):
         data = data.copy()
         
-        data['sma_slow'] = self.zlema.zero_lag_ema(data)
+        data['sma_slow'] = self.slow_sma.zero_lag_ema(data)
 
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)
         data['bearish_engulfing'] = EngulfingPattern.bearish(data)

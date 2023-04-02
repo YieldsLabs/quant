@@ -1,8 +1,13 @@
+from typing import Type
+from risk_management.abstract_risk_manager import AbstractRiskManager
+from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
+from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
 from shared.trade_type import TradeType
 
 
-class RiskManager:
-    def __init__(self, stop_loss_finder, take_profit_finder, risk_per_trade=0.01, risk_reward_ratio=1.5, trading_fee=0.01, price_precision=3, position_precision=2, min_position_size=0.01):
+class RiskManager(AbstractRiskManager):
+    def __init__(self, stop_loss_finder: Type[AbstractStopLoss], take_profit_finder: Type[AbstractTakeProfit], risk_per_trade=0.01, risk_reward_ratio=1.5, trading_fee=0.01, price_precision=3, position_precision=2, min_position_size=0.01):
+        super().__init__()
         self.stop_loss_finder = stop_loss_finder
         self.take_profit_finder = take_profit_finder
         self.risk_per_trade = risk_per_trade

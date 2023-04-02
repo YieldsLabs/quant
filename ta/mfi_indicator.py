@@ -16,3 +16,6 @@ class MoneyFlowIndexIndicator:
         mfi = 100 - (100 / (1 + money_flow_ratio))
 
         return mfi
+    
+    def __str__(self) -> str:
+        return f'MoneyFlowIndexIndicator(period={self.period})'

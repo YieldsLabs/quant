@@ -34,4 +34,4 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
         return buy_signal, sell_signal
 
     def __str__(self) -> str:
-        return 'ExtremeEuphoriaBBStrategy'
+        return f'ExtremeEuphoriaBBStrategy(bb_indicator={self.bb_indicator})'

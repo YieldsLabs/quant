@@ -111,8 +111,18 @@ class FuturesBybitBroker(AbstractBroker):
         })
         
         res = self._create_order(**order_params)
-        return res['result']['orderId']
+        
+        return res['info']['orderId']
 
+    def update_stop_loss(self, order_id, symbol, side, stop_loss_price):
+        order_params = {
+           'id': order_id,
+           'symbol': symbol,
+           'side': side,
+           'params': self._create_extra_params(stop_loss_price)
+        }
+        self.exchange.edit_limit_order(**order_params)
+    
     def has_open_position(self, symbol):
         return self.get_open_position(symbol) is not None
 
@@ -122,7 +132,10 @@ class FuturesBybitBroker(AbstractBroker):
         
         open_position = self.get_open_position(symbol)
 
-        self.create_order('market', 'sell' if open_position['position_side'] == TradeSide.LONG else 'buy', symbol, open_position['position_size'])
+        self._create_order('market', 'sell' if open_position['position_side'] == TradeSide.LONG else 'buy', symbol, open_position['position_size'])
+
+    def close_order(self, order_id, symbol):
+        self.exchange.cancel_order(order_id, symbol)
 
     def get_open_position(self, symbol):
         positions = self.exchange.fetch_positions(symbol)

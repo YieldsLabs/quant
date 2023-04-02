@@ -12,3 +12,6 @@ class ZeroLagEMAIndicator:
         shifted_series = data[column].shift(-lag)
         zlema = 2 * ema - shifted_series.ewm(span=self.window).mean()
         return zlema
+    
+    def __str__(self) -> str:
+        return f'ZeroLagEMAIndicator(window={self.window})'

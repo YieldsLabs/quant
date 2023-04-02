@@ -15,4 +15,7 @@ class MACDIndicator:
         histogram = macd - signal_line
         
         return macd, signal_line, histogram
+    
+    def __str__(self) -> str:
+        return f'MACDIndicator(fast_ema={self.fast_ema}, slow_ema={self.slow_ema}, signal_period={self.signal_period})'
 

@@ -27,3 +27,6 @@ class ATRIndicator:
             data['atr'] = data['true_range'].rolling(window=self.period).mean()
         
         return data['atr']
+    
+    def __str__(self) -> str:
+        return f'ATRIndicator(period={self.period})'
