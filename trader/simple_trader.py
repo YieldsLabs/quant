@@ -93,19 +93,26 @@ class SimpleTrader(AbstractTrader):
         if not self.position_side:
             return
         
-        close_price = current_row['close']
-
         self.update_trailing_stop_loss(symbol)
 
         if not self.broker.has_open_position(symbol):
-            pnl = self._calculate_pnl(current_row)
-            self.completed_orders.append(Order(current_row['timestamp'], self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
             self.reset_position_values()
         elif self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print("Close position")
             self.broker.close_position(symbol)
             pnl = self._calculate_pnl(current_row)
-            self.completed_orders.append(Order(current_row['timestamp'], self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, pnl))
+            exit_price = current_row['close']
+            timestamp = current_row['timestamp']
+            
+            if self.position_side == TradeSide.LONG:
+                exit_price = min(exit_price, self.take_profit_price if self.take_profit_price else exit_price)
+                exit_price = max(exit_price, self.stop_loss_price if self.stop_loss_price else exit_price) 
+            
+            elif self.position_side == TradeSide.SHORT:
+                exit_price = max(exit_price, self.take_profit_price if self.take_profit_price else exit_price)
+                exit_price = min(exit_price, self.stop_loss_price if self.stop_loss_price else exit_price)
+
+            self.completed_orders.append(Order(timestamp, self.position_side, self.entry_price, exit_price, self.stop_loss_price, self.take_profit_price, pnl))
             self.reset_position_values()
 
     def update_trailing_stop_loss(self, symbol):
@@ -113,8 +120,8 @@ class SimpleTrader(AbstractTrader):
 
         if self.stop_loss_price != stop_loss_price:
             print(f"A new stop_loss={stop_loss_price}")
-            self.broker.update_stop_loss(self.current_order_id, symbol, self.position_side, stop_loss_price)
-            self.stop_loss_price = stop_loss_price
+            # self.broker.update_stop_loss(self.current_order_id, symbol, self.position_side, stop_loss_price)
+            # self.stop_loss_price = stop_loss_price
     
     def reset_position_values(self):
         self.position_side = None
@@ -147,16 +154,16 @@ class SimpleTrader(AbstractTrader):
             print(f"Current size: {self.position_size}")
             print(f"Current stop loss: {self.stop_loss_price}")
             print(f"Current take profit: {self.take_profit_price}")
-        
-        stats = self.analytics.calculate(self.completed_orders)
+        else:
+            stats = self.analytics.calculate(self.completed_orders)
 
-        print(f"Total trades: {stats['total_trades']}")
-        print(f"Successful trades: {stats['successful_trades']}")
-        print(f"Win rate: {stats['win_rate']:.2%}")
-        print(f"Rate of return: {stats['rate_of_return']:.2%}")
-        print(f"Total PnL: {stats['total_pnl']:.2f}")
-        print(f"Average PnL: {stats['average_pnl']:.2f}")
-        print(f"Sharpe ratio: {stats['sharpe_ratio']:.2f}")
-        print(f"Max consecutive wins: {stats['max_consecutive_wins']}")
-        print(f"Max consecutive losses: {stats['max_consecutive_losses']}")
-        print(f"Max drawdown: {stats['max_drawdown']:.2%}")
+            print(f"Total trades: {stats['total_trades']}")
+            print(f"Successful trades: {stats['successful_trades']}")
+            print(f"Win rate: {stats['win_rate']:.2%}")
+            print(f"Rate of return: {stats['rate_of_return']:.2%}")
+            print(f"Total PnL: {stats['total_pnl']:.2f}")
+            print(f"Average PnL: {stats['average_pnl']:.2f}")
+            print(f"Sharpe ratio: {stats['sharpe_ratio']:.2f}")
+            print(f"Max consecutive wins: {stats['max_consecutive_wins']}")
+            print(f"Max consecutive losses: {stats['max_consecutive_losses']}")
+            print(f"Max drawdown: {stats['max_drawdown']:.2%}")

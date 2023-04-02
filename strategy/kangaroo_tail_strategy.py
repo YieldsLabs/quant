@@ -9,7 +9,9 @@ class KangarooTailStrategy(AbstractStrategy):
         self.sma_period = sma_period
         self.ma = MovingAverageIndicator(sma_period)
 
-    def _add_indicators(self, data):
+    def _add_indicators(self, ohlcv):
+        data = ohlcv.copy()
+
         data['sma'] = self.ma.smma(data['close'])
         data['bullish_kangaroo_tail'] = KangarooTailPattern.bullish(data, self.lookback)
         data['bearish_kangaroo_tail'] = KangarooTailPattern.bearish(data, self.lookback)

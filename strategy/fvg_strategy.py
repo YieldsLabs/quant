@@ -15,7 +15,9 @@ class FairValueGapStrategy(AbstractStrategy):
         self.zlema = ZeroLagEMAIndicator(window=slow_sma_period)
         self.mfi = MoneyFlowIndexAlerts(overbought_level=overbought, oversold_level=oversold)
 
-    def _add_indicators(self, data):
+    def _add_indicators(self, ohlcv):
+        data = ohlcv.copy()
+        
         data['zlema'] = self.zlema.zero_lag_ema(data)
         data['fvg'] = self.fvg_indicator.fvg(data)
         data['mfi_buy'], data['mfi_sell'] = self.mfi.alert(data)

@@ -7,7 +7,8 @@ class BollingerEngulfing(AbstractStrategy):
         super().__init__()
         self.bb = BBIndicator(sma_period=sma_period, multiplier=multiplier)
 
-    def _add_indicators(self, data):
+    def _add_indicators(self, ohlcv):
+        data = ohlcv.copy()
         data['upper_band'], data['lower_band'] = self.bb.bb(data)
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)
         data['bearish_engulfing'] = EngulfingPattern.bearish(data)

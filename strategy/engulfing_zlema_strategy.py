@@ -14,7 +14,9 @@ class EngulfingSMA(AbstractStrategy):
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct
 
-    def _add_indicators(self, data):
+    def _add_indicators(self, ohlcv):
+        data = ohlcv.copy()
+        
         data['sma_slow'] = self.slow_sma.zero_lag_ema(data)
 
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)

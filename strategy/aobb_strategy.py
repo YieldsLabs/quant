@@ -15,8 +15,9 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
         self.sma = ZeroLagEMAIndicator(window=sma_period)
         self.mfi = MoneyFlowIndexIndicator(period=mfi_period)
 
-    def _add_indicators(self, data):
-
+    def _add_indicators(self, ohlcv):
+        data = ohlcv.copy()
+        
         data['sma'] = self.sma.zero_lag_ema(data)
         data['ao'] =  self.ao.ao(data)
         data['upper_band'], data['lower_band'] = self.bb.bb(data)

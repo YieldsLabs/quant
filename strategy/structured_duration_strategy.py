@@ -13,7 +13,9 @@ class StructuredDurationStrategy(AbstractStrategy):
         self.rsi_indicator = RSIIndicator(lookback_rsi)
         self.order_block_indicator = OrderBlockIndicator(lookback_order_block)
 
-    def _add_indicators(self, data):
+    def _add_indicators(self, ohlcv):
+        data = ohlcv.copy()
+        
         data['rsi'] = self.rsi_indicator.rsi(data)
         data['order_block_high'], data['order_block_low'] = self.order_block_indicator.find_order_blocks(data)
 
