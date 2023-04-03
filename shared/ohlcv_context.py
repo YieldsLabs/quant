@@ -1,5 +1,7 @@
-from typing import Type
+from typing import Final, Type
 import pandas as pd
+
+OHLCV_COLUMNS: Final = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
 
 class OhlcvContext:
     def __init__(self):
@@ -11,10 +13,8 @@ class OhlcvContext:
 
     @ohlcv.setter
     def ohlcv(self, ohlcv: pd.DataFrame):
-        required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        
-        if not set(required_columns).issubset(ohlcv.columns):
-            raise ValueError(f"The DataFrame must have the following columns: {required_columns}")
+        if not set(OHLCV_COLUMNS).issubset(ohlcv.columns):
+            raise ValueError(f"The DataFrame must have the following columns: {OHLCV_COLUMNS}")
         
         self._ohlcv = ohlcv
 

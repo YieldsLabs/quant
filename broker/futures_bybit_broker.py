@@ -5,6 +5,7 @@ import pandas as pd
 from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
+from shared.ohlcv_context import OHLCV_COLUMNS
 from shared.position_side import PositionSide
 
 class FuturesBybitBroker(AbstractBroker):
@@ -177,9 +178,9 @@ class FuturesBybitBroker(AbstractBroker):
                 self.exchange.parse_timeframe(timeframe) * 1000
 
         df = pd.DataFrame(
-            ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+            ohlcv, columns=OHLCV_COLUMNS)
 
-        for column in ['open', 'high', 'low', 'close', 'volume']:
+        for column in OHLCV_COLUMNS[1:]:
             df[column] = df[column].astype(float)
 
         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')

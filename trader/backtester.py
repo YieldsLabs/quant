@@ -1,4 +1,4 @@
-
+from enum import Enum
 from typing import Type
 import pandas as pd
 from analytics.abstract_performace import AbstractPerformance
@@ -10,6 +10,10 @@ from trader.trade_type import TradeType
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
 from shared.position_side import PositionSide
+
+class SignalType(Enum):
+    LONG = 'long'
+    SHORT = 'short'
 
 class Backtester(AbstractTrader):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000, lookback=1000):
@@ -47,8 +51,8 @@ class Backtester(AbstractTrader):
         elif self.trade_type == TradeType.SHORT:
             long_signals = pd.DataFrame()
 
-        long_signals['signal'] = 'long'
-        short_signals['signal'] = 'short'
+        long_signals['signal'] = SignalType.LONG
+        short_signals['signal'] = SignalType.SHORT
         
         combined_signals = pd.concat([long_signals, short_signals]).sort_index()
 
@@ -62,10 +66,10 @@ class Backtester(AbstractTrader):
                 signal_type = signal_row.iloc[0]['signal']
 
                 if active_trade is None:
-                    if signal_type == 'long' and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.LONG):
+                    if signal_type == SignalType.LONG and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.LONG):
                         active_trade = (PositionSide.LONG, row)
 
-                    if signal_type == 'short' and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.SHORT):
+                    if signal_type == SignalType.SHORT and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.SHORT):
                         active_trade = (PositionSide.SHORT, row)
 
                 else:

@@ -5,15 +5,15 @@ from shared.order_side import OrderSide
 
 class AbstractBroker(ABC):
     @abstractmethod
-    def set_leverage(self, symbol, leverage=3):
+    def set_leverage(self, symbol: str, leverage=3):
         raise NotImplementedError
 
     @abstractmethod
-    def set_position_mode(self, symbol, mode=PositionMode):
+    def set_position_mode(self, symbol: str, mode=PositionMode):
         raise NotImplementedError
 
     @abstractmethod
-    def set_margin_mode(self, symbol, mode=MarginMode, leverage=1):
+    def set_margin_mode(self, symbol: str, mode=MarginMode, leverage=1):
         raise NotImplementedError
 
     @abstractmethod
@@ -25,37 +25,37 @@ class AbstractBroker(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_open_position(self, symbol):
+    def get_open_position(self, symbol: str):
        raise NotImplementedError
 
     @abstractmethod
     def get_symbols(self):
         raise NotImplementedError
+
+    @abstractmethod
+    def get_historical_data(self, symbol: str, timeframe: str, lookback=1000):
+        raise NotImplementedError
+
+    @abstractmethod
+    def place_market_order(self, side: OrderSide, symbol: str, position_size, stop_loss_price=None, take_profit_price=None):
+        raise NotImplementedError
     
     @abstractmethod
-    def get_historical_data(self, symbol, timeframe, lookback=1000):
+    def place_limit_order(self, side: OrderSide, symbol: str, price, position_size, stop_loss_price=None, take_profit_price=None):
         raise NotImplementedError
 
     @abstractmethod
-    def place_market_order(self, side: OrderSide, symbol, position_size, stop_loss_price=None, take_profit_price=None):
-        raise NotImplementedError
-    
-    @abstractmethod
-    def place_limit_order(self, side: OrderSide, symbol, price, position_size, stop_loss_price=None, take_profit_price=None):
+    def update_stop_loss(self, order_id, symbol: str, side: OrderSide, stop_loss_price):
         raise NotImplementedError
 
     @abstractmethod
-    def update_stop_loss(self, order_id, symbol, side: OrderSide, stop_loss_price):
+    def has_open_position(self, symbol: str):
         raise NotImplementedError
 
     @abstractmethod
-    def has_open_position(self, symbol):
+    def close_position(self, symbol: str):
         raise NotImplementedError
 
     @abstractmethod
-    def close_position(self, symbol):
-        raise NotImplementedError
-
-    @abstractmethod
-    def close_order(self, order_id, symbol):
+    def close_order(self, order_id: str, symbol: str):
         raise NotImplementedError
