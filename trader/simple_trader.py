@@ -49,14 +49,8 @@ class SimpleTrader(AbstractTrader):
 
     def place_trade_orders(self, symbol, position_side, entry_price):
         order_side = OrderSide.BUY if position_side == PositionSide.LONG else OrderSide.SELL
-
-        stop_loss_price, take_profit_price = self.rm.calculate_prices(
-            self.position_side, self.entry_price)
-
-        balance = self.broker.get_account_balance()
-
-        position_size = self.rm.calculate_position_size(
-            balance, entry_price, stop_loss_price)
+        account_size = self.broker.get_account_balance()
+        position_size, stop_loss_price, take_profit_price = self.rm.calculate_entry(position_side, account_size, entry_price)
 
         current_order_id = self.broker.place_limit_order(order_side, symbol, entry_price, position_size,
                                                          stop_loss_price=stop_loss_price, take_profit_price=take_profit_price)
@@ -100,7 +94,7 @@ class SimpleTrader(AbstractTrader):
                                               self.entry_price, close_price, self.take_profit_price, self.stop_loss_price)
 
             self.completed_orders.append(Order(timestamp, self.position_side, self.entry_price,
-                                         close_price, self.stop_loss_price, self.take_profit_price, profit))
+                                         close_price, self.stop_loss_price, self.take_profit_price, profit, self.current_order_id))
 
             self.reset_trade_values()
 

@@ -67,6 +67,12 @@ class RiskManager(AbstractRiskManager):
 
         return round(stop_loss_price, self.price_precision), round(take_profit_price, self.price_precision) if take_profit_price else None
 
+    def calculate_entry(self, position_side, account_size, entry_price):
+        stop_loss_price, take_profit_price = self.calculate_prices(position_side, entry_price)
+        position_size = self.calculate_position_size(account_size, entry_price, stop_loss_price=stop_loss_price)
+
+        return position_size, stop_loss_price, take_profit_price
+
     def should_exit(self, position_side, stop_loss_price, take_profit_price, current_row):
         if position_side == PositionSide.LONG:
             return self._long_exit_conditions(stop_loss_price, take_profit_price, current_row)
