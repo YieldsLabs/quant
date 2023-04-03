@@ -1,8 +1,9 @@
 from typing import Type
 from risk_management.abstract_risk_manager import AbstractRiskManager
-from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
+from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
 from shared.trade_type import TradeType
+from trader.trade_side import TradeSide
 
 
 class RiskManager(AbstractRiskManager):
@@ -34,6 +35,24 @@ class RiskManager(AbstractRiskManager):
             return True
 
         return False
+    
+    def calculate_profit(self, position_side, position_size, entry_price, current_close, take_profit_price, stop_loss_price):
+        profit = 0 
+        exit_price = current_close
+
+        if position_side == TradeSide.LONG:
+            exit_price = min(exit_price, take_profit_price if take_profit_price else exit_price)
+            exit_price = max(exit_price, stop_loss_price if stop_loss_price else exit_price) 
+            
+            profit = (exit_price - entry_price) * position_size
+
+        elif position_side == TradeSide.SHORT:
+            exit_price = max(exit_price, take_profit_price if take_profit_price else exit_price)
+            exit_price = min(exit_price, stop_loss_price if stop_loss_price else exit_price)
+
+            profit = (entry_price - exit_price) * position_size
+
+        return profit
 
     def calculate_prices(self, entry_trade_type, entry_price):
         stop_loss_price = self.stop_loss_finder.next(

@@ -6,7 +6,7 @@ from analytics.performance import PerformanceStats
 from broker.futures_bybit_broker import FuturesBybitBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
-from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
+from risk_management.stop_loss.base.atr_stop_loss_finder import ATRStopLossFinder
 from risk_management.stop_loss.trailing_stop_loss_finder import TrailingStopLossFinder
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 from shared.ohlcv_context import OhlcvContext

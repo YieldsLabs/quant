@@ -94,26 +94,18 @@ class SimpleTrader(AbstractTrader):
         if not self.position_side:
             return
         
-        self.update_trailing_stop_loss(symbol)
-
         if not self.broker.has_open_position(symbol):
             self.reset_position_values()
         elif self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print("Close position")
             self.broker.close_position(symbol)
-            pnl = self._calculate_pnl(current_row)
-            exit_price = current_row['close']
+            close_price = current_row['close']
             timestamp = current_row['timestamp']
             
-            if self.position_side == TradeSide.LONG:
-                exit_price = min(exit_price, self.take_profit_price if self.take_profit_price else exit_price)
-                exit_price = max(exit_price, self.stop_loss_price if self.stop_loss_price else exit_price) 
+            profit = self.rm.calculate_profit(self.position_side, self.position_size, self.entry_price, close_price, self.take_profit_price, self.stop_loss_price) 
             
-            elif self.position_side == TradeSide.SHORT:
-                exit_price = max(exit_price, self.take_profit_price if self.take_profit_price else exit_price)
-                exit_price = min(exit_price, self.stop_loss_price if self.stop_loss_price else exit_price)
-
-            self.completed_orders.append(Order(timestamp, self.position_side, self.entry_price, exit_price, self.stop_loss_price, self.take_profit_price, pnl))
+            self.completed_orders.append(Order(timestamp, self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, profit))
+            
             self.reset_position_values()
 
     def update_trailing_stop_loss(self, symbol):
@@ -131,12 +123,6 @@ class SimpleTrader(AbstractTrader):
         self.stop_loss_price = None
         self.take_profit_price = None
         self.current_order_id = None
-
-    def _calculate_pnl(self, current_row):
-        if self.position_side.value == TradeSide.LONG.value:
-            return (current_row['close'] - self.entry_price) * self.position_size
-
-        return (self.entry_price - current_row['close']) * self.position_size
 
     def print_trade_info(self, strategy, symbol, timeframe, current_row):
         print(f"-------------------------------------------->")

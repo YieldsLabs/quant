@@ -12,3 +12,7 @@ class AbstractRiskManager(ABC):
     @abstractmethod
     def calculate_prices(self, entry_trade_type, entry_price):
         raise NotImplementedError
+    
+    @abstractmethod
+    def calculate_profit(self, position_side, position_size, entry_price, current_close, take_profit_price, stop_loss_price):
+        raise NotImplementedError

@@ -1,6 +1,5 @@
 from typing import Type
-from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
-from risk_management.stop_loss.simple_stop_loss_finder import SimpleStopLossFinder
+from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from shared.ohlcv_context import OhlcvContext
 from shared.trade_type import TradeType
 

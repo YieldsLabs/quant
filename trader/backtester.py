@@ -88,24 +88,13 @@ class Backtester(AbstractTrader):
 
             entry_trade, exit_trade = trades[i], trades[i + 1]
             entry_price, exit_price = entry_trade[1]['close'], exit_trade[1]['close']
-            profit = 0
-
+            timestamp = exit_trade[1]['timestamp']
+            
             stop_loss_price, take_profit_price = self.risk_management.calculate_prices(entry_trade[0], entry_price)
             position_size = self.risk_management.calculate_position_size(self.initial_account_size, entry_price, stop_loss_price)
+            profit = self.risk_management.calculate_profit(entry_trade[0], position_size, entry_price, exit_price, take_profit_price, stop_loss_price) 
 
-            if entry_trade[0] == TradeType.LONG:
-                exit_price = min(exit_price, take_profit_price if take_profit_price else exit_price)
-                exit_price = max(exit_price, stop_loss_price if stop_loss_price else exit_price) 
-
-                profit = (exit_price - entry_price) * position_size
-
-            elif entry_trade[0] == TradeType.SHORT:
-                exit_price = max(exit_price, take_profit_price if take_profit_price else exit_price)
-                exit_price = min(exit_price, stop_loss_price if stop_loss_price else exit_price)
-                
-                profit = (entry_price - exit_price) * position_size
-                
-            self.orders.append(Order(timestamp=exit_trade[1]['timestamp'], side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, pnl=profit))
+            self.orders.append(Order(timestamp=timestamp, side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, pnl=profit))
 
         return self.analytics.calculate(self.orders)
 

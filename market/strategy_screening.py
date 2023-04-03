@@ -4,7 +4,7 @@ from typing import List, Type
 import pandas as pd
 from analytics.performance import PerformanceStats
 from broker.abstract_broker import AbstractBroker
-from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
+from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
 from shared.ohlcv_context import OhlcvContext
 from strategy.abstract_strategy import AbstractStrategy

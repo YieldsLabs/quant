@@ -1,10 +1,11 @@
 import pandas as pd
 
 class ATRIndicator:
-    def __init__(self, period=14):
+    def __init__(self, period=14, smoothing='rma'):
         self.period = period
+        self.smoothing = smoothing
 
-    def atr(self, ohlcv, smoothing='rma'):
+    def atr(self, ohlcv):
         data = ohlcv.copy()
         
         data['previous_close'] = data['close'].shift(1)
@@ -16,9 +17,9 @@ class ATRIndicator:
 
         data['true_range'] = true_range.max(axis=1)
         
-        if smoothing == 'rma':
+        if self.smoothing == 'rma':
             data['atr'] = data['true_range'].ewm(span=self.period, adjust=False).mean()
-        elif smoothing == 'wilder':
+        elif self.smoothing == 'wilder':
             data['atr'] = 0.0
             
             data.at[self.period, 'atr'] = data['true_range'][1:self.period + 1].mean()
@@ -30,4 +31,4 @@ class ATRIndicator:
         return data['atr']
     
     def __str__(self) -> str:
-        return f'ATRIndicator(period={self.period})'
+        return f'ATRIndicator(period={self.period}, smoothing={self.smoothing})'
