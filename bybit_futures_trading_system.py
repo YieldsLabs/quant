@@ -7,7 +7,6 @@ from broker.futures_bybit_broker import FuturesBybitBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from risk_management.stop_loss.base.atr_stop_loss_finder import ATRStopLossFinder
-from risk_management.stop_loss.trailing_stop_loss_finder import TrailingStopLossFinder
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 from shared.ohlcv_context import OhlcvContext
 from strategy.aobb_strategy import AwesomeOscillatorBBStrategy
@@ -41,8 +40,7 @@ broker.set_margin_mode(symbol, mode=MarginMode.ISOLATED, leverage=leverage)
 
 ohlcv_context = OhlcvContext()
 
-atr_stop_loss_finder = ATRStopLossFinder(ohlcv_context, multiplier=atr_multi)
-stop_loss_finder = TrailingStopLossFinder(ohlcv_context, stop_loss_finder=atr_stop_loss_finder)
+stop_loss_finder = ATRStopLossFinder(ohlcv_context, multiplier=atr_multi)
 take_profit_finder = RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
 
 market = broker.get_symbol_info(symbol)

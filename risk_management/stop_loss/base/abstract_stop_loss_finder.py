@@ -8,7 +8,3 @@ class AbstractStopLoss(ABC):
     @abstractmethod
     def next(self, position_side: PositionSide, entry_price: float):
         pass
-    
-    @abstractmethod
-    def reset(self):
-        pass

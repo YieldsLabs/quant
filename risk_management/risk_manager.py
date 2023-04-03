@@ -6,18 +6,22 @@ from shared.position_side import PositionSide
 
 
 class RiskManager(AbstractRiskManager):
-    def __init__(self, stop_loss_finder: Type[AbstractStopLoss], take_profit_finder: Type[AbstractTakeProfit], risk_per_trade=0.01, risk_reward_ratio=1.5, trading_fee=0.01, price_precision=3, position_precision=2, min_position_size=0.01):
+    def __init__(self, stop_loss_finder: Type[AbstractStopLoss], take_profit_finder: Type[AbstractTakeProfit], risk_per_trade=0.01, trading_fee=0.01, price_precision=3, position_precision=2, min_position_size=0.01, trailing_stop_loss=False, max_stop_loss_adjustments=10):
         super().__init__()
         self.stop_loss_finder = stop_loss_finder
         self.take_profit_finder = take_profit_finder
         self.risk_per_trade = self._validate_risk_per_trade(risk_per_trade)
-        self.risk_reward_ratio = self._validate_risk_reward_ratio(
-            risk_reward_ratio)
         self.trading_fee = self._validate_trading_fee(trading_fee)
         self.price_precision = self._validate_precision(price_precision)
         self.position_precision = self._validate_precision(position_precision)
         self.min_position_size = self._validate_min_position_size(
             min_position_size)
+        
+        self.trailing_stop_loss = trailing_stop_loss
+        self.trailing_stop_loss_prices = {}
+        self.max_stop_loss_adjustments = max_stop_loss_adjustments
+        self.stop_loss_adjustment_count = {PositionSide.LONG: 0, PositionSide.SHORT: 0}
+
 
     def calculate_position_size(self, account_size, entry_price=None, stop_loss_price=None):
         risk_amount = self.risk_per_trade * account_size
@@ -31,8 +35,12 @@ class RiskManager(AbstractRiskManager):
         stop_loss_price, take_profit_price = self.calculate_prices(
             position_side, entry_price)
 
+        if self.trailing_stop_loss and self.stop_loss_adjustment_count[position_side] < self.max_stop_loss_adjustments:
+            stop_loss_price = self.update_trailing_stop_loss(position_side, stop_loss_price, current_row)
+
         if self.should_exit(position_side, stop_loss_price, take_profit_price, current_row):
-            self.stop_loss_finder.reset()
+            self.trailing_stop_loss_prices[position_side] = None
+            self.stop_loss_adjustment_count[position_side] = 0
             return True
 
         return False
@@ -78,6 +86,23 @@ class RiskManager(AbstractRiskManager):
             return self._long_exit_conditions(stop_loss_price, take_profit_price, current_row)
         elif position_side == PositionSide.SHORT:
             return self._short_exit_conditions(stop_loss_price, take_profit_price, current_row)
+        
+    def update_trailing_stop_loss(self, position_side, stop_loss_price, current_row):
+        if position_side not in self.trailing_stop_loss_prices:
+            self.trailing_stop_loss_prices[position_side] = stop_loss_price
+
+        if position_side == PositionSide.LONG:
+            new_stop_loss_price = current_row['high'] - (current_row['high'] - stop_loss_price) * self.risk_per_trade
+            if new_stop_loss_price > self.trailing_stop_loss_prices[position_side]:
+                self.trailing_stop_loss_prices[position_side] = new_stop_loss_price
+                self.stop_loss_adjustment_count[position_side] += 1
+        elif position_side == PositionSide.SHORT:
+            new_stop_loss_price = current_row['low'] + (stop_loss_price - current_row['low']) * self.risk_per_trade
+            if new_stop_loss_price < self.trailing_stop_loss_prices[position_side]:
+                self.trailing_stop_loss_prices[position_side] = new_stop_loss_price
+                self.stop_loss_adjustment_count[position_side] += 1
+
+        return self.trailing_stop_loss_prices[position_side]
 
     @staticmethod
     def _long_exit_conditions(stop_loss_price, take_profit_price, current_row):
@@ -94,11 +119,6 @@ class RiskManager(AbstractRiskManager):
             raise ValueError(
                 "Risk per trade should be a positive value between 0 and 1.")
         return risk_per_trade
-
-    def _validate_risk_reward_ratio(self, risk_reward_ratio):
-        if risk_reward_ratio <= 0:
-            raise ValueError("Risk-reward ratio should be a positive value.")
-        return risk_reward_ratio
 
     def _validate_trading_fee(self, trading_fee):
         if trading_fee < 0 or trading_fee >= 1:
