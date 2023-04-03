@@ -102,7 +102,7 @@ class Backtester(AbstractTrader):
                 
                 profit = (entry_price - exit_price) * position_size
                 
-            self.orders.append(Order(timestamp=exit_trade[1]['timestamp'], side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, profit=profit))
+            self.orders.append(Order(timestamp=exit_trade[1]['timestamp'], side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, pnl=profit))
 
         return self.analytics.calculate(self.orders)
 
