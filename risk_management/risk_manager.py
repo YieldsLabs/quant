@@ -10,12 +10,14 @@ class RiskManager(AbstractRiskManager):
         super().__init__()
         self.stop_loss_finder = stop_loss_finder
         self.take_profit_finder = take_profit_finder
-        self.risk_per_trade = risk_per_trade
-        self.risk_reward_ratio = risk_reward_ratio
-        self.trading_fee = trading_fee
-        self.price_precision = price_precision
-        self.position_precision = position_precision
-        self.min_position_size = min_position_size
+        self.risk_per_trade = self._validate_risk_per_trade(risk_per_trade)
+        self.risk_reward_ratio = self._validate_risk_reward_ratio(
+            risk_reward_ratio)
+        self.trading_fee = self._validate_trading_fee(trading_fee)
+        self.price_precision = self._validate_precision(price_precision)
+        self.position_precision = self._validate_precision(position_precision)
+        self.min_position_size = self._validate_min_position_size(
+            min_position_size)
 
     def calculate_position_size(self, account_size, entry_price=None, stop_loss_price=None):
         risk_amount = self.risk_per_trade * account_size
@@ -34,20 +36,24 @@ class RiskManager(AbstractRiskManager):
             return True
 
         return False
-    
+
     def calculate_profit(self, position_side, position_size, entry_price, current_close, take_profit_price, stop_loss_price):
-        profit = 0 
+        profit = 0
         exit_price = current_close
 
         if position_side == PositionSide.LONG:
-            exit_price = min(exit_price, take_profit_price if take_profit_price else exit_price)
-            exit_price = max(exit_price, stop_loss_price if stop_loss_price else exit_price) 
-            
+            exit_price = min(
+                exit_price, take_profit_price if take_profit_price else exit_price)
+            exit_price = max(
+                exit_price, stop_loss_price if stop_loss_price else exit_price)
+
             profit = (exit_price - entry_price) * position_size
 
         elif position_side == PositionSide.SHORT:
-            exit_price = max(exit_price, take_profit_price if take_profit_price else exit_price)
-            exit_price = min(exit_price, stop_loss_price if stop_loss_price else exit_price)
+            exit_price = max(
+                exit_price, take_profit_price if take_profit_price else exit_price)
+            exit_price = min(
+                exit_price, stop_loss_price if stop_loss_price else exit_price)
 
             profit = (entry_price - exit_price) * position_size
 
@@ -76,3 +82,30 @@ class RiskManager(AbstractRiskManager):
     def _short_exit_conditions(stop_loss_price, take_profit_price, current_row):
         return (stop_loss_price is not None and current_row['high'] >= stop_loss_price) or \
                (take_profit_price is not None and current_row['low'] <= take_profit_price)
+
+    def _validate_risk_per_trade(self, risk_per_trade):
+        if risk_per_trade <= 0 or risk_per_trade >= 1:
+            raise ValueError(
+                "Risk per trade should be a positive value between 0 and 1.")
+        return risk_per_trade
+
+    def _validate_risk_reward_ratio(self, risk_reward_ratio):
+        if risk_reward_ratio <= 0:
+            raise ValueError("Risk-reward ratio should be a positive value.")
+        return risk_reward_ratio
+
+    def _validate_trading_fee(self, trading_fee):
+        if trading_fee < 0 or trading_fee >= 1:
+            raise ValueError("Trading fee should be a value between 0 and 1.")
+        return trading_fee
+
+    def _validate_precision(self, precision):
+        if precision < 0 or not isinstance(precision, int):
+            raise ValueError("Precision should be a non-negative integer.")
+        return precision
+
+    def _validate_min_position_size(self, min_position_size):
+        if min_position_size <= 0:
+            raise ValueError(
+                "Minimum position size should be a positive value.")
+        return min_position_size
