@@ -12,7 +12,7 @@ from trader.abstract_trader import AbstractTrader
 from shared.position_side import PositionSide
 
 class Backtester(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000, lookback=1000):
         super().__init__(ohlcv)
         self.broker = broker
         self.risk_management = risk_management
@@ -20,6 +20,7 @@ class Backtester(AbstractTrader):
         self.analytics = analytics
         self.trade_type = trade_type
         self.orders = []
+        self.lookback = lookback
 
     @update_ohlcv_data
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str):
