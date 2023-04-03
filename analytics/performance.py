@@ -13,7 +13,7 @@ class PerformanceStats(AbstractPerformance):
     def calculate(self, orders: List[Order]):
         total_trades = len(orders)
         successful_trades = len(
-            [order for order in orders if order.profit > 0])
+            [order for order in orders if order.pnl > 0])
         pnl = [order.profit for order in orders]
         win_rate = successful_trades / total_trades if total_trades > 0 else 0
         total_pnl = np.sum(pnl) if len(pnl) else 0
