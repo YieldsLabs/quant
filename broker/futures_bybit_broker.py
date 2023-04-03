@@ -79,7 +79,7 @@ class FuturesBybitBroker(AbstractBroker):
         return {
             'order_type': order_type,
             'symbol': symbol,
-            'side': side,
+            'side': side.value,
             'position_size': position_size,
             'extra_params': None,
         }

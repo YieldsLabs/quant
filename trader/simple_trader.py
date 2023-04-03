@@ -10,6 +10,7 @@ from shared.position_side import PositionSide
 from shared.order_side import OrderSide
 from trader.trade_info import TradeInfo
 
+
 class SimpleTrader(AbstractTrader):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], lookback=100):
         super().__init__(ohlcv)
@@ -23,14 +24,14 @@ class SimpleTrader(AbstractTrader):
     @update_ohlcv_data
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str) -> None:
         current_row = self.ohlcv_context.ohlcv.iloc[-1]
-        
+
         self.print_trade_intro(strategy, symbol, timeframe, current_row)
 
         self.sync_and_update_positions(symbol, current_row)
-        
+
         self.check_and_execute_trades(
             strategy, symbol, current_row)
-        
+
         self.print_statistics()
 
     def check_and_execute_trades(self, strategy, symbol, current_row):
@@ -42,28 +43,28 @@ class SimpleTrader(AbstractTrader):
         if sell_signal and not self.broker.has_open_position(symbol):
             self.execute_trade(PositionSide.SHORT, symbol, current_row)
 
-    def execute_trade(self, trade_side, symbol, current_row):
-        self.position_side = trade_side
-        self.entry_price = current_row['close']
-        self.place_trade_orders(symbol)
+    def execute_trade(self, position_side, symbol, current_row):
+        self.place_trade_orders(symbol, position_side, current_row['close'])
         self.print_trade_summary()
 
-    def place_trade_orders(self, symbol):
-        market_order_side = OrderSide.BUY if self.position_side == PositionSide.LONG else OrderSide.SELL
-       
+    def place_trade_orders(self, symbol, position_side, entry_price):
+        order_side = OrderSide.BUY if position_side == PositionSide.LONG else OrderSide.SELL
+
         stop_loss_price, take_profit_price = self.rm.calculate_prices(
             self.position_side, self.entry_price)
-        
+
         balance = self.broker.get_account_balance()
-        
-        self.position_size = self.rm.calculate_position_size(
-            balance, self.entry_price, stop_loss_price)
 
-        self.stop_loss_price = stop_loss_price
-        self.take_profit_price = take_profit_price
+        position_size = self.rm.calculate_position_size(
+            balance, entry_price, stop_loss_price)
 
-        self.current_order_id = self.broker.place_limit_order(market_order_side.value, symbol, self.entry_price, self.position_size,
-                                      stop_loss_price=self.stop_loss_price, take_profit_price=self.take_profit_price)
+        current_order_id = self.broker.place_limit_order(order_side, symbol, entry_price, position_size,
+                                                         stop_loss_price=stop_loss_price, take_profit_price=take_profit_price)
+        if not current_order_id:
+            return
+
+        self.update_trade_values(current_order_id, position_side, entry_price,
+                                 position_size, stop_loss_price, take_profit_price)
 
     def sync_and_update_positions(self, symbol, current_row):
         if self.position_side is None and self.broker.has_open_position(symbol):
@@ -84,23 +85,25 @@ class SimpleTrader(AbstractTrader):
     def update_positions(self, symbol, current_row):
         if not self.position_side:
             return
-        
+
         if not self.broker.has_open_position(symbol):
             self.reset_position_values()
         elif self.rm.check_exit_conditions(self.position_side, self.entry_price, current_row):
             print(f"Close position {self.position_side}")
-            
+
             self.broker.close_position(symbol)
-            
+
             close_price = current_row['close']
             timestamp = current_row['timestamp']
-            
-            profit = self.rm.calculate_profit(self.position_side, self.position_size, self.entry_price, close_price, self.take_profit_price, self.stop_loss_price) 
-            
-            self.completed_orders.append(Order(timestamp, self.position_side, self.entry_price, close_price, self.stop_loss_price, self.take_profit_price, profit))
-            
+
+            profit = self.rm.calculate_profit(self.position_side, self.position_size,
+                                              self.entry_price, close_price, self.take_profit_price, self.stop_loss_price)
+
+            self.completed_orders.append(Order(timestamp, self.position_side, self.entry_price,
+                                         close_price, self.stop_loss_price, self.take_profit_price, profit))
+
             self.reset_trade_values()
-    
+
     def reset_trade_values(self):
         self.position_side = None
         self.entry_price = None
@@ -109,9 +112,17 @@ class SimpleTrader(AbstractTrader):
         self.take_profit_price = None
         self.current_order_id = None
 
+    def update_trade_values(self, current_order_id: str, position_side: PositionSide, entry_price: float, position_size: float, stop_loss_price: float, take_profit_price: float) -> None:
+        self.current_order_id = current_order_id
+        self.position_size = position_size
+        self.position_side = position_side
+        self.entry_price = entry_price
+        self.stop_loss_price = stop_loss_price
+        self.take_profit_price = take_profit_price
+
     def print_trade_summary(self):
         trade_info = self._get_trade_info()
-        
+
         print(f"Go {trade_info.position_side}")
         print(f"Entry price {trade_info.entry_price}")
         print(f"Position size {trade_info.position_size}")
@@ -131,7 +142,7 @@ class SimpleTrader(AbstractTrader):
     def print_statistics(self):
         trade_info = self._get_trade_info()
 
-        if self.position_side:
+        if trade_info.position_side:
             print(f"Current side: {trade_info.position_side}")
             print(f"Current entry price: {trade_info.entry_price}")
             print(f"Current size: {trade_info.position_size}")
