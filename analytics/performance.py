@@ -55,7 +55,7 @@ class PerformanceStats(AbstractPerformance):
         peak = self.initial_account_size
 
         for order in orders:
-            profit = order.profit
+            profit = order.pnl
             account_size += profit
             self.equity.append(account_size)
 
