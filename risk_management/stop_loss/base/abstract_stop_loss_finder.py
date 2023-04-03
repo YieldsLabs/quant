@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from shared.ohlcv_context import inject_ohlcv
+from shared.position_side import PositionSide
 
-from shared.trade_type import TradeType
 
 @inject_ohlcv
 class AbstractStopLoss(ABC):
     @abstractmethod
-    def next(self, entry_trade_type: TradeType, entry_price: float):
+    def next(self, position_side: PositionSide, entry_price: float):
         pass
     
     @abstractmethod

@@ -5,7 +5,7 @@ import pandas as pd
 from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
-from trader.trade_side import TradeSide
+from shared.position_side import PositionSide
 
 class FuturesBybitBroker(AbstractBroker):
     def __init__(self, api_key, secret):
@@ -132,7 +132,7 @@ class FuturesBybitBroker(AbstractBroker):
         
         open_position = self.get_open_position(symbol)
 
-        self._create_order('market', 'sell' if open_position['position_side'] == TradeSide.LONG else 'buy', symbol, open_position['position_size'])
+        self._create_order('market', 'sell' if open_position['position_side'] == PositionSide.LONG else 'buy', symbol, open_position['position_size'])
 
     def close_order(self, order_id, symbol):
         self.exchange.cancel_order(order_id, symbol)
@@ -146,7 +146,7 @@ class FuturesBybitBroker(AbstractBroker):
             current_position = open_positions[0]
 
             return {
-                'position_side': TradeSide.LONG if current_position['side'] == 'long' else TradeSide.SHORT,
+                'position_side': PositionSide.LONG if current_position['side'] == 'long' else PositionSide.SHORT,
                 'entry_price': float(current_position['entryPrice']),
                 'position_size': float(current_position['info']['size']),
                 'stop_loss_price':  float(current_position['info']['stopLoss']),

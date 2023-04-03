@@ -2,7 +2,7 @@ from typing import Type
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from shared.ohlcv_context import OhlcvContext
 from ta.atr_indicator import ATRIndicator
-from shared.trade_type import TradeType
+from shared.position_side import PositionSide
 
 
 class ATRStopLossFinder(AbstractStopLoss):
@@ -11,7 +11,7 @@ class ATRStopLossFinder(AbstractStopLoss):
         self.atr_indicator = ATRIndicator(atr_period)
         self.multiplier = multiplier
 
-    def next(self, entry_trade_type, entry_price):
+    def next(self, position_side, entry_price):
         data = self.ohlcv_context.ohlcv
 
         if len(data) == 0:
@@ -20,10 +20,10 @@ class ATRStopLossFinder(AbstractStopLoss):
         atr_value = self.atr_indicator.atr(data)
         atr_value = atr_value.iloc[-1]
 
-        if entry_trade_type.value == TradeType.LONG.value:
+        if position_side == PositionSide.LONG:
             stop_loss_price = entry_price - (atr_value * self.multiplier)
         
-        elif entry_trade_type.value == TradeType.SHORT.value:
+        elif position_side == PositionSide.SHORT:
             stop_loss_price = entry_price + (atr_value * self.multiplier)
 
 

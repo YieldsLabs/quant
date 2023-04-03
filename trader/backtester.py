@@ -6,9 +6,10 @@ from broker.abstract_broker import AbstractBroker
 from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.ohlcv_context import OhlcvContext, update_ohlcv_data
 from shared.order import Order
-from shared.trade_type import TradeType
+from trader.trade_type import TradeType
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
+from shared.position_side import PositionSide
 
 class Backtester(AbstractTrader):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
@@ -61,10 +62,10 @@ class Backtester(AbstractTrader):
 
                 if active_trade is None:
                     if signal_type == 'long' and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.LONG):
-                        active_trade = (TradeType.LONG, row)
+                        active_trade = (PositionSide.LONG, row)
 
                     if signal_type == 'short' and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.SHORT):
-                        active_trade = (TradeType.SHORT, row)
+                        active_trade = (PositionSide.SHORT, row)
 
                 else:
                     entry_trade_type, entry_row = active_trade

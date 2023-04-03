@@ -1,5 +1,5 @@
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-from shared.trade_type import TradeType
+from shared.position_side import PositionSide
 
 
 class SimpleTakeProfitFinder(AbstractTakeProfit):
@@ -7,10 +7,10 @@ class SimpleTakeProfitFinder(AbstractTakeProfit):
         super().__init__()
         self.take_profit_pct = take_profit_pct
 
-    def next(self, trade_type, entry_price, stop_loss_price=0.0):
-        if trade_type.value == TradeType.LONG.value :
+    def next(self, position_side, entry_price, stop_loss_price=0.0):
+        if position_side == PositionSide.LONG :
             take_profit_price = entry_price * (1.0 + self.take_profit_pct)
-        elif trade_type.value == TradeType.SHORT.value :
+        elif position_side == PositionSide.SHORT :
             take_profit_price = entry_price * (1.0 - self.take_profit_pct)
         
         return take_profit_price

@@ -1,4 +1,4 @@
-from trader.order_side import OrderSide
+from shared.order_side import OrderSide
 
 
 class Order:

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
+from shared.order_side import OrderSide
 
 class AbstractBroker(ABC):
     @abstractmethod
@@ -36,15 +37,15 @@ class AbstractBroker(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def place_market_order(self, side, symbol, position_size, stop_loss_price=None, take_profit_price=None):
+    def place_market_order(self, side: OrderSide, symbol, position_size, stop_loss_price=None, take_profit_price=None):
         raise NotImplementedError
     
     @abstractmethod
-    def place_limit_order(self, side, symbol, price, position_size, stop_loss_price=None, take_profit_price=None):
+    def place_limit_order(self, side: OrderSide, symbol, price, position_size, stop_loss_price=None, take_profit_price=None):
         raise NotImplementedError
 
     @abstractmethod
-    def update_stop_loss(self, order_id, symbol, side, stop_loss_price):
+    def update_stop_loss(self, order_id, symbol, side: OrderSide, stop_loss_price):
         raise NotImplementedError
 
     @abstractmethod

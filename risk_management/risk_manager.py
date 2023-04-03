@@ -2,8 +2,7 @@ from typing import Type
 from risk_management.abstract_risk_manager import AbstractRiskManager
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-from shared.trade_type import TradeType
-from trader.trade_side import TradeSide
+from shared.position_side import PositionSide
 
 
 class RiskManager(AbstractRiskManager):
@@ -26,11 +25,11 @@ class RiskManager(AbstractRiskManager):
 
         return round(position_size if position_size > self.min_position_size else self.min_position_size, self.price_precision)
 
-    def check_exit_conditions(self, entry_trade_type, entry_price, current_row):
+    def check_exit_conditions(self, position_side, entry_price, current_row):
         stop_loss_price, take_profit_price = self.calculate_prices(
-            entry_trade_type, entry_price)
+            position_side, entry_price)
 
-        if self.should_exit(entry_trade_type, stop_loss_price, take_profit_price, current_row):
+        if self.should_exit(position_side, stop_loss_price, take_profit_price, current_row):
             self.stop_loss_finder.reset()
             return True
 
@@ -40,13 +39,13 @@ class RiskManager(AbstractRiskManager):
         profit = 0 
         exit_price = current_close
 
-        if position_side == TradeSide.LONG:
+        if position_side == PositionSide.LONG:
             exit_price = min(exit_price, take_profit_price if take_profit_price else exit_price)
             exit_price = max(exit_price, stop_loss_price if stop_loss_price else exit_price) 
             
             profit = (exit_price - entry_price) * position_size
 
-        elif position_side == TradeSide.SHORT:
+        elif position_side == PositionSide.SHORT:
             exit_price = max(exit_price, take_profit_price if take_profit_price else exit_price)
             exit_price = min(exit_price, stop_loss_price if stop_loss_price else exit_price)
 
@@ -54,18 +53,18 @@ class RiskManager(AbstractRiskManager):
 
         return profit
 
-    def calculate_prices(self, entry_trade_type, entry_price):
+    def calculate_prices(self, position_side, entry_price):
         stop_loss_price = self.stop_loss_finder.next(
-            entry_trade_type, entry_price)
+            position_side, entry_price)
         take_profit_price = self.take_profit_finder.next(
-            entry_trade_type, entry_price, stop_loss_price)
+            position_side, entry_price, stop_loss_price)
 
         return round(stop_loss_price, self.price_precision), round(take_profit_price, self.price_precision) if take_profit_price else None
 
-    def should_exit(self, entry_trade_type, stop_loss_price, take_profit_price, current_row):
-        if entry_trade_type.value == TradeType.LONG.value:
+    def should_exit(self, position_side, stop_loss_price, take_profit_price, current_row):
+        if position_side == PositionSide.LONG:
             return self._long_exit_conditions(stop_loss_price, take_profit_price, current_row)
-        elif entry_trade_type.value == TradeType.SHORT.value:
+        elif position_side == PositionSide.SHORT:
             return self._short_exit_conditions(stop_loss_price, take_profit_price, current_row)
 
     @staticmethod

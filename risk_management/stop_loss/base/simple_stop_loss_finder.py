@@ -1,7 +1,7 @@
 from typing import Type
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from shared.ohlcv_context import OhlcvContext
-from shared.trade_type import TradeType
+from shared.position_side import PositionSide
 
 
 class SimpleStopLossFinder(AbstractStopLoss):
@@ -9,10 +9,10 @@ class SimpleStopLossFinder(AbstractStopLoss):
         super().__init__(ohlcv)
         self.stop_loss_pct = stop_loss_pct
 
-    def next(self, trade_type, entry_price):
-        if trade_type.value == TradeType.LONG.value:
+    def next(self, position_side, entry_price):
+        if position_side == PositionSide.LONG:
             stop_loss_price = entry_price * (1.0 - self.stop_loss_pct)
-        elif trade_type.value == TradeType.SHORT.value:
+        elif position_side == PositionSide.SHORT:
             stop_loss_price = entry_price * (1.0 + self.stop_loss_pct)
         
         return stop_loss_price

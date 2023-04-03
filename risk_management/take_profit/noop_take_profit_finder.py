@@ -2,7 +2,7 @@ from risk_management.take_profit.abstract_take_profit_finder import AbstractTake
 
 
 class NoopTakeProfitFinder(AbstractTakeProfit):
-    def next(self, trade_type, entry_price, stop_loss_price=0):
+    def next(self, position_side, entry_price, stop_loss_price=0):
         return None
     
     def __str__(self) -> str:

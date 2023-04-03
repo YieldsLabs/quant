@@ -6,8 +6,8 @@ from shared.ohlcv_context import OhlcvContext, update_ohlcv_data
 from shared.order import Order
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
-from trader.trade_side import TradeSide
-from trader.order_side import OrderSide
+from shared.position_side import PositionSide
+from shared.order_side import OrderSide
 
 class SimpleTrader(AbstractTrader):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], lookback=100):
@@ -27,34 +27,35 @@ class SimpleTrader(AbstractTrader):
 
         print(f"buy_signal={buy_signal}, sell_signal={sell_signal}")
 
-        balance = self.broker.get_account_balance()
         current_row = data.iloc[-1]
 
         self.sync_and_update_positions(symbol, current_row)
         self.check_and_execute_trades(
-            strategy, symbol, timeframe, current_row, buy_signal, sell_signal, balance)
+            strategy, symbol, timeframe, current_row, buy_signal, sell_signal)
         self.print_statistics()
 
-    def check_and_execute_trades(self, strategy, symbol, timeframe, current_row, buy_signal, sell_signal, balance):
+    def check_and_execute_trades(self, strategy, symbol, timeframe, current_row, buy_signal, sell_signal):
         if self.position_side is None:
             self.print_trade_info(strategy, symbol, timeframe, current_row)
 
         if buy_signal and not self.broker.has_open_position(symbol):
-            self.execute_trade(TradeSide.LONG, symbol, current_row, balance)
+            self.execute_trade(PositionSide.LONG, symbol, current_row)
 
         if sell_signal and not self.broker.has_open_position(symbol):
-            self.execute_trade(TradeSide.SHORT, symbol, current_row, balance)
+            self.execute_trade(PositionSide.SHORT, symbol, current_row)
 
-    def execute_trade(self, trade_side, symbol, current_row, balance):
+    def execute_trade(self, trade_side, symbol, current_row):
         self.position_side = trade_side
         self.entry_price = current_row['close']
-        self.place_trade_orders(symbol, balance)
+        self.place_trade_orders(symbol)
 
-    def place_trade_orders(self, symbol, balance):
-        market_order_side = OrderSide.BUY if self.position_side == TradeSide.LONG else OrderSide.SELL
+    def place_trade_orders(self, symbol):
+        market_order_side = OrderSide.BUY if self.position_side == PositionSide.LONG else OrderSide.SELL
        
         stop_loss_price, take_profit_price = self.rm.calculate_prices(
             self.position_side, self.entry_price)
+        
+        balance = self.broker.get_account_balance()
         
         self.position_size = self.rm.calculate_position_size(
             balance, self.entry_price, stop_loss_price)
@@ -128,7 +129,7 @@ class SimpleTrader(AbstractTrader):
         print(f"-------------------------------------------->")
         print(
             f"{strategy} with {self.rm.stop_loss_finder} and {self.rm.take_profit_finder} is looking for trade, {symbol} {timeframe}, price: {current_row['close']}")
-        for side in [TradeSide.LONG, TradeSide.SHORT]:
+        for side in [PositionSide.LONG, PositionSide.SHORT]:
             stop_loss_price, take_profit_price = self.rm.calculate_prices(
                 side, current_row['close'])
             print(
