@@ -6,14 +6,14 @@ from analytics.performance import PerformanceStats
 from broker.abstract_broker import AbstractBroker
 from risk_management.stop_loss.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-from shared.ohlcv_context import OhlcvContext, inject_ohlcv
+from shared.ohlcv_context import OhlcvContext
 from strategy.abstract_strategy import AbstractStrategy
 from trader.backtester import Backtester
 from market.abstract_screening import AbstractScreening
 from risk_management.risk_manager import RiskManager
 
 class StrategyScreening(AbstractScreening):
-    def __init__(self, broker: Type[AbstractBroker], analytics: Type[PerformanceStats], ohlcv: Type[OhlcvContext], symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy], stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit], lookback=5000, num_last_trades=15):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], analytics: Type[PerformanceStats], symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy], stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit], lookback=5000, num_last_trades=15):
         super().__init__(ohlcv)
         self.broker = broker
         self.analytics = analytics
@@ -30,11 +30,8 @@ class StrategyScreening(AbstractScreening):
         for symbol, timeframe, strategy, stop_loss_finder, take_profit_finder in product(
             self.symbols, self.timeframes, self.strategies, self.stop_loss_finders, self.take_profit_finders
         ):
-            self.ohlcv_context.ohlcv = self.broker.get_historical_data(
-                symbol, timeframe, lookback=self.lookback)
-            
             market = self.broker.get_symbol_info(symbol)
-            
+
             trading_fee, price_precision, position_precision = market[
                 'trading_fee'], market['price_precision'], market['position_precision']
 
@@ -46,8 +43,8 @@ class StrategyScreening(AbstractScreening):
                 position_precision=position_precision,
             )
 
-            backtester = Backtester(self.ohlcv_context, rm, self.analytics)
-
+            backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
+            
             result = backtester.trade(strategy, symbol, timeframe)
 
             result.update({

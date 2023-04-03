@@ -2,7 +2,7 @@ from typing import List, Type
 from analytics.abstract_performace import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
 from risk_management.abstract_risk_manager import AbstractRiskManager
-from shared.ohlcv_context import OhlcvContext
+from shared.ohlcv_context import OhlcvContext, update_ohlcv_data
 from shared.order import Order
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
@@ -10,7 +10,7 @@ from trader.trade_side import TradeSide
 from trader.order_side import OrderSide
 
 class SimpleTrader(AbstractTrader):
-    def __init__(self, broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], ohlcv: Type[OhlcvContext], lookback=100):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], lookback=100):
         super().__init__(ohlcv)
         self.broker = broker
         self.rm = rm
@@ -19,6 +19,7 @@ class SimpleTrader(AbstractTrader):
         self.lookback = lookback
         self.reset_position_values()
 
+    @update_ohlcv_data
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str) -> None:
         data = self.ohlcv_context.ohlcv
 

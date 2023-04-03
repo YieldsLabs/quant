@@ -1,23 +1,26 @@
 
 from typing import Type
 import pandas as pd
-from analytics.performance import PerformanceStats
+from analytics.abstract_performace import AbstractPerformance
+from broker.abstract_broker import AbstractBroker
 from risk_management.abstract_risk_manager import AbstractRiskManager
-from shared.ohlcv_context import OhlcvContext
+from shared.ohlcv_context import OhlcvContext, update_ohlcv_data
 from shared.order import Order
 from shared.trade_type import TradeType
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
 
 class Backtester(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], risk_management: Type[AbstractRiskManager], analytics: Type[PerformanceStats], trade_type=TradeType.BOTH, initial_account_size=1000):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
         super().__init__(ohlcv)
+        self.broker = broker
         self.risk_management = risk_management
         self.initial_account_size = initial_account_size
         self.analytics = analytics
         self.trade_type = trade_type
         self.orders = []
 
+    @update_ohlcv_data
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str):
         long_signals, short_signals = self._generate_signals(strategy)
         

@@ -14,6 +14,7 @@ from strategy.aobb_strategy import AwesomeOscillatorBBStrategy
 
 from risk_management.risk_manager import RiskManager
 from strategy.bollinger_engulfing_strategy import BollingerEngulfing
+from strategy.extreme_euphoria_bb_strategy import ExtremeEuphoriaBBStrategy
 from trader.simple_trader import SimpleTrader
 
 load_dotenv()
@@ -27,7 +28,7 @@ API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 
 atr_multi = 0.85
-risk_reward_ratio = 4
+risk_reward_ratio = 1.5
 risk_per_trade = 0.00001
 lookback_period = 20
 slow_sma_period = 100
@@ -49,9 +50,8 @@ initial_balance = broker.get_account_balance()
 
 rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade, trading_fee=market['trading_fee'], price_precision=market['price_precision'], position_precision=market['position_precision'])
 analytics = PerformanceStats(initial_balance)
-trader = SimpleTrader(broker, rm, analytics, ohlcv_context)
-wss = 'wss://stream.bybit.com/v5/public/linear'
-strategy = BollingerEngulfing()
+trader = SimpleTrader(ohlcv_context, broker, rm, analytics)
+strategy = ExtremeEuphoriaBBStrategy()
 
 def on_open(ws):
     print("WebSocket connection opened")
@@ -59,17 +59,15 @@ def on_open(ws):
         ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
 
 def on_message(ws, message):
-    _timeframe = f"{timeframe}m"
-    ohlcv_context.ohlcv = broker.get_historical_data(symbol, _timeframe, lookback=lookback)
-    trader.trade(strategy, symbol, _timeframe)
+    trader.trade(strategy, symbol, f"{timeframe}m")
 
 def on_error(ws, error):
     print(f"WebSocket error: {error}")
-    for channel in channels:
-        ws.send(json.dumps({"op": "unsubscribe", "args": [channel]}))
 
 def on_close(ws):
     print("WebSocket connection closed")
+
+wss = 'wss://stream.bybit.com/v5/public/linear'
 
 ws = websocket.WebSocketApp(
     wss,
