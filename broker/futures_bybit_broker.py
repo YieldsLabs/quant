@@ -168,6 +168,10 @@ class FuturesBybitBroker(AbstractBroker):
             current_limit = min(lookback - len(ohlcv), 1000)
             current_ohlcv = self.exchange.fetch_ohlcv(
                 symbol, timeframe, since=start_time, limit=current_limit)
+
+            if not current_ohlcv:
+                break
+
             ohlcv += current_ohlcv
             start_time = current_ohlcv[-1][0] + \
                 self.exchange.parse_timeframe(timeframe) * 1000
