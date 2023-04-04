@@ -23,7 +23,6 @@ class StrategyScreening(AbstractScreening):
         self.stop_loss_finders = stop_loss_finders
         self.take_profit_finders = take_profit_finders
         self.num_last_trades = num_last_trades
-        self.lookback = lookback
 
     def run(self):
         results_list = []
@@ -32,16 +31,7 @@ class StrategyScreening(AbstractScreening):
         ):
             market = self.broker.get_symbol_info(symbol)
 
-            trading_fee, price_precision, position_precision = market[
-                'trading_fee'], market['price_precision'], market['position_precision']
-
-            rm = RiskManager(
-                stop_loss_finder,
-                take_profit_finder,
-                trading_fee=trading_fee,
-                price_precision=price_precision,
-                position_precision=position_precision,
-            )
+            rm = RiskManager(stop_loss_finder, take_profit_finder, **market)
 
             backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
             
