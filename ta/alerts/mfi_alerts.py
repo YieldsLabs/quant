@@ -10,6 +10,6 @@ class MoneyFlowIndexAlerts(AbstractAlert):
         self.oversold_level = oversold_level
 
     def alert(self, data):
-        data['mfi'] = self.mfi.mfi(data)
+        data['mfi'] = self.mfi.call(data)
 
         return data['mfi'] < self.oversold_level, data['mfi'] > self.overbought_level
