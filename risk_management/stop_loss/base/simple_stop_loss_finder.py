@@ -1,6 +1,6 @@
 from typing import Type
+from ohlcv.context import OhlcvContext
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
-from shared.ohlcv_context import OhlcvContext
 from shared.position_side import PositionSide
 
 

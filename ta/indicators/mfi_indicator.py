@@ -1,8 +1,11 @@
-class MoneyFlowIndexIndicator:
+from ta.indicators.base.abstract_indicator import AbstractIndicator
+
+
+class MoneyFlowIndexIndicator(AbstractIndicator):
     def __init__(self, period=14):
         self.period = period
 
-    def mfi(self, ohlcv):
+    def call(self, ohlcv):
         data = ohlcv.copy()
         
         data['typical_price'] = (data['high'] + data['low'] + data['close']) / 3

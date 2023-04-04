@@ -5,7 +5,7 @@ import pandas as pd
 from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
-from shared.ohlcv_context import OHLCV_COLUMNS
+from ohlcv.context import OHLCV_COLUMNS
 from shared.position_side import PositionSide
 
 class FuturesBybitBroker(AbstractBroker):

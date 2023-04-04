@@ -1,8 +1,8 @@
 from typing import List, Type
 from analytics.abstract_performace import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
+from ohlcv.context import OhlcvContext, update_ohlcv
 from risk_management.abstract_risk_manager import AbstractRiskManager
-from shared.ohlcv_context import OhlcvContext, update_ohlcv_data
 from shared.order import Order
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
@@ -12,16 +12,15 @@ from trader.trade_info import TradeInfo
 
 
 class SimpleTrader(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], lookback=100):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance]):
         super().__init__(ohlcv)
         self.broker = broker
         self.rm = rm
         self.analytics = analytics
         self.completed_orders: List[Order] = []
-        self.lookback = lookback
         self.reset_trade_values()
 
-    @update_ohlcv_data
+    @update_ohlcv
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str) -> None:
         current_row = self.ohlcv_context.ohlcv.iloc[-1]
 
@@ -50,10 +49,17 @@ class SimpleTrader(AbstractTrader):
     def place_trade_orders(self, symbol, position_side, entry_price):
         order_side = OrderSide.BUY if position_side == PositionSide.LONG else OrderSide.SELL
         account_size = self.broker.get_account_balance()
-        position_size, stop_loss_price, take_profit_price = self.rm.calculate_entry(position_side, account_size, entry_price)
+        position_size, stop_loss_price, take_profit_price = self.rm.calculate_entry(
+            position_side, account_size, entry_price)
 
-        current_order_id = self.broker.place_limit_order(order_side, symbol, entry_price, position_size,
-                                                         stop_loss_price=stop_loss_price, take_profit_price=take_profit_price)
+        current_order_id = None
+
+        if self.rm.trailing_stop_loss:
+            current_order_id = self.broker.place_limit_order(order_side, symbol, entry_price, position_size,
+                                                             stop_loss_price=stop_loss_price)
+        else:
+            current_order_id = self.broker.place_limit_order(order_side, symbol, entry_price, position_size,
+                                                             stop_loss_price=stop_loss_price, take_profit_price=take_profit_price)
         if not current_order_id:
             return
 

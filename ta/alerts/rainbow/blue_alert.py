@@ -1,5 +1,5 @@
 from alerts.abstract_alert import AbstractAlert
-from ta.rsi_indicator import RSIIndicator
+from ta.indicators.rsi_indicator import RSIIndicator
 
 
 class BlueAlert(AbstractAlert):

@@ -1,7 +1,7 @@
-from alerts.mfi_alerts import MoneyFlowIndexAlerts
-from smc.fair_value_gap import FairValueGapIndicator
 from strategy.abstract_strategy import AbstractStrategy
-from ta.zlema_indicator import ZeroLagEMAIndicator
+from ta.alerts.mfi_alerts import MoneyFlowIndexAlerts
+from ta.indicators.zlema_indicator import ZeroLagEMAIndicator
+from ta.smc.fair_value_gap import FairValueGapIndicator
 
 
 class FairValueGapStrategy(AbstractStrategy):
@@ -18,8 +18,8 @@ class FairValueGapStrategy(AbstractStrategy):
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
         
-        data['zlema'] = self.zlema.zero_lag_ema(data)
-        data['fvg'] = self.fvg_indicator.fvg(data)
+        data['zlema'] = self.zlema.call(data)
+        data['fvg'] = self.fvg_indicator.call(data)
         data['mfi_buy'], data['mfi_sell'] = self.mfi.alert(data)
         return data
     
@@ -61,5 +61,8 @@ class FairValueGapStrategy(AbstractStrategy):
 
         return buy_signal, sell_signal
 
+    def exit(self, ohlcv):
+        pass
+    
     def __str__(self) -> str:
         return f'FairValueGapStrategy(lookback={self.lookback}, fair_value={self.fair_value})'

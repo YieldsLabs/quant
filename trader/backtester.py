@@ -3,8 +3,8 @@ from typing import Type
 import pandas as pd
 from analytics.abstract_performace import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
+from ohlcv.context import OhlcvContext, update_ohlcv
 from risk_management.abstract_risk_manager import AbstractRiskManager
-from shared.ohlcv_context import OhlcvContext, update_ohlcv_data
 from shared.order import Order
 from trader.trade_type import TradeType
 from strategy.abstract_strategy import AbstractStrategy
@@ -16,7 +16,7 @@ class SignalType(Enum):
     SHORT = 'short'
 
 class Backtester(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000, lookback=1000):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
         super().__init__(ohlcv)
         self.broker = broker
         self.risk_management = risk_management
@@ -24,9 +24,8 @@ class Backtester(AbstractTrader):
         self.analytics = analytics
         self.trade_type = trade_type
         self.orders = []
-        self.lookback = lookback
 
-    @update_ohlcv_data
+    @update_ohlcv
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str):
         long_signals, short_signals = self._generate_signals(strategy)
         
@@ -51,8 +50,7 @@ class Backtester(AbstractTrader):
         elif self.trade_type == TradeType.SHORT:
             long_signals = pd.DataFrame()
 
-        long_signals['signal'] = SignalType.LONG
-        short_signals['signal'] = SignalType.SHORT
+        long_signals['signal'], short_signals['signal'] = SignalType.LONG, SignalType.SHORT
         
         combined_signals = pd.concat([long_signals, short_signals]).sort_index()
 

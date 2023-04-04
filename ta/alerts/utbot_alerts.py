@@ -1,6 +1,6 @@
 from alerts.abstract_alert import AbstractAlert
-from ta.atr_indicator import ATRIndicator
-from ta.rsi_indicator import RSIIndicator
+from ta.indicators.atr_indicator import ATRIndicator
+from ta.indicators.rsi_indicator import RSIIndicator
 
 class UTBotAlerts(AbstractAlert):
     def __init__(self, atr_period=10, sensitivity=2, ema_period=1):

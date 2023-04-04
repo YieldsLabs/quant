@@ -1,16 +1,17 @@
-from ta.ma_indicator import MovingAverageIndicator
+from ta.indicators.base.abstract_indicator import AbstractIndicator
+from ta.indicators.base.ma import MovingAverage
 
 
-class ZeroLagEMAIndicator:
+class ZeroLagEMAIndicator(AbstractIndicator):
     def __init__(self, window=5):
         self.window = window
-        self.ma = MovingAverageIndicator(window=window)
+        self.ma = MovingAverage(window=window)
 
-    def zero_lag_ema(self, data, column='close'):
+    def call(self, data, column='close'):
         ema = self.ma.ema(data[column])
         lag = (self.window - 1) // 2
         shifted_series = data[column].shift(-lag)
-        zlema = 2 * ema - shifted_series.ewm(span=self.window).mean()
+        zlema = 2 * ema - self.ma.ema(shifted_series)
         return zlema
     
     def __str__(self) -> str:

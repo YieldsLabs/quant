@@ -1,5 +1,5 @@
 from alerts.abstract_alert import AbstractAlert
-from ta.mfi_indicator import MoneyFlowIndexIndicator
+from ta.indicators.mfi_indicator import MoneyFlowIndexIndicator
 
 
 class MoneyFlowIndexAlerts(AbstractAlert):

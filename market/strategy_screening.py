@@ -4,9 +4,9 @@ from typing import List, Type
 import pandas as pd
 from analytics.performance import PerformanceStats
 from broker.abstract_broker import AbstractBroker
+from ohlcv.context import OhlcvContext
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-from shared.ohlcv_context import OhlcvContext
 from strategy.abstract_strategy import AbstractStrategy
 from trader.backtester import Backtester
 from market.abstract_screening import AbstractScreening
@@ -43,7 +43,7 @@ class StrategyScreening(AbstractScreening):
                 position_precision=position_precision,
             )
 
-            backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics, lookback=self.lookback)
+            backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
             
             result = backtester.trade(strategy, symbol, timeframe)
 

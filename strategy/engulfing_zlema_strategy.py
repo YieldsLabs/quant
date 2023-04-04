@@ -1,8 +1,8 @@
-from alerts.mfi_alerts import MoneyFlowIndexAlerts
-from ta.zlema_indicator import ZeroLagEMAIndicator
-from patterns.engulfing_pattern import EngulfingPattern
-from patterns.harami_pattern import HaramiPattern
+from ta.alerts.mfi_alerts import MoneyFlowIndexAlerts
+from ta.indicators.zlema_indicator import ZeroLagEMAIndicator
 from strategy.abstract_strategy import AbstractStrategy
+from ta.patterns.engulfing_pattern import EngulfingPattern
+from ta.patterns.harami_pattern import HaramiPattern
 
 class EngulfingSMA(AbstractStrategy):
     def __init__(self, slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
@@ -17,7 +17,7 @@ class EngulfingSMA(AbstractStrategy):
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
         
-        data['sma_slow'] = self.slow_sma.zero_lag_ema(data)
+        data['sma_slow'] = self.slow_sma.call(data)
 
         data['bullish_engulfing'] = EngulfingPattern.bullish(data)
         data['bearish_engulfing'] = EngulfingPattern.bearish(data)
@@ -68,6 +68,9 @@ class EngulfingSMA(AbstractStrategy):
         )
 
         return buy_signal, sell_signal
+    
+    def exit(self, ohlcv):
+        pass
     
     def __str__(self) -> str:
         return f'EngulfingSMA()'

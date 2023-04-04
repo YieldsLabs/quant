@@ -1,11 +1,13 @@
 import pandas as pd
 
-class ATRIndicator:
+from ta.indicators.base.abstract_indicator import AbstractIndicator
+
+class ATRIndicator(AbstractIndicator):
     def __init__(self, period=14, smoothing='rma'):
         self.period = period
         self.smoothing = smoothing
 
-    def atr(self, ohlcv):
+    def call(self, ohlcv):
         data = ohlcv.copy()
         
         data['previous_close'] = data['close'].shift(1)

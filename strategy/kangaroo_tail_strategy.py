@@ -1,13 +1,13 @@
-from ta.ma_indicator import MovingAverageIndicator
-from patterns.kangaroo_tail_pattern import KangarooTailPattern
 from strategy.abstract_strategy import AbstractStrategy
+from ta.indicators.base.ma import MovingAverage
+from ta.patterns.kangaroo_tail_pattern import KangarooTailPattern
 
 class KangarooTailStrategy(AbstractStrategy):
     def __init__(self, lookback=200, sma_period=100):
         super().__init__()
         self.lookback = lookback
         self.sma_period = sma_period
-        self.ma = MovingAverageIndicator(sma_period)
+        self.ma = MovingAverage(sma_period)
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
@@ -37,5 +37,8 @@ class KangarooTailStrategy(AbstractStrategy):
 
         return buy_signal, sell_signal
 
+    def exit(self, ohlcv):
+        pass
+    
     def __str__(self) -> str:
         return f'KangarooTailStrategy(lookback={self.lookback}, sma_period={self.sma_period})'

@@ -6,13 +6,12 @@ from analytics.performance import PerformanceStats
 from broker.futures_bybit_broker import FuturesBybitBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
+from ohlcv.bybit_datasource import BybitDataSource
+from ohlcv.context import OhlcvContext
 from risk_management.stop_loss.base.atr_stop_loss_finder import ATRStopLossFinder
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
-from shared.ohlcv_context import OhlcvContext
-from strategy.aobb_strategy import AwesomeOscillatorBBStrategy
 
 from risk_management.risk_manager import RiskManager
-from strategy.bollinger_engulfing_strategy import BollingerEngulfing
 from strategy.extreme_euphoria_bb_strategy import ExtremeEuphoriaBBStrategy
 from trader.simple_trader import SimpleTrader
 
@@ -31,14 +30,15 @@ risk_reward_ratio = 1.5
 risk_per_trade = 0.00001
 lookback_period = 20
 slow_sma_period = 100
-lookback = 100
+lookback = 1000
 
 broker = FuturesBybitBroker(API_KEY, API_SECRET)
 broker.set_leverage(symbol, leverage)
 broker.set_position_mode(symbol, PositionMode.ONE_WAY)
 broker.set_margin_mode(symbol, mode=MarginMode.ISOLATED, leverage=leverage)
 
-ohlcv_context = OhlcvContext()
+datasource = BybitDataSource(broker, lookback)
+ohlcv_context = OhlcvContext(datasource)
 
 stop_loss_finder = ATRStopLossFinder(ohlcv_context, multiplier=atr_multi)
 take_profit_finder = RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
@@ -60,6 +60,7 @@ def on_message(ws, message):
     trader.trade(strategy, symbol, f"{timeframe}m")
 
 def on_error(ws, error):
+    print(error)
     print(f"WebSocket error: {error}")
 
 def on_close(ws):

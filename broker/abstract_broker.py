@@ -9,11 +9,11 @@ class AbstractBroker(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set_position_mode(self, symbol: str, mode=PositionMode):
+    def set_position_mode(self, symbol: str, mode: PositionMode):
         raise NotImplementedError
 
     @abstractmethod
-    def set_margin_mode(self, symbol: str, mode=MarginMode, leverage=1):
+    def set_margin_mode(self, symbol: str, mode: MarginMode, leverage=1):
         raise NotImplementedError
 
     @abstractmethod
@@ -37,15 +37,15 @@ class AbstractBroker(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def place_market_order(self, side: OrderSide, symbol: str, position_size, stop_loss_price=None, take_profit_price=None):
+    def place_market_order(self, side: OrderSide, symbol: str, position_size: float, stop_loss_price=None, take_profit_price=None):
         raise NotImplementedError
     
     @abstractmethod
-    def place_limit_order(self, side: OrderSide, symbol: str, price, position_size, stop_loss_price=None, take_profit_price=None):
+    def place_limit_order(self, side: OrderSide, symbol: str, price, position_size: float, stop_loss_price=None, take_profit_price=None):
         raise NotImplementedError
 
     @abstractmethod
-    def update_stop_loss(self, order_id, symbol: str, side: OrderSide, stop_loss_price):
+    def update_stop_loss(self, order_id, symbol: str, side: OrderSide, stop_loss_price: float):
         raise NotImplementedError
 
     @abstractmethod

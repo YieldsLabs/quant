@@ -1,10 +1,13 @@
-class VAMAIndicator:
+from ta.indicators.base.abstract_indicator import AbstractIndicator
+
+
+class VAMAIndicator(AbstractIndicator):
     def __init__(self, short_volatility=50, long_volatility=1000, alpha_factor=0.20):
         self.short_volatility = short_volatility
         self.long_volatility = long_volatility
         self.alpha_factor = alpha_factor
 
-    def vama(self, data):
+    def call(self, data):
         short_std = data['close'].rolling(window=self.short_volatility).std()
         long_std = data['close'].rolling(window=self.long_volatility).std()
 

@@ -1,6 +1,6 @@
-from smc.order_block import OrderBlockIndicator
-from ta.rsi_indicator import RSIIndicator
+from ta.indicators.rsi_indicator import RSIIndicator
 from strategy.abstract_strategy import AbstractStrategy
+from ta.smc.order_block import OrderBlockIndicator
 
 class StructuredDurationStrategy(AbstractStrategy):
     def __init__(self, upper_barrier=80, lower_barrier=20, lookback_rsi=15, lookback_order_block=15):
@@ -48,5 +48,8 @@ class StructuredDurationStrategy(AbstractStrategy):
 
         return buy_signal, sell_signal
 
+    def exit(self, ohlcv):
+        pass
+    
     def __str__(self) -> str:
         return f'StructuredDurationStrategy(upper_barrier={self.upper_barrier}, lower_barrier={self.lower_barrier})'

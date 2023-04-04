@@ -1,10 +1,7 @@
 from abc import ABC, abstractmethod
 
-from ohlcv.context import ohlcv
 
-
-@ohlcv
-class AbstractScreening(ABC):
+class AbstractDatasource(ABC):
     @abstractmethod
-    def run(self):
+    def fetch(self, symbol: str, timeseries: str):
         raise NotImplementedError

@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 
-from ohlcv.context import ohlcv
+import pandas as pd
 
 
-@ohlcv
-class AbstractScreening(ABC):
+class AbstractIndicator(ABC):
     @abstractmethod
-    def run(self):
+    def call(self, data: pd.DataFrame):
         raise NotImplementedError
