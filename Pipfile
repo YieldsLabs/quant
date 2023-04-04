@@ -6,8 +6,9 @@ name = "pypi"
 [packages]
 numpy = "*"
 pandas = "*"
-websocket = "*"
 ccxt = "*"
+python-dotenv = "*"
+websocket-client = "*"
 
 [dev-packages]
 
