@@ -4,6 +4,7 @@ import numpy as np
 from analytics.abstract_performace import AbstractPerformance
 from shared.order import Order
 
+
 class PerformanceStats(AbstractPerformance):
     def __init__(self, initial_account_size: float):
         super().__init__()

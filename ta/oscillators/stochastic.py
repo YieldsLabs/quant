@@ -13,10 +13,10 @@ class StochasticOscillator(AbstractIndicator):
             window=self.stochastic_period).max() - data['low'].rolling(window=self.stochastic_period).min()
         close_low_range = data['close'] - \
             data['low'].rolling(window=self.stochastic_period).min()
-        
+
         raw_percent_k = (close_low_range / high_low_range) * 100
-        
+
         percent_k = self.k_period_ma.sma(raw_percent_k)
         percent_d = self.d_period_ma.sma(percent_k)
-        
+
         return percent_k, percent_d

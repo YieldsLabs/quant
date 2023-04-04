@@ -32,7 +32,7 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
             last_row['close'] >= last_row['upper_band'])
 
         return buy_signal, sell_signal
-    
+
     def exit(self, ohlcv):
         pass
 

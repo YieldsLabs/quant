@@ -15,15 +15,15 @@ class BlueAlert(AbstractAlert):
         data['indicator'] = self.rsi.rsi(data, 'slope')
 
         buy = (
-            (data['indicator'] > 30) &
-            (data['indicator'].shift(1) < 30) &
-            (data['indicator'] < 35)
+            (data['indicator'] > 30)
+            & (data['indicator'].shift(1) < 30)
+            & (data['indicator'] < 35)
         )
 
         sell = (
-            (data['indicator'] < 70) &
-            (data['indicator'].shift(1) > 70) &
-            (data['indicator'] > 65)
+            (data['indicator'] < 70)
+            & (data['indicator'].shift(1) > 70)
+            & (data['indicator'] > 65)
         )
 
         return buy, sell

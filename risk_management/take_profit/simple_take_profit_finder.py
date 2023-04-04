@@ -12,9 +12,8 @@ class SimpleTakeProfitFinder(AbstractTakeProfit):
             take_profit_price = entry_price * (1.0 + self.take_profit_pct)
         elif position_side == PositionSide.SHORT :
             take_profit_price = entry_price * (1.0 - self.take_profit_pct)
-        
+
         return take_profit_price
-    
+
     def __str__(self) -> str:
         return f'SimpleTakeProfitFinder(take_profit_pct={self.take_profit_pct})'
-    

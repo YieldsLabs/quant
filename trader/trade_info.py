@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from shared.position_side import PositionSide
 
+
 @dataclass
 class TradeInfo:
     position_side: PositionSide

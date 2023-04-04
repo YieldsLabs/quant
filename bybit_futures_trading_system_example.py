@@ -50,19 +50,24 @@ analytics = PerformanceStats(initial_balance)
 trader = SimpleTrader(ohlcv_context, broker, rm, analytics)
 strategy = ExtremeEuphoriaBBStrategy()
 
+
 def on_open(ws):
     print("WebSocket connection opened")
     for channel in channels:
         ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
 
+
 def on_message(ws, message):
     trader.trade(strategy, symbol, f"{timeframe}m")
+
 
 def on_error(ws, error):
     print(f"WebSocket error: {error}")
 
+
 def on_close(ws):
     print("WebSocket connection closed")
+
 
 wss = 'wss://stream.bybit.com/v5/public/linear'
 

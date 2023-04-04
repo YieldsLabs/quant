@@ -12,14 +12,13 @@ class MACDIndicator(AbstractIndicator):
 
     def call(self, data):
         ema_fast = self.fast_ema.ema(data['close'])
-        ema_slow =  self.fast_ema.ema(data['close'])
-       
+        ema_slow = self.fast_ema.ema(data['close'])
+
         macd = ema_fast - ema_slow
         signal_line = self.signal_ema.ema(macd)
         histogram = macd - signal_line
-        
+
         return macd, signal_line, histogram
-    
+
     def __str__(self) -> str:
         return f'MACDIndicator(fast_ema={self.fast_ema}, slow_ema={self.slow_ema}, signal_period={self.signal_period})'
-

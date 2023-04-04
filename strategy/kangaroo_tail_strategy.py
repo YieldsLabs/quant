@@ -2,6 +2,7 @@ from strategy.abstract_strategy import AbstractStrategy
 from ta.indicators.base.ma import MovingAverage
 from ta.patterns.kangaroo_tail_pattern import KangarooTailPattern
 
+
 class KangarooTailStrategy(AbstractStrategy):
     def __init__(self, lookback=200, sma_period=100):
         super().__init__()
@@ -27,18 +28,18 @@ class KangarooTailStrategy(AbstractStrategy):
         current_row = data.iloc[-1]
 
         buy_signal = (
-            current_row['bullish_kangaroo_tail'] and
-            current_row['close'] > current_row['sma']
+            current_row['bullish_kangaroo_tail']
+            and current_row['close'] > current_row['sma']
         )
         sell_signal = (
-            current_row['bearish_kangaroo_tail'] and
-            current_row['close'] < current_row['sma']
+            current_row['bearish_kangaroo_tail']
+            and current_row['close'] < current_row['sma']
         )
 
         return buy_signal, sell_signal
 
     def exit(self, ohlcv):
         pass
-    
+
     def __str__(self) -> str:
         return f'KangarooTailStrategy(lookback={self.lookback}, sma_period={self.sma_period})'

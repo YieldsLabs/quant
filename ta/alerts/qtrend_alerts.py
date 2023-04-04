@@ -3,9 +3,11 @@ from enum import Enum
 
 from alerts.abstract_alert import AbstractAlert
 
+
 class SignalMode(Enum):
     TypeA = 1
     TypeB = 2
+
 
 class QTrendAlerts(AbstractAlert):
     def __init__(self, p=200, atr_p=14, mult=1.0, mode=SignalMode.TypeA, use_ema_smoother=False, src_ema_period=3):

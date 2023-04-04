@@ -12,6 +12,7 @@ from trader.backtester import Backtester
 from market.abstract_screening import AbstractScreening
 from risk_management.risk_manager import RiskManager
 
+
 class StrategyScreening(AbstractScreening):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], analytics: Type[PerformanceStats], symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy], stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit], lookback=5000, num_last_trades=15):
         super().__init__(ohlcv)
@@ -34,7 +35,7 @@ class StrategyScreening(AbstractScreening):
             rm = RiskManager(stop_loss_finder, take_profit_finder, **market)
 
             backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
-            
+
             result = backtester.trade(strategy, symbol, timeframe)
 
             result.update({

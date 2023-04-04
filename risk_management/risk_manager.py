@@ -16,17 +16,16 @@ class RiskManager(AbstractRiskManager):
         self.position_precision = self._validate_precision(position_precision)
         self.min_position_size = self._validate_min_position_size(
             min_position_size)
-        
+
         self.trailing_stop_loss = trailing_stop_loss
         self.trailing_stop_loss_prices = {}
         self.max_stop_loss_adjustments = max_stop_loss_adjustments
         self.stop_loss_adjustment_count = {PositionSide.LONG: 0, PositionSide.SHORT: 0}
 
-
     def calculate_position_size(self, account_size, entry_price=None, stop_loss_price=None):
         risk_amount = self.risk_per_trade * account_size
-        div = abs(entry_price - stop_loss_price) * (1 +
-                                                    self.trading_fee) if stop_loss_price and entry_price else 1
+        div = abs(entry_price - stop_loss_price) * (1
+                                                    + self.trading_fee) if stop_loss_price and entry_price else 1
         position_size = risk_amount / div if div != 0 else 1
 
         return round(position_size if position_size > self.min_position_size else self.min_position_size, self.price_precision)
@@ -86,7 +85,7 @@ class RiskManager(AbstractRiskManager):
             return self._long_exit_conditions(stop_loss_price, take_profit_price, current_row)
         elif position_side == PositionSide.SHORT:
             return self._short_exit_conditions(stop_loss_price, take_profit_price, current_row)
-        
+
     def update_trailing_stop_loss(self, position_side, stop_loss_price, current_row):
         if position_side not in self.trailing_stop_loss_prices:
             self.trailing_stop_loss_prices[position_side] = stop_loss_price

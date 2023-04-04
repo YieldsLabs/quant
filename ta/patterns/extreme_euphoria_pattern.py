@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class ExtremeEuphoriaPattern:
     @staticmethod
     def bullish(data):

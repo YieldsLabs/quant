@@ -11,7 +11,12 @@ python-dotenv = "*"
 websocket-client = "*"
 
 [dev-packages]
+flake8 = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.11"
 python_full_version = "3.11.2"
+
+[scripts]
+lint = "flake8"

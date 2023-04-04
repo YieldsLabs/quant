@@ -4,6 +4,7 @@ from ohlcv.context import ohlcv
 
 from strategy.abstract_strategy import AbstractStrategy
 
+
 @ohlcv
 class AbstractTrader(ABC):
     @abstractmethod

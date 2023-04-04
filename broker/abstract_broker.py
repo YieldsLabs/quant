@@ -3,6 +3,7 @@ from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from shared.order_side import OrderSide
 
+
 class AbstractBroker(ABC):
     @abstractmethod
     def set_leverage(self, symbol: str, leverage=3):
@@ -26,7 +27,7 @@ class AbstractBroker(ABC):
 
     @abstractmethod
     def get_open_position(self, symbol: str):
-       raise NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def get_symbols(self):
@@ -39,7 +40,7 @@ class AbstractBroker(ABC):
     @abstractmethod
     def place_market_order(self, side: OrderSide, symbol: str, position_size: float, stop_loss_price=None, take_profit_price=None):
         raise NotImplementedError
-    
+
     @abstractmethod
     def place_limit_order(self, side: OrderSide, symbol: str, price, position_size: float, stop_loss_price=None, take_profit_price=None):
         raise NotImplementedError

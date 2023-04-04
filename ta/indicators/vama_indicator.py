@@ -20,6 +20,6 @@ class VAMAIndicator(AbstractIndicator):
             vama.iloc[i] = vama.iloc[i - 1] * (1 - alpha.iloc[i]) + data['close'].iloc[i] * alpha.iloc[i]
 
         return vama
-    
+
     def __str__(self) -> str:
         return f'VAMAIndicator(short_volatility={self.short_volatility}, long_volatility={self.long_volatility}, alpha_factor={self.alpha_factor})'

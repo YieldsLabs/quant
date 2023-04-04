@@ -20,6 +20,6 @@ class LowHighStopLossFinder(AbstractStopLoss):
         entry_price = recent_data['low'].min() if position_side == PositionSide.LONG else recent_data['high'].max()
 
         return self.stop_loss_finder.next(position_side, entry_price)
-    
+
     def __str__(self) -> str:
         return f'LowHighStopLossFinder(stop_loss_finder={self.stop_loss_finder}, lookback_period={self.lookback_period})'

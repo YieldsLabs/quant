@@ -11,6 +11,6 @@ class VWAPIndicator(AbstractIndicator):
         vwap = (price * volume).rolling(window=self.window).sum() / \
             data['volume'].rolling(window=self.window).sum()
         return vwap
-    
+
     def __str__(self) -> str:
         return f'VWAPIndicator(window={self.window})'

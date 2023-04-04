@@ -11,20 +11,20 @@ class GreenAlert(AbstractAlert):
     def alert(self, ohlcv):
         data = ohlcv.copy()
 
-        data['rsi'] =  self.rsi.rsi(data)
+        data['rsi'] = self.rsi.rsi(data)
         data['rsi_slope'] = (
             data['rsi'] - data['rsi'].shift(self.lookback)) / self.lookback
 
         buy = (
-            data['rsi_slope'] > 0 and
-            data['rsi_slope'].shift(1) < 0 and
-            data['rsi'] < 25
+            data['rsi_slope'] > 0
+            and data['rsi_slope'].shift(1) < 0
+            and data['rsi'] < 25
         )
 
         sell = (
-            data['rsi_slope'] < 0 and
-            data['rsi_slope'].shift(1) > 0 and
-            data['rsi'] > 75
+            data['rsi_slope'] < 0
+            and data['rsi_slope'].shift(1) > 0
+            and data['rsi'] > 75
         )
 
         return buy, sell

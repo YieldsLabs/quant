@@ -5,6 +5,7 @@ from ohlcv.abstract_datasource import AbstractDatasource
 
 OHLCV_COLUMNS: Final = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
 
+
 class OhlcvContext:
     def __init__(self, datasource: Type[AbstractDatasource]):
         self._ohlcv = pd.DataFrame()

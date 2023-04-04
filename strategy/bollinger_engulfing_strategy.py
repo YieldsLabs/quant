@@ -2,6 +2,7 @@ from ta.indicators.bb_indicator import BBIndicator
 from strategy.abstract_strategy import AbstractStrategy
 from ta.patterns.engulfing_pattern import EngulfingPattern
 
+
 class BollingerEngulfing(AbstractStrategy):
     def __init__(self, sma_period=20, multiplier=2):
         super().__init__()
@@ -18,24 +19,24 @@ class BollingerEngulfing(AbstractStrategy):
     def entry(self, ohlcv):
         if len(ohlcv) < 2:
             return False, False
-        
+
         data = self._add_indicators(ohlcv)
 
         current_row = data.iloc[-1]
 
         buy_signal = (
-            current_row['close'] <= current_row['lower_band'] and
-            current_row['bullish_engulfing']
+            current_row['close'] <= current_row['lower_band']
+            and current_row['bullish_engulfing']
         )
         sell_signal = (
-            current_row['close'] >= current_row['upper_band'] and
-            current_row['bearish_engulfing']
+            current_row['close'] >= current_row['upper_band']
+            and current_row['bearish_engulfing']
         )
 
         return buy_signal, sell_signal
 
     def exit(self, ohlcv):
         pass
-    
+
     def __str__(self) -> str:
         return f'BollingerEngulfing(bb={self.bb})'

@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class PiercingPattern:
     @staticmethod
     def bullish(data):

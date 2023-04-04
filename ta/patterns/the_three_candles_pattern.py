@@ -9,7 +9,6 @@ class TheThreeCandlesPattern:
                     (body.shift(1) >= body.shift(1).rolling(window=5).max()) & \
                     (body.shift(2) >= body.shift(2).rolling(window=5).max())
         return condition
-    
 
     @staticmethod
     def three_black_crows(data):
@@ -21,4 +20,3 @@ class TheThreeCandlesPattern:
                     (body.shift(1) >= body.shift(1).rolling(window=5).max()) & \
                     (body.shift(2) >= body.shift(2).rolling(window=5).max())
         return condition
-

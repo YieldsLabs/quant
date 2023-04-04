@@ -4,12 +4,13 @@ from strategy.abstract_strategy import AbstractStrategy
 from ta.indicators.mfi_indicator import MoneyFlowIndexIndicator
 from ta.oscillators.awesome import AwesomeOscillator
 
+
 class AwesomeOscillatorBBStrategy(AbstractStrategy):
     def __init__(self, ao_short_period=5, ao_long_period=34, bb_period=25, bb_std_dev=2, sma_period=50, mfi_period=14, mfi_buy_level=40, mfi_sell_level=60):
         super().__init__()
         self.mfi_buy_level = mfi_buy_level
         self.mfi_sell_level = mfi_sell_level
-        
+
         self.ao = AwesomeOscillator(ao_short_period=ao_short_period, ao_long_period=ao_long_period)
         self.bb = BBIndicator(sma_period=bb_period, multiplier=bb_std_dev)
         self.sma = ZeroLagEMAIndicator(window=sma_period)
@@ -17,9 +18,9 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
-        
+
         data['sma'] = self.sma.call(data)
-        data['ao'] =  self.ao.call(data)
+        data['ao'] = self.ao.call(data)
         data['upper_band'], _, data['lower_band'] = self.bb.call(data)
         data['mfi'] = self.mfi.call(data)
 
@@ -38,7 +39,7 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
 
     def exit(self, ohlcv):
         pass
-    
+
     def _generate_buy_signal(self, data):
         last_row = data.iloc[-1]
         second_last_row = data.iloc[-2]
@@ -60,6 +61,6 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
         mfi_sell_signal = last_row['mfi'] >= self.mfi_sell_level
 
         return higher_low_price and lower_high_ao and price_touch_upper_band and mfi_sell_signal
-    
+
     def __str__(self) -> str:
         return 'AwesomeOscillatorBBStrategy'

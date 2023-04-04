@@ -9,7 +9,7 @@ class AwesomeOscillator(AbstractIndicator):
 
     def call(self, data):
         median_price = (data['high'] + data['low']) / 2
-        
+
         sma_short = self.short_period_ma.sma(median_price)
         sma_long = self.long_period_ma.sma(median_price)
 

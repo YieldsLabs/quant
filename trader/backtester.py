@@ -11,9 +11,11 @@ from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
 from shared.position_side import PositionSide
 
+
 class SignalType(Enum):
     LONG = 'long'
     SHORT = 'short'
+
 
 class Backtester(AbstractTrader):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
@@ -28,7 +30,7 @@ class Backtester(AbstractTrader):
     @update_ohlcv
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str):
         long_signals, short_signals = self._generate_signals(strategy)
-        
+
         return self._calculate_performance(long_signals, short_signals)
 
     def _generate_signals(self, strategy):
@@ -36,7 +38,7 @@ class Backtester(AbstractTrader):
         go_short = []
         for index, row in self.ohlcv_context.ohlcv.iterrows():
             long_signal, short_signal = strategy.entry(self.ohlcv_context.ohlcv[:index])
-            
+
             if long_signal:
                 go_long.append(row)
             if short_signal:
@@ -51,7 +53,7 @@ class Backtester(AbstractTrader):
             long_signals = pd.DataFrame()
 
         long_signals['signal'], short_signals['signal'] = SignalType.LONG, SignalType.SHORT
-        
+
         combined_signals = pd.concat([long_signals, short_signals]).sort_index()
 
         trades = []
@@ -93,15 +95,14 @@ class Backtester(AbstractTrader):
             entry_trade, exit_trade = trades[i], trades[i + 1]
             entry_price, exit_price = entry_trade[1]['close'], exit_trade[1]['close']
             timestamp = exit_trade[1]['timestamp']
-            
+
             stop_loss_price, take_profit_price = self.risk_management.calculate_prices(entry_trade[0], entry_price)
             position_size = self.risk_management.calculate_position_size(self.initial_account_size, entry_price, stop_loss_price)
-            profit = self.risk_management.calculate_profit(entry_trade[0], position_size, entry_price, exit_price, take_profit_price, stop_loss_price) 
+            profit = self.risk_management.calculate_profit(entry_trade[0], position_size, entry_price, exit_price, take_profit_price, stop_loss_price)
 
             self.orders.append(Order(timestamp=timestamp, side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, pnl=profit))
 
         return self.analytics.calculate(self.orders)
-
 
     def get_orders(self):
         return pd.DataFrame.from_records([order.to_dict() for order in self.orders])

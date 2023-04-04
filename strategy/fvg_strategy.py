@@ -17,12 +17,12 @@ class FairValueGapStrategy(AbstractStrategy):
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
-        
+
         data['zlema'] = self.zlema.call(data)
         data['fvg'] = self.fvg_indicator.call(data)
         data['mfi_buy'], data['mfi_sell'] = self.mfi.alert(data)
         return data
-    
+
     def _check_confirmation_candle(self, current_row, previous_row):
         buy_confirmation = (
             previous_row['close'] > current_row['zlema']
@@ -33,7 +33,7 @@ class FairValueGapStrategy(AbstractStrategy):
             previous_row['close'] < current_row['zlema']
             and abs(previous_row['close'] - current_row['zlema']) / current_row['zlema'] <= self.tolerance
         )
-        
+
         return buy_confirmation, sell_confirmation
 
     def entry(self, ohlcv):
@@ -41,7 +41,7 @@ class FairValueGapStrategy(AbstractStrategy):
             return False, False
 
         data = self._add_indicators(ohlcv)
-        
+
         last_row = data.iloc[-1]
         previous_row = data.iloc[-2]
 
@@ -63,6 +63,6 @@ class FairValueGapStrategy(AbstractStrategy):
 
     def exit(self, ohlcv):
         pass
-    
+
     def __str__(self) -> str:
         return f'FairValueGapStrategy(lookback={self.lookback}, fair_value={self.fair_value})'

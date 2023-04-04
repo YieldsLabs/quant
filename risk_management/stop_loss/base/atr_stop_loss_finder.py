@@ -16,18 +16,17 @@ class ATRStopLossFinder(AbstractStopLoss):
 
         if len(data) == 0:
             raise ValueError('Add ohlcv data')
-    
+
         atr_value = self.atr_indicator.call(data)
         atr_value = atr_value.iloc[-1]
 
         if position_side == PositionSide.LONG:
             stop_loss_price = entry_price - (atr_value * self.multiplier)
-        
+
         elif position_side == PositionSide.SHORT:
             stop_loss_price = entry_price + (atr_value * self.multiplier)
 
-
         return stop_loss_price
-    
+
     def __str__(self) -> str:
         return f'ATRStopLossFinder(multiplier={self.multiplier}, atr={self.atr_indicator})'
