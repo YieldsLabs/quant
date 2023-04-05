@@ -12,6 +12,7 @@ from risk_management.stop_loss.base.atr_stop_loss_finder import ATRStopLossFinde
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 
 from risk_management.risk_manager import RiskManager
+from shared.timeframes import Timeframes
 from strategy.extreme_euphoria_bb_strategy import ExtremeEuphoriaBBStrategy
 from trader.simple_trader import SimpleTrader
 
@@ -21,9 +22,8 @@ API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 
 symbol = 'SOLUSDT'
-timeframe = '1'
+timeframe = Timeframes.ONE_MINUTE
 leverage = 1
-channels = [f"kline.{timeframe}.{symbol}"]
 atr_multi = 0.85
 risk_reward_ratio = 1.5
 risk_per_trade = 0.00001
@@ -51,6 +51,10 @@ trader = SimpleTrader(ohlcv_context, broker, rm, analytics)
 strategy = ExtremeEuphoriaBBStrategy()
 
 
+inverval = 1
+channels = [f"kline.{inverval}.{symbol}"]
+
+
 def on_open(ws):
     print("WebSocket connection opened")
     for channel in channels:
@@ -58,7 +62,7 @@ def on_open(ws):
 
 
 def on_message(ws, message):
-    trader.trade(strategy, symbol, f"{timeframe}m")
+    trader.trade(strategy, symbol, timeframe)
 
 
 def on_error(ws, error):
