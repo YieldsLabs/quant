@@ -6,6 +6,7 @@ from broker.abstract_broker import AbstractBroker
 from ohlcv.context import OhlcvContext, update_ohlcv
 from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.order import Order
+from shared.timeframes import Timeframes
 from trader.trade_type import TradeType
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
@@ -28,7 +29,7 @@ class Backtester(AbstractTrader):
         self.orders = []
 
     @update_ohlcv
-    def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str):
+    def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: Timeframes):
         long_signals, short_signals = self._generate_signals(strategy)
 
         return self._calculate_performance(long_signals, short_signals)

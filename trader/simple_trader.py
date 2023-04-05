@@ -4,6 +4,7 @@ from broker.abstract_broker import AbstractBroker
 from ohlcv.context import OhlcvContext, update_ohlcv
 from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.order import Order
+from shared.timeframes import Timeframes
 from strategy.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
 from shared.position_side import PositionSide
@@ -21,7 +22,7 @@ class SimpleTrader(AbstractTrader):
         self.reset_trade_values()
 
     @update_ohlcv
-    def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: str) -> None:
+    def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: Timeframes) -> None:
         current_row = self.ohlcv_context.ohlcv.iloc[-1]
 
         self.print_trade_intro(strategy, symbol, timeframe, current_row)
