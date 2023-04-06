@@ -6,11 +6,11 @@ import pandas as pd
 from analytics.abstract_performace import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
 from ohlcv.context import OhlcvContext
+from optimization.abstract_screening import AbstractScreening
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
 from strategy.abstract_strategy import AbstractStrategy
 from trader.backtester import Backtester
-from optimization.abstract_screening import AbstractScreening
 from risk_management.risk_manager import RiskManager
 
 
@@ -48,7 +48,7 @@ class StrategyScreening(AbstractScreening):
 
     def run(self):
         market_dict = {symbol: self.broker.get_symbol_info(symbol) for symbol in self.symbols}
-        
+
         risk_manager_dict = {(symbol, stop_loss_finder, take_profit_finder): RiskManager(stop_loss_finder, take_profit_finder, **market_dict[symbol]) for symbol in self.symbols for stop_loss_finder, take_profit_finder in product(self.stop_loss_finders, self.take_profit_finders)}
 
         combined_settings = list(product(self.symbols, self.timeframes, self.strategies, risk_manager_dict.keys()))
