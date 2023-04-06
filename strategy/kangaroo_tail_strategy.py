@@ -41,4 +41,4 @@ class KangarooTailStrategy(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'_KANGAROOTAILSTRATEGY{self.ma}_{self.lookback}{KangarooTail()}'
+        return f'_KANGAROOTAILSTRATEGY_{self.lookback}{self.ma}{KangarooTail()}'

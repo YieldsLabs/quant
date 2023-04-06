@@ -17,4 +17,4 @@ class BollingerBands(AbstractIndicator):
         return upper_band, middle_band, lower_band
 
     def __str__(self) -> str:
-        return f'_BBANDS{self.ma}_{self.multiplier}'
+        return f'_BBANDS_{self.multiplier}{self.ma}'

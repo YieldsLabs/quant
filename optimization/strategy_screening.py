@@ -42,7 +42,7 @@ class StrategyScreening(AbstractScreening):
             'win_rate': result['win_rate'] * 100,
         })
 
-        print(f"{symbol} orders for strategy: {strategy}, TimeFrame: {timeframe}, StopLossFinder: {rm.stop_loss_finder}, TakeProfitFinder: {rm.take_profit_finder}")
+        print(f"{symbol}_{timeframe}{strategy}{rm.stop_loss_finder}{rm.take_profit_finder}")
         print(backtester.get_orders().tail(self.num_last_trades))
         return result
 

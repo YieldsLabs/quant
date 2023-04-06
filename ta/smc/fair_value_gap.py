@@ -18,4 +18,4 @@ class FairValueGap(AbstractIndicator):
         return fair_value_gap
 
     def __str__(self) -> str:
-        return f'_FVG{self.ma}_{self.lookback}'
+        return f'_FVG_{self.lookback}{self.ma}'

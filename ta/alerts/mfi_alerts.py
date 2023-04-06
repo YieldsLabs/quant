@@ -15,4 +15,4 @@ class MoneyFlowIndexAlerts(AbstractAlert):
         return data['mfi'] < self.oversold_level, data['mfi'] > self.overbought_level
     
     def __str__(self) -> str:
-        return f'MFIALERT{self.mfi}_{self.overbought_level}_{self.oversold_level}'
+        return f'MFIALERT_{self.overbought_level}_{self.oversold_level}{self.mfi}'
