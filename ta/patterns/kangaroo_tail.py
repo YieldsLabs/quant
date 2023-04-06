@@ -1,4 +1,4 @@
-class KangarooTailPattern:
+class KangarooTail:
     @staticmethod
     def bullish(data, look_to_the_left=200):
         candle_range = data['high'] - data['low']
@@ -40,3 +40,6 @@ class KangarooTailPattern:
             & (data['high'] >= data['high'].rolling(13).max())
         )
         return bearish_kangaroo_tail
+
+    def __str__(self) -> str:
+        return '_KANGAROOTAIL'

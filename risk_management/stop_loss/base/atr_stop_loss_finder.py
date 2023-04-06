@@ -1,14 +1,14 @@
 from typing import Type
 from ohlcv.context import OhlcvContext
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
-from ta.indicators.atr_indicator import ATRIndicator
+from ta.volatility.atr import AvarageTrueRange
 from shared.position_side import PositionSide
 
 
 class ATRStopLossFinder(AbstractStopLoss):
     def __init__(self, ohlcv: Type[OhlcvContext], multiplier=1.5, atr_period=14):
         super().__init__(ohlcv)
-        self.atr_indicator = ATRIndicator(atr_period)
+        self.atr_indicator = AvarageTrueRange(atr_period)
         self.multiplier = multiplier
 
     def next(self, position_side, entry_price):
@@ -29,4 +29,4 @@ class ATRStopLossFinder(AbstractStopLoss):
         return stop_loss_price
 
     def __str__(self) -> str:
-        return f'ATRStopLossFinder(multiplier={self.multiplier}, atr={self.atr_indicator})'
+        return f'_ATRSTOPLOSS_{self.multiplier}{self.atr_indicator}'

@@ -18,4 +18,4 @@ class RiskRewardTakeProfitFinder(AbstractTakeProfit):
         return take_profit_price
 
     def __str__(self) -> str:
-        return f'RiskRewardTakeProfitFinder(risk_reward_ratio={self.risk_reward_ratio})'
+        return f'_RRTAKEPROFIT_{self.risk_reward_ratio}'

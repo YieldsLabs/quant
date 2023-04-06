@@ -1,9 +1,9 @@
 import pandas as pd
 
-from ta.indicators.base.abstract_indicator import AbstractIndicator
+from ta.base.abstract_indicator import AbstractIndicator
 
 
-class OrderBlockIndicator(AbstractIndicator):
+class OrderBlock(AbstractIndicator):
     def __init__(self, lookback=25):
         self.lookback = lookback
 
@@ -18,3 +18,6 @@ class OrderBlockIndicator(AbstractIndicator):
         df.iloc[:self.lookback] = None
 
         return df['order_block_high'], df['order_block_low']
+
+    def __str__(self) -> str:
+        return f'_OB_{self.lookback}'

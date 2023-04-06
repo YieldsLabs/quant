@@ -1,20 +1,20 @@
 from strategy.abstract_strategy import AbstractStrategy
-from ta.indicators.bb_indicator import BBIndicator
-from ta.patterns.extreme_euphoria_pattern import ExtremeEuphoriaPattern
+from ta.volatility.bbands import BollingerBands
+from ta.patterns.extreme_euphoria import ExtremeEuphoria
 
 
 class ExtremeEuphoriaBBStrategy(AbstractStrategy):
     def __init__(self, sma_period=20, multiplier=2):
         super().__init__()
-        self.bb_indicator = BBIndicator(sma_period, multiplier)
+        self.bb_indicator = BollingerBands(sma_period, multiplier)
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
 
         data['upper_band'], _, data['lower_band'] = self.bb_indicator.call(data)
-        data['bullish_extreme_euphoria'] = ExtremeEuphoriaPattern.bullish(
+        data['bullish_extreme_euphoria'] = ExtremeEuphoria.bullish(
             data)
-        data['bearish_extreme_euphoria'] = ExtremeEuphoriaPattern.bearish(
+        data['bearish_extreme_euphoria'] = ExtremeEuphoria.bearish(
             data)
         return data
 
@@ -37,4 +37,4 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'ExtremeEuphoriaBBStrategy(bb_indicator={self.bb_indicator})'
+        return f'_EXTREMEEUPHORIASTRATEGY{self.bb_indicator}{ExtremeEuphoria()}'

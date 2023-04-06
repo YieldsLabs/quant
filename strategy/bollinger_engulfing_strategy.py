@@ -1,18 +1,19 @@
-from ta.indicators.bb_indicator import BBIndicator
+
 from strategy.abstract_strategy import AbstractStrategy
-from ta.patterns.engulfing_pattern import EngulfingPattern
+from ta.patterns.engulfing import Engulfing
+from ta.volatility.bbands import BollingerBands
 
 
 class BollingerEngulfing(AbstractStrategy):
     def __init__(self, sma_period=20, multiplier=2):
         super().__init__()
-        self.bb = BBIndicator(sma_period=sma_period, multiplier=multiplier)
+        self.bb = BollingerBands(sma_period=sma_period, multiplier=multiplier)
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
         data['upper_band'], _, data['lower_band'] = self.bb.call(data)
-        data['bullish_engulfing'] = EngulfingPattern.bullish(data)
-        data['bearish_engulfing'] = EngulfingPattern.bearish(data)
+        data['bullish_engulfing'] = Engulfing.bullish(data)
+        data['bearish_engulfing'] = Engulfing.bearish(data)
 
         return data
 
@@ -39,4 +40,4 @@ class BollingerEngulfing(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'BollingerEngulfing(bb={self.bb})'
+        return f'_BBENGULFINGSTRATEGY{self.bb}{Engulfing()}'

@@ -1,10 +1,10 @@
 
 
-from ta.indicators.base.abstract_indicator import AbstractIndicator
-from ta.indicators.base.ma import MovingAverage
+from ta.base.abstract_indicator import AbstractIndicator
+from ta.base.ma import MovingAverage
 
 
-class MACDIndicator(AbstractIndicator):
+class MACD(AbstractIndicator):
     def __init__(self, short_period=12, long_period=26, signal_period=9):
         self.fast_ema = MovingAverage(window=short_period)
         self.slow_ema = MovingAverage(window=long_period)
@@ -21,4 +21,4 @@ class MACDIndicator(AbstractIndicator):
         return macd, signal_line, histogram
 
     def __str__(self) -> str:
-        return f'MACDIndicator(fast_ema={self.fast_ema}, slow_ema={self.slow_ema}, signal_period={self.signal_period})'
+        return f'_MACD{self.fast_ema}{self.slow_ema}{self.signal_ema}'

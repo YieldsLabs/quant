@@ -1,16 +1,17 @@
 from alerts.abstract_alert import AbstractAlert
-from ta.indicators.atr_indicator import ATRIndicator
-from ta.indicators.rsi_indicator import RSIIndicator
+from ta.volatility.atr import AvarageTrueRange
+from ta.momentum.rsi import RelativeStrengthIndex
 
 
 class UTBotAlerts(AbstractAlert):
     def __init__(self, atr_period=10, sensitivity=2, ema_period=1):
         super().__init__()
+        self.atr_indicator = AvarageTrueRange(period=atr_period)
+        self.rsi_indicator = RelativeStrengthIndex(period=ema_period)
+
         self.atr_period = atr_period
         self.sensitivity = sensitivity
         self.ema_period = ema_period
-        self.atr_indicator = ATRIndicator(period=atr_period)
-        self.rsi_indicator = RSIIndicator(period=ema_period)
 
     def alert(self, ohlcv):
         data = ohlcv.copy()

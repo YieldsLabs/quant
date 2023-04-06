@@ -1,9 +1,9 @@
 
-from ta.indicators.base.abstract_indicator import AbstractIndicator
-from ta.indicators.base.ma import MovingAverage
+from ta.base.abstract_indicator import AbstractIndicator
+from ta.base.ma import MovingAverage
 
 
-class RSIIndicator(AbstractIndicator):
+class RelativeStrengthIndex(AbstractIndicator):
     def __init__(self, period=14):
         self.ma = MovingAverage(window=period)
 
@@ -23,4 +23,4 @@ class RSIIndicator(AbstractIndicator):
         return rsi
 
     def __str__(self) -> str:
-        return f'RSIIndicator(ma={self.ma})'
+        return f'_RSI{self.ma}'

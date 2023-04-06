@@ -1,7 +1,7 @@
-from ta.indicators.base.abstract_indicator import AbstractIndicator
+from ta.base.abstract_indicator import AbstractIndicator
 
 
-class MoneyFlowIndexIndicator(AbstractIndicator):
+class MoneyFlowIndex(AbstractIndicator):
     def __init__(self, period=14):
         self.period = period
 
@@ -22,4 +22,4 @@ class MoneyFlowIndexIndicator(AbstractIndicator):
         return mfi
 
     def __str__(self) -> str:
-        return f'MoneyFlowIndexIndicator(period={self.period})'
+        return f'_MFI_{self.period}'

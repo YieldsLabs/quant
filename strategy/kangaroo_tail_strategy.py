@@ -1,26 +1,25 @@
 from strategy.abstract_strategy import AbstractStrategy
-from ta.indicators.base.ma import MovingAverage
-from ta.patterns.kangaroo_tail_pattern import KangarooTailPattern
+from ta.base.ma import MovingAverage
+from ta.patterns.kangaroo_tail import KangarooTail
 
 
 class KangarooTailStrategy(AbstractStrategy):
     def __init__(self, lookback=200, sma_period=100):
         super().__init__()
-        self.lookback = lookback
-        self.sma_period = sma_period
         self.ma = MovingAverage(sma_period)
+        self.lookback = lookback
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
 
         data['sma'] = self.ma.smma(data['close'])
-        data['bullish_kangaroo_tail'] = KangarooTailPattern.bullish(data, self.lookback)
-        data['bearish_kangaroo_tail'] = KangarooTailPattern.bearish(data, self.lookback)
+        data['bullish_kangaroo_tail'] = KangarooTail.bullish(data, self.lookback)
+        data['bearish_kangaroo_tail'] = KangarooTail.bearish(data, self.lookback)
 
         return data
 
     def entry(self, ohlcv):
-        if len(ohlcv) < max(3, self.sma_period):
+        if len(ohlcv) < max(3, self.ma.window):
             return False, False
 
         data = self._add_indicators(ohlcv)
@@ -42,4 +41,4 @@ class KangarooTailStrategy(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'KangarooTailStrategy(lookback={self.lookback}, sma_period={self.sma_period})'
+        return f'_KANGAROOTAILSTRATEGY_{self.lookback}{self.ma}{KangarooTail()}'

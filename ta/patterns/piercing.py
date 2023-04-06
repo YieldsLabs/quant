@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-class PiercingPattern:
+class Piercing:
     @staticmethod
     def bullish(data):
         if len(data) < 2:
@@ -37,3 +37,6 @@ class PiercingPattern:
         dark_cloud_cover = long_bullish & long_bearish & close_below_midpoint & close_above_first_open & open_above_first_close
 
         return dark_cloud_cover
+
+    def __str__(self) -> str:
+        return '_PIERCING'

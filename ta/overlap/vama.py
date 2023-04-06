@@ -1,7 +1,7 @@
-from ta.indicators.base.abstract_indicator import AbstractIndicator
+from ta.base.abstract_indicator import AbstractIndicator
 
 
-class VAMAIndicator(AbstractIndicator):
+class VolumeAdjustedMovingAverage(AbstractIndicator):
     def __init__(self, short_volatility=50, long_volatility=1000, alpha_factor=0.20):
         self.short_volatility = short_volatility
         self.long_volatility = long_volatility
@@ -22,4 +22,4 @@ class VAMAIndicator(AbstractIndicator):
         return vama
 
     def __str__(self) -> str:
-        return f'VAMAIndicator(short_volatility={self.short_volatility}, long_volatility={self.long_volatility}, alpha_factor={self.alpha_factor})'
+        return f'_VAMA_{self.short_volatility}_{self.long_volatility}_{self.alpha_factor}'

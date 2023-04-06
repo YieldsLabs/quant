@@ -1,17 +1,15 @@
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlerts
-from ta.indicators.zlema_indicator import ZeroLagEMAIndicator
+from ta.overlap.zlma import ZeroLagEMA
 from strategy.abstract_strategy import AbstractStrategy
-from ta.patterns.engulfing_pattern import EngulfingPattern
-from ta.patterns.harami_pattern import HaramiPattern
+from ta.patterns.engulfing import Engulfing
+from ta.patterns.harami import Harami
 
 
 class EngulfingSMA(AbstractStrategy):
     def __init__(self, slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
         super().__init__()
-        self.slow_sma = ZeroLagEMAIndicator(window=slow_sma_period)
+        self.slow_sma = ZeroLagEMA(window=slow_sma_period)
         self.mfi = MoneyFlowIndexAlerts(overbought_level=upper_barrier, oversold_level=lower_barrier)
-        self.upper_barrier = upper_barrier
-        self.lower_barrier = lower_barrier
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct
 
@@ -20,11 +18,11 @@ class EngulfingSMA(AbstractStrategy):
 
         data['sma_slow'] = self.slow_sma.call(data)
 
-        data['bullish_engulfing'] = EngulfingPattern.bullish(data)
-        data['bearish_engulfing'] = EngulfingPattern.bearish(data)
+        data['bullish_engulfing'] = Engulfing.bullish(data)
+        data['bearish_engulfing'] = Engulfing.bearish(data)
 
-        data['bullish_harami'] = HaramiPattern.bullish(data)
-        data['bearish_harami'] = HaramiPattern.bearish(data)
+        data['bullish_harami'] = Harami.bullish(data)
+        data['bearish_harami'] = Harami.bearish(data)
 
         data['mfi_buy'], data['mfi_sell'] = self.mfi.alert(data)
 
@@ -74,4 +72,4 @@ class EngulfingSMA(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return 'EngulfingSMA()'
+        return f'_EGULFINGSMASTRATEGY_{self.tolerance}_{self.retracement_pct}{self.slow_sma}{self.mfi}{Engulfing()}{Harami()}'

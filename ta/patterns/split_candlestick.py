@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class SplitCandlestickPattern:
+class SplitCandlestick:
     @staticmethod
     def bullish(data):
         bullish_split = (
@@ -29,3 +29,6 @@ class SplitCandlestickPattern:
         )
 
         return bearish_split
+
+    def __str__(self) -> str:
+        return '_SPLITCANDLESTICK'

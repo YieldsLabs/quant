@@ -1,4 +1,4 @@
-class HaramiPattern:
+class Harami:
     @staticmethod
     def bullish(data):
         previous_row = data.iloc[-2]
@@ -22,3 +22,6 @@ class HaramiPattern:
         is_previous_long = previous_row['high'] - previous_row['low'] > previous_row['close'] - previous_row['open']
 
         return is_previous_bullish and is_current_bearish and is_current_inside_previous and is_previous_long
+
+    def __str__(self) -> str:
+        return '_HARAMI'

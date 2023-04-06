@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class ExtremeEuphoriaPattern:
+class ExtremeEuphoria:
     @staticmethod
     def bullish(data):
         bullish_extreme_euphoria = (
@@ -29,3 +29,6 @@ class ExtremeEuphoriaPattern:
             & (np.abs(data['close'].shift(3) - data['open'].shift(3)) > np.abs(data['close'].shift(4) - data['open'].shift(4)))
         )
         return bearish_extreme_euphoria
+
+    def __str__(self) -> str:
+        return '_EXTREMEEUPHORIA'

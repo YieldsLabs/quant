@@ -1,19 +1,20 @@
 from strategy.abstract_strategy import AbstractStrategy
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlerts
-from ta.indicators.zlema_indicator import ZeroLagEMAIndicator
-from ta.smc.fair_value_gap import FairValueGapIndicator
+from ta.overlap.zlma import ZeroLagEMA
+from ta.smc.fair_value_gap import FairValueGap
 
 
 class FairValueGapStrategy(AbstractStrategy):
     def __init__(self, lookback=40, overbought=70, oversold=30, fair_value=0.5, slow_sma_period=100, tolerance=0.02):
         super().__init__()
+        self.fvg_indicator = FairValueGap(lookback)
+        self.zlema = ZeroLagEMA(window=slow_sma_period)
+        self.mfi = MoneyFlowIndexAlerts(overbought_level=overbought, oversold_level=oversold)
+        
         self.lookback = lookback
         self.fair_value = fair_value
         self.tolerance = tolerance
 
-        self.fvg_indicator = FairValueGapIndicator(lookback)
-        self.zlema = ZeroLagEMAIndicator(window=slow_sma_period)
-        self.mfi = MoneyFlowIndexAlerts(overbought_level=overbought, oversold_level=oversold)
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
@@ -65,4 +66,4 @@ class FairValueGapStrategy(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'FairValueGapStrategy(lookback={self.lookback}, fair_value={self.fair_value})'
+        return f'_FGVSTRATEGY_{self.lookback}_{self.fair_value}_{self.tolerance}{self.fvg_indicator}{self.zlema}{self.mfi}'
