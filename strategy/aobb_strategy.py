@@ -1,20 +1,20 @@
-from ta.indicators.zlema_indicator import ZeroLagEMAIndicator
-from ta.indicators.bb_indicator import BBIndicator
 from strategy.abstract_strategy import AbstractStrategy
-from ta.indicators.mfi_indicator import MoneyFlowIndexIndicator
-from ta.oscillators.awesome import AwesomeOscillator
+from ta.overlap.zlma import ZeroLagEMA
+from ta.volatility.bbands import BollingerBands
+from ta.volume.mfi import MoneyFlowIndex
+from ta.momentum.awesome_oscillator import AwesomeOscillator
 
 
 class AwesomeOscillatorBBStrategy(AbstractStrategy):
     def __init__(self, ao_short_period=5, ao_long_period=34, bb_period=25, bb_std_dev=2, sma_period=50, mfi_period=14, mfi_buy_level=40, mfi_sell_level=60):
         super().__init__()
+        self.ao = AwesomeOscillator(ao_short_period=ao_short_period, ao_long_period=ao_long_period)
+        self.bb = BollingerBands(sma_period=bb_period, multiplier=bb_std_dev)
+        self.sma = ZeroLagEMA(window=sma_period)
+        self.mfi = MoneyFlowIndex(period=mfi_period)
         self.mfi_buy_level = mfi_buy_level
         self.mfi_sell_level = mfi_sell_level
 
-        self.ao = AwesomeOscillator(ao_short_period=ao_short_period, ao_long_period=ao_long_period)
-        self.bb = BBIndicator(sma_period=bb_period, multiplier=bb_std_dev)
-        self.sma = ZeroLagEMAIndicator(window=sma_period)
-        self.mfi = MoneyFlowIndexIndicator(period=mfi_period)
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
@@ -63,4 +63,4 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
         return higher_low_price and lower_high_ao and price_touch_upper_band and mfi_sell_signal
 
     def __str__(self) -> str:
-        return 'AwesomeOscillatorBBStrategy'
+        return f'_AOSTRATEGY{self.ao}{self.bb}{self.sma}{self.mfi}_{self.mfi_buy_level}_{self.mfi_sell_level}'

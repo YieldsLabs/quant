@@ -1,12 +1,12 @@
 from alerts.abstract_alert import AbstractAlert
-from ta.indicators.rsi_indicator import RSIIndicator
+from ta.momentum.rsi import RelativeStrengthIndex
 
 
 class BlueAlert(AbstractAlert):
     def __init__(self, lookback=21, lookback_rsi=21):
         super().__init__()
+        self.rsi = RelativeStrengthIndex(period=lookback_rsi)
         self.lookback = lookback
-        self.rsi = RSIIndicator(period=lookback_rsi)
 
     def alert(self, ohlcv):
         data = ohlcv.copy()

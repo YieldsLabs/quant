@@ -1,5 +1,5 @@
-from ta.indicators.base.abstract_indicator import AbstractIndicator
-from ta.indicators.base.ma import MovingAverage
+from ta.base.abstract_indicator import AbstractIndicator
+from ta.base.ma import MovingAverage
 
 
 class AwesomeOscillator(AbstractIndicator):
@@ -14,3 +14,6 @@ class AwesomeOscillator(AbstractIndicator):
         sma_long = self.long_period_ma.sma(median_price)
 
         return sma_short - sma_long
+
+    def __str__(self) -> str:
+        return f'_AO{self.short_period_ma}{self.long_period_ma}'

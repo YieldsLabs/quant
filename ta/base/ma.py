@@ -23,4 +23,4 @@ class MovingAverage:
         return (close * volume).rolling(window=self.window).sum() / volume.rolling(window=self.window).sum()
 
     def __str__(self) -> str:
-        return f'MovingAverageIndicator(window={self.window})'
+        return f'_MA_{self.window}'

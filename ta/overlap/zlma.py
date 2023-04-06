@@ -1,11 +1,11 @@
-from ta.indicators.base.abstract_indicator import AbstractIndicator
-from ta.indicators.base.ma import MovingAverage
+from ta.base.abstract_indicator import AbstractIndicator
+from ta.base.ma import MovingAverage
 
 
-class ZeroLagEMAIndicator(AbstractIndicator):
+class ZeroLagEMA(AbstractIndicator):
     def __init__(self, window=5):
-        self.window = window
         self.ma = MovingAverage(window=window)
+        self.window = window
 
     def call(self, data, column='close'):
         ema = self.ma.ema(data[column])
@@ -15,4 +15,4 @@ class ZeroLagEMAIndicator(AbstractIndicator):
         return zlema
 
     def __str__(self) -> str:
-        return f'ZeroLagEMAIndicator(window={self.window})'
+        return f'_ZLMA{self.ma}_{self.window}'

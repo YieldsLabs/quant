@@ -6,4 +6,4 @@ class NoopTakeProfitFinder(AbstractTakeProfit):
         return None
 
     def __str__(self) -> str:
-        return 'NoopTakeProfitFinder()'
+        return '_NOOPTAKEPROFIT'

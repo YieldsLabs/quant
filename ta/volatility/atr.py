@@ -1,10 +1,10 @@
 import pandas as pd
 
-from ta.indicators.base.abstract_indicator import AbstractIndicator
+from ta.base.abstract_indicator import AbstractIndicator
 
 
-class ATRIndicator(AbstractIndicator):
-    def __init__(self, period=14, smoothing='rma'):
+class AvarageTrueRange(AbstractIndicator):
+    def __init__(self, period=14, smoothing='RMA'):
         self.period = period
         self.smoothing = smoothing
 
@@ -20,9 +20,9 @@ class ATRIndicator(AbstractIndicator):
 
         data['true_range'] = true_range.max(axis=1)
 
-        if self.smoothing == 'rma':
+        if self.smoothing == 'RMA':
             data['atr'] = data['true_range'].ewm(span=self.period, adjust=False).mean()
-        elif self.smoothing == 'wilder':
+        elif self.smoothing == 'WILDER':
             data['atr'] = 0.0
 
             data.at[self.period, 'atr'] = data['true_range'][1:self.period + 1].mean()
@@ -34,4 +34,4 @@ class ATRIndicator(AbstractIndicator):
         return data['atr']
 
     def __str__(self) -> str:
-        return f'ATRIndicator(period={self.period}, smoothing={self.smoothing})'
+        return f'_ATR_{self.period}_{self.smoothing}'

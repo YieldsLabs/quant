@@ -1,7 +1,7 @@
-from ta.indicators.base.abstract_indicator import AbstractIndicator
+from ta.base.abstract_indicator import AbstractIndicator
 
 
-class VWAPIndicator(AbstractIndicator):
+class VolumeWeightedAveragePrice(AbstractIndicator):
     def __init__(self, window=20):
         self.window = window
 
@@ -13,4 +13,4 @@ class VWAPIndicator(AbstractIndicator):
         return vwap
 
     def __str__(self) -> str:
-        return f'VWAPIndicator(window={self.window})'
+        return f'_VWAP_{self.window}'

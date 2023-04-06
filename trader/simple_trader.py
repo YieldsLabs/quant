@@ -133,7 +133,7 @@ class SimpleTrader(AbstractTrader):
     def print_trade_intro(self, strategy, symbol, timeframe, current_row):
         print("-------------------------------------------->")
         print(
-            f"{strategy} with {self.rm.stop_loss_finder} and {self.rm.take_profit_finder} is looking for trade, {symbol} {timeframe}, price: {current_row['close']}")
+            f"{symbol}_{timeframe}_{current_row['close']}{strategy}{self.rm.stop_loss_finder}{self.rm.take_profit_finder}")
         for side in [PositionSide.LONG, PositionSide.SHORT]:
             stop_loss_price, take_profit_price = self.rm.calculate_prices(
                 side, current_row['close'])

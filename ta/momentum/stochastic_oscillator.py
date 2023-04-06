@@ -1,5 +1,5 @@
-from ta.indicators.base.abstract_indicator import AbstractIndicator
-from ta.indicators.base.ma import MovingAverage
+from ta.base.abstract_indicator import AbstractIndicator
+from ta.base.ma import MovingAverage
 
 
 class StochasticOscillator(AbstractIndicator):
@@ -20,3 +20,6 @@ class StochasticOscillator(AbstractIndicator):
         percent_d = self.d_period_ma.sma(percent_k)
 
         return percent_k, percent_d
+    
+    def __str__(self) -> str:
+        return f'_STOCH_{self.stochastic_period}{self.k_period_ma}{self.d_period_ma}'
