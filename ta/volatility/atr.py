@@ -3,7 +3,7 @@ import pandas as pd
 from ta.base.abstract_indicator import AbstractIndicator
 
 
-class AvarageTrueRange(AbstractIndicator):
+class AverageTrueRange(AbstractIndicator):
     def __init__(self, period=14, smoothing='RMA'):
         self.period = period
         self.smoothing = smoothing

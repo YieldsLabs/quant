@@ -1,7 +1,7 @@
-from ta.volatility import AverageTrueRange
 from enum import Enum
 
 from alerts.abstract_alert import AbstractAlert
+from ta.volatility.atr import AverageTrueRange
 
 
 class SignalMode(Enum):
