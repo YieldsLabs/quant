@@ -47,16 +47,16 @@ class FuturesBybitBroker(AbstractBroker):
         except Exception as e:
             print(e)
 
-    def set_position_mode(self, symbol, mode=PositionMode.ONE_WAY):
-        is_hedged = mode != PositionMode.ONE_WAY
+    def set_position_mode(self, symbol, position_mode=PositionMode.ONE_WAY):
+        is_hedged = position_mode != PositionMode.ONE_WAY
         try:
             self.exchange.set_position_mode(is_hedged, symbol)
         except Exception as e:
             print(e)
 
-    def set_margin_mode(self, symbol, mode=MarginMode.ISOLATED, leverage=1):
+    def set_margin_mode(self, symbol, margin_mode=MarginMode.ISOLATED, leverage=1):
         try:
-            self.exchange.set_margin_mode(mode.value, symbol, {'leverage': leverage})
+            self.exchange.set_margin_mode(margin_mode.value, symbol, {'leverage': leverage})
         except Exception as e:
             print(e)
 
