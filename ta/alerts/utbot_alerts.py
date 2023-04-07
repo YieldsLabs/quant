@@ -1,4 +1,5 @@
-from alerts.abstract_alert import AbstractAlert
+
+from ta.alerts.abstract_alert import AbstractAlert
 from ta.volatility.atr import AverageTrueRange
 from ta.momentum.rsi import RelativeStrengthIndex
 

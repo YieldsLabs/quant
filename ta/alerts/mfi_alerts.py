@@ -1,4 +1,4 @@
-from alerts.abstract_alert import AbstractAlert
+from ta.alerts.abstract_alert import AbstractAlert
 from ta.volume.mfi import MoneyFlowIndex
 
 
@@ -15,4 +15,4 @@ class MoneyFlowIndexAlerts(AbstractAlert):
         return data['mfi'] < self.oversold_level, data['mfi'] > self.overbought_level
     
     def __str__(self) -> str:
-        return f'MFIALERT_{self.overbought_level}_{self.oversold_level}{self.mfi}'
+        return f'_MFIALERT_{self.overbought_level}_{self.oversold_level}{self.mfi}'
