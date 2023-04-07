@@ -18,4 +18,4 @@ class SimpleStopLossFinder(AbstractStopLoss):
         return stop_loss_price
 
     def __str__(self) -> str:
-        return f'_SIMPLESTOPLOSS_{self.stop_loss_pct}'
+        return f'_STOPLOSSSIMPLE_{self.stop_loss_pct}'

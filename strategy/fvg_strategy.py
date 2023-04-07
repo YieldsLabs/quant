@@ -66,4 +66,4 @@ class FairValueGapStrategy(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'_FGVSTRATEGY_{self.lookback}_{self.fair_value}_{self.tolerance}{self.fvg_indicator}{self.zlema}{self.mfi}'
+        return f'_STRATEGYFGV_{self.lookback}_{self.fair_value}_{self.tolerance}{self.fvg_indicator}{self.zlema}{self.mfi}'

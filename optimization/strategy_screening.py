@@ -37,8 +37,6 @@ class StrategyScreening(AbstractScreening):
             'symbol': symbol,
             'timeframe': timeframe,
             'strategy': strategy,
-            'stop_loss_finder': rm.stop_loss_finder,
-            'take_profit_finder': rm.take_profit_finder,
             'win_rate': result['win_rate'] * 100,
         })
 

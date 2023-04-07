@@ -37,4 +37,4 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'_EXTREMEEUPHORIASTRATEGY{self.bb_indicator}{ExtremeEuphoria()}'
+        return f'_STRATEGYEXTREMEEUPHORIA{self.bb_indicator}{ExtremeEuphoria()}'

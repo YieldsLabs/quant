@@ -16,4 +16,4 @@ class Engulfing:
         return bearish_engulfing_pattern
 
     def __str__(self) -> str:
-        return '_ENGULFING'
+        return '_PATTERNENGULFING'

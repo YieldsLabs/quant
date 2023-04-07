@@ -29,4 +29,4 @@ class ATRStopLossFinder(AbstractStopLoss):
         return stop_loss_price
 
     def __str__(self) -> str:
-        return f'_ATRSTOPLOSS_{self.multiplier}{self.atr_indicator}'
+        return f'_STOPLOSSATR_{self.multiplier}{self.atr_indicator}'

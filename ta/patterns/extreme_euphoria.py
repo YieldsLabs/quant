@@ -31,4 +31,4 @@ class ExtremeEuphoria:
         return bearish_extreme_euphoria
 
     def __str__(self) -> str:
-        return '_EXTREMEEUPHORIA'
+        return '_PATTERNEXTREMEEUPHORIA'

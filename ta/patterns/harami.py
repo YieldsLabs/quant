@@ -24,4 +24,4 @@ class Harami:
         return is_previous_bullish and is_current_bearish and is_current_inside_previous and is_previous_long
 
     def __str__(self) -> str:
-        return '_HARAMI'
+        return '_PATTERNHARAMI'

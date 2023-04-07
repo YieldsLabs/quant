@@ -16,4 +16,4 @@ class SimpleTakeProfitFinder(AbstractTakeProfit):
         return take_profit_price
 
     def __str__(self) -> str:
-        return f'_SIMPLETAKEPROFIT_{self.take_profit_pct}'
+        return f'_TAKEPROFITSIMPLE_{self.take_profit_pct}'

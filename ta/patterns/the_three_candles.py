@@ -22,4 +22,4 @@ class TheThreeCandles:
         return condition
 
     def __str__(self) -> str:
-        return '_THETHREECANDLES'
+        return '_PATTERNTHETHREECANDLES'

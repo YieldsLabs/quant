@@ -40,4 +40,4 @@ class BollingerEngulfing(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'_BBENGULFINGSTRATEGY{self.bb}{Engulfing()}'
+        return f'_STRATEGYBBENGULFING{self.bb}{Engulfing()}'

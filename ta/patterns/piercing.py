@@ -39,4 +39,4 @@ class Piercing:
         return dark_cloud_cover
 
     def __str__(self) -> str:
-        return '_PIERCING'
+        return '_PATTERNPIERCING'

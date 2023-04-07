@@ -51,8 +51,16 @@ trader = SimpleTrader(ohlcv_context, broker, rm, analytics)
 strategy = ExtremeEuphoriaBBStrategy()
 
 
-inverval = 1
-channels = [f"kline.{inverval}.{symbol}"]
+invervals = {
+    Timeframes.ONE_MINUTE: 1,
+    Timeframes.THREE_MINUTES: 3,
+    Timeframes.FIVE_MINUTES: 5,
+    Timeframes.FIFTEEN_MINUTES: 15,
+    Timeframes.ONE_HOUR: 60,
+    Timeframes.FOUR_HOURS: 240,
+}
+
+channels = [f"kline.{invervals[Timeframes.ONE_MINUTE]}.{symbol}"]
 
 
 def on_open(ws):

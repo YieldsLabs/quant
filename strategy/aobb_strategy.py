@@ -63,4 +63,4 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
         return higher_low_price and lower_high_ao and price_touch_upper_band and mfi_sell_signal
 
     def __str__(self) -> str:
-        return f'_AOSTRATEGY_{self.mfi_buy_level}_{self.mfi_sell_level}{self.ao}{self.bb}{self.sma}{self.mfi}'
+        return f'_STRATEGYAO_{self.mfi_buy_level}_{self.mfi_sell_level}{self.ao}{self.bb}{self.sma}{self.mfi}'

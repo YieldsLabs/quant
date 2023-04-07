@@ -31,4 +31,4 @@ class SplitCandlestick:
         return bearish_split
 
     def __str__(self) -> str:
-        return '_SPLITCANDLESTICK'
+        return '_PATTERNSPLITCANDLESTICK'

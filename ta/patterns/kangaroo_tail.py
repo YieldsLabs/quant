@@ -42,4 +42,4 @@ class KangarooTail:
         return bearish_kangaroo_tail
 
     def __str__(self) -> str:
-        return '_KANGAROOTAIL'
+        return '_PATTERNKANGAROOTAIL'

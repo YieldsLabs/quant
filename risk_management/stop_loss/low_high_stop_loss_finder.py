@@ -22,4 +22,4 @@ class LowHighStopLossFinder(AbstractStopLoss):
         return self.stop_loss_finder.next(position_side, entry_price)
 
     def __str__(self) -> str:
-        return f'_LOWHIGHSTOPLOSS_{self.lookback}{self.stop_loss_finder}'
+        return f'_STOPLOSSLOWHIGH_{self.lookback}{self.stop_loss_finder}'

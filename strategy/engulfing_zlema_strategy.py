@@ -72,4 +72,4 @@ class EngulfingSMA(AbstractStrategy):
         pass
 
     def __str__(self) -> str:
-        return f'_EGULFINGSMASTRATEGY_{self.tolerance}_{self.retracement_pct}{self.slow_sma}{self.mfi}{Engulfing()}{Harami()}'
+        return f'_STRATEGYEGULFINGSMA_{self.tolerance}_{self.retracement_pct}{self.slow_sma}{self.mfi}{Engulfing()}{Harami()}'
