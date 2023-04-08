@@ -1,3 +1,4 @@
+import random
 import time
 from typing import Type
 from broker.abstract_broker import AbstractBroker
@@ -26,7 +27,7 @@ class BybitDataSource(AbstractDatasource):
             except Exception as e:
                 print(f"Unexpected error: {e}. Retrying...")
 
-            retry_delay = self.initial_retry_delay * (2 ** retries)
+            retry_delay = self.initial_retry_delay * (2 ** retries) * random.uniform(0.5, 1.5)
             print(f"Waiting {retry_delay} seconds before retrying.")
             time.sleep(retry_delay)
             retries += 1
