@@ -1,10 +1,8 @@
 import pandas as pd
-from shared.meta_label import meta_label
 
 from ta.base.abstract_indicator import AbstractIndicator
 
 
-@meta_label
 class OrderBlock(AbstractIndicator):
     NAME = "OB"
 

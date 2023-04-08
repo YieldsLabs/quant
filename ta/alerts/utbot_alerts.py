@@ -1,11 +1,8 @@
-
-from shared.meta_label import meta_label
 from ta.alerts.abstract_alert import AbstractAlert
 from ta.volatility.atr import AverageTrueRange
 from ta.momentum.rsi import RelativeStrengthIndex
 
 
-@meta_label
 class UTBot(AbstractAlert):
     NAME = "UTBOT"
 

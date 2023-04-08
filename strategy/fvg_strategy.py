@@ -1,11 +1,9 @@
-from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from ta.smc.fair_value_gap import FairValueGap
 
 
-@meta_label
 class FairValueGapStrategy(AbstractStrategy):
     NAME = "FVG"
 

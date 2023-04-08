@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 
+from shared.meta_label.abstract_meta_label import AbstractMetaLabel
+from shared.meta_label.meta_label import meta_label
 
-class AbstractPattern(ABC):
+
+@meta_label
+class AbstractPattern(AbstractMetaLabel):
     SUFFIX = "_PATTERN"
     NAME = ""
 
@@ -12,6 +16,3 @@ class AbstractPattern(ABC):
     @abstractmethod
     def bearish(self, data):
         raise NotImplementedError
-
-    def __str__(self) -> str:
-        return f'{self.SUFFIX}{self.NAME}'

@@ -1,11 +1,8 @@
-
-from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
 from ta.patterns.engulfing import Engulfing
 from ta.volatility.bbands import BollingerBands
 
 
-@meta_label
 class BollingerEngulfing(AbstractStrategy):
     NAME = "BE"
 

@@ -1,10 +1,8 @@
 import pandas as pd
-from shared.meta_label import meta_label
 
 from ta.patterns.abstract_pattern import AbstractPattern
 
 
-@meta_label
 class Piercing(AbstractPattern):
     NAME = 'PIERCING'
 

@@ -1,10 +1,8 @@
-from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
 from ta.volatility.bbands import BollingerBands
 from ta.patterns.extreme_euphoria import ExtremeEuphoria
 
 
-@meta_label
 class ExtremeEuphoriaBBStrategy(AbstractStrategy):
     NAME = "EEBB"
 

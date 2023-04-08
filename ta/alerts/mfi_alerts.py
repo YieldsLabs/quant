@@ -1,9 +1,7 @@
-from shared.meta_label import meta_label
 from ta.alerts.abstract_alert import AbstractAlert
 from ta.volume.mfi import MoneyFlowIndex
 
 
-@meta_label
 class MoneyFlowIndexAlert(AbstractAlert):
     NAME = 'MFI'
 

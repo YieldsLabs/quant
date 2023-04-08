@@ -1,12 +1,10 @@
 from typing import Type
 from ohlcv.context import OhlcvContext
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
-from shared.meta_label import meta_label
 from ta.volatility.atr import AverageTrueRange
 from shared.position_side import PositionSide
 
 
-@meta_label
 class ATRStopLossFinder(AbstractStopLoss):
     NAME = 'ATR'
 

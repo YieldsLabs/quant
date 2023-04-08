@@ -1,10 +1,8 @@
-from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
 from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.kangaroo_tail import KangarooTail
 
 
-@meta_label
 class KangarooTailStrategy(AbstractStrategy):
     NAME = "KANGAROOTAIL"
 

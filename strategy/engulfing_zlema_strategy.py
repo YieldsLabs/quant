@@ -1,4 +1,3 @@
-from shared.meta_label import meta_label
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from strategy.abstract_strategy import AbstractStrategy
@@ -6,7 +5,6 @@ from ta.patterns.engulfing import Engulfing
 from ta.patterns.harami import Harami
 
 
-@meta_label
 class EngulfingSMA(AbstractStrategy):
     NAME = "ESMA"
 

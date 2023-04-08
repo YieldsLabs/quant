@@ -1,9 +1,7 @@
 from alerts.abstract_alert import AbstractAlert
-from shared.meta_label import meta_label
 from ta.momentum.rsi import RelativeStrengthIndex
 
 
-@meta_label
 class BlueAlert(AbstractAlert):
     NAME = "BLUE"
 

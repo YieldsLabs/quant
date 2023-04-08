@@ -1,9 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import pandas as pd
+from shared.meta_label.abstract_meta_label import AbstractMetaLabel
+from shared.meta_label.meta_label import meta_label
 
 
-class AbstractStrategy(ABC):
+@meta_label
+class AbstractStrategy(AbstractMetaLabel):
     SUFFIX = '_STRATEGY'
     NAME = ""
 
@@ -14,6 +17,3 @@ class AbstractStrategy(ABC):
     @abstractmethod
     def exit(self, ohlcv: pd.DataFrame):
         raise NotImplementedError
-
-    def __str__(self) -> str:
-        return f'{self.SUFFIX}{self.NAME}'

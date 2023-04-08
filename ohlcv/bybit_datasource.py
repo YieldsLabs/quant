@@ -14,7 +14,7 @@ class BybitDataSource(AbstractDatasource):
         self.max_retries = max_retries
         self.initial_retry_delay = initial_retry_delay
 
-    @cached(cache=TTLCache(maxsize=100, ttl=5))
+    @cached(cache=TTLCache(maxsize=500, ttl=10))
     def fetch(self, symbol: str, timeframe: Timeframes):
         retries = 0
 

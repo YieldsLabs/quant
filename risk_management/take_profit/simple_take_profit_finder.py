@@ -1,9 +1,7 @@
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-from shared.meta_label import meta_label
 from shared.position_side import PositionSide
 
 
-@meta_label
 class SimpleTakeProfitFinder(AbstractTakeProfit):
     NAME = 'SIMPLE'
 

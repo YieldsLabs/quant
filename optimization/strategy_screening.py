@@ -61,7 +61,7 @@ class StrategyScreening(AbstractScreening):
         unique_settings = [(symbol, timeframe, strategy, risk_manager_tuple, self._generate_id(symbol, timeframe, strategy, risk_manager_tuple)) for symbol, timeframe, strategy, risk_manager_tuple in combined_settings if self._is_unique_id(self._generate_id(symbol, timeframe, strategy, risk_manager_tuple), seen_ids)]
 
         random.shuffle(unique_settings)
-        
+
         with ThreadPoolExecutor() as executor:
             results_list = [executor.submit(self._run_backtest, (setting[0], setting[1], setting[2], setting[4]), risk_manager_dict[setting[0], setting[3][1], setting[3][2]]) for setting in unique_settings]
             results_list = [result.result() for result in results_list]

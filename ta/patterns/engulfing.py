@@ -1,8 +1,6 @@
-from shared.meta_label import meta_label
 from ta.patterns.abstract_pattern import AbstractPattern
 
 
-@meta_label
 class Engulfing(AbstractPattern):
     NAME = 'ENGULFING'
 

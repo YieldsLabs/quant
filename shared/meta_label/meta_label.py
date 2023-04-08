@@ -1,6 +1,7 @@
 import inspect
 from cachetools import cached
 
+
 @cached(cache={})
 def extract_numeric_params(instance):
     numeric_params = []

@@ -1,9 +1,7 @@
-from shared.meta_label import meta_label
 from ta.base.abstract_indicator import AbstractIndicator
 from ta.base.ma import MovingAverage
 
 
-@meta_label
 class AwesomeOscillator(AbstractIndicator):
     NAME = 'AO'
 

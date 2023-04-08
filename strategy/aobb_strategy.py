@@ -1,4 +1,3 @@
-from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
 from ta.overlap.zlma import ZeroLagEMA
 from ta.volatility.bbands import BollingerBands
@@ -6,7 +5,6 @@ from ta.volume.mfi import MoneyFlowIndex
 from ta.momentum.awesome_oscillator import AwesomeOscillator
 
 
-@meta_label
 class AwesomeOscillatorBBStrategy(AbstractStrategy):
     NAME = "AOBB"
 

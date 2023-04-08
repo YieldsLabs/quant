@@ -1,10 +1,7 @@
 import numpy as np
-from shared.meta_label import meta_label
-
 from ta.patterns.abstract_pattern import AbstractPattern
 
 
-@meta_label
 class ExtremeEuphoria(AbstractPattern):
     NAME = 'EXTREMEEUPHORIA'
 
