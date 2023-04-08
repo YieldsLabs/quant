@@ -32,15 +32,10 @@ class StrategyScreening(AbstractScreening):
         backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
 
         result = backtester.trade(strategy, symbol, timeframe)
-
-        result.update({
-            'symbol': symbol,
-            'timeframe': timeframe,
-            'strategy': strategy,
-            'win_rate': result['win_rate'] * 100,
-        })
-
-        print(f"{symbol}_{timeframe}{strategy}{rm.stop_loss_finder}{rm.take_profit_finder}")
+        label = f"{symbol}_{timeframe}{strategy}{rm.stop_loss_finder}{rm.take_profit_finder}"
+        
+        result.update({ 'label': label })
+        
         print(backtester.get_orders().tail(self.num_last_trades))
         return result
 
