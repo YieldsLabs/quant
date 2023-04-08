@@ -16,7 +16,7 @@ class KangarooTailStrategy(AbstractStrategy):
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
 
-        data['sma'] = self.ma.call(data['close'])
+        data['sma'] = self.ma.call(data)
         data['bullish_kangaroo_tail'] = KangarooTail.bullish(data, self.lookback)
         data['bearish_kangaroo_tail'] = KangarooTail.bearish(data, self.lookback)
 
