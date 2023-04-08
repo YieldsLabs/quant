@@ -15,7 +15,7 @@ from risk_management.risk_manager import RiskManager
 
 
 class StrategyScreening(AbstractScreening):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], analytics: Type[AbstractPerformance], symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy], stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit], num_last_trades=15):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], analytics: Type[AbstractPerformance], symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy], stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit], sort_by="total_pnl",  num_last_trades=15):
         super().__init__(ohlcv)
         self.broker = broker
         self.analytics = analytics
@@ -25,6 +25,7 @@ class StrategyScreening(AbstractScreening):
         self.stop_loss_finders = stop_loss_finders
         self.take_profit_finders = take_profit_finders
         self.num_last_trades = num_last_trades
+        self.sort_by = sort_by
 
     def _run_backtest(self, settings, rm):
         symbol, timeframe, strategy = settings
@@ -50,4 +51,4 @@ class StrategyScreening(AbstractScreening):
             results_list = [executor.submit(self._run_backtest, settings[:3], risk_manager_dict[settings[0], settings[3][1], settings[3][2]]) for settings in combined_settings]
             results_list = [result.result() for result in results_list]
 
-        return pd.DataFrame(results_list).sort_values(by="total_pnl", ascending=False)
+        return pd.DataFrame(results_list).sort_values(by=self.sort_by, ascending=False)
