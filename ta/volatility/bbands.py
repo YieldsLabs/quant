@@ -1,10 +1,15 @@
 
+from shared.meta_label import meta_label
 from ta.base.abstract_indicator import AbstractIndicator
 from ta.base.ma import MovingAverage
 
 
+@meta_label
 class BollingerBands(AbstractIndicator):
+    NAME = 'BBANDS'
+
     def __init__(self, sma_period=20, multiplier=2):
+        super().__init__()
         self.ma = MovingAverage(sma_period)
         self.multiplier = multiplier
 
@@ -13,8 +18,5 @@ class BollingerBands(AbstractIndicator):
         std_dev = data['close'].rolling(window=self.ma.window).std()
         upper_band = middle_band + (std_dev * self.multiplier)
         lower_band = middle_band - (std_dev * self.multiplier)
-        
-        return upper_band, middle_band, lower_band
 
-    def __str__(self) -> str:
-        return f'_BBANDS_{self.multiplier}{self.ma}'
+        return upper_band, middle_band, lower_band

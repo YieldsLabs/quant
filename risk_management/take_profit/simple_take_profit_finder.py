@@ -1,8 +1,12 @@
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
+from shared.meta_label import meta_label
 from shared.position_side import PositionSide
 
 
+@meta_label
 class SimpleTakeProfitFinder(AbstractTakeProfit):
+    NAME = 'SIMPLE'
+
     def __init__(self, take_profit_pct=0.03):
         super().__init__()
         self.take_profit_pct = take_profit_pct
@@ -15,5 +19,5 @@ class SimpleTakeProfitFinder(AbstractTakeProfit):
 
         return take_profit_price
 
-    def __str__(self) -> str:
-        return f'_TAKEPROFITSIMPLE_{self.take_profit_pct}'
+    def __str__(self):
+        return f'{super().__str__()}'

@@ -1,11 +1,15 @@
 from alerts.abstract_alert import AbstractAlert
+from shared.meta_label import meta_label
 from ta.momentum.rsi import RelativeStrengthIndex
 
 
+@meta_label
 class BlueAlert(AbstractAlert):
-    def __init__(self, lookback=21, lookback_rsi=21):
+    NAME = "BLUE"
+
+    def __init__(self, period=21, lookback=21):
         super().__init__()
-        self.rsi = RelativeStrengthIndex(period=lookback_rsi)
+        self.rsi = RelativeStrengthIndex(period=period)
         self.lookback = lookback
 
     def alert(self, ohlcv):
@@ -27,3 +31,6 @@ class BlueAlert(AbstractAlert):
         )
 
         return buy, sell
+
+    def __str__(self):
+        return f'{super().__str__()}'

@@ -1,4 +1,11 @@
-class KangarooTail:
+from shared.meta_label import meta_label
+from ta.patterns.abstract_pattern import AbstractPattern
+
+
+@meta_label
+class KangarooTail(AbstractPattern):
+    NAME = 'KANGAROOTAIL'
+
     @staticmethod
     def bullish(data, look_to_the_left=200):
         candle_range = data['high'] - data['low']
@@ -40,6 +47,3 @@ class KangarooTail:
             & (data['high'] >= data['high'].rolling(13).max())
         )
         return bearish_kangaroo_tail
-
-    def __str__(self) -> str:
-        return '_PATTERNKANGAROOTAIL'

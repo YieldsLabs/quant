@@ -1,7 +1,13 @@
 import pandas as pd
+from shared.meta_label import meta_label
+
+from ta.patterns.abstract_pattern import AbstractPattern
 
 
-class Piercing:
+@meta_label
+class Piercing(AbstractPattern):
+    NAME = 'PIERCING'
+
     @staticmethod
     def bullish(data):
         if len(data) < 2:
@@ -37,6 +43,3 @@ class Piercing:
         dark_cloud_cover = long_bullish & long_bearish & close_below_midpoint & close_above_first_open & open_above_first_close
 
         return dark_cloud_cover
-
-    def __str__(self) -> str:
-        return '_PATTERNPIERCING'

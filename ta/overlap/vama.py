@@ -1,8 +1,13 @@
+from shared.meta_label import meta_label
 from ta.base.abstract_indicator import AbstractIndicator
 
 
+@meta_label
 class VolumeAdjustedMovingAverage(AbstractIndicator):
+    NAME = 'VAMA'
+
     def __init__(self, short_volatility=50, long_volatility=1000, alpha_factor=0.20):
+        super().__init__()
         self.short_volatility = short_volatility
         self.long_volatility = long_volatility
         self.alpha_factor = alpha_factor
@@ -20,6 +25,3 @@ class VolumeAdjustedMovingAverage(AbstractIndicator):
             vama.iloc[i] = vama.iloc[i - 1] * (1 - alpha.iloc[i]) + data['close'].iloc[i] * alpha.iloc[i]
 
         return vama
-
-    def __str__(self) -> str:
-        return f'_VAMA_{self.short_volatility}_{self.long_volatility}_{self.alpha_factor}'

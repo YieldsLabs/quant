@@ -1,18 +1,22 @@
+from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
-from ta.base.ma import MovingAverage
+from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.kangaroo_tail import KangarooTail
 
 
+@meta_label
 class KangarooTailStrategy(AbstractStrategy):
-    def __init__(self, lookback=200, sma_period=100):
+    NAME = "KANGAROOTAIL"
+
+    def __init__(self, sma_period=100, lookback=200):
         super().__init__()
-        self.ma = MovingAverage(sma_period)
+        self.ma = ZeroLagEMA(sma_period)
         self.lookback = lookback
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
 
-        data['sma'] = self.ma.smma(data['close'])
+        data['sma'] = self.ma.call(data['close'])
         data['bullish_kangaroo_tail'] = KangarooTail.bullish(data, self.lookback)
         data['bearish_kangaroo_tail'] = KangarooTail.bearish(data, self.lookback)
 
@@ -39,6 +43,3 @@ class KangarooTailStrategy(AbstractStrategy):
 
     def exit(self, ohlcv):
         pass
-
-    def __str__(self) -> str:
-        return f'_STRATEGYKANGAROOTAIL_{self.lookback}{self.ma}{KangarooTail()}'

@@ -1,15 +1,19 @@
-from ta.alerts.mfi_alerts import MoneyFlowIndexAlerts
+from shared.meta_label import meta_label
+from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from strategy.abstract_strategy import AbstractStrategy
 from ta.patterns.engulfing import Engulfing
 from ta.patterns.harami import Harami
 
 
+@meta_label
 class EngulfingSMA(AbstractStrategy):
+    NAME = "ESMA"
+
     def __init__(self, slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
         super().__init__()
         self.slow_sma = ZeroLagEMA(window=slow_sma_period)
-        self.mfi = MoneyFlowIndexAlerts(overbought_level=upper_barrier, oversold_level=lower_barrier)
+        self.mfi = MoneyFlowIndexAlert(overbought_level=upper_barrier, oversold_level=lower_barrier)
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct
 
@@ -70,6 +74,3 @@ class EngulfingSMA(AbstractStrategy):
 
     def exit(self, ohlcv):
         pass
-
-    def __str__(self) -> str:
-        return f'_STRATEGYEGULFINGSMA_{self.tolerance}_{self.retracement_pct}{self.slow_sma}{self.mfi}{Engulfing()}{Harami()}'

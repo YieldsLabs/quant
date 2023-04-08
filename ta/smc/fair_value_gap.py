@@ -1,11 +1,15 @@
+from shared.meta_label import meta_label
 from ta.base.abstract_indicator import AbstractIndicator
 from ta.base.ma import MovingAverage
 
 
+@meta_label
 class FairValueGap(AbstractIndicator):
+    NAME = "FVG"
+
     def __init__(self, lookback=15):
+        super().__init__()
         self.ma = MovingAverage(window=lookback)
-        self.lookback = lookback
 
     def call(self, data):
         fair_values = data['close']
@@ -13,9 +17,6 @@ class FairValueGap(AbstractIndicator):
         fair_value_mean = self.ma.sma(fair_values)
         fair_value_gap = fair_values - fair_value_mean
 
-        fair_value_gap.iloc[:self.lookback] = None
+        fair_value_gap.iloc[:self.ma.window] = None
 
         return fair_value_gap
-
-    def __str__(self) -> str:
-        return f'_FVG_{self.lookback}{self.ma}'

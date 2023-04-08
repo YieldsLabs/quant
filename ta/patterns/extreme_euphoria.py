@@ -1,7 +1,13 @@
 import numpy as np
+from shared.meta_label import meta_label
+
+from ta.patterns.abstract_pattern import AbstractPattern
 
 
-class ExtremeEuphoria:
+@meta_label
+class ExtremeEuphoria(AbstractPattern):
+    NAME = 'EXTREMEEUPHORIA'
+
     @staticmethod
     def bullish(data):
         bullish_extreme_euphoria = (
@@ -29,6 +35,3 @@ class ExtremeEuphoria:
             & (np.abs(data['close'].shift(3) - data['open'].shift(3)) > np.abs(data['close'].shift(4) - data['open'].shift(4)))
         )
         return bearish_extreme_euphoria
-
-    def __str__(self) -> str:
-        return '_PATTERNEXTREMEEUPHORIA'

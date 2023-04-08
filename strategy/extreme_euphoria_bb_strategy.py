@@ -1,9 +1,13 @@
+from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
 from ta.volatility.bbands import BollingerBands
 from ta.patterns.extreme_euphoria import ExtremeEuphoria
 
 
+@meta_label
 class ExtremeEuphoriaBBStrategy(AbstractStrategy):
+    NAME = "EEBB"
+
     def __init__(self, sma_period=20, multiplier=2):
         super().__init__()
         self.bb_indicator = BollingerBands(sma_period, multiplier)
@@ -35,6 +39,3 @@ class ExtremeEuphoriaBBStrategy(AbstractStrategy):
 
     def exit(self, ohlcv):
         pass
-
-    def __str__(self) -> str:
-        return f'_STRATEGYEXTREMEEUPHORIA{self.bb_indicator}{ExtremeEuphoria()}'

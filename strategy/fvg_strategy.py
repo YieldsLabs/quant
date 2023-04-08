@@ -1,20 +1,21 @@
+from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
-from ta.alerts.mfi_alerts import MoneyFlowIndexAlerts
+from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from ta.smc.fair_value_gap import FairValueGap
 
 
+@meta_label
 class FairValueGapStrategy(AbstractStrategy):
-    def __init__(self, lookback=40, overbought=70, oversold=30, fair_value=0.5, slow_sma_period=100, tolerance=0.02):
+    NAME = "FVG"
+
+    def __init__(self, slow_sma_period=100, period=14, overbought=70, oversold=30, lookback=40, fair_value=0.5, tolerance=0.02):
         super().__init__()
-        self.fvg_indicator = FairValueGap(lookback)
         self.zlema = ZeroLagEMA(window=slow_sma_period)
-        self.mfi = MoneyFlowIndexAlerts(overbought_level=overbought, oversold_level=oversold)
-        
-        self.lookback = lookback
+        self.mfi = MoneyFlowIndexAlert(period=period, overbought_level=overbought, oversold_level=oversold)
+        self.fvg_indicator = FairValueGap(lookback)
         self.fair_value = fair_value
         self.tolerance = tolerance
-
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()
@@ -38,7 +39,7 @@ class FairValueGapStrategy(AbstractStrategy):
         return buy_confirmation, sell_confirmation
 
     def entry(self, ohlcv):
-        if len(ohlcv) < self.lookback:
+        if len(ohlcv) < self.fvg_indicator.lookback:
             return False, False
 
         data = self._add_indicators(ohlcv)
@@ -64,6 +65,3 @@ class FairValueGapStrategy(AbstractStrategy):
 
     def exit(self, ohlcv):
         pass
-
-    def __str__(self) -> str:
-        return f'_STRATEGYFGV_{self.lookback}_{self.fair_value}_{self.tolerance}{self.fvg_indicator}{self.zlema}{self.mfi}'

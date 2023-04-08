@@ -1,10 +1,15 @@
 
+from shared.meta_label import meta_label
 from ta.base.abstract_indicator import AbstractIndicator
 from ta.base.ma import MovingAverage
 
 
+@meta_label
 class RelativeStrengthIndex(AbstractIndicator):
+    NAME = 'RSI'
+
     def __init__(self, period=14):
+        super().__init__()
         self.ma = MovingAverage(window=period)
 
     def call(self, data, column='close'):
@@ -21,6 +26,3 @@ class RelativeStrengthIndex(AbstractIndicator):
         rsi = 100 - (100 / (1 + rs))
 
         return rsi
-
-    def __str__(self) -> str:
-        return f'_RSI{self.ma}'

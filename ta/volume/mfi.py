@@ -1,8 +1,13 @@
+from shared.meta_label import meta_label
 from ta.base.abstract_indicator import AbstractIndicator
 
 
+@meta_label
 class MoneyFlowIndex(AbstractIndicator):
+    NAME = 'MFI'
+
     def __init__(self, period=14):
+        super().__init__()
         self.period = period
 
     def call(self, ohlcv):
@@ -20,6 +25,3 @@ class MoneyFlowIndex(AbstractIndicator):
         mfi = 100 - (100 / (1 + money_flow_ratio))
 
         return mfi
-
-    def __str__(self) -> str:
-        return f'_MFI_{self.period}'

@@ -1,10 +1,15 @@
 import pandas as pd
+from shared.meta_label import meta_label
 
 from ta.base.abstract_indicator import AbstractIndicator
 
 
+@meta_label
 class AverageTrueRange(AbstractIndicator):
+    NAME = 'ATR'
+
     def __init__(self, period=14, smoothing='RMA'):
+        super().__init__()
         self.period = period
         self.smoothing = smoothing
 
@@ -32,6 +37,3 @@ class AverageTrueRange(AbstractIndicator):
             data['atr'] = data['true_range'].rolling(window=self.period).mean()
 
         return data['atr']
-
-    def __str__(self) -> str:
-        return f'_ATR_{self.period}_{self.smoothing}'

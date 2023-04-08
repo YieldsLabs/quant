@@ -1,10 +1,14 @@
 
+from shared.meta_label import meta_label
 from strategy.abstract_strategy import AbstractStrategy
 from ta.patterns.engulfing import Engulfing
 from ta.volatility.bbands import BollingerBands
 
 
+@meta_label
 class BollingerEngulfing(AbstractStrategy):
+    NAME = "BE"
+
     def __init__(self, sma_period=20, multiplier=2):
         super().__init__()
         self.bb = BollingerBands(sma_period=sma_period, multiplier=multiplier)
@@ -38,6 +42,3 @@ class BollingerEngulfing(AbstractStrategy):
 
     def exit(self, ohlcv):
         pass
-
-    def __str__(self) -> str:
-        return f'_STRATEGYBBENGULFING{self.bb}{Engulfing()}'

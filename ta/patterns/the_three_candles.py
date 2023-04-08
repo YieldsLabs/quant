@@ -1,4 +1,11 @@
-class TheThreeCandles:
+from shared.meta_label import meta_label
+from ta.patterns.abstract_pattern import AbstractPattern
+
+
+@meta_label
+class TheThreeCandles(AbstractPattern):
+    NAME = 'THETHREECANDLES'
+
     @staticmethod
     def three_white_soldiers(data):
         body = (data['close'] - data['open']).abs()
@@ -20,6 +27,3 @@ class TheThreeCandles:
                     (body.shift(1) >= body.shift(1).rolling(window=5).max()) & \
                     (body.shift(2) >= body.shift(2).rolling(window=5).max())
         return condition
-
-    def __str__(self) -> str:
-        return '_PATTERNTHETHREECANDLES'

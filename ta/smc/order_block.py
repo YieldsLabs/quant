@@ -1,10 +1,15 @@
 import pandas as pd
+from shared.meta_label import meta_label
 
 from ta.base.abstract_indicator import AbstractIndicator
 
 
+@meta_label
 class OrderBlock(AbstractIndicator):
+    NAME = "OB"
+
     def __init__(self, lookback=25):
+        super().__init__()
         self.lookback = lookback
 
     def call(self, data):
@@ -18,6 +23,3 @@ class OrderBlock(AbstractIndicator):
         df.iloc[:self.lookback] = None
 
         return df['order_block_high'], df['order_block_low']
-
-    def __str__(self) -> str:
-        return f'_OB_{self.lookback}'

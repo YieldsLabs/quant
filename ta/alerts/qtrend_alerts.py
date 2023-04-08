@@ -1,4 +1,5 @@
 from enum import Enum
+from shared.meta_label import meta_label
 
 from ta.alerts.abstract_alert import AbstractAlert
 from ta.volatility.atr import AverageTrueRange
@@ -9,7 +10,10 @@ class SignalMode(Enum):
     TypeB = 2
 
 
-class QTrendAlerts(AbstractAlert):
+@meta_label
+class QTrendAlert(AbstractAlert):
+    NAME = "QTREND"
+
     def __init__(self, p=200, atr_p=14, mult=1.0, mode=SignalMode.TypeA, use_ema_smoother=False, src_ema_period=3):
         super().__init__()
         self.p = p

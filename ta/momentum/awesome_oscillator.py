@@ -1,9 +1,14 @@
+from shared.meta_label import meta_label
 from ta.base.abstract_indicator import AbstractIndicator
 from ta.base.ma import MovingAverage
 
 
+@meta_label
 class AwesomeOscillator(AbstractIndicator):
+    NAME = 'AO'
+
     def __init__(self, ao_short_period=5, ao_long_period=34):
+        super().__init__()
         self.short_period_ma = MovingAverage(ao_short_period)
         self.long_period_ma = MovingAverage(ao_long_period)
 
@@ -14,6 +19,3 @@ class AwesomeOscillator(AbstractIndicator):
         sma_long = self.long_period_ma.sma(median_price)
 
         return sma_short - sma_long
-
-    def __str__(self) -> str:
-        return f'_AO{self.short_period_ma}{self.long_period_ma}'

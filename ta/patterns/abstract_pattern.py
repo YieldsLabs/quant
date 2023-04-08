@@ -1,18 +1,16 @@
 from abc import ABC, abstractmethod
 
-import pandas as pd
 
-
-class AbstractStrategy(ABC):
-    SUFFIX = '_STRATEGY'
+class AbstractPattern(ABC):
+    SUFFIX = "_PATTERN"
     NAME = ""
 
     @abstractmethod
-    def entry(self, ohlcv: pd.DataFrame):
+    def bullish(self, data):
         raise NotImplementedError
 
     @abstractmethod
-    def exit(self, ohlcv: pd.DataFrame):
+    def bearish(self, data):
         raise NotImplementedError
 
     def __str__(self) -> str:

@@ -1,7 +1,10 @@
 import numpy as np
 from pandas import Series
 
+from shared.meta_label import meta_label
 
+
+@meta_label
 class MovingAverage:
     def __init__(self, window=20):
         self.window = window
@@ -21,6 +24,3 @@ class MovingAverage:
 
     def vwma(self, close: Series, volume: Series):
         return (close * volume).rolling(window=self.window).sum() / volume.rolling(window=self.window).sum()
-
-    def __str__(self) -> str:
-        return f'_MA_{self.window}'

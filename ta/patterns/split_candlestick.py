@@ -1,7 +1,13 @@
 import numpy as np
+from shared.meta_label import meta_label
+
+from ta.patterns.abstract_pattern import AbstractPattern
 
 
-class SplitCandlestick:
+@meta_label
+class SplitCandlestick(AbstractPattern):
+    NAME = 'SPLITCANDLESTICK'
+
     @staticmethod
     def bullish(data):
         bullish_split = (
@@ -29,6 +35,3 @@ class SplitCandlestick:
         )
 
         return bearish_split
-
-    def __str__(self) -> str:
-        return '_PATTERNSPLITCANDLESTICK'
