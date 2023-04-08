@@ -33,8 +33,8 @@ lookback = 1000
 
 broker = FuturesBybitBroker(API_KEY, API_SECRET)
 broker.set_leverage(symbol, leverage)
-broker.set_position_mode(symbol, PositionMode.ONE_WAY)
-broker.set_margin_mode(symbol, mode=MarginMode.ISOLATED, leverage=leverage)
+broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
+broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
 
 market = broker.get_symbol_info(symbol)
 initial_balance = broker.get_account_balance()
