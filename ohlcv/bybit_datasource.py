@@ -5,7 +5,7 @@ from broker.abstract_broker import AbstractBroker
 from ohlcv.abstract_datasource import AbstractDatasource
 from shared.timeframes import Timeframes
 from requests.exceptions import RequestException
-
+from cachetools import TTLCache, cached
 
 class BybitDataSource(AbstractDatasource):
     def __init__(self, broker: Type[AbstractBroker], lookback=1000, max_retries=7, initial_retry_delay=3):
@@ -14,6 +14,7 @@ class BybitDataSource(AbstractDatasource):
         self.max_retries = max_retries
         self.initial_retry_delay = initial_retry_delay
 
+    @cached(cache=TTLCache(maxsize=100, ttl=5))
     def fetch(self, symbol: str, timeframe: Timeframes):
         retries = 0
 

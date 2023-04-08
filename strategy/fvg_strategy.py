@@ -39,7 +39,7 @@ class FairValueGapStrategy(AbstractStrategy):
         return buy_confirmation, sell_confirmation
 
     def entry(self, ohlcv):
-        if len(ohlcv) < self.fvg_indicator.lookback:
+        if len(ohlcv) < self.fvg_indicator.ma.window:
             return False, False
 
         data = self._add_indicators(ohlcv)
