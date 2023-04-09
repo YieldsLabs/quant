@@ -6,6 +6,3 @@ class NoopTakeProfitFinder(AbstractTakeProfit):
 
     def next(self, position_side, entry_price, stop_loss_price=0):
         return None
-
-    def __str__(self):
-        return f'{super().__str__()}'

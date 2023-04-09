@@ -1,4 +1,5 @@
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
+from shared.meta_label.meta_label import meta_label
 from shared.position_side import PositionSide
 
 
@@ -18,6 +19,3 @@ class RiskRewardTakeProfitFinder(AbstractTakeProfit):
             take_profit_price = entry_price - self.risk_reward_ratio * risk
 
         return take_profit_price
-
-    def __str__(self):
-        return f'{super().__str__()}'

@@ -8,10 +8,10 @@ from ta.patterns.harami import Harami
 class EngulfingSMA(AbstractStrategy):
     NAME = "ESMA"
 
-    def __init__(self, slow_sma_period=200, upper_barrier=80, lower_barrier=20, tolerance=0.002, retracement_pct=0.05):
+    def __init__(self, slow_sma_period=200, oversold=20, overbought=80, tolerance=0.002, retracement_pct=0.05):
         super().__init__()
         self.slow_sma = ZeroLagEMA(window=slow_sma_period)
-        self.mfi = MoneyFlowIndexAlert(overbought_level=upper_barrier, oversold_level=lower_barrier)
+        self.mfi = MoneyFlowIndexAlert(overbought_level=oversold, oversold_level=overbought)
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct
 

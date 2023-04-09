@@ -6,9 +6,9 @@ from ta.patterns.extreme_euphoria import ExtremeEuphoria
 class ExtremeEuphoriaBBStrategy(AbstractStrategy):
     NAME = "EEBB"
 
-    def __init__(self, sma_period=20, multiplier=2):
+    def __init__(self, sma_period=20, stdev_multi=2):
         super().__init__()
-        self.bb_indicator = BollingerBands(sma_period, multiplier)
+        self.bb_indicator = BollingerBands(sma_period, multiplier=stdev_multi)
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()

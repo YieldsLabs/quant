@@ -8,14 +8,14 @@ from ta.momentum.awesome_oscillator import AwesomeOscillator
 class AwesomeOscillatorBBStrategy(AbstractStrategy):
     NAME = "AOBB"
 
-    def __init__(self, ao_short_period=5, ao_long_period=34, bb_period=25, bb_std_dev=2, sma_period=50, mfi_period=14, mfi_buy_level=40, mfi_sell_level=60):
+    def __init__(self, ao_short_period=5, ao_long_period=34, sma_period=25, stdev_multi=2, slow_sma_period=50, mfi_period=14, oversold=40, overbought=60):
         super().__init__()
         self.ao = AwesomeOscillator(ao_short_period=ao_short_period, ao_long_period=ao_long_period)
-        self.bb = BollingerBands(sma_period=bb_period, multiplier=bb_std_dev)
-        self.sma = ZeroLagEMA(window=sma_period)
+        self.bb = BollingerBands(sma_period=sma_period, multiplier=stdev_multi)
+        self.sma = ZeroLagEMA(window=slow_sma_period)
         self.mfi = MoneyFlowIndex(period=mfi_period)
-        self.mfi_buy_level = mfi_buy_level
-        self.mfi_sell_level = mfi_sell_level
+        self.mfi_buy_level = oversold
+        self.mfi_sell_level = overbought
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()

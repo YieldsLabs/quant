@@ -6,9 +6,9 @@ from ta.patterns.kangaroo_tail import KangarooTail
 class KangarooTailStrategy(AbstractStrategy):
     NAME = "KANGAROOTAIL"
 
-    def __init__(self, sma_period=100, lookback=200):
+    def __init__(self, slow_sma_period=100, lookback=200):
         super().__init__()
-        self.ma = ZeroLagEMA(sma_period)
+        self.ma = ZeroLagEMA(slow_sma_period)
         self.lookback = lookback
 
     def _add_indicators(self, ohlcv):

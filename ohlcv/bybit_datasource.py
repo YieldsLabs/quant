@@ -7,6 +7,7 @@ from shared.timeframes import Timeframes
 from requests.exceptions import RequestException
 from cachetools import TTLCache, cached
 
+
 class BybitDataSource(AbstractDatasource):
     def __init__(self, broker: Type[AbstractBroker], lookback=1000, max_retries=7, initial_retry_delay=3):
         self.broker = broker

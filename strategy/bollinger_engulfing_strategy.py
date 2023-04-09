@@ -6,9 +6,9 @@ from ta.volatility.bbands import BollingerBands
 class BollingerEngulfing(AbstractStrategy):
     NAME = "BE"
 
-    def __init__(self, sma_period=20, multiplier=2):
+    def __init__(self, sma_period=20, stdev_multi=2):
         super().__init__()
-        self.bb = BollingerBands(sma_period=sma_period, multiplier=multiplier)
+        self.bb = BollingerBands(sma_period=sma_period, multiplier=stdev_multi)
 
     def _add_indicators(self, ohlcv):
         data = ohlcv.copy()

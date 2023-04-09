@@ -49,21 +49,49 @@ class StrategyScreening(AbstractScreening):
         seen_ids.add(id)
         return True
 
-    def _generate_id(self, symbol, timeframe, strategy, risk_manager_tuple):
-        return f"{symbol}_{timeframe}{strategy}{risk_manager_tuple[1]}{risk_manager_tuple[2]}"
+    def _generate_id(self, symbol, timeframe, strategy, rm):
+        _, stop_loss, take_profit = rm
+
+        return f"{symbol}_{timeframe}{strategy}{stop_loss}{take_profit}"
 
     def run(self):
         market_dict = {symbol: self.broker.get_symbol_info(symbol) for symbol in self.symbols}
-        risk_manager_dict = {(symbol, stop_loss_finder, take_profit_finder): RiskManager(stop_loss_finder, take_profit_finder, **market_dict[symbol]) for symbol in self.symbols for stop_loss_finder, take_profit_finder in product(self.stop_loss_finders, self.take_profit_finders)}
+        risk_manager_products = product(self.stop_loss_finders, self.take_profit_finders)
 
-        combined_settings = list(product(self.symbols, self.timeframes, self.strategies, risk_manager_dict.keys()))
+        risk_manager_dict = {
+            (symbol, stop_loss_finder, take_profit_finder): RiskManager(
+                stop_loss_finder,
+                take_profit_finder,
+                **market_dict[symbol],
+            )
+            for symbol in self.symbols
+            for stop_loss_finder, take_profit_finder in risk_manager_products
+        }
+
         seen_ids = set()
-        unique_settings = [(symbol, timeframe, strategy, risk_manager_tuple, self._generate_id(symbol, timeframe, strategy, risk_manager_tuple)) for symbol, timeframe, strategy, risk_manager_tuple in combined_settings if self._is_unique_id(self._generate_id(symbol, timeframe, strategy, risk_manager_tuple), seen_ids)]
+        
+        def _settings_generator():
+            for symbol, timeframe, strategy in product(self.symbols, self.timeframes, self.strategies):
+                for risk_manager_key in risk_manager_dict.keys():
+                    current_id = self._generate_id(symbol, timeframe, strategy, risk_manager_key)
+                    if self._is_unique_id(current_id, seen_ids):
+                        yield (symbol, timeframe, strategy, risk_manager_key, current_id)
+
+        unique_settings = list(_settings_generator())
 
         random.shuffle(unique_settings)
 
         with ThreadPoolExecutor() as executor:
-            results_list = [executor.submit(self._run_backtest, (setting[0], setting[1], setting[2], setting[4]), risk_manager_dict[setting[0], setting[3][1], setting[3][2]]) for setting in unique_settings]
+            results_list = [
+                executor.submit(
+                    self._run_backtest,
+                    (setting[0], setting[1], setting[2], setting[4]),
+                    risk_manager_dict[setting[3]],
+                )
+                for setting in unique_settings
+            ]
             results_list = [result.result() for result in results_list]
 
-        return pd.DataFrame(results_list).sort_values(by=self.sort_by, ascending=False)
+        return pd.DataFrame(results_list).sort_values(
+            by=self.sort_by, ascending=False
+        )
