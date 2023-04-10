@@ -44,15 +44,15 @@ ohlcv_context = OhlcvContext(datasource)
 
 symbols = [
     'NEARUSDT',
-    'SOLUSDT',
-    'AVAXUSDT',
-    'XRPUSDT'
+    # 'SOLUSDT',
+    # 'AVAXUSDT',
+    # 'XRPUSDT'
 ]
 
 timeframes = [
     Timeframes.ONE_MINUTE,
-    Timeframes.THREE_MINUTES,
-    Timeframes.FIVE_MINUTES
+    # Timeframes.THREE_MINUTES,
+    # Timeframes.FIVE_MINUTES
 ]
 
 
@@ -62,15 +62,15 @@ def create_map(classes):
 
 strategy_map = create_map([
     EngulfingSMA,
-    BollingerEngulfing,
-    ExtremeEuphoriaBBStrategy,
-    AwesomeOscillatorBBStrategy,
-    FairValueGapStrategy,
-    KangarooTailStrategy
+    # BollingerEngulfing,
+    # ExtremeEuphoriaBBStrategy,
+    # AwesomeOscillatorBBStrategy,
+    # FairValueGapStrategy,
+    # KangarooTailStrategy
 ])
 stoploss_map = create_map([
     ATRStopLossFinder,
-    LowHighStopLossFinder
+    # LowHighStopLossFinder
 ])
 takeprofit_map = create_map([RiskRewardTakeProfitFinder])
 timeframe_map = {

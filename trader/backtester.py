@@ -19,41 +19,39 @@ class SignalType(Enum):
 
 
 class Backtester(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000, window=10):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000, window_size=100):
         super().__init__(ohlcv)
         self.broker = broker
         self.risk_management = risk_management
         self.initial_account_size = initial_account_size
         self.analytics = analytics
         self.trade_type = trade_type
-        self.window = window
+        self.window_size = window_size
         self.orders = []
 
     @update_ohlcv
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: Timeframes):
         long_signals, short_signals = self._generate_signals(strategy)
-
         return self._calculate_performance(long_signals, short_signals)
 
     def _generate_signals(self, strategy):
-        def apply_strategy(data):
-            long_signal, short_signal = strategy.entry(data)
-            return pd.Series([long_signal, short_signal], index=['long_signal', 'short_signal'])
-        
-        numeric_data = self.ohlcv_context.ohlcv.iloc[:, 1:]
-        
-        rolling_window = numeric_data.rolling(window=self.window, min_periods=1)
-        
-        signal_df_long = rolling_window.apply(lambda data: apply_strategy(data)['long_signal'], raw=False)
-        signal_df_short = rolling_window.apply(lambda data: apply_strategy(data)['short_signal'], raw=False)
-        
-        long_signals = signal_df_long.astype(bool)
-        short_signals = signal_df_short.astype(bool)
+        ohlcv = self.ohlcv_context.ohlcv
 
-        go_long = self.ohlcv_context.ohlcv[long_signals]
-        go_short = self.ohlcv_context.ohlcv[short_signals]
+        n_rows = len(ohlcv)
+        
+        long_signals = []
+        short_signals = []
 
-        return go_long, go_short
+        for i in range(n_rows - self.window_size + 1):
+            window_data = ohlcv.iloc[i:i + self.window_size]
+            long_signal, short_signal = strategy.entry(window_data)
+
+            if long_signal:
+                long_signals.append(window_data.iloc[-1])
+            if short_signal:
+                short_signals.append(window_data.iloc[-1])
+
+        return pd.DataFrame(long_signals), pd.DataFrame(short_signals)
 
     def _calculate_performance(self, long_signals, short_signals):
         long_signals['signal'], short_signals['signal'] = SignalType.LONG, SignalType.SHORT

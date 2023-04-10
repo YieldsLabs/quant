@@ -37,9 +37,9 @@ class AwesomeOscillatorBBStrategy(AbstractStrategy):
         sell_signal = self._generate_sell_signal(data)
 
         return buy_signal, sell_signal
-
+    
     def exit(self, ohlcv):
-        pass
+        return False, False
 
     def _generate_buy_signal(self, data):
         last_row = data.iloc[-1]

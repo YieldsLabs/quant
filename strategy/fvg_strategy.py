@@ -60,6 +60,6 @@ class FairValueGapStrategy(AbstractStrategy):
         )
 
         return buy_signal, sell_signal
-
+    
     def exit(self, ohlcv):
-        pass
+        return False, False
