@@ -4,6 +4,7 @@ import random
 import time
 from typing import List, Type
 
+import multiprocessing
 import pandas as pd
 from analytics.abstract_performace import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
@@ -38,7 +39,7 @@ class StrategyScreening(AbstractScreening):
         print(f"Backtest: {id}")
 
         backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
-
+        
         result = backtester.trade(strategy, symbol, timeframe)
 
         result.update({'id': id})
@@ -73,7 +74,7 @@ class StrategyScreening(AbstractScreening):
 
         seen_ids = set()
         risk_manager_keys = list(risk_manager_dict.keys())
-            
+
         def _settings_generator():
             for symbol, timeframe, strategy in product(self.symbols, self.timeframes, self.strategies):
                 for risk_manager_key in risk_manager_keys:
@@ -85,7 +86,7 @@ class StrategyScreening(AbstractScreening):
 
         random.shuffle(unique_settings)
 
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
             results_list = [
                 executor.submit(
                     self._run_backtest,
