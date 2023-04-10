@@ -1,8 +1,8 @@
 import inspect
-from cachetools import cached
+from cachetools import cached, LRUCache
 
 
-@cached(cache={})
+@cached(cache=LRUCache(maxsize=1000))
 def extract_numeric_params(instance):
     numeric_params = []
     signature = inspect.signature(instance.__class__.__init__)

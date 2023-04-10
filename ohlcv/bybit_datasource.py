@@ -15,23 +15,25 @@ class BybitDataSource(AbstractDatasource):
         self.max_retries = max_retries
         self.initial_retry_delay = initial_retry_delay
 
-    @cached(cache=TTLCache(maxsize=500, ttl=10))
+    @cached(cache=TTLCache(maxsize=5000, ttl=8))
     def fetch(self, symbol: str, timeframe: Timeframes):
+        return self._retry(
+            self.broker.get_historical_data,
+            symbol,
+            timeframe.value,
+            lookback=self.lookback,
+        )
+    
+    def _retry(self, function, *args, **kwargs):
         retries = 0
-
         while retries < self.max_retries:
             try:
-                return self.broker.get_historical_data(symbol, timeframe.value, lookback=self.lookback)
+                return function(*args, **kwargs)
+            except (RequestException, Exception) as e:
+                print(f"Error: {e}. Retrying...")
+                retries += 1
+                retry_delay = self.initial_retry_delay * (2 ** retries) * random.uniform(0.5, 1.5)
+                print(f"Waiting {retry_delay} seconds before retrying.")
+                time.sleep(retry_delay)
 
-            except RequestException as e:
-                print(f"Request error: {e}. Retrying...")
-
-            except Exception as e:
-                print(f"Unexpected error: {e}. Retrying...")
-
-            retry_delay = self.initial_retry_delay * (2 ** retries) * random.uniform(0.5, 1.5)
-            print(f"Waiting {retry_delay} seconds before retrying.")
-            time.sleep(retry_delay)
-            retries += 1
-
-        raise Exception(f"Failed to fetch data for {symbol} after {self.max_retries} retries.")
+        raise Exception("Failed to fetch data after reaching maximum retries.")

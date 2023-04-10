@@ -6,9 +6,9 @@ strategy_hyperparameters = {
 }
 
 stoploss_hyperparameters = {
-    'atr_multi': [0.5, 1.5, 0.1],
+    'atr_multi': [0.7, 1.6, 0.1],
 }
 
 takeprofit_hyperparameters = {
-    'risk_reward_ratio': [1, 4, 0.5],
+    'risk_reward_ratio': [1, 5.5, 0.5],
 }

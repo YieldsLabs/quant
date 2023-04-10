@@ -17,7 +17,7 @@ from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossF
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 
 from risk_management.risk_manager import RiskManager
-from shared.meta_label.meta_label import extract_numeric_params
+from shared.meta_label.parse_label import parse_meta_label
 from shared.timeframes import Timeframes
 from strategy.aobb_strategy import AwesomeOscillatorBBStrategy
 from strategy.bollinger_engulfing_strategy import BollingerEngulfing
@@ -57,40 +57,21 @@ timeframes = [
 
 
 def create_map(classes):
-    map = {}
-    for cls in classes:
-        name = cls.NAME
-        if name is not None:
-            map[name] = cls
-    return map
+    return {cls.NAME: cls for cls in classes if cls.NAME is not None}
 
-def parse_label(label: str):
-    pattern = r"([A-Z]+[A-Z\d]+)_(\d+[smhd])_STRATEGY([A-Z]+)([\d:.]+)_STOPLOSS([A-Z]+)([\d:.]+)_TAKEPROFIT([A-Z]+)([\d:.]+)"
-    matches = re.match(pattern, label)
 
-    symbol = matches.group(1)
-    timeframe = matches.group(2)
-
-    strategy_name = matches.group(3)
-    strategy_params = [float(p) if '.' in p else int(p) for p in matches.group(4).split(':')]
-
-    stop_loss_name = matches.group(5)
-    stop_loss_params = [float(p) if '.' in p else int(p) for p in matches.group(6).split(':')]
-
-    take_profit_name = matches.group(7)
-    take_profit_params = [float(p) if '.' in p else int(p) for p in matches.group(8).split(':')]
-
-    return symbol, timeframe, (strategy_name, strategy_params), (stop_loss_name, stop_loss_params), (take_profit_name, take_profit_params)
-
-strategy = [
+strategy_map = create_map([
     EngulfingSMA,
     BollingerEngulfing,
     ExtremeEuphoriaBBStrategy,
-    AwesomeOscillatorBBStrategy
-]
-
-strategy_map = create_map(strategy)
-stoploss_map = create_map([ATRStopLossFinder, LowHighStopLossFinder])
+    AwesomeOscillatorBBStrategy,
+    FairValueGapStrategy,
+    KangarooTailStrategy
+])
+stoploss_map = create_map([
+    ATRStopLossFinder,
+    LowHighStopLossFinder
+])
 takeprofit_map = create_map([RiskRewardTakeProfitFinder])
 timeframe_map = {
     '1m': Timeframes.ONE_MINUTE,
@@ -98,14 +79,13 @@ timeframe_map = {
     '5m': Timeframes.FIVE_MINUTES
 }
 
-stop_loss_finders = [] \
-    + [ATRStopLossFinder(ohlcv_context, atr_multi=round(atr_multi, 2)) for atr_multi in np.arange(*stoploss_hyperparameters['atr_multi'])] \
-    + [LowHighStopLossFinder(ohlcv_context, atr_multi=round(atr_multi, 2)) for atr_multi in np.arange(*stoploss_hyperparameters['atr_multi'])]
+atr_multi_range = np.arange(*stoploss_hyperparameters['atr_multi'])
+stop_loss_finders = [cls(ohlcv_context, atr_multi=round(atr_multi, 2)) for cls in stoploss_map.values() for atr_multi in atr_multi_range]
 
-take_profit_finders = [] \
-    + [RiskRewardTakeProfitFinder(risk_reward_ratio=round(risk_reward_ratio, 2)) for risk_reward_ratio in np.arange(*takeprofit_hyperparameters['risk_reward_ratio'])]
+risk_reward_range = np.arange(*takeprofit_hyperparameters['risk_reward_ratio'])
+take_profit_finders = [cls(risk_reward_ratio=round(risk_reward_ratio, 2)) for cls in takeprofit_map.values() for risk_reward_ratio in risk_reward_range]
 
-strategies = [cls() for cls in strategy]
+strategies = [cls() for cls in strategy_map.values()]
 
 screener = StrategyScreening(
     ohlcv=ohlcv_context,
@@ -122,9 +102,9 @@ result = screener.run()
 
 result.to_csv('strategy.csv')
 
-label = str(result.head(1)['id'].iloc[0])
+meta_label = str(result.head(1)['id'].iloc[0])
 
-symbol, _timeframe, _strategy, _stop_loss, _take_profit = parse_label(label)
+symbol, _timeframe, _strategy, _stop_loss, _take_profit = parse_meta_label(meta_label)
 
 timeframe = timeframe_map[_timeframe]
 strategy = strategy_map[_strategy[0]](*_strategy[1])
@@ -150,6 +130,7 @@ invervals = {
 }
 
 channels = [f"kline.{invervals[timeframe]}.{symbol}"]
+
 
 def on_open(ws):
     print("WebSocket connection opened")

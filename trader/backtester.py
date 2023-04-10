@@ -19,13 +19,14 @@ class SignalType(Enum):
 
 
 class Backtester(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
+    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000, window=10):
         super().__init__(ohlcv)
         self.broker = broker
         self.risk_management = risk_management
         self.initial_account_size = initial_account_size
         self.analytics = analytics
         self.trade_type = trade_type
+        self.window = window
         self.orders = []
 
     @update_ohlcv
@@ -35,24 +36,26 @@ class Backtester(AbstractTrader):
         return self._calculate_performance(long_signals, short_signals)
 
     def _generate_signals(self, strategy):
-        go_long = []
-        go_short = []
-        for index, row in self.ohlcv_context.ohlcv.iterrows():
-            long_signal, short_signal = strategy.entry(self.ohlcv_context.ohlcv[:index])
+        def apply_strategy(data):
+            long_signal, short_signal = strategy.entry(data)
+            return pd.Series([long_signal, short_signal], index=['long_signal', 'short_signal'])
+        
+        numeric_data = self.ohlcv_context.ohlcv.iloc[:, 1:]
+        
+        rolling_window = numeric_data.rolling(window=self.window, min_periods=1)
+        
+        signal_df_long = rolling_window.apply(lambda data: apply_strategy(data)['long_signal'], raw=False)
+        signal_df_short = rolling_window.apply(lambda data: apply_strategy(data)['short_signal'], raw=False)
+        
+        long_signals = signal_df_long.astype(bool)
+        short_signals = signal_df_short.astype(bool)
 
-            if long_signal:
-                go_long.append(row)
-            if short_signal:
-                go_short.append(row)
+        go_long = self.ohlcv_context.ohlcv[long_signals]
+        go_short = self.ohlcv_context.ohlcv[short_signals]
 
-        return pd.DataFrame(go_long), pd.DataFrame(go_short)
+        return go_long, go_short
 
     def _calculate_performance(self, long_signals, short_signals):
-        if self.trade_type == TradeType.LONG:
-            short_signals = pd.DataFrame()
-        elif self.trade_type == TradeType.SHORT:
-            long_signals = pd.DataFrame()
-
         long_signals['signal'], short_signals['signal'] = SignalType.LONG, SignalType.SHORT
 
         combined_signals = pd.concat([long_signals, short_signals]).sort_index()
@@ -89,16 +92,13 @@ class Backtester(AbstractTrader):
         return self._evaluate_trades(trades)
 
     def _evaluate_trades(self, trades):
-        for i in range(0, len(trades), 2):
-            if i + 1 >= len(trades):
-                break
-
-            entry_trade, exit_trade = trades[i], trades[i + 1]
+        for entry_trade, exit_trade in zip(trades[::2], trades[1::2]):
+            
             entry_price, exit_price = entry_trade[1]['close'], exit_trade[1]['close']
             timestamp = exit_trade[1]['timestamp']
 
-            stop_loss_price, take_profit_price = self.risk_management.calculate_prices(entry_trade[0], entry_price)
-            position_size = self.risk_management.calculate_position_size(self.initial_account_size, entry_price, stop_loss_price)
+            position_size, stop_loss_price, take_profit_price = self.risk_management.calculate_entry(entry_trade[0], self.initial_account_size, entry_price)
+
             profit = self.risk_management.calculate_profit(entry_trade[0], position_size, entry_price, exit_price, take_profit_price, stop_loss_price)
 
             self.orders.append(Order(timestamp=timestamp, side=entry_trade[0], entry_price=entry_price, exit_price=exit_price, stop_loss=stop_loss_price, take_profit=take_profit_price, pnl=profit))

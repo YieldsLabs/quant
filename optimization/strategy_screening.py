@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 import random
+import time
 from typing import List, Type
 
 import pandas as pd
@@ -37,7 +38,9 @@ class StrategyScreening(AbstractScreening):
         print(f"Backtest: {id}")
 
         backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
+
         result = backtester.trade(strategy, symbol, timeframe)
+
         result.update({'id': id})
 
         print(backtester.get_orders().tail(self.num_last_trades))
@@ -69,10 +72,11 @@ class StrategyScreening(AbstractScreening):
         }
 
         seen_ids = set()
-        
+        risk_manager_keys = list(risk_manager_dict.keys())
+            
         def _settings_generator():
             for symbol, timeframe, strategy in product(self.symbols, self.timeframes, self.strategies):
-                for risk_manager_key in risk_manager_dict.keys():
+                for risk_manager_key in risk_manager_keys:
                     current_id = self._generate_id(symbol, timeframe, strategy, risk_manager_key)
                     if self._is_unique_id(current_id, seen_ids):
                         yield (symbol, timeframe, strategy, risk_manager_key, current_id)
