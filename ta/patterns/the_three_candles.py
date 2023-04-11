@@ -5,7 +5,7 @@ class TheThreeCandles(AbstractPattern):
     NAME = 'THETHREECANDLES'
 
     @staticmethod
-    def three_white_soldiers(data):
+    def bullish(data):
         body = (data['close'] - data['open']).abs()
         condition = (data['close'] > data['close'].shift(1)) & \
                     (data['close'].shift(1) > data['close'].shift(2)) & \
@@ -16,7 +16,7 @@ class TheThreeCandles(AbstractPattern):
         return condition
 
     @staticmethod
-    def three_black_crows(data):
+    def bearish(data):
         body = (data['close'] - data['open']).abs()
         condition = (data['close'] < data['close'].shift(1)) & \
                     (data['close'].shift(1) < data['close'].shift(2)) & \
