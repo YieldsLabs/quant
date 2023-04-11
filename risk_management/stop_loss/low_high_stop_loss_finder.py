@@ -1,14 +1,16 @@
 from typing import Type
+
+import numpy as np
 from ohlcv.context import OhlcvContext
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
-from risk_management.stop_loss.base.atr_stop_loss_finder import ATRStopLossFinder
+from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from shared.position_side import PositionSide
 
 
 class LowHighStopLossFinder(AbstractStopLoss):
     NAME = 'LOWHIGH'
 
-    def __init__(self, ohlcv: Type[OhlcvContext], atr_multi=1, lookback=10):
+    def __init__(self, ohlcv: Type[OhlcvContext], atr_multi=1, lookback=50):
         super().__init__(ohlcv)
         self.stop_loss_finder = ATRStopLossFinder(ohlcv, atr_multi=atr_multi)
         self.lookback = lookback
@@ -20,8 +22,6 @@ class LowHighStopLossFinder(AbstractStopLoss):
             raise ValueError('Add ohlcv data')
         
         recent_data = data.tail(self.lookback)
-       
-        stop_loss_price = None
 
         if position_side == PositionSide.LONG:
             low_series = recent_data['low']
@@ -30,7 +30,7 @@ class LowHighStopLossFinder(AbstractStopLoss):
             high_series = recent_data['high']
             stop_loss_price = high_series[high_series > entry_price].max()
 
-        if stop_loss_price is None:
-            stop_loss_price = self.stop_loss_finder.next(position_side, entry_price)
+        if np.isnan(stop_loss_price):
+            return self.stop_loss_finder.next(position_side, entry_price)
 
         return stop_loss_price
