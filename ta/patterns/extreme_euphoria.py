@@ -7,7 +7,7 @@ class ExtremeEuphoria(AbstractPattern):
 
     @staticmethod
     def bullish(data):
-        bullish_extreme_euphoria = (
+        return (
             (data['close'].shift(5) < data['open'].shift(5))
             & (data['close'].shift(4) < data['open'].shift(4))
             & (data['close'].shift(3) < data['open'].shift(3))
@@ -17,11 +17,10 @@ class ExtremeEuphoria(AbstractPattern):
             & (np.abs(data['close'].shift(2) - data['open'].shift(2)) > np.abs(data['close'].shift(3) - data['open'].shift(3)))
             & (np.abs(data['close'].shift(3) - data['open'].shift(3)) > np.abs(data['close'].shift(4) - data['open'].shift(4)))
         )
-        return bullish_extreme_euphoria
 
     @staticmethod
     def bearish(data):
-        bearish_extreme_euphoria = (
+        return (
             (data['close'].shift(5) > data['open'].shift(5))
             & (data['close'].shift(4) > data['open'].shift(4))
             & (data['close'].shift(3) > data['open'].shift(3))
@@ -31,4 +30,3 @@ class ExtremeEuphoria(AbstractPattern):
             & (np.abs(data['close'].shift(2) - data['open'].shift(2)) > np.abs(data['close'].shift(3) - data['open'].shift(3)))
             & (np.abs(data['close'].shift(3) - data['open'].shift(3)) > np.abs(data['close'].shift(4) - data['open'].shift(4)))
         )
-        return bearish_extreme_euphoria

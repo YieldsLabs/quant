@@ -12,10 +12,11 @@ class StochasticOscillator(AbstractIndicator):
         self.d_period_ma = MovingAverage(d_period)
 
     def call(self, data):
-        high_low_range = data['high'].rolling(
-            window=self.stochastic_period).max() - data['low'].rolling(window=self.stochastic_period).min()
-        close_low_range = data['close'] - \
-            data['low'].rolling(window=self.stochastic_period).min()
+        high_rolling = data['high'].rolling(window=self.stochastic_period)
+        low_rolling = data['low'].rolling(window=self.stochastic_period)
+
+        high_low_range = high_rolling.max() - low_rolling.min()
+        close_low_range = data['close'] - low_rolling.min()
 
         raw_percent_k = (close_low_range / high_low_range) * 100
 

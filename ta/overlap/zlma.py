@@ -1,3 +1,4 @@
+import pandas as pd
 from ta.base.abstract_indicator import AbstractIndicator
 from ta.base.ma import MovingAverage
 
@@ -11,8 +12,9 @@ class ZeroLagEMA(AbstractIndicator):
         self.window = window
 
     def call(self, data, column='close'):
-        ema = self.ma.ema(data[column])
+        close_values = data[column].values
+        ema = self.ma.ema(pd.Series(close_values, index=data.index))
         lag = (self.window - 1) // 2
-        shifted_series = data[column].shift(-lag)
+        shifted_series = pd.Series(close_values, index=data.index).shift(-lag)
         zlema = 2 * ema - self.ma.ema(shifted_series)
         return zlema

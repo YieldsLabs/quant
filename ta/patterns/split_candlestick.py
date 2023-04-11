@@ -8,7 +8,7 @@ class SplitCandlestick(AbstractPattern):
 
     @staticmethod
     def bullish(data):
-        bullish_split = (
+        return (
             (data['close'].shift(1) < data['open'].shift(1))
             & (data['open'].shift(1) < data['high'].shift(1))
             & np.isclose(data['close'].shift(1), data['low'].shift(1))
@@ -18,11 +18,9 @@ class SplitCandlestick(AbstractPattern):
             & (data['close'] > data['open'].shift(1))
         )
 
-        return bullish_split
-
     @staticmethod
     def bearish(data):
-        bearish_split = (
+        return (
             (data['close'].shift(1) > data['open'].shift(1))
             & (data['open'].shift(1) > data['low'].shift(1))
             & np.isclose(data['close'].shift(1), data['high'].shift(1))
@@ -31,5 +29,3 @@ class SplitCandlestick(AbstractPattern):
             & (data['open'] < data['high'])
             & (data['close'] < data['open'].shift(1))
         )
-
-        return bearish_split

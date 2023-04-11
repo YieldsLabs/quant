@@ -14,10 +14,9 @@ class RelativeStrengthIndex(AbstractIndicator):
         gain, loss = delta.copy(), delta.copy()
         gain[gain < 0] = 0
         loss[loss > 0] = 0
-        loss = loss.abs()
 
         avg_gain = self.ma.sma(gain)
-        avg_loss = self.ma.sma(loss)
+        avg_loss = self.ma.sma(loss.apply(lambda x: abs(x)))
 
         rs = avg_gain / avg_loss
         rsi = 100 - (100 / (1 + rs))

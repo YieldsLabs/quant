@@ -6,24 +6,18 @@ class Harami(AbstractPattern):
 
     @staticmethod
     def bullish(data):
-        previous_row = data.iloc[-2]
-        current_row = data.iloc[-1]
+        is_previous_bearish = data['close'].shift(1) < data['open'].shift(1)
+        is_current_bullish = data['close'] > data['open']
+        is_current_inside_previous = (data['open'] <= data['high'].shift(1)) & (data['close'] >= data['low'].shift(1))
+        is_previous_long = (data['high'].shift(1) - data['low'].shift(1)) > (data['close'].shift(1) - data['open'].shift(1))
 
-        is_previous_bearish = previous_row['close'] < previous_row['open']
-        is_current_bullish = current_row['close'] > current_row['open']
-        is_current_inside_previous = current_row['open'] <= previous_row['high'] and current_row['close'] >= previous_row['low']
-        is_previous_long = previous_row['high'] - previous_row['low'] > previous_row['close'] - previous_row['open']
-
-        return is_previous_bearish and is_current_bullish and is_current_inside_previous and is_previous_long
+        return is_previous_bearish & is_current_bullish & is_current_inside_previous & is_previous_long
 
     @staticmethod
     def bearish(data):
-        previous_row = data.iloc[-2]
-        current_row = data.iloc[-1]
+        is_previous_bullish = data['close'].shift(1) > data['open'].shift(1)
+        is_current_bearish = data['close'] < data['open']
+        is_current_inside_previous = (data['open'] >= data['low'].shift(1)) & (data['close'] <= data['high'].shift(1))
+        is_previous_long = (data['high'].shift(1) - data['low'].shift(1)) > (data['close'].shift(1) - data['open'].shift(1))
 
-        is_previous_bullish = previous_row['close'] > previous_row['open']
-        is_current_bearish = current_row['close'] < current_row['open']
-        is_current_inside_previous = current_row['open'] >= previous_row['low'] and current_row['close'] <= previous_row['high']
-        is_previous_long = previous_row['high'] - previous_row['low'] > previous_row['close'] - previous_row['open']
-
-        return is_previous_bullish and is_current_bearish and is_current_inside_previous and is_previous_long
+        return is_previous_bullish & is_current_bearish & is_current_inside_previous & is_previous_long
