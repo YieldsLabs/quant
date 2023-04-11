@@ -12,6 +12,9 @@ class SimpleStopLossFinder(AbstractStopLoss):
         self.stop_loss_pct = stop_loss_pct
 
     def next(self, position_side, entry_price):
+        
+        stop_loss_price = None
+
         if position_side == PositionSide.LONG:
             stop_loss_price = entry_price * (1.0 - self.stop_loss_pct)
         elif position_side == PositionSide.SHORT:

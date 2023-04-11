@@ -13,13 +13,24 @@ class LowHighStopLossFinder(AbstractStopLoss):
         self.stop_loss_finder = ATRStopLossFinder(ohlcv, atr_multi=atr_multi)
         self.lookback = lookback
 
-    def next(self, position_side, entry_price=0):
+    def next(self, position_side, entry_price):
         data = self.ohlcv_context.ohlcv
 
         if len(data) == 0:
             raise ValueError('Add ohlcv data')
-
+        
         recent_data = data.tail(self.lookback)
-        entry_price = recent_data['low'].min() if position_side == PositionSide.LONG else recent_data['high'].max()
+       
+        stop_loss_price = None
 
-        return self.stop_loss_finder.next(position_side, entry_price)
+        if position_side == PositionSide.LONG:
+            low_series = recent_data['low']
+            stop_loss_price = low_series[low_series < entry_price].min()
+        elif position_side == PositionSide.SHORT:
+            high_series = recent_data['high']
+            stop_loss_price = high_series[high_series > entry_price].max()
+
+        if stop_loss_price is None:
+            stop_loss_price = self.stop_loss_finder.next(position_side, entry_price)
+
+        return stop_loss_price

@@ -21,6 +21,8 @@ class ATRStopLossFinder(AbstractStopLoss):
 
         atr_value = self.atr_indicator.call(data)
         atr_value = atr_value.iloc[-1]
+        
+        stop_loss_price = None
 
         if position_side == PositionSide.LONG:
             stop_loss_price = entry_price - (atr_value * self.atr_multi)
