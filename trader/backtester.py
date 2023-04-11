@@ -75,22 +75,22 @@ class Backtester(AbstractTrader):
         signal_rows = combined_signals[signal_idx]
 
         for index, row in signal_rows.iterrows():
-            signal_type = row['signal']
+            signal_type, ohlcv = row['signal'], self.ohlcv_context.ohlcv.loc[index]
 
             if active_trade is None:
                 if signal_type == SignalType.LONG and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.LONG):
-                    active_trade = (PositionSide.LONG, self.ohlcv_context.ohlcv.loc[index])
+                    active_trade = (PositionSide.LONG, ohlcv)
 
                 if signal_type == SignalType.SHORT and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.SHORT):
-                    active_trade = (PositionSide.SHORT, self.ohlcv_context.ohlcv.loc[index])
+                    active_trade = (PositionSide.SHORT, ohlcv)
 
             else:
                 entry_trade_type, entry_row = active_trade
                 entry_price = entry_row['close']
 
-                if self.risk_management.check_exit_conditions(entry_trade_type, entry_price, self.ohlcv_context.ohlcv.loc[index]):
+                if self.risk_management.check_exit_conditions(entry_trade_type, entry_price, ohlcv):
                     trades.append(active_trade)
-                    trades.append(('exit', self.ohlcv_context.ohlcv.loc[index]))
+                    trades.append(('exit', ohlcv))
                     active_trade = None
 
         if active_trade is not None:
