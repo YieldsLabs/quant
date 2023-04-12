@@ -42,10 +42,7 @@ class Backtester(AbstractTrader):
 
     @update_ohlcv
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: Timeframes):
-        start = time.time()
         long_signals, short_signals = self._generate_signals(strategy, invervals[timeframe])
-        end = time.time()
-        print(end - start)
         return self._calculate_performance(long_signals, short_signals)
 
     def _generate_signals(self, strategy, interval):
