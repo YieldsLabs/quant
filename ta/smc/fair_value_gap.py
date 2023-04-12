@@ -7,7 +7,7 @@ class FairValueGap(AbstractIndicator):
 
     def __init__(self, lookback=15):
         super().__init__()
-        self.ma = MovingAverage(window=lookback)
+        self.ma = MovingAverage(lookback)
 
     def call(self, data):
         fair_values = data['close']
