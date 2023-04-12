@@ -15,7 +15,7 @@ class MoneyFlowIndex(AbstractIndicator):
         volume = ohlcv['volume']
 
         typical_price = (high + low + close) / 3
-        
+
         money_flow = typical_price * volume
         money_flow_positive = money_flow.where(typical_price > typical_price.shift(1), 0)
         money_flow_negative = money_flow.where(typical_price < typical_price.shift(1), 0)
@@ -24,7 +24,7 @@ class MoneyFlowIndex(AbstractIndicator):
         money_flow_negative_sum = money_flow_negative.rolling(window=self.period).sum()
 
         money_flow_ratio = money_flow_positive_sum / money_flow_negative_sum
-        
+
         mfi = 100 - (100 / (1 + money_flow_ratio))
 
         return mfi

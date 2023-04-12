@@ -23,7 +23,7 @@ class BybitDataSource(AbstractDatasource):
             timeframe.value,
             lookback=self.lookback,
         )
-    
+
     def _retry(self, function, *args, **kwargs):
         retries = 0
         while retries < self.max_retries:

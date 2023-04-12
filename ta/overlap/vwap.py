@@ -15,8 +15,8 @@ class VolumeWeightedAveragePrice(AbstractIndicator):
         weighted_price = price * volume
 
         vwap = (
-            pd.Series(weighted_price, index=data.index).rolling(window=self.window).sum() / 
-            data['volume'].rolling(window=self.window).sum()
+            pd.Series(weighted_price, index=data.index).rolling(window=self.window).sum()
+            / data['volume'].rolling(window=self.window).sum()
         )
 
         return vwap
