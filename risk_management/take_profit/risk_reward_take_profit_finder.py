@@ -4,7 +4,7 @@ from shared.position_side import PositionSide
 
 
 class RiskRewardTakeProfitFinder(AbstractTakeProfit):
-    NAME = 'RR'
+    NAME = 'RSKRWRD'
 
     def __init__(self, risk_reward_ratio=1.5):
         super().__init__()

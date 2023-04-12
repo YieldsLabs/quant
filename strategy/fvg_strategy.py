@@ -1,65 +1,51 @@
-from strategy.abstract_strategy import AbstractStrategy
+from strategy.base.base_strategy import BaseStrategy
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from ta.smc.fair_value_gap import FairValueGap
 
 
-class FairValueGapStrategy(AbstractStrategy):
-    NAME = "FVG"
+class FairValueGapZLMA(BaseStrategy):
+    NAME = "FVGZLMA"
 
     def __init__(self, slow_sma_period=100, mfi_period=14, overbought=70, oversold=30, lookback=40, fair_value=0.5, tolerance=0.02):
-        super().__init__()
-        self.zlema = ZeroLagEMA(window=slow_sma_period)
-        self.mfi = MoneyFlowIndexAlert(period=mfi_period, overbought_level=overbought, oversold_level=oversold)
-        self.fvg_indicator = FairValueGap(lookback)
+        indicators = [
+            (ZeroLagEMA(window=slow_sma_period), ZeroLagEMA.NAME),
+            (MoneyFlowIndexAlert(period=mfi_period, overbought_level=overbought, oversold_level=oversold), (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
+            (FairValueGap(lookback), FairValueGap.NAME)
+        ]
+        super().__init__(indicators)
         self.fair_value = fair_value
         self.tolerance = tolerance
 
-    def _add_indicators(self, ohlcv):
-        data = ohlcv.copy()
-
-        data['zlema'] = self.zlema.call(data)
-        data['fvg'] = self.fvg_indicator.call(data)
-        data['mfi_buy'], data['mfi_sell'] = self.mfi.alert(data)
-        return data
-
     def _check_confirmation_candle(self, current_row, previous_row):
         buy_confirmation = (
-            previous_row['close'] > current_row['zlema']
-            and abs(previous_row['close'] - current_row['zlema']) / current_row['zlema'] <= self.tolerance
+            previous_row['close'] > current_row[ZeroLagEMA.NAME]
+            and abs(previous_row['close'] - current_row[ZeroLagEMA.NAME]) / current_row[ZeroLagEMA.NAME] <= self.tolerance
         )
 
         sell_confirmation = (
-            previous_row['close'] < current_row['zlema']
-            and abs(previous_row['close'] - current_row['zlema']) / current_row['zlema'] <= self.tolerance
+            previous_row['close'] < current_row[ZeroLagEMA.NAME]
+            and abs(previous_row['close'] - current_row[ZeroLagEMA.NAME]) / current_row[ZeroLagEMA.NAME] <= self.tolerance
         )
 
         return buy_confirmation, sell_confirmation
 
-    def entry(self, ohlcv):
-        if len(ohlcv) < self.fvg_indicator.ma.window:
-            return False, False
-
-        data = self._add_indicators(ohlcv)
-
-        last_row = data.iloc[-1]
-        previous_row = data.iloc[-2]
-
-        buy_confirmation, sell_confirmation = self._check_confirmation_candle(last_row, previous_row)
+    def _generate_buy_signal(self, data):
+        buy_confirmation, _ = self._check_confirmation_candle(data.iloc[-1], data.iloc[-2])
 
         buy_signal = (
-            last_row['fvg'] < -self.fair_value
+            data.iloc[-1, data.columns.get_loc(FairValueGap.NAME)] < -self.fair_value
             and buy_confirmation
-            and last_row['mfi_buy']
+            and data.iloc[-1, data.columns.get_loc(MoneyFlowIndexAlert.buy_column())]
         )
+        return buy_signal
+
+    def _generate_sell_signal(self, data):
+        _, sell_confirmation = self._check_confirmation_candle(data.iloc[-1], data.iloc[-2])
 
         sell_signal = (
-            last_row['fvg'] > self.fair_value
+            data.iloc[-1, data.columns.get_loc(FairValueGap.NAME)] > self.fair_value
             and sell_confirmation
-            and last_row['mfi_sell']
+            and data.iloc[-1, data.columns.get_loc(MoneyFlowIndexAlert.sell_column())]
         )
-
-        return buy_signal, sell_signal
-    
-    def exit(self, ohlcv):
-        return False, False
+        return sell_signal

@@ -10,7 +10,7 @@ from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.order import Order
 from shared.timeframes import Timeframes
 from trader.trade_type import TradeType
-from strategy.abstract_strategy import AbstractStrategy
+from strategy.base.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
 from shared.position_side import PositionSide
 
@@ -42,7 +42,10 @@ class Backtester(AbstractTrader):
 
     @update_ohlcv
     def trade(self, strategy: Type[AbstractStrategy], symbol: str, timeframe: Timeframes):
+        start = time.time()
         long_signals, short_signals = self._generate_signals(strategy, invervals[timeframe])
+        end = time.time()
+        print(end - start)
         return self._calculate_performance(long_signals, short_signals)
 
     def _generate_signals(self, strategy, interval):

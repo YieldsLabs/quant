@@ -8,7 +8,7 @@ from shared.position_side import PositionSide
 @ohlcv
 @meta_label
 class AbstractStopLoss(AbstractMetaLabel):
-    SUFFIX = "_STOPLOSS"
+    SUFFIX = "_STPLSS"
     NAME = ""
 
     @abstractmethod

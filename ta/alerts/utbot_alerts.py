@@ -15,7 +15,7 @@ class UTBot(AbstractAlert):
         self.sensitivity = sensitivity
         self.ema_period = ema_period
 
-    def alert(self, ohlcv):
+    def call(self, ohlcv):
         data = ohlcv.copy()
 
         data['atr'] = self.atr_indicator.atr(ohlcv)

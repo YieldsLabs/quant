@@ -5,7 +5,7 @@ from ohlcv.context import OhlcvContext, update_ohlcv
 from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.order import Order
 from shared.timeframes import Timeframes
-from strategy.abstract_strategy import AbstractStrategy
+from strategy.base.abstract_strategy import AbstractStrategy
 from trader.abstract_trader import AbstractTrader
 from shared.position_side import PositionSide
 from shared.order_side import OrderSide

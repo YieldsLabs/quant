@@ -4,7 +4,7 @@ def parse_meta_label(label: str):
     def parse_params(params_str: str):
         return [float(p) if '.' in p else int(p) for p in params_str.split(':')]
 
-    pattern = r"([A-Z]+[A-Z\d]+)_(\d+[smhd])_STRATEGY([A-Z]+)([\d:.]+)_STOPLOSS([A-Z]+)([\d:.]+)_TAKEPROFIT([A-Z]+)([\d:.]+)"
+    pattern = r"([A-Z]+[A-Z\d]+)_(\d+[smhd])_STRTG([A-Z]+)([\d:.]+)_STPLSS([A-Z]+)([\d:.]+)_TKPRFT([A-Z]+)([\d:.]+)"
     matches = re.match(pattern, label)
 
     symbol = matches.group(1)

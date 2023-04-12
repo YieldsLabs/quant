@@ -12,7 +12,7 @@ def extract_numeric_params(instance):
         if name in instance.__dict__:
             bound_arguments[name] = instance.__dict__[name]
         else:
-            for attr_name, attr_value in instance.__dict__.items():
+            for _, attr_value in instance.__dict__.items():
                 if hasattr(attr_value, "__dict__") and name in attr_value.__dict__:
                     bound_arguments[name] = attr_value.__dict__[name]
                     break

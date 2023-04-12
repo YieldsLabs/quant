@@ -21,7 +21,7 @@ class QTrendAlert(AbstractAlert):
         self.use_ema_smoother = use_ema_smoother
         self.src_ema_period = src_ema_period
 
-    def alert(self, ohlcv):
+    def call(self, ohlcv):
         data = ohlcv.copy()
 
         if self.use_ema_smoother:

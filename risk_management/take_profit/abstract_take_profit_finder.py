@@ -7,7 +7,7 @@ from shared.position_side import PositionSide
 
 @meta_label
 class AbstractTakeProfit(AbstractMetaLabel):
-    SUFFIX = "_TAKEPROFIT"
+    SUFFIX = "_TKPRFT"
     NAME = ""
 
     @abstractmethod

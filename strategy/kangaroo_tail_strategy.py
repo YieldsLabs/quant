@@ -1,43 +1,36 @@
-from strategy.abstract_strategy import AbstractStrategy
+from strategy.base.base_strategy import BaseStrategy
 from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.kangaroo_tail import KangarooTail
 
 
-class KangarooTailStrategy(AbstractStrategy):
-    NAME = "KANGAROOTAIL"
+class KangarooTailZLMA(BaseStrategy):
+    NAME = "KTZLMA"
 
-    def __init__(self, slow_sma_period=100, lookback=200):
-        super().__init__()
-        self.ma = ZeroLagEMA(slow_sma_period)
-        self.lookback = lookback
+    def __init__(self, slow_sma_period=100, lookback=100):
+        indicators = [
+            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME)
+        ]
+        patterns = [
+            (KangarooTail(lookback), (KangarooTail.bullish_column(), KangarooTail.bearish_column()))
+        ]
+        super().__init__(indicators, patterns)
 
-    def _add_indicators(self, ohlcv):
-        data = ohlcv.copy()
-
-        data['sma'] = self.ma.call(data)
-        data['bullish_kangaroo_tail'] = KangarooTail.bullish(data, self.lookback)
-        data['bearish_kangaroo_tail'] = KangarooTail.bearish(data, self.lookback)
-
-        return data
-
-    def entry(self, ohlcv):
-        if len(ohlcv) < max(3, self.ma.window):
-            return False, False
-
-        data = self._add_indicators(ohlcv)
-
+    def _generate_buy_signal(self, data):
         current_row = data.iloc[-1]
 
         buy_signal = (
-            current_row['bullish_kangaroo_tail']
-            and current_row['close'] > current_row['sma']
-        )
-        sell_signal = (
-            current_row['bearish_kangaroo_tail']
-            and current_row['close'] < current_row['sma']
+            current_row[KangarooTail.bullish_column()]
+            and current_row['close'] > current_row[ZeroLagEMA.NAME]
         )
 
-        return buy_signal, sell_signal
-    
-    def exit(self, ohlcv):
-        return False, False
+        return buy_signal
+
+    def _generate_sell_signal(self, data):
+        current_row = data.iloc[-1]
+
+        sell_signal = (
+            current_row[KangarooTail.bearish_column()]
+            and current_row['close'] < current_row[ZeroLagEMA.NAME]
+        )
+
+        return sell_signal

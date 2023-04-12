@@ -1,39 +1,28 @@
-from strategy.abstract_strategy import AbstractStrategy
-from ta.volatility.bbands import BollingerBands
+from strategy.base.base_strategy import BaseStrategy
 from ta.patterns.extreme_euphoria import ExtremeEuphoria
+from ta.volatility.bbands import BollingerBands
 
 
-class ExtremeEuphoriaBBStrategy(AbstractStrategy):
+class ExtremeEuphoriaBollingerBands(BaseStrategy):
     NAME = "EEBB"
 
     def __init__(self, sma_period=20, stdev_multi=2):
-        super().__init__()
-        self.bb_indicator = BollingerBands(sma_period, multiplier=stdev_multi)
+        indicators = [
+            (BollingerBands(sma_period=sma_period, multiplier=stdev_multi), ('upper_band', 'middle_band', 'lower_band'))
+        ]
+        patterns = [
+            (ExtremeEuphoria, (ExtremeEuphoria.bullish_column(), ExtremeEuphoria.bearish_column()))
+        ]
+        super().__init__(indicators, patterns)
 
-    def _add_indicators(self, ohlcv):
-        data = ohlcv.copy()
-
-        data['upper_band'], _, data['lower_band'] = self.bb_indicator.call(data)
-        data['bullish_extreme_euphoria'] = ExtremeEuphoria.bullish(
-            data)
-        data['bearish_extreme_euphoria'] = ExtremeEuphoria.bearish(
-            data)
-        return data
-
-    def entry(self, ohlcv):
-        if len(ohlcv) < 6:
-            return False, False
-
-        data = self._add_indicators(ohlcv)
-
+    def _generate_buy_signal(self, data):
         last_row = data.iloc[-1]
-
-        buy_signal = last_row['bullish_extreme_euphoria'] and (
+        buy_signal = last_row[ExtremeEuphoria.bullish_column()] and (
             last_row['close'] <= last_row['lower_band'])
-        sell_signal = last_row['bearish_extreme_euphoria'] and (
-            last_row['close'] >= last_row['upper_band'])
+        return buy_signal
 
-        return buy_signal, sell_signal
-    
-    def exit(self, ohlcv):
-        return False, False
+    def _generate_sell_signal(self, data):
+        last_row = data.iloc[-1]
+        sell_signal = last_row[ExtremeEuphoria.bearish_column()] and (
+            last_row['close'] >= last_row['upper_band'])
+        return sell_signal
