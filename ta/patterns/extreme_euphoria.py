@@ -5,8 +5,7 @@ from ta.patterns.abstract_pattern import AbstractPattern
 class ExtremeEuphoria(AbstractPattern):
     NAME = 'EXTREMEEUPHORIA'
 
-    @staticmethod
-    def bullish(data):
+    def bullish(self, data):
         return (
             (data['close'].shift(5) < data['open'].shift(5))
             & (data['close'].shift(4) < data['open'].shift(4))
@@ -18,8 +17,7 @@ class ExtremeEuphoria(AbstractPattern):
             & (np.abs(data['close'].shift(3) - data['open'].shift(3)) > np.abs(data['close'].shift(4) - data['open'].shift(4)))
         )
 
-    @staticmethod
-    def bearish(data):
+    def bearish(self, data):
         return (
             (data['close'].shift(5) > data['open'].shift(5))
             & (data['close'].shift(4) > data['open'].shift(4))

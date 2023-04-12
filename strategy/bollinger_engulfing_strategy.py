@@ -8,10 +8,10 @@ class BollingerBandsEngulfing(BaseStrategy):
 
     def __init__(self, sma_period=20, stdev_multi=2):
         indicators = [
-            (BollingerBands(sma_period=sma_period, multiplier=stdev_multi), ('upper_band', 'middle_band', 'lower_band'))
+            (BollingerBands(sma_period=sma_period, stdev_multi=stdev_multi), ('upper_band', 'middle_band', 'lower_band'))
         ]
         patterns = [
-            (Engulfing, (Engulfing.bullish_column(), Engulfing.bearish_column()))
+            (Engulfing(), (Engulfing.bullish_column(), Engulfing.bearish_column()))
         ]
 
         super().__init__(indicators, patterns)

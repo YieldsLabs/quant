@@ -10,7 +10,7 @@ from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from ohlcv.bybit_datasource import BybitDataSource
 from ohlcv.context import OhlcvContext
-from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
+from optimization.hyperparameters import create_instances_with_hyperparameters, strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from optimization.strategy_screening import StrategyScreening
 from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
@@ -81,13 +81,11 @@ timeframe_map = {
     '5m': Timeframes.FIVE_MINUTES
 }
 
-atr_multi_range = np.arange(*stoploss_hyperparameters['atr_multi'])
-stop_loss_finders = [cls(ohlcv_context, atr_multi=round(atr_multi, 2)) for cls in stoploss_map.values() for atr_multi in atr_multi_range]
+stop_loss_finders = create_instances_with_hyperparameters(stoploss_map, stoploss_hyperparameters, pre_args=(ohlcv_context,))
+take_profit_finders = create_instances_with_hyperparameters(takeprofit_map, takeprofit_hyperparameters)
+strategies = create_instances_with_hyperparameters(strategy_map, strategy_hyperparameters)
 
-risk_reward_range = np.arange(*takeprofit_hyperparameters['risk_reward_ratio'])
-take_profit_finders = [cls(risk_reward_ratio=round(risk_reward_ratio, 2)) for cls in takeprofit_map.values() for risk_reward_ratio in risk_reward_range]
-
-strategies = [cls() for cls in strategy_map.values()]
+print(f'Screening... n_strategies={len(strategies)}, n_stop_loss_finders={len(stop_loss_finders)}, n_take_profit_finders={len(take_profit_finders)}')
 
 screener = StrategyScreening(
     ohlcv=ohlcv_context,

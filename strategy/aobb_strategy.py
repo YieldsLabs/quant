@@ -11,13 +11,13 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
     def __init__(self, ao_short_period=5, ao_long_period=34, sma_period=25, stdev_multi=2, slow_sma_period=50, mfi_period=14, oversold=40, overbought=60):
         indicators = [
             (AwesomeOscillator(ao_short_period=ao_short_period, ao_long_period=ao_long_period), AwesomeOscillator.NAME),
-            (BollingerBands(sma_period=sma_period, multiplier=stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
-            (ZeroLagEMA(window=slow_sma_period), ZeroLagEMA.NAME),
+            (BollingerBands(sma_period=sma_period, stdev_multi=stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
+            (ZeroLagEMA(slow_sma_period=slow_sma_period), ZeroLagEMA.NAME),
             (MoneyFlowIndex(period=mfi_period), MoneyFlowIndex.NAME)
         ]
         super().__init__(indicators)
-        self.mfi_buy_level = oversold
-        self.mfi_sell_level = overbought
+        self.oversold = oversold
+        self.overbought = overbought
 
     def _generate_conditions(self, data):
         close = data['close']
@@ -33,8 +33,8 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
 
     def _generate_buy_signal(self, data):
         price_change, ao_change, price_touch_lower_band, _, mfi = self._generate_conditions(data)
-        return price_change.iloc[-1] and ao_change.iloc[-1] and price_touch_lower_band.iloc[-1] and (mfi.iloc[-1] <= self.mfi_buy_level)
+        return price_change.iloc[-1] and ao_change.iloc[-1] and price_touch_lower_band.iloc[-1] and (mfi.iloc[-1] <= self.oversold)
 
     def _generate_sell_signal(self, data):
         price_change, ao_change, _, price_touch_upper_band, mfi = self._generate_conditions(data)
-        return not price_change.iloc[-1] and not ao_change.iloc[-1] and price_touch_upper_band.iloc[-1] and (mfi.iloc[-1] >= self.mfi_sell_level)
+        return not price_change.iloc[-1] and not ao_change.iloc[-1] and price_touch_upper_band.iloc[-1] and (mfi.iloc[-1] >= self.overbought)

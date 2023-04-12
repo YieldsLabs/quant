@@ -7,7 +7,7 @@ class RelativeStrengthIndex(AbstractIndicator):
 
     def __init__(self, period=14):
         super().__init__()
-        self.ma = MovingAverage(window=period)
+        self.ma = MovingAverage(period)
 
     def call(self, data, column='close'):
         delta = data[column].diff()

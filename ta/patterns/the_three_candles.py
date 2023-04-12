@@ -4,8 +4,7 @@ from ta.patterns.abstract_pattern import AbstractPattern
 class TheThreeCandles(AbstractPattern):
     NAME = 'THETHREECANDLES'
 
-    @staticmethod
-    def bullish(data):
+    def bullish(self, data):
         body = (data['close'] - data['open']).abs()
         condition = (data['close'] > data['close'].shift(1)) & \
                     (data['close'].shift(1) > data['close'].shift(2)) & \
@@ -15,8 +14,7 @@ class TheThreeCandles(AbstractPattern):
                     (body.shift(2) >= body.shift(2).rolling(window=5).max())
         return condition
 
-    @staticmethod
-    def bearish(data):
+    def bearish(self, data):
         body = (data['close'] - data['open']).abs()
         condition = (data['close'] < data['close'].shift(1)) & \
                     (data['close'].shift(1) < data['close'].shift(2)) & \

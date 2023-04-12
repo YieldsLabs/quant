@@ -5,16 +5,13 @@ from ta.volume.mfi import MoneyFlowIndex
 class MoneyFlowIndexAlert(AbstractAlert):
     NAME = 'MFI'
 
-    def __init__(self, period=14, overbought_level=80, oversold_level=20):
+    def __init__(self, period=14, overbought=80, oversold=20):
         super().__init__()
         self.mfi = MoneyFlowIndex(period)
-        self.overbought_level = overbought_level
-        self.oversold_level = oversold_level
+        self.overbought = overbought
+        self.oversold = oversold
 
     def call(self, data):
         mfi_values = self.mfi.call(data)
 
-        oversold = mfi_values < self.oversold_level
-        overbought = mfi_values > self.overbought_level
-
-        return oversold, overbought
+        return mfi_values < self.oversold, mfi_values > self.overbought

@@ -1,7 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 import random
-import time
 from typing import List, Type
 
 import multiprocessing
@@ -86,7 +85,9 @@ class StrategyScreening(AbstractScreening):
 
         random.shuffle(unique_settings)
 
-        with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+        num_workers = min(multiprocessing.cpu_count(), len(unique_settings))
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
             results_list = [
                 executor.submit(
                     self._run_backtest,

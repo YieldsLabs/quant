@@ -7,9 +7,9 @@ class MACD(AbstractIndicator):
 
     def __init__(self, short_period=12, long_period=26, signal_period=9):
         super().__init__()
-        self.fast_ema = MovingAverage(window=short_period)
-        self.slow_ema = MovingAverage(window=long_period)
-        self.signal_ema = MovingAverage(window=signal_period)
+        self.fast_ema = MovingAverage(short_period)
+        self.slow_ema = MovingAverage(long_period)
+        self.signal_ema = MovingAverage(signal_period)
 
     def call(self, data):
         ema_fast = self.fast_ema.ema(data['close'])
