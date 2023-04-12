@@ -8,7 +8,7 @@ from shared.position_side import PositionSide
 
 
 class LowHighStopLossFinder(AbstractStopLoss):
-    NAME = 'LOWHIGH'
+    NAME = 'LWHGH'
 
     def __init__(self, ohlcv: Type[OhlcvContext], atr_multi=1, lookback=50):
         super().__init__(ohlcv)

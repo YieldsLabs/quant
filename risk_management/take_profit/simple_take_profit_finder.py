@@ -3,7 +3,7 @@ from shared.position_side import PositionSide
 
 
 class SimpleTakeProfitFinder(AbstractTakeProfit):
-    NAME = 'SIMPLE'
+    NAME = 'SMPL'
 
     def __init__(self, take_profit_pct=0.03):
         super().__init__()

@@ -8,7 +8,7 @@ from shared.meta_label.meta_label import meta_label
 
 @meta_label
 class AbstractIndicator(AbstractMetaLabel):
-    SUFFIX = "_INDICATOR"
+    SUFFIX = "_IND"
     NAME = ""
 
     @abstractmethod

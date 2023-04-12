@@ -12,19 +12,19 @@ from ohlcv.bybit_datasource import BybitDataSource
 from ohlcv.context import OhlcvContext
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from optimization.strategy_screening import StrategyScreening
-from risk_management.stop_loss.base.atr_stop_loss_finder import ATRStopLossFinder
+from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 
 from risk_management.risk_manager import RiskManager
 from shared.meta_label.parse_label import parse_meta_label
 from shared.timeframes import Timeframes
-from strategy.aobb_strategy import AwesomeOscillatorBBStrategy
-from strategy.bollinger_engulfing_strategy import BollingerEngulfing
-from strategy.engulfing_zlema_strategy import EngulfingSMA
-from strategy.extreme_euphoria_bb_strategy import ExtremeEuphoriaBBStrategy
-from strategy.fvg_strategy import FairValueGapStrategy
-from strategy.kangaroo_tail_strategy import KangarooTailStrategy
+from strategy.aobb_strategy import AwesomeOscillatorBollingerBands
+from strategy.bollinger_engulfing_strategy import BollingerBandsEngulfing
+from strategy.engulfing_zlema_strategy import EngulfingZLMA
+from strategy.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
+from strategy.fvg_strategy import FairValueGapZLMA
+from strategy.kangaroo_tail_strategy import KangarooTailZLMA
 from trader.simple_trader import SimpleTrader
 
 load_dotenv()
@@ -44,15 +44,15 @@ ohlcv_context = OhlcvContext(datasource)
 
 symbols = [
     'NEARUSDT',
-    # 'SOLUSDT',
-    # 'AVAXUSDT',
-    # 'XRPUSDT'
+    'SOLUSDT',
+    'AVAXUSDT',
+    'XRPUSDT'
 ]
 
 timeframes = [
     Timeframes.ONE_MINUTE,
-    # Timeframes.THREE_MINUTES,
-    # Timeframes.FIVE_MINUTES
+    Timeframes.THREE_MINUTES,
+    Timeframes.FIVE_MINUTES
 ]
 
 
@@ -61,17 +61,19 @@ def create_map(classes):
 
 
 strategy_map = create_map([
-    EngulfingSMA,
-    # BollingerEngulfing,
-    # ExtremeEuphoriaBBStrategy,
-    # AwesomeOscillatorBBStrategy,
-    # FairValueGapStrategy,
-    # KangarooTailStrategy
+    AwesomeOscillatorBollingerBands,
+    BollingerBandsEngulfing,
+    ExtremeEuphoriaBollingerBands,
+    FairValueGapZLMA,
+    EngulfingZLMA,
+    KangarooTailZLMA
 ])
+
 stoploss_map = create_map([
     ATRStopLossFinder,
-    # LowHighStopLossFinder
+    LowHighStopLossFinder
 ])
+
 takeprofit_map = create_map([RiskRewardTakeProfitFinder])
 timeframe_map = {
     '1m': Timeframes.ONE_MINUTE,

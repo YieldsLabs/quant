@@ -5,7 +5,7 @@ from shared.position_side import PositionSide
 
 
 class SimpleStopLossFinder(AbstractStopLoss):
-    NAME = 'SIMPLE'
+    NAME = 'SMPL'
 
     def __init__(self, ohlcv: Type[OhlcvContext], stop_loss_pct=0.02):
         super().__init__(ohlcv)

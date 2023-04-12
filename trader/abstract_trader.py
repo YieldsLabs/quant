@@ -3,7 +3,7 @@ from typing import Type
 from ohlcv.context import ohlcv
 from shared.timeframes import Timeframes
 
-from strategy.abstract_strategy import AbstractStrategy
+from strategy.base.abstract_strategy import AbstractStrategy
 
 
 @ohlcv

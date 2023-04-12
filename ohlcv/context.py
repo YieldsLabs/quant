@@ -16,7 +16,7 @@ class OhlcvContext:
 
     @property
     def ohlcv(self) -> pd.DataFrame:
-        return self._ohlcv.copy()
+        return self._ohlcv
 
     @ohlcv.setter
     def ohlcv(self, ohlcv: pd.DataFrame):
