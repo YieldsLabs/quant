@@ -20,7 +20,7 @@ class LowHighStopLossFinder(AbstractStopLoss):
 
         if len(data) == 0:
             raise ValueError('Add ohlcv data')
-        
+
         recent_data = data.tail(self.lookback)
 
         if position_side == PositionSide.LONG:

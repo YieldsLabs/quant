@@ -1,5 +1,6 @@
 import re
 
+
 def parse_meta_label(label: str):
     def parse_params(params_str: str):
         return [float(p) if '.' in p else int(p) for p in params_str.split(':')]

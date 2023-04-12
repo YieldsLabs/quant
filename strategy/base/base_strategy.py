@@ -11,7 +11,7 @@ class BaseStrategy(AbstractStrategy):
     def _calculate_lookback(self):
         lookbacks = [getattr(item, "lookback", 0) for items in [self.indicators, self.patterns] for item, _ in items]
         return max(lookbacks, default=5) + 1
-    
+
     def _add_indicators_and_patterns(self, ohlcv):
         data = ohlcv.copy(deep=False)
 

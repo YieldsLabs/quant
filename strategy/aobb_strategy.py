@@ -23,7 +23,7 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
         close = data['close']
 
         price_change = close.shift() < close
-        
+
         ao_change = data[AwesomeOscillator.NAME].shift() > data[AwesomeOscillator.NAME]
         price_touch_lower_band = close <= data['lower_band']
         price_touch_upper_band = close >= data['upper_band']

@@ -12,7 +12,7 @@ class VolumeAdjustedMovingAverage(AbstractIndicator):
 
     def call(self, data):
         close = data['close']
-        
+
         short_std = close.rolling(window=self.short_volatility).std()
         long_std = close.rolling(window=self.long_volatility).std()
 

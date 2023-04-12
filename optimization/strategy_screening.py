@@ -39,7 +39,7 @@ class StrategyScreening(AbstractScreening):
         print(f"Backtest: {id}")
 
         backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
-        
+
         result = backtester.trade(strategy, symbol, timeframe)
 
         result.update({'id': id})

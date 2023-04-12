@@ -12,10 +12,10 @@ class BollingerBands(AbstractIndicator):
 
     def call(self, data):
         closes = data['close']
-        
+
         middle_band = self.ma.sma(closes)
         std_dev = closes.rolling(window=self.ma.window).std()
-        
+
         upper_band = middle_band + (std_dev * self.multiplier)
         lower_band = middle_band - (std_dev * self.multiplier)
         return upper_band, middle_band, lower_band

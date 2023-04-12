@@ -2,6 +2,7 @@ from strategy.base.base_strategy import BaseStrategy
 from ta.patterns.engulfing import Engulfing
 from ta.volatility.bbands import BollingerBands
 
+
 class BollingerBandsEngulfing(BaseStrategy):
     NAME = "BBE"
 

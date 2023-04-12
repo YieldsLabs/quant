@@ -17,7 +17,6 @@ class AbstractAlert(AbstractMetaLabel):
     def sell_column(cls) -> str:
         return f'{cls.NAME}_SELL'
 
-
     @abstractmethod
     def call(self, data):
         raise NotImplementedError

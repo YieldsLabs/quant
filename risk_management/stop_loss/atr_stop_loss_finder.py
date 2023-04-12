@@ -30,7 +30,7 @@ class ATRStopLossFinder(AbstractStopLoss):
             return self.base_stop_loss_finder.next(position_side, entry_price)
 
         if position_side == PositionSide.LONG:
-           return entry_price - (atr_value * self.atr_multi)
+            return entry_price - (atr_value * self.atr_multi)
 
         if position_side == PositionSide.SHORT:
             return entry_price + (atr_value * self.atr_multi)

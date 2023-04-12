@@ -9,6 +9,7 @@ from ohlcv.context import OHLCV_COLUMNS
 from shared.position_side import PositionSide
 from cachetools import TTLCache
 
+
 class FuturesBybitBroker(AbstractBroker):
     def __init__(self, api_key, secret, cache_capacity=1000, cache_ttl=300):
         super().__init__()
@@ -18,7 +19,7 @@ class FuturesBybitBroker(AbstractBroker):
     def get_account_balance(self):
         balance = self.exchange.fetch_balance()
         return float(balance['total']['USDT'])
-    
+
     def _fetch_market_info(self):
         if 'market_info' not in self._cache:
             market_info = self.exchange.fetch_markets()
