@@ -1,6 +1,4 @@
 import inspect
-from itertools import product
-import numpy as np
 
 
 strategy_hyperparameters = {
@@ -22,28 +20,3 @@ stoploss_hyperparameters = {
 takeprofit_hyperparameters = {
     'risk_reward_ratio': [1, 6, 0.5],
 }
-
-
-def create_instances_with_hyperparameters(class_map, hyperparameters, pre_args=()):
-    instances_dict = {}
-
-    for cls in class_map.values():
-        signature = inspect.signature(cls.__init__)
-        parameters = signature.parameters
-
-        applicable_hyperparams = {
-            param_name: np.arange(*hyperparameters[param_name])
-            for param_name in parameters
-            if param_name in hyperparameters
-        }
-
-        if not applicable_hyperparams:
-            instance = cls(*pre_args)
-            instances_dict[str(instance)] = instance
-        else:
-            param_combinations = product(*applicable_hyperparams.values())
-            for combination in param_combinations:
-                instance = cls(*pre_args, **dict(zip(applicable_hyperparams.keys(), combination)))
-                instances_dict[str(instance)] = instance
-
-    return list(instances_dict.values())

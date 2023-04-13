@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+import inspect
 from itertools import product
 import random
 from typing import List, Type
@@ -20,15 +21,15 @@ class StrategyScreening(AbstractScreening):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], analytics: Type[AbstractPerformance],
                  symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy],
                  stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit],
-                 sort_by="total_pnl", num_last_trades=15):
+                 sort_by="total_pnl", num_last_trades=15, hyperparameters=None):
         super().__init__(ohlcv)
         self.broker = broker
         self.analytics = analytics
         self.symbols = symbols
         self.timeframes = timeframes
-        self.strategies = strategies
-        self.stop_loss_finders = stop_loss_finders
-        self.take_profit_finders = take_profit_finders
+        self.strategies = self._create_instances(strategies, hyperparameters)
+        self.stop_loss_finders = self._create_instances(stop_loss_finders, hyperparameters,  pre_args=(ohlcv,))
+        self.take_profit_finders = self._create_instances(take_profit_finders, hyperparameters)
         self.num_last_trades = num_last_trades
         self.sort_by = sort_by
 
@@ -44,6 +45,7 @@ class StrategyScreening(AbstractScreening):
         result.update({'id': id})
 
         print(backtester.get_orders().tail(self.num_last_trades))
+        
         return result
 
     def _is_unique_id(self, id, seen_ids):
@@ -55,6 +57,28 @@ class StrategyScreening(AbstractScreening):
     def _generate_id(self, symbol, timeframe, strategy, rm):
         _, stop_loss, take_profit = rm
         return f"{symbol}_{timeframe}{strategy}{stop_loss}{take_profit}"
+    
+    def _create_instances(self, classes, hyperparameters, pre_args=()):
+        instances_dict = {}
+
+        for cls in classes:
+            signature = inspect.signature(cls.__init__)
+            parameters = signature.parameters
+
+            applicable_hyperparams = {
+                param_name: hyperparameters[param_name]
+                for param_name in parameters
+                if param_name in hyperparameters
+            }
+
+            if not applicable_hyperparams:
+                instance = cls(*pre_args)
+                instances_dict[str(instance)] = instance
+            else:
+                instance = cls(*pre_args, **applicable_hyperparams)
+                instances_dict[str(instance)] = instance
+
+        return list(instances_dict.values())
     
     def _unique_settings(self, seen_ids, risk_manager_keys):
         settings_iter = list(product(self.symbols, self.timeframes, self.strategies, risk_manager_keys))
