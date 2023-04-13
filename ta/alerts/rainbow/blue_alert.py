@@ -10,7 +10,7 @@ class BlueAlert(AbstractAlert):
         self.rsi = RelativeStrengthIndex(period=period)
         self.lookback = lookback
 
-    def alert(self, ohlcv):
+    def call(self, ohlcv):
         data = ohlcv.copy()
 
         data['slope'] = (data['close'] - data['close'].shift(self.lookback)) / self.lookback

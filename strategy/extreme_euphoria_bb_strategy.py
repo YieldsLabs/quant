@@ -8,7 +8,7 @@ class ExtremeEuphoriaBollingerBands(BaseStrategy):
 
     def __init__(self, sma_period=20, stdev_multi=2):
         indicators = [
-            (BollingerBands(sma_period=sma_period, stdev_multi=stdev_multi), ('upper_band', 'middle_band', 'lower_band'))
+            (BollingerBands(sma_period, stdev_multi), ('upper_band', 'middle_band', 'lower_band'))
         ]
         patterns = [
             (ExtremeEuphoria(), (ExtremeEuphoria.bullish_column(), ExtremeEuphoria.bearish_column()))

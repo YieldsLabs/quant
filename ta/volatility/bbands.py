@@ -9,6 +9,8 @@ class BollingerBands(AbstractIndicator):
         super().__init__()
         self.ma = MovingAverage(sma_period)
         self.stdev_multi = stdev_multi
+        # known issue with meta labels
+        self.sma_period = sma_period
 
     def call(self, data):
         closes = data['close']

@@ -8,6 +8,8 @@ class RelativeStrengthIndex(AbstractIndicator):
     def __init__(self, period=14):
         super().__init__()
         self.ma = MovingAverage(period)
+        # known issue with meta labels
+        self.period = period
 
     def call(self, data, column='close'):
         delta = data[column].diff()

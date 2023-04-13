@@ -1,11 +1,15 @@
 import re
+from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
+from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
+
+from strategy.base.abstract_strategy import AbstractStrategy
 
 
 def parse_meta_label(label: str):
     def parse_params(params_str: str):
         return [float(p) if '.' in p else int(p) for p in params_str.split(':')]
 
-    pattern = r"([A-Z]+[A-Z\d]+)_(\d+[smhd])_STRTG([A-Z]+)([\d:.]+)_STPLSS([A-Z]+)([\d:.]+)_TKPRFT([A-Z]+)([\d:.]+)"
+    pattern = rf"([A-Z]+[A-Z\d]+)_(\d+[smhd]){AbstractStrategy.SUFFIX}([A-Z]+)([\d:.]+){AbstractStopLoss.SUFFIX}([A-Z]+)([\d:.]+){AbstractTakeProfit.SUFFIX}([A-Z]+)([\d:.]+)"
     matches = re.match(pattern, label)
 
     symbol = matches.group(1)

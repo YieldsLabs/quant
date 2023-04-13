@@ -10,8 +10,8 @@ class EngulfingZLMA(BaseStrategy):
 
     def __init__(self, slow_sma_period=200, oversold=20, overbought=80, tolerance=0.002, retracement_pct=0.05,):
         indicators = [
-            (ZeroLagEMA(slow_sma_period=slow_sma_period), ZeroLagEMA.NAME),
-            (MoneyFlowIndexAlert(overbought=overbought, oversold=oversold), (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
+            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
+            (MoneyFlowIndexAlert(overbought, oversold), (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
         ]
         patterns = [
             (Engulfing(), (Engulfing.bullish_column(), Engulfing.bearish_column())),

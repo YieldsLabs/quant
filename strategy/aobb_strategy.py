@@ -10,9 +10,9 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
 
     def __init__(self, ao_short_period=5, ao_long_period=34, sma_period=25, stdev_multi=2, slow_sma_period=50, mfi_period=14, oversold=40, overbought=60):
         indicators = [
-            (AwesomeOscillator(ao_short_period=ao_short_period, ao_long_period=ao_long_period), AwesomeOscillator.NAME),
-            (BollingerBands(sma_period=sma_period, stdev_multi=stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
-            (ZeroLagEMA(slow_sma_period=slow_sma_period), ZeroLagEMA.NAME),
+            (AwesomeOscillator(ao_short_period, ao_long_period), AwesomeOscillator.NAME),
+            (BollingerBands(sma_period, stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
+            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
             (MoneyFlowIndex(period=mfi_period), MoneyFlowIndex.NAME)
         ]
         super().__init__(indicators)

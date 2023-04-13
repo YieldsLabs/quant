@@ -11,6 +11,11 @@ class MACD(AbstractIndicator):
         self.slow_ema = MovingAverage(long_period)
         self.signal_ema = MovingAverage(signal_period)
 
+        # known issue with meta labels
+        self.short_period = short_period
+        self.long_period = long_period
+        self.signal_period = signal_period
+
     def call(self, data):
         close = data['close']
         

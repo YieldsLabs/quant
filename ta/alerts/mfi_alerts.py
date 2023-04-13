@@ -10,6 +10,8 @@ class MoneyFlowIndexAlert(AbstractAlert):
         self.mfi = MoneyFlowIndex(period)
         self.overbought = overbought
         self.oversold = oversold
+        # known issue with meta labels
+        self.period = period
 
     def call(self, data):
         mfi_values = self.mfi.call(data)

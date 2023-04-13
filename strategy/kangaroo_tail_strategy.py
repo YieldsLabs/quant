@@ -8,10 +8,10 @@ class KangarooTailZLMA(BaseStrategy):
 
     def __init__(self, slow_sma_period=100, lookback=100):
         indicators = [
-            (ZeroLagEMA(slow_sma_period=slow_sma_period), ZeroLagEMA.NAME)
+            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME)
         ]
         patterns = [
-            (KangarooTail(lookback=lookback), (KangarooTail.bullish_column(), KangarooTail.bearish_column()))
+            (KangarooTail(lookback), (KangarooTail.bullish_column(), KangarooTail.bearish_column()))
         ]
         super().__init__(indicators, patterns)
 

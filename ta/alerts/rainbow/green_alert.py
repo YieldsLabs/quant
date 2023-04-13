@@ -10,7 +10,7 @@ class GreenAlert(AbstractAlert):
         self.rsi = RelativeStrengthIndex(period=period)
         self.lookback = lookback
 
-    def alert(self, ohlcv):
+    def call(self, ohlcv):
         data = ohlcv.copy()
 
         data['rsi'] = self.rsi.rsi(data)
