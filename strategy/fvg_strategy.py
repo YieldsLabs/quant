@@ -7,11 +7,12 @@ from ta.smc.fair_value_gap import FairValueGap
 class FairValueGapZLMA(BaseStrategy):
     NAME = "FVGZLMA"
 
-    def __init__(self, slow_sma_period=100, mfi_period=14, overbought=70, oversold=30, lookback=40, fair_value=0.5, tolerance=0.02):
+    def __init__(self, slow_sma_period=100, mfi_period=14, overbought=70, oversold=30, sma_period=40, fair_value=0.5, tolerance=0.02):
         indicators = [
-            (ZeroLagEMA(window=slow_sma_period), ZeroLagEMA.NAME),
-            (MoneyFlowIndexAlert(period=mfi_period, overbought_level=overbought, oversold_level=oversold), (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
-            (FairValueGap(lookback), FairValueGap.NAME)
+            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
+            (MoneyFlowIndexAlert(period=mfi_period, overbought=overbought, oversold=oversold),
+                (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
+            (FairValueGap(sma_period), FairValueGap.NAME)
         ]
         super().__init__(indicators)
         self.fair_value = fair_value

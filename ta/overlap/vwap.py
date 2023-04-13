@@ -5,9 +5,9 @@ from ta.base.abstract_indicator import AbstractIndicator
 class VolumeWeightedAveragePrice(AbstractIndicator):
     NAME = 'VWAP'
 
-    def __init__(self, window=20):
+    def __init__(self, period=20):
         super().__init__()
-        self.window = window
+        self.period = period
 
     def call(self, data):
         volume = data['volume'].values
@@ -15,8 +15,8 @@ class VolumeWeightedAveragePrice(AbstractIndicator):
         weighted_price = price * volume
 
         vwap = (
-            pd.Series(weighted_price, index=data.index).rolling(window=self.window).sum()
-            / data['volume'].rolling(window=self.window).sum()
+            pd.Series(weighted_price, index=data.index).rolling(window=self.period).sum()
+            / data['volume'].rolling(window=self.period).sum()
         )
 
         return vwap

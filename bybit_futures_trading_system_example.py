@@ -11,6 +11,7 @@ from broker.position_mode import PositionMode
 from ohlcv.bybit_datasource import BybitDataSource
 from ohlcv.context import OhlcvContext
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
+from optimization.random_search import RandomSearch
 from optimization.strategy_screening import StrategyScreening
 from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
@@ -55,41 +56,41 @@ timeframes = [
     Timeframes.FIVE_MINUTES
 ]
 
-
-def create_map(classes):
-    return {cls.NAME: cls for cls in classes if cls.NAME is not None}
-
-
-strategy_map = create_map([
+strategies = [
     AwesomeOscillatorBollingerBands,
     BollingerBandsEngulfing,
     ExtremeEuphoriaBollingerBands,
     FairValueGapZLMA,
     EngulfingZLMA,
     KangarooTailZLMA
-])
+]
 
-stoploss_map = create_map([
+stop_loss_finders = [
     ATRStopLossFinder,
     LowHighStopLossFinder
-])
+]
 
-takeprofit_map = create_map([RiskRewardTakeProfitFinder])
+take_profit_finders = [
+    RiskRewardTakeProfitFinder
+]
+
 timeframe_map = {
     '1m': Timeframes.ONE_MINUTE,
     '3m': Timeframes.THREE_MINUTES,
     '5m': Timeframes.FIVE_MINUTES
 }
 
-atr_multi_range = np.arange(*stoploss_hyperparameters['atr_multi'])
-stop_loss_finders = [cls(ohlcv_context, atr_multi=round(atr_multi, 2)) for cls in stoploss_map.values() for atr_multi in atr_multi_range]
+search_space = {
+    **strategy_hyperparameters,
+    **stoploss_hyperparameters,
+    **takeprofit_hyperparameters
+}
 
-risk_reward_range = np.arange(*takeprofit_hyperparameters['risk_reward_ratio'])
-take_profit_finders = [cls(risk_reward_ratio=round(risk_reward_ratio, 2)) for cls in takeprofit_map.values() for risk_reward_ratio in risk_reward_range]
-
-strategies = [cls() for cls in strategy_map.values()]
-
-screener = StrategyScreening(
+random_search = RandomSearch(
+    search_space=search_space,
+    n_iterations=50,
+    target_metric='total_pnl',
+    screener_class=StrategyScreening,
     ohlcv=ohlcv_context,
     broker=broker,
     analytics=analytics,
@@ -100,13 +101,18 @@ screener = StrategyScreening(
     take_profit_finders=take_profit_finders,
 )
 
-result = screener.run()
+best_result = random_search.run()
+best_result.to_csv('best_strategy.csv')
 
-result.to_csv('strategy.csv')
-
-meta_label = str(result.head(1)['id'].iloc[0])
-
+meta_label = str(best_result.head(1)['id'].iloc[0])
 symbol, _timeframe, _strategy, _stop_loss, _take_profit = parse_meta_label(meta_label)
+
+def create_map(classes):
+    return {cls.NAME: cls for cls in classes if cls.NAME is not None}
+
+strategy_map = create_map(strategies)
+stoploss_map = create_map(stop_loss_finders)
+takeprofit_map = create_map(take_profit_finders)
 
 timeframe = timeframe_map[_timeframe]
 strategy = strategy_map[_strategy[0]](*_strategy[1])
@@ -118,8 +124,8 @@ broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
 broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
 
 market = broker.get_symbol_info(symbol)
-rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade, **market)
 
+rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade, **market)
 trader = SimpleTrader(ohlcv_context, broker, rm, analytics)
 
 invervals = {

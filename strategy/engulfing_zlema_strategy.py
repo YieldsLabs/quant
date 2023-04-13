@@ -8,22 +8,14 @@ from ta.patterns.harami import Harami
 class EngulfingZLMA(BaseStrategy):
     NAME = "EZLMA"
 
-    def __init__(
-        self,
-        slow_sma_period=200,
-        oversold=20,
-        overbought=80,
-        tolerance=0.002,
-        retracement_pct=0.05,
-    ):
+    def __init__(self, slow_sma_period=200, oversold=20, overbought=80, tolerance=0.002, retracement_pct=0.05,):
         indicators = [
-            (ZeroLagEMA(window=slow_sma_period), ZeroLagEMA.NAME),
-            (MoneyFlowIndexAlert(overbought_level=oversold, oversold_level=overbought),
-                (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
+            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
+            (MoneyFlowIndexAlert(overbought, oversold), (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
         ]
         patterns = [
-            (Engulfing, (Engulfing.bullish_column(), Engulfing.bearish_column())),
-            (Harami, (Harami.bullish_column(), Harami.bearish_column())),
+            (Engulfing(), (Engulfing.bullish_column(), Engulfing.bearish_column())),
+            (Harami(), (Harami.bullish_column(), Harami.bearish_column())),
         ]
         super().__init__(indicators, patterns)
         self.tolerance = tolerance

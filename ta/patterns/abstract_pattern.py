@@ -17,12 +17,10 @@ class AbstractPattern(AbstractMetaLabel):
     def bearish_column(cls) -> str:
         return f'{cls.NAME}_BEARISH'
 
-    @staticmethod
     @abstractmethod
     def bullish(self, data) -> bool:
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
     def bearish(self, data) -> bool:
         raise NotImplementedError

@@ -1,10 +1,24 @@
 import inspect
+from numbers import Number
 from cachetools import cached, LRUCache
 
 
-@cached(cache=LRUCache(maxsize=1000))
+def extract_nested_instances(instance):
+    nested_instances = []
+    for _, attr_value in instance.__dict__.items():
+        if isinstance(attr_value, list):
+            for item in attr_value:
+                if isinstance(item, tuple) and len(item) > 0:
+                    nested_instance = item[0]
+                    nested_instances.append(nested_instance)
+        elif hasattr(attr_value, "__dict__"):
+            nested_instances.extend(extract_nested_instances(attr_value))
+    return nested_instances
+
+@cached(cache=LRUCache(maxsize=100))
 def extract_numeric_params(instance):
     numeric_params = []
+    nested_params = {}
     signature = inspect.signature(instance.__class__.__init__)
 
     bound_arguments = {}
@@ -20,6 +34,11 @@ def extract_numeric_params(instance):
     bound_arguments = signature.bind_partial(**bound_arguments)
     bound_arguments.apply_defaults()
 
+    nested_instances = extract_nested_instances(instance)
+    
+    for nested_instance in nested_instances:
+        nested_params.update(extract_numeric_params(nested_instance))
+
     for param in signature.parameters.values():
         value = None
         if param.default is not inspect._empty:
@@ -27,22 +46,10 @@ def extract_numeric_params(instance):
         if param.name in bound_arguments.arguments:
             value = bound_arguments.arguments[param.name]
 
-        if value is not None and isinstance(value, (int, float)):
+        value = nested_params.get(param.name, value)
+
+        if value is not None and isinstance(value, Number):
             numeric_params.append((param.name, value))
-        elif value is not None and hasattr(value, "__dict__"):
-            numeric_params.extend(extract_numeric_params(value))
-        elif value is not None and isinstance(value, type) and issubclass(value, object):
-            nested_instance = None
-            if param.name in instance.__dict__:
-                nested_instance = instance.__dict__[param.name]
-            elif param.name in bound_arguments.arguments:
-                nested_instance = bound_arguments.arguments[param.name]
-            if nested_instance is not None:
-                numeric_params.extend(extract_numeric_params(nested_instance))
-            else:
-                nested_class = value
-                nested_params = extract_numeric_params(nested_class(**bound_arguments.arguments))
-                numeric_params.extend(nested_params)
 
     return numeric_params
 

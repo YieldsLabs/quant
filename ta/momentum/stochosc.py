@@ -7,9 +7,12 @@ class StochasticOscillator(AbstractIndicator):
 
     def __init__(self, stochastic_period=14, k_period=3, d_period=3):
         super().__init__()
-        self.stochastic_period = stochastic_period
         self.k_period_ma = MovingAverage(k_period)
         self.d_period_ma = MovingAverage(d_period)
+        self.stochastic_period = stochastic_period
+        # known issue with meta labels
+        self.k_period = k_period
+        self.d_period = d_period
 
     def call(self, data):
         high_rolling = data['high'].rolling(window=self.stochastic_period)

@@ -6,8 +6,7 @@ from ta.patterns.abstract_pattern import AbstractPattern
 class Piercing(AbstractPattern):
     NAME = 'PIERCING'
 
-    @staticmethod
-    def bullish(data):
+    def bullish(self, data):
         if len(data) < 2:
             return pd.Series(index=data.index, dtype=bool)
 
@@ -24,8 +23,7 @@ class Piercing(AbstractPattern):
 
         return piercing
 
-    @staticmethod
-    def bearish(data):
+    def bearish(self, data):
         if len(data) < 2:
             return pd.Series(index=data.index, dtype=bool)
 

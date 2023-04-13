@@ -10,6 +10,10 @@ class AwesomeOscillator(AbstractIndicator):
         self.short_period_ma = MovingAverage(ao_short_period)
         self.long_period_ma = MovingAverage(ao_long_period)
 
+        # known issue with meta labels
+        self.ao_short_period = ao_short_period
+        self.ao_long_period = ao_long_period
+
     def call(self, data):
         median_price = (data['high'] + data['low']) / 2
 

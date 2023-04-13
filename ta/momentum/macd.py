@@ -7,13 +7,20 @@ class MACD(AbstractIndicator):
 
     def __init__(self, short_period=12, long_period=26, signal_period=9):
         super().__init__()
-        self.fast_ema = MovingAverage(window=short_period)
-        self.slow_ema = MovingAverage(window=long_period)
-        self.signal_ema = MovingAverage(window=signal_period)
+        self.fast_ema = MovingAverage(short_period)
+        self.slow_ema = MovingAverage(long_period)
+        self.signal_ema = MovingAverage(signal_period)
+
+        # known issue with meta labels
+        self.short_period = short_period
+        self.long_period = long_period
+        self.signal_period = signal_period
 
     def call(self, data):
-        ema_fast = self.fast_ema.ema(data['close'])
-        ema_slow = self.slow_ema.ema(data['close'])
+        close = data['close']
+        
+        ema_fast = self.fast_ema.ema(close)
+        ema_slow = self.slow_ema.ema(close)
 
         macd = ema_fast - ema_slow
         signal_line = self.signal_ema.ema(macd)

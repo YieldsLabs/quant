@@ -6,8 +6,7 @@ from ta.patterns.abstract_pattern import AbstractPattern
 class SplitCandlestick(AbstractPattern):
     NAME = 'SPLITCANDLESTICK'
 
-    @staticmethod
-    def bullish(data):
+    def bullish(self, data):
         return (
             (data['close'].shift(1) < data['open'].shift(1))
             & (data['open'].shift(1) < data['high'].shift(1))
@@ -18,8 +17,7 @@ class SplitCandlestick(AbstractPattern):
             & (data['close'] > data['open'].shift(1))
         )
 
-    @staticmethod
-    def bearish(data):
+    def bearish(self, data):
         return (
             (data['close'].shift(1) > data['open'].shift(1))
             & (data['open'].shift(1) > data['low'].shift(1))
