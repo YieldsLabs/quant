@@ -6,7 +6,7 @@ from ta.momentum.rsi import RelativeStrengthIndex
 class UTBot(AbstractAlert):
     NAME = "UTBOT"
 
-    def __init__(self, atr_period=10, sensitivity=2, ema_period=1):
+    def __init__(self, atr_period=10, ema_period=1, sensitivity=2):
         super().__init__()
         self.atr_indicator = AverageTrueRange(period=atr_period)
         self.rsi_indicator = RelativeStrengthIndex(period=ema_period)

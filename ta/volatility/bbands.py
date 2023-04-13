@@ -14,7 +14,7 @@ class BollingerBands(AbstractIndicator):
         closes = data['close']
 
         middle_band = self.ma.sma(closes)
-        std_dev = closes.rolling(window=self.ma.window).std()
+        std_dev = closes.rolling(window=self.ma.sma_period).std()
 
         upper_band = middle_band + (std_dev * self.stdev_multi)
         lower_band = middle_band - (std_dev * self.stdev_multi)

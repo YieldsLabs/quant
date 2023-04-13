@@ -11,8 +11,8 @@ strategy_hyperparameters = {
     'stdev_multi': [0.5, 2, 0.5],
     'tolerance': [0.002, 0.01, 0.002],
     'lookback': [50, 150, 50],
-    'ao_short': [3, 15, 2.5],
-    'ao_long': [20, 50, 15]
+    'ao_short_period': [3, 15, 2.5],
+    'ao_long_period': [20, 50, 15]
 }
 
 stoploss_hyperparameters = {
