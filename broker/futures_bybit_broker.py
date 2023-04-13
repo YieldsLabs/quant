@@ -7,24 +7,21 @@ from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from ohlcv.context import OHLCV_COLUMNS
 from shared.position_side import PositionSide
-from cachetools import TTLCache
+from cachetools import TTLCache, cached
 
 
 class FuturesBybitBroker(AbstractBroker):
-    def __init__(self, api_key, secret, cache_capacity=1000, cache_ttl=300):
+    def __init__(self, api_key, secret):
         super().__init__()
         self.exchange = ccxt.bybit({'apiKey': api_key, 'secret': secret})
-        self._cache = TTLCache(maxsize=cache_capacity, ttl=cache_ttl)
 
     def get_account_balance(self):
         balance = self.exchange.fetch_balance()
         return float(balance['total']['USDT'])
 
+    @cached(cache=TTLCache(maxsize=1000, ttl=300))
     def _fetch_market_info(self):
-        if 'market_info' not in self._cache:
-            market_info = self.exchange.fetch_markets()
-            self._cache['market_info'] = market_info
-        return self._cache['market_info']
+        return self.exchange.fetch_markets()
 
     def get_symbol_info(self, symbol):
         try:
@@ -166,7 +163,7 @@ class FuturesBybitBroker(AbstractBroker):
         return None
 
     def get_symbols(self):
-        markets = self.exchange.fetch_markets()
+        markets = self._fetch_market_info()
         return [market_info['id'] for market_info in markets if market_info['linear']]
 
     def get_historical_data(self, symbol, timeframe, lookback=1000):

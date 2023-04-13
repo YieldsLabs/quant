@@ -21,7 +21,7 @@ class StrategyScreening(AbstractScreening):
     def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], analytics: Type[AbstractPerformance],
                  symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy],
                  stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit],
-                 sort_by="total_pnl", num_last_trades=15, hyperparameters=None):
+                 target_metric="total_pnl", num_last_trades=15, hyperparameters=None):
         super().__init__(ohlcv)
         self.broker = broker
         self.analytics = analytics
@@ -31,14 +31,14 @@ class StrategyScreening(AbstractScreening):
         self.stop_loss_finders = self._create_instances(stop_loss_finders, hyperparameters,  pre_args=(ohlcv,))
         self.take_profit_finders = self._create_instances(take_profit_finders, hyperparameters)
         self.num_last_trades = num_last_trades
-        self.sort_by = sort_by
+        self.target_metric = target_metric
 
-    def _run_backtest(self, settings, rm):
+    def _run_backtest(self, settings, rm, analytics):
         symbol, timeframe, strategy, id = settings
 
         print(f"Backtest: {id}")
 
-        backtester = Backtester(self.ohlcv_context, self.broker, rm, self.analytics)
+        backtester = Backtester(self.ohlcv_context, self.broker, rm, analytics)
 
         result = backtester.trade(strategy, symbol, timeframe)
 
@@ -51,7 +51,9 @@ class StrategyScreening(AbstractScreening):
     def _is_unique_id(self, id, seen_ids):
         if id in seen_ids:
             return False
+        
         seen_ids.add(id)
+        
         return True
 
     def _generate_id(self, symbol, timeframe, strategy, rm):
@@ -83,24 +85,22 @@ class StrategyScreening(AbstractScreening):
     def _unique_settings(self, seen_ids, risk_manager_keys):
         settings_iter = list(product(self.symbols, self.timeframes, self.strategies, risk_manager_keys))
         random.shuffle(settings_iter)
+
         for symbol, timeframe, strategy, risk_manager_key in settings_iter:
             current_id = self._generate_id(symbol, timeframe, strategy, risk_manager_key)
             if self._is_unique_id(current_id, seen_ids):
                 yield (symbol, timeframe, strategy, risk_manager_key, current_id)
 
-
     def run(self):
-        market_dict = {symbol: self.broker.get_symbol_info(symbol) for symbol in self.symbols}
-        risk_manager_products = product(self.stop_loss_finders, self.take_profit_finders)
-
         risk_manager_dict = {
             (symbol, stop_loss_finder, take_profit_finder): RiskManager(
                 stop_loss_finder,
                 take_profit_finder,
-                **market_dict[symbol],
+                **self.broker.get_symbol_info(symbol),
             )
             for symbol in self.symbols
-            for stop_loss_finder, take_profit_finder in risk_manager_products
+            for stop_loss_finder in self.stop_loss_finders
+            for take_profit_finder in self.take_profit_finders
         }
 
         seen_ids = set()
@@ -112,11 +112,12 @@ class StrategyScreening(AbstractScreening):
                     self._run_backtest,
                     (setting[0], setting[1], setting[2], setting[4]),
                     risk_manager_dict[setting[3]],
+                    self.analytics
                 )
                 for setting in self._unique_settings(seen_ids, risk_manager_keys)
             ]
             results_list = [result.result() for result in results_list]
 
         return pd.DataFrame(results_list).sort_values(
-            by=self.sort_by, ascending=False
+            by=self.target_metric, ascending=False
         )

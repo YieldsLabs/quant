@@ -1,6 +1,6 @@
+from functools import lru_cache
 import inspect
 from numbers import Number
-from cachetools import cached, LRUCache
 
 
 def extract_nested_instances(instance):
@@ -15,7 +15,7 @@ def extract_nested_instances(instance):
             nested_instances.extend(extract_nested_instances(attr_value))
     return nested_instances
 
-@cached(cache=LRUCache(maxsize=100))
+@lru_cache(100)
 def extract_numeric_params(instance):
     numeric_params = []
     nested_params = {}

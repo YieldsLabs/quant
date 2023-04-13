@@ -88,7 +88,7 @@ search_space = {
 
 random_search = RandomSearch(
     search_space=search_space,
-    n_iterations=50,
+    n_iterations=5,
     target_metric='total_pnl',
     screener_class=StrategyScreening,
     ohlcv=ohlcv_context,
@@ -101,7 +101,7 @@ random_search = RandomSearch(
     take_profit_finders=take_profit_finders,
 )
 
-best_result = random_search.run()
+best_result, _ = random_search.run()
 best_result.to_csv('best_strategy.csv')
 
 meta_label = str(best_result.head(1)['id'].iloc[0])
