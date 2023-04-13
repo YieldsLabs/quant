@@ -54,8 +54,16 @@ class StrategyScreening(AbstractScreening):
 
     def _generate_id(self, symbol, timeframe, strategy, rm):
         _, stop_loss, take_profit = rm
-
         return f"{symbol}_{timeframe}{strategy}{stop_loss}{take_profit}"
+    
+    def _unique_settings(self, seen_ids, risk_manager_keys):
+        settings_iter = list(product(self.symbols, self.timeframes, self.strategies, risk_manager_keys))
+        random.shuffle(settings_iter)
+        for symbol, timeframe, strategy, risk_manager_key in settings_iter:
+            current_id = self._generate_id(symbol, timeframe, strategy, risk_manager_key)
+            if self._is_unique_id(current_id, seen_ids):
+                yield (symbol, timeframe, strategy, risk_manager_key, current_id)
+
 
     def run(self):
         market_dict = {symbol: self.broker.get_symbol_info(symbol) for symbol in self.symbols}
@@ -74,27 +82,14 @@ class StrategyScreening(AbstractScreening):
         seen_ids = set()
         risk_manager_keys = list(risk_manager_dict.keys())
 
-        def _settings_generator():
-            for symbol, timeframe, strategy in product(self.symbols, self.timeframes, self.strategies):
-                for risk_manager_key in risk_manager_keys:
-                    current_id = self._generate_id(symbol, timeframe, strategy, risk_manager_key)
-                    if self._is_unique_id(current_id, seen_ids):
-                        yield (symbol, timeframe, strategy, risk_manager_key, current_id)
-
-        unique_settings = list(_settings_generator())
-
-        random.shuffle(unique_settings)
-
-        num_workers = min(multiprocessing.cpu_count(), len(unique_settings))
-
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
             results_list = [
                 executor.submit(
                     self._run_backtest,
                     (setting[0], setting[1], setting[2], setting[4]),
                     risk_manager_dict[setting[3]],
                 )
-                for setting in unique_settings
+                for setting in self._unique_settings(seen_ids, risk_manager_keys)
             ]
             results_list = [result.result() for result in results_list]
 

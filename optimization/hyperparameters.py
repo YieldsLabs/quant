@@ -22,11 +22,8 @@ takeprofit_hyperparameters = {
 }
 
 
-def create_instances_with_hyperparameters(class_map, hyperparameters, pre_args=None):
+def create_instances_with_hyperparameters(class_map, hyperparameters, pre_args=()):
     instances_dict = {}
-
-    if pre_args is None:
-        pre_args = tuple()
 
     for cls in class_map.values():
         signature = inspect.signature(cls.__init__)
