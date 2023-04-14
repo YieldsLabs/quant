@@ -71,6 +71,10 @@ class PerformanceStats(AbstractPerformance):
             return 0
 
         downside_std = np.std(downside_returns)
+
+        if downside_std == 0:
+            return 0
+        
         avg_return = np.mean(pnl_array)
         sortino_ratio = (avg_return - risk_free_rate) / downside_std
 
