@@ -1,5 +1,4 @@
 from enum import Enum
-import time
 from typing import Type
 import numpy as np
 import pandas as pd
@@ -11,7 +10,7 @@ from shared.order import Order
 from shared.timeframes import Timeframes
 from trader.trade_type import TradeType
 from strategy.base.abstract_strategy import AbstractStrategy
-from trader.abstract_trader import AbstractTrader
+from .abstract_trader import AbstractTrader
 from shared.position_side import PositionSide
 
 

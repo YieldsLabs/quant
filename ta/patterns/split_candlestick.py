@@ -1,6 +1,6 @@
 import numpy as np
 
-from ta.patterns.abstract_pattern import AbstractPattern
+from .abstract_pattern import AbstractPattern
 
 
 class SplitCandlestick(AbstractPattern):

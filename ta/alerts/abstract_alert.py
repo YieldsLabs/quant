@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Tuple
 
 from shared.meta_label.abstract_meta_label import AbstractMetaLabel
 from shared.meta_label.meta_label import meta_label
@@ -18,5 +19,5 @@ class AbstractAlert(AbstractMetaLabel):
         return f'{cls.NAME}_SELL'
 
     @abstractmethod
-    def call(self, data):
+    def call(self, data) -> Tuple[bool, bool]:
         raise NotImplementedError

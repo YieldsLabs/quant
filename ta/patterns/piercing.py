@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ta.patterns.abstract_pattern import AbstractPattern
+from .abstract_pattern import AbstractPattern
 
 
 class Piercing(AbstractPattern):

@@ -1,4 +1,4 @@
-from strategy.base.base_strategy import BaseStrategy
+from .base.base_strategy import BaseStrategy
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from ta.smc.fair_value_gap import FairValueGap

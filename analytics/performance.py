@@ -36,7 +36,7 @@ class PerformanceStats(AbstractPerformance):
         pnl = [order.pnl for order in orders]
         total_trades = len(orders)
         successful_trades = sum(order.pnl > 0 for order in orders)
-        max_drawdown = self._max_drawdown(pnl)
+        max_drawdown = self._max_drawdown(pnl) if pnl else 0
         win_rate = successful_trades / total_trades if total_trades else 0
 
         return PerformanceStatsResults(
@@ -66,13 +66,14 @@ class PerformanceStats(AbstractPerformance):
     def _sortino_ratio(self, pnl, risk_free_rate=0):
         pnl_array = np.array(pnl)
         downside_returns = pnl_array[pnl_array < 0]
-        downside_std = np.std(downside_returns)
-        
-        if downside_std == 0:
-            return np.nan
 
+        if len(downside_returns) < 2:
+            return 0
+
+        downside_std = np.std(downside_returns)
         avg_return = np.mean(pnl_array)
         sortino_ratio = (avg_return - risk_free_rate) / downside_std
+
         return sortino_ratio
 
     def _max_streak(self, pnl, winning: bool):
@@ -115,11 +116,14 @@ class PerformanceStats(AbstractPerformance):
     
     def _recovery_factor(self, pnl, max_drawdown):
         total_profit = sum(pnl_value for pnl_value in pnl if pnl_value > 0)
-        return total_profit / max_drawdown if max_drawdown != 0 else np.nan
+        
+        return total_profit / max_drawdown if max_drawdown != 0 else 0
     
     def _risk_of_ruin(self, win_rate: float):
         if win_rate == 1 or win_rate == 0:
             return 0
+
         loss_rate = 1 - win_rate
         risk_of_ruin = ((1 - (self.risk_per_trade * (1 - loss_rate / win_rate))) ** self.initial_account_size) * 100
+        
         return risk_of_ruin

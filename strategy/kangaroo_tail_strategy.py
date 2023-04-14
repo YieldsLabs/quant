@@ -1,4 +1,4 @@
-from strategy.base.base_strategy import BaseStrategy
+from .base.base_strategy import BaseStrategy
 from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.kangaroo_tail import KangarooTail
 

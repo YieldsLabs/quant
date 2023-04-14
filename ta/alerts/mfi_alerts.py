@@ -1,4 +1,4 @@
-from ta.alerts.abstract_alert import AbstractAlert
+from .abstract_alert import AbstractAlert
 from ta.volume.mfi import MoneyFlowIndex
 
 

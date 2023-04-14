@@ -1,4 +1,4 @@
-from strategy.base.base_strategy import BaseStrategy
+from .base.base_strategy import BaseStrategy
 from ta.patterns.extreme_euphoria import ExtremeEuphoria
 from ta.volatility.bbands import BollingerBands
 
