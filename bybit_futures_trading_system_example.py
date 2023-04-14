@@ -39,7 +39,7 @@ risk_per_trade = 0.00001
 
 broker = FuturesBybitBroker(API_KEY, API_SECRET)
 datasource = BybitDataSource(broker, lookback)
-analytics = PerformanceStats(broker.get_account_balance())
+analytics = PerformanceStats(broker.get_account_balance(), risk_per_trade)
 OhlcvContext(datasource)
 
 symbols = [

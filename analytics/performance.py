@@ -27,9 +27,10 @@ class PerformanceStatsResults:
 
 
 class PerformanceStats(AbstractPerformance):
-    def __init__(self, initial_account_size: float):
+    def __init__(self, initial_account_size: float, risk_per_trade: float):
         super().__init__()
         self.initial_account_size = initial_account_size
+        self.risk_per_trade = risk_per_trade
 
     def calculate(self, orders: List[Order]) -> PerformanceStatsResults:
         pnl = [order.pnl for order in orders]
