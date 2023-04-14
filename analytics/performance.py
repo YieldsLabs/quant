@@ -1,78 +1,80 @@
-from typing import List
+from dataclasses import asdict, dataclass
+from typing import List, Type
 import numpy as np
 
 from analytics.abstract_performace import AbstractPerformance
 from shared.order import Order
+
+@dataclass
+class PerformanceStatsResults:
+    total_trades: int
+    successful_trades: int
+    win_rate: float
+    rate_of_return: float
+    total_pnl: float
+    average_pnl: float
+    sharpe_ratio: float
+    max_consecutive_wins: int
+    max_consecutive_losses: int
+    max_drawdown: float
+
+    def to_dict(self):
+        return asdict(self)
 
 
 class PerformanceStats(AbstractPerformance):
     def __init__(self, initial_account_size: float):
         super().__init__()
         self.initial_account_size = initial_account_size
-        self.equity = [initial_account_size]
 
-    def calculate(self, orders: List[Order]):
-        total_trades = len(orders)
-        successful_trades = len(
-            [order for order in orders if order.pnl > 0])
+    def calculate(self, orders: List[Order]) -> PerformanceStatsResults:
         pnl = [order.pnl for order in orders]
-        win_rate = successful_trades / total_trades if total_trades > 0 else 0
-        total_pnl = np.sum(pnl) if len(pnl) else 0
-        average_pnl = np.mean(pnl) if len(pnl) else 0
-        sharpe_ratio = self._calculate_sharpe_ratio(pnl) if len(pnl) else 0
-        rate_of_return, max_drawdown, max_consecutive_wins, max_consecutive_losses = self._calculate_drawdown_and_streaks(orders)
+        total_trades = len(orders)
+        successful_trades = sum(order.pnl > 0 for order in orders)
 
-        return {
-            'total_trades': total_trades,
-            'successful_trades': successful_trades,
-            'win_rate': win_rate,
-            'rate_of_return': rate_of_return,
-            'total_pnl': total_pnl,
-            'average_pnl': average_pnl,
-            'sharpe_ratio': sharpe_ratio,
-            'max_consecutive_wins': max_consecutive_wins,
-            'max_consecutive_losses': max_consecutive_losses,
-            'max_drawdown': max_drawdown
-        }
+        return PerformanceStatsResults(
+            total_trades=total_trades,
+            successful_trades=successful_trades,
+            win_rate=successful_trades / total_trades if total_trades else 0,
+            rate_of_return=self._rate_of_return(pnl),
+            total_pnl=np.sum(pnl) if pnl else 0,
+            average_pnl=np.mean(pnl) if pnl else 0,
+            sharpe_ratio=self._sharpe_ratio(pnl) if pnl else 0,
+            max_consecutive_wins=self._max_streak(pnl, True),
+            max_consecutive_losses=self._max_streak(pnl, False),
+            max_drawdown=self._max_drawdown(pnl),
+        )
 
-    def _calculate_sharpe_ratio(self, pnl, risk_free_rate=0):
+    def _sharpe_ratio(self, pnl, risk_free_rate=0):
         pnl_array = np.array(pnl)
         avg_return = np.mean(pnl_array)
         std_return = np.std(pnl_array)
 
-        if std_return == 0:
-            return np.nan
+        return (avg_return - risk_free_rate) / std_return if std_return else np.nan
 
-        sharpe_ratio = (avg_return - risk_free_rate) / std_return
-        return sharpe_ratio
+    def _max_streak(self, pnl, winning: bool):
+        streak = max_streak = 0
+        for pnl_value in pnl:
+            if (pnl_value > 0) == winning:
+                streak += 1
+                max_streak = max(max_streak, streak)
+            else:
+                streak = 0
+        return max_streak
 
-    def _calculate_drawdown_and_streaks(self, orders):
+    def _rate_of_return(self, pnl):
+        account_size = self.initial_account_size + sum(pnl)
+        return (account_size / self.initial_account_size) - 1
+
+    def _max_drawdown(self, pnl):
         account_size = self.initial_account_size
-        win_streak = 0
-        loss_streak = 0
-        max_consecutive_wins = 0
-        max_consecutive_losses = 0
+        peak = account_size
         max_drawdown = 0
-        peak = self.initial_account_size
 
-        for order in orders:
-            profit = order.pnl
-            account_size += profit
-            self.equity.append(account_size)
-
+        for pnl_value in pnl:
+            account_size += pnl_value
             peak = max(peak, account_size)
             drawdown = (peak - account_size) / peak
             max_drawdown = max(max_drawdown, drawdown)
 
-            if profit > 0:
-                win_streak += 1
-                loss_streak = 0
-                max_consecutive_wins = max(max_consecutive_wins, win_streak)
-            else:
-                loss_streak += 1
-                win_streak = 0
-                max_consecutive_losses = max(
-                    max_consecutive_losses, loss_streak)
-
-        rate_of_return = (account_size / self.initial_account_size) - 1
-        return rate_of_return, max_drawdown, max_consecutive_wins, max_consecutive_losses
+        return max_drawdown

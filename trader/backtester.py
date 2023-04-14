@@ -4,8 +4,8 @@ from typing import Type
 import numpy as np
 import pandas as pd
 from analytics.abstract_performace import AbstractPerformance
-from broker.abstract_broker import AbstractBroker
-from ohlcv.context import OhlcvContext, update_ohlcv
+from analytics.performance import PerformanceStatsResults
+from ohlcv.context import update_ohlcv
 from risk_management.abstract_risk_manager import AbstractRiskManager
 from shared.order import Order
 from shared.timeframes import Timeframes
@@ -98,7 +98,7 @@ class Backtester(AbstractTrader):
 
         return self._evaluate_trades(trades)
 
-    def _evaluate_trades(self, trades):
+    def _evaluate_trades(self, trades) -> PerformanceStatsResults:
         for entry_trade, exit_trade in zip(trades[::2], trades[1::2]):
 
             entry_price, exit_price = entry_trade[1]['close'], exit_trade[1]['close']

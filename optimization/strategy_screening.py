@@ -41,11 +41,9 @@ class StrategyScreening(AbstractScreening):
 
         result = backtester.trade(strategy, symbol, timeframe)
 
-        result.update({'id': id})
-
         print(backtester.get_orders().tail(self.num_last_trades))
         
-        return result
+        return result.to_dict().update({ 'id': id })
 
     def _is_unique_id(self, id, seen_ids):
         if id in seen_ids:

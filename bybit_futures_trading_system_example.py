@@ -38,10 +38,8 @@ leverage = 1
 risk_per_trade = 0.00001
 
 broker = FuturesBybitBroker(API_KEY, API_SECRET)
-initial_balance = broker.get_account_balance()
-analytics = PerformanceStats(initial_balance)
 datasource = BybitDataSource(broker, lookback)
-
+analytics = PerformanceStats(broker.get_account_balance())
 OhlcvContext(datasource)
 
 symbols = [
@@ -87,10 +85,11 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
+
 random_search = RandomSearch(
     search_space=search_space,
     n_iterations=5,
-    target_metric='total_pnl',
+    target_metric='sharpe_ratio',
     screener_class=StrategyScreening,
     broker=broker,
     analytics=analytics,
@@ -123,9 +122,7 @@ broker.set_leverage(symbol, leverage)
 broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
 broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
 
-market = broker.get_symbol_info(symbol)
-
-rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade, **market)
+rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade, **broker.get_symbol_info(symbol))
 trader = SimpleTrader(broker, rm, analytics)
 
 invervals = {
