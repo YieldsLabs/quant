@@ -31,9 +31,8 @@ invervals = {
 
 
 class Backtester(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
-        super().__init__(ohlcv)
-        self.broker = broker
+    def __init__(self, risk_management: Type[AbstractRiskManager], analytics: Type[AbstractPerformance], trade_type=TradeType.BOTH, initial_account_size=1000):
+        super().__init__()
         self.risk_management = risk_management
         self.initial_account_size = initial_account_size
         self.analytics = analytics

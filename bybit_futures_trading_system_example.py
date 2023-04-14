@@ -41,7 +41,8 @@ broker = FuturesBybitBroker(API_KEY, API_SECRET)
 initial_balance = broker.get_account_balance()
 analytics = PerformanceStats(initial_balance)
 datasource = BybitDataSource(broker, lookback)
-ohlcv_context = OhlcvContext(datasource)
+
+OhlcvContext(datasource)
 
 symbols = [
     'NEARUSDT',
@@ -91,7 +92,6 @@ random_search = RandomSearch(
     n_iterations=5,
     target_metric='total_pnl',
     screener_class=StrategyScreening,
-    ohlcv=ohlcv_context,
     broker=broker,
     analytics=analytics,
     symbols=symbols,
@@ -116,7 +116,7 @@ takeprofit_map = create_map(take_profit_finders)
 
 timeframe = timeframe_map[_timeframe]
 strategy = strategy_map[_strategy[0]](*_strategy[1])
-stop_loss_finder = stoploss_map[_stop_loss[0]](ohlcv_context, *_stop_loss[1])
+stop_loss_finder = stoploss_map[_stop_loss[0]](*_stop_loss[1])
 take_profit_finder = takeprofit_map[_take_profit[0]](*_take_profit[1])
 
 broker.set_leverage(symbol, leverage)
@@ -126,7 +126,7 @@ broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverag
 market = broker.get_symbol_info(symbol)
 
 rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade, **market)
-trader = SimpleTrader(ohlcv_context, broker, rm, analytics)
+trader = SimpleTrader(broker, rm, analytics)
 
 invervals = {
     Timeframes.ONE_MINUTE: 1,

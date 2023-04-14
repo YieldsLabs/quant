@@ -13,8 +13,8 @@ from trader.trade_info import TradeInfo
 
 
 class SimpleTrader(AbstractTrader):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance]):
-        super().__init__(ohlcv)
+    def __init__(self, broker: Type[AbstractBroker], rm: Type[AbstractRiskManager], analytics: Type[AbstractPerformance]):
+        super().__init__()
         self.broker = broker
         self.rm = rm
         self.analytics = analytics

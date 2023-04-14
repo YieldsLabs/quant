@@ -8,7 +8,6 @@ import multiprocessing
 import pandas as pd
 from analytics.abstract_performace import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
-from ohlcv.context import OhlcvContext
 from optimization.abstract_screening import AbstractScreening
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
@@ -18,17 +17,17 @@ from risk_management.risk_manager import RiskManager
 
 
 class StrategyScreening(AbstractScreening):
-    def __init__(self, ohlcv: Type[OhlcvContext], broker: Type[AbstractBroker], analytics: Type[AbstractPerformance],
+    def __init__(self, broker: Type[AbstractBroker], analytics: Type[AbstractPerformance],
                  symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy],
                  stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit],
                  target_metric="total_pnl", num_last_trades=15, hyperparameters=None):
-        super().__init__(ohlcv)
+        super().__init__()
         self.broker = broker
         self.analytics = analytics
         self.symbols = symbols
         self.timeframes = timeframes
         self.strategies = self._create_instances(strategies, hyperparameters)
-        self.stop_loss_finders = self._create_instances(stop_loss_finders, hyperparameters,  pre_args=(ohlcv,))
+        self.stop_loss_finders = self._create_instances(stop_loss_finders, hyperparameters)
         self.take_profit_finders = self._create_instances(take_profit_finders, hyperparameters)
         self.num_last_trades = num_last_trades
         self.target_metric = target_metric
@@ -38,7 +37,7 @@ class StrategyScreening(AbstractScreening):
 
         print(f"Backtest: {id}")
 
-        backtester = Backtester(self.ohlcv_context, self.broker, rm, analytics)
+        backtester = Backtester(rm, analytics)
 
         result = backtester.trade(strategy, symbol, timeframe)
 
@@ -60,7 +59,7 @@ class StrategyScreening(AbstractScreening):
         _, stop_loss, take_profit = rm
         return f"{symbol}_{timeframe}{strategy}{stop_loss}{take_profit}"
     
-    def _create_instances(self, classes, hyperparameters, pre_args=()):
+    def _create_instances(self, classes, hyperparameters):
         instances_dict = {}
 
         for cls in classes:
@@ -74,10 +73,10 @@ class StrategyScreening(AbstractScreening):
             }
 
             if not applicable_hyperparams:
-                instance = cls(*pre_args)
+                instance = cls()
                 instances_dict[str(instance)] = instance
             else:
-                instance = cls(*pre_args, **applicable_hyperparams)
+                instance = cls(**applicable_hyperparams)
                 instances_dict[str(instance)] = instance
 
         return list(instances_dict.values())

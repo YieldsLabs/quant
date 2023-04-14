@@ -1,7 +1,4 @@
-from typing import Type
-
 import numpy as np
-from ohlcv.context import OhlcvContext
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from shared.position_side import PositionSide
@@ -10,9 +7,9 @@ from shared.position_side import PositionSide
 class LowHighStopLossFinder(AbstractStopLoss):
     NAME = 'LWHGH'
 
-    def __init__(self, ohlcv: Type[OhlcvContext], atr_multi=1, lookback=50):
-        super().__init__(ohlcv)
-        self.stop_loss_finder = ATRStopLossFinder(ohlcv, atr_multi=atr_multi)
+    def __init__(self, atr_multi=1, lookback=50):
+        super().__init__()
+        self.stop_loss_finder = ATRStopLossFinder(atr_multi=atr_multi)
         self.lookback = lookback
 
     def next(self, position_side, entry_price):
