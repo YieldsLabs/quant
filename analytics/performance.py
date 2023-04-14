@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import List, Type
+from typing import List
 import numpy as np
 
 from analytics.abstract_performace import AbstractPerformance
@@ -14,9 +14,11 @@ class PerformanceStatsResults:
     total_pnl: float
     average_pnl: float
     sharpe_ratio: float
+    profit_factor: float
     max_consecutive_wins: int
     max_consecutive_losses: int
     max_drawdown: float
+    recovery_factor: float
 
     def to_dict(self):
         return asdict(self)
@@ -31,6 +33,7 @@ class PerformanceStats(AbstractPerformance):
         pnl = [order.pnl for order in orders]
         total_trades = len(orders)
         successful_trades = sum(order.pnl > 0 for order in orders)
+        max_drawdown = self._max_drawdown(pnl)
 
         return PerformanceStatsResults(
             total_trades=total_trades,
@@ -40,9 +43,11 @@ class PerformanceStats(AbstractPerformance):
             total_pnl=np.sum(pnl) if pnl else 0,
             average_pnl=np.mean(pnl) if pnl else 0,
             sharpe_ratio=self._sharpe_ratio(pnl) if pnl else 0,
+            profit_factor=self._profit_factor(pnl) if pnl else 0,
             max_consecutive_wins=self._max_streak(pnl, True),
             max_consecutive_losses=self._max_streak(pnl, False),
-            max_drawdown=self._max_drawdown(pnl),
+            max_drawdown=max_drawdown,
+            recovery_factor=self._recovery_factor(pnl, max_drawdown) if pnl else 0,
         )
 
     def _sharpe_ratio(self, pnl, risk_free_rate=0):
@@ -65,6 +70,17 @@ class PerformanceStats(AbstractPerformance):
     def _rate_of_return(self, pnl):
         account_size = self.initial_account_size + sum(pnl)
         return (account_size / self.initial_account_size) - 1
+    
+    def _profit_factor(self, pnl):
+        pnl_array = np.array(pnl)
+        gross_profit = np.sum(pnl_array[pnl_array > 0])
+        gross_loss = np.abs(np.sum(pnl_array[pnl_array < 0]))
+
+        if gross_loss == 0:
+            return np.nan
+
+        profit_factor = gross_profit / gross_loss
+        return profit_factor
 
     def _max_drawdown(self, pnl):
         account_size = self.initial_account_size
@@ -78,3 +94,7 @@ class PerformanceStats(AbstractPerformance):
             max_drawdown = max(max_drawdown, drawdown)
 
         return max_drawdown
+    
+    def _recovery_factor(self, pnl, max_drawdown):
+        total_profit = sum(pnl_value for pnl_value in pnl if pnl_value > 0)
+        return total_profit / max_drawdown if max_drawdown != 0 else np.nan
