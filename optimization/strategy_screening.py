@@ -20,7 +20,7 @@ class StrategyScreening(AbstractScreening):
     def __init__(self, broker: Type[AbstractBroker], analytics: Type[AbstractPerformance],
                  symbols: List[str], timeframes: List[str], strategies: List[AbstractStrategy],
                  stop_loss_finders: List[AbstractStopLoss], take_profit_finders: List[AbstractTakeProfit],
-                 target_metric="total_pnl", num_last_trades=15, hyperparameters=None):
+                num_last_trades=15, hyperparameters=None):
         super().__init__()
         self.broker = broker
         self.analytics = analytics
@@ -30,7 +30,6 @@ class StrategyScreening(AbstractScreening):
         self.stop_loss_finders = self._create_instances(stop_loss_finders, hyperparameters)
         self.take_profit_finders = self._create_instances(take_profit_finders, hyperparameters)
         self.num_last_trades = num_last_trades
-        self.target_metric = target_metric
 
     def _run_backtest(self, settings, rm, analytics):
         symbol, timeframe, strategy, id = settings
@@ -39,11 +38,15 @@ class StrategyScreening(AbstractScreening):
 
         backtester = Backtester(rm, analytics)
 
-        result = backtester.trade(strategy, symbol, timeframe)
+        stats = backtester.trade(strategy, symbol, timeframe)
 
         print(backtester.get_orders().tail(self.num_last_trades))
+
+        result = stats.to_dict()
         
-        return result.to_dict().update({ 'id': id })
+        result.update({ 'id': id })
+
+        return result
 
     def _is_unique_id(self, id, seen_ids):
         if id in seen_ids:
@@ -115,6 +118,4 @@ class StrategyScreening(AbstractScreening):
             ]
             results_list = [result.result() for result in results_list]
 
-        return pd.DataFrame(results_list).sort_values(
-            by=self.target_metric, ascending=False
-        )
+        return pd.DataFrame(results_list)

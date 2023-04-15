@@ -36,7 +36,7 @@ class PerformanceStats(AbstractPerformance):
         pnl = [order.pnl for order in orders]
         total_trades = len(orders)
         successful_trades = sum(order.pnl > 0 for order in orders)
-        max_drawdown = self._max_drawdown(pnl) if pnl else 0
+        max_drawdown = self._max_drawdown(pnl) if len(pnl) else 0
         win_rate = successful_trades / total_trades if total_trades else 0
 
         return PerformanceStatsResults(
@@ -45,15 +45,15 @@ class PerformanceStats(AbstractPerformance):
             win_rate=win_rate,
             risk_of_ruin=self._risk_of_ruin(win_rate),
             rate_of_return=self._rate_of_return(pnl),
-            total_pnl=np.sum(pnl) if pnl else 0,
-            average_pnl=np.mean(pnl) if pnl else 0,
-            sharpe_ratio=self._sharpe_ratio(pnl) if pnl else 0,
-            sortino_ratio=self._sortino_ratio(pnl) if pnl else 0,
-            profit_factor=self._profit_factor(pnl) if pnl else 0,
+            total_pnl=np.sum(pnl) if len(pnl) else 0,
+            average_pnl=np.mean(pnl) if len(pnl) else 0,
+            sharpe_ratio=self._sharpe_ratio(pnl) if len(pnl) else 0,
+            sortino_ratio=self._sortino_ratio(pnl) if len(pnl) else 0,
+            profit_factor=self._profit_factor(pnl) if len(pnl) else 0,
             max_consecutive_wins=self._max_streak(pnl, True),
             max_consecutive_losses=self._max_streak(pnl, False),
             max_drawdown=max_drawdown,
-            recovery_factor=self._recovery_factor(pnl, max_drawdown) if pnl else 0
+            recovery_factor=self._recovery_factor(pnl, max_drawdown) if len(pnl) else 0
         )
 
     def _sharpe_ratio(self, pnl, risk_free_rate=0):
@@ -61,7 +61,7 @@ class PerformanceStats(AbstractPerformance):
         avg_return = np.mean(pnl_array)
         std_return = np.std(pnl_array)
 
-        return (avg_return - risk_free_rate) / std_return if std_return else np.nan
+        return (avg_return - risk_free_rate) / std_return if std_return else 0
     
     def _sortino_ratio(self, pnl, risk_free_rate=0):
         pnl_array = np.array(pnl)

@@ -35,7 +35,7 @@ class RiskManager(AbstractRiskManager):
             position_side, entry_price)
 
         if self.trailing_stop_loss and self.stop_loss_adjustment_count[position_side] < self.max_stop_loss_adjustments:
-            stop_loss_price = self.update_trailing_stop_loss(position_side, stop_loss_price, current_row)
+            stop_loss_price = self.update_trailing_stop_loss(position_side, stop_loss_price, entry_price, current_row)
 
         if self.should_exit(position_side, stop_loss_price, take_profit_price, current_row):
             self.trailing_stop_loss_prices[position_side] = None
@@ -86,7 +86,7 @@ class RiskManager(AbstractRiskManager):
         elif position_side == PositionSide.SHORT:
             return self._short_exit_conditions(stop_loss_price, take_profit_price, current_row)
 
-    def update_trailing_stop_loss(self, position_side, stop_loss_price, current_row):
+    def update_trailing_stop_loss(self, position_side, stop_loss_price, entry_price, current_row):
         if position_side not in self.trailing_stop_loss_prices:
             self.trailing_stop_loss_prices[position_side] = stop_loss_price
 
@@ -95,11 +95,17 @@ class RiskManager(AbstractRiskManager):
             if new_stop_loss_price > self.trailing_stop_loss_prices[position_side]:
                 self.trailing_stop_loss_prices[position_side] = new_stop_loss_price
                 self.stop_loss_adjustment_count[position_side] += 1
+
+                if self.trailing_stop_loss_prices[position_side] - entry_price >= self.risk_per_trade * self.position_size:
+                    self.trailing_stop_loss_prices[position_side] = entry_price
         elif position_side == PositionSide.SHORT:
             new_stop_loss_price = current_row['low'] + (stop_loss_price - current_row['low']) * self.risk_per_trade
             if new_stop_loss_price < self.trailing_stop_loss_prices[position_side]:
                 self.trailing_stop_loss_prices[position_side] = new_stop_loss_price
                 self.stop_loss_adjustment_count[position_side] += 1
+
+                if entry_price - self.trailing_stop_loss_prices[position_side] >= self.risk_per_trade * self.position_size:
+                    self.trailing_stop_loss_prices[position_side] = entry_price
 
         return self.trailing_stop_loss_prices[position_side]
 

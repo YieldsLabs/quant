@@ -61,39 +61,42 @@ class Backtester(AbstractTrader):
         return np.where(long_signals)[0].tolist(), np.where(short_signals)[0].tolist()
 
     def _calculate_performance(self, long_signals, short_signals):
-        long_signals, short_signals = pd.DataFrame(long_signals), pd.DataFrame(short_signals)
-        long_signals['signal'], short_signals['signal'] = SignalType.LONG, SignalType.SHORT
+        def process_signals(signals, signal_type):
+            signals = pd.DataFrame(signals)
+            signals['signal'] = signal_type
+            return signals
+
+        long_signals = process_signals(long_signals, SignalType.LONG)
+        short_signals = process_signals(short_signals, SignalType.SHORT)
 
         combined_signals = pd.concat([long_signals, short_signals]).sort_index()
+        valid_indices = combined_signals.index.intersection(self.ohlcv_context.ohlcv.index)
+        signal_rows = combined_signals.loc[valid_indices]
 
         trades = []
         active_trade = None
 
-        signal_idx = combined_signals.index.isin(self.ohlcv_context.ohlcv.index)
-        signal_rows = combined_signals[signal_idx]
-
         for index, row in signal_rows.iterrows():
-            signal_type, ohlcv = row['signal'], self.ohlcv_context.ohlcv.loc[index]
+            signal_type = row['signal']
 
             if active_trade is None:
-                if signal_type == SignalType.LONG and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.LONG):
-                    active_trade = (PositionSide.LONG, ohlcv)
+                is_long_trade = signal_type == SignalType.LONG and (self.trade_type in {TradeType.BOTH, TradeType.LONG})
+                is_short_trade = signal_type == SignalType.SHORT and (self.trade_type in {TradeType.BOTH, TradeType.SHORT})
 
-                if signal_type == SignalType.SHORT and (self.trade_type == TradeType.BOTH or self.trade_type == TradeType.SHORT):
-                    active_trade = (PositionSide.SHORT, ohlcv)
-
+                if is_long_trade:
+                    active_trade = (PositionSide.LONG, self.ohlcv_context.ohlcv.loc[index])
+                elif is_short_trade:
+                    active_trade = (PositionSide.SHORT, self.ohlcv_context.ohlcv.loc[index])
             else:
                 entry_trade_type, entry_row = active_trade
                 entry_price = entry_row['close']
 
-                if self.risk_management.check_exit_conditions(entry_trade_type, entry_price, ohlcv):
-                    trades.append(active_trade)
-                    trades.append(('exit', ohlcv))
+                if self.risk_management.check_exit_conditions(entry_trade_type, entry_price, self.ohlcv_context.ohlcv.loc[index]):
+                    trades.extend([active_trade, ('exit', self.ohlcv_context.ohlcv.loc[index])])
                     active_trade = None
 
         if active_trade is not None:
-            trades.append(active_trade)
-            trades.append(('exit', self.ohlcv_context.ohlcv.iloc[-1]))
+            trades.extend([active_trade, ('exit', self.ohlcv_context.ohlcv.iloc[-1])])
 
         return self._evaluate_trades(trades)
 
