@@ -6,12 +6,12 @@ from typing import List, Type
 
 import multiprocessing
 import pandas as pd
-from analytics.abstract_performace import AbstractPerformance
+from portfolio_management.abstract_portfolio_manager import AbstractPerformance
 from broker.abstract_broker import AbstractBroker
 from optimization.abstract_screening import AbstractScreening
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-from strategy.base.abstract_strategy import AbstractStrategy
+from strategy.abstract_strategy import AbstractStrategy
 from trader.backtester import Backtester
 from risk_management.risk_manager import RiskManager
 

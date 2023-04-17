@@ -1,4 +1,6 @@
-from .base.base_strategy import BaseStrategy
+from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
+from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
+from strategy.base_strategy import BaseStrategy
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from ta.smc.fair_value_gap import FairValueGap
@@ -7,14 +9,18 @@ from ta.smc.fair_value_gap import FairValueGap
 class FairValueGapZLMA(BaseStrategy):
     NAME = "FVGZLMA"
 
-    def __init__(self, slow_sma_period=100, mfi_period=14, overbought=70, oversold=30, sma_period=40, fair_value=0.5, tolerance=0.02):
+    def __init__(self, slow_sma_period=100, mfi_period=14, overbought=70, oversold=30, sma_period=40, fair_value=0.5, tolerance=0.02, risk_reward_ratio=1.5):
         indicators = [
             (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
             (MoneyFlowIndexAlert(period=mfi_period, overbought=overbought, oversold=oversold),
                 (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
             (FairValueGap(sma_period), FairValueGap.NAME)
         ]
-        super().__init__(indicators)
+        super().__init__(
+            indicators,
+            LowHighStopLossFinder(),
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+        )
         self.fair_value = fair_value
         self.tolerance = tolerance
 

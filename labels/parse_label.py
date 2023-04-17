@@ -1,8 +1,7 @@
 import re
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-
-from strategy.base.abstract_strategy import AbstractStrategy
+from strategy.abstract_strategy import AbstractStrategy
 
 
 def parse_meta_label(label: str):

@@ -1,7 +1,7 @@
 import numpy as np
 from pandas import Series
 
-from shared.meta_label.meta_label import meta_label
+from labels.meta_label import meta_label
 
 
 @meta_label

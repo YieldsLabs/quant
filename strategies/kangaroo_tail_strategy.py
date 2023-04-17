@@ -1,4 +1,6 @@
-from .base.base_strategy import BaseStrategy
+from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
+from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
+from strategy.base_strategy import BaseStrategy
 from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.kangaroo_tail import KangarooTail
 
@@ -6,14 +8,16 @@ from ta.patterns.kangaroo_tail import KangarooTail
 class KangarooTailZLMA(BaseStrategy):
     NAME = "KTZLMA"
 
-    def __init__(self, slow_sma_period=100, lookback=100):
+    def __init__(self, slow_sma_period=100, lookback=200, risk_reward_ratio=1.5):
         indicators = [
-            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME)
-        ]
-        patterns = [
+            (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
             (KangarooTail(lookback), (KangarooTail.bullish_column(), KangarooTail.bearish_column()))
         ]
-        super().__init__(indicators, patterns)
+        super().__init__(
+            indicators,
+            LowHighStopLossFinder(lookback=lookback),
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+        )
 
     def _generate_buy_signal(self, data):
         current_row = data.iloc[-1]

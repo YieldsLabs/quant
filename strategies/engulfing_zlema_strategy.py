@@ -1,4 +1,6 @@
-from .base.base_strategy import BaseStrategy
+from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
+from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
+from strategy.base_strategy import BaseStrategy
 from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.engulfing import Engulfing
@@ -8,16 +10,18 @@ from ta.patterns.harami import Harami
 class EngulfingZLMA(BaseStrategy):
     NAME = "EZLMA"
 
-    def __init__(self, slow_sma_period=200, oversold=20, overbought=80, tolerance=0.002, retracement_pct=0.05,):
+    def __init__(self, slow_sma_period=100, oversold=20, overbought=80, tolerance=0.002, retracement_pct=0.05, risk_reward_ratio=1.5):
         indicators = [
             (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
             (MoneyFlowIndexAlert(overbought, oversold), (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
-        ]
-        patterns = [
             (Engulfing(), (Engulfing.bullish_column(), Engulfing.bearish_column())),
             (Harami(), (Harami.bullish_column(), Harami.bearish_column())),
         ]
-        super().__init__(indicators, patterns)
+        super().__init__(
+            indicators,
+            LowHighStopLossFinder(),
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+        )
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct
 
