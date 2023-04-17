@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Dict, Type, Union
 import numpy as np
 from core.event_dispatcher import register_handler
@@ -16,7 +17,8 @@ class PortfolioManager(AbstractPortfolioManager):
         self.datasource = datasource
         self.risk_per_trade = risk_per_trade
         self.closed_positions = []
-        self.active_positions: Dict[str, Position] = {}
+        self.active_positions: Dict[str, Position] = defaultdict(dict)
+        self.strategy_performance: Dict[str, Dict[str, PortfolioPerformance]] = defaultdict(dict)
 
     @register_handler(OHLCVEvent)
     def _on_market(self, event: OHLCVEvent):
@@ -62,8 +64,12 @@ class PortfolioManager(AbstractPortfolioManager):
             del self.active_positions[symbol]
     
             performance = self.calculate_performance()
-            id = f'{position.symbol}_{position.timeframe}{position.strategy}'
-            self.dispatcher.dispatch(PortfolioPerformanceEvent(id=id, performance=performance))
+            
+            strategy_id = position.get_id()
+
+            self.strategy_performance[symbol][strategy_id] = performance
+            
+            self.dispatcher.dispatch(PortfolioPerformanceEvent(id=strategy_id, performance=performance))
 
     def handle_position(self, position_side, event: Union[GoLong, GoShort]):
         if event.symbol in self.active_positions:

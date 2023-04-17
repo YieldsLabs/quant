@@ -19,6 +19,10 @@ class Position:
         self.orders: List[Order] = []
         self.closed = False
 
+    
+    def get_id(self):
+        return f'{self.symbol}_{self.timeframe}{self.strategy}'
+
     def add_order(self, order):
         self.orders.append(order)
         
