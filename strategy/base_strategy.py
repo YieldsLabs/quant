@@ -71,3 +71,6 @@ class BaseStrategy(AbstractStrategy):
 
     def _generate_sell_signal(self, data):
         raise NotImplementedError
+    
+    def __str__(self):
+        return f'{super().__str__()}{str(self.take_profit_finder)}{str(self.stop_loss_finder)}'

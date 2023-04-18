@@ -19,4 +19,6 @@ class ATRStopLossFinder(AbstractStopLoss):
         if np.isnan(atr_value):
             return self.base_stop_loss_finder.next(entry, ohlcv)
 
-        return entry - (atr_value * self.atr_multi), entry + (atr_value * self.atr_multi)
+        atr = atr_value * self.atr_multi
+
+        return entry - atr, entry + atr
