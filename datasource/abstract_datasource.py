@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from core.timeframes import Timeframes
+from core.timeframe import Timeframe
 
 
 class AbstractDatasource(ABC):
     @abstractmethod
-    def fetch(self, symbol: str, timeframe: Timeframes):
+    def fetch(self, symbol: str, timeframe: Timeframe):
         pass
     
     @abstractmethod

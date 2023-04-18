@@ -1,7 +1,6 @@
-
 from abc import ABC
 
-from core.event_dispatcher import eda
+from .event_dispatcher import eda
 
 @eda
 class AbstractEventManager(ABC):

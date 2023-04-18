@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from core.timeframes import Timeframes
+from ..timeframe import Timeframe
 from ..event_dispatcher import Event
 
 class OrderSide(Enum):
@@ -29,5 +29,5 @@ class Order:
 @dataclass
 class FillOrder(Event):
     symbol: str
-    timeframe: Timeframes
+    timeframe: Timeframe
     order: Order

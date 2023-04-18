@@ -1,12 +1,12 @@
 strategy_hyperparameters = {
-    'overbought': [10, 30, 5],
-    'oversold': [70, 90, 5],
+    'overbought': [10, 30, 10],
+    'oversold': [70, 90, 10],
     'sma_period': [20, 100, 10],
     'slow_sma_period': [50, 200, 50],
     'stdev_multi': [0.5, 2, 0.5],
     'tolerance': [0.002, 0.01, 0.002],
     'lookback': [50, 150, 50],
-    'ao_short_period': [3, 15, 2],
+    'ao_short_period': [5, 15, 5],
     'ao_long_period': [20, 50, 15]
 }
 

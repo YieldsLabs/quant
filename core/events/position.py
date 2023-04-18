@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from core.timeframes import Timeframes
-
+from ..timeframe import Timeframe
 from ..event_dispatcher import Event
 
 class PositionSide(Enum):
@@ -16,7 +15,7 @@ class PositionSide(Enum):
 @dataclass
 class PositionEvent(Event):
     symbol: str
-    timeframe: Timeframes
+    timeframe: Timeframe
     size: float
     entry: float
     stop_loss: Optional[float] = None
@@ -33,11 +32,9 @@ class OpenShortPosition(PositionEvent):
 @dataclass
 class ClosePosition(Event):
     symbol: str
-    timeframe: Timeframes
+    timeframe: Timeframe
     exit_price: float
 
 @dataclass
-class ClosedPosition(Event):
-    symbol: str
-    timeframe: Timeframes
-    exit_price: float
+class ClosedPosition(ClosePosition):
+    pass

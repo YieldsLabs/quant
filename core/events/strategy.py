@@ -1,13 +1,12 @@
 from dataclasses import dataclass
-from core.event_dispatcher import Event
-from core.events.ohlcv import OHLCV
-from core.timeframes import Timeframes
+from ..event_dispatcher import Event
+from ..timeframe import Timeframe
 
 
 @dataclass
 class StrategyEvent(Event):
     symbol: str
-    timeframe: Timeframes
+    timeframe: Timeframe
     strategy: str
     entry: float
     stop_loss: float

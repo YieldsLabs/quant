@@ -19,6 +19,13 @@ class EventDispatcher:
         
         self.event_handlers[event_class].append(handler)
 
+    def unregister(self, event_class: Type[Event], handler: Callable) -> None:
+        if event_class in self.event_handlers:
+            try:
+                self.event_handlers[event_class].remove(handler)
+            except ValueError:
+                pass
+
     def dispatch(self, event: Event, *args, **kwargs) -> None:
         event_class = type(event)
 
@@ -31,11 +38,17 @@ def eda(cls: Type):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.dispatcher = EventDispatcher()
+            self.registered_handlers = []
 
             for _, method in self.__class__.__dict__.items():
                 if hasattr(method, "event"):
                     method(instance=self)
-
+                    self.registered_handlers.append((method.event, method))
+        
+        def __del__(self):
+            for event_class, handler in self.registered_handlers:
+                self.dispatcher.unregister(event_class, handler)
+    
     Wrapped.__name__ = cls.__name__
     Wrapped.__doc__ = cls.__doc__
     return Wrapped

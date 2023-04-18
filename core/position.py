@@ -1,12 +1,12 @@
 from typing import List, Optional
 
-from core.events.order import Order
-from core.events.position import PositionSide
-from core.timeframes import Timeframes
+from .events.order import Order
+from .events.position import PositionSide
+from .timeframe import Timeframe
 
 
 class Position:
-    def __init__(self, symbol: str, timeframe: Timeframes, strategy: str, side: PositionSide, size: float, entry: float, stop_loss: Optional[float] = None, take_profit: Optional[float] = None):
+    def __init__(self, symbol: str, timeframe: Timeframe, strategy: str, side: PositionSide, size: float, entry: float, stop_loss: Optional[float] = None, take_profit: Optional[float] = None):
         self.symbol = symbol
         self.timeframe = timeframe
         self.strategy = strategy

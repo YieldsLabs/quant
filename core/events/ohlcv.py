@@ -1,7 +1,6 @@
 from dataclasses import asdict, dataclass
 from ..event_dispatcher import Event
-
-from core.timeframes import Timeframes
+from ..timeframe import Timeframe
 
 
 @dataclass
@@ -19,5 +18,5 @@ class OHLCV:
 @dataclass
 class OHLCVEvent(Event):
     symbol: str
-    timeframe: Timeframes
+    timeframe: Timeframe
     ohlcv: OHLCV

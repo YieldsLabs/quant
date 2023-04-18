@@ -1,9 +1,7 @@
 from dataclasses import asdict, dataclass
-from core.events.ohlcv import OHLCV
-
-from core.events.position import PositionSide
-from core.timeframes import Timeframes
-
+from .ohlcv import OHLCV
+from .position import PositionSide
+from ..timeframe import Timeframe
 from ..event_dispatcher import Event
 
 @dataclass
@@ -35,7 +33,7 @@ class PortfolioPerformanceEvent(Event):
 @dataclass
 class CheckExitConditions(Event):
     symbol: str
-    timeframe: Timeframes
+    timeframe: Timeframe
     side: PositionSide
     size: float
     entry: float
