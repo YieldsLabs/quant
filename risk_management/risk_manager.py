@@ -20,7 +20,7 @@ class RiskManager(AbstractRiskManager):
             self._initialize_symbol_data(symbol)
 
         if self.should_update_trailing_stop_loss(symbol, position_side):
-            stop_loss_price = self._update_trailing_stop_loss(symbol, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
+            stop_loss_price = self._update_trailing_stop_loss(position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
 
         if not self._should_exit(position_side, stop_loss_price, take_profit_price, ohlcv):
             return

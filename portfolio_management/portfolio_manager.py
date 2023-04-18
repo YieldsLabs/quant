@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Type, Union
+from typing import Dict, List, Optional, Type, Union
 import numpy as np
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
@@ -16,9 +16,8 @@ class PortfolioManager(AbstractPortfolioManager):
         super().__init__()
         self.datasource = datasource
         self.risk_per_trade = risk_per_trade
-        self.closed_positions = []
+        self.closed_positions: List[Position] = []
         self.active_positions: Dict[str, Position] = defaultdict(dict)
-        self.strategy_performance: Dict[str, Dict[str, PortfolioPerformance]] = defaultdict(dict)
 
     @register_handler(OHLCVEvent)
     def _on_market(self, event: OHLCVEvent):
@@ -64,11 +63,8 @@ class PortfolioManager(AbstractPortfolioManager):
             del self.active_positions[symbol]
     
             performance = self.calculate_performance()
-            
             strategy_id = position.get_id()
 
-            self.strategy_performance[symbol][strategy_id] = performance
-            
             self.dispatcher.dispatch(PortfolioPerformanceEvent(id=strategy_id, performance=performance))
 
     def handle_position(self, position_side, event: Union[GoLong, GoShort]):
@@ -111,15 +107,32 @@ class PortfolioManager(AbstractPortfolioManager):
                 take_profit=position.take_profit_price
             )
         
-    def calculate_position_size(self, account_size, entry_price, trading_fee, min_position_size, price_precision, stop_loss_price=None):
+    def calculate_position_size(
+        self, 
+        account_size: float, 
+        entry_price: float, 
+        trading_fee: float, 
+        min_position_size: float, 
+        price_precision: int, 
+        stop_loss_price: Optional[float] = None
+    ) -> float:
         risk_amount = self.risk_per_trade * account_size
-        
-        div = abs(entry_price - stop_loss_price) * (1 + trading_fee) if stop_loss_price and entry_price else 1
-        
-        position_size = risk_amount / div if div != 0 else 1
 
-        return round(position_size if position_size > min_position_size else min_position_size, price_precision)
-    
+        if stop_loss_price and entry_price:
+            price_difference = abs(entry_price - stop_loss_price) * (1 + trading_fee)
+        else:
+            price_difference = 1
+
+        if price_difference != 0:
+            position_size = risk_amount / price_difference
+        else:
+            position_size = 1
+
+        adjusted_position_size = max(position_size, min_position_size)
+        rounded_position_size = round(adjusted_position_size, price_precision)
+
+        return rounded_position_size
+        
     def calculate_performance(self) -> PortfolioPerformance:
         initial_account_size = self.datasource.account_size()
         pnl = [position.calculate_pnl() for position in self.closed_positions]
@@ -144,7 +157,7 @@ class PortfolioManager(AbstractPortfolioManager):
             max_drawdown=max_drawdown,
             recovery_factor=self._recovery_factor(pnl, max_drawdown) if len(pnl) else 0
         )
-
+    
     def _sharpe_ratio(self, pnl, risk_free_rate=0):
         pnl_array = np.array(pnl)
         avg_return = np.mean(pnl_array)
