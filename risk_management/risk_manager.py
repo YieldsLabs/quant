@@ -13,7 +13,7 @@ class RiskManager(AbstractRiskManager):
         self.stop_loss_adjustment_count = {}
 
     @register_handler(CheckExitConditions)
-    def _on_check_exit_conditions(self, event: CheckExitConditions):
+    async def _on_check_exit_conditions(self, event: CheckExitConditions):
         symbol, timeframe, position_side, position_size, entry_price, take_profit_price, stop_loss_price, risk_per_trade, ohlcv = self._unpack_event(event)
 
         if symbol not in self.stop_loss_adjustment_count:
@@ -26,8 +26,10 @@ class RiskManager(AbstractRiskManager):
             return
 
         self.reset_trailing_stop_loss_data(symbol, position_side)
+        
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
-        self.dispatcher.dispatch(ClosePosition(symbol=symbol, timeframe=timeframe, exit_price=exit_price))
+        
+        await self.dispatcher.dispatch(ClosePosition(symbol=symbol, timeframe=timeframe, exit_price=exit_price))
 
     def _initialize_symbol_data(self, symbol):
         self.trailing_stop_loss_prices[symbol] = {PositionSide.LONG: None, PositionSide.SHORT: None}

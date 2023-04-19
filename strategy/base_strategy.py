@@ -18,7 +18,7 @@ class BaseStrategy(AbstractStrategy):
         self.indicators = indicators
         self.take_profit_finder = take_profit_finder
         self.stop_loss_finder = stop_loss_finder
-        self.lookback = self._calculate_lookback()
+        self.lookback: int = self._calculate_lookback()
 
     def _calculate_lookback(self):
         lookbacks = [item.lookback for item, _ in self.indicators if hasattr(item, 'lookback')] + \
@@ -60,8 +60,9 @@ class BaseStrategy(AbstractStrategy):
 
     def stop_loss_and_take_profit(self, entry, ohlcv):
         stop_loss_long, stop_loss_short = self.stop_loss_finder.next(entry, ohlcv)
-
+        
         take_profit_long = self.take_profit_finder.next(entry, stop_loss_long)
+
         take_profit_short = self.take_profit_finder.next(entry, stop_loss_short)
 
         return ((stop_loss_long, take_profit_long), (stop_loss_short, take_profit_short))

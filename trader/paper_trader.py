@@ -9,19 +9,19 @@ class PaperTrader(AbstractTrader):
         super().__init__()
 
     @register_handler(OpenLongPosition)
-    def _open_long_position(self, event: OpenLongPosition):
-        self.trade(event)
+    async def _open_long_position(self, event: OpenLongPosition):
+        await self.trade(event)
 
     @register_handler(OpenShortPosition)
-    def _open_short_position(self, event: OpenShortPosition):
-        self.trade(event)
+    async def _open_short_position(self, event: OpenShortPosition):
+        await self.trade(event)
 
     @register_handler(ClosePosition)
-    def _on_close_position(self, event: ClosePosition):
-        self.dispatcher.dispatch(ClosedPosition(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
+    async def _on_close_position(self, event: ClosePosition):
+        await self.dispatcher.dispatch(ClosedPosition(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
         
-    def trade(self, event):
+    async def trade(self, event):
         order_side = OrderSide.BUY if isinstance(event, OpenLongPosition) else OrderSide.SELL
         order = Order(side=order_side, entry=event.entry, size=event.size, stop_loss=event.stop_loss, take_profit=event.take_profit)
         
-        self.dispatcher.dispatch(FillOrder(symbol=event.symbol, timeframe=event.timeframe, order=order))
+        await self.dispatcher.dispatch(FillOrder(symbol=event.symbol, timeframe=event.timeframe, order=order))

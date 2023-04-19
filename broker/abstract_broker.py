@@ -22,7 +22,7 @@ class AbstractBroker(ABC):
         pass
 
     @abstractmethod
-    def get_symbol_info(self):
+    def get_symbol_info(self, symbol: str):
         pass
 
     @abstractmethod

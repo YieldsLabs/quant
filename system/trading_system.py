@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import json
 from typing import List, Type
@@ -48,8 +49,8 @@ class TradingSystem(AbstractSystem):
         
         strategy_map = {cls.NAME: cls for cls in self.strategies if cls.NAME is not None}
         timeframe_map = {'1m': Timeframe.ONE_MINUTE, '3m': Timeframe.THREE_MINUTES, '5m': Timeframe.FIVE_MINUTES}
-        
         timeframe = timeframe_map[timeframe]
+        
         cls = strategy_map[strategy[0]]
         args = strategy[1] + take_profit[1]
 
@@ -59,23 +60,26 @@ class TradingSystem(AbstractSystem):
         
         await self.run_trading(symbol, timeframe, strategy_instance)
 
-    def start(self):
-        self.run_backtest()
+    async def start(self):
+        await self.run_backtest()
 
-    def run_backtest(self):
+    async def run_backtest(self):
         self.backtest = Backtest(self.datasource)
-        self.strategy_manager = StrategyManager([cls() for cls in self.strategies])
         self.trader = PaperTrader()
-        self.backtest.run(self.symbols, self.timeframes, lookback=self.lookback)
+        self.strategy_manager = StrategyManager([cls() for cls in self.strategies])
+        
+        await self.backtest.run(self.symbols, self.timeframes, lookback=self.lookback)
     
     async def run_trading(self, symbol, timeframe, strategy_instance):
-        self.backtest = None
-        
         if not strategy_instance:
             raise ValueError("Strategy should be defined")
 
         if self.ws is None:
             raise ValueError("WS should be defined")
+        
+        self.backtest = None
+        
+        await self.dispatcher.stop()
         
         self.broker.set_leverage(symbol, self.leverage)
         self.broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)

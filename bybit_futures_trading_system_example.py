@@ -4,7 +4,6 @@ import os
 import websockets
 from analytics.strategy_performance import StrategyPerformance
 from broker.futures_bybit_broker import FuturesBybitBroker
-from core.event_dispatcher import EventDispatcher
 from datasource.bybit_datasource import BybitDataSource
 from journal.log_journal import LogJournal
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
@@ -51,13 +50,9 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-lookback = 10000
+lookback = 800
 risk_per_trade = 0.001
 
-async def process_events():
-    event_dispatcher = EventDispatcher()
-    await event_dispatcher.process_events()
-  
 async def process_messages(ws, bybit_trading_system):
     while True:
         try:
@@ -65,30 +60,29 @@ async def process_messages(ws, bybit_trading_system):
             bybit_trading_system.on_new_candle(message)
         except websockets.exceptions.ConnectionClosed as e:
             print(f"Websocket closed with code {e.code}: {e.reason}")
-            bybit_trading_system.unsubscibe_candle_stream(ws)
+            bybit_trading_system.unsubscibe_candle_stream()
             break
         except Exception as e:
             print(f"Unexpected error: {e}")
-            bybit_trading_system.unsubscibe_candle_stream(ws)
+            bybit_trading_system.unsubscibe_candle_stream()
 
 async def main():
-    LogJournal()
-    
-    broker = FuturesBybitBroker(API_KEY, API_SECRET)
-    datasource = BybitDataSource(broker)
-    analytics = StrategyPerformance(datasource, risk_per_trade)
+    while True:
+        LogJournal()
+        
+        broker = FuturesBybitBroker(API_KEY, API_SECRET)
+        datasource = BybitDataSource(broker)
+        analytics = StrategyPerformance(datasource, risk_per_trade)
+        bybit_trading_system = TradingSystem(datasource, broker, analytics, symbols, timeframes, strategies, lookback=lookback, risk_per_trade=risk_per_trade)
+        
+        await bybit_trading_system.start()
 
-    bybit_trading_system = TradingSystem(datasource, broker, analytics, symbols, timeframes, strategies, lookback=lookback, risk_per_trade=risk_per_trade)
-    
-    wss = 'wss://stream.bybit.com/v5/public/linear'
-    
-    async with websockets.connect(wss) as ws:
-        bybit_trading_system.subscribe_candle_stream(ws)
+        # wss = 'wss://stream.bybit.com/v5/public/linear'
+        
+        # async with websockets.connect(wss) as ws:
+        #     bybit_trading_system.subscribe_candle_stream(ws)
 
-        message_processing_task = asyncio.create_task(process_messages(ws, bybit_trading_system))
-        start_trading_system_task = asyncio.create_task(bybit_trading_system.start())
-        process_events_task = asyncio.to_thread(process_events())
+            # message_processing_task = asyncio.create_task(process_messages(ws, bybit_trading_system))
+            # start_trading_system_task = asyncio.create_task(bybit_trading_system.start())
 
-        await asyncio.gather(process_events_task, message_processing_task, start_trading_system_task)
-
-asyncio.run(main())
+asyncio.run(main(), debug=True)

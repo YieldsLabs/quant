@@ -17,7 +17,7 @@ class Backtest(AbstractEventManager):
         self.strategy_performance: Dict[str, Dict[str, PortfolioPerformance]] = defaultdict(dict)
 
     @register_handler(PortfolioPerformanceEvent)
-    def _on_portfolio(self, event: PortfolioPerformanceEvent):
+    async def _on_portfolio(self, event: PortfolioPerformanceEvent):
         strategy_id = event.id
         performance = event.performance
         
@@ -28,25 +28,25 @@ class Backtest(AbstractEventManager):
         best_strategy = self._simple_search_the_best_strategy(symbol)
 
         if best_strategy:
-            self.dispatcher.dispatch(BestStrategyEvent(id=best_strategy[0], performance=best_strategy[1]))
+            await self.dispatcher.dispatch(BestStrategyEvent(id=best_strategy[0], performance=best_strategy[1]))
     
-    def run(self, symbols: List[str], timeframes: List[Timeframe], lookback: int = 3000):
+    async def run(self, symbols: List[str], timeframes: List[Timeframe], lookback: int = 3000):
         symbols_and_timeframes = list(product(symbols, timeframes))
         
         random.shuffle(symbols_and_timeframes)
 
         for symbol, timeframe in symbols_and_timeframes:
-            historical_data = self.datasource.fetch(symbol, timeframe, lookback)
+            historical_data = await self.datasource.fetch(symbol, timeframe, lookback)
 
-            self._process_historical_data(symbol, timeframe, historical_data)
+            await self._process_historical_data(symbol, timeframe, historical_data)
     
-    def _process_historical_data(self, symbol: str, timeframe: Timeframe, historical_data):
+    async def _process_historical_data(self, symbol: str, timeframe: Timeframe, historical_data):
         for timestamp, open, high, low, close, volume in historical_data:
             ohlcv = OHLCV(timestamp, float(open), float(high), float(low), float(close), float(volume))
             
-            self.dispatcher.dispatch(OHLCVEvent(symbol, timeframe, ohlcv))
+            await self.dispatcher.dispatch(OHLCVEvent(symbol, timeframe, ohlcv))
 
-    def _simple_search_the_best_strategy(self, symbol: str, metric: str = 'sharpe_ratio', min_total_trades: int = 20):
+    def _simple_search_the_best_strategy(self, symbol: str, metric: str = 'sharpe_ratio', min_total_trades: int = 50):
         if symbol not in self.strategy_performance:
             return None
 

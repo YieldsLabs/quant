@@ -11,8 +11,9 @@ class StrategyPerformance(AbstractAnalytics):
         self.datasource = datasource
         self.risk_per_trade = risk_per_trade
   
-    def calculate(self, positions: List[Position]) -> PortfolioPerformance:
-        initial_account_size = self.datasource.account_size()
+    async def calculate(self, positions: List[Position]) -> PortfolioPerformance:
+        initial_account_size = await self.datasource.account_size()
+        
         pnl = [position.calculate_pnl() for position in positions]
         total_trades = len(positions)
         successful_trades = sum(position.calculate_pnl() > 0 for position in positions)
@@ -62,16 +63,19 @@ class StrategyPerformance(AbstractAnalytics):
 
     def _max_streak(self, pnl, winning: bool):
         streak = max_streak = 0
+        
         for pnl_value in pnl:
             if (pnl_value > 0) == winning:
                 streak += 1
                 max_streak = max(max_streak, streak)
             else:
                 streak = 0
+        
         return max_streak
 
     def _rate_of_return(self, pnl, initial_account_size):
         account_size = initial_account_size + sum(pnl)
+        
         return (account_size / initial_account_size) - 1
     
     def _profit_factor(self, pnl):
@@ -83,6 +87,7 @@ class StrategyPerformance(AbstractAnalytics):
             return 0
 
         profit_factor = gross_profit / gross_loss
+        
         return profit_factor
 
     def _max_drawdown(self, pnl, initial_account_size):

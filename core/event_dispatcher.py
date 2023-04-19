@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from typing import Callable, Dict, List, Type
 
 
@@ -13,12 +14,19 @@ class EventDispatcher:
             cls.__instance = super().__new__(cls)
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
             cls.__instance.event_queue = asyncio.Queue()
+            cls.__instance.lock = asyncio.Lock()
+            cls.__instance.cancel_event = asyncio.Event()
+        
         return cls.__instance
     
+    def __init__(self):
+        if not hasattr(self, "_process_events_task"):
+            self._process_events_task = asyncio.create_task(self.process_events())
+
     def register(self, event_class: Type[Event], handler: Callable) -> None:
         if event_class not in self.event_handlers:
             self.event_handlers[event_class] = []
-        
+
         self.event_handlers[event_class].append(handler)
 
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
@@ -28,20 +36,37 @@ class EventDispatcher:
             except ValueError:
                 pass
 
-    def dispatch(self, event: Event, *args, **kwargs) -> None:
-        asyncio.create_task(self.event_queue.put((event, args, kwargs)))
+    async def dispatch(self, event: Event, *args, **kwargs) -> None:
+        await self.event_queue.put((event, args, kwargs))
 
     async def process_events(self):
-        while not self.event_queue.empty():
+        while not self.cancel_event.is_set():
             event, args, kwargs = await self.event_queue.get()
-            event_class = type(event)
 
-            if event_class in self.event_handlers:
-                for handler in self.event_handlers[event_class]:
-                    if asyncio.iscoroutinefunction(handler):
-                        await handler(event, *args, **kwargs)
-                    else:
-                        await asyncio.to_thread(handler, event, *args, **kwargs)
+            async with self.lock:
+                event_class = type(event)
+
+                handlers = self.event_handlers.get(event_class, [])
+
+            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
+            
+            if not tasks:
+                print(f"No handlers for event: {event_class}")
+            else:
+                await asyncio.gather(*tasks)
+
+    async def _call_handler(self, handler, event, *args, **kwargs):
+        try:
+            if asyncio.iscoroutinefunction(handler):
+                await handler(event, *args, **kwargs)
+            else:
+                await asyncio.to_thread(handler, event, *args, **kwargs)
+        except Exception as e:
+            print(f"Error in event handler: {e}")
+
+    async def stop(self):
+        self.cancel_event.set()
+        await self._process_events_task
 
 def eda(cls: Type):
     class Wrapped(cls):
@@ -50,7 +75,7 @@ def eda(cls: Type):
             self.dispatcher = EventDispatcher()
             self.registered_handlers = []
 
-            for _, method in self.__class__.__dict__.items():
+            for _, method in inspect.getmembers(self.__class__, predicate=inspect.isfunction):
                 if hasattr(method, "event"):
                     method(instance=self)
                     self.registered_handlers.append((method.event, method))
