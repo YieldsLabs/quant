@@ -8,8 +8,8 @@ numpy = "*"
 pandas = "*"
 ccxt = "*"
 python-dotenv = "*"
-websocket-client = "*"
 cachetools = "*"
+websockets = "*"
 
 [dev-packages]
 flake8 = "*"

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Callable, Dict, List, Type
 
 
@@ -11,6 +12,7 @@ class EventDispatcher:
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
+            cls.__instance.event_queue = asyncio.Queue()
         return cls.__instance
     
     def register(self, event_class: Type[Event], handler: Callable) -> None:
@@ -27,11 +29,19 @@ class EventDispatcher:
                 pass
 
     def dispatch(self, event: Event, *args, **kwargs) -> None:
-        event_class = type(event)
+        asyncio.create_task(self.event_queue.put((event, args, kwargs)))
 
-        if event_class in self.event_handlers:
-            for handler in self.event_handlers[event_class]:
-                handler(event, *args, **kwargs)
+    async def process_events(self):
+        while not self.event_queue.empty():
+            event, args, kwargs = await self.event_queue.get()
+            event_class = type(event)
+
+            if event_class in self.event_handlers:
+                for handler in self.event_handlers[event_class]:
+                    if asyncio.iscoroutinefunction(handler):
+                        await handler(event, *args, **kwargs)
+                    else:
+                        await asyncio.to_thread(handler, event, *args, **kwargs)
 
 def eda(cls: Type):
     class Wrapped(cls):

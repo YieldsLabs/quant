@@ -19,8 +19,8 @@ class EngulfingZLMA(BaseStrategy):
         ]
         super().__init__(
             indicators,
-            LowHighStopLossFinder(),
-            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
+            LowHighStopLossFinder()
         )
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct

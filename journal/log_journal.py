@@ -1,7 +1,7 @@
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.order import FillOrder
-from core.events.portfolio import PortfolioPerformanceEvent
+from core.events.portfolio import BestStrategyEvent, PortfolioPerformanceEvent
 
 
 class LogJournal(AbstractEventManager):
@@ -15,5 +15,10 @@ class LogJournal(AbstractEventManager):
 
     @register_handler(FillOrder)
     def _fill_order(self, event: FillOrder):
+        print('----------------------------------------------------->')
+        print(event)
+
+    @register_handler(BestStrategyEvent)
+    def _fill_order(self, event: BestStrategyEvent):
         print('----------------------------------------------------->')
         print(event)

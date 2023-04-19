@@ -1,8 +1,12 @@
+import asyncio
 from dotenv import load_dotenv
 import os
+import websockets
 from analytics.strategy_performance import StrategyPerformance
 from broker.futures_bybit_broker import FuturesBybitBroker
+from core.event_dispatcher import EventDispatcher
 from datasource.bybit_datasource import BybitDataSource
+from journal.log_journal import LogJournal
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from core.timeframe import Timeframe
 from strategies.aobb_strategy import AwesomeOscillatorBollingerBands
@@ -50,70 +54,41 @@ search_space = {
 lookback = 10000
 risk_per_trade = 0.001
 
-broker = FuturesBybitBroker(API_KEY, API_SECRET)
-datasource = BybitDataSource(broker)
-analytics = StrategyPerformance(datasource, risk_per_trade)
+async def process_events():
+    event_dispatcher = EventDispatcher()
+    await event_dispatcher.process_events()
+  
+async def process_messages(ws, bybit_trading_system):
+    while True:
+        try:
+            message = await ws.recv()
+            bybit_trading_system.on_new_candle(message)
+        except websockets.exceptions.ConnectionClosed as e:
+            print(f"Websocket closed with code {e.code}: {e.reason}")
+            bybit_trading_system.unsubscibe_candle_stream(ws)
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            bybit_trading_system.unsubscibe_candle_stream(ws)
 
-bybit_trading_system = TradingSystem(datasource, analytics, symbols, timeframes, strategies, lookback=lookback, risk_per_trade=risk_per_trade)
-bybit_trading_system.start()
+async def main():
+    LogJournal()
+    
+    broker = FuturesBybitBroker(API_KEY, API_SECRET)
+    datasource = BybitDataSource(broker)
+    analytics = StrategyPerformance(datasource, risk_per_trade)
 
-# meta_label = str(best_result.head(1)['id'].iloc[0])
-# symbol, _timeframe, _strategy, _stop_loss, _take_profit = parse_meta_label(meta_label)
-# timeframe_map = {
-#     '1m': Timeframes.ONE_MINUTE,
-#     '3m': Timeframes.THREE_MINUTES,
-#     '5m': Timeframes.FIVE_MINUTES
-# }
+    bybit_trading_system = TradingSystem(datasource, broker, analytics, symbols, timeframes, strategies, lookback=lookback, risk_per_trade=risk_per_trade)
+    
+    wss = 'wss://stream.bybit.com/v5/public/linear'
+    
+    async with websockets.connect(wss) as ws:
+        bybit_trading_system.subscribe_candle_stream(ws)
 
-# def create_map(classes):
-#     return {cls.NAME: cls for cls in classes if cls.NAME is not None}
+        message_processing_task = asyncio.create_task(process_messages(ws, bybit_trading_system))
+        start_trading_system_task = asyncio.create_task(bybit_trading_system.start())
+        process_events_task = asyncio.to_thread(process_events())
 
-# strategy_map = create_map(strategies)
-# stoploss_map = create_map(stop_loss_finders)
-# takeprofit_map = create_map(take_profit_finders)
+        await asyncio.gather(process_events_task, message_processing_task, start_trading_system_task)
 
-# timeframe = timeframe_map[_timeframe]
-# strategy = strategy_map[_strategy[0]](*_strategy[1])
-# stop_loss_finder = stoploss_map[_stop_loss[0]](*_stop_loss[1])
-# take_profit_finder = takeprofit_map[_take_profit[0]](*_take_profit[1])
-
-# broker.set_leverage(symbol, leverage)
-# broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
-# broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
-
-# invervals = {
-#     Timeframes.ONE_MINUTE: 1,
-#     Timeframes.THREE_MINUTES: 3,
-#     Timeframes.FIVE_MINUTES: 5,
-#     Timeframes.FIFTEEN_MINUTES: 15,
-#     Timeframes.ONE_HOUR: 60,
-#     Timeframes.FOUR_HOURS: 240,
-# }
-
-# channels = [f"kline.{invervals[timeframe]}.{symbol}"]
-
-# def on_open(ws):
-#     print("WebSocket connection opened")
-#     for channel in channels:
-#         ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
-
-# def on_message(ws, message):
-#     trader.trade(strategy, symbol, timeframe)
-
-# def on_error(ws, error):
-#     print(f"WebSocket error: {error}")
-
-# def on_close(ws):
-#     print("WebSocket connection closed")
-
-# wss = 'wss://stream.bybit.com/v5/public/linear'
-
-# ws = websocket.WebSocketApp(
-#     wss,
-#     on_open=on_open,
-#     on_message=on_message,
-#     on_error=on_error,
-#     on_close=on_close
-# )
-
-# ws.run_forever()
+asyncio.run(main())

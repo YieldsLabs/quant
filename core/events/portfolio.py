@@ -31,6 +31,10 @@ class PortfolioPerformanceEvent(Event):
     performance: PortfolioPerformance
 
 @dataclass
+class BestStrategyEvent(PortfolioPerformanceEvent):
+    pass
+
+@dataclass
 class CheckExitConditions(Event):
     symbol: str
     timeframe: Timeframe

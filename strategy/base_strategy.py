@@ -11,13 +11,13 @@ class BaseStrategy(AbstractStrategy):
     def __init__(
             self,
             indicators: List[Union[AbstractIndicator, AbstractPattern]],
-            stop_loss_finder: Type[AbstractStopLoss],
             take_profit_finder: Type[AbstractTakeProfit],
+            stop_loss_finder: Type[AbstractStopLoss],
         ):
         super().__init__()
         self.indicators = indicators
-        self.stop_loss_finder = stop_loss_finder
         self.take_profit_finder = take_profit_finder
+        self.stop_loss_finder = stop_loss_finder
         self.lookback = self._calculate_lookback()
 
     def _calculate_lookback(self):

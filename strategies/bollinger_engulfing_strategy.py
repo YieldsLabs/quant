@@ -16,8 +16,8 @@ class BollingerBandsEngulfing(BaseStrategy):
 
         super().__init__(
             indicators,
-            LowHighStopLossFinder(),
-            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
+            LowHighStopLossFinder()
         )
 
     def _generate_buy_signal(self, data):

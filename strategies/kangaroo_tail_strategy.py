@@ -15,8 +15,8 @@ class KangarooTailZLMA(BaseStrategy):
         ]
         super().__init__(
             indicators,
-            LowHighStopLossFinder(lookback=lookback),
-            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
+            LowHighStopLossFinder(lookback=lookback)
         )
 
     def _generate_buy_signal(self, data):

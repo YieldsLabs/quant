@@ -19,8 +19,8 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
         ]
         super().__init__(
             indicators,
-            ATRStopLossFinder(atr_multi=atr_multi),
-            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
+            ATRStopLossFinder(atr_multi=atr_multi)
         )
         self.oversold = oversold
         self.overbought = overbought

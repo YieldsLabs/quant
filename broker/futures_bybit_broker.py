@@ -52,7 +52,7 @@ class FuturesBybitBroker(AbstractBroker):
         return {
             'order_type': order_type,
             'symbol': symbol,
-            'side': side.value,
+            'side': side,
             'position_size': position_size,
             'extra_params': None,
         }
@@ -77,10 +77,10 @@ class FuturesBybitBroker(AbstractBroker):
 
         self._create_order(**order_params)
 
-    def place_limit_order(self, side, symbol, price, position_size, stop_loss_price=None, take_profit_price=None):
-        order_params = self._create_order_params('limit', side, symbol, position_size)
+    def place_limit_order(self, order_side, symbol, entry_price, position_size, stop_loss_price=None, take_profit_price=None):
+        order_params = self._create_order_params('limit', order_side.value, symbol, position_size)
         order_params.update({
-            'price': price,
+            'price': entry_price,
             'extra_params': self._create_extra_params(stop_loss_price, take_profit_price)
         })
 

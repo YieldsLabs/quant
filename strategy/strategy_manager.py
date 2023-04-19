@@ -37,8 +37,10 @@ class StrategyManager(AbstractEventManager):
                 entry = event.ohlcv.close
                 lookback = strategy.lookback
                 required_events = pd.DataFrame([data.to_dict() for data in window_events[-lookback:]], columns=OHLCV_COLUMNS)
+                
                 entry_long_signal, entry_short_signal = strategy.entry(required_events)
                 stop_loss, take_profit = strategy.stop_loss_and_take_profit(entry, required_events)
+                
                 strategy_name = str(strategy)
 
                 if entry_long_signal:

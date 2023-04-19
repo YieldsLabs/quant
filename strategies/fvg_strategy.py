@@ -18,8 +18,8 @@ class FairValueGapZLMA(BaseStrategy):
         ]
         super().__init__(
             indicators,
-            LowHighStopLossFinder(),
-            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio)
+            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
+            LowHighStopLossFinder()
         )
         self.fair_value = fair_value
         self.tolerance = tolerance
