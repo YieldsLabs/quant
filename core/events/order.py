@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, time
 from enum import Enum
 from typing import Optional
 
@@ -25,9 +25,14 @@ class Order:
 
     def to_dict(self):
         return asdict(self)
+    
+    def __hash__(self):
+        return hash((self.side, self.entry, self.size, self.stop_loss, self.take_profit, self.id, self.timestamp))
 
-@dataclass
+@dataclass(frozen=True)
 class FillOrder(Event):
     symbol: str
     timeframe: Timeframe
     order: Order
+    timestamp: int = datetime.now().timestamp()
+    

@@ -1,8 +1,8 @@
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.order import FillOrder
-from core.events.portfolio import BestStrategyEvent, PortfolioPerformanceEvent
-from core.events.position import OpenLongPosition, OpenShortPosition
+from core.events.portfolio import BestStrategyEvent, CheckExitConditions, PortfolioPerformanceEvent
+from core.events.position import ClosePosition, OpenLongPosition, OpenShortPosition
 from core.events.strategy import GoLong, GoShort
 
 
@@ -20,8 +20,13 @@ class LogJournal(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
 
+    @register_handler(CheckExitConditions)
+    def _check_exit(self, event: CheckExitConditions):
+        print('----------------------------------------------------->')
+        print(event)
+
     @register_handler(BestStrategyEvent)
-    def _fill_order(self, event: BestStrategyEvent):
+    def _on_best_strategy(self, event: BestStrategyEvent):
         print('----------------------------------------------------->')
         print(event)
 
@@ -36,11 +41,16 @@ class LogJournal(AbstractEventManager):
         print(event)
 
     @register_handler(OpenLongPosition)
-    def _open_long(self, event: OpenLongPosition):
+    def _open_long_position(self, event: OpenLongPosition):
         print('----------------------------------------------------->')
         print(event)
 
     @register_handler(OpenShortPosition)
-    def _open_short(self, event: OpenShortPosition):
+    def _open_short_position(self, event: OpenShortPosition):
+        print('----------------------------------------------------->')
+        print(event)
+
+    @register_handler(ClosePosition)
+    def _close_position(self, event: ClosePosition):
         print('----------------------------------------------------->')
         print(event)

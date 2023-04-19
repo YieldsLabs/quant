@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from ..event_dispatcher import Event
 from ..timeframe import Timeframe
 
@@ -14,9 +15,13 @@ class OHLCV:
 
     def to_dict(self):
         return asdict(self)
+    
+    def __hash__(self):
+        return hash((self.timestamp, self.open, self.high, self.low, self.close, self.volume))
 
-@dataclass
+@dataclass(frozen=True)
 class OHLCVEvent(Event):
     symbol: str
     timeframe: Timeframe
     ohlcv: OHLCV
+    timestamp: int = datetime.now().timestamp()

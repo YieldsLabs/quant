@@ -34,7 +34,8 @@ class StrategyManager(AbstractEventManager):
 
         window_events = list(symbol_data['events'])
 
-        await asyncio.gather(*[self.process_strategy(strategy, window_events, event) for strategy in self.strategies])
+        for strategy in self.strategies:
+            await self.process_strategy(strategy, window_events, event)
 
     async def process_strategy(self, strategy: AbstractStrategy, window_events: List[Any], event: OHLCVEvent) -> None:
         strategy_name = str(strategy)
@@ -42,7 +43,8 @@ class StrategyManager(AbstractEventManager):
         lookback = strategy.lookback
 
         required_events = pd.DataFrame([data.to_dict() for data in window_events[-lookback:]], columns=self.OHLCV_COLUMNS)
-        entry_long_signal, entry_short_signal, stop_loss, take_profit = await asyncio.to_thread(calculate_signals, strategy, required_events, entry)
+        
+        entry_long_signal, entry_short_signal, stop_loss, take_profit = self.calculate_signals(strategy, required_events, entry)
 
         if entry_long_signal:
             stop_loss_price, take_profit_price = stop_loss[0], take_profit[0]
@@ -53,10 +55,10 @@ class StrategyManager(AbstractEventManager):
 
     def get_id(self, event: OHLCVEvent) -> str:
         return f'{event.symbol}_{event.timeframe}'
-
-def calculate_signals(strategy: AbstractStrategy, required_events: pd.DataFrame, entry: float) -> tuple:
-    entry_long_signal, entry_short_signal = strategy.entry(required_events)
     
-    stop_loss, take_profit = strategy.stop_loss_and_take_profit(entry, required_events)
+    def calculate_signals(self, strategy: AbstractStrategy, required_events: pd.DataFrame, entry: float) -> tuple:
+        entry_long_signal, entry_short_signal = strategy.entry(required_events)
+        
+        stop_loss, take_profit = strategy.stop_loss_and_take_profit(entry, required_events)
 
-    return entry_long_signal, entry_short_signal, stop_loss, take_profit
+        return entry_long_signal, entry_short_signal, stop_loss, take_profit

@@ -1,13 +1,10 @@
 import asyncio
-from aiocache import cached, SimpleMemoryCache
-from aiocache.serializers import JsonSerializer
 from typing import Type
 from broker.abstract_broker import AbstractBroker
 from datasource.abstract_datasource import AbstractDatasource
 from .retry import retry
 from core.timeframe import Timeframe
 
-cache = SimpleMemoryCache(serializer=JsonSerializer())
 
 class BybitDataSource(AbstractDatasource):
     def __init__(self, broker: Type[AbstractBroker]):

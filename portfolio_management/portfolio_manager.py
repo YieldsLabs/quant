@@ -28,17 +28,19 @@ class PortfolioManager(AbstractPortfolioManager):
         if symbol in self.active_positions:
             position = self.active_positions[symbol]
         
-            await self.dispatcher.dispatch(CheckExitConditions(
-                symbol=symbol,
-                timeframe=timeframe,
-                side=position.side,
-                size=position.size,
-                entry=position.entry_price,
-                stop_loss=position.stop_loss_price,
-                take_profit=position.take_profit_price,
-                risk=self.risk_per_trade,
-                ohlcv=event.ohlcv
-            ))
+            await self.dispatcher.dispatch(
+                CheckExitConditions(
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    side=position.side,
+                    size=position.size,
+                    entry=position.entry_price,
+                    stop_loss=position.stop_loss_price,
+                    take_profit=position.take_profit_price,
+                    risk=self.risk_per_trade,
+                    ohlcv=event.ohlcv
+                )
+            )
 
     @register_handler(GoLong)
     async def _on_go_long(self, event: GoLong):

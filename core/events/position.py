@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, time
 from enum import Enum
 from typing import Optional
 
@@ -12,7 +13,7 @@ class PositionSide(Enum):
     def __str__(self):
         return self.value
 
-@dataclass
+@dataclass(frozen=True)
 class PositionEvent(Event):
     symbol: str
     timeframe: Timeframe
@@ -20,21 +21,23 @@ class PositionEvent(Event):
     entry: float
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
+    timestamp: int = datetime.now().timestamp()
 
-@dataclass
+@dataclass(frozen=True)
 class OpenLongPosition(PositionEvent):
-    pass
+   pass
 
-@dataclass
+@dataclass(frozen=True)
 class OpenShortPosition(PositionEvent):
    pass
 
-@dataclass
+@dataclass(frozen=True)
 class ClosePosition(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
+    timestamp: int = datetime.now().timestamp()
 
-@dataclass
+@dataclass(frozen=True)
 class ClosedPosition(ClosePosition):
     pass

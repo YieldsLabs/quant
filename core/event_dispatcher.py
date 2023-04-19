@@ -1,8 +1,12 @@
 import asyncio
+from dataclasses import dataclass
+import hashlib
 import inspect
-from typing import Callable, Dict, List, Type
+from typing import Callable, Deque, Dict, List, Tuple, Type
+from collections import deque
+from weakref import WeakSet
 
-
+@dataclass(frozen=True)
 class Event:
     pass
 
@@ -13,9 +17,10 @@ class EventDispatcher:
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
-            cls.__instance.event_queue = asyncio.Queue()
+            cls.__instance.event_queue: Deque[Tuple[Event, Tuple, Dict]] = deque()
             cls.__instance.lock = asyncio.Lock()
             cls.__instance.cancel_event = asyncio.Event()
+            cls.__instance.seen_events = WeakSet()
         
         return cls.__instance
     
@@ -37,15 +42,25 @@ class EventDispatcher:
                 pass
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
-        await self.event_queue.put((event, args, kwargs))
+        async with self.lock:
+            if event in self.seen_events:
+                return
+            # print(event)
+            self.seen_events.add(event)
+            self.event_queue.append((event, args, kwargs))
 
     async def process_events(self):
         while not self.cancel_event.is_set():
-            event, args, kwargs = await self.event_queue.get()
-
             async with self.lock:
-                event_class = type(event)
+                if len(self.event_queue) == 0:
+                    await asyncio.sleep(0.01)
+                    
+                    continue
 
+                event, args, kwargs = self.event_queue.popleft()
+
+                event_class = type(event)
+                
                 handlers = self.event_handlers.get(event_class, [])
 
             tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]

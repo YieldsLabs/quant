@@ -1,10 +1,11 @@
 from dataclasses import asdict, dataclass
+from datetime import datetime, time
 from .ohlcv import OHLCV
 from .position import PositionSide
 from ..timeframe import Timeframe
 from ..event_dispatcher import Event
 
-@dataclass
+@dataclass(frozen=True)
 class PortfolioPerformance:
     total_trades: int
     successful_trades: int
@@ -25,16 +26,18 @@ class PortfolioPerformance:
         return asdict(self)
 
 
-@dataclass
+@dataclass(frozen=True, eq=True)
 class PortfolioPerformanceEvent(Event):
     id: str
     performance: PortfolioPerformance
+    timestamp: int = datetime.now().timestamp()
 
-@dataclass
+
+@dataclass(frozen=True, eq=True)
 class BestStrategyEvent(PortfolioPerformanceEvent):
     pass
 
-@dataclass
+@dataclass(frozen=True, eq=True)
 class CheckExitConditions(Event):
     symbol: str
     timeframe: Timeframe
@@ -45,3 +48,4 @@ class CheckExitConditions(Event):
     take_profit: float
     risk: float
     ohlcv: OHLCV
+    timestamp: int = datetime.now().timestamp()
