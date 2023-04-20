@@ -1,4 +1,3 @@
-from typing import Type
 from core.event_dispatcher import register_handler
 from core.events.order import FillOrder, Order, OrderSide
 from core.events.position import ClosePosition, ClosedPosition, OpenLongPosition, OpenShortPosition

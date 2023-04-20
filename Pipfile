@@ -11,6 +11,7 @@ python-dotenv = "*"
 cachetools = "*"
 websockets = "*"
 aiocache = "*"
+uuid = "*"
 
 [dev-packages]
 flake8 = "*"

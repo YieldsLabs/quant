@@ -1,5 +1,6 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
+import uuid
 from ..event_dispatcher import Event
 from ..timeframe import Timeframe
 
@@ -24,4 +25,4 @@ class OHLCVEvent(Event):
     symbol: str
     timeframe: Timeframe
     ohlcv: OHLCV
-    timestamp: int = datetime.now().timestamp()
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))

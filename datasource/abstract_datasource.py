@@ -6,7 +6,7 @@ from core.timeframe import Timeframe
 
 class AbstractDatasource(ABC):
     @abstractmethod
-    def fetch(self, symbol: str, timeframe: Timeframe):
+    def fetch(self, symbol: str, timeframe: Timeframe, lookback: int):
         pass
     
     @abstractmethod

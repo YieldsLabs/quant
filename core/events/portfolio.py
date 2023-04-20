@@ -1,11 +1,11 @@
-from dataclasses import asdict, dataclass
-from datetime import datetime, time
+from dataclasses import asdict, dataclass, field
+import uuid
 from .ohlcv import OHLCV
 from .position import PositionSide
 from ..timeframe import Timeframe
 from ..event_dispatcher import Event
 
-@dataclass(frozen=True)
+@dataclass
 class PortfolioPerformance:
     total_trades: int
     successful_trades: int
@@ -25,13 +25,11 @@ class PortfolioPerformance:
     def to_dict(self):
         return asdict(self)
 
-
 @dataclass(frozen=True, eq=True)
 class PortfolioPerformanceEvent(Event):
-    id: str
+    strategy_id: str
     performance: PortfolioPerformance
-    timestamp: int = datetime.now().timestamp()
-
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass(frozen=True, eq=True)
 class BestStrategyEvent(PortfolioPerformanceEvent):
@@ -48,4 +46,4 @@ class CheckExitConditions(Event):
     take_profit: float
     risk: float
     ohlcv: OHLCV
-    timestamp: int = datetime.now().timestamp()
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))

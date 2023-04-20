@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+import uuid
 from ..event_dispatcher import Event
 from ..timeframe import Timeframe
 
@@ -12,10 +12,7 @@ class StrategyEvent(Event):
     entry: float
     stop_loss: float
     take_profit: float
-    timestamp: int = datetime.now().timestamp()
-
-    def __hash__(self):
-        return hash((self.symbol, self.timeframe, self.strategy, self.entry, self.stop_loss, self.take_profit, self.timestamp))
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass(frozen=True)
 class GoLong(StrategyEvent):

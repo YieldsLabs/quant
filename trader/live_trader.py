@@ -1,3 +1,4 @@
+import asyncio
 from typing import Type
 from broker.abstract_broker import AbstractBroker
 from core.event_dispatcher import register_handler
@@ -23,8 +24,8 @@ class LiveTrader(AbstractTrader):
     @register_handler(ClosePosition)
     async def _on_close_position(self, event: ClosePosition):
         try:
-            self.broker.close_position(event.symbol)
-
+            await asyncio.to_thread(self.broker.close_position, event.symbol)
+            
             await self.dispatcher.dispatch(ClosedPosition(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
         
         except Exception as e:
@@ -43,7 +44,7 @@ class LiveTrader(AbstractTrader):
         }
 
         try:
-            current_order_id = self.broker.place_limit_order(**order_params)
+            current_order_id = await asyncio.to_thread(self.broker.place_limit_order, **order_params)
 
             if not current_order_id:
                 self.logger.warning(f"Failed to place order for {event.symbol}")

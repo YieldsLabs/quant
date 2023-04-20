@@ -1,7 +1,8 @@
-from dataclasses import asdict, dataclass
-from datetime import datetime, time
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Optional
+import uuid
 
 from ..timeframe import Timeframe
 from ..event_dispatcher import Event
@@ -34,5 +35,5 @@ class FillOrder(Event):
     symbol: str
     timeframe: Timeframe
     order: Order
-    timestamp: int = datetime.now().timestamp()
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
     

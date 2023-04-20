@@ -1,7 +1,7 @@
-from dataclasses import dataclass
-from datetime import datetime, time
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
+import uuid
 
 from ..timeframe import Timeframe
 from ..event_dispatcher import Event
@@ -21,7 +21,7 @@ class PositionEvent(Event):
     entry: float
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
-    timestamp: int = datetime.now().timestamp()
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass(frozen=True)
 class OpenLongPosition(PositionEvent):
@@ -36,7 +36,7 @@ class ClosePosition(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
-    timestamp: int = datetime.now().timestamp()
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass(frozen=True)
 class ClosedPosition(ClosePosition):
