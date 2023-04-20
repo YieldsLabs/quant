@@ -4,24 +4,25 @@ from functools import partial, wraps
 import inspect
 from typing import Callable, Deque, Dict, List, Tuple, Type
 
+
 @dataclass(frozen=True)
 class Event:
     pass
 
 class EventDispatcher:
     __instance: 'EventDispatcher' = None
-    
+
     def __new__(cls) -> 'EventDispatcher':
         if not cls.__instance:
             cls.__instance = super().__new__(cls)
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
-            cls.__instance.event_queue = asyncio.Queue()
+            cls.__instance.event_queue = asyncio.Queue(maxsize=0)
             cls.__instance.cancel_event = asyncio.Event()
             cls.__instance.lock: asyncio.Lock = asyncio.Lock()
             cls.__instance.dead_letter_queue: List[Tuple[Event, Exception]] = []
-        
+
         return cls.__instance
-    
+
     def __init__(self):
         if not hasattr(self, "_process_events_task"):
             self._process_events_task = asyncio.create_task(self.process_events())
@@ -29,7 +30,7 @@ class EventDispatcher:
     def register(self, event_class: Type[Event], handler: Callable) -> None:
         if event_class not in self.event_handlers:
             self.event_handlers[event_class] = []
-        
+
         self.event_handlers[event_class].append(handler)
 
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
@@ -37,27 +38,22 @@ class EventDispatcher:
             self.event_handlers[event_class].remove(handler)
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
-        async with self.lock:
-            await self.event_queue.put((event, args, kwargs))
+        await self.event_queue.put((event, args, kwargs))
 
-    async def process_events(self) -> None:
+    async def process_events(self):
         while not self.cancel_event.is_set():
-            async with self.lock:
-                if self.event_queue.empty():
-                    await asyncio.sleep(0.1)
-                    continue
-                event, args, kwargs = self.event_queue.get_nowait()
-            
+            event, args, kwargs = await self.event_queue.get()
             event_class = type(event)
+
             handlers = self.event_handlers.get(event_class, [])
             tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
 
-            if not tasks:
-                continue
-
-            await asyncio.gather(*tasks)
+            if tasks:
+                await asyncio.gather(*tasks)
 
             self.event_queue.task_done()
+            
+            await asyncio.sleep(0.01)
 
     async def _call_handler(self, handler, event, *args, **kwargs):
         try:
@@ -85,9 +81,9 @@ def eda(cls: Type):
             for _, handler in inspect.getmembers(self.__class__, predicate=inspect.isfunction):
                 if hasattr(handler, "event"):
                     event_type = handler.event
-                    
+
                     wrapped_handler = partial(handler, self)
-                    
+
                     self.dispatcher.register(event_type, wrapped_handler)
 
     Wrapped.__name__ = cls.__name__

@@ -14,9 +14,11 @@ class LogJournal(AbstractEventManager):
 
     @register_handler(OHLCVEvent)
     def _on_market(self, event: OHLCVEvent):
+        self.counter += 1
         print('----------------------------------------------------->')
         print('OHLCV event')
         print(event)
+        print(self.counter)
 
     @register_handler(PortfolioPerformanceEvent)
     def _portfolio_performance(self, event: PortfolioPerformanceEvent):
