@@ -1,26 +1,24 @@
 import asyncio
 from dataclasses import dataclass
-import hashlib
+from functools import partial, wraps
 import inspect
 from typing import Callable, Deque, Dict, List, Tuple, Type
-from collections import deque
-from weakref import WeakSet
 
 @dataclass(frozen=True)
 class Event:
     pass
 
 class EventDispatcher:
-    __instance = None
+    __instance: 'EventDispatcher' = None
     
-    def __new__(cls):
-        if cls.__instance is None:
+    def __new__(cls) -> 'EventDispatcher':
+        if not cls.__instance:
             cls.__instance = super().__new__(cls)
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
-            cls.__instance.event_queue: Deque[Tuple[Event, Tuple, Dict]] = deque()
-            cls.__instance.lock = asyncio.Lock()
+            cls.__instance.event_queue = asyncio.Queue()
             cls.__instance.cancel_event = asyncio.Event()
-            cls.__instance.seen_events = WeakSet()
+            cls.__instance.lock: asyncio.Lock = asyncio.Lock()
+            cls.__instance.dead_letter_queue: List[Tuple[Event, Exception]] = []
         
         return cls.__instance
     
@@ -31,44 +29,35 @@ class EventDispatcher:
     def register(self, event_class: Type[Event], handler: Callable) -> None:
         if event_class not in self.event_handlers:
             self.event_handlers[event_class] = []
-
+        
         self.event_handlers[event_class].append(handler)
 
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
         if event_class in self.event_handlers:
-            try:
-                self.event_handlers[event_class].remove(handler)
-            except ValueError:
-                pass
+            self.event_handlers[event_class].remove(handler)
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         async with self.lock:
-            if event in self.seen_events:
-                return
-            # print(event)
-            self.seen_events.add(event)
-            self.event_queue.append((event, args, kwargs))
+            await self.event_queue.put((event, args, kwargs))
 
-    async def process_events(self):
+    async def process_events(self) -> None:
         while not self.cancel_event.is_set():
             async with self.lock:
-                if len(self.event_queue) == 0:
-                    await asyncio.sleep(0.01)
-                    
+                if self.event_queue.empty():
+                    await asyncio.sleep(0.1)
                     continue
-
-                event, args, kwargs = self.event_queue.popleft()
-
-                event_class = type(event)
-                
-                handlers = self.event_handlers.get(event_class, [])
-
-            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
+                event, args, kwargs = self.event_queue.get_nowait()
             
+            event_class = type(event)
+            handlers = self.event_handlers.get(event_class, [])
+            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
+
             if not tasks:
-                print(f"No handlers for event: {event_class}")
-            else:
-                await asyncio.gather(*tasks)
+                continue
+
+            await asyncio.gather(*tasks)
+
+            self.event_queue.task_done()
 
     async def _call_handler(self, handler, event, *args, **kwargs):
         try:
@@ -77,36 +66,50 @@ class EventDispatcher:
             else:
                 await asyncio.to_thread(handler, event, *args, **kwargs)
         except Exception as e:
-            print(f"Error in event handler: {e}")
+            self.dead_letter_queue.append((event, e))
 
-    async def stop(self):
-        self.cancel_event.set()
+    async def wait(self) -> None:
         await self._process_events_task
+
+    async def stop(self) -> None:
+        self.cancel_event.set()
+        await asyncio.shield(self._process_events_task)
 
 def eda(cls: Type):
     class Wrapped(cls):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.dispatcher = EventDispatcher()
-            self.registered_handlers = []
 
-            for _, method in inspect.getmembers(self.__class__, predicate=inspect.isfunction):
-                if hasattr(method, "event"):
-                    method(instance=self)
-                    self.registered_handlers.append((method.event, method))
-        
-        def __del__(self):
-            for event_class, handler in self.registered_handlers:
-                self.dispatcher.unregister(event_class, handler)
-    
+            self.dispatcher = EventDispatcher()
+
+            for _, handler in inspect.getmembers(self.__class__, predicate=inspect.isfunction):
+                if hasattr(handler, "event"):
+                    event_type = handler.event
+                    
+                    wrapped_handler = partial(handler, self)
+                    
+                    self.dispatcher.register(event_type, wrapped_handler)
+
     Wrapped.__name__ = cls.__name__
+    Wrapped.__qualname__ = cls.__qualname__
     Wrapped.__doc__ = cls.__doc__
+    Wrapped.__annotations__ = cls.__annotations__
+    Wrapped.__module__ = cls.__module__
+
     return Wrapped
 
-def register_handler(event: Type[Event]):
-    def decorator(handler: Callable):
-        def wrapper(instance):
-            instance.dispatcher.register(event, handler.__get__(instance, instance.__class__))
-        wrapper.event = event
-        return wrapper
+def register_handler(event_type: Type[Event]) -> Callable[[Callable], Callable]:
+    def decorator(handler: Callable) -> Callable:
+        if asyncio.iscoroutinefunction(handler):
+            async def async_wrapped_handler(self, event: Event):
+                return await handler(self, event)
+        else:
+            def async_wrapped_handler(self, event: Event):
+                return handler(self, event)
+
+        async_wrapped_handler.event = event_type
+        async_wrapped_handler = wraps(handler)(async_wrapped_handler)
+
+        return async_wrapped_handler
+
     return decorator
