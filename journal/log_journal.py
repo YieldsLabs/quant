@@ -1,3 +1,4 @@
+import asyncio
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
@@ -11,10 +12,13 @@ class LogJournal(AbstractEventManager):
     def __init__(self):
         super().__init__()
         self.counter = 0
+        self.counter = 0
+        self.lock = asyncio.Lock()
 
     @register_handler(OHLCVEvent)
-    def _on_market(self, event: OHLCVEvent):
-        self.counter += 1
+    async def _on_market(self, event: OHLCVEvent):
+        async with self.lock:
+            self.counter += 1
         print('----------------------------------------------------->')
         print('OHLCV event')
         print(event)

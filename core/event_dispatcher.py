@@ -2,6 +2,7 @@ import asyncio
 from dataclasses import dataclass
 from functools import partial, wraps
 import inspect
+import os
 from typing import Callable, Deque, Dict, List, Tuple, Type
 
 
@@ -11,6 +12,7 @@ class Event:
 
 class EventDispatcher:
     __instance: 'EventDispatcher' = None
+    __slots__ = ('event_handlers', 'event_queue', 'cancel_event', 'dead_letter_queue', '_worker_tasks')
 
     def __new__(cls) -> 'EventDispatcher':
         if not cls.__instance:
@@ -18,14 +20,13 @@ class EventDispatcher:
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
             cls.__instance.event_queue = asyncio.Queue(maxsize=0)
             cls.__instance.cancel_event = asyncio.Event()
-            cls.__instance.lock: asyncio.Lock = asyncio.Lock()
             cls.__instance.dead_letter_queue: List[Tuple[Event, Exception]] = []
 
         return cls.__instance
 
-    def __init__(self):
-        if not hasattr(self, "_process_events_task"):
-            self._process_events_task = asyncio.create_task(self.process_events())
+    def __init__(self, num_workers: int = os.cpu_count()):
+        if not hasattr(self, "_worker_tasks"):
+            self._worker_tasks = [asyncio.create_task(self.process_events()) for _ in range(num_workers)]
 
     def register(self, event_class: Type[Event], handler: Callable) -> None:
         if event_class not in self.event_handlers:
@@ -43,17 +44,14 @@ class EventDispatcher:
     async def process_events(self):
         while not self.cancel_event.is_set():
             event, args, kwargs = await self.event_queue.get()
-            event_class = type(event)
-
-            handlers = self.event_handlers.get(event_class, [])
+            
+            handlers = self.event_handlers.get(type(event), [])
             tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
 
             if tasks:
                 await asyncio.gather(*tasks)
 
             self.event_queue.task_done()
-            
-            await asyncio.sleep(0.01)
 
     async def _call_handler(self, handler, event, *args, **kwargs):
         try:
@@ -65,11 +63,11 @@ class EventDispatcher:
             self.dead_letter_queue.append((event, e))
 
     async def wait(self) -> None:
-        await self._process_events_task
+        await asyncio.gather(*self._worker_tasks)
 
     async def stop(self) -> None:
         self.cancel_event.set()
-        await asyncio.shield(self._process_events_task)
+        await asyncio.shield(asyncio.gather(*self._worker_tasks))
 
 def eda(cls: Type):
     class Wrapped(cls):
