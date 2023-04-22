@@ -3,7 +3,7 @@ import uuid
 from .ohlcv import OHLCV
 from .position import PositionSide
 from ..timeframe import Timeframe
-from ..event_dispatcher import Event
+from ..event_dispatcher import Event, EventMeta
 
 @dataclass
 class PortfolioPerformance:
@@ -29,7 +29,7 @@ class PortfolioPerformance:
 class PortfolioPerformanceEvent(Event):
     strategy_id: str
     performance: PortfolioPerformance
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    meta: EventMeta = field(default_factory=EventMeta)
 
 @dataclass(frozen=True, eq=True)
 class BestStrategyEvent(PortfolioPerformanceEvent):
@@ -46,4 +46,4 @@ class CheckExitConditions(Event):
     take_profit: float
     risk: float
     ohlcv: OHLCV
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    meta: EventMeta = field(default_factory=EventMeta)

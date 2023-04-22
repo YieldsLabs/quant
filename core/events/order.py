@@ -5,7 +5,7 @@ from typing import Optional
 import uuid
 
 from ..timeframe import Timeframe
-from ..event_dispatcher import Event
+from ..event_dispatcher import Event, EventMeta
 
 class OrderSide(Enum):
     BUY = "buy"
@@ -35,5 +35,5 @@ class FillOrder(Event):
     symbol: str
     timeframe: Timeframe
     order: Order
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    meta: EventMeta = field(default_factory=EventMeta)
     
