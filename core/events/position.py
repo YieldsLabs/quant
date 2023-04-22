@@ -27,7 +27,7 @@ class Order:
     def to_dict(self):
         return asdict(self)
 
-@dataclass
+@dataclass(frozen=True)
 class FillOrder(Event):
     symbol: str
     timeframe: Timeframe
@@ -41,7 +41,7 @@ class PositionSide(Enum):
     def __str__(self):
         return self.value
 
-@dataclass
+@dataclass(frozen=True)
 class PositionEvent(Event):
     symbol: str
     timeframe: Timeframe
@@ -51,26 +51,29 @@ class PositionEvent(Event):
     take_profit: Optional[float] = None
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
-@dataclass
+@dataclass(frozen=True)
 class OpenLongPosition(PositionEvent):
    pass
 
-@dataclass
+@dataclass(frozen=True)
 class OpenShortPosition(PositionEvent):
    pass
 
-@dataclass
+@dataclass(frozen=True)
 class ReadyToClosePosition(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
-@dataclass
-class ClosedPosition(ReadyToClosePosition):
-    pass
+@dataclass(frozen=True)
+class ClosedPosition(Event):
+    symbol: str
+    timeframe: Timeframe
+    exit_price: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
-@dataclass
+@dataclass(frozen=True)
 class CheckExitConditions(Event):
     symbol: str
     timeframe: Timeframe

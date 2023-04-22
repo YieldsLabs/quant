@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
 
-@dataclass
+@dataclass(frozen=True)
 class StrategyEvent(Event):
     symbol: str
     timeframe: Timeframe
@@ -13,10 +13,10 @@ class StrategyEvent(Event):
     take_profit: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
-@dataclass
+@dataclass(frozen=True)
 class GoLong(StrategyEvent):
     pass
 
-@dataclass
+@dataclass(frozen=True)
 class GoShort(StrategyEvent):
     pass

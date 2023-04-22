@@ -22,13 +22,13 @@ class PortfolioPerformance:
     def to_dict(self):
         return asdict(self)
 
-@dataclass
+@dataclass(frozen=True)
 class PortfolioPerformanceEvent(Event):
     strategy_id: str
     performance: PortfolioPerformance
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))
 
-@dataclass
+@dataclass(frozen=True)
 class BestStrategyEvent(Event):
     strategy_id: str
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))
