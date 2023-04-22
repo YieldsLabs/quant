@@ -1,6 +1,5 @@
 from core.event_dispatcher import register_handler
-from core.events.portfolio import CheckExitConditions
-from core.events.position import PositionSide, ReadyToClosePosition
+from core.events.position import CheckExitConditions, PositionSide, ReadyToClosePosition
 from risk_management.abstract_risk_manager import AbstractRiskManager
 
 

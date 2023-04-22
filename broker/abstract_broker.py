@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
-from core.events.order import OrderSide
+from core.events.position import OrderSide
 
 
 class AbstractBroker(ABC):

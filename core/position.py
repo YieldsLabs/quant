@@ -1,7 +1,6 @@
 from typing import List, Optional
 
-from .events.order import Order
-from .events.position import PositionSide
+from .events.position import PositionSide, Order
 from .timeframe import Timeframe
 
 

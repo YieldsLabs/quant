@@ -2,8 +2,7 @@ import asyncio
 from typing import Type
 from broker.abstract_broker import AbstractBroker
 from core.event_dispatcher import register_handler
-from core.events.order import FillOrder, Order, OrderSide
-from core.events.position import ClosedPosition, OpenLongPosition, OpenShortPosition, ReadyToClosePosition
+from core.events.position import ClosedPosition, OpenLongPosition, OpenShortPosition, ReadyToClosePosition, FillOrder, Order, OrderSide
 from trader.abstract_trader import AbstractTrader
 import logging
 

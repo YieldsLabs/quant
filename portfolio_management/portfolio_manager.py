@@ -3,9 +3,8 @@ from typing import Dict, List, Optional, Type, Union
 from analytics.abstract_analytics import AbstractAnalytics
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
-from core.events.order import FillOrder
-from core.events.portfolio import CheckExitConditions, PortfolioPerformanceEvent
-from core.events.position import ClosedPosition, OpenLongPosition, OpenShortPosition, PositionSide
+from core.events.portfolio import  PortfolioPerformanceEvent
+from core.events.position import CheckExitConditions, ClosedPosition, FillOrder, OpenLongPosition, OpenShortPosition, PositionSide
 from core.events.strategy import GoLong, GoShort
 from core.position import Position
 from datasource.abstract_datasource import AbstractDatasource

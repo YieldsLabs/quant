@@ -2,9 +2,8 @@ import asyncio
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
-from core.events.order import FillOrder
-from core.events.portfolio import BestStrategyEvent, CheckExitConditions, PortfolioPerformanceEvent
-from core.events.position import ReadyToClosePosition, OpenLongPosition, OpenShortPosition
+from core.events.portfolio import BestStrategyEvent, PortfolioPerformanceEvent
+from core.events.position import CheckExitConditions, FillOrder, ReadyToClosePosition, OpenLongPosition, OpenShortPosition
 from core.events.strategy import GoLong, GoShort
 
 

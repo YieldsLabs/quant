@@ -1,7 +1,5 @@
-from typing import Final
 import ccxt
 import math
-import pandas as pd
 
 from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode

@@ -16,28 +16,28 @@ class Backtest(AbstractEventManager):
         self.datasource = datasource
         self.strategy_performance: Dict[str, Dict[str, PortfolioPerformance]] = defaultdict(dict)
 
-    @register_handler(PortfolioPerformanceEvent)
-    async def _on_portfolio(self, event: PortfolioPerformanceEvent):
-        strategy_id = event.id
-        performance = event.performance
+    # @register_handler(PortfolioPerformanceEvent)
+    # async def _on_portfolio(self, event: PortfolioPerformanceEvent):
+    #     strategy_id = event.id
+    #     performance = event.performance
         
-        symbol = parse_meta_label(strategy_id)[0]
+    #     symbol = parse_meta_label(strategy_id)[0]
         
-        self.strategy_performance[symbol][strategy_id] = performance
+    #     self.strategy_performance[symbol][strategy_id] = performance
 
-        best_strategy = self._simple_search_the_best_strategy(symbol)
+    #     best_strategy = self._simple_search_the_best_strategy(symbol)
 
-        if best_strategy:
-            await self.dispatcher.dispatch(BestStrategyEvent(id=best_strategy[0], performance=best_strategy[1]))
+    #     if best_strategy:
+    #         await self.dispatcher.dispatch(BestStrategyEvent(id=best_strategy[0], performance=best_strategy[1]))
     
     async def run(self, symbols: List[str], timeframes: List[Timeframe], lookback: int = 3000):
         symbols_and_timeframes = list(product(symbols, timeframes))
         
         random.shuffle(symbols_and_timeframes)
-
+        
         for symbol, timeframe in symbols_and_timeframes:
             historical_data = await self.datasource.fetch(symbol, timeframe, lookback)
-
+            
             await self._process_historical_data(symbol, timeframe, historical_data)
     
     async def _process_historical_data(self, symbol: str, timeframe: Timeframe, historical_data):

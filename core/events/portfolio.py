@@ -1,11 +1,8 @@
 from dataclasses import asdict, dataclass, field
-import uuid
-from .ohlcv import OHLCV
-from .position import PositionSide
-from ..timeframe import Timeframe
-from ..event_dispatcher import Event, EventMeta
 
-@dataclass
+from .base_event import Event, EventMeta
+
+@dataclass(order=True)
 class PortfolioPerformance:
     total_trades: int
     successful_trades: int
@@ -25,25 +22,13 @@ class PortfolioPerformance:
     def to_dict(self):
         return asdict(self)
 
-@dataclass(frozen=True, eq=True)
+@dataclass(order=True)
 class PortfolioPerformanceEvent(Event):
     strategy_id: str
     performance: PortfolioPerformance
-    meta: EventMeta = field(default_factory=EventMeta)
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))
 
-@dataclass(frozen=True, eq=True)
-class BestStrategyEvent(PortfolioPerformanceEvent):
-    pass
-
-@dataclass(frozen=True, eq=True)
-class CheckExitConditions(Event):
-    symbol: str
-    timeframe: Timeframe
-    side: PositionSide
-    size: float
-    entry: float
-    stop_loss: float
-    take_profit: float
-    risk: float
-    ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=EventMeta)
+@dataclass(order=True)
+class BestStrategyEvent(Event):
+    strategy_id: str
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))

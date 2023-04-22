@@ -1,11 +1,10 @@
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
-import uuid
-from ..event_dispatcher import Event, EventMeta
+
+from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
 
 
-@dataclass
+@dataclass(order=True)
 class OHLCV:
     timestamp: int
     open: float
@@ -16,13 +15,10 @@ class OHLCV:
 
     def to_dict(self):
         return asdict(self)
-    
-    def __hash__(self):
-        return hash((self.timestamp, self.open, self.high, self.low, self.close, self.volume))
 
-@dataclass(frozen=True)
+@dataclass(order=True)
 class OHLCVEvent(Event):
     symbol: str
     timeframe: Timeframe
     ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=EventMeta)
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))

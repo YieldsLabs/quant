@@ -1,6 +1,5 @@
 from core.event_dispatcher import register_handler
-from core.events.order import FillOrder, Order, OrderSide
-from core.events.position import ClosedPosition, OpenLongPosition, OpenShortPosition, ReadyToClosePosition
+from core.events.position import ClosedPosition, OpenLongPosition, OpenShortPosition, ReadyToClosePosition, FillOrder, Order, OrderSide
 from .abstract_trader import AbstractTrader
 
 class PaperTrader(AbstractTrader):

@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
-import uuid
-from ..event_dispatcher import Event, EventMeta
+
+from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
 
-
-@dataclass(frozen=True)
+@dataclass(order=True)
 class StrategyEvent(Event):
     symbol: str
     timeframe: Timeframe
@@ -12,12 +11,12 @@ class StrategyEvent(Event):
     entry: float
     stop_loss: float
     take_profit: float
-    meta: EventMeta = field(default_factory=EventMeta)
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
-@dataclass(frozen=True)
+@dataclass(order=True)
 class GoLong(StrategyEvent):
     pass
 
-@dataclass(frozen=True)
+@dataclass(order=True)
 class GoShort(StrategyEvent):
     pass

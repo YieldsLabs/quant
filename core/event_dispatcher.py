@@ -1,13 +1,9 @@
 import asyncio
-from dataclasses import dataclass
 from functools import partial, wraps
 import inspect
 from typing import Any, AsyncIterable, Callable, Dict, List, Tuple, Type
 
-
-@dataclass(frozen=True)
-class Event:
-    pass
+from .events.base_event import Event
 
 class EventDispatcher:
     __instance: 'EventDispatcher' = None
@@ -17,7 +13,7 @@ class EventDispatcher:
         if not cls.__instance:
             cls.__instance = super().__new__(cls)
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
-            cls.__instance.event_queue = asyncio.Queue(maxsize=0)
+            cls.__instance.event_queue = asyncio.PriorityQueue(maxsize=0)
             cls.__instance.cancel_event = asyncio.Event()
             cls.__instance.dead_letter_queue: List[Tuple[Event, Exception]] = []
 
@@ -35,7 +31,9 @@ class EventDispatcher:
             self.event_handlers[event_class].remove(handler)
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
-        await self.event_queue.put((event, args, kwargs))
+        priority = event.meta.priority
+        
+        await self.event_queue.put((-priority, (event, args, kwargs)))
 
     async def process_events(self):
         async for event, args, kwargs in self._get_event_stream():
@@ -59,8 +57,10 @@ class EventDispatcher:
     
     async def _get_event_stream(self) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
         while not self.cancel_event.is_set():
-            event, args, kwargs = await self.event_queue.get()
+            _, (event, args, kwargs) = await self.event_queue.get()
+            
             yield event, args, kwargs
+            
             self.event_queue.task_done()
 
     async def wait(self) -> None:
