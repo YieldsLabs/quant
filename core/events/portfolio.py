@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass, field
 
 from .base_event import Event, EventMeta
 
-@dataclass(order=True)
+@dataclass
 class PortfolioPerformance:
     total_trades: int
     successful_trades: int
@@ -22,13 +22,13 @@ class PortfolioPerformance:
     def to_dict(self):
         return asdict(self)
 
-@dataclass(order=True)
+@dataclass
 class PortfolioPerformanceEvent(Event):
     strategy_id: str
     performance: PortfolioPerformance
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))
 
-@dataclass(order=True)
+@dataclass
 class BestStrategyEvent(Event):
     strategy_id: str
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))

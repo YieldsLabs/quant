@@ -4,7 +4,7 @@ from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
 
 
-@dataclass(order=True)
+@dataclass
 class OHLCV:
     timestamp: int
     open: float
@@ -16,7 +16,7 @@ class OHLCV:
     def to_dict(self):
         return asdict(self)
 
-@dataclass(order=True)
+@dataclass
 class OHLCVEvent(Event):
     symbol: str
     timeframe: Timeframe

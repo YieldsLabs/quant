@@ -1,26 +1,20 @@
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from functools import total_ordering
 from typing import Optional
 
 from .ohlcv import OHLCV
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
 
-@total_ordering
 class OrderSide(Enum):
     BUY = "buy"
     SELL = "sell"
 
     def __str__(self):
         return self.value
-    
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value < other.value
 
-@dataclass(order=True)
+@dataclass
 class Order:
     side: OrderSide
     entry: float
@@ -33,26 +27,21 @@ class Order:
     def to_dict(self):
         return asdict(self)
 
-@dataclass(order=True)
+@dataclass
 class FillOrder(Event):
     symbol: str
     timeframe: Timeframe
     order: Order
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
-@total_ordering
 class PositionSide(Enum):
     LONG = "long"
     SHORT = "short"
 
     def __str__(self):
         return self.value
-    
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value < other.value
 
-@dataclass(order=True)
+@dataclass
 class PositionEvent(Event):
     symbol: str
     timeframe: Timeframe
@@ -62,26 +51,26 @@ class PositionEvent(Event):
     take_profit: Optional[float] = None
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
-@dataclass(order=True)
+@dataclass
 class OpenLongPosition(PositionEvent):
    pass
 
-@dataclass(order=True)
+@dataclass
 class OpenShortPosition(PositionEvent):
    pass
 
-@dataclass(order=True)
+@dataclass
 class ReadyToClosePosition(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
-@dataclass(order=True)
+@dataclass
 class ClosedPosition(ReadyToClosePosition):
     pass
 
-@dataclass(order=True)
+@dataclass
 class CheckExitConditions(Event):
     symbol: str
     timeframe: Timeframe
