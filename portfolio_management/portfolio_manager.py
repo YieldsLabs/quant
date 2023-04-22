@@ -54,27 +54,30 @@ class PortfolioManager(AbstractPortfolioManager):
     def _on_order_filled(self, event: FillOrder):
         symbol = event.symbol
 
-        if symbol in self.active_positions:
-            self.active_positions[symbol].add_order(event.order)
+        if symbol not in self.active_positions:
+            return
+        
+        self.active_positions[symbol].add_order(event.order)
     
     @register_handler(ClosedPosition)
     async def _on_closed_position(self, event: ClosedPosition):
         symbol = event.symbol
 
-        if symbol in self.active_positions:
-            position = self.active_positions[symbol]
-            
-            position.close_position(event.exit_price)
-            
-            self.closed_positions.append(position)
-            
-            del self.active_positions[symbol]
-    
-            strategy_id = position.get_id()
+        if symbol not in self.active_positions:
+            return
+        
+        position = self.active_positions[symbol]
+        
+        position.close_position(event.exit_price)
+        self.closed_positions.append(position)
+        
+        del self.active_positions[symbol]
 
-            performance = await self.analytics.calculate(self.closed_positions)
+        strategy_id = position.get_id()
 
-            await self.dispatcher.dispatch(PortfolioPerformanceEvent(id=strategy_id, performance=performance))
+        performance = await self.analytics.calculate(self.closed_positions)
+
+        await self.dispatcher.dispatch(PortfolioPerformanceEvent(id=strategy_id, performance=performance))
 
     async def handle_position(self, position_side, event: Union[GoLong, GoShort]):
         if event.symbol in self.active_positions:

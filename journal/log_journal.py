@@ -4,14 +4,13 @@ from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.order import FillOrder
 from core.events.portfolio import BestStrategyEvent, CheckExitConditions, PortfolioPerformanceEvent
-from core.events.position import ClosePosition, OpenLongPosition, OpenShortPosition
+from core.events.position import ReadyToClosePosition, OpenLongPosition, OpenShortPosition
 from core.events.strategy import GoLong, GoShort
 
 
 class LogJournal(AbstractEventManager):
     def __init__(self):
         super().__init__()
-        self.counter = 0
         self.counter = 0
         self.lock = asyncio.Lock()
 
@@ -72,8 +71,8 @@ class LogJournal(AbstractEventManager):
         print('Open Short Position')
         print(event)
 
-    @register_handler(ClosePosition)
-    def _close_position(self, event: ClosePosition):
+    @register_handler(ReadyToClosePosition)
+    def _close_position(self, event: ReadyToClosePosition):
         print('----------------------------------------------------->')
         print('Close Position')
         print(event)

@@ -32,12 +32,12 @@ class OpenShortPosition(PositionEvent):
    pass
 
 @dataclass(frozen=True)
-class ClosePosition(Event):
+class ReadyToClosePosition(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass(frozen=True)
-class ClosedPosition(ClosePosition):
+class ClosedPosition(ReadyToClosePosition):
     pass

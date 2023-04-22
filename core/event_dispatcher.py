@@ -2,8 +2,7 @@ import asyncio
 from dataclasses import dataclass
 from functools import partial, wraps
 import inspect
-import os
-from typing import Callable, Deque, Dict, List, Tuple, Type
+from typing import Any, AsyncIterable, Callable, Dict, List, Tuple, Type
 
 
 @dataclass(frozen=True)
@@ -24,15 +23,12 @@ class EventDispatcher:
 
         return cls.__instance
 
-    def __init__(self, num_workers: int = os.cpu_count()):
+    def __init__(self, num_workers: int = 3):
         if not hasattr(self, "_worker_tasks"):
             self._worker_tasks = [asyncio.create_task(self.process_events()) for _ in range(num_workers)]
 
     def register(self, event_class: Type[Event], handler: Callable) -> None:
-        if event_class not in self.event_handlers:
-            self.event_handlers[event_class] = []
-
-        self.event_handlers[event_class].append(handler)
+        self.event_handlers.setdefault(event_class, []).append(handler)
 
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
         if event_class in self.event_handlers:
@@ -42,16 +38,15 @@ class EventDispatcher:
         await self.event_queue.put((event, args, kwargs))
 
     async def process_events(self):
-        while not self.cancel_event.is_set():
-            event, args, kwargs = await self.event_queue.get()
-            
+        async for event, args, kwargs in self._get_event_stream():
             handlers = self.event_handlers.get(type(event), [])
+            
             tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
 
-            if tasks:
-                await asyncio.gather(*tasks)
-
-            self.event_queue.task_done()
+            if not tasks:
+                continue
+            
+            await asyncio.gather(*tasks)
 
     async def _call_handler(self, handler, event, *args, **kwargs):
         try:
@@ -61,6 +56,12 @@ class EventDispatcher:
                 await asyncio.to_thread(handler, event, *args, **kwargs)
         except Exception as e:
             self.dead_letter_queue.append((event, e))
+    
+    async def _get_event_stream(self) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
+        while not self.cancel_event.is_set():
+            event, args, kwargs = await self.event_queue.get()
+            yield event, args, kwargs
+            self.event_queue.task_done()
 
     async def wait(self) -> None:
         await asyncio.gather(*self._worker_tasks)
@@ -79,9 +80,7 @@ def eda(cls: Type):
             for _, handler in inspect.getmembers(self.__class__, predicate=inspect.isfunction):
                 if hasattr(handler, "event"):
                     event_type = handler.event
-
                     wrapped_handler = partial(handler, self)
-
                     self.dispatcher.register(event_type, wrapped_handler)
 
     Wrapped.__name__ = cls.__name__

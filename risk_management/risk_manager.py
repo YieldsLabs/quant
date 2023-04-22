@@ -1,6 +1,6 @@
 from core.event_dispatcher import register_handler
 from core.events.portfolio import CheckExitConditions
-from core.events.position import ClosePosition, PositionSide
+from core.events.position import PositionSide, ReadyToClosePosition
 from risk_management.abstract_risk_manager import AbstractRiskManager
 
 
@@ -29,7 +29,7 @@ class RiskManager(AbstractRiskManager):
         
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
         
-        await self.dispatcher.dispatch(ClosePosition(symbol=symbol, timeframe=timeframe, exit_price=exit_price))
+        await self.dispatcher.dispatch(ReadyToClosePosition(symbol=symbol, timeframe=timeframe, exit_price=exit_price))
 
     def _initialize_symbol_data(self, symbol):
         self.trailing_stop_loss_prices[symbol] = {PositionSide.LONG: None, PositionSide.SHORT: None}

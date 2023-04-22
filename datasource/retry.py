@@ -1,5 +1,4 @@
 import asyncio
-import time
 import random
 from requests.exceptions import RequestException
 

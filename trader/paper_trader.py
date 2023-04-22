@@ -1,6 +1,6 @@
 from core.event_dispatcher import register_handler
 from core.events.order import FillOrder, Order, OrderSide
-from core.events.position import ClosePosition, ClosedPosition, OpenLongPosition, OpenShortPosition
+from core.events.position import ClosedPosition, OpenLongPosition, OpenShortPosition, ReadyToClosePosition
 from .abstract_trader import AbstractTrader
 
 class PaperTrader(AbstractTrader):
@@ -15,8 +15,8 @@ class PaperTrader(AbstractTrader):
     async def _open_short_position(self, event: OpenShortPosition):
         await self.trade(event)
 
-    @register_handler(ClosePosition)
-    async def _on_close_position(self, event: ClosePosition):
+    @register_handler(ReadyToClosePosition)
+    async def _on_close_position(self, event: ReadyToClosePosition):
         await self.dispatcher.dispatch(ClosedPosition(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
         
     async def trade(self, event):

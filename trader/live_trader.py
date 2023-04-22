@@ -3,7 +3,7 @@ from typing import Type
 from broker.abstract_broker import AbstractBroker
 from core.event_dispatcher import register_handler
 from core.events.order import FillOrder, Order, OrderSide
-from core.events.position import ClosePosition, ClosedPosition, OpenLongPosition, OpenShortPosition
+from core.events.position import ClosedPosition, OpenLongPosition, OpenShortPosition, ReadyToClosePosition
 from trader.abstract_trader import AbstractTrader
 import logging
 
@@ -21,8 +21,8 @@ class LiveTrader(AbstractTrader):
     async def _open_short_position(self, event: OpenShortPosition):
         await self.trade(event)
 
-    @register_handler(ClosePosition)
-    async def _on_close_position(self, event: ClosePosition):
+    @register_handler(ReadyToClosePosition)
+    async def _on_close_position(self, event: ReadyToClosePosition):
         try:
             await asyncio.to_thread(self.broker.close_position, event.symbol)
             
