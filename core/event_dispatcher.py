@@ -1,6 +1,8 @@
 import asyncio
 from functools import partial, wraps
 import inspect
+import os
+import random
 from typing import Any, AsyncIterable, Callable, Dict, List, Tuple, Type
 
 from .events.base_event import Event
@@ -18,15 +20,15 @@ class EventDispatcher:
 
         return cls.__instance
 
-    def __init__(self, num_workers: int = 2, priority_groups: int = 4):
+    def __init__(self, num_workers: int = os.cpu_count(), priority_groups: int = 4):
         if not hasattr(self, "_worker_tasks"):
             self._worker_tasks = []
             self._group_event_queues = [asyncio.Queue() for _ in range(priority_groups)]
             self._group_event_counts = [0] * priority_groups
-            self._group_priorities = list(range(1, priority_groups)) 
+            self._group_priorities = list(range(priority_groups)) 
 
             for priority_group in range(priority_groups):
-                tasks = [asyncio.create_task(self.process_events(priority_group + 1)) for _ in range(num_workers)]
+                tasks = [asyncio.create_task(self.process_events(priority_group)) for _ in range(num_workers)]
                 
                 self._worker_tasks.extend(tasks)
 
@@ -39,7 +41,6 @@ class EventDispatcher:
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         priority_group = self._determine_priority_group(event.meta.priority)
-        
         await self._group_event_queues[priority_group].put((event, args, kwargs))
 
     async def process_events(self, priority_group):
@@ -83,11 +84,18 @@ class EventDispatcher:
         if total_events == 0:
             return min(priority, len(self._group_event_queues) - 1)
 
-        las_values = [(event_count / priority) for event_count, priority in zip(self._group_event_counts, self._group_priorities)]
+        processed_ratios = [count / total_events for count in self._group_event_counts]
+        target_ratios = [1 / p for p in self._group_priorities]
+        total_target_ratio = sum(target_ratios)
+        target_ratios = [tr / total_target_ratio for tr in target_ratios]
+
+        errors = [target - processed for target, processed in zip(target_ratios, processed_ratios)]
         
-        priority_group = las_values.index(min(las_values))
-        
-        return priority_group
+        integral_action = 0.5
+
+        control_outputs = [error + integral_action * sum(errors[: i + 1]) for i, error in enumerate(errors)]
+
+        return random.choice([i for i, v in enumerate(control_outputs) if v == max(control_outputs)])
 
 def eda(cls: Type):
     class Wrapped(cls):

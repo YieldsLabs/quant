@@ -18,60 +18,50 @@ class LogJournal(AbstractEventManager):
         async with self.lock:
             self.counter += 1
         print('----------------------------------------------------->')
-        print('OHLCV event')
         print(event)
         print(self.counter)
 
     @register_handler(PortfolioPerformanceEvent)
     def _portfolio_performance(self, event: PortfolioPerformanceEvent):
         print('----------------------------------------------------->')
-        print('Portfolio performance')
         print(event)
 
     @register_handler(FillOrder)
     def _fill_order(self, event: FillOrder):
         print('----------------------------------------------------->')
-        print('Fill Order')
         print(event)
 
     @register_handler(CheckExitConditions)
     def _check_exit(self, event: CheckExitConditions):
         print('----------------------------------------------------->')
-        print('Check Exit Conditions')
         print(event)
 
     @register_handler(BestStrategyEvent)
     def _on_best_strategy(self, event: BestStrategyEvent):
         print('----------------------------------------------------->')
-        print('Best Strategy Event')
         print(event)
 
     @register_handler(GoLong)
     def _go_long(self, event: GoLong):
         print('----------------------------------------------------->')
-        print('Go Long')
         print(event)
 
     @register_handler(GoShort)
     def _go_short(self, event: GoShort):
         print('----------------------------------------------------->')
-        print('Go Short')
         print(event)
 
     @register_handler(OpenLongPosition)
     def _open_long_position(self, event: OpenLongPosition):
         print('----------------------------------------------------->')
-        print('Open Long Position')
         print(event)
 
     @register_handler(OpenShortPosition)
     def _open_short_position(self, event: OpenShortPosition):
         print('----------------------------------------------------->')
-        print('Open Short Position')
         print(event)
 
     @register_handler(ReadyToClosePosition)
     def _close_position(self, event: ReadyToClosePosition):
         print('----------------------------------------------------->')
-        print('Close Position')
         print(event)
