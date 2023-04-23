@@ -149,7 +149,11 @@ class StrategyPerformance(AbstractAnalytics):
         return risk_of_ruin
     
     def _skewness(self, pnl):
-        return scipy.stats.skew(pnl)
-    
+        epsilon = np.finfo(float).eps
+        pnl_adjusted = pnl + epsilon
+        return scipy.stats.skew(pnl_adjusted)
+
     def _kurtosis(self, pnl):
-        return scipy.stats.kurtosis(pnl)
+        epsilon = np.finfo(float).eps
+        pnl_adjusted = pnl + epsilon
+        return scipy.stats.kurtosis(pnl_adjusted)

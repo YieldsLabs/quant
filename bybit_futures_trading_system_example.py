@@ -15,6 +15,7 @@ load_dotenv()
 
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
+WSS = os.getenv('WSS')
 
 symbols = [
     'ETHUSDT',
@@ -36,7 +37,7 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-lookback = 5000
+lookback = 15000
 risk_per_trade = 0.0001
 
 async def process_messages(ws, bybit_trading_system):
@@ -62,16 +63,14 @@ async def send_ping(ws, interval):
         await ws.ping()
 
 async def main():
-    wss = 'wss://stream.bybit.com/v5/public/linear'
-    
     LogJournal()
-    
+
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     analytics = StrategyPerformance(risk_per_trade)
     datasource = BybitDataSource(broker)
     bybit_trading_system = TradingSystem(datasource, broker, analytics, symbols, timeframes, lookback=lookback, risk_per_trade=risk_per_trade)
     
-    async with websockets.connect(wss) as ws:
+    async with websockets.connect(WSS) as ws:
         bybit_trading_system.subscribe_candle_stream(ws)
         
         start_trading_system_task = asyncio.create_task(bybit_trading_system.start())
@@ -85,7 +84,6 @@ async def main():
             message_processing_task.cancel()
             start_trading_system_task.cancel()
     
-    await bybit_trading_system.start()
     await asyncio.sleep(0.01)
 
 asyncio.run(main())
