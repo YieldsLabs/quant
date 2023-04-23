@@ -1,5 +1,6 @@
 from typing import List
 import numpy as np
+import scipy
 from .abstract_analytics import AbstractAnalytics
 from core.events.portfolio import PortfolioPerformance
 from core.position import Position
@@ -27,7 +28,9 @@ class StrategyPerformance(AbstractAnalytics):
                 max_consecutive_wins=0,
                 max_consecutive_losses=0,
                 max_drawdown=0,
-                recovery_factor=0
+                recovery_factor=0,
+                skewness=0,
+                kurtosis=0
             )
         
         pnl = np.array([position.calculate_pnl() for position in positions])
@@ -47,6 +50,9 @@ class StrategyPerformance(AbstractAnalytics):
         max_drawdown = self._max_drawdown(pnl, initial_account_size)
         recovery_factor = self._recovery_factor(total_pnl, max_drawdown)
 
+        skewness = self._skewness(pnl)
+        kurtosis = self._kurtosis(pnl)
+
         return PortfolioPerformance(
             total_trades=total_trades,
             successful_trades=successful_trades,
@@ -61,7 +67,9 @@ class StrategyPerformance(AbstractAnalytics):
             max_consecutive_wins=max_consecutive_wins,
             max_consecutive_losses=max_consecutive_losses,
             max_drawdown=max_drawdown,
-            recovery_factor=recovery_factor
+            recovery_factor=recovery_factor,
+            skewness=skewness,
+            kurtosis=kurtosis
         )
         
     def _sharpe_ratio(self, pnl, risk_free_rate=0):
@@ -139,3 +147,9 @@ class StrategyPerformance(AbstractAnalytics):
         risk_of_ruin = ((1 - (self.risk_per_trade * (1 - loss_rate / win_rate))) ** initial_account_size) * 100
         
         return risk_of_ruin
+    
+    def _skewness(self, pnl):
+        return scipy.stats.skew(pnl)
+    
+    def _kurtosis(self, pnl):
+        return scipy.stats.kurtosis(pnl)

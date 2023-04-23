@@ -8,10 +8,10 @@ numpy = "*"
 pandas = "*"
 ccxt = "*"
 python-dotenv = "*"
-cachetools = "*"
 websockets = "*"
 aiocache = "*"
 uuid = "*"
+scipy = "*"
 
 [dev-packages]
 flake8 = "*"

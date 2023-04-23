@@ -18,6 +18,8 @@ class PortfolioPerformance:
     max_consecutive_losses: int
     max_drawdown: float
     recovery_factor: float
+    skewness: float
+    kurtosis: float
 
     def to_dict(self):
         return asdict(self)
