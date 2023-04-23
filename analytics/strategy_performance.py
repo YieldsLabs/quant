@@ -1,6 +1,5 @@
 from typing import List
 import numpy as np
-import scipy
 from .abstract_analytics import AbstractAnalytics
 from core.events.portfolio import PortfolioPerformance
 from core.position import Position
@@ -149,11 +148,19 @@ class StrategyPerformance(AbstractAnalytics):
         return risk_of_ruin
     
     def _skewness(self, pnl):
-        epsilon = np.finfo(float).eps
-        pnl_adjusted = pnl + epsilon
-        return scipy.stats.skew(pnl_adjusted)
+        if len(pnl) < 2:
+            return 0
+        
+        mean_pnl = np.mean(pnl)
+        std_pnl = np.std(pnl, ddof=1)
+        skewness = np.sum(((pnl - mean_pnl) / std_pnl) ** 3) / len(pnl)
+        return skewness
 
     def _kurtosis(self, pnl):
-        epsilon = np.finfo(float).eps
-        pnl_adjusted = pnl + epsilon
-        return scipy.stats.kurtosis(pnl_adjusted)
+        if len(pnl) < 2:
+            return 0
+        
+        mean_pnl = np.mean(pnl)
+        std_pnl = np.std(pnl, ddof=1)
+        kurtosis = np.sum(((pnl - mean_pnl) / std_pnl) ** 4) / len(pnl) - 3
+        return kurtosis
