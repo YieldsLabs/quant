@@ -1,4 +1,5 @@
 import asyncio
+from functools import lru_cache
 from core.event_dispatcher import register_handler
 from core.events.position import CheckExitConditions, PositionSide, ReadyToClosePosition
 from risk_management.abstract_risk_manager import AbstractRiskManager
@@ -24,7 +25,7 @@ class RiskManager(AbstractRiskManager):
             if self.should_update_trailing_stop_loss(symbol, position_side):
                 stop_loss_price = self._update_trailing_stop_loss(position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
 
-            if not self._should_exit(position_side, stop_loss_price, take_profit_price, ohlcv):
+            if not self._should_exit(position_side, stop_loss_price, take_profit_price, ohlcv.low, ohlcv.high):
                 return
 
             self.reset_trailing_stop_loss_data(symbol, position_side)
@@ -44,31 +45,14 @@ class RiskManager(AbstractRiskManager):
         self.trailing_stop_loss_prices[symbol][position_side] = None
         self.stop_loss_adjustment_count[symbol][position_side] = 0
 
-    def _calculate_exit_price(self, position_side, current_close, take_profit_price, stop_loss_price):
-        exit_price = current_close
-
-        if position_side == PositionSide.LONG:
-            exit_price = min(
-                exit_price, take_profit_price if take_profit_price else exit_price)
-            exit_price = max(
-                exit_price, stop_loss_price if stop_loss_price else exit_price)
-
-        elif position_side == PositionSide.SHORT:
-            exit_price = max(
-                exit_price, take_profit_price if take_profit_price else exit_price)
-            exit_price = min(
-                exit_price, stop_loss_price if stop_loss_price else exit_price)
-
-        return exit_price
-
     def _unpack_event(self, event):
         return event.symbol, event.timeframe, event.side, event.size, event.entry, event.take_profit, event.stop_loss, event.risk, event.ohlcv
 
-    def _should_exit(self, position_side, stop_loss_price, take_profit_price, current_row):
+    def _should_exit(self, position_side, stop_loss_price, take_profit_price, low, high):
         if position_side == PositionSide.LONG:
-            return self._long_exit_conditions(stop_loss_price, take_profit_price, current_row)
+            return self._long_exit_conditions(stop_loss_price, take_profit_price, low, high)
         elif position_side == PositionSide.SHORT:
-            return self._short_exit_conditions(stop_loss_price, take_profit_price, current_row)
+            return self._short_exit_conditions(stop_loss_price, take_profit_price, low, high)
 
     def _update_trailing_stop_loss(self, position_side, position_size, stop_loss_price, entry_price, current_row, risk_per_trade):
         if position_side not in self.trailing_stop_loss_prices:
@@ -95,13 +79,23 @@ class RiskManager(AbstractRiskManager):
                     self.trailing_stop_loss_prices[position_side] = entry_price
 
         return self.trailing_stop_loss_prices[position_side]
+    
+    @staticmethod
+    def _calculate_exit_price(position_side, current_close, take_profit_price, stop_loss_price):
+        if position_side == PositionSide.LONG:
+            exit_price = max(min(current_close, take_profit_price or current_close),
+                            stop_loss_price or current_close)
+        elif position_side == PositionSide.SHORT:
+            exit_price = min(max(current_close, take_profit_price or current_close),
+                            stop_loss_price or current_close)
+        return exit_price
 
     @staticmethod
-    def _long_exit_conditions(stop_loss_price, take_profit_price, current_row):
-        return (stop_loss_price is not None and current_row.low <= stop_loss_price) or \
-               (take_profit_price is not None and current_row.high >= take_profit_price)
+    def _long_exit_conditions(stop_loss_price, take_profit_price, low, high):
+        return (stop_loss_price is not None and low <= stop_loss_price) or \
+               (take_profit_price is not None and high >= take_profit_price)
 
     @staticmethod
-    def _short_exit_conditions(stop_loss_price, take_profit_price, current_row):
-        return (stop_loss_price is not None and current_row.high >= stop_loss_price) or \
-               (take_profit_price is not None and current_row.low <= take_profit_price)
+    def _short_exit_conditions(stop_loss_price, take_profit_price, low, high):
+        return (stop_loss_price is not None and high >= stop_loss_price) or \
+               (take_profit_price is not None and low <= take_profit_price)

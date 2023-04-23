@@ -27,16 +27,16 @@ class PortfolioManager(AbstractPortfolioManager):
     async def _on_market(self, event: OHLCVEvent):
         symbol = event.symbol
         timeframe = event.timeframe
-        
+
         async with self.active_positions_lock:
             if symbol not in self.active_positions:
                 return
 
             position = self.active_positions[symbol]
 
-            if not len(position.orders):
+            if position is None or not len(position.orders):
                 return
-            
+
         await self.dispatcher.dispatch(
             CheckExitConditions(
                 symbol=symbol,
@@ -50,7 +50,6 @@ class PortfolioManager(AbstractPortfolioManager):
                 ohlcv=event.ohlcv
             )
         )
-
     @register_handler(GoLong)
     async def _on_go_long(self, event: GoLong):
         await self.handle_position(PositionSide.LONG, event)
@@ -74,26 +73,25 @@ class PortfolioManager(AbstractPortfolioManager):
         symbol = event.symbol
         
         async with self.active_positions_lock:
-            if symbol not in self.active_positions:
+            position = self.active_positions.pop(symbol, None)
+            
+            if position is None:
                 return
             
-            position = self.active_positions[symbol]
-            
             position.close_position(event.exit_price)
-
-            del self.active_positions[symbol]
 
         async with self.closed_positions_lock:
             closed_key = f"{symbol}_{position.closed_timestamp}"
             
-            if closed_key in self.closed_positions:
-                return
-            
-            self.closed_positions[closed_key] = position
-        
-        account_size = await self.datasource.account_size()    
-        performance = self.analytics.calculate(account_size, list(self.closed_positions.values()))
+            if closed_key not in self.closed_positions:
+                self.closed_positions[closed_key] = position
+
+        account_size = await self.datasource.account_size()
         strategy_id = f'{position.symbol}_{position.timeframe}{position.strategy}'
+        
+        closed_positions_list = list(filter(lambda x: f'{x.symbol}_{x.timeframe}{x.strategy}' == strategy_id, self.closed_positions.values()))
+
+        performance = await asyncio.to_thread(self.analytics.calculate, account_size, closed_positions_list)
         
         await self.dispatcher.dispatch(PortfolioPerformanceEvent(strategy_id=strategy_id, performance=performance))
 

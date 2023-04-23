@@ -1,36 +1,27 @@
 import asyncio
 from collections import deque
-from typing import Final, List, Any
+from dataclasses import dataclass
+from typing import Final, List, Any, Type
 
 import pandas as pd
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.strategy import GoLong, GoShort
-from strategies.aobb_strategy import AwesomeOscillatorBollingerBands
-from strategies.bollinger_engulfing_strategy import BollingerBandsEngulfing
-from strategies.engulfing_zlema_strategy import EngulfingZLMA
-from strategies.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
-from strategies.fvg_strategy import FairValueGapZLMA
-from strategies.kangaroo_tail_strategy import KangarooTailZLMA
 from strategy.abstract_strategy import AbstractStrategy
 
-strategies = [
-    AwesomeOscillatorBollingerBands,
-    BollingerBandsEngulfing,
-    EngulfingZLMA,
-    ExtremeEuphoriaBollingerBands,
-    FairValueGapZLMA,
-    KangarooTailZLMA
-]
+@dataclass
+class SymbolData:
+    events: deque
 
 class StrategyManager(AbstractEventManager):
     OHLCV_COLUMNS: Final = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
     MIN_LOOKBACK = 100
 
-    def __init__(self):
+    def __init__(self, strategies_classes: List[Type[AbstractStrategy]]):
         super().__init__()
-        self.strategies = [cls() for cls in strategies]
+
+        self.strategies = [cls() for cls in strategies_classes]
         self.window_size = max([getattr(strategy, "lookback", self.MIN_LOOKBACK) for strategy in self.strategies])
         self.window_data = {}
         self.window_data_lock = asyncio.Lock()
@@ -44,16 +35,16 @@ class StrategyManager(AbstractEventManager):
         
         async with self.window_data_lock:
             if event_id not in self.window_data:
-                self.window_data[event_id] = {'events': deque(maxlen=self.window_size)}
+                self.window_data[event_id] = SymbolData(events=deque(maxlen=self.window_size))
 
             symbol_data = self.window_data[event_id]
 
-            symbol_data['events'].append(event.ohlcv)
+            symbol_data.events.append(event.ohlcv)
 
-            if len(symbol_data['events']) < self.window_size:
+            if len(symbol_data.events) < self.window_size:
                 return
 
-            window_events = list(symbol_data['events'])
+            window_events = list(symbol_data.events)
 
         for strategy in self.strategies:
             await self.process_strategy(strategy, window_events, event)
@@ -63,9 +54,9 @@ class StrategyManager(AbstractEventManager):
         entry = event.ohlcv.close
         lookback = strategy.lookback
 
-        required_events = pd.DataFrame([data.to_dict() for data in window_events[-lookback:]], columns=self.OHLCV_COLUMNS)
+        events_for_strategy = pd.DataFrame([data.to_dict() for data in window_events[-lookback:]], columns=self.OHLCV_COLUMNS)
         
-        entry_long_signal, entry_short_signal, stop_loss, take_profit = self.calculate_signals(strategy, required_events, entry)
+        entry_long_signal, entry_short_signal, stop_loss, take_profit = await asyncio.to_thread(self.calculate_signals, strategy, events_for_strategy, entry)
 
         if entry_long_signal:
             stop_loss_price, take_profit_price = stop_loss[0], take_profit[0]

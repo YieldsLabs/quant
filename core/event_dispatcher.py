@@ -5,11 +5,12 @@ import os
 import random
 from typing import Any, AsyncIterable, Callable, Dict, List, Tuple, Type
 
+import numpy as np
+
 from .events.base_event import Event
 
 class EventDispatcher:
     __instance: 'EventDispatcher' = None
-    __slots__ = ('event_handlers', 'cancel_event', 'dead_letter_queue', '_worker_tasks', '_group_event_queues', '_group_event_counts', '_group_priorities')
 
     def __new__(cls) -> 'EventDispatcher':
         if not cls.__instance:
@@ -20,16 +21,32 @@ class EventDispatcher:
 
         return cls.__instance
 
-    def __init__(self, num_workers: int = 2, priority_groups: int = 4):
+    def __init__(self, num_workers: int = os.cpu_count(), priority_groups: int = 5):
         if not hasattr(self, "_worker_tasks"):
+        
             self._worker_tasks = []
             self._group_event_queues = [asyncio.Queue() for _ in range(priority_groups)]
-            self._group_event_counts = [0] * priority_groups
+            self._group_event_counts = np.zeros(priority_groups)
             self._group_priorities = list(range(priority_groups)) 
 
+            workers_per_group = num_workers // priority_groups
+            remaining_workers = num_workers % priority_groups
+
             for priority_group in range(priority_groups):
-                tasks = [asyncio.create_task(self.process_events(priority_group)) for _ in range(num_workers)]
+                num_workers_for_group = workers_per_group + (1 if remaining_workers > 0 else 0)
+                remaining_workers -= 1
+                tasks = [asyncio.create_task(self.process_events(priority_group)) for _ in range(num_workers_for_group)]
                 self._worker_tasks.extend(tasks)
+
+            self._kp = 1.0
+            self._ki = 0.5
+            self._kd = 0.2
+
+            self._integral_errors = np.zeros(priority_groups)
+            self._previous_errors = np.zeros(priority_groups)
+
+            self._target_ratios = 1 / (np.arange(priority_groups) + 1)
+
 
     def register(self, event_class: Type[Event], handler: Callable) -> None:
         self.event_handlers.setdefault(event_class, []).append(handler)
@@ -67,7 +84,6 @@ class EventDispatcher:
             else:
                 await asyncio.to_thread(handler, event, *args, **kwargs)
         except Exception as e:
-            print(e)
             self.dead_letter_queue.append((event, e))
     
     async def _get_event_stream(self, priority_group) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
@@ -79,23 +95,30 @@ class EventDispatcher:
             self._group_event_queues[priority_group].task_done()
 
     def _determine_priority_group(self, priority: int) -> int:
-        total_events = sum(self._group_event_counts)
-
+        total_events = self._group_event_counts.sum()
+        
         if total_events == 0:
             return min(priority, len(self._group_event_queues) - 1)
 
-        processed_ratios = [count / total_events for count in self._group_event_counts]
-        target_ratios = [1 / p for p in self._group_priorities]
-        total_target_ratio = sum(target_ratios)
-        target_ratios = [tr / total_target_ratio for tr in target_ratios]
-
-        errors = [target - processed for target, processed in zip(target_ratios, processed_ratios)]
+        processed_ratios = self._group_event_counts / total_events
         
-        integral_action = 0.5
+        errors = self._target_ratios - processed_ratios
 
-        control_outputs = [error + integral_action * sum(errors[: i + 1]) for i, error in enumerate(errors)]
+        self._integral_errors += errors
+        
+        derivative_errors = errors - self._previous_errors
 
-        return random.choice([i for i, v in enumerate(control_outputs) if v == max(control_outputs)])
+        control_outputs = (
+            self._kp * errors + self._ki * self._integral_errors + self._kd * derivative_errors
+        )
+
+        self._previous_errors = errors
+
+        control_output_sum = control_outputs.sum()
+
+        weights = control_outputs / control_output_sum
+
+        return random.choices(range(len(control_outputs)), weights=weights)[0]
 
 def eda(cls: Type):
     class Wrapped(cls):
