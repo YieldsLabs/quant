@@ -10,39 +10,68 @@ class StrategyPerformance(AbstractAnalytics):
         self.risk_per_trade = risk_per_trade
   
     def calculate(self, initial_account_size: float, positions: List[Position]) -> PortfolioPerformance:
-        pnl = [position.calculate_pnl() for position in positions]
         total_trades = len(positions)
-        successful_trades = sum(position.calculate_pnl() > 0 for position in positions)
-        max_drawdown = self._max_drawdown(pnl, initial_account_size) if len(pnl) else 0
-        win_rate = successful_trades / total_trades if total_trades else 0
+        
+        if total_trades == 0:
+            return PortfolioPerformance(
+                total_trades=0,
+                successful_trades=0,
+                win_rate=0,
+                risk_of_ruin=0,
+                rate_of_return=0,
+                total_pnl=0,
+                average_pnl=0,
+                sharpe_ratio=0,
+                sortino_ratio=0,
+                profit_factor=0,
+                max_consecutive_wins=0,
+                max_consecutive_losses=0,
+                max_drawdown=0,
+                recovery_factor=0
+            )
+        
+        pnl = np.array([position.calculate_pnl() for position in positions])
+
+        pnl_positive = pnl > 0
+        successful_trades = pnl_positive.sum()
+        win_rate = successful_trades / total_trades
+        risk_of_ruin = self._risk_of_ruin(win_rate, initial_account_size)
+        rate_of_return = self._rate_of_return(pnl, initial_account_size)
+        total_pnl = pnl.sum()
+        average_pnl = pnl.mean()
+        sharpe_ratio = self._sharpe_ratio(pnl)
+        sortino_ratio = self._sortino_ratio(pnl)
+        profit_factor = self._profit_factor(pnl, pnl_positive)
+        max_consecutive_wins = self._max_streak(pnl_positive, True)
+        max_consecutive_losses = self._max_streak(pnl_positive, False)
+        max_drawdown = self._max_drawdown(pnl, initial_account_size)
+        recovery_factor = self._recovery_factor(total_pnl, max_drawdown)
 
         return PortfolioPerformance(
             total_trades=total_trades,
             successful_trades=successful_trades,
             win_rate=win_rate,
-            risk_of_ruin=self._risk_of_ruin(win_rate, initial_account_size),
-            rate_of_return=self._rate_of_return(pnl, initial_account_size),
-            total_pnl=np.sum(pnl) if len(pnl) else 0,
-            average_pnl=np.mean(pnl) if len(pnl) else 0,
-            sharpe_ratio=self._sharpe_ratio(pnl) if len(pnl) else 0,
-            sortino_ratio=self._sortino_ratio(pnl) if len(pnl) else 0,
-            profit_factor=self._profit_factor(pnl) if len(pnl) else 0,
-            max_consecutive_wins=self._max_streak(pnl, True),
-            max_consecutive_losses=self._max_streak(pnl, False),
+            risk_of_ruin=risk_of_ruin,
+            rate_of_return=rate_of_return,
+            total_pnl=total_pnl,
+            average_pnl=average_pnl,
+            sharpe_ratio=sharpe_ratio,
+            sortino_ratio=sortino_ratio,
+            profit_factor=profit_factor,
+            max_consecutive_wins=max_consecutive_wins,
+            max_consecutive_losses=max_consecutive_losses,
             max_drawdown=max_drawdown,
-            recovery_factor=self._recovery_factor(pnl, max_drawdown) if len(pnl) else 0
+            recovery_factor=recovery_factor
         )
-    
+        
     def _sharpe_ratio(self, pnl, risk_free_rate=0):
-        pnl_array = np.array(pnl)
-        avg_return = np.mean(pnl_array)
-        std_return = np.std(pnl_array)
+        avg_return = np.mean(pnl)
+        std_return = np.std(pnl)
 
         return (avg_return - risk_free_rate) / std_return if std_return else 0
     
     def _sortino_ratio(self, pnl, risk_free_rate=0):
-        pnl_array = np.array(pnl)
-        downside_returns = pnl_array[pnl_array < 0]
+        downside_returns = pnl[pnl < 0]
 
         if len(downside_returns) < 2:
             return 0
@@ -52,39 +81,36 @@ class StrategyPerformance(AbstractAnalytics):
         if downside_std == 0:
             return 0
         
-        avg_return = np.mean(pnl_array)
+        avg_return = np.mean(pnl)
         sortino_ratio = (avg_return - risk_free_rate) / downside_std
 
         return sortino_ratio
 
-    def _max_streak(self, pnl, winning: bool):
+    def _max_streak(self, pnl_positive, winning: bool):
         streak = max_streak = 0
-        
-        for pnl_value in pnl:
-            if (pnl_value > 0) == winning:
+
+        for pnl_value in pnl_positive:
+            if pnl_value == winning:
                 streak += 1
                 max_streak = max(max_streak, streak)
             else:
                 streak = 0
-        
+
         return max_streak
 
     def _rate_of_return(self, pnl, initial_account_size):
-        account_size = initial_account_size + sum(pnl)
+        account_size = initial_account_size + pnl.sum()
         
         return (account_size / initial_account_size) - 1
     
-    def _profit_factor(self, pnl):
-        pnl_array = np.array(pnl)
-        gross_profit = np.sum(pnl_array[pnl_array > 0])
-        gross_loss = np.abs(np.sum(pnl_array[pnl_array < 0]))
+    def _profit_factor(self, pnl, pnl_positive):
+        gross_profit = pnl[pnl_positive].sum()
+        gross_loss = np.abs(pnl[~pnl_positive].sum())
 
         if gross_loss == 0:
             return 0
 
-        profit_factor = gross_profit / gross_loss
-        
-        return profit_factor
+        return gross_profit / gross_loss
 
     def _max_drawdown(self, pnl, initial_account_size):
         account_size = initial_account_size
@@ -100,8 +126,8 @@ class StrategyPerformance(AbstractAnalytics):
         return max_drawdown
     
     def _recovery_factor(self, pnl, max_drawdown):
-        total_profit = sum(pnl_value for pnl_value in pnl if pnl_value > 0)
-        
+        total_profit = pnl[pnl > 0].sum()
+
         return total_profit / max_drawdown if max_drawdown != 0 else 0
     
     def _risk_of_ruin(self, win_rate: float, initial_account_size: float):
