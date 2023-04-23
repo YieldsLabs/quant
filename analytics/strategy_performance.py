@@ -1,19 +1,15 @@
-from typing import List, Type
+from typing import List
 import numpy as np
 from .abstract_analytics import AbstractAnalytics
 from core.events.portfolio import PortfolioPerformance
 from core.position import Position
-from datasource.abstract_datasource import AbstractDatasource
 
 class StrategyPerformance(AbstractAnalytics):
-    def __init__(self, datasource: Type[AbstractDatasource], risk_per_trade: float = 0.001):
+    def __init__(self, risk_per_trade: float = 0.001):
         super().__init__()
-        self.datasource = datasource
         self.risk_per_trade = risk_per_trade
   
-    async def calculate(self, positions: List[Position]) -> PortfolioPerformance:
-        initial_account_size = await self.datasource.account_size()
-        
+    def calculate(self, initial_account_size: float, positions: List[Position]) -> PortfolioPerformance:
         pnl = [position.calculate_pnl() for position in positions]
         total_trades = len(positions)
         successful_trades = sum(position.calculate_pnl() > 0 for position in positions)

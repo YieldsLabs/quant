@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from .events.position import PositionSide, Order
@@ -17,10 +18,8 @@ class Position:
         self.take_profit_price = take_profit
         self.orders: List[Order] = []
         self.closed = False
-
-    
-    def get_id(self):
-        return f'{self.symbol}_{self.timeframe}{self.strategy}'
+        self.open_timestamp = datetime.now().timestamp()
+        self.closed_timestamp = self.open_timestamp
 
     def add_order(self, order):
         self.orders.append(order)
@@ -30,6 +29,7 @@ class Position:
             return
         self.closed = True
         self.exit_price = exit_price
+        self.closed_timestamp = datetime.now().timestamp()
 
     def calculate_pnl(self):
         if not self.closed:

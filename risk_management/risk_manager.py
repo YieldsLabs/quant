@@ -1,3 +1,4 @@
+import asyncio
 from core.event_dispatcher import register_handler
 from core.events.position import CheckExitConditions, PositionSide, ReadyToClosePosition
 from risk_management.abstract_risk_manager import AbstractRiskManager
@@ -10,24 +11,26 @@ class RiskManager(AbstractRiskManager):
         self.trailing_stop_loss_prices = {}
         self.max_stop_loss_adjustments = max_stop_loss_adjustments
         self.stop_loss_adjustment_count = {}
+        self.stop_loss_lock = asyncio.Lock()
 
     @register_handler(CheckExitConditions)
     async def _on_check_exit_conditions(self, event: CheckExitConditions):
         symbol, timeframe, position_side, position_size, entry_price, take_profit_price, stop_loss_price, risk_per_trade, ohlcv = self._unpack_event(event)
-
-        if symbol not in self.stop_loss_adjustment_count:
-            self._initialize_symbol_data(symbol)
-
-        if self.should_update_trailing_stop_loss(symbol, position_side):
-            stop_loss_price = self._update_trailing_stop_loss(position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
-
-        if not self._should_exit(position_side, stop_loss_price, take_profit_price, ohlcv):
-            return
-
-        self.reset_trailing_stop_loss_data(symbol, position_side)
         
-        exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
-        
+        async with self.stop_loss_lock:
+            if symbol not in self.stop_loss_adjustment_count:
+                self._initialize_symbol_data(symbol)
+
+            if self.should_update_trailing_stop_loss(symbol, position_side):
+                stop_loss_price = self._update_trailing_stop_loss(position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
+
+            if not self._should_exit(position_side, stop_loss_price, take_profit_price, ohlcv):
+                return
+
+            self.reset_trailing_stop_loss_data(symbol, position_side)
+            
+            exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
+            
         await self.dispatcher.dispatch(ReadyToClosePosition(symbol=symbol, timeframe=timeframe, exit_price=exit_price))
 
     def _initialize_symbol_data(self, symbol):
@@ -80,6 +83,7 @@ class RiskManager(AbstractRiskManager):
 
                 if self.trailing_stop_loss_prices[position_side] - entry_price >= risk_per_trade * position_size:
                     self.trailing_stop_loss_prices[position_side] = entry_price
+        
         elif position_side == PositionSide.SHORT:
             new_stop_loss_price = current_row.low + (stop_loss_price - current_row.low) * risk_per_trade
 

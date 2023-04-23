@@ -20,7 +20,7 @@ class EventDispatcher:
 
         return cls.__instance
 
-    def __init__(self, num_workers: int = os.cpu_count(), priority_groups: int = 4):
+    def __init__(self, num_workers: int = 2, priority_groups: int = 4):
         if not hasattr(self, "_worker_tasks"):
             self._worker_tasks = []
             self._group_event_queues = [asyncio.Queue() for _ in range(priority_groups)]
@@ -29,7 +29,6 @@ class EventDispatcher:
 
             for priority_group in range(priority_groups):
                 tasks = [asyncio.create_task(self.process_events(priority_group)) for _ in range(num_workers)]
-                
                 self._worker_tasks.extend(tasks)
 
     def register(self, event_class: Type[Event], handler: Callable) -> None:
@@ -68,6 +67,7 @@ class EventDispatcher:
             else:
                 await asyncio.to_thread(handler, event, *args, **kwargs)
         except Exception as e:
+            print(e)
             self.dead_letter_queue.append((event, e))
     
     async def _get_event_stream(self, priority_group) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
