@@ -12,3 +12,7 @@ class EventMeta:
 @dataclass(frozen=True)
 class Event:
     pass
+
+@dataclass(frozen=True)
+class EndEvent(Event):
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))

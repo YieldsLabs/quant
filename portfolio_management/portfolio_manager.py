@@ -1,6 +1,5 @@
 import asyncio
-from collections import defaultdict
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, Optional, Type, Union
 from analytics.abstract_analytics import AbstractAnalytics
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent

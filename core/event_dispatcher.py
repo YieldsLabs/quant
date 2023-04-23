@@ -7,7 +7,7 @@ from typing import Any, AsyncIterable, Callable, Dict, List, Tuple, Type
 
 import numpy as np
 
-from .events.base_event import Event
+from .events.base_event import EndEvent, Event
 
 class EventDispatcher:
     __instance: 'EventDispatcher' = None
@@ -17,6 +17,7 @@ class EventDispatcher:
             cls.__instance = super().__new__(cls)
             cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
             cls.__instance.cancel_event = asyncio.Event()
+            cls.__instance.all_workers_done = asyncio.Event()
             cls.__instance.dead_letter_queue: List[Tuple[Event, Exception]] = []
 
         return cls.__instance
@@ -69,13 +70,26 @@ class EventDispatcher:
                 continue
             
             await asyncio.gather(*tasks)
+        
+        self.all_workers_done.set()
     
     async def wait(self) -> None:
-        await asyncio.gather(*self._worker_tasks)
+        await self.all_workers_done.wait()
+        self.all_workers_done.clear()
 
     async def stop(self) -> None:
         self.cancel_event.set()
+        await self.stop_workers()
         await asyncio.shield(asyncio.gather(*self._worker_tasks))
+
+    async def stop_workers(self) -> None:
+        await asyncio.sleep(0.1)
+
+        while not all(queue.empty() for queue in self._group_event_queues):
+            await asyncio.sleep(0.1)
+
+        for _ in range(len(self._worker_tasks)):
+            await self.dispatch(EndEvent())
 
     async def _call_handler(self, handler, event, *args, **kwargs):
         try:
@@ -90,6 +104,9 @@ class EventDispatcher:
         while not self.cancel_event.is_set():
             event, args, kwargs = await self._group_event_queues[priority_group].get()
             
+            if isinstance(event, EndEvent):
+                break
+
             yield event, args, kwargs
             
             self._group_event_queues[priority_group].task_done()
