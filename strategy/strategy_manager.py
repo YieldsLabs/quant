@@ -1,38 +1,59 @@
 import asyncio
 from collections import deque
-from typing import Final, List, Dict, Any
+from typing import Final, List, Any
 
 import pandas as pd
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.strategy import GoLong, GoShort
+from strategies.aobb_strategy import AwesomeOscillatorBollingerBands
+from strategies.bollinger_engulfing_strategy import BollingerBandsEngulfing
+from strategies.engulfing_zlema_strategy import EngulfingZLMA
+from strategies.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
+from strategies.fvg_strategy import FairValueGapZLMA
+from strategies.kangaroo_tail_strategy import KangarooTailZLMA
 from strategy.abstract_strategy import AbstractStrategy
+
+strategies = [
+    AwesomeOscillatorBollingerBands,
+    BollingerBandsEngulfing,
+    EngulfingZLMA,
+    ExtremeEuphoriaBollingerBands,
+    FairValueGapZLMA,
+    KangarooTailZLMA
+]
 
 class StrategyManager(AbstractEventManager):
     OHLCV_COLUMNS: Final = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
     MIN_LOOKBACK = 100
 
-    def __init__(self, strategies: List[AbstractStrategy]):
+    def __init__(self):
         super().__init__()
-        self.strategies = strategies
+        self.strategies = [cls() for cls in strategies]
         self.window_size = max([getattr(strategy, "lookback", self.MIN_LOOKBACK) for strategy in self.strategies])
         self.window_data = {}
+        self.window_data_lock = asyncio.Lock()
 
     @register_handler(OHLCVEvent)
-    async def _on_market(self, event: OHLCVEvent) -> None:
+    async def _on_ohlcv(self, event: OHLCVEvent) -> None:
+        if not len(self.strategies):
+            raise ValueError('Strategies should be defined') 
+        
         event_id = self.get_id(event)
+        
+        async with self.window_data_lock:
+            if event_id not in self.window_data:
+                self.window_data[event_id] = {'events': deque(maxlen=self.window_size)}
 
-        if event_id not in self.window_data:
-            self.window_data[event_id] = {'events': deque(maxlen=self.window_size)}
+            symbol_data = self.window_data[event_id]
 
-        symbol_data = self.window_data[event_id]
-        symbol_data['events'].append(event.ohlcv)
+            symbol_data['events'].append(event.ohlcv)
 
-        if len(symbol_data['events']) < self.window_size:
-            return
+            if len(symbol_data['events']) < self.window_size:
+                return
 
-        window_events = list(symbol_data['events'])
+            window_events = list(symbol_data['events'])
 
         for strategy in self.strategies:
             await self.process_strategy(strategy, window_events, event)
