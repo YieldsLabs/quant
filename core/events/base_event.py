@@ -9,9 +9,11 @@ class EventMeta:
     timestamp: int = field(default_factory=lambda: datetime.now().timestamp())
     priority: int = field(default_factory=lambda: 1)
 
+
 @dataclass(frozen=True)
 class Event:
     pass
+
 
 @dataclass(frozen=True)
 class EndEvent(Event):

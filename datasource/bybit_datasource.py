@@ -29,19 +29,19 @@ class BybitDataSource(AbstractDatasource):
     async def fetch(self, symbol: str, timeframe: Timeframe, lookback=1000):
         async with self.cache_lock:
             return await self._fetch(symbol, timeframe, lookback)
-    
+
     @retry(max_retries=7, initial_retry_delay=3)
     @cached(ttl=10)
     async def account_size(self):
         async with self.cache_lock:
             return await self._account_size()
-    
+
     @retry(max_retries=7, initial_retry_delay=3)
     @cached(ttl=300)
     async def symbols(self):
         async with self.cache_lock:
             return await self._symbols()
-    
+
     @retry(max_retries=7, initial_retry_delay=3)
     @cached(ttl=300)
     async def fee_and_precisions(self, symbol):

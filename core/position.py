@@ -23,7 +23,7 @@ class Position:
 
     def add_order(self, order):
         self.orders.append(order)
-        
+
     def close_position(self, exit_price):
         if self.closed:
             return

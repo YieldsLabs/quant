@@ -20,7 +20,7 @@ class LogJournal(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
         print(self.counter)
-    
+
     @register_handler(GoLong)
     async def _on_go_long(self, event: GoLong):
         print('----------------------------------------------------->')

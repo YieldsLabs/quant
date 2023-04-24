@@ -21,7 +21,7 @@ class LowHighStopLossFinder(AbstractStopLoss):
 
         long_stop_loss_price = low_series[low_series < entry].min()
         short_stop_loss_price = high_series[high_series > entry].max()
-        
+
         if np.isnan(long_stop_loss_price) or np.isnan(short_stop_loss_price):
             return self.stop_loss_finder.next(entry, ohlcv)
 

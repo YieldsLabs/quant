@@ -3,6 +3,7 @@ from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractSto
 from risk_management.stop_loss.base.simple_stop_loss_finder import SimpleStopLossFinder
 from ta.volatility.atr import AverageTrueRange
 
+
 class ATRStopLossFinder(AbstractStopLoss):
     NAME = 'ATR'
 

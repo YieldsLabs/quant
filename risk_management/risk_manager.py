@@ -16,7 +16,7 @@ class RiskManager(AbstractRiskManager):
     @register_handler(EvaluateExitConditions)
     async def _on_check_exit_conditions(self, event: EvaluateExitConditions):
         symbol, timeframe, position_side, position_size, entry_price, take_profit_price, stop_loss_price, risk_per_trade, ohlcv = self._unpack_event(event)
-        
+
         async with self.stop_loss_lock:
             if symbol not in self.stop_loss_adjustment_count:
                 self._initialize_symbol_data(symbol)
@@ -29,9 +29,9 @@ class RiskManager(AbstractRiskManager):
 
         async with self.stop_loss_lock:
             self._reset_trailing_stop_loss_data(symbol, position_side)
-            
+
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
-            
+
         await self.dispatcher.dispatch(PositionReadyToClose(symbol=symbol, timeframe=timeframe, exit_price=exit_price))
 
     def _initialize_symbol_data(self, symbol):
@@ -67,7 +67,7 @@ class RiskManager(AbstractRiskManager):
 
                 if self.trailing_stop_loss_prices[position_side] - entry_price >= risk_per_trade * position_size:
                     self.trailing_stop_loss_prices[position_side] = entry_price
-        
+
         elif position_side == PositionSide.SHORT:
             new_stop_loss_price = current_row.low + (stop_loss_price - current_row.low) * risk_per_trade
 
@@ -79,15 +79,15 @@ class RiskManager(AbstractRiskManager):
                     self.trailing_stop_loss_prices[position_side] = entry_price
 
         return self.trailing_stop_loss_prices[position_side]
-    
+
     @staticmethod
     def _calculate_exit_price(position_side, current_close, take_profit_price, stop_loss_price):
         if position_side == PositionSide.LONG:
             exit_price = max(min(current_close, take_profit_price or current_close),
-                            stop_loss_price or current_close)
+                             stop_loss_price or current_close)
         elif position_side == PositionSide.SHORT:
             exit_price = min(max(current_close, take_profit_price or current_close),
-                            stop_loss_price or current_close)
+                             stop_loss_price or current_close)
         return exit_price
 
     @staticmethod

@@ -4,14 +4,15 @@ from .abstract_analytics import AbstractAnalytics
 from core.events.portfolio import PortfolioPerformance
 from core.position import Position
 
+
 class StrategyPerformance(AbstractAnalytics):
     def __init__(self, risk_per_trade: float = 0.001):
         super().__init__()
         self.risk_per_trade = risk_per_trade
-  
+
     def calculate(self, initial_account_size: float, positions: List[Position]) -> PortfolioPerformance:
         total_trades = len(positions)
-        
+
         if total_trades == 0:
             return PortfolioPerformance(
                 total_trades=0,
@@ -31,7 +32,7 @@ class StrategyPerformance(AbstractAnalytics):
                 skewness=0,
                 kurtosis=0
             )
-        
+
         pnl = np.array([position.calculate_pnl() for position in positions])
 
         pnl_positive = pnl > 0
@@ -70,13 +71,13 @@ class StrategyPerformance(AbstractAnalytics):
             skewness=skewness,
             kurtosis=kurtosis
         )
-        
+
     def _sharpe_ratio(self, pnl, risk_free_rate=0):
         avg_return = np.mean(pnl)
         std_return = np.std(pnl)
 
         return (avg_return - risk_free_rate) / std_return if std_return else 0
-    
+
     def _sortino_ratio(self, pnl, risk_free_rate=0):
         downside_returns = pnl[pnl < 0]
 
@@ -87,7 +88,7 @@ class StrategyPerformance(AbstractAnalytics):
 
         if downside_std == 0:
             return 0
-        
+
         avg_return = np.mean(pnl)
         sortino_ratio = (avg_return - risk_free_rate) / downside_std
 
@@ -107,9 +108,9 @@ class StrategyPerformance(AbstractAnalytics):
 
     def _rate_of_return(self, pnl, initial_account_size):
         account_size = initial_account_size + pnl.sum()
-        
+
         return (account_size / initial_account_size) - 1
-    
+
     def _profit_factor(self, pnl, pnl_positive):
         gross_profit = pnl[pnl_positive].sum()
         gross_loss = np.abs(pnl[~pnl_positive].sum())
@@ -131,31 +132,31 @@ class StrategyPerformance(AbstractAnalytics):
             max_drawdown = max(max_drawdown, drawdown)
 
         return max_drawdown
-    
+
     def _recovery_factor(self, pnl, max_drawdown):
         total_profit = pnl[pnl > 0].sum()
 
         return total_profit / max_drawdown if max_drawdown != 0 else 0
-    
+
     def _risk_of_ruin(self, win_rate: float, initial_account_size: float):
         if win_rate == 1 or win_rate == 0:
             return 0
 
         loss_rate = 1 - win_rate
-        
+
         risk_of_ruin = ((1 - (self.risk_per_trade * (1 - loss_rate / win_rate))) ** initial_account_size) * 100
-        
+
         return risk_of_ruin
-    
+
     def _skewness(self, pnl):
         n = len(pnl)
-        
+
         if n < 3:
             return 0
 
         mean_pnl = np.mean(pnl)
         std_pnl = np.std(pnl, ddof=1)
-        
+
         if std_pnl == 0:
             return 0
 
@@ -165,13 +166,13 @@ class StrategyPerformance(AbstractAnalytics):
 
     def _kurtosis(self, pnl):
         n = len(pnl)
-        
+
         if n < 4:
             return 0
 
         mean_pnl = np.mean(pnl)
         std_pnl = np.std(pnl, ddof=1)
-        
+
         if std_pnl == 0:
             return 0
 

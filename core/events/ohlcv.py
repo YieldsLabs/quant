@@ -16,6 +16,7 @@ class OHLCV:
     def to_dict(self):
         return asdict(self)
 
+
 @dataclass(frozen=True)
 class OHLCVEvent(Event):
     symbol: str

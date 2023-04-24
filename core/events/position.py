@@ -7,12 +7,14 @@ from .ohlcv import OHLCV
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
 
+
 class OrderSide(Enum):
     BUY = "buy"
     SELL = "sell"
 
     def __str__(self):
         return self.value
+
 
 @dataclass
 class Order:
@@ -27,6 +29,7 @@ class Order:
     def to_dict(self):
         return asdict(self)
 
+
 @dataclass(frozen=True)
 class OrderFilled(Event):
     symbol: str
@@ -34,12 +37,14 @@ class OrderFilled(Event):
     order: Order
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
+
 class PositionSide(Enum):
     LONG = "long"
     SHORT = "short"
 
     def __str__(self):
         return self.value
+
 
 @dataclass(frozen=True)
 class PositionEvent(Event):
@@ -51,13 +56,16 @@ class PositionEvent(Event):
     take_profit: Optional[float] = None
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
+
 @dataclass(frozen=True)
 class LongPositionOpened(PositionEvent):
-   pass
+    pass
+
 
 @dataclass(frozen=True)
 class ShortPositionOpened(PositionEvent):
-   pass
+    pass
+
 
 @dataclass(frozen=True)
 class PositionReadyToClose(Event):
@@ -66,12 +74,14 @@ class PositionReadyToClose(Event):
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
+
 @dataclass(frozen=True)
 class PositionClosed(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+
 
 @dataclass(frozen=True)
 class EvaluateExitConditions(Event):

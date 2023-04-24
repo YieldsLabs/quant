@@ -2,6 +2,7 @@ import asyncio
 import random
 from requests.exceptions import RequestException
 
+
 def retry(max_retries=3, initial_retry_delay=1):
     def decorator(func):
         async def async_wrapper(*args, **kwargs):

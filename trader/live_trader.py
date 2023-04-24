@@ -6,6 +6,7 @@ from core.events.position import PositionClosed, LongPositionOpened, ShortPositi
 from trader.abstract_trader import AbstractTrader
 import logging
 
+
 class LiveTrader(AbstractTrader):
     def __init__(self, broker: Type[AbstractBroker]):
         super().__init__()
@@ -24,15 +25,15 @@ class LiveTrader(AbstractTrader):
     async def _on_close_position(self, event: PositionReadyToClose):
         try:
             await asyncio.to_thread(self.broker.close_position, event.symbol)
-            
+
             await self.dispatcher.dispatch(PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
-        
+
         except Exception as e:
             self.logger.error(f"Error closing position for {event.symbol}: {e}")
 
     async def trade(self, event):
         order_side = OrderSide.BUY if isinstance(event, LongPositionOpened) else OrderSide.SELL
-        
+
         order_params = {
             "symbol": event.symbol,
             "order_side": order_side,

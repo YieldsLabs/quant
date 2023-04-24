@@ -6,6 +6,7 @@ from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from core.events.position import PositionSide
 
+
 class FuturesBybitBroker(AbstractBroker):
     def __init__(self, api_key, secret):
         super().__init__()
@@ -123,7 +124,7 @@ class FuturesBybitBroker(AbstractBroker):
             trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
 
             return trading_fee, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
-    
+
         except Exception as e:
             print(e)
 

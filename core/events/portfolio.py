@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, field
 
 from .base_event import Event, EventMeta
 
+
 @dataclass
 class PortfolioPerformance:
     total_trades: int
@@ -23,6 +24,7 @@ class PortfolioPerformance:
 
     def to_dict(self):
         return asdict(self)
+
 
 @dataclass(frozen=True)
 class PortfolioPerformanceEvent(Event):

@@ -15,6 +15,7 @@ def extract_nested_instances(instance):
             nested_instances.extend(extract_nested_instances(attr_value))
     return nested_instances
 
+
 @lru_cache(100)
 def extract_numeric_params(instance):
     numeric_params = []
@@ -35,7 +36,7 @@ def extract_numeric_params(instance):
     bound_arguments.apply_defaults()
 
     nested_instances = extract_nested_instances(instance)
-    
+
     for nested_instance in nested_instances:
         nested_params.update(extract_numeric_params(nested_instance))
 

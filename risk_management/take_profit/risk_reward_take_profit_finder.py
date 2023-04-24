@@ -1,5 +1,6 @@
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
 
+
 class RiskRewardTakeProfitFinder(AbstractTakeProfit):
     NAME = 'RSKRWRD'
 

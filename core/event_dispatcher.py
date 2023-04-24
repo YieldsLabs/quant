@@ -10,6 +10,7 @@ import numpy as np
 
 from .events.base_event import EndEvent, Event
 
+
 class EventDispatcher:
     __instance: 'EventDispatcher' = None
 
@@ -37,22 +38,22 @@ class EventDispatcher:
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         priority_group = self._determine_priority_group(event.meta.priority)
-        
+
         await self._group_event_queues[priority_group].put((event, args, kwargs))
 
     async def process_events(self, priority_group):
         async for event, args, kwargs in self._get_event_stream(priority_group):
             handlers = self.event_handlers.get(type(event), [])
-            
+
             tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
 
             if not tasks:
                 continue
-            
+
             await asyncio.gather(*tasks)
-        
+
         self.all_workers_done.set()
-    
+
     async def wait(self) -> None:
         await self.all_workers_done.wait()
         self.all_workers_done.clear()
@@ -79,30 +80,30 @@ class EventDispatcher:
                 await asyncio.to_thread(handler, event, *args, **kwargs)
         except Exception as e:
             self.dead_letter_queue.append((event, e))
-    
+
     async def _get_event_stream(self, priority_group) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
         while not self.cancel_event.is_set():
             event, args, kwargs = await self._group_event_queues[priority_group].get()
-            
+
             if isinstance(event, EndEvent):
                 break
 
             yield event, args, kwargs
-            
+
             self._group_event_queues[priority_group].task_done()
 
     def _determine_priority_group(self, priority: int) -> int:
         total_events = self._group_event_counts.sum()
-        
+
         if total_events == 0:
             return min(priority, len(self._group_event_queues) - 1)
 
         processed_ratios = self._group_event_counts / total_events
-        
+
         errors = self._target_ratios - processed_ratios
 
         self._integral_errors += errors
-        
+
         derivative_errors = errors - self._previous_errors
 
         self._previous_errors = errors
@@ -116,7 +117,7 @@ class EventDispatcher:
         weights = control_outputs / control_output_sum
 
         return random.choices(range(len(control_outputs)), weights=weights)[0]
-    
+
     def _initialize_worker_tasks(self, num_workers: int, priority_groups: int):
         self._worker_tasks = []
         self._group_event_queues = [asyncio.Queue() for _ in range(priority_groups)]
@@ -140,6 +141,7 @@ class EventDispatcher:
         self._previous_errors = np.zeros(priority_groups)
         self._target_ratios = 1 / (np.arange(priority_groups) + 1)
 
+
 def eda(cls: Type):
     class Wrapped(cls):
         def __init__(self, *args, **kwargs):
@@ -160,6 +162,7 @@ def eda(cls: Type):
     Wrapped.__module__ = cls.__module__
 
     return Wrapped
+
 
 def register_handler(event_type: Type[Event]) -> Callable[[Callable], Callable]:
     def decorator(handler: Callable) -> Callable:

@@ -50,14 +50,24 @@ strategies = [
     KangarooTailZLMA
 ]
 
+INTERVALS = {
+    Timeframe.ONE_MINUTE: 1,
+    Timeframe.THREE_MINUTES: 3,
+    Timeframe.FIVE_MINUTES: 5,
+    Timeframe.FIFTEEN_MINUTES: 15,
+    Timeframe.ONE_HOUR: 60,
+    Timeframe.FOUR_HOURS: 240,
+}
+
 search_space = {
     **strategy_hyperparameters,
     **stoploss_hyperparameters,
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 5000
+backtest_lookback = 10000
 risk_per_trade = 0.0001
+
 
 async def process_messages(ws, bybit_trading_system):
     while True:
@@ -66,20 +76,26 @@ async def process_messages(ws, bybit_trading_system):
             message_data = json.loads(message)
 
             if "topic" in message_data:
-                await bybit_trading_system.on_new_candle(message_data)
+                ohlcv = message_data["data"][0]
+                topic = message_data["topic"].split(".")
+                symbol, interval = topic[2], topic[1]
+
+                ohlcv_event = bybit_trading_system.parse_candle_message(symbol, interval, ohlcv)
+
+                await bybit_trading_system.dispatcher.dispatch(ohlcv_event)
 
         except websockets.exceptions.ConnectionClosed as e:
             print(f"Websocket closed with code {e.code}: {e.reason}")
-            bybit_trading_system.unsubscibe_candle_stream()
             break
         except Exception as e:
             print(f"Unexpected error: {e}")
-            bybit_trading_system.unsubscibe_candle_stream()
+
 
 async def send_ping(ws, interval):
     while True:
         await asyncio.sleep(interval)
         await ws.ping()
+
 
 async def main():
     LogJournal()
@@ -97,11 +113,15 @@ async def main():
         lookback=backtest_lookback,
         risk_per_trade=risk_per_trade
     )
-    
+
     async with websockets.connect(WSS) as ws:
-        bybit_trading_system.subscribe_candle_stream(ws)
-        
-        start_trading_system_task = asyncio.create_task(bybit_trading_system.start())
+        async def ws_callback(timeframe_symbols):
+            channels = [f"kline.{INTERVALS[timeframe]}.{symbol}" for (timeframe, symbol) in timeframe_symbols]
+
+            for channel in channels:
+                await ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
+
+        start_trading_system_task = asyncio.create_task(bybit_trading_system.start(ws_callback))
         ping_task = asyncio.create_task(send_ping(ws, interval=20))
         message_processing_task = asyncio.create_task(process_messages(ws, bybit_trading_system))
 
@@ -111,7 +131,7 @@ async def main():
             ping_task.cancel()
             message_processing_task.cancel()
             start_trading_system_task.cancel()
-    
+
     await asyncio.sleep(0.01)
 
 asyncio.run(main())

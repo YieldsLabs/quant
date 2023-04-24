@@ -9,11 +9,11 @@ from ta.patterns.abstract_pattern import AbstractPattern
 
 class BaseStrategy(AbstractStrategy):
     def __init__(
-            self,
-            indicators: List[Union[AbstractIndicator, AbstractPattern]],
-            take_profit_finder: Type[AbstractTakeProfit],
-            stop_loss_finder: Type[AbstractStopLoss],
-        ):
+        self,
+        indicators: List[Union[AbstractIndicator, AbstractPattern]],
+        take_profit_finder: Type[AbstractTakeProfit],
+        stop_loss_finder: Type[AbstractStopLoss],
+    ):
         super().__init__()
         self.indicators = indicators
         self.take_profit_finder = take_profit_finder
@@ -60,7 +60,7 @@ class BaseStrategy(AbstractStrategy):
 
     def stop_loss_and_take_profit(self, entry, ohlcv):
         stop_loss_long, stop_loss_short = self.stop_loss_finder.next(entry, ohlcv)
-        
+
         take_profit_long = self.take_profit_finder.next(entry, stop_loss_long)
 
         take_profit_short = self.take_profit_finder.next(entry, stop_loss_short)
@@ -72,6 +72,6 @@ class BaseStrategy(AbstractStrategy):
 
     def _generate_sell_signal(self, data):
         raise NotImplementedError
-    
+
     def __str__(self):
         return f'{super().__str__()}{str(self.take_profit_finder)}{str(self.stop_loss_finder)}'
