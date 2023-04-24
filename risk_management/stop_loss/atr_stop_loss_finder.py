@@ -2,7 +2,6 @@ import numpy as np
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.stop_loss.base.simple_stop_loss_finder import SimpleStopLossFinder
 from ta.volatility.atr import AverageTrueRange
-from shared.position_side import PositionSide
 
 
 class ATRStopLossFinder(AbstractStopLoss):
@@ -14,20 +13,13 @@ class ATRStopLossFinder(AbstractStopLoss):
         self.base_stop_loss_finder = SimpleStopLossFinder(stop_loss_pct=stop_loss_pct)
         self.atr_multi = atr_multi
 
-    def next(self, position_side, entry_price):
-        data = self.ohlcv_context.ohlcv
-
-        if len(data) == 0:
-            raise ValueError('Add ohlcv data')
-
-        atr_value = self.atr_indicator.call(data)
+    def next(self, entry, ohlcv):
+        atr_value = self.atr_indicator.call(ohlcv)
         atr_value = atr_value.iloc[-1]
 
         if np.isnan(atr_value):
-            return self.base_stop_loss_finder.next(position_side, entry_price)
+            return self.base_stop_loss_finder.next(entry, ohlcv)
 
-        if position_side == PositionSide.LONG:
-            return entry_price - (atr_value * self.atr_multi)
+        atr = atr_value * self.atr_multi
 
-        if position_side == PositionSide.SHORT:
-            return entry_price + (atr_value * self.atr_multi)
+        return entry - atr, entry + atr

@@ -1,50 +1,16 @@
 import ccxt
 import math
-import pandas as pd
 
 from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
-from ohlcv.context import OHLCV_COLUMNS
-from shared.position_side import PositionSide
-from cachetools import TTLCache, cached
+from core.events.position import PositionSide
 
 
 class FuturesBybitBroker(AbstractBroker):
     def __init__(self, api_key, secret):
         super().__init__()
         self.exchange = ccxt.bybit({'apiKey': api_key, 'secret': secret})
-
-    def get_account_balance(self):
-        balance = self.exchange.fetch_balance()
-        return float(balance['total']['USDT'])
-
-    @cached(cache=TTLCache(maxsize=1000, ttl=300))
-    def _fetch_market_info(self):
-        return self.exchange.fetch_markets()
-
-    def get_symbol_info(self, symbol):
-        try:
-            market_info = self._fetch_market_info()
-            symbol_info = [market for market in market_info if market['id'] == symbol and market['linear']][0]
-
-            position_precision = symbol_info.get('precision', {}).get('amount', 0)
-            price_precision = symbol_info.get('precision', {}).get('price', 0)
-            trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
-
-            return {
-                'trading_fee': trading_fee,
-                'position_precision': int(abs(math.log10(position_precision))),
-                'price_precision': int(abs(math.log10(price_precision)))
-            }
-        except Exception as e:
-            print(e)
-
-            return {
-                'trading_fee': None,
-                'position_precision': None,
-                'price_precision': None
-            }
 
     def set_leverage(self, symbol, leverage=3):
         try:
@@ -85,7 +51,7 @@ class FuturesBybitBroker(AbstractBroker):
         return {
             'order_type': order_type,
             'symbol': symbol,
-            'side': side.value,
+            'side': side,
             'position_size': position_size,
             'extra_params': None,
         }
@@ -110,10 +76,10 @@ class FuturesBybitBroker(AbstractBroker):
 
         self._create_order(**order_params)
 
-    def place_limit_order(self, side, symbol, price, position_size, stop_loss_price=None, take_profit_price=None):
-        order_params = self._create_order_params('limit', side, symbol, position_size)
+    def place_limit_order(self, order_side, symbol, entry_price, position_size, stop_loss_price=None, take_profit_price=None):
+        order_params = self._create_order_params('limit', order_side.value, symbol, position_size)
         order_params.update({
-            'price': price,
+            'price': entry_price,
             'extra_params': self._create_extra_params(stop_loss_price, take_profit_price)
         })
 
@@ -143,6 +109,26 @@ class FuturesBybitBroker(AbstractBroker):
 
     def close_order(self, order_id, symbol):
         self.exchange.cancel_order(order_id, symbol)
+
+    def get_account_balance(self):
+        balance = self.exchange.fetch_balance()
+        return float(balance['total']['USDT'])
+
+    def get_symbol_info(self, symbol):
+        try:
+            market_info = self.exchange.fetch_markets()
+            symbol_info = [market for market in market_info if market['id'] == symbol and market['linear']][0]
+
+            position_precision = symbol_info.get('precision', {}).get('amount', 0)
+            price_precision = symbol_info.get('precision', {}).get('price', 0)
+            trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
+
+            return trading_fee, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
+
+        except Exception as e:
+            print(e)
+
+            return None, None, None
 
     def get_open_position(self, symbol):
         positions = self.exchange.fetch_positions(symbol)
@@ -183,12 +169,4 @@ class FuturesBybitBroker(AbstractBroker):
             start_time = current_ohlcv[-1][0] + \
                 self.exchange.parse_timeframe(timeframe) * 1000
 
-        df = pd.DataFrame(
-            ohlcv, columns=OHLCV_COLUMNS)
-
-        for column in OHLCV_COLUMNS[1:]:
-            df[column] = df[column].astype(float)
-
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-
-        return df
+        return ohlcv

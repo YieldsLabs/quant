@@ -1,80 +1,62 @@
+import asyncio
+import json
 from dotenv import load_dotenv
 import os
-import websocket
-import json
-from analytics.performance import PerformanceStats
+import websockets
+from analytics.strategy_performance import StrategyPerformance
 from broker.futures_bybit_broker import FuturesBybitBroker
-from broker.margin_mode import MarginMode
-from broker.position_mode import PositionMode
-from ohlcv.bybit_datasource import BybitDataSource
-from ohlcv.context import OhlcvContext
+from datasource.bybit_datasource import BybitDataSource
+from journal.log_journal import LogJournal
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
-from optimization.random_search import RandomSearch
-from optimization.strategy_screening import StrategyScreening
-from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
-from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
-from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
-
-from risk_management.risk_manager import RiskManager
-from shared.meta_label.parse_label import parse_meta_label
-from shared.timeframes import Timeframes
-from strategy.aobb_strategy import AwesomeOscillatorBollingerBands
-from strategy.bollinger_engulfing_strategy import BollingerBandsEngulfing
-from strategy.engulfing_zlema_strategy import EngulfingZLMA
-from strategy.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
-from strategy.fvg_strategy import FairValueGapZLMA
-from strategy.kangaroo_tail_strategy import KangarooTailZLMA
-from trader.simple_trader import SimpleTrader
+from core.timeframe import Timeframe
+from strategies.aobb_strategy import AwesomeOscillatorBollingerBands
+from strategies.bollinger_engulfing_strategy import BollingerBandsEngulfing
+from strategies.engulfing_zlema_strategy import EngulfingZLMA
+from strategies.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
+from strategies.fvg_strategy import FairValueGapZLMA
+from strategies.kangaroo_tail_strategy import KangarooTailZLMA
+from system.trading_system import TradingSystem
 
 load_dotenv()
 
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
-
-lookback = 1000
-leverage = 1
-risk_per_trade = 0.00001
-
-broker = FuturesBybitBroker(API_KEY, API_SECRET)
-datasource = BybitDataSource(broker, lookback)
-analytics = PerformanceStats(broker.get_account_balance(), risk_per_trade)
-OhlcvContext(datasource)
+WSS = os.getenv('WSS')
 
 symbols = [
+    'ETHUSDT',
     'NEARUSDT',
     'SOLUSDT',
     'AVAXUSDT',
-    'XRPUSDT'
+    'XRPUSDT',
+    'APEUSDT',
+    'ADAUSDT',
+    'UNFIUSDT',
+    'MATICUSDT'
 ]
 
 timeframes = [
-    Timeframes.ONE_MINUTE,
-    Timeframes.THREE_MINUTES,
-    Timeframes.FIVE_MINUTES
+    Timeframe.ONE_MINUTE,
+    Timeframe.THREE_MINUTES,
+    Timeframe.FIVE_MINUTES
 ]
 
 strategies = [
     AwesomeOscillatorBollingerBands,
     BollingerBandsEngulfing,
+    EngulfingZLMA,
     ExtremeEuphoriaBollingerBands,
     FairValueGapZLMA,
-    EngulfingZLMA,
     KangarooTailZLMA
 ]
 
-stop_loss_finders = [
-    ATRStopLossFinder,
-    LowHighStopLossFinder
-]
-
-take_profit_finders = [
-    RiskRewardTakeProfitFinder
-]
-
-timeframe_map = {
-    '1m': Timeframes.ONE_MINUTE,
-    '3m': Timeframes.THREE_MINUTES,
-    '5m': Timeframes.FIVE_MINUTES
+INTERVALS = {
+    Timeframe.ONE_MINUTE: 1,
+    Timeframe.THREE_MINUTES: 3,
+    Timeframe.FIVE_MINUTES: 5,
+    Timeframe.FIFTEEN_MINUTES: 15,
+    Timeframe.ONE_HOUR: 60,
+    Timeframe.FOUR_HOURS: 240,
 }
 
 search_space = {
@@ -83,84 +65,73 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-
-random_search = RandomSearch(
-    search_space=search_space,
-    n_iterations=5,
-    target_metric='sharpe_ratio',
-    screener_class=StrategyScreening,
-    broker=broker,
-    analytics=analytics,
-    symbols=symbols,
-    timeframes=timeframes,
-    strategies=strategies,
-    stop_loss_finders=stop_loss_finders,
-    take_profit_finders=take_profit_finders,
-)
-
-best_result, _ = random_search.run()
-best_result.to_csv('best_strategy.csv')
-
-meta_label = str(best_result.head(1)['id'].iloc[0])
-symbol, _timeframe, _strategy, _stop_loss, _take_profit = parse_meta_label(meta_label)
-
-def create_map(classes):
-    return {cls.NAME: cls for cls in classes if cls.NAME is not None}
-
-strategy_map = create_map(strategies)
-stoploss_map = create_map(stop_loss_finders)
-takeprofit_map = create_map(take_profit_finders)
-
-timeframe = timeframe_map[_timeframe]
-strategy = strategy_map[_strategy[0]](*_strategy[1])
-stop_loss_finder = stoploss_map[_stop_loss[0]](*_stop_loss[1])
-take_profit_finder = takeprofit_map[_take_profit[0]](*_take_profit[1])
-
-broker.set_leverage(symbol, leverage)
-broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
-broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
-
-rm = RiskManager(stop_loss_finder, take_profit_finder, risk_per_trade=risk_per_trade, **broker.get_symbol_info(symbol))
-trader = SimpleTrader(broker, rm, analytics)
-
-invervals = {
-    Timeframes.ONE_MINUTE: 1,
-    Timeframes.THREE_MINUTES: 3,
-    Timeframes.FIVE_MINUTES: 5,
-    Timeframes.FIFTEEN_MINUTES: 15,
-    Timeframes.ONE_HOUR: 60,
-    Timeframes.FOUR_HOURS: 240,
-}
-
-channels = [f"kline.{invervals[timeframe]}.{symbol}"]
+backtest_lookback = 10000
+risk_per_trade = 0.0001
 
 
-def on_open(ws):
-    print("WebSocket connection opened")
-    for channel in channels:
-        ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
+async def process_messages(ws, bybit_trading_system):
+    while True:
+        try:
+            message = await ws.recv()
+            message_data = json.loads(message)
+
+            if "topic" in message_data:
+                ohlcv = message_data["data"][0]
+                topic = message_data["topic"].split(".")
+                symbol, interval = topic[2], topic[1]
+
+                ohlcv_event = bybit_trading_system.parse_candle_message(symbol, interval, ohlcv)
+
+                await bybit_trading_system.dispatcher.dispatch(ohlcv_event)
+
+        except websockets.exceptions.ConnectionClosed as e:
+            print(f"Websocket closed with code {e.code}: {e.reason}")
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
 
-def on_message(ws, message):
-    trader.trade(strategy, symbol, timeframe)
+async def send_ping(ws, interval):
+    while True:
+        await asyncio.sleep(interval)
+        await ws.ping()
 
 
-def on_error(ws, error):
-    print(f"WebSocket error: {error}")
+async def main():
+    LogJournal()
 
+    broker = FuturesBybitBroker(API_KEY, API_SECRET)
+    analytics = StrategyPerformance(risk_per_trade)
+    datasource = BybitDataSource(broker)
+    bybit_trading_system = TradingSystem(
+        datasource,
+        broker,
+        analytics,
+        strategies,
+        symbols,
+        timeframes,
+        lookback=backtest_lookback,
+        risk_per_trade=risk_per_trade
+    )
 
-def on_close(ws):
-    print("WebSocket connection closed")
+    async with websockets.connect(WSS) as ws:
+        async def ws_callback(timeframe_symbols):
+            channels = [f"kline.{INTERVALS[timeframe]}.{symbol}" for (timeframe, symbol) in timeframe_symbols]
 
+            for channel in channels:
+                await ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
 
-wss = 'wss://stream.bybit.com/v5/public/linear'
+        start_trading_system_task = asyncio.create_task(bybit_trading_system.start(ws_callback))
+        ping_task = asyncio.create_task(send_ping(ws, interval=20))
+        message_processing_task = asyncio.create_task(process_messages(ws, bybit_trading_system))
 
-ws = websocket.WebSocketApp(
-    wss,
-    on_open=on_open,
-    on_message=on_message,
-    on_error=on_error,
-    on_close=on_close
-)
+        try:
+            await asyncio.gather(start_trading_system_task, ping_task, message_processing_task)
+        finally:
+            ping_task.cancel()
+            message_processing_task.cancel()
+            start_trading_system_task.cancel()
 
-ws.run_forever()
+    await asyncio.sleep(0.01)
+
+asyncio.run(main())

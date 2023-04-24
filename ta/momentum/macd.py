@@ -18,7 +18,7 @@ class MACD(AbstractIndicator):
 
     def call(self, data):
         close = data['close']
-        
+
         ema_fast = self.fast_ema.ema(close)
         ema_slow = self.slow_ema.ema(close)
 
