@@ -28,7 +28,7 @@ class Order:
         return asdict(self)
 
 @dataclass(frozen=True)
-class FillOrder(Event):
+class OrderFilled(Event):
     symbol: str
     timeframe: Timeframe
     order: Order
@@ -52,29 +52,29 @@ class PositionEvent(Event):
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 @dataclass(frozen=True)
-class OpenLongPosition(PositionEvent):
+class LongPositionOpened(PositionEvent):
    pass
 
 @dataclass(frozen=True)
-class OpenShortPosition(PositionEvent):
+class ShortPositionOpened(PositionEvent):
    pass
 
 @dataclass(frozen=True)
-class ReadyToClosePosition(Event):
+class PositionReadyToClose(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 @dataclass(frozen=True)
-class ClosedPosition(Event):
+class PositionClosed(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 @dataclass(frozen=True)
-class CheckExitConditions(Event):
+class EvaluateExitConditions(Event):
     symbol: str
     timeframe: Timeframe
     side: PositionSide

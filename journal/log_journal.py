@@ -2,8 +2,8 @@ import asyncio
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
-from core.events.portfolio import BestStrategyEvent, PortfolioPerformanceEvent
-from core.events.position import CheckExitConditions, ClosedPosition, FillOrder, ReadyToClosePosition, OpenLongPosition, OpenShortPosition
+from core.events.portfolio import PortfolioPerformanceEvent
+from core.events.position import EvaluateExitConditions, PositionClosed, OrderFilled, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
 from core.events.strategy import GoLong, GoShort
 
 
@@ -31,42 +31,37 @@ class LogJournal(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(FillOrder)
-    async def _on_fill_order(self, event: FillOrder):
+    @register_handler(OrderFilled)
+    async def _on_fill_order(self, event: OrderFilled):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(OpenLongPosition)
-    async def _on_open_long_position(self, event: OpenLongPosition):
+    @register_handler(LongPositionOpened)
+    async def _on_open_long_position(self, event: LongPositionOpened):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(OpenShortPosition)
-    async def _on_open_short_position(self, event: OpenShortPosition):
+    @register_handler(ShortPositionOpened)
+    async def _on_open_short_position(self, event: ShortPositionOpened):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(CheckExitConditions)
-    async def _on_check_exit(self, event: CheckExitConditions):
+    @register_handler(EvaluateExitConditions)
+    async def _on_check_exit(self, event: EvaluateExitConditions):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(ReadyToClosePosition)
-    async def _on_close_position(self, event: ReadyToClosePosition):
+    @register_handler(PositionReadyToClose)
+    async def _on_close_position(self, event: PositionReadyToClose):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(ClosedPosition)
-    async def _on_closed_position(self, event: ClosedPosition):
+    @register_handler(PositionClosed)
+    async def _on_closed_position(self, event: PositionClosed):
         print('----------------------------------------------------->')
         print(event)
 
     @register_handler(PortfolioPerformanceEvent)
     async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
-        print('----------------------------------------------------->')
-        print(event)
-
-    @register_handler(BestStrategyEvent)
-    def _on_best_strategy(self, event: BestStrategyEvent):
         print('----------------------------------------------------->')
         print(event)

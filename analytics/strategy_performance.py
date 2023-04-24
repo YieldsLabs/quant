@@ -148,19 +148,33 @@ class StrategyPerformance(AbstractAnalytics):
         return risk_of_ruin
     
     def _skewness(self, pnl):
-        if len(pnl) < 2:
-            return 0
+        n = len(pnl)
         
+        if n < 3:
+            return 0
+
         mean_pnl = np.mean(pnl)
         std_pnl = np.std(pnl, ddof=1)
-        skewness = np.sum(((pnl - mean_pnl) / std_pnl) ** 3) / len(pnl)
+        
+        if std_pnl == 0:
+            return 0
+
+        skewness = np.sum(((pnl - mean_pnl) / std_pnl) ** 3) / n
+
         return skewness
 
     def _kurtosis(self, pnl):
-        if len(pnl) < 2:
-            return 0
+        n = len(pnl)
         
+        if n < 4:
+            return 0
+
         mean_pnl = np.mean(pnl)
         std_pnl = np.std(pnl, ddof=1)
-        kurtosis = np.sum(((pnl - mean_pnl) / std_pnl) ** 4) / len(pnl) - 3
-        return kurtosis
+        
+        if std_pnl == 0:
+            return 0
+
+        excess_kurtosis = np.sum(((pnl - mean_pnl) / std_pnl) ** 4) / n - 3
+
+        return excess_kurtosis

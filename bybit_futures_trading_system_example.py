@@ -9,6 +9,12 @@ from datasource.bybit_datasource import BybitDataSource
 from journal.log_journal import LogJournal
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from core.timeframe import Timeframe
+from strategies.aobb_strategy import AwesomeOscillatorBollingerBands
+from strategies.bollinger_engulfing_strategy import BollingerBandsEngulfing
+from strategies.engulfing_zlema_strategy import EngulfingZLMA
+from strategies.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
+from strategies.fvg_strategy import FairValueGapZLMA
+from strategies.kangaroo_tail_strategy import KangarooTailZLMA
 from system.trading_system import TradingSystem
 
 load_dotenv()
@@ -22,7 +28,11 @@ symbols = [
     'NEARUSDT',
     'SOLUSDT',
     'AVAXUSDT',
-    'XRPUSDT'
+    'XRPUSDT',
+    'APEUSDT',
+    'ADAUSDT',
+    'UNFIUSDT',
+    'MATICUSDT'
 ]
 
 timeframes = [
@@ -31,13 +41,22 @@ timeframes = [
     Timeframe.FIVE_MINUTES
 ]
 
+strategies = [
+    AwesomeOscillatorBollingerBands,
+    BollingerBandsEngulfing,
+    EngulfingZLMA,
+    ExtremeEuphoriaBollingerBands,
+    FairValueGapZLMA,
+    KangarooTailZLMA
+]
+
 search_space = {
     **strategy_hyperparameters,
     **stoploss_hyperparameters,
     **takeprofit_hyperparameters
 }
 
-lookback = 15000
+backtest_lookback = 5000
 risk_per_trade = 0.0001
 
 async def process_messages(ws, bybit_trading_system):
@@ -68,13 +87,22 @@ async def main():
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     analytics = StrategyPerformance(risk_per_trade)
     datasource = BybitDataSource(broker)
-    bybit_trading_system = TradingSystem(datasource, broker, analytics, symbols, timeframes, lookback=lookback, risk_per_trade=risk_per_trade)
+    bybit_trading_system = TradingSystem(
+        datasource,
+        broker,
+        analytics,
+        strategies,
+        symbols,
+        timeframes,
+        lookback=backtest_lookback,
+        risk_per_trade=risk_per_trade
+    )
     
     async with websockets.connect(WSS) as ws:
         bybit_trading_system.subscribe_candle_stream(ws)
         
         start_trading_system_task = asyncio.create_task(bybit_trading_system.start())
-        ping_task = asyncio.create_task(send_ping(ws, interval=30))
+        ping_task = asyncio.create_task(send_ping(ws, interval=20))
         message_processing_task = asyncio.create_task(process_messages(ws, bybit_trading_system))
 
         try:

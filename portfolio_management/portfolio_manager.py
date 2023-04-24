@@ -4,7 +4,7 @@ from analytics.abstract_analytics import AbstractAnalytics
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.portfolio import  PortfolioPerformanceEvent
-from core.events.position import CheckExitConditions, ClosedPosition, FillOrder, OpenLongPosition, OpenShortPosition, PositionSide
+from core.events.position import EvaluateExitConditions, PositionClosed, OrderFilled, LongPositionOpened, ShortPositionOpened, PositionSide
 from core.events.strategy import GoLong, GoShort
 from core.position import Position
 from datasource.abstract_datasource import AbstractDatasource
@@ -27,17 +27,17 @@ class PortfolioManager(AbstractPortfolioManager):
         symbol = event.symbol
         timeframe = event.timeframe
 
-        async with self.active_positions_lock:
-            if symbol not in self.active_positions:
-                return
+        if symbol not in self.active_positions:
+            return
 
+        async with self.active_positions_lock:
             position = self.active_positions[symbol]
 
-            if position is None or not len(position.orders):
-                return
+        if position is None or not len(position.orders):
+            return
 
         await self.dispatcher.dispatch(
-            CheckExitConditions(
+            EvaluateExitConditions(
                 symbol=symbol,
                 timeframe=timeframe,
                 side=position.side,
@@ -49,6 +49,7 @@ class PortfolioManager(AbstractPortfolioManager):
                 ohlcv=event.ohlcv
             )
         )
+
     @register_handler(GoLong)
     async def _on_go_long(self, event: GoLong):
         await self.handle_position(PositionSide.LONG, event)
@@ -57,19 +58,22 @@ class PortfolioManager(AbstractPortfolioManager):
     async def _on_go_short(self, event: GoShort):
         await self.handle_position(PositionSide.SHORT, event)
         
-    @register_handler(FillOrder)
-    async def _on_order_filled(self, event: FillOrder):
+    @register_handler(OrderFilled)
+    async def _on_order_filled(self, event: OrderFilled):
         symbol = event.symbol
 
+        if symbol not in self.active_positions:
+            return
+        
         async with self.active_positions_lock:
-            if symbol not in self.active_positions:
-                return
-            
             self.active_positions[symbol].add_order(event.order)
     
-    @register_handler(ClosedPosition)
-    async def _on_closed_position(self, event: ClosedPosition):
+    @register_handler(PositionClosed)
+    async def _on_closed_position(self, event: PositionClosed):
         symbol = event.symbol
+
+        if symbol not in self.active_positions:
+            return 
         
         async with self.active_positions_lock:
             position = self.active_positions.pop(symbol, None)
@@ -85,28 +89,29 @@ class PortfolioManager(AbstractPortfolioManager):
             if closed_key not in self.closed_positions:
                 self.closed_positions[closed_key] = position
 
-        account_size = await self.datasource.account_size()
         strategy_id = f'{position.symbol}_{position.timeframe}{position.strategy}'
         
         closed_positions_list = list(filter(lambda x: f'{x.symbol}_{x.timeframe}{x.strategy}' == strategy_id, self.closed_positions.values()))
 
+        if not len(closed_positions_list):
+            return
+        
+        account_size = await self.datasource.account_size()
         performance = await asyncio.to_thread(self.analytics.calculate, account_size, closed_positions_list)
         
         await self.dispatcher.dispatch(PortfolioPerformanceEvent(strategy_id=strategy_id, performance=performance))
 
     async def handle_position(self, position_side, event: Union[GoLong, GoShort]):
+        if event.symbol in self.active_positions:
+            return
+        
+        account_size = await self.datasource.account_size()
+        trading_fee, min_position_size, price_precision = await self.datasource.fee_and_precisions(event.symbol)
+
         async with self.active_positions_lock:
-            if event.symbol in self.active_positions:
-                return
-            
-            account_size = await self.datasource.account_size()
-            
-            trading_fee, min_position_size, price_precision = await self.datasource.fee_and_precisions(event.symbol)
-
             position = self.create_position(position_side, account_size, trading_fee, min_position_size, price_precision, event)
-
             self.active_positions[event.symbol] = position
-            
+
         await self.dispatcher.dispatch(self.create_open_position_event(position_side, event))
 
     def create_position(self, position_side, account_size, trading_fee, min_position_size, price_precision, event: Union[GoLong, GoShort]) -> Position:
@@ -116,11 +121,11 @@ class PortfolioManager(AbstractPortfolioManager):
 
         return Position(symbol=event.symbol, timeframe=event.timeframe, strategy=event.strategy, size=size, entry=event.entry, side=position_side, stop_loss=stop_loss_price, take_profit=take_profit_price)
 
-    def create_open_position_event(self, position_side: PositionSide, event: Union[GoLong, GoShort]) -> Union[OpenLongPosition, OpenShortPosition]:
+    def create_open_position_event(self, position_side: PositionSide, event: Union[GoLong, GoShort]) -> Union[LongPositionOpened, ShortPositionOpened]:
         position = self.active_positions[event.symbol]
 
         if position_side == PositionSide.LONG:
-            return OpenLongPosition(
+            return LongPositionOpened(
                 symbol=event.symbol,
                 timeframe=event.timeframe,
                 size=position.size,
@@ -129,7 +134,7 @@ class PortfolioManager(AbstractPortfolioManager):
                 take_profit=position.take_profit_price
             )
         else:
-            return OpenShortPosition(
+            return ShortPositionOpened(
                 symbol=event.symbol,
                 timeframe=event.timeframe,
                 size=position.size,

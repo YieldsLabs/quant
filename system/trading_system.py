@@ -10,19 +10,14 @@ from core.timeframe import Timeframe
 from datasource.abstract_datasource import AbstractDatasource
 from portfolio_management.portfolio_manager import PortfolioManager
 from risk_management.risk_manager import RiskManager
-from strategies.aobb_strategy import AwesomeOscillatorBollingerBands
-from strategies.bollinger_engulfing_strategy import BollingerBandsEngulfing
-from strategies.engulfing_zlema_strategy import EngulfingZLMA
-from strategies.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
-from strategies.fvg_strategy import FairValueGapZLMA
-from strategies.kangaroo_tail_strategy import KangarooTailZLMA
+from strategy.abstract_strategy import AbstractStrategy
 from strategy.strategy_manager import StrategyManager
 from system.abstract_system import AbstractSystem
 from optimization.backtest import Backtest
 from trader.create_trader import create_trader
 
 class TradingSystem(AbstractSystem):
-    def __init__(self, datasource: Type[AbstractDatasource], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], symbols: List[str], timeframes: List[Timeframe], leverage=1, lookback=5000, risk_per_trade=0.001):
+    def __init__(self, datasource: Type[AbstractDatasource], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], strategies: List[Type[AbstractStrategy]], symbols: List[str], timeframes: List[Timeframe], leverage=1, lookback=5000, risk_per_trade=0.001):
         super().__init__()
         self.datasource = datasource
         self.broker = broker
@@ -30,15 +25,6 @@ class TradingSystem(AbstractSystem):
         self.timeframes = timeframes
         self.leverage = leverage
         self.lookback = lookback
-
-        self.strategies = [
-            AwesomeOscillatorBollingerBands,
-            BollingerBandsEngulfing,
-            EngulfingZLMA,
-            ExtremeEuphoriaBollingerBands,
-            FairValueGapZLMA,
-            KangarooTailZLMA,
-        ]
 
         for symbol in self.symbols:
             self.broker.set_leverage(symbol, self.leverage)
@@ -48,7 +34,7 @@ class TradingSystem(AbstractSystem):
         self.portfolio_manager = PortfolioManager(datasource, analytics, risk_per_trade)
         self.risk_manager = RiskManager(trailing_stop_loss=False)
         self.backtest = Backtest(datasource)
-        self.strategy_manager = StrategyManager(self.strategies)
+        self.strategy_manager = StrategyManager(strategies)
         self.trader = create_trader(broker, live_trading=False)
         self.ws = None
 
@@ -84,9 +70,10 @@ class TradingSystem(AbstractSystem):
 
     async def on_new_candle(self, message):
         data = message["data"][0]
-        
-        symbol = message["topic"].split(".")[2]
-        interval = message["topic"].split(".")[1]
+        topic = message["topic"].split(".")
+
+        symbol = topic[2]
+        interval = topic[1]
 
         timeframes = {
             '1': Timeframe.ONE_MINUTE,
