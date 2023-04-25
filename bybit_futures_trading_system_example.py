@@ -27,7 +27,7 @@ symbols = [
     'ADAUSDT',
     'APEUSDT',
     'AVAXUSDT',
-    'ETCUSDT'
+    'ETCUSDT',
     'ETHUSDT',
     'MATICUSDT',
     'NEARUSDT',
