@@ -10,10 +10,14 @@ class PortfolioPerformance:
     win_rate: float
     risk_of_ruin: float
     rate_of_return: float
+    annualized_return: float
+    annualized_volatility: float
     total_pnl: float
     average_pnl: float
     sharpe_ratio: float
     sortino_ratio: float
+    lake_ratio: float
+    burke_ratio: float
     profit_factor: float
     max_consecutive_wins: int
     max_consecutive_losses: int
@@ -22,6 +26,7 @@ class PortfolioPerformance:
     skewness: float
     kurtosis: float
     calmar_ratio: float
+    var: float
     cvar: float
     ulcer_index: float
 

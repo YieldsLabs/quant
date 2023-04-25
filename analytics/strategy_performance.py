@@ -6,9 +6,10 @@ from core.position import Position
 
 
 class StrategyPerformance(AbstractAnalytics):
-    def __init__(self, risk_per_trade: float = 0.001):
+    def __init__(self, risk_per_trade: float = 0.001, periods_per_year: int = 252):
         super().__init__()
         self.risk_per_trade = risk_per_trade
+        self.periods_per_year = periods_per_year
 
     def calculate(self, initial_account_size: float, positions: List[Position]) -> PortfolioPerformance:
         total_trades = len(positions)
@@ -20,10 +21,14 @@ class StrategyPerformance(AbstractAnalytics):
                 win_rate=0,
                 risk_of_ruin=0,
                 rate_of_return=0,
+                annualized_return=0,
+                annualized_volatility=0,
                 total_pnl=0,
                 average_pnl=0,
                 sharpe_ratio=0,
                 sortino_ratio=0,
+                lake_ratio=0,
+                burke_ratio=0,
                 profit_factor=0,
                 max_consecutive_wins=0,
                 max_consecutive_losses=0,
@@ -32,6 +37,7 @@ class StrategyPerformance(AbstractAnalytics):
                 skewness=0,
                 kurtosis=0,
                 calmar_ratio=0,
+                var=0,
                 cvar=0,
                 ulcer_index=0
             )
@@ -47,14 +53,19 @@ class StrategyPerformance(AbstractAnalytics):
         average_pnl = pnl.mean()
         sharpe_ratio = self._sharpe_ratio(pnl)
         sortino_ratio = self._sortino_ratio(pnl)
+        lake_ratio = self._lake_ratio(pnl, initial_account_size)
+        burke_ratio = self._burke_ratio(pnl, initial_account_size)
         profit_factor = self._profit_factor(pnl, pnl_positive)
         max_consecutive_wins = self._max_streak(pnl_positive, True)
         max_consecutive_losses = self._max_streak(pnl_positive, False)
         max_drawdown = self._max_drawdown(pnl, initial_account_size)
         recovery_factor = self._recovery_factor(total_pnl, max_drawdown)
         calmar_ratio = self._calmar_ratio(rate_of_return, max_drawdown)
+        var = self._var(pnl, initial_account_size)
         cvar = self._cvar(pnl)
         ulcer_index = self._ulcer_index(pnl, initial_account_size)
+        annualized_volatility = self._annualized_volatility(pnl, initial_account_size)
+        annualized_return = self._annualized_return(rate_of_return, total_trades)
 
         skewness = self._skewness(pnl)
         kurtosis = self._kurtosis(pnl)
@@ -65,10 +76,14 @@ class StrategyPerformance(AbstractAnalytics):
             win_rate=win_rate,
             risk_of_ruin=risk_of_ruin,
             rate_of_return=rate_of_return,
+            annualized_return=annualized_return,
+            annualized_volatility=annualized_volatility,
             total_pnl=total_pnl,
             average_pnl=average_pnl,
             sharpe_ratio=sharpe_ratio,
             sortino_ratio=sortino_ratio,
+            lake_ratio=lake_ratio,
+            burke_ratio=burke_ratio,
             profit_factor=profit_factor,
             max_consecutive_wins=max_consecutive_wins,
             max_consecutive_losses=max_consecutive_losses,
@@ -77,6 +92,7 @@ class StrategyPerformance(AbstractAnalytics):
             skewness=skewness,
             kurtosis=kurtosis,
             calmar_ratio=calmar_ratio,
+            var=var,
             cvar=cvar,
             ulcer_index=ulcer_index
         )
@@ -200,12 +216,16 @@ class StrategyPerformance(AbstractAnalytics):
 
         return calmar_ratio
 
-    def _cvar(self, pnl, alpha=0.05):
-        if len(pnl) == 0:
-            return 0
+    def _var(self, pnl, initial_account_size, confidence_level=0.95) -> float:
+        daily_returns = pnl / initial_account_size
+        value_at_risk = -np.percentile(daily_returns, (1 - confidence_level) * 100)
 
+        return value_at_risk
+
+    def _cvar(self, pnl, alpha=0.05):
         pnl_sorted = np.sort(pnl)
         n_losses = int(alpha * len(pnl))
+
         if n_losses == 0:
             return 0
 
@@ -230,3 +250,38 @@ class StrategyPerformance(AbstractAnalytics):
         ulcer_index = np.sqrt(np.mean(drawdowns_squared))
 
         return ulcer_index
+
+    def _annualized_volatility(self, pnl, initial_account_size) -> float:
+        total_periods = len(pnl)
+        if total_periods < 2:
+            return 0
+
+        daily_returns = pnl / initial_account_size
+        volatility = np.std(daily_returns, ddof=1)
+        annualized_volatility = volatility * np.sqrt(self.periods_per_year)
+
+        return annualized_volatility
+
+    def _annualized_return(self, rate_of_return: float, total_trades: int) -> float:
+        holding_period_return = 1 + rate_of_return
+        annualized_return = holding_period_return ** (self.periods_per_year / total_trades) - 1
+
+        return annualized_return
+
+    def _lake_ratio(self, pnl: np.ndarray, initial_account_size: float) -> float:
+        account_size = initial_account_size + pnl.cumsum()
+        peaks = np.maximum.accumulate(account_size)
+        drawdowns = (peaks - account_size) / peaks
+        underwater_time = np.sum(drawdowns < 0) / self.periods_per_year
+        lake_ratio = 1 - underwater_time
+
+        return lake_ratio
+
+    def _burke_ratio(self, pnl, initial_account_size: float) -> float:
+        account_size = initial_account_size + pnl.cumsum()
+        periods = len(pnl)
+        cagr = (account_size[-1] / initial_account_size) ** (self.periods_per_year / periods) - 1
+        downside_deviation = np.std(np.minimum(pnl, 0), ddof=1)
+        burke_ratio = cagr / downside_deviation
+
+        return burke_ratio
