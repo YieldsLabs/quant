@@ -18,6 +18,11 @@ class PortfolioPerformance:
     sortino_ratio: float
     lake_ratio: float
     burke_ratio: float
+    rachev_ratio: float
+    tail_ratio: float
+    omega_ratio: float
+    sterling_ratio: float
+    kappa_three_ratio: float
     profit_factor: float
     max_consecutive_wins: int
     max_consecutive_losses: int

@@ -29,6 +29,11 @@ class StrategyPerformance(AbstractAnalytics):
                 sortino_ratio=0,
                 lake_ratio=0,
                 burke_ratio=0,
+                rachev_ratio=0,
+                tail_ratio=0,
+                omega_ratio=0,
+                sterling_ratio=0,
+                kappa_three_ratio=0,
                 profit_factor=0,
                 max_consecutive_wins=0,
                 max_consecutive_losses=0,
@@ -55,6 +60,11 @@ class StrategyPerformance(AbstractAnalytics):
         sortino_ratio = self._sortino_ratio(pnl)
         lake_ratio = self._lake_ratio(pnl, initial_account_size)
         burke_ratio = self._burke_ratio(pnl, initial_account_size)
+        rachev_ratio = self._rachev_ratio(pnl)
+        tail_ratio = self._tail_ratio(pnl)
+        omega_ratio = self._omega_ratio(pnl)
+        sterling_ratio = self._sterling_ratio(pnl)
+        kappa_three_ratio = self._kappa_three_ratio(pnl)
         profit_factor = self._profit_factor(pnl, pnl_positive)
         max_consecutive_wins = self._max_streak(pnl_positive, True)
         max_consecutive_losses = self._max_streak(pnl_positive, False)
@@ -84,6 +94,11 @@ class StrategyPerformance(AbstractAnalytics):
             sortino_ratio=sortino_ratio,
             lake_ratio=lake_ratio,
             burke_ratio=burke_ratio,
+            rachev_ratio=rachev_ratio,
+            tail_ratio=tail_ratio,
+            omega_ratio=omega_ratio,
+            sterling_ratio=sterling_ratio,
+            kappa_three_ratio=kappa_three_ratio,
             profit_factor=profit_factor,
             max_consecutive_wins=max_consecutive_wins,
             max_consecutive_losses=max_consecutive_losses,
@@ -253,6 +268,7 @@ class StrategyPerformance(AbstractAnalytics):
 
     def _annualized_volatility(self, pnl, initial_account_size) -> float:
         total_periods = len(pnl)
+        
         if total_periods < 2:
             return 0
 
@@ -280,8 +296,122 @@ class StrategyPerformance(AbstractAnalytics):
     def _burke_ratio(self, pnl, initial_account_size: float) -> float:
         account_size = initial_account_size + pnl.cumsum()
         periods = len(pnl)
+        
+        if periods < 2:
+            return 0
+        
         cagr = (account_size[-1] / initial_account_size) ** (self.periods_per_year / periods) - 1
+        
         downside_deviation = np.std(np.minimum(pnl, 0), ddof=1)
+        
+        if downside_deviation == 0:
+            return 0
+        
         burke_ratio = cagr / downside_deviation
 
         return burke_ratio
+    
+    def _rachev_ratio(self, pnl: np.ndarray) -> float:
+        if len(pnl) < 3:
+            return 0
+         
+        pnl_sorted = np.sort(pnl)[::-1]
+        
+        var_95 = np.percentile(pnl_sorted, 5)
+
+        shortfall = pnl_sorted[pnl_sorted <= var_95]
+        
+        if len(shortfall) == 0:
+            return 0
+        
+        expected_shortfall = np.abs(np.mean(shortfall))
+        
+        if expected_shortfall == 0:
+            return 0
+        
+        rachev_ratio = np.abs(pnl.mean()) / expected_shortfall
+        
+        return rachev_ratio
+    
+    def _tail_ratio(self, pnl: np.ndarray) -> float:
+        if len(pnl) < 3:
+            return 0
+        
+        var_95 = np.percentile(pnl, 95)
+        
+        gains = pnl[pnl > var_95]
+        losses = pnl[pnl < np.percentile(pnl, 5)]
+
+        if len(losses) == 0 or len(gains) == 0:
+            return 0
+
+        gain_tail = np.mean(gains)
+        
+        loss_tail = np.mean(losses)
+        
+        if np.abs(loss_tail) < np.abs(gain_tail):
+            return 0
+        
+        tail_ratio = np.abs(gain_tail) / np.abs(loss_tail)
+        
+        return tail_ratio
+    
+    def _omega_ratio(self, pnl, risk_free_rate: float = 0) -> float:
+        if len(pnl) < 3:
+            return 0
+        
+        gains = pnl[pnl > 0]
+        losses = pnl[pnl < 0]
+
+        if len(losses) == 0 or len(gains) == 0:
+            return 0
+
+        sum_losses = np.sum(np.abs(losses))
+        
+        if sum_losses == 0:
+            return 0
+        
+        omega_ratio = np.sum(gains) / sum_losses
+        
+        omega_ratio -= risk_free_rate
+        
+        return omega_ratio
+    
+    def _sterling_ratio(self, pnl: np.ndarray, risk_free_rate: float = 0) -> float:
+        if len(pnl) < 3:
+            return 0
+        
+        gains = pnl[pnl > 0]
+        losses = pnl[pnl < 0]
+
+        if len(losses) == 0 or len(gains) == 0:
+            return 0
+
+        upside_potential = np.mean(gains)
+        downside_risk = np.sqrt(np.mean(losses ** 2))
+
+        if downside_risk == 0:
+            return 0
+        
+        sterling_ratio = (upside_potential - risk_free_rate) / downside_risk
+        
+        return sterling_ratio
+    
+    def _kappa_three_ratio(self, pnl, risk_free_rate: float = 0) -> float:
+        gains = pnl[pnl > 0]
+        losses = pnl[pnl < 0]
+
+        if len(losses) == 0 or len(gains) == 0:
+            return 0
+
+        avg_gain = np.mean(gains)
+        avg_loss = np.mean(losses)
+        
+        threshold = avg_gain - avg_loss
+        
+        up_proportion = (gains > threshold).sum() / len(pnl)
+        down_proportion = (losses < threshold).sum() / len(pnl)
+        
+        kappa_three_ratio = (up_proportion ** 3 - down_proportion) / np.sqrt(np.mean(pnl ** 2))
+        
+        return kappa_three_ratio
