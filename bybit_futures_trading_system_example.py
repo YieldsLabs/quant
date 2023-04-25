@@ -24,15 +24,16 @@ API_SECRET = os.getenv('API_SECRET')
 WSS = os.getenv('WSS')
 
 symbols = [
+    'ADAUSDT',
+    'APEUSDT',
+    'AVAXUSDT',
+    'ETCUSDT'
     'ETHUSDT',
+    'MATICUSDT',
     'NEARUSDT',
     'SOLUSDT',
-    'AVAXUSDT',
-    'XRPUSDT',
-    'APEUSDT',
-    'ADAUSDT',
     'UNFIUSDT',
-    'MATICUSDT'
+    'XRPUSDT'
 ]
 
 timeframes = [
@@ -65,7 +66,7 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 10000
+backtest_lookback = 30000
 risk_per_trade = 0.0001
 
 

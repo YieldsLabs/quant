@@ -21,6 +21,9 @@ class PortfolioPerformance:
     recovery_factor: float
     skewness: float
     kurtosis: float
+    calmar_ratio: float
+    cvar: float
+    ulcer_index: float
 
     def to_dict(self):
         return asdict(self)

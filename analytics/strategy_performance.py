@@ -30,7 +30,10 @@ class StrategyPerformance(AbstractAnalytics):
                 max_drawdown=0,
                 recovery_factor=0,
                 skewness=0,
-                kurtosis=0
+                kurtosis=0,
+                calmar_ratio=0,
+                cvar=0,
+                ulcer_index=0
             )
 
         pnl = np.array([position.calculate_pnl() for position in positions])
@@ -49,6 +52,9 @@ class StrategyPerformance(AbstractAnalytics):
         max_consecutive_losses = self._max_streak(pnl_positive, False)
         max_drawdown = self._max_drawdown(pnl, initial_account_size)
         recovery_factor = self._recovery_factor(total_pnl, max_drawdown)
+        calmar_ratio = self._calmar_ratio(rate_of_return, max_drawdown)
+        cvar = self._cvar(pnl)
+        ulcer_index = self._ulcer_index(pnl, initial_account_size)
 
         skewness = self._skewness(pnl)
         kurtosis = self._kurtosis(pnl)
@@ -69,14 +75,20 @@ class StrategyPerformance(AbstractAnalytics):
             max_drawdown=max_drawdown,
             recovery_factor=recovery_factor,
             skewness=skewness,
-            kurtosis=kurtosis
+            kurtosis=kurtosis,
+            calmar_ratio=calmar_ratio,
+            cvar=cvar,
+            ulcer_index=ulcer_index
         )
 
     def _sharpe_ratio(self, pnl, risk_free_rate=0):
         avg_return = np.mean(pnl)
         std_return = np.std(pnl)
 
-        return (avg_return - risk_free_rate) / std_return if std_return else 0
+        if std_return == 0:
+            return 0
+
+        return (avg_return - risk_free_rate) / std_return
 
     def _sortino_ratio(self, pnl, risk_free_rate=0):
         downside_returns = pnl[pnl < 0]
@@ -179,3 +191,42 @@ class StrategyPerformance(AbstractAnalytics):
         excess_kurtosis = np.sum(((pnl - mean_pnl) / std_pnl) ** 4) / n - 3
 
         return excess_kurtosis
+
+    def _calmar_ratio(self, rate_of_return: float, max_drawdown: float) -> float:
+        if max_drawdown == 0:
+            return 0
+
+        calmar_ratio = rate_of_return / abs(max_drawdown)
+
+        return calmar_ratio
+
+    def _cvar(self, pnl, alpha=0.05):
+        if len(pnl) == 0:
+            return 0
+
+        pnl_sorted = np.sort(pnl)
+        n_losses = int(alpha * len(pnl))
+        if n_losses == 0:
+            return 0
+
+        cvar = -pnl_sorted[:n_losses].mean()
+
+        return cvar
+
+    def _ulcer_index(self, pnl, initial_account_size):
+        if len(pnl) == 0:
+            return 0
+
+        account_size = initial_account_size
+        peak = account_size
+        drawdowns_squared = []
+
+        for pnl_value in pnl:
+            account_size += pnl_value
+            peak = max(peak, account_size)
+            drawdown = (peak - account_size) / peak
+            drawdowns_squared.append(drawdown ** 2)
+
+        ulcer_index = np.sqrt(np.mean(drawdowns_squared))
+
+        return ulcer_index

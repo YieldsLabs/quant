@@ -5,6 +5,8 @@ from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from core.events.position import PositionSide
+from datasource.retry import retry
+from ccxt.base.errors import RequestTimeout
 
 
 class FuturesBybitBroker(AbstractBroker):
@@ -152,21 +154,29 @@ class FuturesBybitBroker(AbstractBroker):
         markets = self._fetch_market_info()
         return [market_info['id'] for market_info in markets if market_info['linear']]
 
+    @retry(max_retries=7, handled_exceptions=(RequestTimeout))
+    def _fetch(self, symbol, timeframe, start_time, current_limit):
+        return self.exchange.fetch_ohlcv(
+            symbol, timeframe, since=start_time, limit=current_limit)
+
     def get_historical_data(self, symbol, timeframe, lookback=1000):
-        ohlcv = []
         start_time = self.exchange.milliseconds() - lookback * \
             self.exchange.parse_timeframe(timeframe) * 1000
 
-        while len(ohlcv) < lookback:
-            current_limit = min(lookback - len(ohlcv), 1000)
-            current_ohlcv = self.exchange.fetch_ohlcv(
-                symbol, timeframe, since=start_time, limit=current_limit)
+        fetched_ohlcv = 0
+
+        while fetched_ohlcv < lookback:
+            current_limit = min(lookback - fetched_ohlcv, 1000)
+
+            current_ohlcv = self._fetch(symbol, timeframe, start_time, current_limit)
 
             if not current_ohlcv:
                 break
 
-            ohlcv += current_ohlcv
+            for data in current_ohlcv:
+                yield data
+
+                fetched_ohlcv += 1
+
             start_time = current_ohlcv[-1][0] + \
                 self.exchange.parse_timeframe(timeframe) * 1000
-
-        return ohlcv
