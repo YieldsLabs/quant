@@ -106,26 +106,4 @@ class StrategyManager(AbstractEventManager):
         return entry_long_signal, entry_short_signal, stop_loss, take_profit
 
     def _is_poor_strategy(self, performance: PortfolioPerformance):
-        min_total_trades = max(30, performance.total_trades * 0.1)
-
-        if performance.total_trades < min_total_trades:
-            return False
-
-        min_win_rate = max(0.4, performance.win_rate * 0.9)
-        max_drawdown_threshold = min(0.3, performance.max_drawdown * 1.5)
-        min_sharpe_ratio = max(1, performance.sharpe_ratio * 0.8)
-        min_sortino_ratio = max(1, performance.sortino_ratio * 0.8)
-        min_recovery_factor = max(1, performance.recovery_factor * 0.8)
-        min_profit_factor = max(1.5, performance.profit_factor * 0.8)
-
-        if (
-            performance.win_rate < min_win_rate
-            or performance.max_drawdown > max_drawdown_threshold
-            or performance.sharpe_ratio < min_sharpe_ratio
-            or performance.sortino_ratio < min_sortino_ratio
-            or performance.recovery_factor < min_recovery_factor
-            or performance.profit_factor < min_profit_factor
-        ):
-            return True
-
         return False

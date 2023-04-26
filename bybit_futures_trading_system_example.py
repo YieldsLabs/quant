@@ -6,6 +6,7 @@ import websockets
 from analytics.strategy_performance import StrategyPerformance
 from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
+from journal.gather_journal import GatherJournal
 from journal.log_journal import LogJournal
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from core.timeframe import Timeframe
@@ -66,7 +67,7 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 30000
+backtest_lookback = 80000
 risk_per_trade = 0.0001
 
 
@@ -100,6 +101,7 @@ async def send_ping(ws, interval):
 
 async def main():
     LogJournal()
+    GatherJournal()
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     analytics = StrategyPerformance(risk_per_trade)
