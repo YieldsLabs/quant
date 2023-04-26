@@ -4,8 +4,9 @@ from .abstract_trader import AbstractTrader
 
 
 class PaperTrader(AbstractTrader):
-    def __init__(self):
+    def __init__(self, slippage: float = 0.001):
         super().__init__()
+        self.slippage = slippage
 
     @register_handler(LongPositionOpened)
     async def _open_long_position(self, event: LongPositionOpened):
@@ -21,6 +22,17 @@ class PaperTrader(AbstractTrader):
 
     async def trade(self, event):
         order_side = OrderSide.BUY if isinstance(event, LongPositionOpened) else OrderSide.SELL
-        order = Order(side=order_side, entry=event.entry, size=event.size, stop_loss=event.stop_loss, take_profit=event.take_profit)
+
+        entry = self.apply_slippage(event.entry, order_side)
+
+        order = Order(side=order_side, entry=entry, size=event.size, stop_loss=event.stop_loss, take_profit=event.take_profit)
 
         await self.dispatcher.dispatch(OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))
+
+    def apply_slippage(self, price: float, order_side: OrderSide) -> float:
+        factor = 1 + self.slippage
+
+        if order_side == OrderSide.BUY:
+            return price * factor
+        elif order_side == OrderSide.SELL:
+            return price / factor
