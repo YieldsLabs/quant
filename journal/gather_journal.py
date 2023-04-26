@@ -1,13 +1,14 @@
+import asyncio
 import pandas as pd
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
-from core.events.portfolio import PortfolioPerformanceEvent
+from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
 
 
 class GatherJournal(AbstractEventManager):
-    def __init__(self):
+    def __init__(self, save_interval: int = 120):
         super().__init__()
-        self.df = pd.DataFrame(columns=[
+        self.columns = [
             'timestamp',
             'strategy_id',
             'total_trades',
@@ -38,22 +39,30 @@ class GatherJournal(AbstractEventManager):
             'calmar_ratio',
             'var',
             'cvar',
-            'ulcer_index',
-        ])
+            'ulcer_index'
+        ]
+
+        self.event = {}
+        self.save_interval = save_interval
+        self._save_task = None
+
+        self.start_save_task()
+
+    async def _periodic_save(self):
+        while True:
+            await asyncio.sleep(self.save_interval)
+            self.save_to_csv()
+
+    def start_save_task(self):
+        self._save_task = asyncio.create_task(self._periodic_save())
+
+    def save_to_csv(self):
+        df = pd.DataFrame(list(self.event.values()), columns=self.columns)
+        df.to_csv("strategy_performance.csv", index=False)
 
     @register_handler(PortfolioPerformanceEvent)
     async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
-        if event.performance.total_trades < 5:
-            return
-
-        event_dict = {
-            'timestamp': int(event.meta.timestamp),
-            'strategy_id': event.strategy_id,
-        }
+        event_dict = {'timestamp': int(event.meta.timestamp), 'strategy_id': event.strategy_id}
 
         event_dict.update(event.performance.to_dict())
-
-        new_row = pd.DataFrame([event_dict])
-        self.df = pd.concat([self.df, new_row], ignore_index=True)
-
-        self.df.to_csv("strategy_performance.csv", index=False)
+        self.event[event.strategy_id] = event_dict
