@@ -70,34 +70,63 @@ search_space = {
 backtest_lookback = 130000
 risk_per_trade = 0.0001
 
+class WebSocketHandler:
+    def __init__(self, url, bybit_trading_system):
+        self.url = url
+        self.bybit_trading_system = bybit_trading_system
 
-async def process_messages(ws, bybit_trading_system):
-    while True:
+    async def connect_to_websocket(self):
+        while True:
+            try:
+                return await websockets.connect(self.url)
+            except Exception as e:
+                print(f"Failed to connect to websocket: {e}")
+                await asyncio.sleep(5)
+
+    async def process_message(self, message):
+        message_data = json.loads(message)
+
+        if "topic" in message_data:
+            ohlcv = message_data["data"][0]
+            topic = message_data["topic"].split(".")
+            symbol, interval = topic[2], topic[1]
+
+            ohlcv_event = self.bybit_trading_system.parse_candle_message(symbol, interval, ohlcv)
+
+            await self.bybit_trading_system.dispatcher.dispatch(ohlcv_event)
+
+    async def send_ping(self, ws, interval):
+        while True:
+            await asyncio.sleep(interval)
+            await ws.ping()
+
+    async def process_messages(self, ws):
+        while True:
+                try:
+                    async for message in ws:
+                        await self.process_message(message)
+                except websockets.exceptions.ConnectionClosed as e:
+                    print(f"Websocket closed with code {e.code}: {e.reason}")
+                except Exception as e:
+                    print(f"Unexpected error: {e}")
+
+    async def run(self, ws_callback, ping_interval=20):
+        ws = await self.connect_to_websocket()
+        start_trading_system_task = asyncio.create_task(self.bybit_trading_system.start(lambda t: ws_callback(ws, t)))
+        ping_task = asyncio.create_task(self.send_ping(ws, interval=ping_interval))
+        message_processing_task = asyncio.create_task(self.process_messages(ws))
+
         try:
-            message = await ws.recv()
-            message_data = json.loads(message)
-
-            if "topic" in message_data:
-                ohlcv = message_data["data"][0]
-                topic = message_data["topic"].split(".")
-                symbol, interval = topic[2], topic[1]
-
-                ohlcv_event = bybit_trading_system.parse_candle_message(symbol, interval, ohlcv)
-
-                await bybit_trading_system.dispatcher.dispatch(ohlcv_event)
-
-        except websockets.exceptions.ConnectionClosed as e:
-            print(f"Websocket closed with code {e.code}: {e.reason}")
-            break
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-
+            await asyncio.gather(start_trading_system_task, ping_task, message_processing_task)
+        finally:
+            ping_task.cancel()
+            message_processing_task.cancel()
+            start_trading_system_task.cancel()
 
 async def send_ping(ws, interval):
     while True:
         await asyncio.sleep(interval)
         await ws.ping()
-
 
 async def main():
     LogJournal()
@@ -117,22 +146,14 @@ async def main():
         risk_per_trade=risk_per_trade
     )
 
-    async with websockets.connect(WSS) as ws:
-        async def ws_callback(timeframe_symbols):
-            channels = [f"kline.{INTERVALS[timeframe]}.{symbol}" for (timeframe, symbol) in timeframe_symbols]
+    ws_handler = WebSocketHandler(WSS, bybit_trading_system)
 
-            for channel in channels:
-                await ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
+    async def ws_callback(ws, timeframe_symbols):
+        channels = [f"kline.{INTERVALS[timeframe]}.{symbol}" for (timeframe, symbol) in timeframe_symbols]
 
-        start_trading_system_task = asyncio.create_task(bybit_trading_system.start(ws_callback))
-        ping_task = asyncio.create_task(send_ping(ws, interval=20))
-        message_processing_task = asyncio.create_task(process_messages(ws, bybit_trading_system))
+        for channel in channels:
+            await ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
 
-        try:
-            await asyncio.gather(start_trading_system_task, ping_task, message_processing_task)
-        finally:
-            ping_task.cancel()
-            message_processing_task.cancel()
-            start_trading_system_task.cancel()
+    await ws_handler.run(ws_callback)
 
 asyncio.run(main())
