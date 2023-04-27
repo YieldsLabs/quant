@@ -2,7 +2,7 @@ import asyncio
 import pandas as pd
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
-from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
+from core.events.portfolio import PortfolioPerformanceEvent
 
 
 class GatherJournal(AbstractEventManager):

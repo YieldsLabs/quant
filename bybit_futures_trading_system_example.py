@@ -67,7 +67,7 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 80000
+backtest_lookback = 130000
 risk_per_trade = 0.0001
 
 
@@ -134,7 +134,5 @@ async def main():
             ping_task.cancel()
             message_processing_task.cancel()
             start_trading_system_task.cancel()
-
-    await asyncio.sleep(0.01)
 
 asyncio.run(main())
