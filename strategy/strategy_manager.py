@@ -73,7 +73,7 @@ class StrategyManager(AbstractEventManager):
 
     async def process_strategies(self, strategies: List, window_events: List, event: OHLCVEvent) -> None:
         strategy_tasks = [
-            asyncio.ensure_future(self.process_strategy(strategy, window_events, event))
+            self.process_strategy(strategy, window_events, event)
             for strategy in strategies
         ]
 
