@@ -1,4 +1,5 @@
 import asyncio
+from collections import deque
 from typing import List, Any, Type
 
 import pandas as pd
@@ -12,27 +13,23 @@ from strategy.abstract_strategy import AbstractStrategy
 
 class SymbolData:
     def __init__(self, size: int):
-        self.buffer = [None] * size
-        self.current_index = 0
+        self.buffer = deque(maxlen=size)
         self.count = 0
         self.lock = asyncio.Lock()
 
     async def append(self, event):
         async with self.lock:
-            self.buffer[self.current_index] = event
-            self.current_index = (self.current_index + 1) % len(self.buffer)
-            self.count = min(self.count + 1, len(self.buffer))
+            self.count += 1
+            self.buffer.append(event)
 
     async def get_window(self):
         async with self.lock:
-            if self.count < len(self.buffer):
-                return self.buffer[:self.count]
-            return self.buffer[self.current_index:] + self.buffer[:self.current_index]
-
+            return list(self.buffer)
 
 class StrategyManager(AbstractEventManager):
     OHLCV_COLUMNS: tuple = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
     MIN_LOOKBACK = 100
+    BATCH_SIZE = 10
 
     def __init__(self, strategies_classes: List[Type[AbstractStrategy]]):
         super().__init__()
@@ -45,8 +42,6 @@ class StrategyManager(AbstractEventManager):
 
         self.poor_strategies = set()
         self.poor_strategies_lock = asyncio.Lock()
-
-        self.signal_cache = {}
 
     @register_handler(PortfolioPerformanceEvent)
     async def _on_poor_strategy(self, event: PortfolioPerformanceEvent):
@@ -73,23 +68,26 @@ class StrategyManager(AbstractEventManager):
         symbol_data = self.window_data[event_id]
 
         await symbol_data.append(event.ohlcv)
-
+        
         if symbol_data.count < self.window_size:
             return
-
+        
         window_events = await symbol_data.get_window()
 
         valid_strategies = [strategy for strategy in self.strategies if f"{event_id}{str(strategy)}" not in self.poor_strategies]
 
         await self.process_strategies(valid_strategies, window_events, event)
+            
+    async def process_strategies(self, strategies: list, window_events: list, event: OHLCVEvent) -> None:
+        strategy_batches = [strategies[i:i + self.BATCH_SIZE] for i in range(0, len(strategies), self.BATCH_SIZE)]
 
-    async def process_strategies(self, strategies: List, window_events: List, event: OHLCVEvent) -> None:
-        strategy_tasks = [
-            self.process_strategy(strategy, window_events, event)
-            for strategy in strategies
-        ]
+        for batch in strategy_batches:
+            strategy_tasks = [
+                self.process_strategy(strategy, window_events, event)
+                for strategy in batch
+            ]
 
-        await asyncio.gather(*strategy_tasks)
+            await asyncio.gather(*strategy_tasks)
 
     async def process_strategy(self, strategy: AbstractStrategy, window_events: List[Any], event: OHLCVEvent) -> None:
         strategy_name = str(strategy)
@@ -97,7 +95,6 @@ class StrategyManager(AbstractEventManager):
         lookback = strategy.lookback
 
         events_for_strategy = pd.DataFrame([data.to_dict() for data in window_events[-lookback:]], columns=self.OHLCV_COLUMNS)
-        
         entry_long_signal, entry_short_signal, stop_loss, take_profit = await asyncio.to_thread(self.calculate_signals, strategy, events_for_strategy, entry)
 
         if entry_long_signal:

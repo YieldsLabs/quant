@@ -49,10 +49,7 @@ class EngulfingZLMA(BaseStrategy):
             buy_confirmation
             and (current_row[Engulfing.bullish_column()] or current_row[Harami.bullish_column()])
             and current_row[MoneyFlowIndexAlert.buy_column()]
-            and (
-                current_row["close"]
-                >= current_row[ZeroLagEMA.NAME] * (1 - self.retracement_pct)
-            )
+            and (current_row["close"] >= current_row[ZeroLagEMA.NAME] * (1 - self.retracement_pct))
         )
 
         return buy_signal
@@ -67,10 +64,7 @@ class EngulfingZLMA(BaseStrategy):
             sell_confirmation
             and (current_row[Engulfing.bearish_column()] or current_row[Harami.bearish_column()])
             and current_row[MoneyFlowIndexAlert.sell_column()]
-            and (
-                current_row["close"]
-                <= current_row[ZeroLagEMA.NAME] * (1 + self.retracement_pct)
-            )
+            and ( current_row["close"] <= current_row[ZeroLagEMA.NAME] * (1 + self.retracement_pct))
         )
 
         return sell_signal

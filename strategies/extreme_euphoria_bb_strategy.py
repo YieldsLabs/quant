@@ -21,12 +21,10 @@ class ExtremeEuphoriaBollingerBands(BaseStrategy):
 
     def _generate_buy_signal(self, data):
         last_row = data.iloc[-1]
-        buy_signal = last_row[ExtremeEuphoria.bullish_column()] and (
-            last_row['close'] <= last_row['lower_band'])
+        buy_signal = last_row[ExtremeEuphoria.bullish_column()] and last_row["close"] <= last_row["lower_band"]
         return buy_signal
 
     def _generate_sell_signal(self, data):
         last_row = data.iloc[-1]
-        sell_signal = last_row[ExtremeEuphoria.bearish_column()] and (
-            last_row['close'] >= last_row['upper_band'])
+        sell_signal = last_row[ExtremeEuphoria.bearish_column()] and last_row["close"] >= last_row["upper_band"]
         return sell_signal

@@ -6,7 +6,7 @@ from core.events.portfolio import PortfolioPerformanceEvent
 
 
 class GatherJournal(AbstractEventManager):
-    def __init__(self, save_interval: int = 120):
+    def __init__(self, save_interval: int = 30):
         super().__init__()
         self.columns = [
             'timestamp',
