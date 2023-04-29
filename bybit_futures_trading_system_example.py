@@ -67,8 +67,9 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 130000
+backtest_lookback = 80000
 risk_per_trade = 0.0001
+
 
 class WebSocketHandler:
     def __init__(self, url, bybit_trading_system):
@@ -102,15 +103,15 @@ class WebSocketHandler:
 
     async def process_messages(self, ws):
         while True:
-                try:
-                    async for message in ws:
-                        await self.process_message(message)
-                except websockets.exceptions.ConnectionClosed as e:
-                    print(f"Websocket closed with code {e.code}: {e.reason}")
-                except Exception as e:
-                    print(f"Unexpected error: {e}")
+            try:
+                async for message in ws:
+                    await self.process_message(message)
+            except websockets.exceptions.ConnectionClosed as e:
+                print(f"Websocket closed with code {e.code}: {e.reason}")
+            except Exception as e:
+                print(f"Unexpected error: {e}")
 
-    async def run(self, ws_callback, ping_interval=20):
+    async def run(self, ws_callback, ping_interval=10):
         ws = await self.connect_to_websocket()
         start_trading_system_task = asyncio.create_task(self.bybit_trading_system.start(lambda t: ws_callback(ws, t)))
         ping_task = asyncio.create_task(self.send_ping(ws, interval=ping_interval))
@@ -123,10 +124,12 @@ class WebSocketHandler:
             message_processing_task.cancel()
             start_trading_system_task.cancel()
 
+
 async def send_ping(ws, interval):
     while True:
         await asyncio.sleep(interval)
         await ws.ping()
+
 
 async def main():
     LogJournal()
