@@ -17,6 +17,7 @@ class EvaluateRisk(Event):
     take_profit: float
     risk: float
     ohlcv: OHLCV
+    strategy: str
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 
@@ -24,5 +25,6 @@ class EvaluateRisk(Event):
 class ExitRisk(Event):
     symbol: str
     timeframe: Timeframe
+    strategy: str
     exit: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))

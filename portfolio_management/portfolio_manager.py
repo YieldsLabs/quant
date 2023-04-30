@@ -50,6 +50,7 @@ class PortfolioManager(AbstractPortfolioManager):
                 stop_loss=position.stop_loss_price,
                 take_profit=position.take_profit_price,
                 risk=self.risk_per_trade,
+                strategy=position.strategy,
                 ohlcv=event.ohlcv
             )
         )
@@ -92,12 +93,14 @@ class PortfolioManager(AbstractPortfolioManager):
             return
 
         async with self.active_positions_lock:
-            position = self.active_positions.pop(symbol, None)
+            position = self.active_positions[symbol]
 
             if position is None or not len(position.orders):
                 return
 
             position.close_position(event.exit_price)
+
+            del self.active_positions[symbol]
 
         async with self.closed_positions_lock:
             closed_key = f"{symbol}_{position.closed_timestamp}"
@@ -127,7 +130,6 @@ class PortfolioManager(AbstractPortfolioManager):
         async with self.active_positions_lock:
             position = self.create_position(position_side, account_size, trading_fee, min_position_size, price_precision, event)
             self.active_positions[event.symbol] = position
-
         await self.dispatcher.dispatch(self.create_open_position_event(position_side, event))
 
     async def handle_exit(self, event: Union[ExitLong, ExitShort, ExitRisk]):
@@ -140,6 +142,9 @@ class PortfolioManager(AbstractPortfolioManager):
             position = self.active_positions[symbol]
 
         if position is None or not len(position.orders):
+            return
+
+        if event.strategy != position.strategy:
             return
 
         if isinstance(event, ExitLong) and position.side == PositionSide.LONG:

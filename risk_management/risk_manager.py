@@ -17,7 +17,7 @@ class RiskManager(AbstractRiskManager):
 
     @register_handler(EvaluateRisk)
     async def _on_check_exit_conditions(self, event: EvaluateRisk):
-        symbol, timeframe, position_side, position_size, entry_price, take_profit_price, stop_loss_price, risk_per_trade, ohlcv = self._unpack_event(event)
+        symbol, timeframe, position_side, position_size, entry_price, take_profit_price, stop_loss_price, risk_per_trade, ohlcv, strategy = self._unpack_event(event)
 
         async with self.stop_loss_lock:
             if symbol not in self.stop_loss_adjustment_count:
@@ -34,7 +34,7 @@ class RiskManager(AbstractRiskManager):
 
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
 
-        await self.dispatcher.dispatch(ExitRisk(symbol=symbol, timeframe=timeframe, exit=exit_price))
+        await self.dispatcher.dispatch(ExitRisk(symbol=symbol, timeframe=timeframe, strategy=strategy, exit=exit_price))
 
     def _initialize_symbol_data(self, symbol):
         self.trailing_stop_loss_prices[symbol] = {PositionSide.LONG: None, PositionSide.SHORT: None}
@@ -48,7 +48,7 @@ class RiskManager(AbstractRiskManager):
         self.stop_loss_adjustment_count[symbol][position_side] = 0
 
     def _unpack_event(self, event):
-        return event.symbol, event.timeframe, event.side, event.size, event.entry, event.take_profit, event.stop_loss, event.risk, event.ohlcv
+        return event.symbol, event.timeframe, event.side, event.size, event.entry, event.take_profit, event.stop_loss, event.risk, event.ohlcv, event.strategy
 
     def _should_exit(self, position_side, stop_loss_price, take_profit_price, low, high):
         if position_side == PositionSide.LONG:
