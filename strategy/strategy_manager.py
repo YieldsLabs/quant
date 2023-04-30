@@ -9,6 +9,7 @@ from core.events.ohlcv import OHLCVEvent
 from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
 from core.events.strategy import GoLong, GoShort
 from strategy.abstract_strategy import AbstractStrategy
+from strategy.kmeans_inference import KMeansInference
 
 
 class SymbolData:
@@ -33,8 +34,10 @@ class StrategyManager(AbstractEventManager):
     OHLCV_COLUMNS: tuple = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
     MIN_LOOKBACK = 100
     BATCH_SIZE = 10
+    TOTAL_TRADES_THRESHOLD = 30
+    POOR_STRATEGY_CLUSTER = 1
 
-    def __init__(self, strategies_classes: List[Type[AbstractStrategy]]):
+    def __init__(self, strategies_classes: List[Type[AbstractStrategy]], inference: Type[KMeansInference]):
         super().__init__()
 
         self.strategies = [cls() for cls in strategies_classes]
@@ -42,6 +45,8 @@ class StrategyManager(AbstractEventManager):
 
         self.window_data = {}
         self.window_data_lock = asyncio.Lock()
+        
+        self.inference = inference
 
         self.poor_strategies = set()
         self.poor_strategies_lock = asyncio.Lock()
@@ -72,20 +77,20 @@ class StrategyManager(AbstractEventManager):
 
         await symbol_data.append(event.ohlcv)
 
-        if symbol_data.count < self.window_size:
-            return
+        if symbol_data.count >= self.window_size:
+            await self.process_strategies(symbol_data, event)
 
+    async def process_strategies(self, symbol_data: SymbolData, event: OHLCVEvent) -> None:
+        event_id = self.get_event_id(event)
+        
         valid_strategies = [strategy for strategy in self.strategies if f"{event_id}{str(strategy)}" not in self.poor_strategies]
 
         if not len(valid_strategies):
             return
+        
+        strategy_batches = [valid_strategies[i:i + self.BATCH_SIZE] for i in range(0, len(valid_strategies), self.BATCH_SIZE)]
 
         window_events = await symbol_data.get_window()
-
-        await self.process_strategies(valid_strategies, window_events, event)
-
-    async def process_strategies(self, strategies: list, window_events: list, event: OHLCVEvent) -> None:
-        strategy_batches = [strategies[i:i + self.BATCH_SIZE] for i in range(0, len(strategies), self.BATCH_SIZE)]
 
         for batch in strategy_batches:
             strategy_tasks = [
@@ -121,4 +126,19 @@ class StrategyManager(AbstractEventManager):
         return entry_long_signal, entry_short_signal, stop_loss, take_profit
 
     def _is_poor_strategy(self, performance: PortfolioPerformance):
-        return False
+        if performance.total_trades < self.TOTAL_TRADES_THRESHOLD:
+            return False
+        
+        features = [
+            performance.max_drawdown,
+            performance.average_pnl,
+            performance.risk_of_ruin,
+            performance.profit_factor,
+            performance.sharpe_ratio,
+            performance.sortino_ratio,
+            performance.calmar_ratio,
+            performance.cvar,
+            performance.ulcer_index,
+        ]
+
+        return self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER

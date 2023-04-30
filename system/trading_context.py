@@ -7,11 +7,12 @@ from optimization.backtest import Backtest
 from portfolio_management.portfolio_manager import PortfolioManager
 from risk_management.risk_manager import RiskManager
 from strategy.abstract_strategy import AbstractStrategy
+from strategy.kmeans_inference import KMeansInference
 from strategy.strategy_manager import StrategyManager
 
 
 class TradingContext:
-    def __init__(self, datasource: Type[AbstractDatasource], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], strategies: List[AbstractStrategy], symbols: List[str], timeframes: List[Timeframe], lookback: int, risk_per_trade: float, subscribe: callable):
+    def __init__(self, datasource: Type[AbstractDatasource], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], inference: Type[KMeansInference], strategies: List[AbstractStrategy], symbols: List[str], timeframes: List[Timeframe], lookback: int, risk_per_trade: float, subscribe: callable):
         self.datasource = datasource
         self.broker = broker
         self.analytics = analytics
@@ -25,4 +26,4 @@ class TradingContext:
         self.portfolio_manager = PortfolioManager(datasource, analytics, risk_per_trade)
         self.risk_manager = RiskManager(trailing_stop_loss=False)
         self.backtest = Backtest(datasource)
-        self.strategy_manager = StrategyManager(strategies)
+        self.strategy_manager = StrategyManager(strategies, inference)

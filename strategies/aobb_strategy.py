@@ -1,7 +1,6 @@
 from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 from strategy.base_strategy import BaseStrategy
-from ta.overlap.zlma import ZeroLagEMA
 from ta.volatility.bbands import BollingerBands
 from ta.volume.mfi import MoneyFlowIndex
 from ta.momentum.aosc import AwesomeOscillator

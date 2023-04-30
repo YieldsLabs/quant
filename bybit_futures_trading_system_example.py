@@ -20,6 +20,7 @@ from strategies.engulfing_zlema_strategy import EngulfingZLMA
 from strategies.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
 from strategies.fvg_strategy import FairValueGapZLMA
 from strategies.kangaroo_tail_strategy import KangarooTailZLMA
+from strategy.kmeans_inference import KMeansInference
 from system.trading_system import TradingContext, TradingSystem
 
 load_dotenv()
@@ -174,12 +175,14 @@ async def main():
 
     analytics = StrategyPerformance(risk_per_trade)
     datasource = BybitDataSource(broker)
+    inference = KMeansInference('./strategy/model/kmeans_model.pkl', './strategy/model/scaler.pkl')
     ws_handler = WebSocketHandler(WSS)
 
     context = TradingContext(
         datasource,
         broker,
         analytics,
+        inference,
         strategies,
         symbols,
         timeframes,
