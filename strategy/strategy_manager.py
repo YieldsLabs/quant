@@ -45,7 +45,7 @@ class StrategyManager(AbstractEventManager):
 
         self.window_data = {}
         self.window_data_lock = asyncio.Lock()
-        
+
         self.inference = inference
 
         self.poor_strategies = set()
@@ -82,12 +82,12 @@ class StrategyManager(AbstractEventManager):
 
     async def process_strategies(self, symbol_data: SymbolData, event: OHLCVEvent) -> None:
         event_id = self.get_event_id(event)
-        
+
         valid_strategies = [strategy for strategy in self.strategies if f"{event_id}{str(strategy)}" not in self.poor_strategies]
 
         if not len(valid_strategies):
             return
-        
+
         strategy_batches = [valid_strategies[i:i + self.BATCH_SIZE] for i in range(0, len(valid_strategies), self.BATCH_SIZE)]
 
         window_events = await symbol_data.get_window()
@@ -128,7 +128,7 @@ class StrategyManager(AbstractEventManager):
     def _is_poor_strategy(self, performance: PortfolioPerformance):
         if performance.total_trades < self.TOTAL_TRADES_THRESHOLD:
             return False
-        
+
         features = [
             performance.max_drawdown,
             performance.average_pnl,

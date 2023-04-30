@@ -25,7 +25,7 @@ class PositionSizer:
             position_size = 1
 
         adjusted_position_size = max(position_size, min_position_size)
-        
+
         rounded_position_size = round(adjusted_position_size, price_precision)
 
         return rounded_position_size

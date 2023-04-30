@@ -156,11 +156,13 @@ class WebSocketHandler(AbstractEventManager):
             ohlcv=ohlcv
         )
 
+
 async def subscribe(ws, timeframe_symbols):
     channels = [f"kline.{INTERVALS[timeframe]}.{symbol}" for (timeframe, symbol) in timeframe_symbols]
 
     for channel in channels:
         await ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
+
 
 async def main():
     LogJournal()

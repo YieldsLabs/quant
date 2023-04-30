@@ -11,6 +11,7 @@ class TradingState(Enum):
     TRADING = 2
     STOPPED = 3
 
+
 class TradingSystem(AbstractSystem):
     def __init__(self, context: TradingContext):
         super().__init__()

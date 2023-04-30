@@ -13,7 +13,7 @@ class FairValueGapZLMA(BaseStrategy):
         indicators = [
             (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
             (MoneyFlowIndexAlert(period=mfi_period, overbought=overbought, oversold=oversold),
-            (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
+             (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
             (FairValueGap(sma_period), FairValueGap.NAME)
         ]
         super().__init__(
