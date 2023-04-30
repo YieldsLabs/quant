@@ -1,6 +1,6 @@
 import asyncio
 from collections import deque
-from typing import List, Any, Type
+from typing import List, Type
 
 import pandas as pd
 from core.abstract_event_manager import AbstractEventManager

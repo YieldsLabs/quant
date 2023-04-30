@@ -56,10 +56,7 @@ class FairValueGapZLMA(BaseStrategy):
         upper_band = data['upper_band']
 
         cross_upper_band = close >= upper_band
-
-        re_enter_band = cross_upper_band.shift(1) & (close < upper_band)
-
-        buy_exit_signal = re_enter_band
+        buy_exit_signal = cross_upper_band.shift(1) & (close < upper_band)
 
         return buy_exit_signal
 
@@ -68,9 +65,6 @@ class FairValueGapZLMA(BaseStrategy):
         lower_band = data['lower_band']
 
         cross_lower_band = close <= lower_band
-
-        re_enter_band = cross_lower_band.shift(1) & (close > lower_band)
-
-        sell_exit_signal = re_enter_band
+        sell_exit_signal = cross_lower_band.shift(1) & (close > lower_band)
 
         return sell_exit_signal

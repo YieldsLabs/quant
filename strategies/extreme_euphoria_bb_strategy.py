@@ -52,10 +52,9 @@ class ExtremeEuphoriaBollingerBands(BaseStrategy):
         close = data['close']
         lower_band = data['lower_band']
         bullish_column = data[ExtremeEuphoria.bullish_column()]
+
         cross_lower_band = close <= lower_band
-
         re_enter_band = cross_lower_band.shift(1) & (close > lower_band)
-
         sell_exit_signal = re_enter_band | bullish_column
 
         return sell_exit_signal

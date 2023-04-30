@@ -43,9 +43,9 @@ class KangarooTailZLMA(BaseStrategy):
         close = data['close']
         upper_band = data['upper_band']
         bearish_column = data[KangarooTail.bearish_column()]
+
         cross_upper_band = close >= upper_band
         re_enter_band = cross_upper_band.shift(1) & (close < upper_band)
-
         buy_exit_signal = re_enter_band | bearish_column
 
         return buy_exit_signal
@@ -54,10 +54,9 @@ class KangarooTailZLMA(BaseStrategy):
         close = data['close']
         lower_band = data['lower_band']
         bullish_column = data[KangarooTail.bullish_column()]
+
         cross_lower_band = close <= lower_band
-
         re_enter_band = cross_lower_band.shift(1) & (close > lower_band)
-
         sell_exit_signal = re_enter_band | bullish_column
 
         return sell_exit_signal
