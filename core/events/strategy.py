@@ -23,17 +23,21 @@ class StrategyExitEvent(Event):
     exit: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
+
 @dataclass(frozen=True)
 class GoLong(StrategyEntryEvent):
     pass
+
 
 @dataclass(frozen=True)
 class GoShort(StrategyEntryEvent):
     pass
 
+
 @dataclass(frozen=True)
 class ExitLong(StrategyExitEvent):
     pass
+
 
 @dataclass(frozen=True)
 class ExitShort(StrategyExitEvent):

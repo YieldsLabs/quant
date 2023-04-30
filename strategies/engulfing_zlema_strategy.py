@@ -48,7 +48,7 @@ class EngulfingZLMA(BaseStrategy):
         sell_signal = sell_confirmation & bearish_column & mfi_sell_column & (close <= zlema * (1 + self.retracement_pct))
 
         return sell_signal
-    
+
     def _generate_buy_exit(self, data):
         close = data['close']
         zlema = data[ZeroLagEMA.NAME]
@@ -57,7 +57,7 @@ class EngulfingZLMA(BaseStrategy):
         buy_exit_signal = (close >= zlema) | bearish_column
 
         return buy_exit_signal
-    
+
     def _generate_sell_exit(self, data):
         close = data['close']
         zlema = data[ZeroLagEMA.NAME]

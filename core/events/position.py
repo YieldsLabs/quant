@@ -66,12 +66,14 @@ class LongPositionOpened(PositionEvent):
 class ShortPositionOpened(PositionEvent):
     pass
 
+
 @dataclass(frozen=True)
 class PositionReadyToClose(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+
 
 @dataclass(frozen=True)
 class PositionClosed(Event):

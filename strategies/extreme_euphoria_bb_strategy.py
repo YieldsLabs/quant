@@ -36,7 +36,7 @@ class ExtremeEuphoriaBollingerBands(BaseStrategy):
         sell_signal = bearish_column & (close >= upper_band)
 
         return sell_signal
-    
+
     def _generate_buy_exit(self, data):
         close = data['close']
         middle_band = data['middle_band']

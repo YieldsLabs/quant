@@ -36,21 +36,21 @@ class KangarooTailZLMA(BaseStrategy):
         sell_signal = bearish_column & (close < zlema)
 
         return sell_signal
-    
+
     def _generate_buy_exit(self, data):
         bearish_column = data[KangarooTail.bearish_column()]
         close = data['close']
         zlema = data[ZeroLagEMA.NAME]
-        
+
         buy_exit_signal = (close < zlema) | bearish_column
 
         return buy_exit_signal
-    
+
     def _generate_sell_exit(self, data):
         bullish_column = data[KangarooTail.bullish_column()]
         close = data['close']
         zlema = data[ZeroLagEMA.NAME]
-        
+
         sell_exit_signal = (close > zlema) | bullish_column
 
         return sell_exit_signal

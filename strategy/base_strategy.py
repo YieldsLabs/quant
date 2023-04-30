@@ -58,7 +58,7 @@ class BaseStrategy(AbstractStrategy):
     def exit(self, ohlcv):
         if len(ohlcv) < self.lookback:
             return False, False
-        
+
         data = self._add_indicators_and_patterns(ohlcv)
 
         buy_exit = self._generate_buy_exit(data)
@@ -79,7 +79,7 @@ class BaseStrategy(AbstractStrategy):
 
     def _generate_sell_signal(self, data):
         raise NotImplementedError
-    
+
     def _generate_buy_exit(self, data):
         raise NotImplementedError
 
