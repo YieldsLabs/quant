@@ -31,10 +31,7 @@ class EngulfingZLMA(BaseStrategy):
         bullish_column = data[Engulfing.bullish_column()] | data[Harami.bullish_column()]
         mfi_buy_column = data[MoneyFlowIndexAlert.buy_column()]
 
-        close_diff = abs(close.shift() - zlema)
-        sma_slow_ratio = close_diff / zlema
-
-        buy_confirmation = (close.shift() > zlema) & (sma_slow_ratio <= self.tolerance)
+        buy_confirmation = (close.shift() > zlema) & (abs(close.shift() - zlema) / zlema <= self.tolerance)
 
         buy_signal = buy_confirmation & bullish_column & mfi_buy_column & (close >= zlema * (1 - self.retracement_pct))
 
@@ -46,11 +43,26 @@ class EngulfingZLMA(BaseStrategy):
         bearish_column = data[Engulfing.bearish_column()] | data[Harami.bearish_column()]
         mfi_sell_column = data[MoneyFlowIndexAlert.sell_column()]
 
-        close_diff = abs(close.shift() - zlema)
-        sma_slow_ratio = close_diff / zlema
-
-        sell_confirmation = (close.shift() < zlema) & (sma_slow_ratio <= self.tolerance)
+        sell_confirmation = (close.shift() < zlema) & (abs(close.shift() - zlema) / zlema <= self.tolerance)
 
         sell_signal = sell_confirmation & bearish_column & mfi_sell_column & (close <= zlema * (1 + self.retracement_pct))
 
         return sell_signal
+    
+    def _generate_buy_exit(self, data):
+        close = data['close']
+        zlema = data[ZeroLagEMA.NAME]
+        bearish_column = data[Engulfing.bearish_column()] | data[Harami.bearish_column()]
+
+        buy_exit_signal = (close >= zlema) | bearish_column
+
+        return buy_exit_signal
+    
+    def _generate_sell_exit(self, data):
+        close = data['close']
+        zlema = data[ZeroLagEMA.NAME]
+        bullish_column = data[Engulfing.bullish_column()] | data[Harami.bullish_column()]
+
+        sell_exit_signal = (close <= zlema) | bullish_column
+
+        return sell_exit_signal

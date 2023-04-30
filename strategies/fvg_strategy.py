@@ -13,7 +13,7 @@ class FairValueGapZLMA(BaseStrategy):
         indicators = [
             (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
             (MoneyFlowIndexAlert(period=mfi_period, overbought=overbought, oversold=oversold),
-             (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
+                (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
             (FairValueGap(sma_period), FairValueGap.NAME)
         ]
         super().__init__(
@@ -47,3 +47,19 @@ class FairValueGapZLMA(BaseStrategy):
         sell_signal = sell_confirmation & (fair_value_gap_column > self.fair_value) & mfi_sell_column
 
         return sell_signal
+    
+    def _generate_buy_exit(self, data):
+        close = data['close']
+        fair_value_gap_column = data[FairValueGap.NAME]
+        
+        buy_exit_signal = (close > close.shift()) & (fair_value_gap_column >= -self.fair_value)
+        
+        return buy_exit_signal
+
+    def _generate_sell_exit(self, data):
+        close = data['close']
+        fair_value_gap_column = data[FairValueGap.NAME]
+        
+        sell_exit_signal = (close < close.shift()) & (fair_value_gap_column <= self.fair_value)
+        
+        return sell_exit_signal

@@ -56,13 +56,20 @@ class BaseStrategy(AbstractStrategy):
         return buy_signal.iloc[-1], sell_signal.iloc[-1]
 
     def exit(self, ohlcv):
-        return False, False
+        if len(ohlcv) < self.lookback:
+            return False, False
+        
+        data = self._add_indicators_and_patterns(ohlcv)
+
+        buy_exit = self._generate_buy_exit(data)
+        sell_exit = self._generate_sell_exit(data)
+
+        return buy_exit.iloc[-1], sell_exit.iloc[-1]
 
     def stop_loss_and_take_profit(self, entry, ohlcv):
         stop_loss_long, stop_loss_short = self.stop_loss_finder.next(entry, ohlcv)
 
         take_profit_long = self.take_profit_finder.next(entry, stop_loss_long)
-
         take_profit_short = self.take_profit_finder.next(entry, stop_loss_short)
 
         return ((stop_loss_long, take_profit_long), (stop_loss_short, take_profit_short))
@@ -71,6 +78,12 @@ class BaseStrategy(AbstractStrategy):
         raise NotImplementedError
 
     def _generate_sell_signal(self, data):
+        raise NotImplementedError
+    
+    def _generate_buy_exit(self, data):
+        raise NotImplementedError
+
+    def _generate_sell_exit(self, data):
         raise NotImplementedError
 
     def __str__(self):

@@ -52,3 +52,21 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
         sell_signal = price_change & ao_change & price_touch_upper_band & overbought
 
         return sell_signal
+
+    def _generate_buy_exit(self, data):
+        close = data['close']
+        middle_band = data['middle_band']
+        mfi = data[MoneyFlowIndex.NAME]
+
+        buy_exit_signal = (close >= middle_band) & (mfi >= self.overbought)
+
+        return buy_exit_signal
+
+    def _generate_sell_exit(self, data):
+        close = data['close']
+        middle_band = data['middle_band']
+        mfi = data[MoneyFlowIndex.NAME]
+
+        sell_exit_signal = (close <= middle_band) & (mfi <= self.oversold)
+
+        return sell_exit_signal
