@@ -24,7 +24,7 @@ class EventDispatcher:
 
         return cls.__instance
 
-    def __init__(self, num_workers: int = os.cpu_count() + 5, priority_groups: int = 5):
+    def __init__(self, num_workers: int = os.cpu_count() + 1, priority_groups: int = 5):
         if not hasattr(self, "_worker_tasks"):
             self._initialize_worker_tasks(num_workers, priority_groups)
             self._initialize_load_balancer(priority_groups)

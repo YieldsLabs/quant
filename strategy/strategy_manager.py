@@ -14,17 +14,20 @@ from strategy.abstract_strategy import AbstractStrategy
 class SymbolData:
     def __init__(self, size: int):
         self.buffer = deque(maxlen=size)
-        self.count = 0
         self.lock = asyncio.Lock()
 
     async def append(self, event):
         async with self.lock:
-            self.count += 1
             self.buffer.append(event)
 
     async def get_window(self):
         async with self.lock:
             return list(self.buffer)
+
+    @property
+    def count(self):
+        return len(self.buffer)
+
 
 class StrategyManager(AbstractEventManager):
     OHLCV_COLUMNS: tuple = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
@@ -68,16 +71,19 @@ class StrategyManager(AbstractEventManager):
         symbol_data = self.window_data[event_id]
 
         await symbol_data.append(event.ohlcv)
-        
+
         if symbol_data.count < self.window_size:
             return
-        
-        window_events = await symbol_data.get_window()
 
         valid_strategies = [strategy for strategy in self.strategies if f"{event_id}{str(strategy)}" not in self.poor_strategies]
 
+        if not len(valid_strategies):
+            return
+
+        window_events = await symbol_data.get_window()
+
         await self.process_strategies(valid_strategies, window_events, event)
-            
+
     async def process_strategies(self, strategies: list, window_events: list, event: OHLCVEvent) -> None:
         strategy_batches = [strategies[i:i + self.BATCH_SIZE] for i in range(0, len(strategies), self.BATCH_SIZE)]
 
