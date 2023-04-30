@@ -21,13 +21,19 @@ class BollingerBandsEngulfing(BaseStrategy):
         )
 
     def _generate_buy_signal(self, data):
-        return (
-            data['close'].iloc[-1] <= data['lower_band'].iloc[-1]
-            and data[Engulfing.bullish_column()].iloc[-1]
-        )
+        close = data['close']
+        lower_band = data['lower_band']
+        bullish_column = data[Engulfing.bullish_column()]
+
+        buy_signal = (close <= lower_band) & bullish_column
+
+        return buy_signal
 
     def _generate_sell_signal(self, data):
-        return (
-            data['close'].iloc[-1] >= data['upper_band'].iloc[-1]
-            and data[Engulfing.bearish_column()].iloc[-1]
-        )
+        close = data['close']
+        upper_band = data['upper_band']
+        bearish_column = data[Engulfing.bearish_column()]
+
+        sell_signal = (close >= upper_band) & bearish_column
+
+        return sell_signal

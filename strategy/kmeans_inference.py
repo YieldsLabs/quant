@@ -5,8 +5,6 @@ from sklearn.preprocessing import StandardScaler
 
 
 class KMeansInference:
-    POOR_CLUSTER = 1
-
     def __init__(self, model_path: str, scaler_path: str):
         self.model = self.load_model(model_path)
         self.scaler = self.load_scaler(scaler_path)

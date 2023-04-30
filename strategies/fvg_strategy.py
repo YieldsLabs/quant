@@ -24,35 +24,26 @@ class FairValueGapZLMA(BaseStrategy):
         self.fair_value = fair_value
         self.tolerance = tolerance
 
-    def _check_confirmation_candle(self, current_row, previous_row):
-        buy_confirmation = (
-            previous_row['close'] > current_row[ZeroLagEMA.NAME]
-            and abs(previous_row['close'] - current_row[ZeroLagEMA.NAME]) / current_row[ZeroLagEMA.NAME] <= self.tolerance
-        )
-
-        sell_confirmation = (
-            previous_row['close'] < current_row[ZeroLagEMA.NAME]
-            and abs(previous_row['close'] - current_row[ZeroLagEMA.NAME]) / current_row[ZeroLagEMA.NAME] <= self.tolerance
-        )
-
-        return buy_confirmation, sell_confirmation
-
     def _generate_buy_signal(self, data):
-        buy_confirmation, _ = self._check_confirmation_candle(data.iloc[-1], data.iloc[-2])
+        close = data['close']
+        zlema = data[ZeroLagEMA.NAME]
+        mfi_buy_column = data[MoneyFlowIndexAlert.buy_column()]
+        fair_value_gap_column = data[FairValueGap.NAME]
 
-        buy_signal = (
-            data.iloc[-1, data.columns.get_loc(FairValueGap.NAME)] < -self.fair_value
-            and buy_confirmation
-            and data.iloc[-1, data.columns.get_loc(MoneyFlowIndexAlert.buy_column())]
-        )
+        buy_confirmation = (close.shift() > zlema) & (abs(close.shift() - zlema) / zlema <= self.tolerance)
+
+        buy_signal = buy_confirmation & (fair_value_gap_column < -self.fair_value) & mfi_buy_column
+
         return buy_signal
 
     def _generate_sell_signal(self, data):
-        _, sell_confirmation = self._check_confirmation_candle(data.iloc[-1], data.iloc[-2])
+        close = data['close']
+        zlema = data[ZeroLagEMA.NAME]
+        mfi_sell_column = data[MoneyFlowIndexAlert.sell_column()]
+        fair_value_gap_column = data[FairValueGap.NAME]
 
-        sell_signal = (
-            data.iloc[-1, data.columns.get_loc(FairValueGap.NAME)] > self.fair_value
-            and sell_confirmation
-            and data.iloc[-1, data.columns.get_loc(MoneyFlowIndexAlert.sell_column())]
-        )
+        sell_confirmation = (close.shift() < zlema) & (abs(close.shift() - zlema) / zlema <= self.tolerance)
+
+        sell_signal = sell_confirmation & (fair_value_gap_column > self.fair_value) & mfi_sell_column
+
         return sell_signal

@@ -20,21 +20,19 @@ class KangarooTailZLMA(BaseStrategy):
         )
 
     def _generate_buy_signal(self, data):
-        current_row = data.iloc[-1]
+        bullish_column = data[KangarooTail.bullish_column()]
+        close = data['close']
+        zlema = data[ZeroLagEMA.NAME]
 
-        buy_signal = (
-            current_row[KangarooTail.bullish_column()]
-            and current_row['close'] > current_row[ZeroLagEMA.NAME]
-        )
+        buy_signal = bullish_column & (close > zlema)
 
         return buy_signal
 
     def _generate_sell_signal(self, data):
-        current_row = data.iloc[-1]
+        bearish_column = data[KangarooTail.bearish_column()]
+        close = data['close']
+        zlema = data[ZeroLagEMA.NAME]
 
-        sell_signal = (
-            current_row[KangarooTail.bearish_column()]
-            and current_row['close'] < current_row[ZeroLagEMA.NAME]
-        )
+        sell_signal = bearish_column & (close < zlema)
 
         return sell_signal

@@ -53,7 +53,7 @@ class BaseStrategy(AbstractStrategy):
         buy_signal = self._generate_buy_signal(data)
         sell_signal = self._generate_sell_signal(data)
 
-        return buy_signal, sell_signal
+        return buy_signal.iloc[-1], sell_signal.iloc[-1]
 
     def exit(self, ohlcv):
         return False, False

@@ -34,7 +34,9 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
         price_touch_lower_band = close <= lower_band
         oversold = mfi <= self.oversold
 
-        return price_change.iloc[-1] and ao_change.iloc[-1] and price_touch_lower_band.iloc[-1] and oversold.iloc[-1]
+        buy_signal = price_change & ao_change & price_touch_lower_band & oversold
+
+        return buy_signal
 
     def _generate_sell_signal(self, data):
         close = data['close']
@@ -47,4 +49,6 @@ class AwesomeOscillatorBollingerBands(BaseStrategy):
         price_touch_upper_band = close >= upper_band
         overbought = mfi >= self.overbought
 
-        return price_change.iloc[-1] and ao_change.iloc[-1] and price_touch_upper_band.iloc[-1] and overbought.iloc[-1]
+        sell_signal = price_change & ao_change & price_touch_upper_band & overbought
+
+        return sell_signal

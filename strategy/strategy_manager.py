@@ -141,4 +141,7 @@ class StrategyManager(AbstractEventManager):
             performance.ulcer_index,
         ]
 
-        return self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER
+        return (
+            self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER
+            and performance.total_pnl < 0
+        )
