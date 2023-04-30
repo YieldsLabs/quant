@@ -21,7 +21,7 @@ class StrategyExitEvent(Event):
     timeframe: Timeframe
     strategy: str
     exit: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 
 @dataclass(frozen=True)

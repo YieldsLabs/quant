@@ -34,7 +34,7 @@ class RiskManager(AbstractRiskManager):
 
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
 
-        await self.dispatcher.dispatch(ExitRisk(symbol=symbol, timeframe=timeframe, exit_price=exit_price))
+        await self.dispatcher.dispatch(ExitRisk(symbol=symbol, timeframe=timeframe, exit=exit_price))
 
     def _initialize_symbol_data(self, symbol):
         self.trailing_stop_loss_prices[symbol] = {PositionSide.LONG: None, PositionSide.SHORT: None}

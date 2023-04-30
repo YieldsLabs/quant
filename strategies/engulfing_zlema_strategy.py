@@ -1,3 +1,4 @@
+from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 from risk_management.stop_loss.low_high_stop_loss_finder import LowHighStopLossFinder
 from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 from strategy.base_strategy import BaseStrategy
@@ -5,22 +6,24 @@ from ta.alerts.mfi_alerts import MoneyFlowIndexAlert
 from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.engulfing import Engulfing
 from ta.patterns.harami import Harami
+from ta.volatility.bbands import BollingerBands
 
 
 class EngulfingZLMA(BaseStrategy):
     NAME = "EZLMA"
 
-    def __init__(self, slow_sma_period=100, oversold=20, overbought=80, tolerance=0.002, retracement_pct=0.05, risk_reward_ratio=1.5):
+    def __init__(self, slow_sma_period=100, oversold=20, overbought=80, tolerance=0.002, retracement_pct=0.05, atr_multi=1.3, risk_reward_ratio=1.5):
         indicators = [
             (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
             (MoneyFlowIndexAlert(overbought, oversold), (MoneyFlowIndexAlert.buy_column(), MoneyFlowIndexAlert.sell_column())),
             (Engulfing(), (Engulfing.bullish_column(), Engulfing.bearish_column())),
             (Harami(), (Harami.bullish_column(), Harami.bearish_column())),
+            (BollingerBands(), ('upper_band', 'middle_band', 'lower_band')),
         ]
         super().__init__(
             indicators,
-            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
-            LowHighStopLossFinder()
+            RiskRewardTakeProfitFinder(risk_reward_ratio),
+            ATRStopLossFinder(atr_multi=atr_multi)
         )
         self.tolerance = tolerance
         self.retracement_pct = retracement_pct
@@ -51,18 +54,24 @@ class EngulfingZLMA(BaseStrategy):
 
     def _generate_buy_exit(self, data):
         close = data['close']
-        zlema = data[ZeroLagEMA.NAME]
-        bearish_column = data[Engulfing.bearish_column()] | data[Harami.bearish_column()]
+        upper_band = data['upper_band']
 
-        buy_exit_signal = (close >= zlema) | bearish_column
+        cross_upper_band = close >= upper_band
+
+        re_enter_band = cross_upper_band.shift(1) & (close < upper_band)
+
+        buy_exit_signal = re_enter_band
 
         return buy_exit_signal
 
     def _generate_sell_exit(self, data):
         close = data['close']
-        zlema = data[ZeroLagEMA.NAME]
-        bullish_column = data[Engulfing.bullish_column()] | data[Harami.bullish_column()]
+        lower_band = data['lower_band']
 
-        sell_exit_signal = (close <= zlema) | bullish_column
+        cross_lower_band = close <= lower_band
+
+        re_enter_band = cross_lower_band.shift(1) & (close > lower_band)
+
+        sell_exit_signal = re_enter_band
 
         return sell_exit_signal

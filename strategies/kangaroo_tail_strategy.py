@@ -3,15 +3,17 @@ from risk_management.take_profit.risk_reward_take_profit_finder import RiskRewar
 from strategy.base_strategy import BaseStrategy
 from ta.overlap.zlma import ZeroLagEMA
 from ta.patterns.kangaroo_tail import KangarooTail
+from ta.volatility.bbands import BollingerBands
 
 
 class KangarooTailZLMA(BaseStrategy):
     NAME = "KTZLMA"
 
-    def __init__(self, slow_sma_period=100, lookback=200, risk_reward_ratio=1.5):
+    def __init__(self, slow_sma_period=100, lookback=200, risk_reward_ratio=3):
         indicators = [
             (ZeroLagEMA(slow_sma_period), ZeroLagEMA.NAME),
-            (KangarooTail(lookback), (KangarooTail.bullish_column(), KangarooTail.bearish_column()))
+            (KangarooTail(lookback), (KangarooTail.bullish_column(), KangarooTail.bearish_column())),
+            (BollingerBands(), ('upper_band', 'middle_band', 'lower_band')),
         ]
         super().__init__(
             indicators,
@@ -38,19 +40,24 @@ class KangarooTailZLMA(BaseStrategy):
         return sell_signal
 
     def _generate_buy_exit(self, data):
-        bearish_column = data[KangarooTail.bearish_column()]
         close = data['close']
-        zlema = data[ZeroLagEMA.NAME]
+        upper_band = data['upper_band']
+        bearish_column = data[KangarooTail.bearish_column()]
+        cross_upper_band = close >= upper_band
+        re_enter_band = cross_upper_band.shift(1) & (close < upper_band)
 
-        buy_exit_signal = (close < zlema) | bearish_column
+        buy_exit_signal = re_enter_band | bearish_column
 
         return buy_exit_signal
 
     def _generate_sell_exit(self, data):
-        bullish_column = data[KangarooTail.bullish_column()]
         close = data['close']
-        zlema = data[ZeroLagEMA.NAME]
+        lower_band = data['lower_band']
+        bullish_column = data[KangarooTail.bullish_column()]
+        cross_lower_band = close <= lower_band
 
-        sell_exit_signal = (close > zlema) | bullish_column
+        re_enter_band = cross_lower_band.shift(1) & (close > lower_band)
+
+        sell_exit_signal = re_enter_band | bullish_column
 
         return sell_exit_signal

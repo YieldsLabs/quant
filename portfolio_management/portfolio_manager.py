@@ -94,7 +94,7 @@ class PortfolioManager(AbstractPortfolioManager):
         async with self.active_positions_lock:
             position = self.active_positions.pop(symbol, None)
 
-            if position is None:
+            if position is None or not len(position.orders):
                 return
 
             position.close_position(event.exit_price)
@@ -131,10 +131,23 @@ class PortfolioManager(AbstractPortfolioManager):
         await self.dispatcher.dispatch(self.create_open_position_event(position_side, event))
 
     async def handle_exit(self, event: Union[ExitLong, ExitShort, ExitRisk]):
-        if event.symbol not in self.active_positions:
+        symbol = event.symbol
+
+        if symbol not in self.active_positions:
             return
 
-        await self.dispatcher.dispatch(PositionReadyToClose(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit))
+        async with self.active_positions_lock:
+            position = self.active_positions[symbol]
+
+        if position is None or not len(position.orders):
+            return
+
+        if isinstance(event, ExitLong) and position.side == PositionSide.LONG:
+            await self.dispatcher.dispatch(PositionReadyToClose(symbol=symbol, timeframe=event.timeframe, exit_price=event.exit))
+        elif isinstance(event, ExitShort) and position.side == PositionSide.SHORT:
+            await self.dispatcher.dispatch(PositionReadyToClose(symbol=symbol, timeframe=event.timeframe, exit_price=event.exit))
+        elif isinstance(event, ExitRisk):
+            await self.dispatcher.dispatch(PositionReadyToClose(symbol=symbol, timeframe=event.timeframe, exit_price=event.exit))
 
     def create_position(self, position_side, account_size, trading_fee, min_position_size, price_precision, event: Union[GoLong, GoShort]) -> Position:
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
