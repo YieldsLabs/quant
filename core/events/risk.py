@@ -1,0 +1,28 @@
+from dataclasses import dataclass, field
+from .base_event import Event, EventMeta
+from .ohlcv import OHLCV
+from .position import PositionSide
+
+from ..timeframe import Timeframe
+
+
+@dataclass(frozen=True)
+class EvaluateRisk(Event):
+    symbol: str
+    timeframe: Timeframe
+    side: PositionSide
+    size: float
+    entry: float
+    stop_loss: float
+    take_profit: float
+    risk: float
+    ohlcv: OHLCV
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+
+
+@dataclass(frozen=True)
+class ExitRisk(Event):
+    symbol: str
+    timeframe: Timeframe
+    exit: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))

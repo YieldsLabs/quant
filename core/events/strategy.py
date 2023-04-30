@@ -5,7 +5,7 @@ from ..timeframe import Timeframe
 
 
 @dataclass(frozen=True)
-class StrategyEvent(Event):
+class StrategyEntryEvent(Event):
     symbol: str
     timeframe: Timeframe
     strategy: str
@@ -16,10 +16,25 @@ class StrategyEvent(Event):
 
 
 @dataclass(frozen=True)
-class GoLong(StrategyEvent):
-    pass
-
+class StrategyExitEvent(Event):
+    symbol: str
+    timeframe: Timeframe
+    strategy: str
+    exit: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
 @dataclass(frozen=True)
-class GoShort(StrategyEvent):
+class GoLong(StrategyEntryEvent):
+    pass
+
+@dataclass(frozen=True)
+class GoShort(StrategyEntryEvent):
+    pass
+
+@dataclass(frozen=True)
+class ExitLong(StrategyExitEvent):
+    pass
+
+@dataclass(frozen=True)
+class ExitShort(StrategyExitEvent):
     pass
