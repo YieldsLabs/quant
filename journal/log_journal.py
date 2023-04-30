@@ -4,8 +4,9 @@ from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.portfolio import PortfolioPerformanceEvent
-from core.events.position import EvaluateExitConditions, PositionClosed, OrderFilled, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
-from core.events.strategy import GoLong, GoShort
+from core.events.position import PositionClosed, OrderFilled, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
+from core.events.risk import EvaluateRisk, ExitRisk
+from core.events.strategy import ExitLong, ExitShort, GoLong, GoShort
 
 
 class LogJournal(AbstractEventManager):
@@ -49,8 +50,23 @@ class LogJournal(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(EvaluateExitConditions)
-    async def _on_check_exit(self, event: EvaluateExitConditions):
+    @register_handler(EvaluateRisk)
+    async def _on_evaluate_risk(self, event: EvaluateRisk):
+        print('----------------------------------------------------->')
+        print(event)
+
+    @register_handler(ExitRisk)
+    async def _on_exit_risk(self, event: ExitRisk):
+        print('----------------------------------------------------->')
+        print(event)
+
+    @register_handler(ExitLong)
+    async def _on_exit_long(self, event: ExitLong):
+        print('----------------------------------------------------->')
+        print(event)
+
+    @register_handler(ExitShort)
+    async def _on_exit_short(self, event: ExitShort):
         print('----------------------------------------------------->')
         print(event)
 

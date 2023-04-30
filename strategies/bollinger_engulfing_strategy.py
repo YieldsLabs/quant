@@ -8,7 +8,7 @@ from ta.volatility.bbands import BollingerBands
 class BollingerBandsEngulfing(BaseStrategy):
     NAME = "BBE"
 
-    def __init__(self, sma_period=20, stdev_multi=2, risk_reward_ratio=1.5):
+    def __init__(self, sma_period=20, stdev_multi=2, risk_reward_ratio=2):
         indicators = [
             (BollingerBands(sma_period, stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
             (Engulfing(), (Engulfing.bullish_column(), Engulfing.bearish_column()))
@@ -37,3 +37,21 @@ class BollingerBandsEngulfing(BaseStrategy):
         sell_signal = (close >= upper_band) & bearish_column
 
         return sell_signal
+
+    def _generate_buy_exit(self, data):
+        close = data['close']
+        upper_band = data['upper_band']
+
+        cross_upper_band = close >= upper_band
+        buy_exit_signal = cross_upper_band.shift(1) & (close < upper_band)
+
+        return buy_exit_signal
+
+    def _generate_sell_exit(self, data):
+        close = data['close']
+        lower_band = data['lower_band']
+
+        cross_lower_band = close <= lower_band
+        sell_exit_signal = cross_lower_band.shift(1) & (close > lower_band)
+
+        return sell_exit_signal

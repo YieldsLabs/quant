@@ -81,17 +81,3 @@ class PositionClosed(Event):
     timeframe: Timeframe
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
-
-
-@dataclass(frozen=True)
-class EvaluateExitConditions(Event):
-    symbol: str
-    timeframe: Timeframe
-    side: PositionSide
-    size: float
-    entry: float
-    stop_loss: float
-    take_profit: float
-    risk: float
-    ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
