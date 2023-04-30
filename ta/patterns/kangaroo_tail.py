@@ -10,14 +10,13 @@ class KangarooTail(AbstractPattern):
     def bullish(self, data):
         candle_range = data['high'] - data['low']
         two_third_candle_range = candle_range * 0.66
+        lower_bound = two_third_candle_range + data['low']
 
-        return (
-            (data['close'] > (two_third_candle_range + data['low']))
-            & (data['open'] > (two_third_candle_range + data['low']))
-            & (data['close'] > data['low'].shift(1))
-            & (data['close'] < data['high'].shift(1))
-            & (data['open'] > data['low'].shift(1))
-            & (data['open'] < data['high'].shift(1))
+        conditions = (
+            (data['close'] > lower_bound)
+            & (data['open'] > lower_bound)
+            & (data['close'].between(data['low'].shift(1), data['high'].shift(1)))
+            & (data['open'].between(data['low'].shift(1), data['high'].shift(1)))
             & (data['close'] < data['close'].shift(self.lookback))
             & (candle_range > candle_range.shift(1))
             & (candle_range > candle_range.shift(2))
@@ -26,17 +25,18 @@ class KangarooTail(AbstractPattern):
             & (data['low'] <= data['low'].rolling(13).min())
         )
 
+        return conditions
+
     def bearish(self, data):
         candle_range = data['high'] - data['low']
         two_third_candle_range = candle_range * 0.66
+        upper_bound = data['high'] - two_third_candle_range
 
-        return (
-            (data['close'] < (data['high'] - two_third_candle_range))
-            & (data['open'] < (data['high'] - two_third_candle_range))
-            & (data['close'] > data['low'].shift(1))
-            & (data['close'] < data['high'].shift(1))
-            & (data['open'] > data['low'].shift(1))
-            & (data['open'] < data['high'].shift(1))
+        conditions = (
+            (data['close'] < upper_bound)
+            & (data['open'] < upper_bound)
+            & (data['close'].between(data['low'].shift(1), data['high'].shift(1)))
+            & (data['open'].between(data['low'].shift(1), data['high'].shift(1)))
             & (data['close'] > data['close'].shift(self.lookback))
             & (candle_range > candle_range.shift(1))
             & (candle_range > candle_range.shift(2))
@@ -44,3 +44,5 @@ class KangarooTail(AbstractPattern):
             & (data['close'].shift(1) > data['open'].shift(1))
             & (data['high'] >= data['high'].rolling(13).max())
         )
+
+        return conditions

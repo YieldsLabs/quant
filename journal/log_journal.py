@@ -1,4 +1,5 @@
 import asyncio
+import time
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
@@ -10,16 +11,18 @@ from core.events.strategy import GoLong, GoShort
 class LogJournal(AbstractEventManager):
     def __init__(self):
         super().__init__()
-        self.counter = 0
+        self.num_events = 0
+        self.start_time = time.monotonic()
         self.lock = asyncio.Lock()
 
     @register_handler(OHLCVEvent)
     async def _on_market(self, event: OHLCVEvent):
         async with self.lock:
-            self.counter += 1
+            self.num_events += 1
+        elapsed_time = time.monotonic() - self.start_time
         print('----------------------------------------------------->')
         print(event)
-        print(self.counter)
+        print(f"Processed {self.num_events} events in {elapsed_time:.2f} seconds, throughput = {self.num_events/elapsed_time:.2f} events/s.")
 
     @register_handler(GoLong)
     async def _on_go_long(self, event: GoLong):

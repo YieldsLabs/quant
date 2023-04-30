@@ -11,6 +11,8 @@ python-dotenv = "*"
 websockets = "*"
 aiocache = "*"
 uuid = "*"
+scikit-learn = "*"
+joblib = "*"
 
 [dev-packages]
 flake8 = "*"

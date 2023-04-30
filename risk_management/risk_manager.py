@@ -11,6 +11,7 @@ class RiskManager(AbstractRiskManager):
         self.trailing_stop_loss_prices = {}
         self.max_stop_loss_adjustments = max_stop_loss_adjustments
         self.stop_loss_adjustment_count = {}
+
         self.stop_loss_lock = asyncio.Lock()
 
     @register_handler(EvaluateExitConditions)

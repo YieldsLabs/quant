@@ -16,7 +16,7 @@ class BollingerBandsEngulfing(BaseStrategy):
 
         super().__init__(
             indicators,
-            RiskRewardTakeProfitFinder(risk_reward_ratio=risk_reward_ratio),
+            RiskRewardTakeProfitFinder(risk_reward_ratio),
             LowHighStopLossFinder()
         )
 

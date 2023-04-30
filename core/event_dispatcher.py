@@ -24,7 +24,7 @@ class EventDispatcher:
 
         return cls.__instance
 
-    def __init__(self, num_workers: int = os.cpu_count(), priority_groups: int = 5):
+    def __init__(self, num_workers: int = os.cpu_count() + 1, priority_groups: int = 5):
         if not hasattr(self, "_worker_tasks"):
             self._initialize_worker_tasks(num_workers, priority_groups)
             self._initialize_load_balancer(priority_groups)
@@ -45,10 +45,10 @@ class EventDispatcher:
         async for event, args, kwargs in self._get_event_stream(priority_group):
             handlers = self.event_handlers.get(type(event), [])
 
-            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
-
-            if not tasks:
+            if not handlers:
                 continue
+
+            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
 
             await asyncio.gather(*tasks)
 
@@ -134,8 +134,8 @@ class EventDispatcher:
 
     def _initialize_load_balancer(self, priority_groups: int):
         self._kp = 1.0
-        self._ki = 0.5
-        self._kd = 0.2
+        self._ki = 0.6
+        self._kd = 0.3
 
         self._integral_errors = np.zeros(priority_groups)
         self._previous_errors = np.zeros(priority_groups)

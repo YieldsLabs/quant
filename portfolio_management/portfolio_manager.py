@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Optional, Type, Union
+from typing import Dict, Type, Union
 from analytics.abstract_analytics import AbstractAnalytics
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
@@ -8,6 +8,7 @@ from core.events.position import EvaluateExitConditions, PositionClosed, OrderFi
 from core.events.strategy import GoLong, GoShort
 from core.position import Position
 from datasource.abstract_datasource import AbstractDatasource
+from portfolio_management.position_sizer import PositionSizer
 from .abstract_portfolio_manager import AbstractPortfolioManager
 
 
@@ -17,6 +18,7 @@ class PortfolioManager(AbstractPortfolioManager):
         self.datasource = datasource
         self.analytics = analytics
         self.risk_per_trade = risk_per_trade
+
         self.closed_positions: Dict[str, Position] = {}
         self.active_positions: Dict[str, Position] = {}
 
@@ -118,7 +120,7 @@ class PortfolioManager(AbstractPortfolioManager):
     def create_position(self, position_side, account_size, trading_fee, min_position_size, price_precision, event: Union[GoLong, GoShort]) -> Position:
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
         take_profit_price = round(event.take_profit, price_precision) if event.take_profit else None
-        size = self.calculate_position_size(account_size, event.entry, trading_fee, min_position_size, price_precision, stop_loss_price)
+        size = PositionSizer.calculate_position_size(account_size, event.entry, trading_fee, min_position_size, price_precision, stop_loss_price, self.risk_per_trade)
 
         return Position(symbol=event.symbol, timeframe=event.timeframe, strategy=event.strategy, size=size, entry=event.entry, side=position_side, stop_loss=stop_loss_price, take_profit=take_profit_price)
 
@@ -143,29 +145,3 @@ class PortfolioManager(AbstractPortfolioManager):
                 stop_loss=position.stop_loss_price,
                 take_profit=position.take_profit_price
             )
-
-    def calculate_position_size(
-        self,
-        account_size: float,
-        entry_price: float,
-        trading_fee: float,
-        min_position_size: float,
-        price_precision: int,
-        stop_loss_price: Optional[float] = None
-    ) -> float:
-        risk_amount = self.risk_per_trade * account_size
-
-        if stop_loss_price and entry_price:
-            price_difference = abs(entry_price - stop_loss_price) * (1 + trading_fee)
-        else:
-            price_difference = 1
-
-        if price_difference != 0:
-            position_size = risk_amount / price_difference
-        else:
-            position_size = 1
-
-        adjusted_position_size = max(position_size, min_position_size)
-        rounded_position_size = round(adjusted_position_size, price_precision)
-
-        return rounded_position_size

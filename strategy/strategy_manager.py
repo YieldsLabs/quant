@@ -1,8 +1,6 @@
 import asyncio
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from typing import Final, List, Any, Type
+from typing import List, Any, Type
 
 import pandas as pd
 from core.abstract_event_manager import AbstractEventManager
@@ -11,18 +9,35 @@ from core.events.ohlcv import OHLCVEvent
 from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
 from core.events.strategy import GoLong, GoShort
 from strategy.abstract_strategy import AbstractStrategy
+from strategy.kmeans_inference import KMeansInference
 
 
-@dataclass
 class SymbolData:
-    events: deque
+    def __init__(self, size: int):
+        self.buffer = deque(maxlen=size)
+        self.lock = asyncio.Lock()
+
+    async def append(self, event):
+        async with self.lock:
+            self.buffer.append(event)
+
+    async def get_window(self):
+        async with self.lock:
+            return list(self.buffer)
+
+    @property
+    def count(self):
+        return len(self.buffer)
 
 
 class StrategyManager(AbstractEventManager):
-    OHLCV_COLUMNS: Final = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
+    OHLCV_COLUMNS: tuple = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
     MIN_LOOKBACK = 100
+    BATCH_SIZE = 10
+    TOTAL_TRADES_THRESHOLD = 30
+    POOR_STRATEGY_CLUSTER = 1
 
-    def __init__(self, strategies_classes: List[Type[AbstractStrategy]]):
+    def __init__(self, strategies_classes: List[Type[AbstractStrategy]], inference: Type[KMeansInference]):
         super().__init__()
 
         self.strategies = [cls() for cls in strategies_classes]
@@ -31,10 +46,10 @@ class StrategyManager(AbstractEventManager):
         self.window_data = {}
         self.window_data_lock = asyncio.Lock()
 
+        self.inference = inference
+
         self.poor_strategies = set()
         self.poor_strategies_lock = asyncio.Lock()
-
-        self.executor = ThreadPoolExecutor()
 
     @register_handler(PortfolioPerformanceEvent)
     async def _on_poor_strategy(self, event: PortfolioPerformanceEvent):
@@ -56,28 +71,34 @@ class StrategyManager(AbstractEventManager):
 
         async with self.window_data_lock:
             if event_id not in self.window_data:
-                self.window_data[event_id] = SymbolData(events=deque(maxlen=self.window_size))
+                self.window_data[event_id] = SymbolData(self.window_size)
 
-            symbol_data = self.window_data[event_id]
+        symbol_data = self.window_data[event_id]
 
-            symbol_data.events.append(event.ohlcv)
+        await symbol_data.append(event.ohlcv)
 
-            if len(symbol_data.events) < self.window_size:
-                return
+        if symbol_data.count >= self.window_size:
+            await self.process_strategies(symbol_data, event)
 
-            window_events = list(symbol_data.events)
+    async def process_strategies(self, symbol_data: SymbolData, event: OHLCVEvent) -> None:
+        event_id = self.get_event_id(event)
 
         valid_strategies = [strategy for strategy in self.strategies if f"{event_id}{str(strategy)}" not in self.poor_strategies]
 
-        await self.process_strategies(valid_strategies, window_events, event)
+        if not len(valid_strategies):
+            return
 
-    async def process_strategies(self, strategies: List, window_events: List, event: OHLCVEvent) -> None:
-        strategy_tasks = [
-            asyncio.ensure_future(self.process_strategy(strategy, window_events, event))
-            for strategy in strategies
-        ]
+        strategy_batches = [valid_strategies[i:i + self.BATCH_SIZE] for i in range(0, len(valid_strategies), self.BATCH_SIZE)]
 
-        await asyncio.gather(*strategy_tasks)
+        window_events = await symbol_data.get_window()
+
+        for batch in strategy_batches:
+            strategy_tasks = [
+                self.process_strategy(strategy, window_events, event)
+                for strategy in batch
+            ]
+
+            await asyncio.gather(*strategy_tasks)
 
     async def process_strategy(self, strategy: AbstractStrategy, window_events: List[Any], event: OHLCVEvent) -> None:
         strategy_name = str(strategy)
@@ -85,8 +106,7 @@ class StrategyManager(AbstractEventManager):
         lookback = strategy.lookback
 
         events_for_strategy = pd.DataFrame([data.to_dict() for data in window_events[-lookback:]], columns=self.OHLCV_COLUMNS)
-
-        entry_long_signal, entry_short_signal, stop_loss, take_profit = await asyncio.get_event_loop().run_in_executor(self.executor, self.calculate_signals, strategy, events_for_strategy, entry)
+        entry_long_signal, entry_short_signal, stop_loss, take_profit = await asyncio.to_thread(self.calculate_signals, strategy, events_for_strategy, entry)
 
         if entry_long_signal:
             stop_loss_price, take_profit_price = stop_loss[0], take_profit[0]
@@ -106,26 +126,19 @@ class StrategyManager(AbstractEventManager):
         return entry_long_signal, entry_short_signal, stop_loss, take_profit
 
     def _is_poor_strategy(self, performance: PortfolioPerformance):
-        min_total_trades = max(30, performance.total_trades * 0.1)
-
-        if performance.total_trades < min_total_trades:
+        if performance.total_trades < self.TOTAL_TRADES_THRESHOLD:
             return False
 
-        min_win_rate = max(0.4, performance.win_rate * 0.9)
-        max_drawdown_threshold = min(0.3, performance.max_drawdown * 1.5)
-        min_sharpe_ratio = max(1, performance.sharpe_ratio * 0.8)
-        min_sortino_ratio = max(1, performance.sortino_ratio * 0.8)
-        min_recovery_factor = max(1, performance.recovery_factor * 0.8)
-        min_profit_factor = max(1.5, performance.profit_factor * 0.8)
+        features = [
+            performance.max_drawdown,
+            performance.average_pnl,
+            performance.risk_of_ruin,
+            performance.profit_factor,
+            performance.sharpe_ratio,
+            performance.sortino_ratio,
+            performance.calmar_ratio,
+            performance.cvar,
+            performance.ulcer_index,
+        ]
 
-        if (
-            performance.win_rate < min_win_rate
-            or performance.max_drawdown > max_drawdown_threshold
-            or performance.sharpe_ratio < min_sharpe_ratio
-            or performance.sortino_ratio < min_sortino_ratio
-            or performance.recovery_factor < min_recovery_factor
-            or performance.profit_factor < min_profit_factor
-        ):
-            return True
-
-        return False
+        return self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER

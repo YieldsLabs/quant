@@ -284,7 +284,7 @@ class StrategyPerformance(AbstractAnalytics):
 
         return annualized_return
 
-    def _lake_ratio(self, pnl: np.ndarray, initial_account_size: float) -> float:
+    def _lake_ratio(self, pnl, initial_account_size: float) -> float:
         account_size = initial_account_size + pnl.cumsum()
         peaks = np.maximum.accumulate(account_size)
         drawdowns = (peaks - account_size) / peaks
@@ -311,7 +311,7 @@ class StrategyPerformance(AbstractAnalytics):
 
         return burke_ratio
 
-    def _rachev_ratio(self, pnl: np.ndarray) -> float:
+    def _rachev_ratio(self, pnl) -> float:
         if len(pnl) < 3:
             return 0
 
@@ -333,7 +333,7 @@ class StrategyPerformance(AbstractAnalytics):
 
         return rachev_ratio
 
-    def _tail_ratio(self, pnl: np.ndarray) -> float:
+    def _tail_ratio(self, pnl) -> float:
         if len(pnl) < 3:
             return 0
 
@@ -377,7 +377,7 @@ class StrategyPerformance(AbstractAnalytics):
 
         return omega_ratio
 
-    def _sterling_ratio(self, pnl: np.ndarray, risk_free_rate: float = 0) -> float:
+    def _sterling_ratio(self, pnl, risk_free_rate: float = 0) -> float:
         if len(pnl) < 3:
             return 0
 
@@ -397,7 +397,7 @@ class StrategyPerformance(AbstractAnalytics):
 
         return sterling_ratio
 
-    def _kappa_three_ratio(self, pnl, risk_free_rate: float = 0) -> float:
+    def _kappa_three_ratio(self, pnl) -> float:
         gains = pnl[pnl > 0]
         losses = pnl[pnl < 0]
 

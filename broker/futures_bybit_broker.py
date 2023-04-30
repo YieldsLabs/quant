@@ -6,7 +6,7 @@ from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from core.events.position import PositionSide
 from datasource.retry import retry
-from ccxt.base.errors import RequestTimeout
+from ccxt.base.errors import RequestTimeout, NetworkError
 
 
 class FuturesBybitBroker(AbstractBroker):
@@ -154,7 +154,7 @@ class FuturesBybitBroker(AbstractBroker):
         markets = self._fetch_market_info()
         return [market_info['id'] for market_info in markets if market_info['linear']]
 
-    @retry(max_retries=7, handled_exceptions=(RequestTimeout))
+    @retry(max_retries=7, handled_exceptions=(RequestTimeout, NetworkError))
     def _fetch(self, symbol, timeframe, start_time, current_limit):
         return self.exchange.fetch_ohlcv(
             symbol, timeframe, since=start_time, limit=current_limit)
