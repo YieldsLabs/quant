@@ -1,4 +1,6 @@
 from typing import List, Type, Union
+
+import pandas as pd
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
 from strategy.abstract_strategy import AbstractStrategy
@@ -44,7 +46,7 @@ class BaseStrategy(AbstractStrategy):
 
         return data
 
-    def entry(self, ohlcv):
+    def entry(self, ohlcv: pd.DataFrame):
         if len(ohlcv) < self.lookback:
             return False, False
 
@@ -55,12 +57,11 @@ class BaseStrategy(AbstractStrategy):
 
         return buy_signal.iloc[-1], sell_signal.iloc[-1]
 
-    def exit(self, ohlcv):
+    def exit(self, ohlcv: pd.DataFrame):
         if len(ohlcv) < self.lookback:
             return False, False
 
         data = self._add_indicators_and_patterns(ohlcv)
-
         buy_exit = self._generate_buy_exit(data)
         sell_exit = self._generate_sell_exit(data)
 
@@ -74,16 +75,16 @@ class BaseStrategy(AbstractStrategy):
 
         return ((stop_loss_long, take_profit_long), (stop_loss_short, take_profit_short))
 
-    def _generate_buy_signal(self, data):
+    def _generate_buy_signal(self, data: pd.DataFrame):
         raise NotImplementedError
 
-    def _generate_sell_signal(self, data):
+    def _generate_sell_signal(self, data: pd.DataFrame):
         raise NotImplementedError
 
-    def _generate_buy_exit(self, data):
+    def _generate_buy_exit(self, data: pd.DataFrame):
         raise NotImplementedError
 
-    def _generate_sell_exit(self, data):
+    def _generate_sell_exit(self, data: pd.DataFrame):
         raise NotImplementedError
 
     def __str__(self):

@@ -6,12 +6,15 @@ from core.position import Position
 
 
 class StrategyPerformance(AbstractAnalytics):
-    def __init__(self, risk_per_trade: float = 0.001, periods_per_year: int = 252):
+    def __init__(self, account_size: float = 1000, risk_per_trade: float = 0.001, periods_per_year: int = 252):
         super().__init__()
+        self.account_size = account_size
         self.risk_per_trade = risk_per_trade
         self.periods_per_year = periods_per_year
 
-    def calculate(self, initial_account_size: float, positions: List[Position]) -> PortfolioPerformance:
+    def calculate(self, positions: List[Position]) -> PortfolioPerformance:
+        initial_account_size = self.account_size
+
         total_trades = len(positions)
 
         if total_trades == 0:

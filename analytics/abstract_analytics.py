@@ -6,5 +6,5 @@ from core.position import Position
 
 class AbstractAnalytics(AbstractEventManager):
     @abstractmethod
-    def calculate(self, account_size: float, positions: List[Position]):
+    def calculate(self, positions: List[Position]):
         pass

@@ -1,5 +1,6 @@
 import asyncio
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Type
 
 import pandas as pd
@@ -31,7 +32,6 @@ class SymbolData:
 
 
 class StrategyManager(AbstractEventManager):
-    OHLCV_COLUMNS: tuple = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
     MIN_LOOKBACK = 100
     BATCH_SIZE = 10
     TOTAL_TRADES_THRESHOLD = 30
@@ -67,7 +67,7 @@ class StrategyManager(AbstractEventManager):
         if not len(self.strategies):
             raise ValueError('Strategies should be defined')
 
-        event_id = self.get_event_id(event)
+        event_id = self.create_event_id(event)
 
         async with self.window_data_lock:
             if event_id not in self.window_data:
@@ -78,55 +78,38 @@ class StrategyManager(AbstractEventManager):
         await symbol_data.append(event.ohlcv)
 
         if symbol_data.count >= self.window_size:
-            await self.process_strategies(symbol_data, event)
+            await self.process_strategies(event_id, symbol_data, event)
 
-    async def process_strategies(self, symbol_data: SymbolData, event: OHLCVEvent) -> None:
-        event_id = self.get_event_id(event)
-
+    async def process_strategies(self, event_id: str, symbol_data: SymbolData, event: OHLCVEvent) -> None:
         valid_strategies = [strategy for strategy in self.strategies if f"{event_id}{str(strategy)}" not in self.poor_strategies]
 
-        if not len(valid_strategies):
-            return
+        for strategy in valid_strategies:
+            await self.process_strategy(strategy, symbol_data, event)
 
-        strategy_batches = [valid_strategies[i:i + self.BATCH_SIZE] for i in range(0, len(valid_strategies), self.BATCH_SIZE)]
-
-        window_events = await symbol_data.get_window()
-
-        for batch in strategy_batches:
-            strategy_tasks = [
-                self.process_strategy(strategy, window_events, event)
-                for strategy in batch
-            ]
-
-            await asyncio.gather(*strategy_tasks)
-
-    async def process_strategy(self, strategy: AbstractStrategy, window_events: List[OHLCV], event: OHLCVEvent) -> None:
+    async def process_strategy(self, strategy: AbstractStrategy, data: SymbolData, event: OHLCVEvent) -> None:
         strategy_name = str(strategy)
         close = event.ohlcv.close
         lookback = strategy.lookback
 
-        entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit = await self.calculate_signals(strategy, window_events[-lookback:], close)
+        window_events = await data.get_window()
+
+        entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit = await asyncio.to_thread(self.calculate_signals, strategy, window_events[-lookback:], close)
+
+        tasks = []
 
         if entry_long_signal:
-            await self.dispatcher.dispatch(GoLong(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[0], take_profit=take_profit[0]))
+            tasks.append(self.dispatcher.dispatch(GoLong(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[0], take_profit=take_profit[0])))
         elif entry_short_signal:
-            await self.dispatcher.dispatch(GoShort(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[1], take_profit=take_profit[1]))
+            tasks.append(self.dispatcher.dispatch(GoShort(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[1], take_profit=take_profit[1])))
         elif exit_long_signal:
-            await self.dispatcher.dispatch(ExitLong(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close))
+            tasks.append(self.dispatcher.dispatch(ExitLong(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close)))
         elif exit_short_signal:
-            await self.dispatcher.dispatch(ExitShort(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close))
+            tasks.append(self.dispatcher.dispatch(ExitShort(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close)))
 
-    async def calculate_signals(self, strategy: AbstractStrategy, required_events: List[OHLCV], entry: float) -> tuple:
-        events_for_strategy = pd.DataFrame([data.to_dict() for data in required_events], columns=self.OHLCV_COLUMNS)
+        if not tasks:
+            return
 
-        entry_long_signal, entry_short_signal = await asyncio.to_thread(strategy.entry, events_for_strategy)
-        exit_long_signal, exit_short_signal = await asyncio.to_thread(strategy.exit, events_for_strategy)
-        stop_loss, take_profit = await asyncio.to_thread(strategy.stop_loss_and_take_profit, entry, events_for_strategy)
-
-        return entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit
-
-    def get_event_id(self, event: OHLCVEvent) -> str:
-        return f'{event.symbol}_{event.timeframe}'
+        await asyncio.gather(*tasks)
 
     def _is_poor_strategy(self, performance: PortfolioPerformance):
         if performance.total_trades < self.TOTAL_TRADES_THRESHOLD:
@@ -148,3 +131,19 @@ class StrategyManager(AbstractEventManager):
             self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER
             and performance.total_pnl < 0
         )
+
+    @staticmethod
+    def calculate_signals(strategy: AbstractStrategy, events: List[OHLCV], entry: float) -> tuple:
+        ohlcv_columns: tuple = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
+        column_types = {column: float for column in ohlcv_columns[1:]}
+        df_events = pd.DataFrame.from_records((e.to_dict() for e in events), columns=ohlcv_columns).astype(column_types)
+
+        entry_long_signal, entry_short_signal = strategy.entry(df_events)
+        exit_long_signal, exit_short_signal = strategy.exit(df_events)
+        stop_loss, take_profit = strategy.stop_loss_and_take_profit(entry, df_events)
+
+        return entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit
+
+    @staticmethod
+    def create_event_id(event: OHLCVEvent) -> str:
+        return f'{event.symbol}_{event.timeframe}'
