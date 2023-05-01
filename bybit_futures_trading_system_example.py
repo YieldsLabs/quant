@@ -81,7 +81,7 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 30000
+backtest_lookback = 60000
 risk_per_trade = 0.0001
 leverage = 1
 
@@ -175,8 +175,11 @@ async def main():
         broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
         broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
 
-    analytics = StrategyPerformance(risk_per_trade)
     datasource = BybitDataSource(broker)
+
+    account_size = await datasource.account_size()
+
+    analytics = StrategyPerformance(account_size)
     inference = KMeansInference('./strategy/model/kmeans_model.pkl', './strategy/model/scaler.pkl')
     ws_handler = WebSocketHandler(WSS)
 
