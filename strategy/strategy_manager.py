@@ -1,6 +1,5 @@
 import asyncio
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
 from typing import List, Type
 
 import pandas as pd
@@ -8,7 +7,7 @@ from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
-from core.events.strategy import ExitLong, ExitShort, GoLong, GoShort
+from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
 from strategy.abstract_strategy import AbstractStrategy
 from strategy.kmeans_inference import KMeansInference
 
@@ -33,7 +32,6 @@ class SymbolData:
 
 class StrategyManager(AbstractEventManager):
     MIN_LOOKBACK = 100
-    BATCH_SIZE = 10
     TOTAL_TRADES_THRESHOLD = 30
     POOR_STRATEGY_CLUSTER = 1
 
@@ -77,41 +75,44 @@ class StrategyManager(AbstractEventManager):
 
         await symbol_data.append(event.ohlcv)
 
-        if symbol_data.count >= self.window_size:
-            await self.process_strategies(event_id, symbol_data, event)
+        if symbol_data.count < self.window_size:
+            return
 
-    async def process_strategies(self, event_id: str, symbol_data: SymbolData, event: OHLCVEvent) -> None:
+        window_events = await symbol_data.get_window()
+
+        await self.process_strategies(event_id, window_events, event)
+
+    async def process_strategies(self, event_id: str, window_events: List[OHLCV], event: OHLCVEvent) -> None:
         valid_strategies = [strategy for strategy in self.strategies if f"{event_id}{str(strategy)}" not in self.poor_strategies]
 
         for strategy in valid_strategies:
-            await self.process_strategy(strategy, symbol_data, event)
+            await self.process_strategy(strategy, window_events, event)
 
-    async def process_strategy(self, strategy: AbstractStrategy, data: SymbolData, event: OHLCVEvent) -> None:
+    async def process_strategy(self, strategy: AbstractStrategy, window_events: List[OHLCV], event: OHLCVEvent) -> None:
         strategy_name = str(strategy)
         close = event.ohlcv.close
         lookback = strategy.lookback
+        events = window_events[-lookback:]
 
-        window_events = await data.get_window()
-
-        entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit = await asyncio.to_thread(self.calculate_signals, strategy, window_events[-lookback:], close)
+        entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit = await asyncio.to_thread(self.calculate_signals, strategy, events, close)
 
         tasks = []
 
         if entry_long_signal:
-            tasks.append(self.dispatcher.dispatch(GoLong(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[0], take_profit=take_profit[0])))
+            tasks.append(self.dispatcher.dispatch(LongGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[0], take_profit=take_profit[0])))
         elif entry_short_signal:
-            tasks.append(self.dispatcher.dispatch(GoShort(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[1], take_profit=take_profit[1])))
+            tasks.append(self.dispatcher.dispatch(ShortGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[1], take_profit=take_profit[1])))
         elif exit_long_signal:
-            tasks.append(self.dispatcher.dispatch(ExitLong(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close)))
+            tasks.append(self.dispatcher.dispatch(LongExit(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close)))
         elif exit_short_signal:
-            tasks.append(self.dispatcher.dispatch(ExitShort(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close)))
+            tasks.append(self.dispatcher.dispatch(ShortExit(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close)))
 
         if not tasks:
             return
 
         await asyncio.gather(*tasks)
 
-    def _is_poor_strategy(self, performance: PortfolioPerformance):
+    def _is_poor_strategy(self, performance: PortfolioPerformance) -> bool:
         if performance.total_trades < self.TOTAL_TRADES_THRESHOLD:
             return False
 

@@ -52,16 +52,17 @@ class BaseStrategy(AbstractStrategy):
 
         data = self._add_indicators_and_patterns(ohlcv)
 
-        buy_signal = self._generate_buy_signal(data)
-        sell_signal = self._generate_sell_signal(data)
+        buy_entry = self._generate_buy_entry(data)
+        sell_entry = self._generate_sell_entry(data)
 
-        return buy_signal.iloc[-1], sell_signal.iloc[-1]
+        return buy_entry.iloc[-1], sell_entry.iloc[-1]
 
     def exit(self, ohlcv: pd.DataFrame):
         if len(ohlcv) < self.lookback:
             return False, False
 
         data = self._add_indicators_and_patterns(ohlcv)
+
         buy_exit = self._generate_buy_exit(data)
         sell_exit = self._generate_sell_exit(data)
 
@@ -75,17 +76,17 @@ class BaseStrategy(AbstractStrategy):
 
         return ((stop_loss_long, take_profit_long), (stop_loss_short, take_profit_short))
 
-    def _generate_buy_signal(self, data: pd.DataFrame):
+    def _generate_buy_entry(self, data: pd.DataFrame):
         raise NotImplementedError
 
-    def _generate_sell_signal(self, data: pd.DataFrame):
+    def _generate_sell_entry(self, data: pd.DataFrame):
         raise NotImplementedError
 
     def _generate_buy_exit(self, data: pd.DataFrame):
-        raise NotImplementedError
+        return pd.Series(False)
 
     def _generate_sell_exit(self, data: pd.DataFrame):
-        raise NotImplementedError
+        return pd.Series(False)
 
     def __str__(self):
         return f'{super().__str__()}{str(self.take_profit_finder)}{str(self.stop_loss_finder)}'

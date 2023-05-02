@@ -1,8 +1,8 @@
 from .abstract_pattern import AbstractPattern
 
 
-class TheThreeCandles(AbstractPattern):
-    NAME = 'THETHREECANDLES'
+class ThreeWhiteSoldiersThreeBlackCrows(AbstractPattern):
+    NAME = 'THREEWHITESOLDIERSTHREEBLACKCROWS'
 
     def __init__(self, lookback=5):
         self.lookback = lookback

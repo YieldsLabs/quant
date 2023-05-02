@@ -1,7 +1,7 @@
 import asyncio
 from core.event_dispatcher import register_handler
 from core.events.position import PositionSide
-from core.events.risk import EvaluateRisk, ExitRisk
+from core.events.risk import RiskEvaluate, RiskExit
 from risk_management.abstract_risk_manager import AbstractRiskManager
 
 
@@ -15,8 +15,8 @@ class RiskManager(AbstractRiskManager):
 
         self.stop_loss_lock = asyncio.Lock()
 
-    @register_handler(EvaluateRisk)
-    async def _on_check_exit_conditions(self, event: EvaluateRisk):
+    @register_handler(RiskEvaluate)
+    async def _on_check_exit_conditions(self, event: RiskEvaluate):
         symbol, timeframe, position_side, position_size, entry_price, take_profit_price, stop_loss_price, risk_per_trade, ohlcv, strategy = self._unpack_event(event)
 
         async with self.stop_loss_lock:
@@ -34,7 +34,7 @@ class RiskManager(AbstractRiskManager):
 
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
 
-        await self.dispatcher.dispatch(ExitRisk(symbol=symbol, timeframe=timeframe, strategy=strategy, exit=exit_price))
+        await self.dispatcher.dispatch(RiskExit(symbol=symbol, timeframe=timeframe, strategy=strategy, exit=exit_price))
 
     def _initialize_symbol_data(self, symbol):
         self.trailing_stop_loss_prices[symbol] = {PositionSide.LONG: None, PositionSide.SHORT: None}

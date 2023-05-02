@@ -14,12 +14,7 @@ from journal.gather_journal import GatherJournal
 from journal.log_journal import LogJournal
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from core.timeframe import Timeframe
-from strategies.aobb_strategy import AwesomeOscillatorBollingerBands
-from strategies.bollinger_engulfing_strategy import BollingerBandsEngulfing
-from strategies.engulfing_zlema_strategy import EngulfingZLMA
-from strategies.extreme_euphoria_bb_strategy import ExtremeEuphoriaBollingerBands
-from strategies.fvg_strategy import FairValueGapZLMA
-from strategies.kangaroo_tail_strategy import KangarooTailZLMA
+from strategies.contrarian_ten_patterns_strategy import ContrarianTenPatterns
 from strategy.kmeans_inference import KMeansInference
 from system.trading_system import TradingContext, TradingSystem
 
@@ -43,18 +38,12 @@ symbols = [
 ]
 
 timeframes = [
-    Timeframe.ONE_MINUTE,
-    Timeframe.THREE_MINUTES,
-    Timeframe.FIVE_MINUTES
+    Timeframe.FIVE_MINUTES,
+    Timeframe.FIFTEEN_MINUTES
 ]
 
 strategies = [
-    AwesomeOscillatorBollingerBands,
-    BollingerBandsEngulfing,
-    EngulfingZLMA,
-    ExtremeEuphoriaBollingerBands,
-    FairValueGapZLMA,
-    KangarooTailZLMA
+    ContrarianTenPatterns,
 ]
 
 INTERVALS = {
@@ -88,6 +77,7 @@ leverage = 1
 
 class WebSocketHandler(AbstractEventManager):
     def __init__(self, url):
+        super().__init__()
         self.url = url
         self.ws = None
 
@@ -126,7 +116,7 @@ class WebSocketHandler(AbstractEventManager):
             except Exception as e:
                 print(f"Unexpected error: {e}")
 
-    async def run(self, ping_interval=10):
+    async def run(self, ping_interval=15):
         self.ws = await self.connect_to_websocket()
 
         ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
@@ -148,17 +138,11 @@ class WebSocketHandler(AbstractEventManager):
             volume=float(data["volume"]),
         )
 
-        timeframe = TIMEFRAMES[interval]
-
-        return OHLCVEvent(
-            symbol=symbol,
-            timeframe=timeframe,
-            ohlcv=ohlcv
-        )
+        return OHLCVEvent(symbol=symbol, timeframe=TIMEFRAMES[interval], ohlcv=ohlcv)
 
 
 async def subscribe(ws, timeframe_symbols):
-    channels = [f"kline.{INTERVALS[timeframe]}.{symbol}" for (timeframe, symbol) in timeframe_symbols]
+    channels = [f"kline.{INTERVALS[timeframe]}.{symbol}" for (symbol, timeframe) in timeframe_symbols]
 
     for channel in channels:
         await ws.send(json.dumps({"op": "subscribe", "args": [channel]}))
@@ -177,10 +161,13 @@ async def main():
 
     datasource = BybitDataSource(broker)
 
-    account_size = await datasource.account_size()
+    initial_account_size = await datasource.account_size()
 
-    analytics = StrategyPerformance(account_size)
-    inference = KMeansInference('./strategy/model/kmeans_model.pkl', './strategy/model/scaler.pkl')
+    analytics = StrategyPerformance(initial_account_size)
+    inference = KMeansInference(
+        './strategy/model/kmeans_model.pkl',
+        './strategy/model/scaler.pkl'
+    )
     ws_handler = WebSocketHandler(WSS)
 
     context = TradingContext(

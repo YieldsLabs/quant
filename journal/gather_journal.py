@@ -45,6 +45,7 @@ class GatherJournal(AbstractEventManager):
         self.event = {}
         self.save_interval = save_interval
         self._save_task = None
+        self.lock = asyncio.Lock()
 
         self.start_save_task()
 
@@ -62,7 +63,8 @@ class GatherJournal(AbstractEventManager):
 
     @register_handler(PortfolioPerformanceEvent)
     async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
-        event_dict = {'timestamp': int(event.meta.timestamp), 'strategy_id': event.strategy_id}
+        async with self.lock:
+            event_dict = {'timestamp': int(event.meta.timestamp), 'strategy_id': event.strategy_id}
 
-        event_dict.update(event.performance.to_dict())
-        self.event[event.strategy_id] = event_dict
+            event_dict.update(event.performance.to_dict())
+            self.event[event.strategy_id] = event_dict

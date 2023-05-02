@@ -21,24 +21,24 @@ class StrategyExitEvent(Event):
     timeframe: Timeframe
     strategy: str
     exit: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 
 @dataclass(frozen=True)
-class GoLong(StrategyEntryEvent):
+class LongGo(StrategyEntryEvent):
     pass
 
 
 @dataclass(frozen=True)
-class GoShort(StrategyEntryEvent):
+class ShortGo(StrategyEntryEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ExitLong(StrategyExitEvent):
+class LongExit(StrategyExitEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ExitShort(StrategyExitEvent):
+class ShortExit(StrategyExitEvent):
     pass

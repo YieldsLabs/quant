@@ -3,13 +3,10 @@ import pandas as pd
 from .abstract_pattern import AbstractPattern
 
 
-class Piercing(AbstractPattern):
+class PiercingDarkCloudCover(AbstractPattern):
     NAME = 'PIERCING'
 
     def bullish(self, data):
-        if len(data) < 2:
-            return pd.Series(index=data.index, dtype=bool)
-
         first_candle = data.shift(1)
         second_candle = data
 
@@ -24,9 +21,6 @@ class Piercing(AbstractPattern):
         return piercing
 
     def bearish(self, data):
-        if len(data) < 2:
-            return pd.Series(index=data.index, dtype=bool)
-
         first_candle = data.shift(1)
         second_candle = data
 

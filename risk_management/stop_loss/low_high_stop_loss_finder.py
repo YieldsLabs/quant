@@ -7,7 +7,7 @@ from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 class LowHighStopLossFinder(AbstractStopLoss):
     NAME = 'LWHGH'
 
-    def __init__(self, atr_multi=1.2, lookback=50):
+    def __init__(self, atr_multi=0.87, lookback=50):
         super().__init__()
         self.stop_loss_finder = ATRStopLossFinder(atr_multi=atr_multi)
         self.lookback = lookback

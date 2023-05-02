@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 from itertools import product
 
 from system.abstract_system import AbstractSystem
@@ -7,9 +7,9 @@ from trader.create_trader import create_trader
 
 
 class TradingState(Enum):
-    BACKTESTING = 1
-    TRADING = 2
-    STOPPED = 3
+    BACKTESTING = auto()
+    TRADING = auto()
+    STOPPED = auto()
 
 
 class TradingSystem(AbstractSystem):
@@ -38,6 +38,7 @@ class TradingSystem(AbstractSystem):
         self.trader = create_trader(self.context.broker, live_trading=False)
 
         await self.context.backtest.run(self.context.symbols, self.context.timeframes, self.context.lookback)
+        await self.dispatcher.stop_workers()
 
     async def _run_trading(self):
         self.trader = create_trader(self.context.broker, live_trading=False)
@@ -45,3 +46,4 @@ class TradingSystem(AbstractSystem):
         timeframes_symbols = list(product(self.context.symbols, self.context.timeframes))
 
         await self.context.subscribe(timeframes_symbols)
+        await self.dispatcher.stop_workers()

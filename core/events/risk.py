@@ -7,7 +7,7 @@ from ..timeframe import Timeframe
 
 
 @dataclass(frozen=True)
-class EvaluateRisk(Event):
+class RiskEvaluate(Event):
     symbol: str
     timeframe: Timeframe
     side: PositionSide
@@ -22,7 +22,7 @@ class EvaluateRisk(Event):
 
 
 @dataclass(frozen=True)
-class ExitRisk(Event):
+class RiskExit(Event):
     symbol: str
     timeframe: Timeframe
     strategy: str

@@ -5,8 +5,8 @@ from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.portfolio import PortfolioPerformanceEvent
 from core.events.position import PositionClosed, OrderFilled, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
-from core.events.risk import EvaluateRisk, ExitRisk
-from core.events.strategy import ExitLong, ExitShort, GoLong, GoShort
+from core.events.risk import RiskEvaluate, RiskExit
+from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
 
 
 class LogJournal(AbstractEventManager):
@@ -25,13 +25,13 @@ class LogJournal(AbstractEventManager):
         print(event)
         print(f"Processed {self.num_events} events in {elapsed_time:.2f} seconds, throughput = {self.num_events/elapsed_time:.2f} events/s.")
 
-    @register_handler(GoLong)
-    async def _on_go_long(self, event: GoLong):
+    @register_handler(LongGo)
+    async def _on_go_long(self, event: LongGo):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(GoShort)
-    async def _on_go_short(self, event: GoShort):
+    @register_handler(ShortGo)
+    async def _on_go_short(self, event: ShortGo):
         print('----------------------------------------------------->')
         print(event)
 
@@ -50,23 +50,23 @@ class LogJournal(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(EvaluateRisk)
-    async def _on_evaluate_risk(self, event: EvaluateRisk):
+    @register_handler(RiskEvaluate)
+    async def _on_evaluate_risk(self, event: RiskEvaluate):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(ExitRisk)
-    async def _on_exit_risk(self, event: ExitRisk):
+    @register_handler(RiskExit)
+    async def _on_exit_risk(self, event: RiskExit):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(ExitLong)
-    async def _on_exit_long(self, event: ExitLong):
+    @register_handler(LongExit)
+    async def _on_exit_long(self, event: LongExit):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(ExitShort)
-    async def _on_exit_short(self, event: ExitShort):
+    @register_handler(ShortExit)
+    async def _on_exit_short(self, event: ShortExit):
         print('----------------------------------------------------->')
         print(event)
 
