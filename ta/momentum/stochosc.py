@@ -5,18 +5,18 @@ from ta.base.ma import MovingAverage
 class StochasticOscillator(AbstractIndicator):
     NAME = 'STOCH'
 
-    def __init__(self, stochastic_period=14, k_period=3, d_period=3):
+    def __init__(self, period=14, k_period=3, d_period=3):
         super().__init__()
         self.k_period_ma = MovingAverage(k_period)
         self.d_period_ma = MovingAverage(d_period)
-        self.stochastic_period = stochastic_period
+        self.period = period
         # known issue with meta labels
         self.k_period = k_period
         self.d_period = d_period
 
     def call(self, data):
-        high_rolling = data['high'].rolling(window=self.stochastic_period)
-        low_rolling = data['low'].rolling(window=self.stochastic_period)
+        high_rolling = data['high'].rolling(window=self.period)
+        low_rolling = data['low'].rolling(window=self.period)
 
         high_low_range = high_rolling.max() - low_rolling.min()
         close_low_range = data['close'] - low_rolling.min()

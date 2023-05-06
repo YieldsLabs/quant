@@ -5,7 +5,7 @@ from core.event_dispatcher import register_handler
 from core.events.portfolio import PortfolioPerformanceEvent
 
 
-class GatherJournal(AbstractEventManager):
+class CSVSync(AbstractEventManager):
     def __init__(self, save_interval: int = 30):
         super().__init__()
         self.columns = [
@@ -64,7 +64,10 @@ class GatherJournal(AbstractEventManager):
     @register_handler(PortfolioPerformanceEvent)
     async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
         async with self.lock:
-            event_dict = {'timestamp': int(event.meta.timestamp), 'strategy_id': event.strategy_id}
+            event_dict = {
+                'timestamp': int(event.meta.timestamp),
+                'strategy_id': event.strategy_id
+            }
 
             event_dict.update(event.performance.to_dict())
             self.event[event.strategy_id] = event_dict

@@ -1,5 +1,4 @@
 import asyncio
-from collections import deque
 from typing import List, Type
 
 import pandas as pd
@@ -8,26 +7,9 @@ from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
-from strategy.abstract_strategy import AbstractStrategy
-from strategy.kmeans_inference import KMeansInference
-
-
-class SymbolData:
-    def __init__(self, size: int):
-        self.buffer = deque(maxlen=size)
-        self.lock = asyncio.Lock()
-
-    async def append(self, event):
-        async with self.lock:
-            self.buffer.append(event)
-
-    async def get_window(self):
-        async with self.lock:
-            return list(self.buffer)
-
-    @property
-    def count(self):
-        return len(self.buffer)
+from .symbol_data import SymbolData
+from .abstract_strategy import AbstractStrategy
+from .kmeans_inference import KMeansInference
 
 
 class StrategyManager(AbstractEventManager):
@@ -113,25 +95,26 @@ class StrategyManager(AbstractEventManager):
         await asyncio.gather(*tasks)
 
     def _is_poor_strategy(self, performance: PortfolioPerformance) -> bool:
-        if performance.total_trades < self.TOTAL_TRADES_THRESHOLD:
-            return False
+        return False
+        # if performance.total_trades < self.TOTAL_TRADES_THRESHOLD:
+        #     return False
 
-        features = [
-            performance.max_drawdown,
-            performance.average_pnl,
-            performance.risk_of_ruin,
-            performance.profit_factor,
-            performance.sharpe_ratio,
-            performance.sortino_ratio,
-            performance.calmar_ratio,
-            performance.cvar,
-            performance.ulcer_index,
-        ]
+        # features = [
+        #     performance.max_drawdown,
+        #     performance.average_pnl,
+        #     performance.risk_of_ruin,
+        #     performance.profit_factor,
+        #     performance.sharpe_ratio,
+        #     performance.sortino_ratio,
+        #     performance.calmar_ratio,
+        #     performance.cvar,
+        #     performance.ulcer_index,
+        # ]
 
-        return (
-            self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER
-            and performance.total_pnl < 0
-        )
+        # return (
+        #     self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER
+        #     and performance.total_pnl < 0
+        # )
 
     @staticmethod
     def calculate_signals(strategy: AbstractStrategy, events: List[OHLCV], entry: float) -> tuple:

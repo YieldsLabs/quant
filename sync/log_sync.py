@@ -9,7 +9,7 @@ from core.events.risk import RiskEvaluate, RiskExit
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
 
 
-class LogJournal(AbstractEventManager):
+class LogSync(AbstractEventManager):
     def __init__(self):
         super().__init__()
         self.num_events = 0

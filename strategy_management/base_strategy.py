@@ -3,7 +3,7 @@ from typing import List, Type, Union
 import pandas as pd
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
-from strategy.abstract_strategy import AbstractStrategy
+from .abstract_strategy import AbstractStrategy
 from ta.alerts.abstract_alert import AbstractAlert
 from ta.base.abstract_indicator import AbstractIndicator
 from ta.patterns.abstract_pattern import AbstractPattern

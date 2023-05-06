@@ -3,8 +3,8 @@ import pandas as pd
 from .abstract_pattern import AbstractPattern
 
 
-class PiercingDarkCloudCover(AbstractPattern):
-    NAME = 'PIERCING'
+class PiercingLineDarkCloudCover(AbstractPattern):
+    NAME = 'PIERCINGLINEDARKCLOUDCOVER'
 
     def bullish(self, data):
         first_candle = data.shift(1)

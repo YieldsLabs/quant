@@ -10,12 +10,13 @@ from broker.position_mode import PositionMode
 from core.abstract_event_manager import AbstractEventManager
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from datasource.bybit_datasource import BybitDataSource
-from journal.gather_journal import GatherJournal
-from journal.log_journal import LogJournal
+from sync.csv_sync import CSVSync
+from sync.log_sync import LogSync
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from core.timeframe import Timeframe
+from strategies.contrarian_neutrality_pullback import ContrarianNeutralityPullBack
 from strategies.contrarian_ten_patterns_strategy import ContrarianTenPatterns
-from strategy.kmeans_inference import KMeansInference
+from strategy_management.kmeans_inference import KMeansInference
 from system.trading_system import TradingContext, TradingSystem
 
 load_dotenv()
@@ -29,7 +30,7 @@ symbols = [
     'APEUSDT',
     'AVAXUSDT',
     'ETCUSDT',
-    'ETHUSDT',
+    'DOTUSDT',
     'MATICUSDT',
     'NEARUSDT',
     'SOLUSDT',
@@ -44,6 +45,7 @@ timeframes = [
 
 strategies = [
     ContrarianTenPatterns,
+    ContrarianNeutralityPullBack,
 ]
 
 INTERVALS = {
@@ -70,8 +72,8 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 60000
-risk_per_trade = 0.0001
+backtest_lookback = 3000
+risk_per_trade = 0.001
 leverage = 1
 
 
@@ -149,8 +151,8 @@ async def subscribe(ws, timeframe_symbols):
 
 
 async def main():
-    LogJournal()
-    GatherJournal()
+    LogSync()
+    CSVSync()
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
 
@@ -165,8 +167,8 @@ async def main():
 
     analytics = StrategyPerformance(initial_account_size)
     inference = KMeansInference(
-        './strategy/model/kmeans_model.pkl',
-        './strategy/model/scaler.pkl'
+        './strategy_management/model/kmeans_model.pkl',
+        './strategy_management/model/scaler.pkl'
     )
     ws_handler = WebSocketHandler(WSS)
 
