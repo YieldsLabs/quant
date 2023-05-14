@@ -4,7 +4,7 @@ from .abstract_pattern import AbstractPattern
 class KangarooTail(AbstractPattern):
     NAME = 'KANGAROOTAIL'
 
-    def __init__(self, lookback=20):
+    def __init__(self, lookback=100):
         self.lookback = lookback
 
     def bullish(self, data):

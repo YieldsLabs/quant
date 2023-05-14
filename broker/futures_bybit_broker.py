@@ -68,7 +68,7 @@ class FuturesBybitBroker(AbstractBroker):
             extra_params['takeProfit'] = str(take_profit_price)
 
         if extra_params:
-            extra_params['timeInForce'] = 'GTC'
+            extra_params['timeInForce'] = 'PostOnly'
 
         return extra_params if extra_params else None
 
@@ -76,7 +76,11 @@ class FuturesBybitBroker(AbstractBroker):
         order_params = self._create_order_params('market', side, symbol, position_size)
         order_params['extra_params'] = self._create_extra_params(stop_loss_price, take_profit_price)
 
-        self._create_order(**order_params)
+        res = self._create_order(**order_params)
+
+        print(res)
+
+        return res['info']['orderId']
 
     def place_limit_order(self, order_side, symbol, entry_price, position_size, stop_loss_price=None, take_profit_price=None):
         order_params = self._create_order_params('limit', order_side.value, symbol, position_size)
@@ -96,6 +100,7 @@ class FuturesBybitBroker(AbstractBroker):
             'side': side,
             'params': self._create_extra_params(stop_loss_price)
         }
+
         self.exchange.edit_limit_order(**order_params)
 
     def has_open_position(self, symbol):
@@ -107,7 +112,9 @@ class FuturesBybitBroker(AbstractBroker):
 
         open_position = self.get_open_position(symbol)
 
-        self._create_order('market', 'sell' if open_position['position_side'] == PositionSide.LONG else 'buy', symbol, open_position['position_size'])
+        res = self._create_order('market', 'sell' if open_position['position_side'] == PositionSide.LONG else 'buy', symbol, open_position['position_size'])
+
+        print(res)
 
     def close_order(self, order_id, symbol):
         self.exchange.cancel_order(order_id, symbol)
@@ -121,11 +128,13 @@ class FuturesBybitBroker(AbstractBroker):
             market_info = self.exchange.fetch_markets()
             symbol_info = [market for market in market_info if market['id'] == symbol and market['linear']][0]
 
+            trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
+            min_position_size = symbol_info.get('amount', {}).get('min', 1.0)
+
             position_precision = symbol_info.get('precision', {}).get('amount', 0)
             price_precision = symbol_info.get('precision', {}).get('price', 0)
-            trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
 
-            return trading_fee, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
+            return trading_fee, min_position_size, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
 
         except Exception as e:
             print(e)

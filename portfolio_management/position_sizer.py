@@ -8,7 +8,7 @@ class PositionSizer:
         entry_price: float,
         trading_fee: float,
         min_position_size: float,
-        price_precision: int,
+        position_precision: int,
         stop_loss_price: Optional[float] = None,
         risk_per_trade: float = 0.001
     ) -> float:
@@ -26,6 +26,6 @@ class PositionSizer:
 
         adjusted_position_size = max(position_size, min_position_size)
 
-        rounded_position_size = round(adjusted_position_size, price_precision)
+        rounded_position_size = round(adjusted_position_size, position_precision)
 
         return rounded_position_size

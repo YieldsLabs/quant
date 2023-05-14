@@ -23,13 +23,13 @@ class PaperTrader(AbstractTrader):
     async def trade(self, event):
         order_side = OrderSide.BUY if isinstance(event, LongPositionOpened) else OrderSide.SELL
 
-        entry = self.apply_slippage(event.entry, order_side)
+        entry_price = self._apply_slippage(event.entry, order_side)
 
-        order = Order(side=order_side, entry=entry, size=event.size, stop_loss=event.stop_loss, take_profit=event.take_profit)
+        order = Order(side=order_side, price=entry_price, size=event.size, stop_loss=event.stop_loss)
 
         await self.dispatcher.dispatch(OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))
 
-    def apply_slippage(self, price: float, order_side: OrderSide) -> float:
+    def _apply_slippage(self, price: float, order_side: OrderSide) -> float:
         factor = 1 + self.slippage
 
         if order_side == OrderSide.BUY:

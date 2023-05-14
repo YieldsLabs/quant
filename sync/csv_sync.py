@@ -6,7 +6,9 @@ from core.events.portfolio import PortfolioPerformanceEvent
 
 
 class CSVSync(AbstractEventManager):
-    def __init__(self, save_interval: int = 30):
+    PERFORMANCE_CSV = "strategy_performance.csv"
+
+    def __init__(self, save_interval: int = 10):
         super().__init__()
         self.columns = [
             'timestamp',
@@ -59,7 +61,7 @@ class CSVSync(AbstractEventManager):
 
     def save_to_csv(self):
         df = pd.DataFrame(list(self.event.values()), columns=self.columns)
-        df.to_csv("strategy_performance.csv", index=False)
+        df.to_csv(self.PERFORMANCE_CSV, index=False)
 
     @register_handler(PortfolioPerformanceEvent)
     async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):

@@ -5,8 +5,8 @@ from trader.live_trader import LiveTrader
 from trader.paper_trader import PaperTrader
 
 
-def create_trader(broker: Type[AbstractBroker], live_trading: bool = False) -> AbstractTrader:
+def create_trader(broker: Type[AbstractBroker], slippage: float = 0.001, live_trading: bool = False) -> AbstractTrader:
     if live_trading:
         return LiveTrader(broker)
     else:
-        return PaperTrader()
+        return PaperTrader(slippage)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 from .base_event import Event, EventMeta
 from .ohlcv import OHLCV
 from .position import PositionSide
@@ -13,9 +14,9 @@ class RiskEvaluate(Event):
     side: PositionSide
     size: float
     entry: float
-    stop_loss: float
-    take_profit: float
-    risk: float
+    stop_loss: Optional[float]
+    risk_reward_ratio: float
+    risk_per_trade: float
     ohlcv: OHLCV
     strategy: str
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
@@ -26,5 +27,6 @@ class RiskExit(Event):
     symbol: str
     timeframe: Timeframe
     strategy: str
+    side: PositionSide
     exit: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))

@@ -41,8 +41,8 @@ class PortfolioManager(AbstractPortfolioManager):
         self.state_lock = asyncio.Lock()
 
         self._state_handlers = {
-            (PositionState.IDLE, LongGo): self.handle_position,
-            (PositionState.IDLE, ShortGo): self.handle_position,
+            (PositionState.IDLE, LongGo): self.handle_open_position,
+            (PositionState.IDLE, ShortGo): self.handle_open_position,
             (PositionState.OPENING, OrderFilled): self.handle_order_filled,
             (PositionState.OPENED, OHLCVEvent): self.handle_market,
             (PositionState.OPENED, LongExit): self.handle_exit,
@@ -83,7 +83,7 @@ class PortfolioManager(AbstractPortfolioManager):
     async def _on_closed_position(self, event: PositionClosed):
         await self.process_event(event)
 
-    async def handle_position(self, event: Union[LongGo, ShortGo]) -> bool:
+    async def handle_open_position(self, event: Union[LongGo, ShortGo]) -> bool:
         symbol = event.symbol
 
         if symbol in self.active_positions:
@@ -108,6 +108,7 @@ class PortfolioManager(AbstractPortfolioManager):
 
         async with self.active_positions_lock:
             self.active_positions[symbol].add_order(event.order)
+            self.active_positions[symbol].update_prices(event.order.price)
 
         return True
 
@@ -137,8 +138,8 @@ class PortfolioManager(AbstractPortfolioManager):
                 size=position.size,
                 entry=position.entry_price,
                 stop_loss=position.stop_loss_price,
-                take_profit=position.take_profit_price,
-                risk=self.risk_per_trade,
+                risk_reward_ratio=position.risk_reward_ratio,
+                risk_per_trade=self.risk_per_trade,
                 strategy=position.strategy,
                 ohlcv=event.ohlcv
             )
@@ -149,7 +150,7 @@ class PortfolioManager(AbstractPortfolioManager):
     async def handle_exit(self, event: Union[LongExit, ShortExit, RiskExit]) -> bool:
         position = await self.get_active_position(event.symbol)
 
-        if position is None or event.strategy != position.strategy or not self.can_close_position(position.side, event):
+        if not position or (event.strategy != position.strategy) or not self.can_close_position(position.side, position.entry_price, event):
             return False
 
         await self.dispatcher.dispatch(PositionReadyToClose(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit))
@@ -158,11 +159,12 @@ class PortfolioManager(AbstractPortfolioManager):
 
     async def close_position(self, position: Position, exit_price: float):
         symbol = position.symbol
-        closed_key = f"{symbol}_{position.closed_timestamp}"
 
         position.close_position(exit_price)
 
         async with self.closed_positions_lock:
+            closed_key = f"{symbol}_{position.closed_timestamp}"
+
             if closed_key not in self.closed_positions:
                 self.closed_positions[closed_key] = position
 
@@ -170,15 +172,14 @@ class PortfolioManager(AbstractPortfolioManager):
 
     async def create_position(self, event: Union[LongGo, ShortGo]) -> Position:
         account_size = await self.datasource.account_size()
-        trading_fee, min_position_size, price_precision = await self.datasource.fee_and_precisions(event.symbol)
-
+        trading_fee, min_position_size, position_precision, price_precision = await self.datasource.fee_and_precisions(event.symbol)
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
-        take_profit_price = round(event.take_profit, price_precision) if event.take_profit else None
+        entry_price = round(event.entry, price_precision)
 
-        size = PositionSizer.calculate_position_size(account_size, event.entry, trading_fee, min_position_size, price_precision, stop_loss_price, self.risk_per_trade)
+        size = PositionSizer.calculate_position_size(account_size, entry_price, trading_fee, min_position_size, position_precision, stop_loss_price, self.risk_per_trade)
         position_side = PositionSide.LONG if isinstance(event, LongGo) else PositionSide.SHORT
 
-        return Position(symbol=event.symbol, timeframe=event.timeframe, strategy=event.strategy, size=size, entry=event.entry, side=position_side, stop_loss=stop_loss_price, take_profit=take_profit_price)
+        return Position(symbol=event.symbol, timeframe=event.timeframe, strategy=event.strategy, size=size, entry=entry_price, side=position_side, risk_reward_ratio=event.risk_reward_ratio, stop_loss=stop_loss_price)
 
     async def get_active_position(self, symbol: str) -> Optional[Position]:
         if symbol not in self.active_positions:
@@ -205,8 +206,7 @@ class PortfolioManager(AbstractPortfolioManager):
                 timeframe=position.timeframe,
                 size=position.size,
                 entry=position.entry_price,
-                stop_loss=position.stop_loss_price,
-                take_profit=position.take_profit_price
+                stop_loss=position.stop_loss_price
             )
         else:
             return ShortPositionOpened(
@@ -214,18 +214,17 @@ class PortfolioManager(AbstractPortfolioManager):
                 timeframe=position.timeframe,
                 size=position.size,
                 entry=position.entry_price,
-                stop_loss=position.stop_loss_price,
-                take_profit=position.take_profit_price
+                stop_loss=position.stop_loss_price
             )
 
-    def can_close_position(self, position_side, event: Union[LongExit, ShortExit, RiskExit]) -> bool:
-        if isinstance(event, LongExit) and position_side == PositionSide.LONG:
+    def can_close_position(self, position_side, entry: float, event: Union[LongExit, ShortExit, RiskExit]) -> bool:
+        if isinstance(event, LongExit) and (position_side == PositionSide.LONG) and (entry < event.exit):
             return True
 
-        if isinstance(event, ShortExit) and position_side == PositionSide.SHORT:
+        if isinstance(event, ShortExit) and (position_side == PositionSide.SHORT) and (entry > event.exit):
             return True
 
-        if isinstance(event, RiskExit):
+        if isinstance(event, RiskExit) and (position_side == event.side):
             return True
 
         return False

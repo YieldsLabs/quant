@@ -37,21 +37,17 @@ class LiveTrader(AbstractTrader):
         order_params = {
             "symbol": event.symbol,
             "order_side": order_side,
-            "entry_price": event.entry,
             "position_size": event.size,
-            "stop_loss_price": event.stop_loss,
-            "take_profit_price": event.take_profit
+            "stop_loss_price": event.stop_loss
         }
 
         try:
-            current_order_id = await asyncio.to_thread(self.broker.place_limit_order, **order_params)
+            current_order_id = await asyncio.to_thread(self.broker.place_market_order, **order_params)
+            position = await asyncio.to_thread(self.broker.get_open_position, event.symbol)
 
-            if not current_order_id:
-                self.logger.warning(f"Failed to place order for {event.symbol}")
-                return
-
-            order = Order(id=current_order_id, side=order_side, size=event.size, entry=event.entry, stop_loss=event.stop_loss, take_profit=event.take_profit)
+            order = Order(id=current_order_id, side=order_side, size=event.size, price=position.entry_price, stop_loss=event.stop_loss)
 
             await self.dispatcher.dispatch(OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))
         except Exception as e:
             self.logger.error(f"Error placing order for {event.symbol}: {e}")
+            await self.dispatcher.dispatch(PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.entry))

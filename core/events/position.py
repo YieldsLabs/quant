@@ -3,7 +3,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from .ohlcv import OHLCV
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
 
@@ -19,12 +18,11 @@ class OrderSide(Enum):
 @dataclass
 class Order:
     side: OrderSide
-    entry: float
+    price: float
     size: float
-    stop_loss: float
-    take_profit: Optional[float] = None
+    stop_loss: Optional[float]
     id: Optional[str] = None
-    timestamp: int = field(default_factory=lambda: datetime.now().timestamp())
+    timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
     def to_dict(self):
         return asdict(self)
@@ -52,8 +50,7 @@ class PositionEvent(Event):
     timeframe: Timeframe
     size: float
     entry: float
-    stop_loss: Optional[float] = None
-    take_profit: Optional[float] = None
+    stop_loss: Optional[float]
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 

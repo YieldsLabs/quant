@@ -35,13 +35,13 @@ class TradingSystem(AbstractSystem):
         await self.dispatcher.stop()
 
     async def _run_backtest(self):
-        self.trader = create_trader(self.context.broker, live_trading=False)
+        self.trader = create_trader(self.context.broker)
 
         await self.context.backtest.run(self.context.symbols, self.context.timeframes, self.context.lookback)
         await self.dispatcher.stop_workers()
 
     async def _run_trading(self):
-        self.trader = create_trader(self.context.broker, live_trading=False)
+        self.trader = create_trader(self.context.broker, live_trading=True)
 
         timeframes_symbols = list(product(self.context.symbols, self.context.timeframes))
 

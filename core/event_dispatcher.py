@@ -8,7 +8,7 @@ from typing import Any, AsyncIterable, Callable, Deque, Dict, List, Tuple, Type
 
 import numpy as np
 
-from .events.base_event import EndEvent, Event
+from .events.base_event import EventEnded, Event
 
 
 class EventDispatcher:
@@ -70,7 +70,7 @@ class EventDispatcher:
             await asyncio.sleep(0.1)
 
         for _ in range(len(self._worker_tasks)):
-            await self.dispatch(EndEvent())
+            await self.dispatch(EventEnded())
 
     async def _call_handler(self, handler, event, *args, **kwargs):
         try:
@@ -85,7 +85,7 @@ class EventDispatcher:
         while not self.cancel_event.is_set():
             event, args, kwargs = await self._group_event_queues[priority_group].get()
 
-            if isinstance(event, EndEvent):
+            if isinstance(event, EventEnded):
                 break
 
             yield event, args, kwargs

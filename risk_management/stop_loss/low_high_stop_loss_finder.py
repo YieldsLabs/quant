@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
 from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
 

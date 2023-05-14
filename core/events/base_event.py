@@ -16,5 +16,5 @@ class Event:
 
 
 @dataclass(frozen=True)
-class EndEvent(Event):
+class EventEnded(Event):
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))

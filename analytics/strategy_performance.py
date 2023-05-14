@@ -14,6 +14,8 @@ class StrategyPerformance(AbstractAnalytics):
 
     def calculate(self, positions: List[Position]) -> PortfolioPerformance:
         initial_account_size = self.account_size
+        risk_per_trade = self.risk_per_trade
+        periods_per_year = self.periods_per_year
 
         total_trades = len(positions)
 
@@ -55,14 +57,14 @@ class StrategyPerformance(AbstractAnalytics):
         pnl_positive = pnl > 0
         successful_trades = pnl_positive.sum()
         win_rate = successful_trades / total_trades
-        risk_of_ruin = self._risk_of_ruin(win_rate, initial_account_size)
+        risk_of_ruin = self._risk_of_ruin(win_rate, initial_account_size, risk_per_trade)
         rate_of_return = self._rate_of_return(pnl, initial_account_size)
         total_pnl = pnl.sum()
         average_pnl = pnl.mean()
         sharpe_ratio = self._sharpe_ratio(pnl)
         sortino_ratio = self._sortino_ratio(pnl)
-        lake_ratio = self._lake_ratio(pnl, initial_account_size)
-        burke_ratio = self._burke_ratio(pnl, initial_account_size)
+        lake_ratio = self._lake_ratio(pnl, initial_account_size, periods_per_year)
+        burke_ratio = self._burke_ratio(pnl, initial_account_size, periods_per_year)
         rachev_ratio = self._rachev_ratio(pnl)
         tail_ratio = self._tail_ratio(pnl)
         omega_ratio = self._omega_ratio(pnl)
@@ -77,8 +79,8 @@ class StrategyPerformance(AbstractAnalytics):
         var = self._var(pnl, initial_account_size)
         cvar = self._cvar(pnl)
         ulcer_index = self._ulcer_index(pnl, initial_account_size)
-        annualized_volatility = self._annualized_volatility(pnl, initial_account_size)
-        annualized_return = self._annualized_return(rate_of_return, total_trades)
+        annualized_volatility = self._annualized_volatility(pnl, initial_account_size, periods_per_year)
+        annualized_return = self._annualized_return(rate_of_return, total_trades, periods_per_year)
 
         skewness = self._skewness(pnl)
         kurtosis = self._kurtosis(pnl)
@@ -115,7 +117,8 @@ class StrategyPerformance(AbstractAnalytics):
             ulcer_index=ulcer_index
         )
 
-    def _sharpe_ratio(self, pnl, risk_free_rate=0):
+    @staticmethod
+    def _sharpe_ratio(pnl, risk_free_rate=0) -> float:
         avg_return = np.mean(pnl)
         std_return = np.std(pnl)
 
@@ -124,7 +127,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return (avg_return - risk_free_rate) / std_return
 
-    def _sortino_ratio(self, pnl, risk_free_rate=0):
+    @staticmethod
+    def _sortino_ratio(pnl, risk_free_rate=0) -> float:
         downside_returns = pnl[pnl < 0]
 
         if len(downside_returns) < 2:
@@ -140,7 +144,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return sortino_ratio
 
-    def _max_streak(self, pnl_positive, winning: bool):
+    @staticmethod
+    def _max_streak(pnl_positive, winning: bool) -> int:
         streak = max_streak = 0
 
         for pnl_value in pnl_positive:
@@ -152,12 +157,14 @@ class StrategyPerformance(AbstractAnalytics):
 
         return max_streak
 
-    def _rate_of_return(self, pnl, initial_account_size):
+    @staticmethod
+    def _rate_of_return(pnl, initial_account_size) -> float:
         account_size = initial_account_size + pnl.sum()
 
         return (account_size / initial_account_size) - 1
 
-    def _profit_factor(self, pnl, pnl_positive):
+    @staticmethod
+    def _profit_factor(pnl, pnl_positive) -> float:
         gross_profit = pnl[pnl_positive].sum()
         gross_loss = np.abs(pnl[~pnl_positive].sum())
 
@@ -166,7 +173,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return gross_profit / gross_loss
 
-    def _max_drawdown(self, pnl, initial_account_size):
+    @staticmethod
+    def _max_drawdown(pnl, initial_account_size) -> float:
         account_size = initial_account_size
         peak = account_size
         max_drawdown = 0
@@ -179,22 +187,25 @@ class StrategyPerformance(AbstractAnalytics):
 
         return max_drawdown
 
-    def _recovery_factor(self, pnl, max_drawdown):
+    @staticmethod
+    def _recovery_factor(pnl, max_drawdown) -> float:
         total_profit = pnl[pnl > 0].sum()
 
         return total_profit / max_drawdown if max_drawdown != 0 else 0
 
-    def _risk_of_ruin(self, win_rate: float, initial_account_size: float):
+    @staticmethod
+    def _risk_of_ruin(win_rate: float, initial_account_size: float, risk_per_trade: float) -> float:
         if win_rate == 1 or win_rate == 0:
             return 0
 
         loss_rate = 1 - win_rate
 
-        risk_of_ruin = ((1 - (self.risk_per_trade * (1 - loss_rate / win_rate))) ** initial_account_size) * 100
+        risk_of_ruin = ((1 - (risk_per_trade * (1 - loss_rate / win_rate))) ** initial_account_size) * 100
 
         return risk_of_ruin
 
-    def _skewness(self, pnl):
+    @staticmethod
+    def _skewness(pnl) -> float:
         n = len(pnl)
 
         if n < 3:
@@ -210,7 +221,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return skewness
 
-    def _kurtosis(self, pnl):
+    @staticmethod
+    def _kurtosis(pnl) -> float:
         n = len(pnl)
 
         if n < 4:
@@ -226,7 +238,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return excess_kurtosis
 
-    def _calmar_ratio(self, rate_of_return: float, max_drawdown: float) -> float:
+    @staticmethod
+    def _calmar_ratio(rate_of_return: float, max_drawdown: float) -> float:
         if max_drawdown == 0:
             return 0
 
@@ -234,13 +247,15 @@ class StrategyPerformance(AbstractAnalytics):
 
         return calmar_ratio
 
-    def _var(self, pnl, initial_account_size, confidence_level=0.95) -> float:
+    @staticmethod
+    def _var(pnl, initial_account_size, confidence_level=0.95) -> float:
         daily_returns = pnl / initial_account_size
         value_at_risk = -np.percentile(daily_returns, (1 - confidence_level) * 100)
 
         return value_at_risk
 
-    def _cvar(self, pnl, alpha=0.05):
+    @staticmethod
+    def _cvar(pnl, alpha=0.05) -> float:
         pnl_sorted = np.sort(pnl)
         n_losses = int(alpha * len(pnl))
 
@@ -251,7 +266,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return cvar
 
-    def _ulcer_index(self, pnl, initial_account_size):
+    @staticmethod
+    def _ulcer_index(pnl, initial_account_size) -> float:
         if len(pnl) == 0:
             return 0
 
@@ -269,7 +285,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return ulcer_index
 
-    def _annualized_volatility(self, pnl, initial_account_size) -> float:
+    @staticmethod
+    def _annualized_volatility(pnl, initial_account_size, periods_per_year: int) -> float:
         total_periods = len(pnl)
 
         if total_periods < 2:
@@ -277,33 +294,36 @@ class StrategyPerformance(AbstractAnalytics):
 
         daily_returns = pnl / initial_account_size
         volatility = np.std(daily_returns, ddof=1)
-        annualized_volatility = volatility * np.sqrt(self.periods_per_year)
+        annualized_volatility = volatility * np.sqrt(periods_per_year)
 
         return annualized_volatility
 
-    def _annualized_return(self, rate_of_return: float, total_trades: int) -> float:
+    @staticmethod
+    def _annualized_return(rate_of_return: float, total_trades: int, periods_per_year: int) -> float:
         holding_period_return = 1 + rate_of_return
-        annualized_return = holding_period_return ** (self.periods_per_year / total_trades) - 1
+        annualized_return = holding_period_return ** (periods_per_year / total_trades) - 1
 
         return annualized_return
 
-    def _lake_ratio(self, pnl, initial_account_size: float) -> float:
+    @staticmethod
+    def _lake_ratio(pnl, initial_account_size: float, periods_per_year: int) -> float:
         account_size = initial_account_size + pnl.cumsum()
         peaks = np.maximum.accumulate(account_size)
         drawdowns = (peaks - account_size) / peaks
-        underwater_time = np.sum(drawdowns < 0) / self.periods_per_year
+        underwater_time = np.sum(drawdowns < 0) / periods_per_year
         lake_ratio = 1 - underwater_time
 
         return lake_ratio
 
-    def _burke_ratio(self, pnl, initial_account_size: float) -> float:
+    @staticmethod
+    def _burke_ratio(pnl, initial_account_size: float, periods_per_year: int) -> float:
         account_size = initial_account_size + pnl.cumsum()
         periods = len(pnl)
 
         if periods < 2:
             return 0
 
-        cagr = (account_size[-1] / initial_account_size) ** (self.periods_per_year / periods) - 1
+        cagr = (account_size[-1] / initial_account_size) ** (periods_per_year / periods) - 1
 
         downside_deviation = np.std(np.minimum(pnl, 0), ddof=1)
 
@@ -314,7 +334,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return burke_ratio
 
-    def _rachev_ratio(self, pnl) -> float:
+    @staticmethod
+    def _rachev_ratio(pnl) -> float:
         if len(pnl) < 3:
             return 0
 
@@ -336,7 +357,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return rachev_ratio
 
-    def _tail_ratio(self, pnl) -> float:
+    @staticmethod
+    def _tail_ratio(pnl) -> float:
         if len(pnl) < 3:
             return 0
 
@@ -359,7 +381,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return tail_ratio
 
-    def _omega_ratio(self, pnl, risk_free_rate: float = 0) -> float:
+    @staticmethod
+    def _omega_ratio(pnl, risk_free_rate: float = 0) -> float:
         if len(pnl) < 3:
             return 0
 
@@ -380,7 +403,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return omega_ratio
 
-    def _sterling_ratio(self, pnl, risk_free_rate: float = 0) -> float:
+    @staticmethod
+    def _sterling_ratio(pnl, risk_free_rate: float = 0) -> float:
         if len(pnl) < 3:
             return 0
 
@@ -400,7 +424,8 @@ class StrategyPerformance(AbstractAnalytics):
 
         return sterling_ratio
 
-    def _kappa_three_ratio(self, pnl) -> float:
+    @staticmethod
+    def _kappa_three_ratio(pnl) -> float:
         gains = pnl[pnl > 0]
         losses = pnl[pnl < 0]
 

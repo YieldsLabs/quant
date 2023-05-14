@@ -21,5 +21,5 @@ class AbstractStrategy(AbstractMetaLabel):
         pass
 
     @abstractmethod
-    def stop_loss_and_take_profit(self, entry: float, ohlcv: pd.DataFrame) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    def stop_loss(self, entry: float, ohlcv: pd.DataFrame) -> Tuple[float, float]:
         pass

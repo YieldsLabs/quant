@@ -11,7 +11,7 @@ class StrategyEntryEvent(Event):
     strategy: str
     entry: float
     stop_loss: float
-    take_profit: float
+    risk_reward_ratio: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
 

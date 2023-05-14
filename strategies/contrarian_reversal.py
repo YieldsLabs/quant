@@ -4,10 +4,10 @@ from ta.momentum.rsi import RelativeStrengthIndex
 from ta.volume.vo import VolumeOscillator
 
 
-class ContrarianNeutralityPullBack(BaseStrategy):
-    NAME = "CONTRARIANNEUTRALITYPULLBACK"
+class ContrarianReversal(BaseStrategy):
+    NAME = "CONTRARIANREVERSAL"
 
-    def __init__(self, period=14, lower_exit_barrier=30, upper_exit_barrier=70, lookback=50, atr_multi=1.5, risk_reward_ratio=2.0):
+    def __init__(self, period=5, lower_barrier=20, lower_threshold=33, upper_barrier=80, upper_threshold=67, lower_exit_barrier=70, upper_exit_barrier=30, lookback=50, atr_multi=1.5, risk_reward_ratio=2.0):
         indicators = [
             (VolumeOscillator(), ('VO')),
             (RelativeStrengthIndex(period=period), ('rsi')),
@@ -17,15 +17,19 @@ class ContrarianNeutralityPullBack(BaseStrategy):
             ATRStopLossFinder(atr_multi=atr_multi),
             risk_reward_ratio=risk_reward_ratio
         )
-        self.lower_exit_barrier = lower_exit_barrier
+        self.lower_barrier = lower_barrier
+        self.lower_threshold = lower_threshold
+        self.upper_barrier = upper_barrier
+        self.upper_threshold = upper_threshold
         self.upper_exit_barrier = upper_exit_barrier
+        self.lower_exit_barrier = lower_exit_barrier
         self.lookback = lookback
 
     def _generate_buy_entry(self, data):
         rsi = data['rsi']
         vo = data['VO']
 
-        buy_entry = (rsi >= 50) & (rsi > rsi.shift(1)) & (rsi.shift(1) > 50) & (rsi.shift(1) < rsi.shift(2)) & (rsi.shift(2) < 53) & (rsi.shift(2) > 50) & (rsi.shift(13) < 50) & (rsi < 55)
+        buy_entry = (rsi >= self.lower_barrier) & (rsi < rsi.shift(1)) & (rsi.shift(1) > self.lower_barrier) & (rsi.shift(1) < self.lower_threshold) & (rsi.shift(2) < self.lower_barrier)
 
         return buy_entry & (vo > 0)
 
@@ -33,7 +37,7 @@ class ContrarianNeutralityPullBack(BaseStrategy):
         rsi = data['rsi']
         vo = data['VO']
 
-        sell_entry = (rsi <= 50) & (rsi < rsi.shift(1)) & (rsi.shift(1) < 50) & (rsi.shift(1) > rsi.shift(2)) & (rsi.shift(2) > 47) & (rsi.shift(2) < 50) & (rsi.shift(13) > 50) & (rsi > 45)
+        sell_entry = (rsi <= self.upper_barrier) & (rsi > rsi.shift(1)) & (rsi.shift(1) < self.upper_barrier) & (rsi.shift(1) > self.upper_threshold) & (rsi.shift(2) > self.upper_barrier)
 
         return sell_entry & (vo < 0)
 

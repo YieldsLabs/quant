@@ -24,6 +24,6 @@ class TradingContext:
         self.subscribe = subscribe
 
         self.portfolio_manager = PortfolioManager(datasource, analytics, risk_per_trade)
-        self.risk_manager = RiskManager(trailing_stop_loss=False)
+        self.risk_manager = RiskManager()
         self.backtest = Backtest(datasource)
         self.strategy_manager = StrategyManager(strategies, inference)

@@ -10,12 +10,15 @@ from broker.position_mode import PositionMode
 from core.abstract_event_manager import AbstractEventManager
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from datasource.bybit_datasource import BybitDataSource
+from strategies.contrarian_deep_three_move import ContrarianDeepThreeMove
+from strategies.contrarian_ma_crossover import ContrarianMACrossover
+from strategies.contrarian_neutrality_pullback import ContrarianNeutralityPullBack
+from strategies.contrarian_patterns import ContrarianPatterns
+from strategies.contrarian_reversal import ContrarianReversal
 from sync.csv_sync import CSVSync
 from sync.log_sync import LogSync
 from optimization.hyperparameters import strategy_hyperparameters, stoploss_hyperparameters, takeprofit_hyperparameters
 from core.timeframe import Timeframe
-from strategies.contrarian_neutrality_pullback import ContrarianNeutralityPullBack
-from strategies.contrarian_ten_patterns_strategy import ContrarianTenPatterns
 from strategy_management.kmeans_inference import KMeansInference
 from system.trading_system import TradingContext, TradingSystem
 
@@ -35,17 +38,15 @@ symbols = [
     'NEARUSDT',
     'SOLUSDT',
     'UNFIUSDT',
-    'XRPUSDT'
+    'XRPUSDT',
 ]
 
 timeframes = [
     Timeframe.FIVE_MINUTES,
-    Timeframe.FIFTEEN_MINUTES
 ]
 
 strategies = [
-    ContrarianTenPatterns,
-    ContrarianNeutralityPullBack,
+    ContrarianMACrossover,
 ]
 
 INTERVALS = {
@@ -72,8 +73,8 @@ search_space = {
     **takeprofit_hyperparameters
 }
 
-backtest_lookback = 3000
-risk_per_trade = 0.001
+backtest_lookback = 5000
+risk_per_trade = 0.0005
 leverage = 1
 
 
@@ -118,7 +119,7 @@ class WebSocketHandler(AbstractEventManager):
             except Exception as e:
                 print(f"Unexpected error: {e}")
 
-    async def run(self, ping_interval=15):
+    async def run(self, ping_interval=10):
         self.ws = await self.connect_to_websocket()
 
         ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))

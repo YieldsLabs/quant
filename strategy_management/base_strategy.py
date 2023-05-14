@@ -13,22 +13,22 @@ class BaseStrategy(AbstractStrategy):
     def __init__(
         self,
         indicators: List[Union[AbstractIndicator, AbstractPattern]],
-        take_profit_finder: Type[AbstractTakeProfit],
         stop_loss_finder: Type[AbstractStopLoss],
+        risk_reward_ratio: float = 1.0
     ):
         super().__init__()
         self.indicators = indicators
-        self.take_profit_finder = take_profit_finder
+        self.risk_reward_ratio = risk_reward_ratio
         self.stop_loss_finder = stop_loss_finder
         self.lookback: int = self._calculate_lookback()
 
     def _calculate_lookback(self):
         lookbacks = [item.lookback for item, _ in self.indicators if hasattr(item, 'lookback')] + \
                     [getattr(item, attr, 0) for item, _ in self.indicators for attr in dir(item) if attr.endswith('period')] + \
-                    [getattr(obj, attr, 0) for obj in [self.stop_loss_finder, self.take_profit_finder] for attr in dir(obj) if attr.endswith('period')] + \
-                    [getattr(self.stop_loss_finder, "lookback", 0), getattr(self.take_profit_finder, "lookback", 0)]
+                    [getattr(obj, attr, 0) for obj in [self.stop_loss_finder] for attr in dir(obj) if attr.endswith('period')] + \
+                    [getattr(self.stop_loss_finder, "lookback", 0)]
 
-        return max(lookbacks, default=5) + 1
+        return max(lookbacks, default=50)
 
     def _add_indicators_and_patterns(self, data):
         for indicator, column in self.indicators:
@@ -68,13 +68,10 @@ class BaseStrategy(AbstractStrategy):
 
         return buy_exit.iloc[-1], sell_exit.iloc[-1]
 
-    def stop_loss_and_take_profit(self, entry, ohlcv):
+    def stop_loss(self, entry, ohlcv):
         stop_loss_long, stop_loss_short = self.stop_loss_finder.next(entry, ohlcv)
 
-        take_profit_long = self.take_profit_finder.next(entry, stop_loss_long)
-        take_profit_short = self.take_profit_finder.next(entry, stop_loss_short)
-
-        return ((stop_loss_long, take_profit_long), (stop_loss_short, take_profit_short))
+        return (stop_loss_long, stop_loss_short)
 
     def _generate_buy_entry(self, data: pd.DataFrame):
         raise NotImplementedError
@@ -89,4 +86,4 @@ class BaseStrategy(AbstractStrategy):
         return pd.Series(False)
 
     def __str__(self):
-        return f'{super().__str__()}{str(self.take_profit_finder)}{str(self.stop_loss_finder)}'
+        return f'{super().__str__()}{str(self.stop_loss_finder)}'

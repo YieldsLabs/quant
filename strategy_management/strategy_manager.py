@@ -74,16 +74,17 @@ class StrategyManager(AbstractEventManager):
         strategy_name = str(strategy)
         close = event.ohlcv.close
         lookback = strategy.lookback
-        events = window_events[-lookback:]
+        risk_reward_ratio = strategy.risk_reward_ratio
 
-        entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit = await asyncio.to_thread(self.calculate_signals, strategy, events, close)
+        events = window_events[-lookback:]
+        entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss_long, stop_loss_short = await asyncio.to_thread(self.calculate_signals, strategy, events, close)
 
         tasks = []
 
         if entry_long_signal:
-            tasks.append(self.dispatcher.dispatch(LongGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[0], take_profit=take_profit[0])))
+            tasks.append(self.dispatcher.dispatch(LongGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss_long, risk_reward_ratio=risk_reward_ratio)))
         elif entry_short_signal:
-            tasks.append(self.dispatcher.dispatch(ShortGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss[1], take_profit=take_profit[1])))
+            tasks.append(self.dispatcher.dispatch(ShortGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=close, stop_loss=stop_loss_short, risk_reward_ratio=risk_reward_ratio)))
         elif exit_long_signal:
             tasks.append(self.dispatcher.dispatch(LongExit(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=close)))
         elif exit_short_signal:
@@ -112,8 +113,7 @@ class StrategyManager(AbstractEventManager):
         # ]
 
         # return (
-        #     self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER
-        #     and performance.total_pnl < 0
+        #     self.inference.infer(features) == self.POOR_STRATEGY_CLUSTER and performance.total_pnl < 0
         # )
 
     @staticmethod
@@ -124,9 +124,9 @@ class StrategyManager(AbstractEventManager):
 
         entry_long_signal, entry_short_signal = strategy.entry(df_events)
         exit_long_signal, exit_short_signal = strategy.exit(df_events)
-        stop_loss, take_profit = strategy.stop_loss_and_take_profit(entry, df_events)
+        stop_loss_long, stop_loss_short = strategy.stop_loss(entry, df_events)
 
-        return entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss, take_profit
+        return entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss_long, stop_loss_short
 
     @staticmethod
     def create_event_id(event: OHLCVEvent) -> str:
