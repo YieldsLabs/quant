@@ -9,9 +9,11 @@ class PositionSizer:
         trading_fee: float,
         min_position_size: float,
         position_precision: int,
+        leverage: int = 1,
         stop_loss_price: Optional[float] = None,
         risk_per_trade: float = 0.001
     ) -> float:
+        account_size *= leverage
         risk_amount = risk_per_trade * account_size
 
         if stop_loss_price and entry_price:

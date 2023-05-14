@@ -182,6 +182,7 @@ async def main():
         symbols,
         timeframes,
         lookback=backtest_lookback,
+        leverage=leverage,
         risk_per_trade=risk_per_trade,
         subscribe=lambda t: subscribe(ws_handler.ws, t)
     )

@@ -25,11 +25,12 @@ PortfolioEvent = Union[LongGo, ShortGo, LongExit, ShortExit, RiskExit, OrderFill
 
 
 class PortfolioManager(AbstractPortfolioManager):
-    def __init__(self, datasource: Type[AbstractDatasource], analytics: Type[AbstractAnalytics], risk_per_trade: float = 0.001):
+    def __init__(self, datasource: Type[AbstractDatasource], analytics: Type[AbstractAnalytics], leverage: int = 1, risk_per_trade: float = 0.001):
         super().__init__()
         self.datasource = datasource
         self.analytics = analytics
         self.risk_per_trade = risk_per_trade
+        self.leverage = leverage
 
         self.active_positions: Dict[str, Position] = {}
         self.active_positions_lock = asyncio.Lock()
@@ -176,7 +177,7 @@ class PortfolioManager(AbstractPortfolioManager):
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
         entry_price = round(event.entry, price_precision)
 
-        size = PositionSizer.calculate_position_size(account_size, entry_price, trading_fee, min_position_size, position_precision, stop_loss_price, self.risk_per_trade)
+        size = PositionSizer.calculate_position_size(account_size, entry_price, trading_fee, min_position_size, position_precision, self.leverage, stop_loss_price, self.risk_per_trade)
         position_side = PositionSide.LONG if isinstance(event, LongGo) else PositionSide.SHORT
 
         return Position(symbol=event.symbol, timeframe=event.timeframe, strategy=event.strategy, size=size, entry=entry_price, side=position_side, risk_reward_ratio=event.risk_reward_ratio, stop_loss=stop_loss_price)
