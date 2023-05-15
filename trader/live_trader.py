@@ -36,7 +36,7 @@ class LiveTrader(AbstractTrader):
 
         order_params = {
             "symbol": event.symbol,
-            "order_side": order_side,
+            "side": order_side,
             "position_size": event.size,
             "stop_loss_price": event.stop_loss
         }
@@ -45,7 +45,7 @@ class LiveTrader(AbstractTrader):
             current_order_id = await asyncio.to_thread(self.broker.place_market_order, **order_params)
             position = await asyncio.to_thread(self.broker.get_open_position, event.symbol)
 
-            order = Order(id=current_order_id, side=order_side, size=event.size, price=position.entry_price, stop_loss=event.stop_loss)
+            order = Order(id=current_order_id, side=order_side, size=event.size, price=position['entry_price'], stop_loss=event.stop_loss)
 
             await self.dispatcher.dispatch(OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))
         except Exception as e:

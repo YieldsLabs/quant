@@ -52,8 +52,8 @@ class FuturesBybitBroker(AbstractBroker):
     def _create_order_params(self, order_type, side, symbol, position_size):
         return {
             'order_type': order_type,
+            'side': side.value,
             'symbol': symbol,
-            'side': side,
             'position_size': position_size,
             'extra_params': None,
         }
@@ -77,8 +77,6 @@ class FuturesBybitBroker(AbstractBroker):
         order_params['extra_params'] = self._create_extra_params(stop_loss_price, take_profit_price)
 
         res = self._create_order(**order_params)
-
-        print(res)
 
         return res['info']['orderId']
 
@@ -112,9 +110,7 @@ class FuturesBybitBroker(AbstractBroker):
 
         open_position = self.get_open_position(symbol)
 
-        res = self._create_order('market', 'sell' if open_position['position_side'] == PositionSide.LONG else 'buy', symbol, open_position['position_size'])
-
-        print(res)
+        self._create_order('market', 'sell' if open_position['position_side'] == PositionSide.LONG else 'buy', symbol, open_position['position_size'])
 
     def close_order(self, order_id, symbol):
         self.exchange.cancel_order(order_id, symbol)
