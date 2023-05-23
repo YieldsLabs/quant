@@ -97,6 +97,9 @@ class PortfolioManager(AbstractPortfolioManager):
 
         open_position_event = self.create_open_position_event(position)
 
+        if not open_position_event:
+            return False
+
         await self.dispatcher.dispatch(open_position_event)
 
         return True
@@ -120,7 +123,6 @@ class PortfolioManager(AbstractPortfolioManager):
             return False
 
         await self.close_position(position, event.exit_price)
-
         await self.update_position_performance(position)
 
         return True
@@ -141,6 +143,7 @@ class PortfolioManager(AbstractPortfolioManager):
                 stop_loss=position.stop_loss_price,
                 risk_reward_ratio=position.risk_reward_ratio,
                 risk_per_trade=self.risk_per_trade,
+                risk_type=position.risk_type,
                 strategy=position.strategy,
                 ohlcv=event.ohlcv
             )
@@ -154,7 +157,12 @@ class PortfolioManager(AbstractPortfolioManager):
         if not position or (event.strategy != position.strategy) or not self.can_close_position(position.side, position.entry_price, event):
             return False
 
-        await self.dispatcher.dispatch(PositionReadyToClose(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit))
+        await self.dispatcher.dispatch(
+            PositionReadyToClose(
+                symbol=event.symbol,
+                timeframe=event.timeframe, exit_price=event.exit
+            )
+        )
 
         return True
 
@@ -174,13 +182,33 @@ class PortfolioManager(AbstractPortfolioManager):
     async def create_position(self, event: Union[LongGo, ShortGo]) -> Position:
         account_size = await self.datasource.account_size()
         trading_fee, min_position_size, position_precision, price_precision = await self.datasource.fee_and_precisions(event.symbol)
+
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
         entry_price = round(event.entry, price_precision)
 
-        size = PositionSizer.calculate_position_size(account_size, entry_price, trading_fee, min_position_size, position_precision, self.leverage, stop_loss_price, self.risk_per_trade)
+        size = PositionSizer.calculate_position_size(
+            account_size,
+            entry_price,
+            trading_fee,
+            min_position_size,
+            position_precision,
+            self.leverage,
+            stop_loss_price,
+            self.risk_per_trade
+        )
+
         position_side = PositionSide.LONG if isinstance(event, LongGo) else PositionSide.SHORT
 
-        return Position(symbol=event.symbol, timeframe=event.timeframe, strategy=event.strategy, size=size, entry=entry_price, side=position_side, risk_reward_ratio=event.risk_reward_ratio, stop_loss=stop_loss_price)
+        return Position(
+            symbol=event.symbol,
+            timeframe=event.timeframe,
+            strategy=event.strategy,
+            size=size,
+            entry=entry_price,
+            side=position_side,
+            risk_reward_ratio=event.risk_reward_ratio,
+            stop_loss=stop_loss_price
+        )
 
     async def get_active_position(self, symbol: str) -> Optional[Position]:
         if symbol not in self.active_positions:
@@ -192,15 +220,16 @@ class PortfolioManager(AbstractPortfolioManager):
         return position if position is not None and len(position.orders) else None
 
     async def update_position_performance(self, position: Position):
-        strategy_id = f'{position.symbol}_{position.timeframe}{position.strategy}'
+        current_strategy_id = self.create_strategy_id(position)
 
-        closed_positions_list = list(filter(lambda x: f'{x.symbol}_{x.timeframe}{x.strategy}' == strategy_id, self.closed_positions.values()))
+        closed_positions_list = list(filter(lambda x: self.create_strategy_id(x) == current_strategy_id, self.closed_positions.values()))
 
         performance = await asyncio.to_thread(self.analytics.calculate, closed_positions_list)
 
-        await self.dispatcher.dispatch(PortfolioPerformanceEvent(strategy_id=strategy_id, performance=performance))
+        await self.dispatcher.dispatch(
+            PortfolioPerformanceEvent(strategy_id=current_strategy_id, performance=performance))
 
-    def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened]:
+    def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened, None]:
         if position.side == PositionSide.LONG:
             return LongPositionOpened(
                 symbol=position.symbol,
@@ -209,7 +238,7 @@ class PortfolioManager(AbstractPortfolioManager):
                 entry=position.entry_price,
                 stop_loss=position.stop_loss_price
             )
-        else:
+        elif position.side == PositionSide.SHORT:
             return ShortPositionOpened(
                 symbol=position.symbol,
                 timeframe=position.timeframe,
@@ -218,12 +247,14 @@ class PortfolioManager(AbstractPortfolioManager):
                 stop_loss=position.stop_loss_price
             )
 
-    def can_close_position(self, position_side, entry: float, event: Union[LongExit, ShortExit, RiskExit]) -> bool:
-        if isinstance(event, LongExit) and (position_side == PositionSide.LONG) and (entry < event.exit):
-            return True
+    def can_close_position(self, position_side: PositionSide, entry: float, event: Union[LongExit, ShortExit, RiskExit], profit_threshold: float = 0.05) -> bool:
+        if isinstance(event, LongExit) and (position_side == PositionSide.LONG):
+            if (entry < event.exit) and abs(entry - event.exit) >= profit_threshold:
+                return True
 
-        if isinstance(event, ShortExit) and (position_side == PositionSide.SHORT) and (entry > event.exit):
-            return True
+        if isinstance(event, ShortExit) and (position_side == PositionSide.SHORT):
+            if (entry > event.exit) and abs(entry - event.exit) >= profit_threshold:
+                return True
 
         if isinstance(event, RiskExit) and (position_side == event.side):
             return True
@@ -265,3 +296,7 @@ class PortfolioManager(AbstractPortfolioManager):
         }
 
         return next_state_mapping[state].get(type(event), state)
+
+    @staticmethod
+    def create_strategy_id(position: Position) -> str:
+        return f'{position.symbol}_{position.timeframe}{position.strategy}'

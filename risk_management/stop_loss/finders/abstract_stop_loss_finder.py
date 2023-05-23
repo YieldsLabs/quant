@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Tuple
 
 import pandas as pd
-from core.events.ohlcv import OHLCV
 from labels.abstract_meta_label import AbstractMetaLabel
 
 from labels.meta_label import meta_label

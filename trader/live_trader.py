@@ -1,10 +1,12 @@
 import asyncio
-from typing import Type
+from typing import Type, Union
 from broker.abstract_broker import AbstractBroker
 from core.event_dispatcher import register_handler
 from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, PositionReadyToClose, OrderFilled, Order, OrderSide
 from trader.abstract_trader import AbstractTrader
 import logging
+
+TradeEvent = Union[LongPositionOpened, ShortPositionOpened]
 
 
 class LiveTrader(AbstractTrader):
@@ -26,19 +28,19 @@ class LiveTrader(AbstractTrader):
         try:
             await asyncio.to_thread(self.broker.close_position, event.symbol)
 
-            await self.dispatcher.dispatch(PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
+            await self.dispatcher.dispatch(
+                PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
 
         except Exception as e:
             self.logger.error(f"Error closing position for {event.symbol}: {e}")
 
-    async def trade(self, event):
+    async def trade(self, event: TradeEvent):
         order_side = OrderSide.BUY if isinstance(event, LongPositionOpened) else OrderSide.SELL
 
         order_params = {
             "symbol": event.symbol,
             "side": order_side,
-            "position_size": event.size,
-            "stop_loss_price": event.stop_loss
+            "position_size": event.size
         }
 
         try:
@@ -47,7 +49,9 @@ class LiveTrader(AbstractTrader):
 
             order = Order(id=current_order_id, side=order_side, size=event.size, price=position['entry_price'], stop_loss=event.stop_loss)
 
-            await self.dispatcher.dispatch(OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))
+            await self.dispatcher.dispatch(
+                OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))
         except Exception as e:
             self.logger.error(f"Error placing order for {event.symbol}: {e}")
-            await self.dispatcher.dispatch(PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.entry))
+            await self.dispatcher.dispatch(
+                PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.entry))

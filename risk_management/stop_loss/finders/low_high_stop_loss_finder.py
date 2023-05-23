@@ -1,6 +1,6 @@
 import numpy as np
-from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
-from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
+from risk_management.stop_loss.finders.abstract_stop_loss_finder import AbstractStopLoss
+from risk_management.stop_loss.finders.atr_stop_loss_finder import ATRStopLossFinder
 
 
 class LowHighStopLossFinder(AbstractStopLoss):

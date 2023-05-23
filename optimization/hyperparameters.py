@@ -4,16 +4,9 @@ strategy_hyperparameters = {
     'sma_period': [20, 100, 10],
     'slow_sma_period': [50, 200, 50],
     'stdev_multi': [0.5, 2, 0.5],
-    'tolerance': [0.002, 0.01, 0.002],
-    'lookback': [50, 150, 50],
-    'ao_short_period': [5, 15, 5],
-    'ao_long_period': [20, 50, 15]
+    'atr_multi': [0.7, 3.1, 0.1],
 }
 
-stoploss_hyperparameters = {
-    'atr_multi': [0.7, 2.1, 0.1],
-}
-
-takeprofit_hyperparameters = {
-    'risk_reward_ratio': [1, 6, 0.5],
+risk_hyperparameters = {
+    'risk_reward_ratio': [1, 3, 0.5]
 }

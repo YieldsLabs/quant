@@ -10,7 +10,7 @@ class AbstractDatasource(ABC):
         pass
 
     @abstractmethod
-    def account_size(self):
+    def account_size(self) -> float:
         pass
 
     @abstractmethod

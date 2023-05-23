@@ -1,8 +1,8 @@
 from typing import List, Type, Union
 
 import pandas as pd
-from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
-from risk_management.take_profit.abstract_take_profit_finder import AbstractTakeProfit
+from risk_management.stop_loss.finders.abstract_stop_loss_finder import AbstractStopLoss
+from risk_management.take_profit.finders.abstract_take_profit_finder import AbstractTakeProfit
 from .abstract_strategy import AbstractStrategy
 from ta.alerts.abstract_alert import AbstractAlert
 from ta.base.abstract_indicator import AbstractIndicator
@@ -30,7 +30,7 @@ class BaseStrategy(AbstractStrategy):
 
         return max(lookbacks, default=50)
 
-    def _add_indicators_and_patterns(self, data):
+    def _add_indicators_and_patterns(self, data: pd.DataFrame):
         for indicator, column in self.indicators:
             if isinstance(indicator, AbstractIndicator) or isinstance(indicator, AbstractAlert):
                 indicator_output = indicator.call(data)

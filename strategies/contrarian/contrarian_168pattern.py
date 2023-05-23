@@ -1,14 +1,13 @@
-from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
+from risk_management.stop_loss.finders.atr_stop_loss_finder import ATRStopLossFinder
 from strategy_management.base_strategy import BaseStrategy
-from ta.base.ma import MovingAverage
 from ta.momentum.rsi import RelativeStrengthIndex
 from ta.volume.vo import VolumeOscillator
 
 
-class ContrarianMACrossover(BaseStrategy):
-    NAME = "CONTRARIANMACROSSOVER"
+class Contrarian168Pattern(BaseStrategy):
+    NAME = "CONTRARIAN168PATTERN"
 
-    def __init__(self, period=8, sma_period=5, oversold=25, overbought=75, lower_exit_barrier=30, upper_exit_barrier=70, lookback=50, atr_multi=1.5, risk_reward_ratio=2.0):
+    def __init__(self, period=13, oversold=40, overbought=60, lower_exit_barrier=30, upper_exit_barrier=70, lookback=50, atr_multi=1.5, risk_reward_ratio=2):
         indicators = [
             (VolumeOscillator(), ('VO')),
             (RelativeStrengthIndex(period=period), ('rsi')),
@@ -18,7 +17,6 @@ class ContrarianMACrossover(BaseStrategy):
             ATRStopLossFinder(atr_multi=atr_multi),
             risk_reward_ratio=risk_reward_ratio
         )
-        self.ma = MovingAverage(sma_period)
         self.oversold = oversold
         self.overbought = overbought
         self.lower_exit_barrier = lower_exit_barrier
@@ -27,19 +25,17 @@ class ContrarianMACrossover(BaseStrategy):
 
     def _generate_buy_entry(self, data):
         rsi = data['rsi']
-        rsi_signal = self.ma.sma(rsi)
         vo = data['VO']
 
-        buy_entry = (rsi > rsi_signal) & (rsi.shift(1) < rsi_signal.shift(1)) & (rsi < self.oversold)
+        buy_entry = (rsi < self.oversold) & (rsi.shift(1) > rsi) & (rsi.shift(1) < self.oversold) & (rsi.shift(1) > rsi.shift(2)) & (rsi.shift(2) > rsi) & (rsi.shift(2) < rsi.shift(3)) & ((rsi.shift(1) - rsi) > (1.6 * (rsi.shift(3) - rsi.shift(2)))) & ((rsi.shift(1) - rsi) < (1.7 * (rsi.shift(3) - rsi.shift(2))))
 
         return buy_entry & (vo > 0)
 
     def _generate_sell_entry(self, data):
         rsi = data['rsi']
-        rsi_signal = self.ma.sma(rsi)
         vo = data['VO']
 
-        sell_entry = (rsi < rsi_signal) & (rsi.shift(1) > rsi_signal.shift(1)) & (rsi > self.overbought)
+        sell_entry = (rsi > self.overbought) & (rsi.shift(1) < rsi) & (rsi.shift(1) > self.overbought) & (rsi.shift(1) < rsi.shift(2)) & (rsi.shift(2) < rsi) & (rsi.shift(2) > rsi.shift(3)) & ((rsi - rsi.shift(1)) > (1.6 * (rsi.shift(2) - rsi.shift(3)))) & ((rsi - rsi.shift(1)) < (1.7 * (rsi.shift(2) - rsi.shift(3))))
 
         return sell_entry & (vo < 0)
 

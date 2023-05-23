@@ -1,13 +1,13 @@
-from risk_management.stop_loss.atr_stop_loss_finder import ATRStopLossFinder
+from risk_management.stop_loss.finders.atr_stop_loss_finder import ATRStopLossFinder
 from strategy_management.base_strategy import BaseStrategy
 from ta.momentum.rsi import RelativeStrengthIndex
 from ta.volume.vo import VolumeOscillator
 
 
-class ContrarianReversal(BaseStrategy):
-    NAME = "CONTRARIANREVERSAL"
+class ContrarianDeepThreeMove(BaseStrategy):
+    NAME = "CONTRARIANDEEPTHREEMOVE"
 
-    def __init__(self, period=5, lower_barrier=20, lower_threshold=33, upper_barrier=80, upper_threshold=67, lower_exit_barrier=70, upper_exit_barrier=30, lookback=50, atr_multi=1.5, risk_reward_ratio=2.0):
+    def __init__(self, period=8, oversold=20, overbought=80, lower_exit_barrier=30, upper_exit_barrier=70, lookback=50, atr_multi=1.5, risk_reward_ratio=2):
         indicators = [
             (VolumeOscillator(), ('VO')),
             (RelativeStrengthIndex(period=period), ('rsi')),
@@ -17,19 +17,17 @@ class ContrarianReversal(BaseStrategy):
             ATRStopLossFinder(atr_multi=atr_multi),
             risk_reward_ratio=risk_reward_ratio
         )
-        self.lower_barrier = lower_barrier
-        self.lower_threshold = lower_threshold
-        self.upper_barrier = upper_barrier
-        self.upper_threshold = upper_threshold
-        self.upper_exit_barrier = upper_exit_barrier
+        self.oversold = oversold
+        self.overbought = overbought
         self.lower_exit_barrier = lower_exit_barrier
+        self.upper_exit_barrier = upper_exit_barrier
         self.lookback = lookback
 
     def _generate_buy_entry(self, data):
         rsi = data['rsi']
         vo = data['VO']
 
-        buy_entry = (rsi >= self.lower_barrier) & (rsi < rsi.shift(1)) & (rsi.shift(1) > self.lower_barrier) & (rsi.shift(1) < self.lower_threshold) & (rsi.shift(2) < self.lower_barrier)
+        buy_entry = (rsi < rsi.shift(1)) & (rsi.shift(1) < rsi.shift(2)) & (rsi.shift(2) < rsi.shift(3)) & (rsi.shift(3) < self.oversold) & (rsi.shift(4) > self.oversold)
 
         return buy_entry & (vo > 0)
 
@@ -37,7 +35,7 @@ class ContrarianReversal(BaseStrategy):
         rsi = data['rsi']
         vo = data['VO']
 
-        sell_entry = (rsi <= self.upper_barrier) & (rsi > rsi.shift(1)) & (rsi.shift(1) < self.upper_barrier) & (rsi.shift(1) > self.upper_threshold) & (rsi.shift(2) > self.upper_barrier)
+        sell_entry = (rsi > rsi.shift(1)) & (rsi.shift(1) > rsi.shift(2)) & (rsi.shift(2) > rsi.shift(3)) & (rsi.shift(3) > self.overbought) & (rsi.shift(4) < self.overbought)
 
         return sell_entry & (vo < 0)
 

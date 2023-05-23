@@ -1,6 +1,6 @@
 import numpy as np
-from risk_management.stop_loss.base.abstract_stop_loss_finder import AbstractStopLoss
-from risk_management.stop_loss.base.simple_stop_loss_finder import SimpleStopLossFinder
+from risk_management.stop_loss.finders.abstract_stop_loss_finder import AbstractStopLoss
+from risk_management.stop_loss.finders.simple_stop_loss_finder import SimpleStopLossFinder
 from ta.volatility.atr import AverageTrueRange
 
 

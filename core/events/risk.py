@@ -1,10 +1,15 @@
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Optional
 from .base_event import Event, EventMeta
 from .ohlcv import OHLCV
 from .position import PositionSide
 
 from ..timeframe import Timeframe
+
+
+class RiskType(Enum):
+    BREAK_EVEN = auto()
 
 
 @dataclass(frozen=True)

@@ -115,27 +115,21 @@ class FuturesBybitBroker(AbstractBroker):
     def close_order(self, order_id, symbol):
         self.exchange.cancel_order(order_id, symbol)
 
-    def get_account_balance(self):
+    def get_account_balance(self, currency='USDT'):
         balance = self.exchange.fetch_balance()
-        return float(balance['total']['USDT'])
+        return float(balance['total'][currency])
 
     def get_symbol_info(self, symbol):
-        try:
-            market_info = self.exchange.fetch_markets()
-            symbol_info = [market for market in market_info if market['id'] == symbol and market['linear']][0]
+        market_info = self.exchange.fetch_markets()
+        symbol_info = [market for market in market_info if market['id'] == symbol and market['linear']][0]
 
-            trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
-            min_position_size = symbol_info.get('amount', {}).get('min', 1.0)
+        trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
+        min_position_size = symbol_info.get('amount', {}).get('min', 1.0)
 
-            position_precision = symbol_info.get('precision', {}).get('amount', 0)
-            price_precision = symbol_info.get('precision', {}).get('price', 0)
+        position_precision = symbol_info.get('precision', {}).get('amount', 0)
+        price_precision = symbol_info.get('precision', {}).get('price', 0)
 
-            return trading_fee, min_position_size, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
-
-        except Exception as e:
-            print(e)
-
-            return None, None, None
+        return trading_fee, min_position_size, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
 
     def get_open_position(self, symbol):
         positions = self.exchange.fetch_positions(symbol)
@@ -156,8 +150,8 @@ class FuturesBybitBroker(AbstractBroker):
         return None
 
     def get_symbols(self):
-        markets = self._fetch_market_info()
-        return [market_info['id'] for market_info in markets if market_info['linear']]
+        markets = self.exchange.fetch_markets()
+        return [market_info['id'] for market_info in markets if market_info['linear'] and not market_info['type'] == 'future' and market_info['settle'] == 'USDT']
 
     @retry(max_retries=7, handled_exceptions=(RequestTimeout, NetworkError))
     def _fetch(self, symbol, timeframe, start_time, current_limit):
