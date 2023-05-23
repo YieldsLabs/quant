@@ -17,7 +17,7 @@ class RiskManager(AbstractRiskManager):
 
     @register_handler(RiskEvaluate)
     async def _on_risk(self, event: RiskEvaluate):
-        symbol, timeframe, position_side, position_size, entry_price, stop_loss_price, risk_reward_ratio, risk_per_trade, risk_type, ohlcv, strategy = self._unpack_event(event)
+        symbol, timeframe, position_side, position_size, entry_price, stop_loss_price, risk_reward_ratio, risk_per_trade, ohlcv, strategy = self._unpack_event(event)
 
         take_profit_price = None
 
@@ -40,7 +40,7 @@ class RiskManager(AbstractRiskManager):
             RiskExit(symbol=symbol, timeframe=timeframe, side=position_side, strategy=strategy, exit=exit_price))
 
     def _unpack_event(self, event: RiskEvaluate):
-        return event.symbol, event.timeframe, event.side, event.size, event.entry, event.stop_loss, event.risk_reward_ratio, event.risk_per_trade, event.risk_type, event.ohlcv, event.strategy
+        return event.symbol, event.timeframe, event.side, event.size, event.entry, event.stop_loss, event.risk_reward_ratio, event.risk_per_trade, event.ohlcv, event.strategy
 
     def _should_exit(self, position_side: PositionSide, stop_loss_price: float | None, take_profit_price: float | None, low: float, high: float):
         if position_side == PositionSide.LONG:

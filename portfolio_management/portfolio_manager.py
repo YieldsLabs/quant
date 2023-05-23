@@ -143,7 +143,6 @@ class PortfolioManager(AbstractPortfolioManager):
                 stop_loss=position.stop_loss_price,
                 risk_reward_ratio=position.risk_reward_ratio,
                 risk_per_trade=self.risk_per_trade,
-                risk_type=position.risk_type,
                 strategy=position.strategy,
                 ohlcv=event.ohlcv
             )

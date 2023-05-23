@@ -66,7 +66,6 @@ class TradingSystem(AbstractSystem):
     async def _run_backtest(self):
         self.strategy_manager = StrategyManager([cls() for cls in self.strategies_classes])
         self.trader = create_trader(self.context.broker)
-
         await self.context.backtest.run(self.symbols, self.timeframes, self.context.lookback)
         await self.dispatcher.stop_workers()
 
@@ -76,7 +75,7 @@ class TradingSystem(AbstractSystem):
     async def _run_trading(self):
         self.trader = create_trader(self.context.broker, live_trading=False)
 
-        timeframes_symbols = list(product(self.context.symbols, self.context.timeframes))
+        timeframes_symbols = list(product(self.symbols, self.timeframes))
 
         await self.context.ws_handler.subscribe(timeframes_symbols)
         await self.dispatcher.stop_workers()
