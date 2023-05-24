@@ -2,7 +2,7 @@ import asyncio
 import pandas as pd
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
-from core.events.portfolio import PortfolioPerformanceEvent
+from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
 
 
 class CSVSync(AbstractEventManager):
@@ -10,41 +10,12 @@ class CSVSync(AbstractEventManager):
 
     def __init__(self, save_interval: int = 10):
         super().__init__()
-        self.columns = [
+        self.perf_columns = [
             'timestamp',
             'strategy_id',
-            'total_trades',
-            'successful_trades',
-            'win_rate',
-            'risk_of_ruin',
-            'rate_of_return',
-            'annualized_return',
-            'annualized_volatility',
-            'total_pnl',
-            'average_pnl',
-            'sharpe_ratio',
-            'sortino_ratio',
-            'lake_ratio',
-            'burke_ratio',
-            'rachev_ratio',
-            'tail_ratio',
-            'omega_ratio',
-            'sterling_ratio',
-            'kappa_three_ratio',
-            'profit_factor',
-            'max_consecutive_wins',
-            'max_consecutive_losses',
-            'max_drawdown',
-            'recovery_factor',
-            'skewness',
-            'kurtosis',
-            'calmar_ratio',
-            'var',
-            'cvar',
-            'ulcer_index'
-        ]
+        ] + list(PortfolioPerformance.__annotations__.keys())
 
-        self.event = {}
+        self.perf_event = {}
         self.save_interval = save_interval
         self._save_task = None
         self.lock = asyncio.Lock()
@@ -60,8 +31,8 @@ class CSVSync(AbstractEventManager):
         self._save_task = asyncio.create_task(self._periodic_save())
 
     def save_to_csv(self):
-        df = pd.DataFrame(list(self.event.values()), columns=self.columns)
-        df.to_csv(self.PERFORMANCE_CSV, index=False)
+        perf_df = pd.DataFrame(list(self.perf_event.values()), columns=self.perf_columns)
+        perf_df.to_csv(self.PERFORMANCE_CSV, index=False)
 
     @register_handler(PortfolioPerformanceEvent)
     async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
@@ -72,4 +43,4 @@ class CSVSync(AbstractEventManager):
             }
 
             event_dict.update(event.performance.to_dict())
-            self.event[event.strategy_id] = event_dict
+            self.perf_event[event.strategy_id] = event_dict
