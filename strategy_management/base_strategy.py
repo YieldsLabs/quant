@@ -10,6 +10,8 @@ from ta.patterns.abstract_pattern import AbstractPattern
 
 
 class BaseStrategy(AbstractStrategy):
+    MIN_LOOKBACK = 50
+
     def __init__(
         self,
         indicators: List[Union[AbstractIndicator, AbstractPattern]],
@@ -28,7 +30,7 @@ class BaseStrategy(AbstractStrategy):
                     [getattr(obj, attr, 0) for obj in [self.stop_loss_finder] for attr in dir(obj) if attr.endswith('period')] + \
                     [getattr(self.stop_loss_finder, "lookback", 0)]
 
-        return max(lookbacks, default=50)
+        return max(lookbacks, default=self.MIN_LOOKBACK)
 
     def _add_indicators_and_patterns(self, data: pd.DataFrame):
         for indicator, column in self.indicators:
