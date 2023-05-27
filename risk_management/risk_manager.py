@@ -2,9 +2,10 @@ from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCV
 from core.events.position import PositionSide
 from core.events.risk import RiskEvaluate, RiskExit, RiskType
-from risk_management.abstract_risk_manager import AbstractRiskManager
-from risk_management.stop_loss.strategy.break_even import BreakEvenStopLossStrategy
-from risk_management.take_profit.finders.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
+
+from .abstract_risk_manager import AbstractRiskManager
+from .stop_loss.strategy.break_even import BreakEvenStopLossStrategy
+from .take_profit.finders.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 
 
 class RiskManager(AbstractRiskManager):
@@ -19,19 +20,19 @@ class RiskManager(AbstractRiskManager):
         take_profit_price = self._calculate_take_profit_price(risk_reward_ratio, entry_price, stop_loss_price)
 
         if self.risk_type == RiskType.BREAK_EVEN and stop_loss_price is not None:
-            stop_loss_price = await self._calculate_break_even_stop_loss(symbol, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
+            stop_loss_price = await self._calculate_break_even_stop_loss(symbol, timeframe, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
 
         if self._should_exit(position_side, stop_loss_price, take_profit_price, ohlcv):
             await self._process_exit(symbol, timeframe, position_side, strategy, ohlcv, take_profit_price, stop_loss_price)
 
-    async def _calculate_break_even_stop_loss(self, symbol, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade):
-        return await self.break_even_strategy.next(symbol, position_side, position_size, stop_loss_price, entry_price, ohlcv.low, ohlcv.high, risk_per_trade)
+    async def _calculate_break_even_stop_loss(self, symbol, timeframe, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade):
+        return await self.break_even_strategy.next(symbol, timeframe, position_side, position_size, stop_loss_price, entry_price, ohlcv.low, ohlcv.high, risk_per_trade)
 
     def _calculate_take_profit_price(self, risk_reward_ratio, entry_price, stop_loss_price):
         return RiskRewardTakeProfitFinder(risk_reward_ratio).next(entry_price, stop_loss_price)
 
     async def _process_exit(self, symbol, timeframe, position_side, strategy, ohlcv, take_profit_price, stop_loss_price):
-        await self.break_even_strategy.reset(symbol, position_side)
+        await self.break_even_strategy.reset(symbol, timeframe, position_side)
 
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
 

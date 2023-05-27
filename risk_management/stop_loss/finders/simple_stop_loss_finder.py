@@ -1,4 +1,4 @@
-from risk_management.stop_loss.finders.abstract_stop_loss_finder import AbstractStopLoss
+from .abstract_stop_loss_finder import AbstractStopLoss
 
 
 class SimpleStopLossFinder(AbstractStopLoss):

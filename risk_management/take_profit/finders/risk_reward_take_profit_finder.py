@@ -1,4 +1,4 @@
-from risk_management.take_profit.finders.abstract_take_profit_finder import AbstractTakeProfit
+from .abstract_take_profit_finder import AbstractTakeProfit
 
 
 class RiskRewardTakeProfitFinder(AbstractTakeProfit):
