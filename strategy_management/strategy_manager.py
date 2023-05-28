@@ -21,18 +21,14 @@ class StrategyManager(AbstractEventManager):
 
     @register_handler(OHLCVEvent)
     async def _on_ohlcv(self, event: OHLCVEvent) -> None:
-        event_id = self._create_event_id(event)
-        await self.storage.append(event_id, event.ohlcv)
+        await self.storage.append(event.symbol, event.timeframe, event.ohlcv)
 
-        if not self.storage.can_process(event_id):
+        if not self.storage.can_process(event.symbol, event.timeframe):
             return
 
-        window_events = await self.storage.get_window(event_id)
-        await self.process_strategies(window_events, event)
+        strategy_events = await self.storage.get_window(event.symbol, event.timeframe)
+
+        await self.process_strategies(strategy_events, event)
 
     async def process_strategies(self, window_events: List[OHLCV], event: OHLCVEvent) -> None:
         await asyncio.gather(*(strategy.process(window_events, event) for strategy in self.strategies))
-
-    @staticmethod
-    def _create_event_id(event: OHLCVEvent) -> str:
-        return f'{event.symbol}_{event.timeframe}'
