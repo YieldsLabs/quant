@@ -1,6 +1,5 @@
 import asyncio
-from enum import Enum, auto
-from typing import Dict, Type, Union
+from typing import Type, Union
 from analytics.abstract_analytics import AbstractAnalytics
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
@@ -10,19 +9,11 @@ from core.events.risk import RiskEvaluate, RiskExit
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
 from core.position import Position
 from datasource.abstract_datasource import AbstractDatasource
+
+from .position_state_machine import PositionStateMachine
 from .position_sizer import PositionSizer
 from .position_storage import PositionStorage
 from .abstract_portfolio_manager import AbstractPortfolioManager
-
-
-class PositionState(Enum):
-    IDLE = auto()
-    OPENING = auto()
-    OPENED = auto()
-    CLOSING = auto()
-
-
-PortfolioEvent = Union[LongGo, ShortGo, LongExit, ShortExit, RiskExit, OrderFilled, PositionClosed, OHLCVEvent]
 
 
 class PortfolioManager(AbstractPortfolioManager):
@@ -34,51 +25,39 @@ class PortfolioManager(AbstractPortfolioManager):
         self.leverage = leverage
 
         self.position_storage = PositionStorage()
-        self.state: Dict[str, PositionState] = {}
-        self.state_lock = asyncio.Lock()
-
-        self._state_handlers = {
-            (PositionState.IDLE, LongGo): self.handle_open_position,
-            (PositionState.IDLE, ShortGo): self.handle_open_position,
-            (PositionState.OPENING, OrderFilled): self.handle_order_filled,
-            (PositionState.OPENED, OHLCVEvent): self.handle_market,
-            (PositionState.OPENED, LongExit): self.handle_exit,
-            (PositionState.OPENED, ShortExit): self.handle_exit,
-            (PositionState.OPENED, RiskExit): self.handle_exit,
-            (PositionState.CLOSING, PositionClosed): self.handle_closed_position,
-        }
+        self.state_machine = PositionStateMachine(self)
 
     @register_handler(OHLCVEvent)
     async def _on_market(self, event: OHLCVEvent):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     @register_handler(LongGo)
     async def _on_go_long(self, event: LongGo):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     @register_handler(ShortGo)
     async def _on_go_short(self, event: ShortGo):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     @register_handler(LongExit)
     async def _on_exit_long(self, event: LongExit):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     @register_handler(ShortExit)
     async def _on_exit_short(self, event: ShortExit):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     @register_handler(RiskExit)
     async def _on_exit_risk(self, event: RiskExit):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     @register_handler(OrderFilled)
     async def _on_order_filled(self, event: OrderFilled):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     @register_handler(PositionClosed)
     async def _on_closed_position(self, event: PositionClosed):
-        await self.process_event(event)
+        await self.state_machine.process_event(event)
 
     async def handle_open_position(self, event: Union[LongGo, ShortGo]) -> bool:
         active_position = await self.position_storage.get_active_position(event.symbol)
@@ -236,39 +215,3 @@ class PortfolioManager(AbstractPortfolioManager):
             return True
 
         return False
-
-    async def process_event(self, event: PortfolioEvent):
-        symbol = event.symbol
-
-        async with self.state_lock:
-            state = self.state.get(symbol, PositionState.IDLE)
-
-        handler = self._state_handlers.get((state, type(event)))
-
-        if handler is None or not await handler(event):
-            return
-
-        async with self.state_lock:
-            self.state[symbol] = self.next_state(state, event)
-
-    def next_state(self, state: PositionState, event: PortfolioEvent) -> PositionState:
-        next_state_mapping = {
-            PositionState.IDLE: {
-                LongGo: PositionState.OPENING,
-                ShortGo: PositionState.OPENING
-            },
-            PositionState.OPENING: {
-                OrderFilled: PositionState.OPENED
-            },
-            PositionState.OPENED: {
-                LongExit: PositionState.CLOSING,
-                ShortExit: PositionState.CLOSING,
-                RiskExit: PositionState.CLOSING,
-                OHLCVEvent: PositionState.OPENED
-            },
-            PositionState.CLOSING: {
-                PositionClosed: PositionState.IDLE
-            }
-        }
-
-        return next_state_mapping[state].get(type(event), state)
