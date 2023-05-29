@@ -10,7 +10,7 @@ from optimization.kmeans_inference import KMeansInference
 
 
 class TradingContext:
-    def __init__(self, datasource: Type[AbstractDatasource], ws_handler: Type[AbstractWS], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], optimization: Type[KMeansInference], lookback: int, leverage: int, risk_per_trade: float):
+    def __init__(self, datasource: Type[AbstractDatasource], ws_handler: Type[AbstractWS], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], optimization: Type[KMeansInference], lookback: int, leverage: int, risk_per_trade: float, live_mode: bool):
         self.datasource = datasource
         self.ws_handler = ws_handler
         self.broker = broker
@@ -19,6 +19,7 @@ class TradingContext:
         self.leverage = leverage
         self.lookback = lookback
         self.risk_per_trade = risk_per_trade
+        self.live_mode = live_mode
 
         self.portfolio_manager = PortfolioManager(datasource, analytics, leverage, risk_per_trade)
         self.risk_manager = RiskManager()

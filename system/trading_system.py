@@ -11,7 +11,6 @@ from system.abstract_system import AbstractSystem
 from system.trading_context import TradingContext
 from trader.create_trader import create_trader
 
-
 class TradingState(Enum):
     INIT = auto()
     BACKTESTING = auto()
@@ -73,8 +72,7 @@ class TradingSystem(AbstractSystem):
         await asyncio.sleep(100)
 
     async def _run_trading(self):
-        self.trader = create_trader(self.context.broker, live_trading=False)
-
+        self.trader = create_trader(self.context.broker, live_trading=self.context.live_mode)
         timeframes_symbols = list(product(self.symbols, self.timeframes))
 
         await self.context.ws_handler.subscribe(timeframes_symbols)

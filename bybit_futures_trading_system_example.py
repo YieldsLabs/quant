@@ -15,6 +15,7 @@ load_dotenv()
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 WSS = os.getenv('WSS')
+IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
 backtest_lookback = 2016 * 4
 risk_per_trade = 0.0015
@@ -46,6 +47,7 @@ async def main():
         lookback=backtest_lookback,
         leverage=leverage,
         risk_per_trade=risk_per_trade,
+        live_mode=IS_LIVE_MODE
     )
 
     bybit_trading_system = TradingSystem(context)
