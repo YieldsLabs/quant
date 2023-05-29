@@ -4,7 +4,7 @@ from itertools import product
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
 from core.timeframe import Timeframe
-from strategies.contrarian.contrarian_macrossover import ContrarianMACrossover
+from strategy.contrarian.contrarian_macrossover import ContrarianMACrossover
 from strategy_management.strategy_manager import StrategyManager
 
 from system.abstract_system import AbstractSystem
