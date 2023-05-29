@@ -21,6 +21,10 @@ class Position:
         self.open_timestamp = datetime.now().timestamp()
         self.closed_timestamp = self.open_timestamp
 
+    @property
+    def strategy_id(self) -> str:
+        return f'{self.symbol}_{self.timeframe}{self.strategy}'
+
     def add_order(self, order: Order):
         self.orders.append(order)
 

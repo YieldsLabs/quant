@@ -1,6 +1,6 @@
 import asyncio
 from enum import Enum, auto
-from typing import Dict, Optional, Type, Union
+from typing import Dict, Type, Union
 from analytics.abstract_analytics import AbstractAnalytics
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
@@ -10,7 +10,8 @@ from core.events.risk import RiskEvaluate, RiskExit
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
 from core.position import Position
 from datasource.abstract_datasource import AbstractDatasource
-from portfolio_management.position_sizer import PositionSizer
+from .position_sizer import PositionSizer
+from .position_storage import PositionStorage
 from .abstract_portfolio_manager import AbstractPortfolioManager
 
 
@@ -32,12 +33,7 @@ class PortfolioManager(AbstractPortfolioManager):
         self.risk_per_trade = risk_per_trade
         self.leverage = leverage
 
-        self.active_positions: Dict[str, Position] = {}
-        self.active_positions_lock = asyncio.Lock()
-
-        self.closed_positions: Dict[str, Position] = {}
-        self.closed_positions_lock = asyncio.Lock()
-
+        self.position_storage = PositionStorage()
         self.state: Dict[str, PositionState] = {}
         self.state_lock = asyncio.Lock()
 
@@ -85,15 +81,14 @@ class PortfolioManager(AbstractPortfolioManager):
         await self.process_event(event)
 
     async def handle_open_position(self, event: Union[LongGo, ShortGo]) -> bool:
-        symbol = event.symbol
+        active_position = await self.position_storage.get_active_position(event.symbol)
 
-        if symbol in self.active_positions:
+        if active_position is not None:
             return False
 
         position = await self.create_position(event)
 
-        async with self.active_positions_lock:
-            self.active_positions[symbol] = position
+        await self.position_storage.add_active_position(event.symbol, position)
 
         open_position_event = self.create_open_position_event(position)
 
@@ -105,45 +100,46 @@ class PortfolioManager(AbstractPortfolioManager):
         return True
 
     async def handle_order_filled(self, event: OrderFilled) -> bool:
-        symbol = event.symbol
+        active_position = await self.position_storage.get_active_position(event.symbol)
 
-        if symbol not in self.active_positions:
+        if active_position is None:
             return False
 
-        async with self.active_positions_lock:
-            self.active_positions[symbol].add_order(event.order)
-            self.active_positions[symbol].update_prices(event.order.price)
+        active_position.add_order(event.order)
+        active_position.update_prices(event.order.price)
+
+        await self.position_storage.add_active_position(event.symbol, active_position)
 
         return True
 
     async def handle_closed_position(self, event: PositionClosed) -> bool:
-        position = await self.get_active_position(event.symbol)
+        active_position = await self.position_storage.get_active_position(event.symbol)
 
-        if position is None:
+        if active_position is None:
             return False
 
-        await self.close_position(position, event.exit_price)
-        await self.update_position_performance(position)
+        await self.close_position(active_position, event.exit_price)
+        await self.update_position_performance(active_position)
 
         return True
 
     async def handle_market(self, event: OHLCVEvent) -> bool:
-        position = await self.get_active_position(event.symbol)
+        active_position = await self.position_storage.get_active_position(event.symbol)
 
-        if position is None:
+        if active_position is None:
             return False
 
         await self.dispatcher.dispatch(
             RiskEvaluate(
-                symbol=position.symbol,
-                timeframe=position.timeframe,
-                side=position.side,
-                size=position.size,
-                entry=position.entry_price,
-                stop_loss=position.stop_loss_price,
-                risk_reward_ratio=position.risk_reward_ratio,
+                symbol=active_position.symbol,
+                timeframe=active_position.timeframe,
+                side=active_position.side,
+                size=active_position.size,
+                entry=active_position.entry_price,
+                stop_loss=active_position.stop_loss_price,
+                risk_reward_ratio=active_position.risk_reward_ratio,
+                strategy=active_position.strategy,
                 risk_per_trade=self.risk_per_trade,
-                strategy=position.strategy,
                 ohlcv=event.ohlcv
             )
         )
@@ -151,9 +147,9 @@ class PortfolioManager(AbstractPortfolioManager):
         return True
 
     async def handle_exit(self, event: Union[LongExit, ShortExit, RiskExit]) -> bool:
-        position = await self.get_active_position(event.symbol)
+        active_position = await self.position_storage.get_active_position(event.symbol)
 
-        if not position or (event.strategy != position.strategy) or not self.can_close_position(position.side, position.entry_price, event):
+        if active_position is None or (event.strategy != active_position.strategy) or not self.can_close_position(active_position.side, active_position.entry_price, event):
             return False
 
         await self.dispatcher.dispatch(
@@ -166,17 +162,10 @@ class PortfolioManager(AbstractPortfolioManager):
         return True
 
     async def close_position(self, position: Position, exit_price: float):
-        symbol = position.symbol
-
         position.close_position(exit_price)
 
-        async with self.closed_positions_lock:
-            closed_key = f"{symbol}_{position.closed_timestamp}"
-
-            if closed_key not in self.closed_positions:
-                self.closed_positions[closed_key] = position
-
-        del self.active_positions[symbol]
+        await self.position_storage.add_closed_position(position)
+        await self.position_storage.remove_active_position(position.symbol)
 
     async def create_position(self, event: Union[LongGo, ShortGo]) -> Position:
         account_size = await self.datasource.account_size()
@@ -209,24 +198,12 @@ class PortfolioManager(AbstractPortfolioManager):
             stop_loss=stop_loss_price
         )
 
-    async def get_active_position(self, symbol: str) -> Optional[Position]:
-        if symbol not in self.active_positions:
-            return None
-
-        async with self.active_positions_lock:
-            position = self.active_positions[symbol]
-
-        return position if position is not None and len(position.orders) else None
-
     async def update_position_performance(self, position: Position):
-        current_strategy_id = self.create_strategy_id(position)
-
-        closed_positions_list = list(filter(lambda x: self.create_strategy_id(x) == current_strategy_id, self.closed_positions.values()))
-
-        performance = await asyncio.to_thread(self.analytics.calculate, closed_positions_list)
+        closed_positions = await self.position_storage.filter_closed_positions_by_strategy(position.strategy_id)
+        portfolio_performance = await asyncio.to_thread(self.analytics.calculate, closed_positions)
 
         await self.dispatcher.dispatch(
-            PortfolioPerformanceEvent(strategy_id=current_strategy_id, performance=performance))
+            PortfolioPerformanceEvent(strategy_id=position.strategy_id, performance=portfolio_performance))
 
     def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened, None]:
         if position.side == PositionSide.LONG:
@@ -295,7 +272,3 @@ class PortfolioManager(AbstractPortfolioManager):
         }
 
         return next_state_mapping[state].get(type(event), state)
-
-    @staticmethod
-    def create_strategy_id(position: Position) -> str:
-        return f'{position.symbol}_{position.timeframe}{position.strategy}'
