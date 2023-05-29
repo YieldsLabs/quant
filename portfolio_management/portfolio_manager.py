@@ -71,9 +71,6 @@ class PortfolioManager(AbstractPortfolioManager):
 
         open_position_event = self.create_open_position_event(position)
 
-        if not open_position_event:
-            return False
-
         await self.dispatcher.dispatch(open_position_event)
 
         return True
@@ -184,7 +181,7 @@ class PortfolioManager(AbstractPortfolioManager):
         await self.dispatcher.dispatch(
             PortfolioPerformanceEvent(strategy_id=position.strategy_id, performance=portfolio_performance))
 
-    def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened, None]:
+    def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened]:
         if position.side == PositionSide.LONG:
             return LongPositionOpened(
                 symbol=position.symbol,
@@ -193,7 +190,7 @@ class PortfolioManager(AbstractPortfolioManager):
                 entry=position.entry_price,
                 stop_loss=position.stop_loss_price
             )
-        elif position.side == PositionSide.SHORT:
+        else:
             return ShortPositionOpened(
                 symbol=position.symbol,
                 timeframe=position.timeframe,
