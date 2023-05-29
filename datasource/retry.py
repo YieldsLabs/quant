@@ -5,7 +5,24 @@ from requests.exceptions import RequestException, ReadTimeout
 
 
 def retry(max_retries=3, initial_retry_delay=1, handled_exceptions=(RequestException, ReadTimeout)):
-    def handle_retry(func, is_async, *args, **kwargs):
+    max_retries_exception = Exception("Failed to fetch data after reaching maximum retries.")
+
+    async def handle_retry_async(func, *args, **kwargs):
+        retries = 0
+
+        while retries < max_retries:
+            try:
+                return await func(*args, **kwargs)
+            except handled_exceptions as e:
+                print(f"Error: {e}. Retrying...")
+                retries += 1
+                retry_delay = initial_retry_delay * (2 ** retries) * random.uniform(0.5, 1.5)
+                print(f"Waiting {retry_delay} seconds before retrying.")
+                await asyncio.sleep(retry_delay)
+
+        raise max_retries_exception
+
+    def handle_retry_sync(func, *args, **kwargs):
         retries = 0
 
         while retries < max_retries:
@@ -16,23 +33,18 @@ def retry(max_retries=3, initial_retry_delay=1, handled_exceptions=(RequestExcep
                 retries += 1
                 retry_delay = initial_retry_delay * (2 ** retries) * random.uniform(0.5, 1.5)
                 print(f"Waiting {retry_delay} seconds before retrying.")
-                if is_async:
-                    asyncio.sleep(retry_delay)
-                else:
-                    time.sleep(retry_delay)
-        raise Exception("Failed to fetch data after reaching maximum retries.")
+                time.sleep(retry_delay)
 
-    def wrapper(func, is_async, *args, **kwargs):
-        if is_async:
-            async def async_wrapper():
-                return await handle_retry(func, True, *args, **kwargs)
-            return async_wrapper()
+        raise max_retries_exception
+
+    def wrapper(func):
+        if asyncio.iscoroutinefunction(func):
+            async def wrapped(*args, **kwargs):
+                return await handle_retry_async(func, *args, **kwargs)
         else:
-            return handle_retry(func, False, *args, **kwargs)
+            def wrapped(*args, **kwargs):
+                return handle_retry_sync(func, *args, **kwargs)
 
-    def decorator(func):
-        def wrapped(*args, **kwargs):
-            return wrapper(func, asyncio.iscoroutinefunction(func), *args, **kwargs)
         return wrapped
 
-    return decorator
+    return wrapper

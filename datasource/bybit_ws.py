@@ -1,10 +1,11 @@
-
 import asyncio
 import json
 import websockets
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from core.timeframe import Timeframe
-from datasource.abstract_ws import AbstractWS
+
+from .retry import retry
+from .abstract_ws import AbstractWS
 
 
 class BybitWSHandler(AbstractWS):
@@ -31,13 +32,9 @@ class BybitWSHandler(AbstractWS):
         self.url = url
         self.ws = None
 
+    @retry(max_retries=5, initial_retry_delay=5, handled_exceptions=(Exception,))
     async def connect_to_websocket(self):
-        while True:
-            try:
-                return await websockets.connect(self.url)
-            except Exception as e:
-                print(f"Failed to connect to websocket: {e}")
-                await asyncio.sleep(1)
+        self.ws = await websockets.connect(self.url)
 
     async def process_message(self, message):
         message_data = json.loads(message)
@@ -53,33 +50,50 @@ class BybitWSHandler(AbstractWS):
 
     async def send_ping(self, interval):
         while True:
+            await asyncio.sleep(interval)
             try:
-                await asyncio.sleep(interval)
-                await self.ws.ping()
+                if self.ws.open:
+                    await self.ws.ping()
+                else:
+                    raise websockets.exceptions.ConnectionClosedOK(None, websockets.frames.Close(code=1000, reason='Connection closed'))
+            except websockets.exceptions.ConnectionClosedOK:
+                print("Connection closed.")
+                await self.connect_to_websocket()
+            except websockets.exceptions.ConnectionClosedError:
+                print("Connection closed with error")
+                await self.connect_to_websocket()
             except Exception as e:
-                print(f"Unexpected error: {e}")
+                print(f"Error while keep alive ping: {e}")
+                await self.connect_to_websocket()
 
     async def process_messages(self):
         while True:
             try:
                 async for message in self.ws:
                     await self.process_message(message)
-            except websockets.exceptions.ConnectionClosed as e:
-                print(f"Websocket closed with code {e.code}: {e.reason}")
+            except websockets.exceptions.ConnectionClosedOK:
+                print("Connection closed.")
+                await self.connect_to_websocket()
+            except websockets.exceptions.ConnectionClosedError:
+                print("Connection closed with error")
+                await self.connect_to_websocket()
             except Exception as e:
-                print(f"Unexpected error: {e}")
+                print(f"Error while process message: {e}")
+                await self.connect_to_websocket()
 
     async def run(self, ping_interval=10):
-        self.ws = await self.connect_to_websocket()
-
-        ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
-        message_processing_task = asyncio.create_task(self.process_messages())
-
         try:
+            await self.connect_to_websocket()
+
+            ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
+            message_processing_task = asyncio.create_task(self.process_messages())
+
             await asyncio.gather(ping_task, message_processing_task)
+        except ConnectionError as e:
+            print(f"Could not establish WebSocket connection: {e}")
         finally:
-            ping_task.cancel()
-            message_processing_task.cancel()
+            if self.ws:
+                await self.ws.close()
 
     def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV(
