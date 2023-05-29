@@ -23,16 +23,15 @@ class PositionStateMachine:
     def __init__(self, portfolio_manager: Type[AbstractPortfolioManager]):
         self.state: Dict[str, PositionState] = {}
         self.state_lock = asyncio.Lock()
-        self.portfolio_manager = portfolio_manager
         self._state_handlers = {
-            (PositionState.IDLE, LongGo): self.portfolio_manager.handle_open_position,
-            (PositionState.IDLE, ShortGo): self.portfolio_manager.handle_open_position,
-            (PositionState.OPENING, OrderFilled): self.portfolio_manager.handle_order_filled,
-            (PositionState.OPENED, OHLCVEvent): self.portfolio_manager.handle_market,
-            (PositionState.OPENED, LongExit): self.portfolio_manager.handle_exit,
-            (PositionState.OPENED, ShortExit): self.portfolio_manager.handle_exit,
-            (PositionState.OPENED, RiskExit): self.portfolio_manager.handle_exit,
-            (PositionState.CLOSING, PositionClosed): self.portfolio_manager.handle_closed_position,
+            (PositionState.IDLE, LongGo): portfolio_manager.handle_open_position,
+            (PositionState.IDLE, ShortGo): portfolio_manager.handle_open_position,
+            (PositionState.OPENING, OrderFilled): portfolio_manager.handle_order_filled,
+            (PositionState.OPENED, OHLCVEvent): portfolio_manager.handle_market,
+            (PositionState.OPENED, LongExit): portfolio_manager.handle_exit,
+            (PositionState.OPENED, ShortExit): portfolio_manager.handle_exit,
+            (PositionState.OPENED, RiskExit): portfolio_manager.handle_exit,
+            (PositionState.CLOSING, PositionClosed): portfolio_manager.handle_closed_position,
         }
 
     def next_state(self, state: PositionState, event: PortfolioEvent) -> PositionState:
