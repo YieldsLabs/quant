@@ -1,6 +1,6 @@
 import asyncio
 from typing import Type, Union
-from analytics.abstract_analytics import AbstractAnalytics
+
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.portfolio import PortfolioPerformanceEvent
@@ -9,6 +9,7 @@ from core.events.risk import RiskEvaluate, RiskExit
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
 from core.position import Position
 from datasource.abstract_datasource import AbstractDatasource
+from analytics.abstract_analytics import AbstractAnalytics
 
 from .position_state_machine import PositionStateMachine
 from .position_sizer import PositionSizer
@@ -81,10 +82,7 @@ class PortfolioManager(AbstractPortfolioManager):
         if active_position is None:
             return False
 
-        active_position.add_order(event.order)
-        active_position.update_prices(event.order.price)
-
-        await self.position_storage.add_active_position(event.symbol, active_position)
+        await self.position_storage.add_order(event.symbol, event.order)
 
         return True
 

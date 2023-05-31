@@ -1,5 +1,7 @@
 import asyncio
 from typing import Dict, List, Optional
+
+from core.events.position import Order
 from core.position import Position
 
 
@@ -24,10 +26,19 @@ class PositionStorage:
 
         return position
 
-    async def add_closed_position(self, position: Position):
-        async with self.closed_positions_lock:
-            closed_key = f"{position.symbol}_{position.closed_timestamp}"
+    async def add_order(self, symbol: str, order: Order):
+        async with self.active_positions_lock:
+            position = self.active_positions.get(symbol)
 
+            position.add_order(order)
+            position.update_prices(order.price)
+
+            self.active_positions[symbol] = position
+
+    async def add_closed_position(self, position: Position):
+        closed_key = f"{position.symbol}_{position.closed_timestamp}"
+
+        async with self.closed_positions_lock:
             if closed_key not in self.closed_positions:
                 self.closed_positions[closed_key] = position
 
