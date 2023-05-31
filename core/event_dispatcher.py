@@ -5,7 +5,6 @@ import inspect
 import os
 import random
 from typing import Any, AsyncIterable, Callable, Deque, Dict, List, Tuple, Type
-
 import numpy as np
 
 from .events.base_event import EventEnded, Event
@@ -33,7 +32,7 @@ class EventDispatcher:
         self.event_handlers.setdefault(event_class, []).append(handler)
 
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
-        if event_class in self.event_handlers:
+        if event_class in self.event_handlers and handler in self.event_handlers[event_class]:
             self.event_handlers[event_class].remove(handler)
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
@@ -55,7 +54,9 @@ class EventDispatcher:
         self.all_workers_done.set()
 
     async def wait(self) -> None:
-        await self.all_workers_done.wait()
+        for queue in self._group_event_queues:
+            await queue.join()
+
         self.all_workers_done.clear()
 
     async def stop(self) -> None:
@@ -149,11 +150,28 @@ def eda(cls: Type):
 
             self.dispatcher = EventDispatcher()
 
+            self._registered_handlers = []
+
             for _, handler in inspect.getmembers(self.__class__, predicate=inspect.isfunction):
                 if hasattr(handler, "event"):
                     event_type = handler.event
                     wrapped_handler = partial(handler, self)
                     self.dispatcher.register(event_type, wrapped_handler)
+
+                    self._registered_handlers.append((event_type, wrapped_handler))
+
+        def _unregister(self):
+            for event_type, handler in self._registered_handlers:
+                self.dispatcher.unregister(event_type, handler)
+
+        def __del__(self):
+            self._unregister()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self._unregister()
 
     Wrapped.__name__ = cls.__name__
     Wrapped.__qualname__ = cls.__qualname__
