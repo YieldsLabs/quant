@@ -1,9 +1,10 @@
 import asyncio
 from typing import List, Type
-from core.abstract_event_manager import AbstractEventManager
 
+from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCV, OHLCVEvent
+
 from .strategy_storage import StrategyStorage
 from .strategy_processor import StrategyProcessor
 from .abstract_strategy import AbstractStrategy
@@ -16,7 +17,7 @@ class StrategyManager(AbstractEventManager):
         super().__init__()
         self.strategies = [StrategyProcessor(strategy) for strategy in strategies]
         self.storage = StrategyStorage(
-            window_size=max(getattr(strategy, "lookback", self.MIN_LOOKBACK) for strategy in self.strategies)
+            window_size=max(getattr(strategy, "lookback", self.MIN_LOOKBACK) for strategy in strategies)
         )
 
     @register_handler(OHLCVEvent)
