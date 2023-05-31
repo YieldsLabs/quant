@@ -35,10 +35,12 @@ class PositionStorage:
 
             self.active_positions[symbol] = position
 
-    async def add_closed_position(self, position: Position):
+    async def add_closed_position(self, position: Position, exit_price: float):
         closed_key = f"{position.symbol}_{position.closed_timestamp}"
 
         async with self.closed_positions_lock:
+            position.close_position(exit_price)
+
             if closed_key not in self.closed_positions:
                 self.closed_positions[closed_key] = position
 

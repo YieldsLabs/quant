@@ -136,9 +136,7 @@ class PortfolioManager(AbstractPortfolioManager):
         return True
 
     async def close_position(self, position: Position, exit_price: float):
-        position.close_position(exit_price)
-
-        await self.position_storage.add_closed_position(position)
+        await self.position_storage.add_closed_position(position, exit_price)
         await self.position_storage.remove_active_position(position.symbol)
 
     async def create_position(self, event: Union[LongGo, ShortGo]) -> Position:
