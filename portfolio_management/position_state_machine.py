@@ -1,11 +1,12 @@
 import asyncio
 from enum import Enum, auto
-from typing import Dict, Type, Union
+from typing import Callable, Dict, Type, Union
+
 from core.events.ohlcv import OHLCVEvent
 from core.events.position import OrderFilled, PositionClosed
 from core.events.risk import RiskExit
-
 from core.events.strategy import LongExit, LongGo, ShortExit, ShortGo
+
 from .abstract_portfolio_manager import AbstractPortfolioManager
 
 
@@ -17,13 +18,14 @@ class PositionState(Enum):
 
 
 PortfolioEvent = Union[LongGo, ShortGo, LongExit, ShortExit, RiskExit, OrderFilled, PositionClosed, OHLCVEvent]
+HandlerFunction = Callable[[PortfolioEvent], bool]
 
 
 class PositionStateMachine:
     def __init__(self, portfolio_manager: Type[AbstractPortfolioManager]):
         self.state: Dict[str, PositionState] = {}
         self.state_lock = asyncio.Lock()
-        self._state_handlers = {
+        self._state_handlers: Dict[(PositionState, Type[PortfolioEvent]), HandlerFunction] = {
             (PositionState.IDLE, LongGo): portfolio_manager.handle_open_position,
             (PositionState.IDLE, ShortGo): portfolio_manager.handle_open_position,
             (PositionState.OPENING, OrderFilled): portfolio_manager.handle_order_filled,
