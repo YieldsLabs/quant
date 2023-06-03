@@ -24,7 +24,7 @@ class StrategyManager(AbstractEventManager):
     async def _on_ohlcv(self, event: OHLCVEvent) -> None:
         await self.storage.append(event.symbol, event.timeframe, event.ohlcv)
 
-        if not self.storage.can_process(event.symbol, event.timeframe):
+        if not await self.storage.can_process(event.symbol, event.timeframe):
             return
 
         strategy_events = await self.storage.get_window(event.symbol, event.timeframe)
