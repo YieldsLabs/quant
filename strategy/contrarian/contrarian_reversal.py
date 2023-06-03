@@ -7,7 +7,7 @@ from ta.volume.vo import VolumeOscillator
 class ContrarianReversal(BaseStrategy):
     NAME = "CONTRARIANREVERSAL"
 
-    def __init__(self, period=5, lower_barrier=20, lower_threshold=33, upper_barrier=80, upper_threshold=67, lower_exit_barrier=70, upper_exit_barrier=30, lookback=50, atr_multi=1.5, risk_reward_ratio=2.2):
+    def __init__(self, period=5, lower_barrier=20, lower_threshold=33, upper_barrier=80, upper_threshold=67, lower_exit_barrier=70, upper_exit_barrier=30, atr_multi=1.5, risk_reward_ratio=2.2):
         indicators = [
             (VolumeOscillator(), ('VO')),
             (RelativeStrengthIndex(period=period), ('rsi')),
@@ -23,7 +23,6 @@ class ContrarianReversal(BaseStrategy):
         self.upper_threshold = upper_threshold
         self.upper_exit_barrier = upper_exit_barrier
         self.lower_exit_barrier = lower_exit_barrier
-        self.lookback = lookback
 
     def _generate_buy_entry(self, data):
         rsi = data['rsi']

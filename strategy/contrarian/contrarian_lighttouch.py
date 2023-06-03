@@ -8,7 +8,7 @@ from ta.volume.vo import VolumeOscillator
 class ContrarianLightTouch(BaseStrategy):
     NAME = "CONTRARIANLIGHTTOUCH"
 
-    def __init__(self, sma_period=20, stdev_multi=2, slow_sma_period=200, lookback=200, atr_multi=1.5, risk_reward_ratio=2):
+    def __init__(self, sma_period=20, stdev_multi=2, slow_sma_period=200, atr_multi=1.5, risk_reward_ratio=2):
         indicators = [
             (BollingerBands(sma_period, stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
             (VolumeOscillator(), ('VO')),
@@ -19,7 +19,6 @@ class ContrarianLightTouch(BaseStrategy):
             risk_reward_ratio=risk_reward_ratio
         )
         self.ma = MovingAverage(slow_sma_period)
-        self.lookback = lookback
 
     def _generate_buy_entry(self, data):
         close = data['close']

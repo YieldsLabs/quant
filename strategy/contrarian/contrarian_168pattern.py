@@ -7,7 +7,7 @@ from ta.volume.vo import VolumeOscillator
 class Contrarian168Pattern(BaseStrategy):
     NAME = "CONTRARIAN168PATTERN"
 
-    def __init__(self, period=13, oversold=40, overbought=60, lower_exit_barrier=30, upper_exit_barrier=70, lookback=50, atr_multi=1.5, risk_reward_ratio=2):
+    def __init__(self, period=13, oversold=40, overbought=60, lower_exit_barrier=30, upper_exit_barrier=70, atr_multi=1.5, risk_reward_ratio=2):
         indicators = [
             (VolumeOscillator(), ('VO')),
             (RelativeStrengthIndex(period=period), ('rsi')),
@@ -21,7 +21,6 @@ class Contrarian168Pattern(BaseStrategy):
         self.overbought = overbought
         self.lower_exit_barrier = lower_exit_barrier
         self.upper_exit_barrier = upper_exit_barrier
-        self.lookback = lookback
 
     def _generate_buy_entry(self, data):
         rsi = data['rsi']

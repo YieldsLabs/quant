@@ -15,7 +15,7 @@ from ta.volume.vo import VolumeOscillator
 class ContrarianPatterns(BaseStrategy):
     NAME = "CONTRARIANPATTERNS"
 
-    def __init__(self, sma_period=20, stdev_multi=2, oversold=20, overbought=80, lookback=100, atr_multi=1.5, risk_reward_ratio=2):
+    def __init__(self, sma_period=20, stdev_multi=2, oversold=20, overbought=80, atr_multi=1.5, risk_reward_ratio=2):
         indicators = [
             (BollingerBands(sma_period, stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
             (VolumeOscillator(), ('VO')),
@@ -34,7 +34,6 @@ class ContrarianPatterns(BaseStrategy):
         )
         self.oversold = oversold
         self.overbought = overbought
-        self.lookback = lookback
 
     def _generate_buy_entry(self, data):
         bullish_column = (data[ExtremeEuphoria.bullish_column()]

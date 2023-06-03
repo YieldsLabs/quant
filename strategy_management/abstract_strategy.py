@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from typing import Tuple
-
 import pandas as pd
 
 from labels.abstract_meta_label import AbstractMetaLabel
