@@ -321,12 +321,18 @@ class StrategyPerformance(AbstractAnalytics):
     @staticmethod
     def _burke_ratio(pnl, initial_account_size: float, periods_per_year: int) -> float:
         account_size = initial_account_size + pnl.cumsum()
+
         periods = len(pnl)
 
-        if periods < 2:
+        if periods < 2 or initial_account_size <= 0 or account_size[-1] <= 0:
             return 0
 
-        cagr = (account_size[-1] / initial_account_size) ** (periods_per_year / periods) - 1
+        ratio = account_size[-1] / initial_account_size
+
+        if ratio <= 0:
+            return 0
+
+        cagr = ratio ** (periods_per_year / periods) - 1
 
         downside_deviation = np.std(np.minimum(pnl, 0), ddof=1)
 
