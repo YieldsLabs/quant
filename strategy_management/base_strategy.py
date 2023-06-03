@@ -71,25 +71,25 @@ class BaseStrategy(AbstractStrategy):
 
         return data
 
-    def _process_data(self, ohlcv: pd.DataFrame, generate_func: Callable):
+    def _process_data(self, ohlcv: pd.DataFrame, generate_buy: Callable, generate_sell: Callable):
         if len(ohlcv) < self.lookback:
             return False, False
 
         data = self._add_indicators_and_patterns(ohlcv)
-        buy_data = generate_func(data)
-        sell_data = generate_func(data)
+
+        buy_data = generate_buy(data)
+        sell_data = generate_sell(data)
 
         return buy_data.iloc[-1], sell_data.iloc[-1]
 
     def entry(self, ohlcv: pd.DataFrame):
-        return self._process_data(ohlcv, self._generate_buy_entry), self._process_data(ohlcv, self._generate_sell_entry)
+        return self._process_data(ohlcv, self._generate_buy_entry, self._generate_sell_entry)
 
     def exit(self, ohlcv: pd.DataFrame):
-        return self._process_data(ohlcv, self._generate_buy_exit), self._process_data(ohlcv, self._generate_sell_exit)
+        return self._process_data(ohlcv, self._generate_buy_exit, self._generate_sell_exit)
 
     def stop_loss(self, entry, ohlcv):
-        stop_loss_long, stop_loss_short = self.stop_loss_finder.next(entry, ohlcv)
-        return stop_loss_long, stop_loss_short
+        return self.stop_loss_finder.next(entry, ohlcv)
 
     def _generate_buy_entry(self, data: pd.DataFrame):
         raise NotImplementedError
