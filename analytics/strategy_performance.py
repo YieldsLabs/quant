@@ -302,7 +302,7 @@ class StrategyPerformance(AbstractAnalytics):
     def _annualized_return(rate_of_return: float, total_trades: int, periods_per_year: int) -> float:
         if rate_of_return < 0 and periods_per_year % total_trades != 0:
             return 0
-        
+
         holding_period_return = 1 + rate_of_return
         annualized_return = holding_period_return ** (periods_per_year / total_trades) - 1
 
