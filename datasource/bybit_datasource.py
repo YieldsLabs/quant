@@ -3,34 +3,38 @@ from aiocache import cached
 from typing import Type
 
 from broker.abstract_broker import AbstractBroker
-from datasource.abstract_datasource import AbstractDatasource
 from core.timeframe import Timeframe
+
+from .abstract_datasource import AbstractDatasource
 from .retry import retry
 
 
 class AsyncHistoricalData:
-    def __init__(self, broker, symbol, timeframe, lookback):
+    def __init__(self, broker: AbstractBroker, symbol: str, timeframe: Timeframe, lookback: int):
         self.broker = broker
         self.symbol = symbol
         self.timeframe = timeframe
         self.lookback = lookback
         self.iterator = None
-        self._end_of_iterator = object()
+        self.sentinel = object()
         self.last_row = None
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
-        if self.iterator is None:
-            self.iterator = self.broker.get_historical_data(self.symbol, self.timeframe, self.lookback)
+        self._init_iterator()
 
         next_item = await self._fetch_next_item()
-        if next_item is self._end_of_iterator:
+        if next_item is self.sentinel:
             raise StopAsyncIteration
 
         self.last_row = next_item
         return next_item
+
+    def _init_iterator(self) -> None:
+        if self.iterator is None:
+            self.iterator = self.broker.get_historical_data(self.symbol, self.timeframe, self.lookback)
 
     async def _fetch_next_item(self):
         return await asyncio.to_thread(self._next_item_or_end)
@@ -39,7 +43,7 @@ class AsyncHistoricalData:
         try:
             return next(self.iterator)
         except StopIteration:
-            return self._end_of_iterator
+            return self.sentinel
 
     def get_last_row(self):
         return self.last_row
