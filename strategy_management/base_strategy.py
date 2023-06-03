@@ -21,7 +21,20 @@ class BaseStrategy(AbstractStrategy):
     ):
         super().__init__()
         self._initialize_attributes(indicators, stop_loss_finder, risk_reward_ratio)
-        self.lookback = self._calculate_lookback()
+
+    @property
+    def lookback(self):
+        return self._calculate_lookback()
+
+    @property
+    def hyperparameters(self):
+        return {
+            'sma_period': [20, 100, 10],
+            'slow_sma_period': [50, 250, 50],
+            'stdev_multi': [1.5, 3, 0.5],
+            'atr_multi': [0.8, 3.1, 0.1],
+            'risk_reward_ratio': [1, 5, 0.5]
+        }
 
     def _initialize_attributes(self, indicators, stop_loss_finder, risk_reward_ratio):
         self.risk_reward_ratio = risk_reward_ratio
