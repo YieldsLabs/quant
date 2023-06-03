@@ -25,6 +25,10 @@ class Position:
     def strategy_id(self) -> str:
         return f'{self.symbol}_{self.timeframe}{self.strategy}'
 
+    @property
+    def closed_key(self) -> str:
+        return f"{self.symbol}_{self.closed_timestamp}"
+
     def add_order(self, order: Order):
         self.orders.append(order)
 
