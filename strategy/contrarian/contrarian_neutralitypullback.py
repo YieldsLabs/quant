@@ -7,7 +7,7 @@ from ta.volume.vo import VolumeOscillator
 class ContrarianNeutralityPullBack(BaseStrategy):
     NAME = "CONTRARIANNEUTRALITYPULLBACK"
 
-    def __init__(self, period=14, lower_exit_barrier=30, upper_exit_barrier=70, lookback=50, atr_multi=1.5, risk_reward_ratio=2.5):
+    def __init__(self, period=14, lower_exit_barrier=30, upper_exit_barrier=70, atr_multi=1.5, risk_reward_ratio=2.5):
         indicators = [
             (VolumeOscillator(), ('VO')),
             (RelativeStrengthIndex(period=period), ('rsi')),
@@ -19,7 +19,6 @@ class ContrarianNeutralityPullBack(BaseStrategy):
         )
         self.lower_exit_barrier = lower_exit_barrier
         self.upper_exit_barrier = upper_exit_barrier
-        self.lookback = lookback
 
     def _generate_buy_entry(self, data):
         rsi = data['rsi']

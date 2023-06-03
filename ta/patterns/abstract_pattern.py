@@ -19,8 +19,8 @@ class AbstractPattern(AbstractMetaLabel):
 
     @abstractmethod
     def bullish(self, data) -> bool:
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def bearish(self, data) -> bool:
-        raise NotImplementedError
+        pass
