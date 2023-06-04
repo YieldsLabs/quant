@@ -7,6 +7,7 @@ import random
 from typing import Any, AsyncIterable, Callable, Deque, Dict, List, Tuple, Type
 import numpy as np
 
+from .event_handler import EventHandler
 from .events.base_event import EventEnded, Event
 
 
@@ -16,10 +17,9 @@ class EventDispatcher:
     def __new__(cls) -> 'EventDispatcher':
         if not cls.__instance:
             cls.__instance = super().__new__(cls)
-            cls.__instance.event_handlers: Dict[Type[Event], List[Callable]] = {}
             cls.__instance.cancel_event = asyncio.Event()
             cls.__instance.all_workers_done = asyncio.Event()
-            cls.__instance.dead_letter_queue: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
+            cls.__instance.event_handler = EventHandler()
 
         return cls.__instance
 
@@ -29,11 +29,10 @@ class EventDispatcher:
             self._initialize_load_balancer(priority_groups)
 
     def register(self, event_class: Type[Event], handler: Callable) -> None:
-        self.event_handlers.setdefault(event_class, []).append(handler)
+        self.event_handler.register(event_class, handler)
 
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
-        if event_class in self.event_handlers and handler in self.event_handlers[event_class]:
-            self.event_handlers[event_class].remove(handler)
+        self.event_handler.unregister(event_class, handler)
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         priority_group = self._determine_priority_group(event.meta.priority)
@@ -42,14 +41,7 @@ class EventDispatcher:
 
     async def process_events(self, priority_group):
         async for event, args, kwargs in self._get_event_stream(priority_group):
-            handlers = self.event_handlers.get(type(event), [])
-
-            if not handlers:
-                continue
-
-            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
-
-            await asyncio.gather(*tasks)
+            await self.event_handler.handle_event(event, *args, **kwargs)
 
         self.all_workers_done.set()
 
@@ -72,15 +64,6 @@ class EventDispatcher:
 
         for _ in range(len(self._worker_tasks)):
             await self.dispatch(EventEnded())
-
-    async def _call_handler(self, handler, event, *args, **kwargs):
-        try:
-            if asyncio.iscoroutinefunction(handler):
-                await handler(event, *args, **kwargs)
-            else:
-                await asyncio.to_thread(handler, event, *args, **kwargs)
-        except Exception as e:
-            self.dead_letter_queue.append((event, e))
 
     async def _get_event_stream(self, priority_group) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
         while not self.cancel_event.is_set():
