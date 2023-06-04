@@ -1,11 +1,21 @@
 import asyncio
-from typing import List, Tuple, Type
-
+from typing import List, NamedTuple, Tuple, Type
 import pandas as pd
+
 from core.abstract_event_manager import AbstractEventManager
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
+
 from .abstract_strategy import AbstractStrategy
+
+
+class SignalResult(NamedTuple):
+    entry_long_signal: bool
+    entry_short_signal: bool
+    exit_long_signal: bool
+    exit_short_signal: bool
+    stop_loss_long: float
+    stop_loss_short: float
 
 
 class StrategyProcessor(AbstractEventManager):
@@ -22,27 +32,26 @@ class StrategyProcessor(AbstractEventManager):
     def calculate_signals(self, events: List[OHLCV], entry: float) -> Tuple[bool, bool, bool, bool, float, float]:
         df_events = self._events_to_dataframe(events)
 
-        return (
+        return SignalResult(
             *self.strategy.entry(df_events),
             *self.strategy.exit(df_events),
             *self.strategy.stop_loss(entry, df_events)
         )
 
-    async def dispatch_signals(self, signals, event):
-        entry_long_signal, entry_short_signal, exit_long_signal, exit_short_signal, stop_loss_long, stop_loss_short = signals
+    async def dispatch_signals(self, signals: SignalResult, event: OHLCVEvent):
         strategy_name = str(self.strategy)
         tasks = []
 
-        if entry_long_signal:
+        if signals.entry_long_signal:
             tasks.append(self.dispatcher.dispatch(
-                LongGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=event.ohlcv.close, stop_loss=stop_loss_long, risk_reward_ratio=self.strategy.risk_reward_ratio)))
-        elif entry_short_signal:
+                LongGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=event.ohlcv.close, stop_loss=signals.stop_loss_long, risk_reward_ratio=self.strategy.risk_reward_ratio)))
+        elif signals.entry_short_signal:
             tasks.append(self.dispatcher.dispatch(
-                ShortGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=event.ohlcv.close, stop_loss=stop_loss_short, risk_reward_ratio=self.strategy.risk_reward_ratio)))
-        elif exit_long_signal:
+                ShortGo(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, entry=event.ohlcv.close, stop_loss=signals.stop_loss_short, risk_reward_ratio=self.strategy.risk_reward_ratio)))
+        elif signals.exit_long_signal:
             tasks.append(self.dispatcher.dispatch(
                 LongExit(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=event.ohlcv.close)))
-        elif exit_short_signal:
+        elif signals.exit_short_signal:
             tasks.append(self.dispatcher.dispatch(
                 ShortExit(symbol=event.symbol, strategy=strategy_name, timeframe=event.timeframe, exit=event.ohlcv.close)))
 
