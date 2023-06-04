@@ -77,16 +77,14 @@ class TradingSystem(AbstractSystem):
 
     async def _run_trading(self):
         leverage = self.context.leverage
-        top_strategies = await self.context.optimization.get_top5_strategies()
+        top_strategies = await self.context.optimization.get_top_strategies()
 
         symbols = [strategy[0] for strategy in top_strategies]
         timeframes = [strategy[1] for strategy in top_strategies]
         strategies = [strategy[2] for strategy in top_strategies]
 
         for symbol in symbols:
-            self.context.broker.set_leverage(symbol, leverage)
-            self.context.broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
-            self.context.broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
+            self._set_broker_settings(symbol, leverage)
 
         with create_trader(self.context.broker, live_trading=self.context.live_mode):
             for strategy in strategies:
@@ -94,3 +92,8 @@ class TradingSystem(AbstractSystem):
                 with StrategyManager(strategy_instances):
                     timeframes_symbols = list(product(symbols, timeframes))
                     await self.context.ws_handler.subscribe(timeframes_symbols)
+
+    def _set_broker_settings(self, symbol, leverage):
+        self.context.broker.set_leverage(symbol, leverage)
+        self.context.broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
+        self.context.broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)

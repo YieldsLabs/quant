@@ -5,6 +5,7 @@ from analytics.strategy_performance import StrategyPerformance
 from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
+from optimization.backtest import Lookback
 from sync.csv_sync import CSVSync
 from sync.log_sync import LogSync
 from optimization.kmeans_inference import KMeansInference
@@ -17,7 +18,7 @@ API_SECRET = os.getenv('API_SECRET')
 WSS = os.getenv('WSS')
 IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
-backtest_lookback = 2016 * 4
+backtest_lookback = Lookback.ONE_MONTH
 risk_per_trade = 0.0015
 leverage = 5
 
