@@ -1,16 +1,17 @@
 from typing import Type
+
 from analytics.abstract_analytics import AbstractAnalytics
 from broker.abstract_broker import AbstractBroker
 from datasource.abstract_datasource import AbstractDatasource
 from datasource.abstract_ws import AbstractWS
-from optimization.backtest import Backtest
+from optimization.abstract_optimization import AbstractOptimization
+from optimization.backtest import Backtest, Lookback
 from portfolio_management.portfolio_manager import PortfolioManager
 from risk_management.risk_manager import RiskManager
-from optimization.kmeans_inference import KMeansInference
 
 
 class TradingContext:
-    def __init__(self, datasource: Type[AbstractDatasource], ws_handler: Type[AbstractWS], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], optimization: Type[KMeansInference], lookback: int, leverage: int, risk_per_trade: float, live_mode: bool):
+    def __init__(self, datasource: Type[AbstractDatasource], ws_handler: Type[AbstractWS], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], optimization: Type[AbstractOptimization], lookback: Lookback, leverage: int, risk_per_trade: float, live_mode: bool):
         self.datasource = datasource
         self.ws_handler = ws_handler
         self.broker = broker
