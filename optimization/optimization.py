@@ -49,4 +49,4 @@ class Optimization(AbstractOptimization):
 
     async def get_all_strategies(self) -> List[str]:
         async with self.lock:
-            return self.strategies.values()
+            return [strategy[0] for strategy in self.strategies.values()]
