@@ -6,9 +6,9 @@ from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
 from optimization.backtest import Lookback
+from optimization.optimization import Optimization
 from sync.csv_sync import CSVSync
 from sync.log_sync import LogSync
-from optimization.kmeans_inference import KMeansInference
 from system.trading_system import TradingContext, TradingSystem
 
 load_dotenv()
@@ -33,18 +33,14 @@ async def main():
 
     initial_account_size = await datasource.account_size()
     analytics = StrategyPerformance(initial_account_size, risk_per_trade)
-
-    inference = KMeansInference(
-        './optimization/model/kmeans_model.pkl',
-        './optimization/model/scaler.pkl'
-    )
+    optimization = Optimization()
 
     context = TradingContext(
         datasource,
         ws_handler,
         broker,
         analytics,
-        inference,
+        optimization,
         lookback=backtest_lookback,
         leverage=leverage,
         risk_per_trade=risk_per_trade,
