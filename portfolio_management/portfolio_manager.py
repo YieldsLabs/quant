@@ -1,15 +1,12 @@
-import asyncio
 from typing import Type, Union
 
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
-from core.events.portfolio import PortfolioPerformanceEvent
-from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, PositionReadyToClose, ShortPositionOpened, PositionSide
+from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, PositionClosedUpdated, PositionReadyToClose, ShortPositionOpened
 from core.events.risk import RiskEvaluate, RiskExit
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
-from core.position import Position
+from core.position import Position, PositionSide
 from datasource.abstract_datasource import AbstractDatasource
-from analytics.abstract_analytics import AbstractAnalytics
 
 from .position_state_machine import PositionStateMachine
 from .position_sizer import PositionSizer
@@ -18,12 +15,11 @@ from .abstract_portfolio_manager import AbstractPortfolioManager
 
 
 class PortfolioManager(AbstractPortfolioManager):
-    def __init__(self, datasource: Type[AbstractDatasource], analytics: Type[AbstractAnalytics], leverage: int = 1, risk_per_trade: float = 0.001):
+    def __init__(self, datasource: Type[AbstractDatasource], leverage: int = 1, risk_per_trade: float = 0.001):
         super().__init__()
         self.datasource = datasource
-        self.analytics = analytics
-        self.risk_per_trade = risk_per_trade
         self.leverage = leverage
+        self.risk_per_trade = risk_per_trade
 
         self.position_storage = PositionStorage()
         self.state_machine = PositionStateMachine(self)
@@ -172,10 +168,9 @@ class PortfolioManager(AbstractPortfolioManager):
 
     async def update_position_performance(self, position: Position):
         closed_positions = await self.position_storage.filter_closed_positions_by_strategy(position.strategy_id)
-        portfolio_performance = await asyncio.to_thread(self.analytics.calculate, closed_positions)
 
         await self.dispatcher.dispatch(
-            PortfolioPerformanceEvent(strategy_id=position.strategy_id, performance=portfolio_performance))
+            PositionClosedUpdated(strategy_id=position.strategy_id, position=closed_positions))
 
     def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened]:
         if position.side == PositionSide.LONG:

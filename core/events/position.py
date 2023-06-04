@@ -1,47 +1,17 @@
-from dataclasses import asdict, dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
-
-
-class OrderSide(Enum):
-    BUY = "buy"
-    SELL = "sell"
-
-    def __str__(self):
-        return self.value
-
-
-@dataclass
-class Order:
-    side: OrderSide
-    price: float
-    size: float
-    stop_loss: Optional[float]
-    id: Optional[str] = None
-    timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
-
-    def to_dict(self):
-        return asdict(self)
+from ..position import OrderSide, Position
 
 
 @dataclass(frozen=True)
 class OrderFilled(Event):
     symbol: str
     timeframe: Timeframe
-    order: Order
+    order: OrderSide
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
-
-
-class PositionSide(Enum):
-    LONG = "long"
-    SHORT = "short"
-
-    def __str__(self):
-        return self.value
 
 
 @dataclass(frozen=True)
@@ -77,4 +47,11 @@ class PositionClosed(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+
+
+@dataclass(frozen=True)
+class PositionClosedUpdated(Event):
+    strategy_id: str
+    position: List[Position]
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))

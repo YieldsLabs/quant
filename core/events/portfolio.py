@@ -40,7 +40,7 @@ class PortfolioPerformance:
 
 
 @dataclass(frozen=True)
-class PortfolioPerformanceEvent(Event):
+class PortfolioPerformanceUpdated(Event):
     strategy_id: str
     performance: PortfolioPerformance
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))

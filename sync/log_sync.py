@@ -1,10 +1,11 @@
 import asyncio
 import time
+
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCVEvent
-from core.events.portfolio import PortfolioPerformanceEvent
-from core.events.position import PositionClosed, OrderFilled, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
+from core.events.portfolio import PortfolioPerformanceUpdated
+from core.events.position import PositionClosed, OrderFilled, PositionClosedUpdated, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
 from core.events.risk import RiskEvaluate, RiskExit
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
 
@@ -80,7 +81,12 @@ class LogSync(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(PortfolioPerformanceEvent)
-    async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
+    @register_handler(PositionClosedUpdated)
+    async def _on_closed_position_updated(self, event: PositionClosedUpdated):
+        print('----------------------------------------------------->')
+        print(event)
+
+    @register_handler(PortfolioPerformanceUpdated)
+    async def _on_portfolio_performance(self, event: PortfolioPerformanceUpdated):
         print('----------------------------------------------------->')
         print(event)

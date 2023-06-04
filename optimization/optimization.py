@@ -2,7 +2,7 @@ import asyncio
 from typing import List
 
 from core.event_dispatcher import register_handler
-from core.events.portfolio import PortfolioPerformanceEvent
+from core.events.portfolio import PortfolioPerformanceUpdated
 from labels.parse_label import parse_meta_label
 
 from .abstract_optimization import AbstractOptimization
@@ -23,8 +23,8 @@ class Optimization(AbstractOptimization):
             './optimization/model/scaler.pkl'
         )
 
-    @register_handler(PortfolioPerformanceEvent)
-    async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
+    @register_handler(PortfolioPerformanceUpdated)
+    async def _on_portfolio_performance(self, event: PortfolioPerformanceUpdated):
         async with self.lock:
             strategy_id = event.strategy_id
             strategy_performance = event.performance

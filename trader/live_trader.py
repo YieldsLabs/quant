@@ -1,10 +1,13 @@
 import asyncio
 from typing import Type, Union
+import logging
+
 from broker.abstract_broker import AbstractBroker
 from core.event_dispatcher import register_handler
-from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, PositionReadyToClose, OrderFilled, Order, OrderSide
+from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, PositionReadyToClose, OrderFilled
+from core.position import Order, OrderSide
 from trader.abstract_trader import AbstractTrader
-import logging
+
 
 TradeEvent = Union[LongPositionOpened, ShortPositionOpened]
 

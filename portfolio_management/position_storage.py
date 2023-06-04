@@ -1,8 +1,7 @@
 import asyncio
 from typing import Dict, List, Optional
 
-from core.events.position import Order
-from core.position import Position
+from core.position import Order, Position
 
 
 class PositionStorage:

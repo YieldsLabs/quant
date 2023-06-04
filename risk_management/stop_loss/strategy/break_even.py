@@ -1,5 +1,6 @@
 import asyncio
-from core.events.position import PositionSide
+
+from core.position import PositionSide
 from core.timeframe import Timeframe
 
 

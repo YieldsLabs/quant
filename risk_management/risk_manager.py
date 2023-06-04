@@ -1,7 +1,7 @@
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCV
-from core.events.position import PositionSide
 from core.events.risk import RiskEvaluate, RiskExit, RiskType
+from core.position import PositionSide
 
 from .abstract_risk_manager import AbstractRiskManager
 from .stop_loss.strategy.break_even import BreakEvenStopLossStrategy

@@ -22,6 +22,6 @@ class TradingContext:
         self.risk_per_trade = risk_per_trade
         self.live_mode = live_mode
 
-        self.portfolio_manager = PortfolioManager(datasource, analytics, leverage, risk_per_trade)
+        self.portfolio_manager = PortfolioManager(datasource, self.leverage, self.risk_per_trade)
         self.risk_manager = RiskManager()
         self.backtest = Backtest(datasource)

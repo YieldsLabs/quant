@@ -4,7 +4,7 @@ import math
 from broker.abstract_broker import AbstractBroker
 from broker.margin_mode import MarginMode
 from broker.position_mode import PositionMode
-from core.events.position import PositionSide
+from core.position import PositionSide
 from datasource.retry import retry
 from ccxt.base.errors import RequestTimeout, NetworkError
 

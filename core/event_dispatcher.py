@@ -1,10 +1,9 @@
 import asyncio
-from collections import deque
 from functools import partial, wraps
 import inspect
 import os
 import random
-from typing import Any, AsyncIterable, Callable, Deque, Dict, List, Tuple, Type
+from typing import Any, AsyncIterable, Callable, Dict, Tuple, Type
 import numpy as np
 
 from .event_handler import EventHandler

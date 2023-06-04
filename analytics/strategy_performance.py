@@ -1,8 +1,13 @@
+import asyncio
 from typing import List
 import numpy as np
-from .abstract_analytics import AbstractAnalytics
-from core.events.portfolio import PortfolioPerformance
+
+from core.event_dispatcher import register_handler
+from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceUpdated
+from core.events.position import PositionClosedUpdated
 from core.position import Position
+
+from .abstract_analytics import AbstractAnalytics
 
 
 class StrategyPerformance(AbstractAnalytics):
@@ -11,6 +16,13 @@ class StrategyPerformance(AbstractAnalytics):
         self.account_size = account_size
         self.risk_per_trade = risk_per_trade
         self.periods_per_year = periods_per_year
+
+    @register_handler(PositionClosedUpdated)
+    async def _on_position_closed(self, event: PositionClosedUpdated):
+        performance = await asyncio.to_thread(self.calculate, event.position)
+
+        await self.dispatcher.dispatch(
+            PortfolioPerformanceUpdated(strategy_id=event.strategy_id, performance=performance))
 
     def calculate(self, positions: List[Position]) -> PortfolioPerformance:
         initial_account_size = self.account_size

@@ -4,7 +4,7 @@ import pandas as pd
 
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
-from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceEvent
+from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceUpdated
 
 
 class CSVSync(AbstractEventManager):
@@ -24,8 +24,8 @@ class CSVSync(AbstractEventManager):
 
         self.start_save_task()
 
-    @register_handler(PortfolioPerformanceEvent)
-    async def _on_portfolio_performance(self, event: PortfolioPerformanceEvent):
+    @register_handler(PortfolioPerformanceUpdated)
+    async def _on_portfolio_performance(self, event: PortfolioPerformanceUpdated):
         async with self.lock:
             self.perf_event[event.strategy_id] = self._event_to_dict(event)
 
