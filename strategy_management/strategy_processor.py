@@ -29,7 +29,7 @@ class StrategyProcessor(AbstractEventManager):
 
         await self.dispatch_signals(signals, event)
 
-    def calculate_signals(self, events: List[OHLCV], entry: float) -> Tuple[bool, bool, bool, bool, float, float]:
+    def calculate_signals(self, events: List[OHLCV], entry: float) -> SignalResult:
         df_events = self._events_to_dataframe(events)
 
         return SignalResult(
