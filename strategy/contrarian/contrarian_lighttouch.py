@@ -1,6 +1,6 @@
 from risk_management.stop_loss.finders.atr_stop_loss_finder import ATRStopLossFinder
 from strategy.base_strategy import BaseStrategy
-from ta.base.ma import MovingAverage
+from ta.overlap.sma import SimpleMA
 from ta.volatility.bbands import BollingerBands
 from ta.volume.vo import VolumeOscillator
 
@@ -12,17 +12,17 @@ class ContrarianLightTouch(BaseStrategy):
         indicators = [
             (BollingerBands(sma_period, stdev_multi), ('upper_band', 'middle_band', 'lower_band')),
             (VolumeOscillator(), ('VO')),
+            (SimpleMA(slow_sma_period), ('sma'))
         ]
         super().__init__(
             indicators,
             ATRStopLossFinder(atr_multi=atr_multi),
             risk_reward_ratio=risk_reward_ratio
         )
-        self.ma = MovingAverage(slow_sma_period)
 
     def _generate_buy_entry(self, data):
         close = data['close']
-        ma = self.ma.sma(close)
+        ma = data['sma']
         vo = data['VO']
         low = data['low']
         lower_band = data['lower_band']
@@ -33,7 +33,7 @@ class ContrarianLightTouch(BaseStrategy):
 
     def _generate_sell_entry(self, data):
         close = data['close']
-        ma = self.ma.sma(close)
+        ma = data['sma']
         vo = data['VO']
         high = data['high']
         upper_band = data['upper_band']
