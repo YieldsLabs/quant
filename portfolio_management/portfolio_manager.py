@@ -1,6 +1,6 @@
 from typing import Type, Union
 
-from core.event_dispatcher import register_handler
+from core.event_decorators import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, PositionClosedUpdated, PositionReadyToClose, ShortPositionOpened
 from core.events.risk import RiskEvaluate, RiskExit

@@ -1,7 +1,7 @@
 import asyncio
 from typing import List
 
-from core.event_dispatcher import register_handler
+from core.event_decorators import register_handler
 from core.events.portfolio import PortfolioPerformanceUpdated
 from labels.parse_label import parse_meta_label
 

@@ -2,7 +2,7 @@ import asyncio
 from typing import List, Type
 
 from core.abstract_event_manager import AbstractEventManager
-from core.event_dispatcher import register_handler
+from core.event_decorators import register_handler
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from strategy.abstract_strategy import AbstractStrategy
 

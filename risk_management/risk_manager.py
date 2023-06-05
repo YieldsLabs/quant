@@ -1,4 +1,4 @@
-from core.event_dispatcher import register_handler
+from core.event_decorators import register_handler
 from core.events.ohlcv import OHLCV
 from core.events.risk import RiskEvaluate, RiskExit, RiskType
 from core.position import PositionSide

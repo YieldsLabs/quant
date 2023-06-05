@@ -2,7 +2,7 @@ import asyncio
 from typing import List
 import numpy as np
 
-from core.event_dispatcher import register_handler
+from core.event_decorators import register_handler
 from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceUpdated
 from core.events.position import PositionClosedUpdated
 from core.position import Position

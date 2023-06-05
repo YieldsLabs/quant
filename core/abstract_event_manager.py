@@ -1,6 +1,6 @@
 from abc import ABC
 
-from .event_dispatcher import eda
+from .event_decorators import eda
 
 
 @eda

@@ -2,7 +2,7 @@ import asyncio
 import time
 
 from core.abstract_event_manager import AbstractEventManager
-from core.event_dispatcher import register_handler
+from core.event_decorators import register_handler
 from core.events.ohlcv import OHLCVEvent
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed, OrderFilled, PositionClosedUpdated, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
