@@ -3,14 +3,14 @@ from typing import List, Optional
 
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
-from ..position import OrderSide, Position
+from ..position import Order, Position
 
 
 @dataclass(frozen=True)
 class OrderFilled(Event):
     symbol: str
     timeframe: Timeframe
-    order: OrderSide
+    order: Order
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 

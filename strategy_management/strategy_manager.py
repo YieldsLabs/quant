@@ -4,10 +4,10 @@ from typing import List, Type
 from core.abstract_event_manager import AbstractEventManager
 from core.event_dispatcher import register_handler
 from core.events.ohlcv import OHLCV, OHLCVEvent
+from strategy.abstract_strategy import AbstractStrategy
 
 from .strategy_storage import StrategyStorage
 from .strategy_processor import StrategyProcessor
-from .abstract_strategy import AbstractStrategy
 
 
 class StrategyManager(AbstractEventManager):

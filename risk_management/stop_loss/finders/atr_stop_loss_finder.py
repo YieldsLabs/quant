@@ -1,7 +1,9 @@
 import numpy as np
-from risk_management.stop_loss.finders.abstract_stop_loss_finder import AbstractStopLoss
-from risk_management.stop_loss.finders.simple_stop_loss_finder import SimpleStopLossFinder
+
 from ta.volatility.atr import AverageTrueRange
+
+from .abstract_stop_loss_finder import AbstractStopLoss
+from .simple_stop_loss_finder import SimpleStopLossFinder
 
 
 class ATRStopLossFinder(AbstractStopLoss):

@@ -6,7 +6,8 @@ from broker.abstract_broker import AbstractBroker
 from core.event_dispatcher import register_handler
 from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, PositionReadyToClose, OrderFilled
 from core.position import Order, OrderSide
-from trader.abstract_trader import AbstractTrader
+
+from .abstract_trader import AbstractTrader
 
 
 TradeEvent = Union[LongPositionOpened, ShortPositionOpened]

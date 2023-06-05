@@ -76,7 +76,6 @@ class TradingSystem(AbstractSystem):
         await asyncio.sleep(0.1)
 
     async def _run_trading(self):
-        leverage = self.context.leverage
         top_strategies = await self.context.optimization.get_top_strategies()
 
         symbols = [strategy[0] for strategy in top_strategies]
@@ -84,16 +83,11 @@ class TradingSystem(AbstractSystem):
         strategies = [strategy[2] for strategy in top_strategies]
 
         for symbol in symbols:
-            self._set_broker_settings(symbol, leverage)
+            self.context.broker.set_settings(symbol, self.context.leverage, position_mode=PositionMode.ONE_WAY, margin_mode=MarginMode.ISOLATED)
 
         with create_trader(self.context.broker, live_trading=self.context.live_mode):
-            for strategy in strategies:
-                strategy_instances = [strategy_cls(*strategy[1]) for strategy_cls in self.strategies_classes if strategy_cls.NAME == strategy[0]]
-                with StrategyManager(strategy_instances):
-                    timeframes_symbols = list(product(symbols, timeframes))
-                    await self.context.ws_handler.subscribe(timeframes_symbols)
+            strategy_instances = [strategy_cls(*strategy[1]) for strategy in strategies for strategy_cls in self.strategies_classes if strategy_cls.NAME == strategy[0]]
 
-    def _set_broker_settings(self, symbol, leverage):
-        self.context.broker.set_leverage(symbol, leverage)
-        self.context.broker.set_position_mode(symbol, position_mode=PositionMode.ONE_WAY)
-        self.context.broker.set_margin_mode(symbol, margin_mode=MarginMode.ISOLATED, leverage=leverage)
+            with StrategyManager(strategy_instances):
+                timeframes_symbols = list(product(symbols, timeframes))
+                await self.context.ws_handler.subscribe(timeframes_symbols)

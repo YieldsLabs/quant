@@ -1,12 +1,11 @@
 import asyncio
-from typing import List, NamedTuple, Tuple, Type
+from typing import List, NamedTuple, Type
 import pandas as pd
 
 from core.abstract_event_manager import AbstractEventManager
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
-
-from .abstract_strategy import AbstractStrategy
+from strategy.abstract_strategy import AbstractStrategy
 
 
 class SignalResult(NamedTuple):

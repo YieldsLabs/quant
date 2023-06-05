@@ -1,6 +1,7 @@
 import asyncio
 import json
 import websockets
+
 from core.events.ohlcv import OHLCV, OHLCVEvent
 from core.timeframe import Timeframe
 

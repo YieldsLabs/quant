@@ -1,5 +1,5 @@
 from risk_management.stop_loss.finders.atr_stop_loss_finder import ATRStopLossFinder
-from strategy_management.base_strategy import BaseStrategy
+from strategy.base_strategy import BaseStrategy
 from ta.base.ma import MovingAverage
 from ta.momentum.rsi import RelativeStrengthIndex
 from ta.volume.vo import VolumeOscillator

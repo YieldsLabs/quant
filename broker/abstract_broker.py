@@ -1,20 +1,14 @@
 from abc import ABC, abstractmethod
-from broker.margin_mode import MarginMode
-from broker.position_mode import PositionMode
-from core.events.position import OrderSide
+
+from core.position import OrderSide
+
+from .margin_mode import MarginMode
+from .position_mode import PositionMode
 
 
 class AbstractBroker(ABC):
     @abstractmethod
-    def set_leverage(self, symbol: str, leverage=3):
-        pass
-
-    @abstractmethod
-    def set_position_mode(self, symbol: str, mode: PositionMode):
-        pass
-
-    @abstractmethod
-    def set_margin_mode(self, symbol: str, mode: MarginMode, leverage=1):
+    def set_settings(self, symbol: str, leverage: int, position_mode: PositionMode, margin_mode: MarginMode):
         pass
 
     @abstractmethod

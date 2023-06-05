@@ -1,12 +1,13 @@
 import ccxt
 import math
 
-from broker.abstract_broker import AbstractBroker
-from broker.margin_mode import MarginMode
-from broker.position_mode import PositionMode
 from core.position import PositionSide
 from datasource.retry import retry
 from ccxt.base.errors import RequestTimeout, NetworkError
+
+from .abstract_broker import AbstractBroker
+from .margin_mode import MarginMode
+from .position_mode import PositionMode
 
 
 class FuturesBybitBroker(AbstractBroker):
@@ -14,21 +15,11 @@ class FuturesBybitBroker(AbstractBroker):
         super().__init__()
         self.exchange = ccxt.bybit({'apiKey': api_key, 'secret': secret})
 
-    def set_leverage(self, symbol, leverage=3):
-        try:
-            self.exchange.set_leverage(leverage, symbol)
-        except Exception as e:
-            print(e)
-
-    def set_position_mode(self, symbol, position_mode=PositionMode.ONE_WAY):
+    def set_settings(self, symbol, leverage=1, position_mode=PositionMode.ONE_WAY, margin_mode=MarginMode.ISOLATED):
         is_hedged = position_mode != PositionMode.ONE_WAY
         try:
+            self.exchange.set_leverage(leverage, symbol)
             self.exchange.set_position_mode(is_hedged, symbol)
-        except Exception as e:
-            print(e)
-
-    def set_margin_mode(self, symbol, margin_mode=MarginMode.ISOLATED, leverage=1):
-        try:
             self.exchange.set_margin_mode(margin_mode.value, symbol, {'leverage': leverage})
         except Exception as e:
             print(e)

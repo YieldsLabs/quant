@@ -1,10 +1,11 @@
 from collections import defaultdict
 import asyncio
 from typing import List
+
 from core.events.ohlcv import OHLCV
 from core.timeframe import Timeframe
 
-from strategy_management.symbol_data import SymbolData
+from .symbol_data import SymbolData
 
 
 class StrategyStorage:
