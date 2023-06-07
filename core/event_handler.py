@@ -1,38 +1,44 @@
 import asyncio
 from collections import deque
 from functools import partial
-from typing import Deque, Dict, List, Tuple, Type
+from typing import Any, Callable, Deque, Dict, List, Tuple, Type, Union
 
 from .events.base_event import Event
+
+HandlerType = Union[partial, Callable[..., Any]]
 
 
 class EventHandler:
     def __init__(self):
-        self.event_handlers: Dict[Type[Event], List[partial]] = {}
-        self.dead_letter_queue: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
+        self._event_handlers: Dict[Type[Event], List[HandlerType]] = {}
+        self._dead_letter_queue: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
 
-    def register(self, event_class: Type[Event], handler: partial) -> None:
-        self.event_handlers.setdefault(event_class, []).append(handler)
+    def register(self, event_class: Type[Event], handler: HandlerType) -> None:
+        if event_class in self._event_handlers:
+            self._event_handlers[event_class].append(handler)
+        else:
+            self._event_handlers[event_class] = [handler]
 
-    def unregister(self, event_class: Type[Event], handler: partial) -> None:
-        if event_class in self.event_handlers and handler in self.event_handlers[event_class]:
-            self.event_handlers[event_class].remove(handler)
+    def unregister(self, event_class: Type[Event], handler: HandlerType) -> None:
+        if event_class in self._event_handlers:
+            try:
+                self._event_handlers[event_class].remove(handler)
+            except ValueError:
+                pass
 
     async def handle_event(self, event: Event, *args, **kwargs) -> None:
-        handlers = self.event_handlers.get(type(event), [])
+        if type(event) in self._event_handlers:
+            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in self._event_handlers[type(event)]]
+            await asyncio.gather(*tasks)
 
-        if not handlers:
-            return
-
-        tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in handlers]
-        await asyncio.gather(*tasks)
-
-    async def _call_handler(self, handler, event, *args, **kwargs):
+    async def _call_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         try:
-            if asyncio.iscoroutinefunction(handler):
-                await handler(event, *args, **kwargs)
-            else:
-                await asyncio.to_thread(handler, event, *args, **kwargs)
+            await self._execute_handler(handler, event, *args, **kwargs)
         except Exception as e:
-            print(e)
-            self.dead_letter_queue.append((event, e))
+            self._dead_letter_queue.append((event, e))
+
+    async def _execute_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
+        if asyncio.iscoroutinefunction(handler):
+            await handler(event, *args, **kwargs)
+        else:
+            await asyncio.to_thread(handler, event, *args, **kwargs)
