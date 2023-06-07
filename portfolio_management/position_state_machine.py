@@ -25,49 +25,46 @@ class PositionStateMachine:
     def __init__(self, portfolio_manager: Type[AbstractPortfolioManager]):
         self.state: Dict[str, PositionState] = {}
         self.state_lock = asyncio.Lock()
-        self._state_handlers: Dict[(PositionState, Type[PortfolioEvent]), HandlerFunction] = {
-            (PositionState.IDLE, LongGo): portfolio_manager.handle_open_position,
-            (PositionState.IDLE, ShortGo): portfolio_manager.handle_open_position,
-            (PositionState.OPENING, OrderFilled): portfolio_manager.handle_order_filled,
-            (PositionState.OPENED, OHLCVEvent): portfolio_manager.handle_market,
-            (PositionState.OPENED, LongExit): portfolio_manager.handle_exit,
-            (PositionState.OPENED, ShortExit): portfolio_manager.handle_exit,
-            (PositionState.OPENED, RiskExit): portfolio_manager.handle_exit,
-            (PositionState.CLOSING, PositionClosed): portfolio_manager.handle_closed_position,
-        }
 
-    def next_state(self, state: PositionState, event: PortfolioEvent) -> PositionState:
-        next_state_mapping = {
+        transitions = {
             PositionState.IDLE: {
-                LongGo: PositionState.OPENING,
-                ShortGo: PositionState.OPENING
+                LongGo: (PositionState.OPENING, portfolio_manager.handle_open_position),
+                ShortGo: (PositionState.OPENING, portfolio_manager.handle_open_position)
             },
             PositionState.OPENING: {
-                OrderFilled: PositionState.OPENED
+                OrderFilled: (PositionState.OPENED, portfolio_manager.handle_order_filled)
             },
             PositionState.OPENED: {
-                LongExit: PositionState.CLOSING,
-                ShortExit: PositionState.CLOSING,
-                RiskExit: PositionState.CLOSING,
-                OHLCVEvent: PositionState.OPENED
+                OHLCVEvent: (PositionState.OPENED, portfolio_manager.handle_market),
+                LongExit: (PositionState.CLOSING, portfolio_manager.handle_exit),
+                ShortExit: (PositionState.CLOSING, portfolio_manager.handle_exit),
+                RiskExit: (PositionState.CLOSING, portfolio_manager.handle_exit)
             },
             PositionState.CLOSING: {
-                PositionClosed: PositionState.IDLE
+                PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position)
             }
         }
 
-        return next_state_mapping[state].get(type(event), state)
+        self._state_handlers: Dict[(PositionState, Type[PortfolioEvent]), HandlerFunction] = {}
+
+        for state, event_dict in transitions.items():
+            for event, (next_state, handler) in event_dict.items():
+                self._state_handlers[(state, event)] = (next_state, handler)
+
+    def get_state(self, symbol: str) -> PositionState:
+        return self.state.get(symbol, PositionState.IDLE)
+
+    async def set_state(self, symbol: str, state: PositionState):
+        async with self.state_lock:
+            self.state[symbol] = state
 
     async def process_event(self, event: PortfolioEvent):
         symbol = event.symbol
+        state = self.get_state(symbol)
 
-        async with self.state_lock:
-            state = self.state.get(symbol, PositionState.IDLE)
-
-        handler = self._state_handlers.get((state, type(event)))
+        next_state, handler = self._state_handlers.get((state, type(event)), (state, None))
 
         if handler is None or not await handler(event):
             return
 
-        async with self.state_lock:
-            self.state[symbol] = self.next_state(state, event)
+        await self.set_state(symbol, next_state)
