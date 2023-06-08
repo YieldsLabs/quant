@@ -4,7 +4,7 @@ import logging
 
 from broker.abstract_broker import AbstractBroker
 from core.event_decorators import register_handler
-from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, PositionReadyToClose, OrderFilled
+from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, ClosePositionPrepared, OrderFilled
 from core.position import Order, OrderSide
 
 from .abstract_trader import AbstractTrader
@@ -27,8 +27,8 @@ class LiveTrader(AbstractTrader):
     async def _open_short_position(self, event: ShortPositionOpened):
         await self.trade(event)
 
-    @register_handler(PositionReadyToClose)
-    async def _on_close_position(self, event: PositionReadyToClose):
+    @register_handler(ClosePositionPrepared)
+    async def _on_close_position(self, event: ClosePositionPrepared):
         try:
             await asyncio.to_thread(self.broker.close_position, event.symbol)
 

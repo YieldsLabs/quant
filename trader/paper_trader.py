@@ -1,7 +1,7 @@
 from typing import Union
 
 from core.event_decorators import register_handler
-from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, PositionReadyToClose, OrderFilled
+from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, ClosePositionPrepared, OrderFilled
 from core.position import Order, OrderSide
 
 from .abstract_trader import AbstractTrader
@@ -23,8 +23,8 @@ class PaperTrader(AbstractTrader):
     async def _open_short_position(self, event: ShortPositionOpened):
         await self.trade(event)
 
-    @register_handler(PositionReadyToClose)
-    async def _on_close_position(self, event: PositionReadyToClose):
+    @register_handler(ClosePositionPrepared)
+    async def _on_close_position(self, event: ClosePositionPrepared):
         await self.dispatcher.dispatch(
             PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
 

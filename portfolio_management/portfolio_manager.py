@@ -2,8 +2,8 @@ from typing import Type, Union
 
 from core.event_decorators import register_handler
 from core.events.ohlcv import NewMarketDataReceived
-from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, PositionClosedUpdated, PositionReadyToClose, ShortPositionOpened
-from core.events.risk import RiskEvaluate, RiskThresholdBreached
+from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, LongPositionOpened, PositionClosedUpdated, ClosePositionPrepared, ShortPositionOpened
+from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.position import Position, PositionSide
 from datasource.abstract_datasource import AbstractDatasource
@@ -100,7 +100,7 @@ class PortfolioManager(AbstractPortfolioManager):
             return False
 
         await self.dispatcher.dispatch(
-            RiskEvaluate(
+            ActivePositionOpened(
                 symbol=active_position.symbol,
                 timeframe=active_position.timeframe,
                 side=active_position.side,
@@ -123,7 +123,7 @@ class PortfolioManager(AbstractPortfolioManager):
             return False
 
         await self.dispatcher.dispatch(
-            PositionReadyToClose(
+            ClosePositionPrepared(
                 symbol=event.symbol,
                 timeframe=event.timeframe, exit_price=event.exit
             )

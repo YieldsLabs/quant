@@ -1,6 +1,7 @@
 from core.event_decorators import register_handler
 from core.events.ohlcv import OHLCV
-from core.events.risk import RiskEvaluate, RiskThresholdBreached, RiskType
+from core.events.position import ActivePositionOpened
+from core.events.risk import RiskThresholdBreached, RiskType
 from core.position import PositionSide
 
 from .abstract_risk_manager import AbstractRiskManager
@@ -14,8 +15,8 @@ class RiskManager(AbstractRiskManager):
         self.risk_type = risk_type
         self.break_even_strategy = BreakEvenStopLossStrategy()
 
-    @register_handler(RiskEvaluate)
-    async def _on_risk(self, event: RiskEvaluate):
+    @register_handler(ActivePositionOpened)
+    async def _on_risk(self, event: ActivePositionOpened):
         symbol, timeframe, position_side, position_size, entry_price, stop_loss_price, risk_reward_ratio, risk_per_trade, ohlcv, strategy = self._unpack_event(event)
         take_profit_price = self._calculate_take_profit_price(risk_reward_ratio, entry_price, stop_loss_price)
 
@@ -38,7 +39,7 @@ class RiskManager(AbstractRiskManager):
 
         await self.dispatcher.dispatch(RiskThresholdBreached(symbol=symbol, timeframe=timeframe, side=position_side, strategy=strategy, exit=exit_price))
 
-    def _unpack_event(self, event: RiskEvaluate):
+    def _unpack_event(self, event: ActivePositionOpened):
         return event.symbol, event.timeframe, event.side, event.size, event.entry, event.stop_loss, event.risk_reward_ratio, event.risk_per_trade, event.ohlcv, event.strategy
 
     def _should_exit(self, position_side: PositionSide, stop_loss_price: float | None, take_profit_price: float | None, ohlcv: OHLCV):

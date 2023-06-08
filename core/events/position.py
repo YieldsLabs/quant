@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from .ohlcv import OHLCV
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
-from ..position import Order, Position
+from ..position import Order, Position, PositionSide
 
 
 @dataclass(frozen=True)
@@ -35,10 +36,25 @@ class ShortPositionOpened(PositionEvent):
 
 
 @dataclass(frozen=True)
-class PositionReadyToClose(Event):
+class ClosePositionPrepared(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+
+
+@dataclass(frozen=True)
+class ActivePositionOpened(Event):
+    symbol: str
+    timeframe: Timeframe
+    side: PositionSide
+    size: float
+    entry: float
+    stop_loss: Optional[float]
+    risk_reward_ratio: float
+    risk_per_trade: float
+    ohlcv: OHLCV
+    strategy: str
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 
