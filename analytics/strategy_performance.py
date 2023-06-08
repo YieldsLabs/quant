@@ -4,7 +4,7 @@ import numpy as np
 
 from core.event_decorators import register_handler
 from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceUpdated
-from core.events.position import PositionClosedUpdated
+from core.events.position import ClosedPositionUpdated
 from core.position import Position
 
 from .abstract_analytics import AbstractAnalytics
@@ -17,8 +17,8 @@ class StrategyPerformance(AbstractAnalytics):
         self.risk_per_trade = risk_per_trade
         self.periods_per_year = periods_per_year
 
-    @register_handler(PositionClosedUpdated)
-    async def _on_position_closed(self, event: PositionClosedUpdated):
+    @register_handler(ClosedPositionUpdated)
+    async def _on_position_closed(self, event: ClosedPositionUpdated):
         performance = await asyncio.to_thread(self.calculate, event.position)
 
         await self.dispatcher.dispatch(

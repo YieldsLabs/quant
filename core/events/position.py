@@ -67,7 +67,7 @@ class PositionClosed(Event):
 
 
 @dataclass(frozen=True)
-class PositionClosedUpdated(Event):
+class ClosedPositionUpdated(Event):
     strategy_id: str
     position: List[Position]
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))

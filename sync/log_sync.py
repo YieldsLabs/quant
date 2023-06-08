@@ -5,7 +5,7 @@ from core.abstract_event_manager import AbstractEventManager
 from core.event_decorators import register_handler
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.portfolio import PortfolioPerformanceUpdated
-from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, PositionClosedUpdated, ClosePositionPrepared, LongPositionOpened, ShortPositionOpened
+from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, ClosedPositionUpdated, ClosePositionPrepared, LongPositionOpened, ShortPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 
@@ -81,8 +81,8 @@ class LogSync(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(PositionClosedUpdated)
-    async def _on_closed_position_updated(self, event: PositionClosedUpdated):
+    @register_handler(ClosedPositionUpdated)
+    async def _on_closed_position_updated(self, event: ClosedPositionUpdated):
         print('----------------------------------------------------->')
         print(event)
 

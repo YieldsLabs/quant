@@ -2,7 +2,7 @@ from typing import Type, Union
 
 from core.event_decorators import register_handler
 from core.events.ohlcv import NewMarketDataReceived
-from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, LongPositionOpened, PositionClosedUpdated, ClosePositionPrepared, ShortPositionOpened
+from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, LongPositionOpened, ClosedPositionUpdated, ClosePositionPrepared, ShortPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.position import Position, PositionSide
@@ -170,7 +170,7 @@ class PortfolioManager(AbstractPortfolioManager):
         closed_positions = await self.position_storage.filter_closed_positions_by_strategy(position.strategy_id)
 
         await self.dispatcher.dispatch(
-            PositionClosedUpdated(strategy_id=position.strategy_id, position=closed_positions))
+            ClosedPositionUpdated(strategy_id=position.strategy_id, position=closed_positions))
 
     def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened]:
         if position.side == PositionSide.LONG:
