@@ -25,20 +25,20 @@ class StrategyExitEvent(Event):
 
 
 @dataclass(frozen=True)
-class LongGo(StrategyEntryEvent):
+class GoLongSignalReceived(StrategyEntryEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ShortGo(StrategyEntryEvent):
+class GoShortSignalReceived(StrategyEntryEvent):
     pass
 
 
 @dataclass(frozen=True)
-class LongExit(StrategyExitEvent):
+class ExitLongSignalReceived(StrategyExitEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ShortExit(StrategyExitEvent):
+class ExitShortSignalReceived(StrategyExitEvent):
     pass

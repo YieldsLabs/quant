@@ -2,7 +2,7 @@ import asyncio
 import json
 import websockets
 
-from core.events.ohlcv import OHLCV, OHLCVEvent
+from core.events.ohlcv import OHLCV, NewMarketDataReceived
 from core.timeframe import Timeframe
 
 from .retry import retry
@@ -106,7 +106,7 @@ class BybitWSHandler(AbstractWS):
             volume=float(data["volume"]),
         )
 
-        return OHLCVEvent(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
+        return NewMarketDataReceived(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
 
     async def subscribe(self, timeframes_and_symbols):
         if self.ws is None:

@@ -2,10 +2,10 @@ import asyncio
 from enum import Enum, auto
 from typing import Callable, Dict, Type, Union
 
-from core.events.ohlcv import OHLCVEvent
+from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import OrderFilled, PositionClosed
-from core.events.risk import RiskExit
-from core.events.strategy import LongExit, LongGo, ShortExit, ShortGo
+from core.events.risk import RiskThresholdBreached
+from core.events.strategy import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
 
 from .abstract_portfolio_manager import AbstractPortfolioManager
 
@@ -17,7 +17,7 @@ class PositionState(Enum):
     CLOSING = auto()
 
 
-PortfolioEvent = Union[LongGo, ShortGo, LongExit, ShortExit, RiskExit, OrderFilled, PositionClosed, OHLCVEvent]
+PortfolioEvent = Union[GoLongSignalReceived, GoShortSignalReceived, ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached, OrderFilled, PositionClosed, NewMarketDataReceived]
 HandlerFunction = Callable[[PortfolioEvent], bool]
 
 
@@ -28,17 +28,17 @@ class PositionStateMachine:
 
         transitions = {
             PositionState.IDLE: {
-                LongGo: (PositionState.OPENING, portfolio_manager.handle_open_position),
-                ShortGo: (PositionState.OPENING, portfolio_manager.handle_open_position)
+                GoLongSignalReceived: (PositionState.OPENING, portfolio_manager.handle_open_position),
+                GoShortSignalReceived: (PositionState.OPENING, portfolio_manager.handle_open_position)
             },
             PositionState.OPENING: {
                 OrderFilled: (PositionState.OPENED, portfolio_manager.handle_order_filled)
             },
             PositionState.OPENED: {
-                OHLCVEvent: (PositionState.OPENED, portfolio_manager.handle_market),
-                LongExit: (PositionState.CLOSING, portfolio_manager.handle_exit),
-                ShortExit: (PositionState.CLOSING, portfolio_manager.handle_exit),
-                RiskExit: (PositionState.CLOSING, portfolio_manager.handle_exit)
+                NewMarketDataReceived: (PositionState.OPENED, portfolio_manager.handle_market),
+                ExitLongSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
+                ExitShortSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
+                RiskThresholdBreached: (PositionState.CLOSING, portfolio_manager.handle_exit)
             },
             PositionState.CLOSING: {
                 PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position)

@@ -28,7 +28,7 @@ class RiskEvaluate(Event):
 
 
 @dataclass(frozen=True)
-class RiskExit(Event):
+class RiskThresholdBreached(Event):
     symbol: str
     timeframe: Timeframe
     strategy: str

@@ -3,7 +3,7 @@ from typing import List, Type
 
 from core.abstract_event_manager import AbstractEventManager
 from core.event_decorators import register_handler
-from core.events.ohlcv import OHLCV, OHLCVEvent
+from core.events.ohlcv import OHLCV, NewMarketDataReceived
 from strategy.abstract_strategy import AbstractStrategy
 
 from .strategy_storage import StrategyStorage
@@ -20,8 +20,8 @@ class StrategyManager(AbstractEventManager):
             window_size=max(getattr(strategy, "lookback", self.MIN_LOOKBACK) for strategy in strategies)
         )
 
-    @register_handler(OHLCVEvent)
-    async def _on_ohlcv(self, event: OHLCVEvent) -> None:
+    @register_handler(NewMarketDataReceived)
+    async def _on_ohlcv(self, event: NewMarketDataReceived) -> None:
         await self.storage.append(event.symbol, event.timeframe, event.ohlcv)
 
         if not await self.storage.can_process(event.symbol, event.timeframe):
@@ -31,5 +31,5 @@ class StrategyManager(AbstractEventManager):
 
         await self.process_strategies(strategy_events, event)
 
-    async def process_strategies(self, window_events: List[OHLCV], event: OHLCVEvent) -> None:
+    async def process_strategies(self, window_events: List[OHLCV], event: NewMarketDataReceived) -> None:
         await asyncio.gather(*(strategy.process(window_events, event) for strategy in self.strategies))

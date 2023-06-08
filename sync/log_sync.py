@@ -3,11 +3,11 @@ import time
 
 from core.abstract_event_manager import AbstractEventManager
 from core.event_decorators import register_handler
-from core.events.ohlcv import OHLCVEvent
+from core.events.ohlcv import NewMarketDataReceived
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed, OrderFilled, PositionClosedUpdated, PositionReadyToClose, LongPositionOpened, ShortPositionOpened
-from core.events.risk import RiskEvaluate, RiskExit
-from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
+from core.events.risk import RiskEvaluate, RiskThresholdBreached
+from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 
 
 class LogSync(AbstractEventManager):
@@ -17,8 +17,8 @@ class LogSync(AbstractEventManager):
         self.start_time = time.monotonic()
         self.lock = asyncio.Lock()
 
-    @register_handler(OHLCVEvent)
-    async def _on_market(self, event: OHLCVEvent):
+    @register_handler(NewMarketDataReceived)
+    async def _on_market(self, event: NewMarketDataReceived):
         async with self.lock:
             self.num_events += 1
         elapsed_time = time.monotonic() - self.start_time
@@ -26,13 +26,13 @@ class LogSync(AbstractEventManager):
         print(event)
         print(f"Processed {self.num_events} events in {elapsed_time:.2f} seconds, throughput = {self.num_events/elapsed_time:.2f} events/s.")
 
-    @register_handler(LongGo)
-    async def _on_go_long(self, event: LongGo):
+    @register_handler(GoLongSignalReceived)
+    async def _on_go_long(self, event: GoLongSignalReceived):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(ShortGo)
-    async def _on_go_short(self, event: ShortGo):
+    @register_handler(GoShortSignalReceived)
+    async def _on_go_short(self, event: GoShortSignalReceived):
         print('----------------------------------------------------->')
         print(event)
 
@@ -56,18 +56,18 @@ class LogSync(AbstractEventManager):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(RiskExit)
-    async def _on_exit_risk(self, event: RiskExit):
+    @register_handler(RiskThresholdBreached)
+    async def _on_exit_risk(self, event: RiskThresholdBreached):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(LongExit)
-    async def _on_exit_long(self, event: LongExit):
+    @register_handler(ExitLongSignalReceived)
+    async def _on_exit_long(self, event: ExitLongSignalReceived):
         print('----------------------------------------------------->')
         print(event)
 
-    @register_handler(ShortExit)
-    async def _on_exit_short(self, event: ShortExit):
+    @register_handler(ExitShortSignalReceived)
+    async def _on_exit_short(self, event: ExitShortSignalReceived):
         print('----------------------------------------------------->')
         print(event)
 

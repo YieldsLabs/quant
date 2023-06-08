@@ -1,10 +1,10 @@
 from typing import Type, Union
 
 from core.event_decorators import register_handler
-from core.events.ohlcv import OHLCVEvent
+from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, PositionClosedUpdated, PositionReadyToClose, ShortPositionOpened
-from core.events.risk import RiskEvaluate, RiskExit
-from core.events.strategy import LongExit, ShortExit, LongGo, ShortGo
+from core.events.risk import RiskEvaluate, RiskThresholdBreached
+from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.position import Position, PositionSide
 from datasource.abstract_datasource import AbstractDatasource
 
@@ -24,28 +24,28 @@ class PortfolioManager(AbstractPortfolioManager):
         self.position_storage = PositionStorage()
         self.state_machine = PositionStateMachine(self)
 
-    @register_handler(OHLCVEvent)
-    async def _on_market(self, event: OHLCVEvent):
+    @register_handler(NewMarketDataReceived)
+    async def _on_market(self, event: NewMarketDataReceived):
         await self.state_machine.process_event(event)
 
-    @register_handler(LongGo)
-    async def _on_go_long(self, event: LongGo):
+    @register_handler(GoLongSignalReceived)
+    async def _on_go_long(self, event: GoLongSignalReceived):
         await self.state_machine.process_event(event)
 
-    @register_handler(ShortGo)
-    async def _on_go_short(self, event: ShortGo):
+    @register_handler(GoShortSignalReceived)
+    async def _on_go_short(self, event: GoShortSignalReceived):
         await self.state_machine.process_event(event)
 
-    @register_handler(LongExit)
-    async def _on_exit_long(self, event: LongExit):
+    @register_handler(ExitLongSignalReceived)
+    async def _on_exit_long(self, event: ExitLongSignalReceived):
         await self.state_machine.process_event(event)
 
-    @register_handler(ShortExit)
-    async def _on_exit_short(self, event: ShortExit):
+    @register_handler(ExitShortSignalReceived)
+    async def _on_exit_short(self, event: ExitShortSignalReceived):
         await self.state_machine.process_event(event)
 
-    @register_handler(RiskExit)
-    async def _on_exit_risk(self, event: RiskExit):
+    @register_handler(RiskThresholdBreached)
+    async def _on_exit_risk(self, event: RiskThresholdBreached):
         await self.state_machine.process_event(event)
 
     @register_handler(OrderFilled)
@@ -56,7 +56,7 @@ class PortfolioManager(AbstractPortfolioManager):
     async def _on_closed_position(self, event: PositionClosed):
         await self.state_machine.process_event(event)
 
-    async def handle_open_position(self, event: Union[LongGo, ShortGo]) -> bool:
+    async def handle_open_position(self, event: Union[GoLongSignalReceived, GoShortSignalReceived]) -> bool:
         active_position = await self.position_storage.get_active_position(event.symbol)
 
         if active_position is not None:
@@ -93,7 +93,7 @@ class PortfolioManager(AbstractPortfolioManager):
 
         return True
 
-    async def handle_market(self, event: OHLCVEvent) -> bool:
+    async def handle_market(self, event: NewMarketDataReceived) -> bool:
         active_position = await self.position_storage.get_active_position(event.symbol)
 
         if active_position is None:
@@ -116,7 +116,7 @@ class PortfolioManager(AbstractPortfolioManager):
 
         return True
 
-    async def handle_exit(self, event: Union[LongExit, ShortExit, RiskExit]) -> bool:
+    async def handle_exit(self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached]) -> bool:
         active_position = await self.position_storage.get_active_position(event.symbol)
 
         if active_position is None or (event.strategy != active_position.strategy) or not self.can_close_position(active_position.side, active_position.entry_price, event):
@@ -135,7 +135,7 @@ class PortfolioManager(AbstractPortfolioManager):
         await self.position_storage.add_closed_position(position, exit_price)
         await self.position_storage.remove_active_position(position.symbol)
 
-    async def create_position(self, event: Union[LongGo, ShortGo]) -> Position:
+    async def create_position(self, event: Union[GoLongSignalReceived, GoShortSignalReceived]) -> Position:
         account_size = await self.datasource.account_size()
         trading_fee, min_position_size, position_precision, price_precision = await self.datasource.fee_and_precisions(event.symbol)
 
@@ -153,7 +153,7 @@ class PortfolioManager(AbstractPortfolioManager):
             self.risk_per_trade
         )
 
-        position_side = PositionSide.LONG if isinstance(event, LongGo) else PositionSide.SHORT
+        position_side = PositionSide.LONG if isinstance(event, GoLongSignalReceived) else PositionSide.SHORT
 
         return Position(
             symbol=event.symbol,
@@ -190,16 +190,16 @@ class PortfolioManager(AbstractPortfolioManager):
                 stop_loss=position.stop_loss_price
             )
 
-    def can_close_position(self, position_side: PositionSide, entry: float, event: Union[LongExit, ShortExit, RiskExit], profit_threshold: float = 0.05) -> bool:
-        if isinstance(event, LongExit) and (position_side == PositionSide.LONG):
+    def can_close_position(self, position_side: PositionSide, entry: float, event: Union[ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached], profit_threshold: float = 0.05) -> bool:
+        if isinstance(event, ExitLongSignalReceived) and (position_side == PositionSide.LONG):
             if (entry < event.exit) and abs(entry - event.exit) >= profit_threshold:
                 return True
 
-        if isinstance(event, ShortExit) and (position_side == PositionSide.SHORT):
+        if isinstance(event, ExitShortSignalReceived) and (position_side == PositionSide.SHORT):
             if (entry > event.exit) and abs(entry - event.exit) >= profit_threshold:
                 return True
 
-        if isinstance(event, RiskExit) and (position_side == event.side):
+        if isinstance(event, RiskThresholdBreached) and (position_side == event.side):
             return True
 
         return False

@@ -4,7 +4,7 @@ import random
 from typing import List, Type
 
 from core.abstract_event_manager import AbstractEventManager
-from core.events.ohlcv import OHLCV, OHLCVEvent
+from core.events.ohlcv import OHLCV, NewMarketDataReceived
 from core.events.position import PositionReadyToClose
 from core.timeframe import Timeframe
 from datasource.abstract_datasource import AbstractDatasource
@@ -49,4 +49,4 @@ class Backtest(AbstractEventManager):
     async def _process_historical_data(self, symbol: str, timeframe: Timeframe, data):
         timestamp, open, high, low, close, volume = data
         ohlcv = OHLCV(timestamp, float(open), float(high), float(low), float(close), float(volume))
-        await self.dispatcher.dispatch(OHLCVEvent(symbol, timeframe, ohlcv))
+        await self.dispatcher.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv))

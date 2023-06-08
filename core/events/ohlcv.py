@@ -18,7 +18,7 @@ class OHLCV:
 
 
 @dataclass(frozen=True)
-class OHLCVEvent(Event):
+class NewMarketDataReceived(Event):
     symbol: str
     timeframe: Timeframe
     ohlcv: OHLCV

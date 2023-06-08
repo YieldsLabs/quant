@@ -1,6 +1,6 @@
 from core.event_decorators import register_handler
 from core.events.ohlcv import OHLCV
-from core.events.risk import RiskEvaluate, RiskExit, RiskType
+from core.events.risk import RiskEvaluate, RiskThresholdBreached, RiskType
 from core.position import PositionSide
 
 from .abstract_risk_manager import AbstractRiskManager
@@ -36,7 +36,7 @@ class RiskManager(AbstractRiskManager):
 
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
 
-        await self.dispatcher.dispatch(RiskExit(symbol=symbol, timeframe=timeframe, side=position_side, strategy=strategy, exit=exit_price))
+        await self.dispatcher.dispatch(RiskThresholdBreached(symbol=symbol, timeframe=timeframe, side=position_side, strategy=strategy, exit=exit_price))
 
     def _unpack_event(self, event: RiskEvaluate):
         return event.symbol, event.timeframe, event.side, event.size, event.entry, event.stop_loss, event.risk_reward_ratio, event.risk_per_trade, event.ohlcv, event.strategy
