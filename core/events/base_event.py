@@ -8,6 +8,7 @@ class EventMeta:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
     priority: int = field(default_factory=lambda: 1)
+    version: int = field(default_factory=lambda: 1)
 
 
 @dataclass(frozen=True)
