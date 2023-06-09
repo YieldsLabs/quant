@@ -27,9 +27,10 @@ class EventHandler:
                 pass
 
     async def handle_event(self, event: Event, *args, **kwargs) -> None:
-        if type(event) in self._event_handlers:
-            tasks = [self._call_handler(handler, event, *args, **kwargs) for handler in self._event_handlers[type(event)]]
-            await asyncio.gather(*tasks)
+        event_type = type(event)
+
+        if event_type in self._event_handlers:
+            await asyncio.gather(*[self._call_handler(handler, event, *args, **kwargs) for handler in self._event_handlers[event_type]])
 
     async def _call_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         try:
