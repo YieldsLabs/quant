@@ -1,6 +1,3 @@
-import asyncio
-import time
-
 from core.abstract_event_manager import AbstractEventManager
 from core.event_decorators import register_handler
 from core.events.ohlcv import NewMarketDataReceived
@@ -13,18 +10,11 @@ from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived
 class LogSync(AbstractEventManager):
     def __init__(self):
         super().__init__()
-        self.num_events = 0
-        self.start_time = time.monotonic()
-        self.lock = asyncio.Lock()
 
     @register_handler(NewMarketDataReceived)
     async def _on_market(self, event: NewMarketDataReceived):
-        async with self.lock:
-            self.num_events += 1
-        elapsed_time = time.monotonic() - self.start_time
         print('----------------------------------------------------->')
         print(event)
-        print(f"Processed {self.num_events} events in {elapsed_time:.2f} seconds, throughput = {self.num_events/elapsed_time:.2f} events/s.")
 
     @register_handler(GoLongSignalReceived)
     async def _on_go_long(self, event: GoLongSignalReceived):
