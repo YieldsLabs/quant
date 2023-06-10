@@ -2,7 +2,7 @@ import asyncio
 from typing import Any, AsyncIterable, Dict, Tuple
 
 from .event_handler import EventHandler
-from .events.base_event import Event, EventEnded
+from .events.base_event import Event
 
 
 class EventWorker:
@@ -20,12 +20,12 @@ class EventWorker:
         while not self.cancel_event.is_set():
             event, args, kwargs = await self.queue.get()
 
-            if isinstance(event, EventEnded):
-                break
-
             yield event, args, kwargs
 
             self.queue.task_done()
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self.queue.put((event, args, kwargs))
+
+    async def wait(self) -> None:
+        await self.queue.join()
