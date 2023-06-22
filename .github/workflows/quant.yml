@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Set up Rust
-        uses: actions/setup-rust@v1
+        uses: rust-lang/setup-rust@v1
 
       - name: Check out code
         uses: actions/checkout@v2
