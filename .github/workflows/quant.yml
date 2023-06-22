@@ -1,0 +1,20 @@
+name: QUANT CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Test ta_lib
+        run: cargo test --manifest-path=ta_lib/Cargo.toml
