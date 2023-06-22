@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Rust
-        uses: rust-lang/setup-rust@v1
-
       - name: Check out code
         uses: actions/checkout@v2
 
