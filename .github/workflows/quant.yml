@@ -13,5 +13,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Test ta_lib
-        run: cargo test --manifest-path=ta_lib/Cargo.toml
+      - name: Test
+        run: make test
+
+      - name: Check
+        run: make check

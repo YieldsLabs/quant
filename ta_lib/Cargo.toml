@@ -1,5 +1,7 @@
 [workspace]
 members = [
 "overlap",
-"momentum"
+"momentum",
+"price",
+"statistics"
 ]
