@@ -8,11 +8,12 @@ pub fn vama(
 ) -> Vec<Option<f64>> {
     let short_std = std_dev(close, short_volatility);
     let long_std = std_dev(close, long_volatility);
+    let len = close.len();
 
-    let mut alpha = vec![None; close.len()];
-    let mut vama = vec![None; close.len()];
+    let mut alpha = vec![None; len];
+    let mut vama = vec![None; len];
 
-    for i in 0..close.len() {
+    for i in 0..len {
         if let (Some(ss), Some(ls)) = (short_std[i], long_std[i]) {
             alpha[i] = Some((ss / ls) * alpha_factor);
         }
