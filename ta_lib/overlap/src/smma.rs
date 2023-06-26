@@ -1,16 +1,18 @@
 pub fn smma(data: &[f64], period: usize) -> Vec<Option<f64>> {
-    if data.len() < period {
-        return vec![None; data.len()];
+    let len = data.len();
+
+    if len < period {
+        return vec![None; len];
     }
 
     let alpha = 1.0 / period as f64;
 
-    let mut smma = vec![None; data.len()];
-
+    let mut smma = vec![None; len];
     let mut smma_current = data[0];
 
-    for i in 1..data.len() {
+    for i in 1..len {
         smma_current = (data[i] - smma_current) * alpha + smma_current;
+
         if i >= period - 1 {
             smma[i] = Some(smma_current);
         }

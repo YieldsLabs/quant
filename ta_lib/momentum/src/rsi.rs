@@ -1,12 +1,14 @@
 use overlap::smma::smma;
 
 pub fn rsi(data: &[f64], period: usize) -> Vec<Option<f64>> {
-    if data.len() < period {
-        return vec![None; data.len()];
+    let len = data.len();
+
+    if len < period {
+        return vec![None; len];
     }
 
-    let mut gains = vec![0.0; data.len()];
-    let mut losses = vec![0.0; data.len()];
+    let mut gains = vec![0.0; len];
+    let mut losses = vec![0.0; len];
 
     for i in 1..data.len() {
         let change = data[i] - data[i - 1];

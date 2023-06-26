@@ -1,8 +1,14 @@
 pub fn sma(data: &[f64], period: usize) -> Vec<Option<f64>> {
-    let mut sma = vec![None; data.len()];
+    let len = data.len();
+
+    if len < period {
+        return vec![None; len];
+    }
+
+    let mut sma = vec![None; len];
     let mut sum = 0.0;
 
-    for i in 0..data.len() {
+    for i in 0..len {
         sum += data[i];
 
         if i >= period {

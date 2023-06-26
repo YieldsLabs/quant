@@ -1,16 +1,18 @@
 pub fn ema(data: &[f64], period: usize) -> Vec<Option<f64>> {
-    if data.len() < period {
-        return vec![None; data.len()];
+    let len = data.len();
+
+    if len < period {
+        return vec![None; len];
     }
 
     let alpha = 2.0 / (period as f64 + 1.0);
 
-    let mut ema = vec![None; data.len()];
-
+    let mut ema = vec![None; len];
     let mut ema_current = data[0];
 
-    for i in 1..data.len() {
+    for i in 1..len {
         ema_current = (data[i] - ema_current) * alpha + ema_current;
+
         if i >= period - 1 {
             ema[i] = Some(ema_current);
         }
