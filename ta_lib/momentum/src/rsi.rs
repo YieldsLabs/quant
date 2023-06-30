@@ -65,7 +65,6 @@ mod test {
         let data = vec![
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
         ];
-        let result = rsi(&data, 6);
         let epsilon = 0.001;
         let expected = vec![
             None,
@@ -78,6 +77,8 @@ mod test {
             Some(79.480508),
             Some(84.221979),
         ];
+
+        let result = rsi(&data, 6);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {

@@ -21,8 +21,8 @@ mod tests {
         let high = vec![1.0, 2.0, 3.0];
         let low = vec![0.5, 1.0, 1.5];
         let close = vec![0.75, 1.5, 2.25];
-
         let expected = vec![Some(0.75), Some(1.5), Some(2.25)];
+
         let result = typical_price(&high, &low, &close);
 
         assert_eq!(result, expected);

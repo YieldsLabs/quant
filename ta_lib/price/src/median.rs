@@ -19,8 +19,8 @@ mod tests {
     fn test_median_price() {
         let high = vec![1.0, 2.0, 3.0];
         let low = vec![0.5, 1.0, 2.0];
-
         let expected = vec![Some(0.75), Some(1.5), Some(2.5)];
+
         let result = median_price(&high, &low);
 
         assert_eq!(result, expected);

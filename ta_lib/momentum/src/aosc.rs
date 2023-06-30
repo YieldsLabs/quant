@@ -34,13 +34,11 @@ mod tests {
     fn test_aosc() {
         let high = &[3.0, 4.0, 5.0, 6.0, 7.0];
         let low = &[1.0, 2.0, 3.0, 4.0, 5.0];
-
         let short_period = 2;
         let long_period = 4;
+        let expected_result = vec![None, None, None, Some(1.0), Some(1.0)];
 
         let result = aosc(high, low, short_period, long_period);
-
-        let expected_result = vec![None, None, None, Some(1.0), Some(1.0)];
 
         assert_eq!(result, expected_result);
     }

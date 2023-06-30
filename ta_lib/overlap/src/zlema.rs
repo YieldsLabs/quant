@@ -36,7 +36,9 @@ mod tests {
         let close = vec![100.0, 105.0, 110.0, 115.0, 120.0];
         let period = 3;
         let expected = vec![None, None, Some(85.0), Some(102.5), Some(113.75)];
+
         let result = zlema(&close, period);
+
         assert_eq!(result, expected);
     }
 }

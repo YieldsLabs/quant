@@ -37,8 +37,8 @@ mod tests {
         let low = vec![1.0, 2.0, 3.0];
         let close = vec![1.5, 3.0, 4.5];
         let volume = vec![100.0, 200.0, 300.0];
-
         let expected = vec![Some(1.5), Some(2.5), Some(3.5)];
+
         let result = vwap(&high, &low, &close, &volume);
 
         assert_eq!(result, expected);

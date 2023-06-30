@@ -42,9 +42,10 @@ mod tests {
     #[test]
     fn test_smma() {
         let data = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let result = smma(&data, 3);
         let expected = vec![None, None, Some(1.888), Some(2.592), Some(3.395)];
         let epsilon = 0.001;
+
+        let result = smma(&data, 3);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {

@@ -49,10 +49,6 @@ mod tests {
         let slow_period = 5;
         let signal_period = 4;
         let epsilon = 0.001;
-
-        let (macd_line, signal_line, histogram) =
-            macd(&data, fast_period, slow_period, signal_period);
-
         let expected_macd_line = vec![
             None,
             None,
@@ -89,6 +85,9 @@ mod tests {
             Some(-0.482997),
             Some(-0.441714),
         ];
+
+        let (macd_line, signal_line, histogram) =
+            macd(&data, fast_period, slow_period, signal_period);
 
         for i in 0..data.len() {
             match (macd_line[i], expected_macd_line[i]) {
