@@ -22,7 +22,7 @@ pub fn rsi(data: &[f64], period: usize) -> Vec<Option<f64>> {
 
     let rsi = avg_gain
         .iter()
-        .zip(avg_loss.iter())
+        .zip(&avg_loss)
         .map(|(&gain, &loss)| match (gain, loss) {
             (Some(gain), Some(loss)) if gain + loss > 0.0 => {
                 let rs = gain / (loss + std::f64::EPSILON);

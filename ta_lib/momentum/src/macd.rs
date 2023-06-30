@@ -12,7 +12,7 @@ pub fn macd(
     let macd_line = ema_fast
         .iter()
         .zip(&ema_slow)
-        .map(|(fast, slow)| match (fast, slow) {
+        .map(|(&fast, &slow)| match (fast, slow) {
             (Some(fast), Some(slow)) => Some(fast - slow),
             _ => None,
         })
@@ -29,7 +29,7 @@ pub fn macd(
     let histogram = macd_line
         .iter()
         .zip(&signal_line)
-        .map(|(macd, signal)| match (macd, signal) {
+        .map(|(&macd, &signal)| match (macd, signal) {
             (Some(macd), Some(signal)) => Some(macd - signal),
             _ => None,
         })
