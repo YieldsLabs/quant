@@ -28,11 +28,20 @@ mod tests {
         let low = vec![1.0, 2.0, 3.0];
         let close = vec![1.5, 3.0, 4.5];
         let period = 3;
+        let epsilon = 0.001;
         let smothing = Some("SMMA");
         let expected = vec![None, None, Some(1.5555)];
 
         let result = atr(&high, &low, &close, period, smothing);
 
-        assert_eq!(result, expected);
+        for i in 0..high.len() {
+            match (result[i], expected[i]) {
+                (Some(a), Some(b)) => {
+                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
+                }
+                (None, None) => {}
+                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
+            }
+        }
     }
 }
