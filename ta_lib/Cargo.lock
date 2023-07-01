@@ -7,6 +7,7 @@ name = "momentum"
 version = "0.1.0"
 dependencies = [
  "overlap",
+ "price",
 ]
 
 [[package]]
@@ -18,5 +19,27 @@ name = "price"
 version = "0.1.0"
 
 [[package]]
-name = "statistics"
+name = "trend"
 version = "0.1.0"
+dependencies = [
+ "overlap",
+]
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+
+[[package]]
+name = "volatility"
+version = "0.1.0"
+dependencies = [
+ "overlap",
+ "utils",
+]
+
+[[package]]
+name = "volume"
+version = "0.1.0"
+dependencies = [
+ "price",
+]

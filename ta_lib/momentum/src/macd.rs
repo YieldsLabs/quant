@@ -1,13 +1,13 @@
 use overlap::ema::ema;
 
 pub fn macd(
-    data: &[f64],
+    source: &[f64],
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
 ) -> (Vec<Option<f64>>, Vec<Option<f64>>, Vec<Option<f64>>) {
-    let ema_fast = ema(data, fast_period);
-    let ema_slow = ema(data, slow_period);
+    let ema_fast = ema(source, fast_period);
+    let ema_slow = ema(source, slow_period);
 
     let macd_line = ema_fast
         .iter()
@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_macd() {
-        let data = vec![2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0];
+        let source = vec![2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0];
         let fast_period = 3;
         let slow_period = 5;
         let signal_period = 4;
@@ -87,9 +87,9 @@ mod tests {
         ];
 
         let (macd_line, signal_line, histogram) =
-            macd(&data, fast_period, slow_period, signal_period);
+            macd(&source, fast_period, slow_period, signal_period);
 
-        for i in 0..data.len() {
+        for i in 0..source.len() {
             match (macd_line[i], expected_macd_line[i]) {
                 (Some(a), Some(b)) => {
                     assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)

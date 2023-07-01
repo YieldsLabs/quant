@@ -1,14 +1,14 @@
-pub fn std_dev(data: &[f64], period: usize) -> Vec<Option<f64>> {
-    let mut std_dev = vec![None; data.len()];
+pub fn std_dev(source: &[f64], period: usize) -> Vec<Option<f64>> {
+    let mut std_dev = vec![None; source.len()];
     let mut sum = 0.0;
     let mut sum_sq = 0.0;
 
-    for (i, &value) in data.iter().enumerate() {
+    for (i, &value) in source.iter().enumerate() {
         sum += value;
         sum_sq += value * value;
 
         if i >= period {
-            let old_value = data[i - period];
+            let old_value = source[i - period];
             sum -= old_value;
             sum_sq -= old_value * old_value;
         }
@@ -29,12 +29,12 @@ mod test {
 
     #[test]
     fn test_std_dev() {
-        let data = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let period = 2;
         let epsilon = 0.001;
         let expected = vec![None, Some(0.5), Some(0.5), Some(0.5), Some(0.5)];
 
-        let result = std_dev(&data, period);
+        let result = std_dev(&source, period);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {

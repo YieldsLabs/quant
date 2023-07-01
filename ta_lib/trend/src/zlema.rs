@@ -1,7 +1,7 @@
-use crate::ema::ema;
+use overlap::ema::ema;
 
-pub fn zlema(close: &[f64], period: usize) -> Vec<Option<f64>> {
-    let len = close.len();
+pub fn zlema(source: &[f64], period: usize) -> Vec<Option<f64>> {
+    let len = source.len();
 
     let lag = (period - 1) / 2;
 
@@ -10,8 +10,8 @@ pub fn zlema(close: &[f64], period: usize) -> Vec<Option<f64>> {
 
     for i in 0..len {
         if i >= lag {
-            let price = close[i];
-            let prev_price = close[i - lag];
+            let price = source[i];
+            let prev_price = source[i - lag];
             ema_data[i] = price + (price - prev_price);
         }
     }
@@ -33,11 +33,11 @@ mod tests {
 
     #[test]
     fn test_zlema() {
-        let close = vec![100.0, 105.0, 110.0, 115.0, 120.0];
+        let source = vec![100.0, 105.0, 110.0, 115.0, 120.0];
         let period = 3;
         let expected = vec![None, None, Some(85.0), Some(102.5), Some(113.75)];
 
-        let result = zlema(&close, period);
+        let result = zlema(&source, period);
 
         assert_eq!(result, expected);
     }

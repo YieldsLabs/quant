@@ -1,5 +1,5 @@
-pub fn sma(data: &[f64], period: usize) -> Vec<Option<f64>> {
-    let len = data.len();
+pub fn sma(source: &[f64], period: usize) -> Vec<Option<f64>> {
+    let len = source.len();
 
     if len < period {
         return vec![None; len];
@@ -9,10 +9,10 @@ pub fn sma(data: &[f64], period: usize) -> Vec<Option<f64>> {
     let mut sum = 0.0;
 
     for i in 0..len {
-        sum += data[i];
+        sum += source[i];
 
         if i >= period {
-            sum -= data[i - period];
+            sum -= source[i - period];
             sma[i] = Some(sum / period as f64);
         } else if i + 1 == period {
             sma[i] = Some(sum / period as f64);
@@ -28,22 +28,22 @@ mod tests {
 
     #[test]
     fn test_sma_len() {
-        let data = vec![1.0, 2.0];
-        let result = sma(&data, 3);
-        assert_eq!(data.len(), result.len());
+        let source = vec![1.0, 2.0];
+        let result = sma(&source, 3);
+        assert_eq!(source.len(), result.len());
     }
 
     #[test]
     fn test_sma_edge_case() {
-        let data = vec![1.0, 2.0];
-        let result = sma(&data, 3);
+        let source = vec![1.0, 2.0];
+        let result = sma(&source, 3);
         assert_eq!(result, vec![None, None]);
     }
 
     #[test]
     fn test_sma() {
-        let data = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let result = sma(&data, 3);
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let result = sma(&source, 3);
         assert_eq!(result, vec![None, None, Some(2.0), Some(3.0), Some(4.0)]);
     }
 }

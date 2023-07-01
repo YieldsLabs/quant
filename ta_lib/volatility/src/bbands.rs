@@ -1,14 +1,14 @@
 use overlap::sma::sma;
-use statistics::stddev::std_dev;
+use utils::stddev::std_dev;
 
 pub fn bbands(
-    data: &[f64],
+    source: &[f64],
     period: usize,
     factor: usize,
 ) -> (Vec<Option<f64>>, Vec<Option<f64>>, Vec<Option<f64>>) {
-    let len = data.len();
-    let stddev = std_dev(data, period);
-    let middle_band = sma(data, period);
+    let len = source.len();
+    let stddev = std_dev(source, period);
+    let middle_band = sma(source, period);
 
     let mut upper_band = vec![None; len];
     let mut lower_band = vec![None; len];
@@ -29,7 +29,7 @@ mod tests {
 
     #[test]
     fn test_bbands() {
-        let data = vec![2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0];
+        let source = vec![2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0];
         let period = 3;
         let factor = 2;
         let epsilon = 0.001;
@@ -70,9 +70,9 @@ mod tests {
             Some(4.367007),
         ];
 
-        let (upper_band, middle_band, lower_band) = bbands(&data, period, factor);
+        let (upper_band, middle_band, lower_band) = bbands(&source, period, factor);
 
-        for i in 0..data.len() {
+        for i in 0..source.len() {
             match (upper_band[i], expected_upper_band[i]) {
                 (Some(a), Some(b)) => {
                     assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)

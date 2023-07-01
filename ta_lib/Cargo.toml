@@ -3,5 +3,8 @@ members = [
 "overlap",
 "momentum",
 "price",
-"statistics"
+"trend",
+"volatility",
+"volume",
+"utils"
 ]
