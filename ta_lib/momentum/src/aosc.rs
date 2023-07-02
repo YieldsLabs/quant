@@ -21,9 +21,9 @@ mod tests {
 
     #[test]
     fn test_aosc() {
-        let high = &[3.0, 4.0, 5.0, 6.0, 7.0];
-        let low = &[1.0, 2.0, 3.0, 4.0, 5.0];
-        let hl2 = median_price(high, low);
+        let high = vec![3.0, 4.0, 5.0, 6.0, 7.0];
+        let low = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let hl2 = median_price(&high, &low);
         let short_period = 2;
         let long_period = 4;
         let expected_result = vec![None, None, None, Some(1.0), Some(1.0)];
