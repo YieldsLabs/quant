@@ -12,10 +12,7 @@ pub fn true_range(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
             high[i] - low[i]
         } else {
             f64::max(
-                f64::max(
-                    high[i] - low[i],
-                    f64::abs(high[i] - close[i - 1])
-                ),
+                f64::max(high[i] - low[i], f64::abs(high[i] - close[i - 1])),
                 f64::abs(low[i] - close[i - 1]),
             )
         };
