@@ -1,3 +1,4 @@
+pub mod change;
 pub mod highest;
 pub mod lowest;
 pub mod nz;
