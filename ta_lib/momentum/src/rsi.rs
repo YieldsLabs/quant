@@ -1,4 +1,5 @@
 use overlap::smma::smma;
+use utils::change::change;
 
 pub fn rsi(source: &[f64], period: usize) -> Vec<Option<f64>> {
     let len = source.len();
@@ -7,15 +8,10 @@ pub fn rsi(source: &[f64], period: usize) -> Vec<Option<f64>> {
         return vec![None; len];
     }
 
-    let mut gains = vec![0.0; len];
-    let mut losses = vec![0.0; len];
+    let changes = change(source, 1);
 
-    for i in 1..len {
-        let change = source[i] - source[i - 1];
-
-        gains[i] = change.max(0.0);
-        losses[i] = (-change).max(0.0);
-    }
+    let gains = changes.iter().map(|&x| x.max(0.0)).collect::<Vec<_>>();
+    let losses = changes.iter().map(|&x| (-x).max(0.0)).collect::<Vec<_>>();
 
     let avg_gain = smma(&gains, period);
     let avg_loss = smma(&losses, period);
