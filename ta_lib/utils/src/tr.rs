@@ -1,10 +1,6 @@
 pub fn true_range(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
     let len = high.len();
 
-    if len != low.len() || len != close.len() {
-        return vec![0.0; len];
-    }
-
     let mut true_range = vec![0.0; len];
 
     for i in 1..len {
@@ -22,6 +18,7 @@ pub fn true_range(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
 
     true_range
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

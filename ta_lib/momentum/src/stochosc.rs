@@ -1,4 +1,4 @@
-use overlap::sma::sma;
+use core::series::Series;
 use utils::stoch::stoch;
 
 pub fn stochosc(
@@ -8,27 +8,12 @@ pub fn stochosc(
     period: usize,
     k_period: usize,
     d_period: usize,
-) -> (Vec<Option<f64>>, Vec<Option<f64>>) {
-    let len = high.len();
+) -> (Series<f64>, Series<f64>) {
+    let stoch = stoch(high, low, close, period);
 
-    if len < period {
-        return (vec![None; len], vec![None; len]);
-    }
+    let k = stoch.mean(k_period);
 
-    let stoch_values = stoch(high, low, close, period);
-
-    let stoch_len = stoch_values.len();
-
-    let k_sma = sma(
-        &stoch_values.iter().filter_map(|&x| x).collect::<Vec<_>>(),
-        k_period,
-    );
-    let mut k = vec![None; stoch_len - k_sma.len()];
-    k.extend(k_sma);
-
-    let d_sma = sma(&k.iter().filter_map(|&x| x).collect::<Vec<_>>(), d_period);
-    let mut d = vec![None; stoch_len - d_sma.len()];
-    d.extend(d_sma);
+    let d = k.mean(d_period);
 
     (k, d)
 }
@@ -45,13 +30,49 @@ mod tests {
         let period = 3;
         let k_period = 3;
         let d_period = 3;
+        let epsilon = 0.0001;
 
-        let expected_k = vec![None, None, None, None, Some(41.666666666666664)];
-        let expected_d = vec![None, None, None, None, None];
+        let expected_k = vec![
+            Some(50.0),
+            Some(62.5),
+            Some(58.3333),
+            Some(50.0),
+            Some(41.6666),
+        ];
+        let expected_d = vec![
+            Some(50.0),
+            Some(56.25),
+            Some(56.9444),
+            Some(56.9444),
+            Some(50.0),
+        ];
 
         let (result_k, result_d) = stochosc(&high, &low, &close, period, k_period, d_period);
 
-        assert_eq!(result_k, expected_k);
-        assert_eq!(result_d, expected_d);
+        for i in 0..result_k.len() {
+            match (result_k[i], expected_k[i]) {
+                (Some(a), Some(b)) => {
+                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
+                }
+                (None, None) => {}
+                _ => panic!(
+                    "at position {}: {:?} != {:?}",
+                    i, result_k[i], expected_k[i]
+                ),
+            }
+        }
+
+        for i in 0..result_d.len() {
+            match (result_d[i], expected_d[i]) {
+                (Some(a), Some(b)) => {
+                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
+                }
+                (None, None) => {}
+                _ => panic!(
+                    "at position {}: {:?} != {:?}",
+                    i, result_d[i], expected_d[i]
+                ),
+            }
+        }
     }
 }

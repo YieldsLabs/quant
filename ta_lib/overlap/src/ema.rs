@@ -1,21 +1,17 @@
-pub fn ema(source: &[f64], period: usize) -> Vec<Option<f64>> {
+use core::series::Series;
+
+pub fn ema(source: &[f64], period: usize) -> Series<f64> {
     let len = source.len();
-
-    if len < period {
-        return vec![None; len];
-    }
-
     let alpha = 2.0 / (period as f64 + 1.0);
+    let one_minus_alpha = 1.0 - alpha;
 
-    let mut ema = vec![None; len];
-    let mut ema_current = source[0];
+    let mut ema = Series::empty(len);
+
+    ema[0] = Some(source[0]);
 
     for i in 1..len {
-        ema_current = (source[i] - ema_current) * alpha + ema_current;
-
-        if i >= period - 1 {
-            ema[i] = Some(ema_current);
-        }
+        let ema_prev = ema[i - 1].unwrap_or(0.0);
+        ema[i] = Some(alpha * source[i] + one_minus_alpha * ema_prev);
     }
 
     ema
@@ -26,26 +22,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_ema_len() {
-        let source = vec![1.0, 2.0];
-        let result = ema(&source, 3);
-        assert_eq!(source.len(), result.len());
-    }
-
-    #[test]
-    fn test_ema_edge_case() {
-        let source = vec![1.0, 2.0];
-        let result = ema(&source, 3);
-        assert_eq!(result, vec![None, None]);
-    }
-
-    #[test]
     fn test_ema() {
         let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![Some(1.0), Some(1.5), Some(2.25), Some(3.125), Some(4.0625)];
+
         let result = ema(&source, 3);
-        assert_eq!(
-            result,
-            vec![None, None, Some(2.25), Some(3.125), Some(4.0625)]
-        );
+
+        assert_eq!(result, expected);
     }
 }

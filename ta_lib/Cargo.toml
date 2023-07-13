@@ -1,5 +1,6 @@
 [workspace]
 members = [
+"core",
 "overlap",
 "momentum",
 "price",
@@ -8,3 +9,6 @@ members = [
 "volume",
 "utils"
 ]
+
+[profile.release]
+opt-level = "s"

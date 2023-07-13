@@ -1,50 +1,24 @@
-use utils::change::change;
+use core::series::Series;
 
-pub fn mfi(hlc3: &[f64], volume: &[f64], period: usize) -> Vec<Option<f64>> {
-    let len = hlc3.len();
-    let mut mfi = vec![None; len];
+pub fn mfi(hlc3: &[f64], volume: &[f64], period: usize) -> Series<f64> {
+    let hlc3 = Series::from(hlc3);
+    let volume = Series::from(volume);
 
-    if len < period || len != volume.len() {
-        return mfi;
-    }
+    let changes = hlc3.change(1);
 
-    let changes = change(hlc3, 1);
-    let mut upper = 0.0;
-    let mut lower = 0.0;
+    let volume_hlc3 = &volume * &hlc3;
 
-    for i in 0..period {
-        if changes[i] < 0.0 {
-            lower += volume[i] * hlc3[i];
-        }
+    let positive_volume = &changes.gt(0.0) * &volume_hlc3;
+    let negative_volume = &changes.lt(0.0) * &volume_hlc3;
 
-        if changes[i] > 0.0 {
-            upper += volume[i] * hlc3[i];
-        }
-    }
+    let upper = positive_volume.sum(period);
+    let lower = negative_volume.sum(period);
 
-    mfi[period - 1] = Some(100.0 - (100.0 / (1.0 + upper / (lower + std::f64::EPSILON))));
+    let money_ratio = &upper / &lower;
 
-    for i in period..len {
-        if changes[i - period] < 0.0 {
-            lower -= volume[i - period] * hlc3[i - period];
-        }
+    let mfi = 100.0 - &(100.0 / &(1.0 + &money_ratio));
 
-        if changes[i - period] > 0.0 {
-            upper -= volume[i - period] * hlc3[i - period];
-        }
-
-        if changes[i] < 0.0 {
-            lower += volume[i] * hlc3[i];
-        }
-
-        if changes[i] > 0.0 {
-            upper += volume[i] * hlc3[i];
-        }
-
-        mfi[i] = Some(100.0 - (100.0 / (1.0 + upper / (lower + std::f64::EPSILON))));
-    }
-
-    mfi
+    mfi.nz(Some(50.0))
 }
 
 #[cfg(test)]
@@ -58,7 +32,13 @@ mod tests {
         let period = 3;
         let epsilon = 0.001;
 
-        let expected = vec![None, None, Some(51.9992), Some(36.1106), Some(34.2859)];
+        let expected = vec![
+            Some(50.0),
+            Some(100.0),
+            Some(51.9992),
+            Some(36.1106),
+            Some(34.2859),
+        ];
 
         let result = mfi(&hlc3, &volume, period);
 

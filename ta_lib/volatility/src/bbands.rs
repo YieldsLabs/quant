@@ -1,24 +1,17 @@
-use overlap::sma::sma;
-use utils::stddev::std_dev;
+use core::series::Series;
 
 pub fn bbands(
     source: &[f64],
     period: usize,
-    factor: usize,
-) -> (Vec<Option<f64>>, Vec<Option<f64>>, Vec<Option<f64>>) {
-    let len = source.len();
-    let stddev = std_dev(source, period);
-    let middle_band = sma(source, period);
+    factor: f64,
+) -> (Series<f64>, Series<f64>, Series<f64>) {
+    let source = Series::from(source);
 
-    let mut upper_band = vec![None; len];
-    let mut lower_band = vec![None; len];
+    let middle_band = source.mean(period);
+    let std = source.std(period);
 
-    for i in 0..len {
-        if let (Some(middle), Some(std_dev)) = (middle_band[i], stddev[i]) {
-            upper_band[i] = Some(middle + (std_dev * factor as f64));
-            lower_band[i] = Some(middle - (std_dev * factor as f64));
-        }
-    }
+    let upper_band = &middle_band + &(factor * &std);
+    let lower_band = &middle_band - &(factor * &std);
 
     (upper_band, middle_band, lower_band)
 }
@@ -31,11 +24,11 @@ mod tests {
     fn test_bbands() {
         let source = vec![2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0];
         let period = 3;
-        let factor = 2;
+        let factor = 2.0;
         let epsilon = 0.001;
         let expected_upper_band = vec![
-            None,
-            None,
+            Some(2.0),
+            Some(5.0),
             Some(7.265986),
             Some(9.265986),
             Some(11.265986),
@@ -46,8 +39,8 @@ mod tests {
             Some(7.632993),
         ];
         let expected_middle_band = vec![
-            None,
-            None,
+            Some(2.0),
+            Some(3.0),
             Some(4.0),
             Some(6.0),
             Some(8.0),
@@ -58,8 +51,8 @@ mod tests {
             Some(6.0),
         ];
         let expected_lower_band = vec![
-            None,
-            None,
+            Some(2.0),
+            Some(1.0),
             Some(0.734014),
             Some(2.734014),
             Some(4.734014),

@@ -3,36 +3,53 @@
 version = 3
 
 [[package]]
+name = "core"
+version = "0.1.0"
+
+[[package]]
 name = "momentum"
 version = "0.1.0"
 dependencies = [
+ "core",
  "overlap",
  "price",
+ "utils",
 ]
 
 [[package]]
 name = "overlap"
 version = "0.1.0"
+dependencies = [
+ "core",
+]
 
 [[package]]
 name = "price"
 version = "0.1.0"
+dependencies = [
+ "core",
+]
 
 [[package]]
 name = "trend"
 version = "0.1.0"
 dependencies = [
+ "core",
  "overlap",
 ]
 
 [[package]]
 name = "utils"
 version = "0.1.0"
+dependencies = [
+ "core",
+]
 
 [[package]]
 name = "volatility"
 version = "0.1.0"
 dependencies = [
+ "core",
  "overlap",
  "utils",
 ]
@@ -41,5 +58,8 @@ dependencies = [
 name = "volume"
 version = "0.1.0"
 dependencies = [
+ "core",
+ "overlap",
  "price",
+ "utils",
 ]

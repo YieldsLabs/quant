@@ -1,10 +1,4 @@
 pub fn median_price(high: &[f64], low: &[f64]) -> Vec<f64> {
-    let len = high.len();
-
-    if len != low.len() {
-        return vec![0.0; len];
-    }
-
     high.iter().zip(low).map(|(&h, &l)| (h + l) / 2.0).collect()
 }
 

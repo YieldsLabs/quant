@@ -1,10 +1,4 @@
 pub fn typical_price(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
-    let len = high.len();
-
-    if len != low.len() || len != close.len() {
-        return vec![0.0; len];
-    }
-
     high.iter()
         .zip(low)
         .zip(close)

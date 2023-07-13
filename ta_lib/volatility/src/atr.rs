@@ -1,3 +1,4 @@
+use core::series::Series;
 use overlap::{ema::ema, sma::sma, smma::smma, wma::wma};
 use utils::tr::true_range;
 
@@ -7,7 +8,7 @@ pub fn atr(
     close: &[f64],
     period: usize,
     smothing: Option<&str>,
-) -> Vec<Option<f64>> {
+) -> Series<f64> {
     let tr = true_range(high, low, close);
 
     match smothing {
@@ -30,7 +31,7 @@ mod tests {
         let period = 3;
         let epsilon = 0.001;
         let smothing = Some("SMMA");
-        let expected = vec![None, None, Some(1.5555)];
+        let expected = vec![Some(0.0), Some(0.8333), Some(1.5555)];
 
         let result = atr(&high, &low, &close, period, smothing);
 

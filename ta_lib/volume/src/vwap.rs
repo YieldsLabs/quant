@@ -1,24 +1,12 @@
-pub fn vwap(hlc3: &[f64], volume: &[f64]) -> Vec<Option<f64>> {
-    let len = hlc3.len();
+use core::series::Series;
 
-    if len != volume.len() {
-        return vec![None; len];
-    }
+pub fn vwap(hlc3: &[f64], volume: &[f64]) -> Series<f64> {
+    let hlc3 = &Series::from(hlc3);
+    let volume = &Series::from(volume);
 
-    let mut vwap = vec![None; len];
-    let mut sum_volume = 0.0;
-    let mut vwap_numerator = 0.0;
+    let product = hlc3 * volume;
 
-    for i in 0..len {
-        let p = hlc3[i];
-        if p.is_finite() {
-            sum_volume += volume[i];
-            vwap_numerator += p * volume[i];
-            if sum_volume != 0.0 {
-                vwap[i] = Some(vwap_numerator / sum_volume);
-            }
-        }
-    }
+    let vwap = &product.cumsum() / &volume.cumsum();
 
     vwap
 }
@@ -36,19 +24,18 @@ mod tests {
         let volume = vec![100.0, 200.0, 300.0];
         let hlc3 = typical_price(&high, &low, &close);
         let expected = vec![Some(1.5), Some(2.5), Some(3.5)];
+        let epsilon = 0.001;
 
         let result = vwap(&hlc3, &volume);
 
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_vwap_some_missing_values() {
-        let hlc3 = vec![2.0, 4.0];
-        let volume = vec![100.0, 200.0, 300.0];
-
-        let result = vwap(&hlc3, &volume);
-
-        assert!(result.iter().any(|r| r.is_none()));
+        for i in 0..high.len() {
+            match (result[i], expected[i]) {
+                (Some(a), Some(b)) => {
+                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
+                }
+                (None, None) => {}
+                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
+            }
+        }
     }
 }

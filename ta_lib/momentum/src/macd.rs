@@ -1,3 +1,4 @@
+use core::series::Series;
 use overlap::ema::ema;
 
 pub fn macd(
@@ -5,35 +6,16 @@ pub fn macd(
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
-) -> (Vec<Option<f64>>, Vec<Option<f64>>, Vec<Option<f64>>) {
-    let ema_fast = ema(source, fast_period);
-    let ema_slow = ema(source, slow_period);
+) -> (Series<f64>, Series<f64>, Series<f64>) {
+    let ema_fast = &ema(source, fast_period);
+    let ema_slow = &ema(source, slow_period);
 
-    let macd_line = ema_fast
-        .iter()
-        .zip(&ema_slow)
-        .map(|(&fast, &slow)| match (fast, slow) {
-            (Some(fast), Some(slow)) => Some(fast - slow),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
+    let macd_line = ema_fast - ema_slow;
+    let macd_line_vec: Vec<f64> = macd_line.clone().into();
 
-    let signal_line_values = ema(
-        &macd_line.iter().filter_map(|&x| x).collect::<Vec<_>>(),
-        signal_period,
-    );
+    let signal_line = ema(&macd_line_vec, signal_period);
 
-    let mut signal_line = vec![None; macd_line.len() - signal_line_values.len()];
-    signal_line.extend(signal_line_values);
-
-    let histogram = macd_line
-        .iter()
-        .zip(&signal_line)
-        .map(|(&macd, &signal)| match (macd, signal) {
-            (Some(macd), Some(signal)) => Some(macd - signal),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
+    let histogram = &macd_line - &signal_line;
 
     (macd_line, signal_line, histogram)
 }
@@ -50,10 +32,10 @@ mod tests {
         let signal_period = 4;
         let epsilon = 0.001;
         let expected_macd_line = vec![
-            None,
-            None,
-            None,
-            None,
+            Some(0.0),
+            Some(0.33333),
+            Some(0.72222),
+            Some(1.0648),
             Some(1.334877),
             Some(1.035751),
             Some(0.596751),
@@ -62,28 +44,28 @@ mod tests {
             Some(-0.403769),
         ];
         let expected_signal_line = vec![
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            Some(0.654418),
-            Some(0.332421),
-            Some(0.037945),
+            Some(0.0),
+            Some(0.13333),
+            Some(0.36888),
+            Some(0.6472),
+            Some(0.9223),
+            Some(0.9676),
+            Some(0.8193),
+            Some(0.5653),
+            Some(0.2789),
+            Some(0.0058),
         ];
         let expected_histogram = vec![
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            Some(-0.470126),
-            Some(-0.482997),
-            Some(-0.441714),
+            Some(0.0),
+            Some(0.1999),
+            Some(0.3533),
+            Some(0.4175),
+            Some(0.4125),
+            Some(0.068),
+            Some(-0.2222),
+            Some(-0.381),
+            Some(-0.4295),
+            Some(-0.4096),
         ];
 
         let (macd_line, signal_line, histogram) =
