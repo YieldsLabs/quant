@@ -1,113 +1,68 @@
 use crate::series::Series;
 
 impl Series<f64> {
+    pub fn window<F>(&self, period: usize, f: F) -> Self
+    where
+        F: Fn(&[f64], usize, usize) -> f64,
+    {
+        let len = self.len();
+        let mut result = Self::empty(len);
+        let mut window = vec![0.0; period];
+        let mut pos = 0;
+
+        for i in 0..len {
+            if let Some(value) = self[i] {
+                window[pos] = value;
+
+                let size = (i + 1).min(period);
+
+                result[i] = Some(f(&window[0..size], size, i));
+
+                pos = (pos + 1) % period;
+            }
+        }
+
+        result
+    }
+
     pub fn max(&self, scalar: f64) -> Self {
-        self.fmap(|val| match val {
-            Some(v) => Some(v.max(scalar)),
-            None => Some(scalar),
-        })
+        self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
     }
 
     pub fn min(&self, scalar: f64) -> Self {
-        self.fmap(|val| match val {
-            Some(v) => Some(v.min(scalar)),
-            None => Some(scalar),
-        })
+        self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
     }
 
     pub fn cumsum(&self) -> Self {
-        let len = self.len();
-        let mut cumsum = Self::empty(len);
-
         let mut sum = 0.0;
 
-        for i in 0..len {
-            if let Some(val) = self[i] {
-                sum += val;
-                cumsum[i] = Some(sum);
-            }
-        }
-
-        cumsum
+        self.fmap(|val| {
+            val.map(|v| {
+                sum += v;
+                sum
+            })
+        })
     }
 
     pub fn sum(&self, period: usize) -> Self {
-        let len = self.len();
-        let mut sum = Self::empty(len);
-        let mut window_sum = 0.0;
-
-        for i in 0..len {
-            if let Some(value) = self[i] {
-                window_sum += value;
-
-                if i >= period {
-                    if let Some(old_value) = self[i - period] {
-                        window_sum -= old_value;
-                    }
-                }
-
-                sum[i] = Some(window_sum);
-            }
-        }
-
-        sum
+        self.window(period, |window, _, _| window.iter().sum())
     }
 
     pub fn mean(&self, period: usize) -> Self {
-        let len = self.len();
-        let mut mean = Self::empty(len);
-        let mut window_sum = 0.0;
-        let mut count = 0;
-
-        for i in 0..len {
-            if let Some(value) = self[i] {
-                window_sum += value;
-                count += 1;
-
-                if i >= period {
-                    if let Some(old_value) = self[i - period] {
-                        window_sum -= old_value;
-                        count -= 1;
-                    }
-                }
-
-                if count > 0 {
-                    mean[i] = Some(window_sum / count as f64);
-                }
-            }
-        }
-
-        mean
+        self.window(period, |window, size, _| {
+            window.iter().sum::<f64>() / size as f64
+        })
     }
 
     pub fn std(&self, period: usize) -> Self {
-        let len = self.len();
-        let mut std = Self::empty(len);
         let mean = self.mean(period);
-        let mut window = Vec::with_capacity(period);
 
-        for i in 0..len {
-            let value = self[i];
-
-            if let Some(v) = value {
-                window.push(v);
-
-                if window.len() > period {
-                    window.remove(0);
-                }
-            }
-
-            let count = window.len();
-
-            if count > 0 {
-                let mean_val = mean[i].unwrap_or(0.0);
-                let variance =
-                    window.iter().map(|&v| (v - mean_val).powi(2)).sum::<f64>() / count as f64;
-                std[i] = Some(variance.sqrt());
-            }
-        }
-
-        std
+        self.window(period, |window, size, i| {
+            let mean_val = mean[i].unwrap_or(0.0);
+            let variance =
+                window.iter().map(|&v| (v - mean_val).powi(2)).sum::<f64>() / size as f64;
+            variance.sqrt()
+        })
     }
 }
 
@@ -179,6 +134,17 @@ mod tests {
                 _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
             }
         }
+    }
+
+    #[test]
+    fn test_cumsum() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![Some(1.0), Some(3.0), Some(6.0), Some(10.0), Some(15.0)];
+        let series = Series::from(&source);
+
+        let result = series.cumsum();
+
+        assert_eq!(result, expected);
     }
 
     #[test]

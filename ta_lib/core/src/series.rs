@@ -10,7 +10,6 @@ impl<T: Clone> Series<T> {
     pub fn fmap<U, F>(&self, mut f: F) -> Series<U>
     where
         F: FnMut(Option<&T>) -> Option<U>,
-        T: Clone,
     {
         Series {
             data: self.data.iter().map(|x| f(x.as_ref())).collect(),
@@ -20,7 +19,6 @@ impl<T: Clone> Series<T> {
     pub fn zip_with<U, V, F>(self, other: &Series<U>, mut f: F) -> Series<V>
     where
         F: FnMut(Option<T>, Option<U>) -> Option<V>,
-        T: Clone,
         U: Clone,
     {
         let data = self
@@ -68,6 +66,30 @@ impl<T> IndexMut<usize> for Series<T> {
 }
 
 impl Series<f64> {
+    fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
+    where
+        F: Fn(&f64, &f64) -> bool,
+    {
+        let len = self.len();
+        let mut extreme_values = Self::empty(len);
+        let mut indices: Vec<usize> = Vec::new();
+
+        for i in 0..len {
+            let start = if i >= period { i - period + 1 } else { 0 };
+
+            indices.retain(|&j| j >= start);
+            indices.retain(|&j| {
+                comparison(&self[j].unwrap_or(f64::NAN), &self[i].unwrap_or(f64::NAN))
+            });
+
+            indices.push(i);
+
+            extreme_values[i] = self[indices[0]].clone();
+        }
+
+        extreme_values
+    }
+
     pub fn nz(&self, replacement: Option<f64>) -> Self {
         let replacement = replacement.unwrap_or(0.0);
 
@@ -91,43 +113,11 @@ impl Series<f64> {
     }
 
     pub fn highest(&self, period: usize) -> Self {
-        let len = self.len();
-        let mut highest_values = Self::empty(len);
-        let mut indices: Vec<usize> = Vec::new();
-
-        for i in 0..len {
-            let start = if i >= period { i - period + 1 } else { 0 };
-
-            indices.retain(|&j| j >= start);
-
-            indices.retain(|&j| self[j] > self[i]);
-
-            indices.push(i);
-
-            highest_values[i] = self[indices[0]];
-        }
-
-        highest_values
+        self.extreme_value(period, |a, b| a >= b)
     }
 
     pub fn lowest(&self, period: usize) -> Self {
-        let len = self.len();
-        let mut lowest_values = Self::empty(len);
-        let mut indices: Vec<usize> = Vec::new();
-
-        for i in 0..len {
-            let start = if i >= period { i - period + 1 } else { 0 };
-
-            indices.retain(|&j| j >= start);
-
-            indices.retain(|&j| self[j] < self[i]);
-
-            indices.push(i);
-
-            lowest_values[i] = self[indices[0]];
-        }
-
-        lowest_values
+        self.extreme_value(period, |a, b| a <= b)
     }
 }
 
