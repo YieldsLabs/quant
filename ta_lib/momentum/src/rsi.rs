@@ -11,9 +11,9 @@ pub fn rsi(source: &[f64], period: usize) -> Series<f64> {
     let up = smma(&gains, period);
     let down = smma(&losses, period);
 
-    let rs = &up / &down;
+    let rs = up / &down;
 
-    let rsi = 100.0 - &(100.0 / &(1.0 + &rs));
+    let rsi = 100.0 - 100.0 / (1.0 + rs);
 
     rsi.nz(Some(100.0))
 }

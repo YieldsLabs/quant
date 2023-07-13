@@ -1,12 +1,12 @@
 use core::series::Series;
 
 pub fn vwap(hlc3: &[f64], volume: &[f64]) -> Series<f64> {
-    let hlc3 = &Series::from(hlc3);
-    let volume = &Series::from(volume);
+    let hlc3 = Series::from(hlc3);
+    let volume = Series::from(volume);
 
-    let product = hlc3 * volume;
+    let product = hlc3 * &volume;
 
-    let vwap = &product.cumsum() / &volume.cumsum();
+    let vwap = product.cumsum() / &volume.cumsum();
 
     vwap
 }

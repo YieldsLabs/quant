@@ -1,10 +1,14 @@
+use core::series::Series;
+
 pub fn average_price(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
-    high.iter()
-        .zip(low)
-        .zip(open)
-        .zip(close)
-        .map(|(((&h, &l), &o), &c)| (h + l + o + c) / 4.0)
-        .collect()
+    let open = Series::from(open);
+    let high = Series::from(high);
+    let low = Series::from(low);
+    let close = Series::from(close);
+
+    let average_price = (open + &high + &low + &close) / 4.0;
+
+    average_price.into()
 }
 
 #[cfg(test)]

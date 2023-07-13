@@ -2,21 +2,21 @@ use crate::series::Series;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 impl Series<f64> {
-    pub fn add(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn add_series(&self, rhs: &Series<f64>) -> Series<f64> {
         self.clone().zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(a_val + b_val),
             _ => None,
         })
     }
 
-    pub fn mul(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
         self.clone().zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(a_val * b_val),
             _ => None,
         })
     }
 
-    pub fn div(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn div_series(&self, rhs: &Series<f64>) -> Series<f64> {
         self.clone().zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => {
                 if b_val == 0.0 {
@@ -35,7 +35,7 @@ impl Series<f64> {
         })
     }
 
-    pub fn sub(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn sub_series(&self, rhs: &Series<f64>) -> Series<f64> {
         self.clone().zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(a_val - b_val),
             _ => None,
@@ -78,7 +78,7 @@ impl Series<f64> {
 }
 
 impl Series<bool> {
-    pub fn mul(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
         self.clone().zip_with(rhs, |b, val| match (b, val) {
             (Some(b_val), Some(val_val)) => {
                 if b_val {
@@ -92,11 +92,43 @@ impl Series<bool> {
     }
 }
 
+impl Add<Series<f64>> for &Series<f64> {
+    type Output = Series<f64>;
+
+    fn add(self, rhs: Series<f64>) -> Series<f64> {
+        self.add_series(&rhs)
+    }
+}
+
+impl Add<&Series<f64>> for Series<f64> {
+    type Output = Series<f64>;
+
+    fn add(self, rhs: &Series<f64>) -> Series<f64> {
+        self.add_series(rhs)
+    }
+}
+
 impl Add<&Series<f64>> for &Series<f64> {
     type Output = Series<f64>;
 
     fn add(self, rhs: &Series<f64>) -> Series<f64> {
-        self.add(rhs)
+        self.add_series(rhs)
+    }
+}
+
+impl Mul<Series<f64>> for &Series<f64> {
+    type Output = Series<f64>;
+
+    fn mul(self, rhs: Series<f64>) -> Series<f64> {
+        self.mul_series(&rhs)
+    }
+}
+
+impl Mul<&Series<f64>> for Series<f64> {
+    type Output = Series<f64>;
+
+    fn mul(self, rhs: &Series<f64>) -> Series<f64> {
+        self.mul_series(rhs)
     }
 }
 
@@ -104,7 +136,7 @@ impl Mul<&Series<f64>> for &Series<f64> {
     type Output = Series<f64>;
 
     fn mul(self, rhs: &Series<f64>) -> Series<f64> {
-        self.mul(rhs)
+        self.mul_series(rhs)
     }
 }
 
@@ -112,7 +144,39 @@ impl Div<&Series<f64>> for &Series<f64> {
     type Output = Series<f64>;
 
     fn div(self, rhs: &Series<f64>) -> Series<f64> {
-        self.div(rhs)
+        self.div_series(rhs)
+    }
+}
+
+impl Div<&Series<f64>> for Series<f64> {
+    type Output = Series<f64>;
+
+    fn div(self, rhs: &Series<f64>) -> Series<f64> {
+        self.div_series(rhs)
+    }
+}
+
+impl Div<Series<f64>> for &Series<f64> {
+    type Output = Series<f64>;
+
+    fn div(self, rhs: Series<f64>) -> Series<f64> {
+        self.div_series(&rhs)
+    }
+}
+
+impl Sub<&Series<f64>> for Series<f64> {
+    type Output = Series<f64>;
+
+    fn sub(self, rhs: &Series<f64>) -> Series<f64> {
+        self.sub_series(rhs)
+    }
+}
+
+impl Sub<Series<f64>> for &Series<f64> {
+    type Output = Series<f64>;
+
+    fn sub(self, rhs: Series<f64>) -> Series<f64> {
+        self.sub_series(&rhs)
     }
 }
 
@@ -120,7 +184,7 @@ impl Sub<&Series<f64>> for &Series<f64> {
     type Output = Series<f64>;
 
     fn sub(self, rhs: &Series<f64>) -> Series<f64> {
-        self.sub(rhs)
+        self.sub_series(rhs)
     }
 }
 
@@ -140,7 +204,23 @@ impl Mul<f64> for &Series<f64> {
     }
 }
 
+impl Mul<f64> for Series<f64> {
+    type Output = Series<f64>;
+
+    fn mul(self, scalar: f64) -> Series<f64> {
+        self.mul_scalar(scalar)
+    }
+}
+
 impl Div<f64> for &Series<f64> {
+    type Output = Series<f64>;
+
+    fn div(self, scalar: f64) -> Series<f64> {
+        self.div_scalar(scalar)
+    }
+}
+
+impl Div<f64> for Series<f64> {
     type Output = Series<f64>;
 
     fn div(self, scalar: f64) -> Series<f64> {
@@ -164,10 +244,26 @@ impl Add<&Series<f64>> for f64 {
     }
 }
 
+impl Add<Series<f64>> for f64 {
+    type Output = Series<f64>;
+
+    fn add(self, rhs: Series<f64>) -> Series<f64> {
+        rhs.add_scalar(self)
+    }
+}
+
 impl Mul<&Series<f64>> for f64 {
     type Output = Series<f64>;
 
     fn mul(self, rhs: &Series<f64>) -> Series<f64> {
+        rhs.mul_scalar(self)
+    }
+}
+
+impl Mul<Series<f64>> for f64 {
+    type Output = Series<f64>;
+
+    fn mul(self, rhs: Series<f64>) -> Series<f64> {
         rhs.mul_scalar(self)
     }
 }
@@ -177,7 +273,16 @@ impl Div<&Series<f64>> for f64 {
 
     fn div(self, rhs: &Series<f64>) -> Series<f64> {
         let scalars = vec![self; rhs.len()];
-        Series::from(&scalars).div(&rhs)
+        Series::from(&scalars).div_series(&rhs)
+    }
+}
+
+impl Div<Series<f64>> for f64 {
+    type Output = Series<f64>;
+
+    fn div(self, rhs: Series<f64>) -> Series<f64> {
+        let scalars = vec![self; rhs.len()];
+        Series::from(&scalars).div_series(&rhs)
     }
 }
 
@@ -189,11 +294,27 @@ impl Sub<&Series<f64>> for f64 {
     }
 }
 
+impl Sub<Series<f64>> for f64 {
+    type Output = Series<f64>;
+
+    fn sub(self, rhs: Series<f64>) -> Series<f64> {
+        rhs.neg().sub_scalar(-self)
+    }
+}
+
 impl Mul<&Series<f64>> for &Series<bool> {
     type Output = Series<f64>;
 
     fn mul(self, rhs: &Series<f64>) -> Series<f64> {
-        self.mul(rhs)
+        self.mul_series(rhs)
+    }
+}
+
+impl Mul<&Series<f64>> for Series<bool> {
+    type Output = Series<f64>;
+
+    fn mul(self, rhs: &Series<f64>) -> Series<f64> {
+        self.mul_series(rhs)
     }
 }
 

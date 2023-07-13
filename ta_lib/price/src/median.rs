@@ -1,5 +1,12 @@
+use core::series::Series;
+
 pub fn median_price(high: &[f64], low: &[f64]) -> Vec<f64> {
-    high.iter().zip(low).map(|(&h, &l)| (h + l) / 2.0).collect()
+    let high = Series::from(high);
+    let low = Series::from(low);
+
+    let median_price = (high + &low) / 2.0;
+
+    median_price.into()
 }
 
 #[cfg(test)]

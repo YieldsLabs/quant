@@ -2,10 +2,10 @@ use core::series::Series;
 use overlap::ema::ema;
 
 pub fn vo(source: &[f64], short_period: usize, long_period: usize) -> Series<f64> {
-    let vo_short = &ema(source, short_period);
-    let vo_long = &ema(source, long_period);
+    let vo_short = ema(source, short_period);
+    let vo_long = ema(source, long_period);
 
-    let vo = &(100.0 * &(vo_short - vo_long)) / vo_long;
+    let vo = 100.0 * (vo_short - &vo_long) / &vo_long;
 
     vo
 }

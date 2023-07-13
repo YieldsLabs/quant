@@ -1,9 +1,13 @@
+use core::series::Series;
+
 pub fn wcl(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
-    high.iter()
-        .zip(low)
-        .zip(close)
-        .map(|((&h, &l), &c)| (h + l + (c * 2.0)) / 4.0)
-        .collect()
+    let high = Series::from(high);
+    let low = Series::from(low);
+    let close = Series::from(close);
+
+    let wcl = (high + &low + &(close * 2.0)) / 4.0;
+
+    wcl.into()
 }
 
 #[cfg(test)]

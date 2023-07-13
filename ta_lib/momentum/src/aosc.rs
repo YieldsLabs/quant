@@ -3,10 +3,10 @@ use core::series::Series;
 pub fn aosc(hl2: &[f64], short_period: usize, long_period: usize) -> Series<f64> {
     let hl2 = Series::from(hl2);
 
-    let ao_short = &hl2.mean(short_period);
-    let ao_long = &hl2.mean(long_period);
+    let ao_short = hl2.mean(short_period);
+    let ao_long = hl2.mean(long_period);
 
-    let aosc = ao_short - ao_long;
+    let aosc = ao_short - &ao_long;
 
     aosc
 }

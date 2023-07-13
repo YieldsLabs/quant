@@ -3,12 +3,12 @@ use core::series::Series;
 pub fn stoch(high: &[f64], low: &[f64], close: &[f64], period: usize) -> Series<f64> {
     let high = Series::from(high);
     let low = Series::from(low);
+    let close = Series::from(close);
 
-    let hh = &high.highest(period);
-    let ll = &low.lowest(period);
-    let close = &Series::from(close);
+    let hh = high.highest(period);
+    let ll = low.lowest(period);
 
-    let stoch = &(100.0 * &(close - ll)) / &(hh - ll);
+    let stoch = 100.0 * (close - &ll) / &(hh - &ll);
 
     stoch
 }

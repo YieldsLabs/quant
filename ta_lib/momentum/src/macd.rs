@@ -7,10 +7,10 @@ pub fn macd(
     slow_period: usize,
     signal_period: usize,
 ) -> (Series<f64>, Series<f64>, Series<f64>) {
-    let ema_fast = &ema(source, fast_period);
-    let ema_slow = &ema(source, slow_period);
+    let ema_fast = ema(source, fast_period);
+    let ema_slow = ema(source, slow_period);
 
-    let macd_line = ema_fast - ema_slow;
+    let macd_line = ema_fast - &ema_slow;
     let macd_line_vec: Vec<f64> = macd_line.clone().into();
 
     let signal_line = ema(&macd_line_vec, signal_period);

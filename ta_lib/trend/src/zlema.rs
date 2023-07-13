@@ -9,7 +9,7 @@ pub fn zlema(source: &[f64], period: usize) -> Series<f64> {
 
     let diff = &ema_first - &ema_second;
 
-    let zlema = &ema_first + &diff;
+    let zlema = ema_first + &diff;
 
     zlema
 }

@@ -8,10 +8,10 @@ pub fn bbands(
     let source = Series::from(source);
 
     let middle_band = source.mean(period);
-    let std = source.std(period);
+    let std_mul = source.std(period) * factor;
 
-    let upper_band = &middle_band + &(factor * &std);
-    let lower_band = &middle_band - &(factor * &std);
+    let upper_band = &middle_band + &std_mul;
+    let lower_band = &middle_band - &std_mul;
 
     (upper_band, middle_band, lower_band)
 }
