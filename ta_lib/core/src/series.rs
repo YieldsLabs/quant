@@ -33,7 +33,7 @@ impl<T: Clone> Series<T> {
 
     pub fn empty(length: usize) -> Self {
         Self {
-            data: repeat(None).take(length).collect(),
+            data: vec![None; length],
         }
     }
 
@@ -66,28 +66,43 @@ impl<T> IndexMut<usize> for Series<T> {
 }
 
 impl Series<f64> {
+    pub fn window<F>(&self, period: usize, f: F) -> Self
+    where
+        F: Fn(&[f64], usize, usize) -> f64,
+    {
+        let len = self.len();
+        let mut result = Self::empty(len);
+        let mut window = vec![0.0; period];
+        let mut pos = 0;
+
+        for i in 0..len {
+            if let Some(value) = self[i] {
+                window[pos] = value;
+
+                let size = (i + 1).min(period);
+
+                result[i] = Some(f(&window[0..size], size, i));
+
+                pos = (pos + 1) % period;
+            }
+        }
+
+        result
+    }
+
     fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
     where
         F: Fn(&f64, &f64) -> bool,
     {
-        let len = self.len();
-        let mut extreme_values = Self::empty(len);
-        let mut indices: Vec<usize> = Vec::new();
-
-        for i in 0..len {
-            let start = if i >= period { i - period + 1 } else { 0 };
-
-            indices.retain(|&j| j >= start);
-            indices.retain(|&j| {
-                comparison(&self[j].unwrap_or(f64::NAN), &self[i].unwrap_or(f64::NAN))
-            });
-
-            indices.push(i);
-
-            extreme_values[i] = self[indices[0]].clone();
-        }
-
-        extreme_values
+        self.window(period, |window, _, _| {
+            window.iter().fold(f64::NAN, |acc, x| {
+                if acc.is_nan() || comparison(&x, &acc) {
+                    *x
+                } else {
+                    acc
+                }
+            })
+        })
     }
 
     pub fn nz(&self, replacement: Option<f64>) -> Self {
@@ -141,14 +156,6 @@ impl PartialEq<Vec<Option<f64>>> for Series<f64> {
     }
 }
 
-impl Series<bool> {}
-
-impl PartialEq<Vec<Option<bool>>> for Series<bool> {
-    fn eq(&self, other: &Vec<Option<bool>>) -> bool {
-        &self.data == other
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -161,6 +168,16 @@ mod tests {
         let result = Series::from(&source);
 
         assert_eq!(result.len(), expected);
+    }
+
+    #[test]
+    fn test_empty() {
+        let len = 4;
+        let expected = vec![None, None, None, None];
+
+        let result = Series::empty(len);
+
+        assert_eq!(result, expected);
     }
 
     #[test]

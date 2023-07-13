@@ -1,30 +1,6 @@
 use crate::series::Series;
 
 impl Series<f64> {
-    pub fn window<F>(&self, period: usize, f: F) -> Self
-    where
-        F: Fn(&[f64], usize, usize) -> f64,
-    {
-        let len = self.len();
-        let mut result = Self::empty(len);
-        let mut window = vec![0.0; period];
-        let mut pos = 0;
-
-        for i in 0..len {
-            if let Some(value) = self[i] {
-                window[pos] = value;
-
-                let size = (i + 1).min(period);
-
-                result[i] = Some(f(&window[0..size], size, i));
-
-                pos = (pos + 1) % period;
-            }
-        }
-
-        result
-    }
-
     pub fn max(&self, scalar: f64) -> Self {
         self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
     }
