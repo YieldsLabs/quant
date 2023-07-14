@@ -1,14 +1,14 @@
 use core::series::Series;
 
-pub fn aosc(hl2: &[f64], short_period: usize, long_period: usize) -> Series<f64> {
+pub fn aosc(hl2: &[f64], short_period: usize, long_period: usize) -> Vec<f64> {
     let hl2 = Series::from(hl2);
 
-    let ao_short = hl2.mean(short_period);
-    let ao_long = hl2.mean(long_period);
+    let ao_short = hl2.ma(short_period);
+    let ao_long = hl2.ma(long_period);
 
     let aosc = ao_short - &ao_long;
 
-    aosc
+    aosc.into()
 }
 
 #[cfg(test)]
@@ -23,10 +23,10 @@ mod tests {
         let hl2 = median_price(&high, &low);
         let short_period = 2;
         let long_period = 4;
-        let expected_result = vec![Some(0.0), Some(0.0), Some(0.5), Some(1.0), Some(1.0)];
+        let expected = vec![0.0, 0.0, 0.5, 1.0, 1.0];
 
         let result = aosc(&hl2, short_period, long_period);
 
-        assert_eq!(result, expected_result);
+        assert_eq!(result, expected);
     }
 }

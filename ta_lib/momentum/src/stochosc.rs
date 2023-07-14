@@ -1,4 +1,3 @@
-use core::series::Series;
 use utils::stoch::stoch;
 
 pub fn stochosc(
@@ -8,14 +7,14 @@ pub fn stochosc(
     period: usize,
     k_period: usize,
     d_period: usize,
-) -> (Series<f64>, Series<f64>) {
+) -> (Vec<f64>, Vec<f64>) {
     let stoch = stoch(high, low, close, period);
 
-    let k = stoch.mean(k_period);
+    let k = stoch.ma(k_period);
 
-    let d = k.mean(d_period);
+    let d = k.ma(d_period);
 
-    (k, d)
+    (k.into(), d.into())
 }
 
 #[cfg(test)]
@@ -32,47 +31,26 @@ mod tests {
         let d_period = 3;
         let epsilon = 0.0001;
 
-        let expected_k = vec![
-            Some(50.0),
-            Some(62.5),
-            Some(58.3333),
-            Some(50.0),
-            Some(41.6666),
-        ];
-        let expected_d = vec![
-            Some(50.0),
-            Some(56.25),
-            Some(56.9444),
-            Some(56.9444),
-            Some(50.0),
-        ];
+        let expected_k = vec![50.0, 62.5, 58.3333, 50.0, 41.6666];
+        let expected_d = vec![50.0, 56.25, 56.9444, 56.9444, 50.0];
 
         let (result_k, result_d) = stochosc(&high, &low, &close, period, k_period, d_period);
 
         for i in 0..result_k.len() {
-            match (result_k[i], expected_k[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!(
-                    "at position {}: {:?} != {:?}",
-                    i, result_k[i], expected_k[i]
-                ),
-            }
-        }
-
-        for i in 0..result_d.len() {
-            match (result_d[i], expected_d[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!(
-                    "at position {}: {:?} != {:?}",
-                    i, result_d[i], expected_d[i]
-                ),
-            }
+            assert!(
+                (result_k[i] - expected_k[i]).abs() < epsilon,
+                "at position {}: {} != {}",
+                i,
+                result_k[i],
+                expected_k[i]
+            );
+            assert!(
+                (result_d[i] - expected_d[i]).abs() < epsilon,
+                "at position {}: {} != {}",
+                i,
+                result_d[i],
+                expected_d[i]
+            );
         }
     }
 }

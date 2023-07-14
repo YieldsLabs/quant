@@ -32,24 +32,18 @@ mod tests {
         let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let period = 3;
         let epsilon = 0.001;
-        let expected = vec![
-            Some(0.0),
-            Some(0.0),
-            Some(2.333333),
-            Some(3.333333),
-            Some(4.333333),
-        ];
+        let expected = vec![0.0, 0.0, 2.333333, 3.333333, 4.333333];
 
         let result = wma(&source, period);
 
         for i in 0..source.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
+            assert!(
+                (result[i] - expected[i]).abs() < epsilon,
+                "at position {}: {} != {}",
+                i,
+                result[i],
+                expected[i]
+            )
         }
     }
 }

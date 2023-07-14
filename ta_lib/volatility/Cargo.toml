@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-utils = { path = "../utils" }
-overlap = { path = "../overlap" }
 core = { path = "../core" }
+overlap = { path = "../overlap" }
+utils = { path = "../utils" }

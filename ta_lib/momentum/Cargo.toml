@@ -5,6 +5,5 @@ edition = "2021"
 
 [dependencies]
 core = { path = "../core" }
-overlap = { path = "../overlap" }
 price = { path = "../price" }
 utils = { path = "../utils" }

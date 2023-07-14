@@ -1,6 +1,32 @@
 use crate::series::Series;
 
 impl Series<f64> {
+    fn ew<F>(&self, period: usize, alpha_fn: F) -> Self
+    where
+        F: Fn(usize) -> f64,
+    {
+        let len = self.len();
+
+        let alpha = alpha_fn(period);
+
+        let one_minus_alpha = 1.0 - alpha;
+
+        let mut ew = Series::empty(len);
+
+        if let Some(val) = self[0] {
+            ew[0] = Some(val);
+        }
+
+        for i in 1..len {
+            let ew_prev = ew[i - 1].unwrap_or(0.0);
+            if let Some(val) = self[i] {
+                ew[i] = Some(alpha * val + one_minus_alpha * ew_prev);
+            }
+        }
+
+        ew
+    }
+
     pub fn max(&self, scalar: f64) -> Self {
         self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
     }
@@ -21,23 +47,37 @@ impl Series<f64> {
     }
 
     pub fn sum(&self, period: usize) -> Self {
-        self.window(period, |window, _, _| window.iter().sum())
-    }
-
-    pub fn mean(&self, period: usize) -> Self {
-        self.window(period, |window, size, _| {
-            window.iter().sum::<f64>() / size as f64
+        self.sliding_map(period, |window, _, _| {
+            Some(window.iter().filter_map(|v| *v).sum())
         })
     }
 
-    pub fn std(&self, period: usize) -> Self {
-        let mean = self.mean(period);
+    pub fn ma(&self, period: usize) -> Self {
+        self.sliding_map(period, |window, size, _| {
+            Some(window.iter().filter_map(|v| *v).sum::<f64>() / size as f64)
+        })
+    }
 
-        self.window(period, |window, size, i| {
-            let mean_val = mean[i].unwrap_or(0.0);
-            let variance =
-                window.iter().map(|&v| (v - mean_val).powi(2)).sum::<f64>() / size as f64;
-            variance.sqrt()
+    pub fn ema(&self, period: usize) -> Self {
+        self.ew(period, |period| 2.0 / (period as f64 + 1.0))
+    }
+
+    pub fn smma(&self, period: usize) -> Self {
+        self.ew(period, |period| 1.0 / (period as f64))
+    }
+
+    pub fn std(&self, period: usize) -> Self {
+        let ma = self.ma(period);
+
+        self.sliding_map(period, |window, size, i| {
+            let ma_val = ma[i].unwrap_or(0.0);
+            let variance = window
+                .iter()
+                .filter_map(|v| *v)
+                .map(|v| (v - ma_val).powi(2))
+                .sum::<f64>()
+                / size as f64;
+            Some(variance.sqrt())
         })
     }
 }
@@ -135,12 +175,12 @@ mod tests {
     }
 
     #[test]
-    fn test_mean() {
+    fn test_ma() {
         let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let expected = vec![Some(1.0), Some(1.5), Some(2.0), Some(3.0), Some(4.0)];
         let series = Series::from(&source);
 
-        let result = series.mean(3);
+        let result = series.ma(3);
 
         assert_eq!(result, expected);
     }

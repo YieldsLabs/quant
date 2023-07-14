@@ -31,6 +31,29 @@ impl<T: Clone> Series<T> {
         Series { data }
     }
 
+    pub fn sliding_map<U, F>(&self, period: usize, mut f: F) -> Series<U>
+    where
+        F: FnMut(&[Option<T>], usize, usize) -> Option<U>,
+        U: Clone,
+    {
+        let len = self.len();
+        let mut result = Series::<U>::empty(len);
+        let mut window = vec![None; period];
+        let mut pos = 0;
+
+        for i in 0..len {
+            window[pos] = self[i].clone();
+
+            let size = (i + 1).min(period);
+
+            result[i] = f(&window[0..size], size, i);
+
+            pos = (pos + 1) % period;
+        }
+
+        result
+    }
+
     pub fn empty(length: usize) -> Self {
         Self {
             data: vec![None; length],
@@ -66,37 +89,13 @@ impl<T> IndexMut<usize> for Series<T> {
 }
 
 impl Series<f64> {
-    pub fn window<F>(&self, period: usize, f: F) -> Self
-    where
-        F: Fn(&[f64], usize, usize) -> f64,
-    {
-        let len = self.len();
-        let mut result = Self::empty(len);
-        let mut window = vec![0.0; period];
-        let mut pos = 0;
-
-        for i in 0..len {
-            if let Some(value) = self[i] {
-                window[pos] = value;
-
-                let size = (i + 1).min(period);
-
-                result[i] = Some(f(&window[0..size], size, i));
-
-                pos = (pos + 1) % period;
-            }
-        }
-
-        result
-    }
-
     fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
     where
-        F: Fn(&f64, &f64) -> bool,
+        F: Fn(Option<&f64>, Option<&f64>) -> bool,
     {
-        self.window(period, |window, _, _| {
-            window.iter().fold(f64::NAN, |acc, x| {
-                if acc.is_nan() || comparison(&x, &acc) {
+        self.sliding_map(period, |window, _, _| {
+            window.iter().fold(None, |acc, x| {
+                if acc.is_none() || comparison(x.as_ref(), acc.as_ref()) {
                     *x
                 } else {
                     acc

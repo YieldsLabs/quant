@@ -1,17 +1,16 @@
 use core::series::Series;
-use overlap::ema::ema;
 
-pub fn zlema(source: &[f64], period: usize) -> Series<f64> {
-    let ema_first = ema(source, period);
-    let ema_first_vec: Vec<f64> = ema_first.clone().into();
+pub fn zlema(source: &[f64], period: usize) -> Vec<f64> {
+    let source = Series::from(source);
 
-    let ema_second = ema(&ema_first_vec, period);
+    let ema_first = source.ema(period);
+    let ema_second = ema_first.ema(period);
 
     let diff = &ema_first - &ema_second;
 
     let zlema = ema_first + &diff;
 
-    zlema
+    zlema.into()
 }
 
 #[cfg(test)]
@@ -22,13 +21,7 @@ mod tests {
     fn test_zlema() {
         let source = vec![100.0, 105.0, 110.0, 115.0, 120.0];
         let period = 3;
-        let expected = vec![
-            Some(100.0),
-            Some(103.75),
-            Some(108.75),
-            Some(114.0625),
-            Some(119.375),
-        ];
+        let expected = vec![100.0, 103.75, 108.75, 114.0625, 119.375];
 
         let result = zlema(&source, period);
 

@@ -1,19 +1,15 @@
 use core::series::Series;
 
-pub fn bbands(
-    source: &[f64],
-    period: usize,
-    factor: f64,
-) -> (Series<f64>, Series<f64>, Series<f64>) {
+pub fn bbands(source: &[f64], period: usize, factor: f64) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     let source = Series::from(source);
 
-    let middle_band = source.mean(period);
+    let middle_band = source.ma(period);
     let std_mul = source.std(period) * factor;
 
     let upper_band = &middle_band + &std_mul;
     let lower_band = &middle_band - &std_mul;
 
-    (upper_band, middle_band, lower_band)
+    (upper_band.into(), middle_band.into(), lower_band.into())
 }
 
 #[cfg(test)]
@@ -27,77 +23,29 @@ mod tests {
         let factor = 2.0;
         let epsilon = 0.001;
         let expected_upper_band = vec![
-            Some(2.0),
-            Some(5.0),
-            Some(7.265986),
-            Some(9.265986),
-            Some(11.265986),
-            Some(10.632993),
-            Some(10.632993),
-            Some(9.632993),
-            Some(8.632993),
-            Some(7.632993),
+            2.0, 5.0, 7.265986, 9.265986, 11.265986, 10.632993, 10.632993, 9.632993, 8.632993,
+            7.632993,
         ];
-        let expected_middle_band = vec![
-            Some(2.0),
-            Some(3.0),
-            Some(4.0),
-            Some(6.0),
-            Some(8.0),
-            Some(9.0),
-            Some(9.0),
-            Some(8.0),
-            Some(7.0),
-            Some(6.0),
-        ];
+        let expected_middle_band = vec![2.0, 3.0, 4.0, 6.0, 8.0, 9.0, 9.0, 8.0, 7.0, 6.0];
         let expected_lower_band = vec![
-            Some(2.0),
-            Some(1.0),
-            Some(0.734014),
-            Some(2.734014),
-            Some(4.734014),
-            Some(7.367007),
-            Some(7.367007),
-            Some(6.367007),
-            Some(5.367007),
-            Some(4.367007),
+            2.0, 1.0, 0.734014, 2.734014, 4.734014, 7.367007, 7.367007, 6.367007, 5.367007,
+            4.367007,
         ];
 
         let (upper_band, middle_band, lower_band) = bbands(&source, period, factor);
 
         for i in 0..source.len() {
-            match (upper_band[i], expected_upper_band[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!(
-                    "at position {}: {:?} != {:?}",
-                    i, upper_band[i], expected_upper_band[i]
-                ),
-            }
+            let a = upper_band[i];
+            let b = expected_upper_band[i];
+            assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b);
 
-            match (middle_band[i], expected_middle_band[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!(
-                    "at position {}: {:?} != {:?}",
-                    i, middle_band[i], expected_middle_band[i]
-                ),
-            }
+            let a = middle_band[i];
+            let b = expected_middle_band[i];
+            assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b);
 
-            match (lower_band[i], expected_lower_band[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!(
-                    "at position {}: {:?} != {:?}",
-                    i, lower_band[i], expected_lower_band[i]
-                ),
-            }
+            let a = lower_band[i];
+            let b = expected_lower_band[i];
+            assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b);
         }
     }
 }
