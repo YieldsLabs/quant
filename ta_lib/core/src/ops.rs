@@ -2,18 +2,29 @@ use crate::series::Series;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 impl Series<f64> {
-    pub fn add_series(&self, rhs: &Series<f64>) -> Series<f64> {
+    fn binary_op_series<F>(&self, rhs: &Series<f64>, op: F) -> Series<f64>
+    where
+        F: Fn(&f64, &f64) -> f64,
+    {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(*a_val + *b_val),
+            (Some(a_val), Some(b_val)) => Some(op(a_val, b_val)),
             _ => None,
         })
     }
 
+    fn unary_op_scalar<F>(&self, scalar: f64, op: F) -> Series<f64>
+    where
+        F: Fn(&f64, f64) -> f64,
+    {
+        self.fmap(|val| val.map(|v| op(v, scalar)))
+    }
+
+    pub fn add_series(&self, rhs: &Series<f64>) -> Series<f64> {
+        self.binary_op_series(rhs, |a, b| a + b)
+    }
+
     pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
-        self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(*a_val * *b_val),
-            _ => None,
-        })
+        self.binary_op_series(rhs, |a, b| a * b)
     }
 
     pub fn div_series(&self, rhs: &Series<f64>) -> Series<f64> {
@@ -28,7 +39,7 @@ impl Series<f64> {
                         None
                     }
                 } else {
-                    Some(*a_val / *b_val)
+                    Some(a_val / b_val)
                 }
             }
             _ => None,
@@ -36,40 +47,35 @@ impl Series<f64> {
     }
 
     pub fn sub_series(&self, rhs: &Series<f64>) -> Series<f64> {
-        self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(*a_val - *b_val),
-            _ => None,
-        })
+        self.binary_op_series(rhs, |a, b| a - b)
     }
 
     pub fn add_scalar(&self, scalar: f64) -> Series<f64> {
-        self.fmap(|val| val.map(|v| v + scalar))
+        self.unary_op_scalar(scalar, |v, s| v + s)
     }
 
     pub fn mul_scalar(&self, scalar: f64) -> Series<f64> {
-        self.fmap(|val| val.map(|v| v * scalar))
+        self.unary_op_scalar(scalar, |v, s| v * s)
     }
 
     pub fn div_scalar(&self, scalar: f64) -> Series<f64> {
-        self.fmap(|val| {
-            val.map(|v| {
-                if *v == 0.0 {
-                    if scalar > 0.0 {
-                        std::f64::INFINITY
-                    } else if scalar < 0.0 {
-                        std::f64::NEG_INFINITY
-                    } else {
-                        0.0
-                    }
+        self.unary_op_scalar(scalar, |v, s| {
+            if *v == 0.0 {
+                if s > 0.0 {
+                    std::f64::INFINITY
+                } else if s < 0.0 {
+                    std::f64::NEG_INFINITY
                 } else {
-                    v / scalar
+                    0.0
                 }
-            })
+            } else {
+                v / s
+            }
         })
     }
 
     pub fn sub_scalar(&self, scalar: f64) -> Series<f64> {
-        self.fmap(|val| val.map(|v| v - scalar))
+        self.unary_op_scalar(scalar, |v, s| v - s)
     }
 
     pub fn neg(&self) -> Series<f64> {
@@ -78,17 +84,18 @@ impl Series<f64> {
 }
 
 impl Series<bool> {
-    pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
+    fn bool_op_series<F>(&self, rhs: &Series<f64>, op: F) -> Series<f64>
+    where
+        F: Fn(&bool, &f64) -> f64,
+    {
         self.zip_with(rhs, |b, a| match (b, a) {
-            (Some(b_val), Some(a_val)) => {
-                if *b_val {
-                    Some(*a_val)
-                } else {
-                    Some(0.0)
-                }
-            }
+            (Some(b_val), Some(a_val)) => Some(op(b_val, a_val)),
             _ => None,
         })
+    }
+
+    pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
+        self.bool_op_series(rhs, |b, a| if *b { *a } else { 0.0 })
     }
 }
 
