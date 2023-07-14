@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn wma(source: &[f64], period: usize) -> Series<f64> {
+pub fn wma(source: &[f64], period: usize) -> Vec<f64> {
     let len = source.len();
     let mut wma = Series::empty(len);
 
@@ -20,7 +20,7 @@ pub fn wma(source: &[f64], period: usize) -> Series<f64> {
         wma[i] = Some(sum / weight_sum);
     }
 
-    wma.nz(Some(0.0))
+    wma.nz(Some(0.0)).into()
 }
 
 #[cfg(test)]
