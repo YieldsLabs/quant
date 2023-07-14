@@ -3,32 +3,32 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 
 impl Series<f64> {
     pub fn add_series(&self, rhs: &Series<f64>) -> Series<f64> {
-        self.clone().zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(a_val + b_val),
+        self.zip_with(rhs, |a, b| match (a, b) {
+            (Some(a_val), Some(b_val)) => Some(*a_val + *b_val),
             _ => None,
         })
     }
 
     pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
-        self.clone().zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(a_val * b_val),
+        self.zip_with(rhs, |a, b| match (a, b) {
+            (Some(a_val), Some(b_val)) => Some(*a_val * *b_val),
             _ => None,
         })
     }
 
     pub fn div_series(&self, rhs: &Series<f64>) -> Series<f64> {
-        self.clone().zip_with(rhs, |a, b| match (a, b) {
+        self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => {
-                if b_val == 0.0 {
-                    if a_val > 0.0 {
+                if *b_val == 0.0 {
+                    if *a_val > 0.0 {
                         Some(std::f64::INFINITY)
-                    } else if a_val < 0.0 {
+                    } else if *a_val < 0.0 {
                         Some(std::f64::NEG_INFINITY)
                     } else {
                         None
                     }
                 } else {
-                    Some(a_val / b_val)
+                    Some(*a_val / *b_val)
                 }
             }
             _ => None,
@@ -36,8 +36,8 @@ impl Series<f64> {
     }
 
     pub fn sub_series(&self, rhs: &Series<f64>) -> Series<f64> {
-        self.clone().zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(a_val - b_val),
+        self.zip_with(rhs, |a, b| match (a, b) {
+            (Some(a_val), Some(b_val)) => Some(*a_val - *b_val),
             _ => None,
         })
     }
@@ -79,10 +79,10 @@ impl Series<f64> {
 
 impl Series<bool> {
     pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
-        self.clone().zip_with(rhs, |b, val| match (b, val) {
-            (Some(b_val), Some(val_val)) => {
-                if b_val {
-                    Some(val_val)
+        self.zip_with(rhs, |b, a| match (b, a) {
+            (Some(b_val), Some(a_val)) => {
+                if *b_val {
+                    Some(*a_val)
                 } else {
                     Some(0.0)
                 }

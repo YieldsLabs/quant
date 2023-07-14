@@ -16,16 +16,16 @@ impl<T: Clone> Series<T> {
         }
     }
 
-    pub fn zip_with<U, V, F>(self, other: &Series<U>, mut f: F) -> Series<V>
+    pub fn zip_with<U, V, F>(&self, other: &Series<U>, mut f: F) -> Series<V>
     where
-        F: FnMut(Option<T>, Option<U>) -> Option<V>,
+        F: FnMut(Option<&T>, Option<&U>) -> Option<V>,
         U: Clone,
     {
         let data = self
             .data
-            .into_iter()
-            .zip(other.data.clone().into_iter())
-            .map(|(x, y)| f(x, y))
+            .iter()
+            .zip(&other.data)
+            .map(|(x, y)| f(x.as_ref(), y.as_ref()))
             .collect();
 
         Series { data }
