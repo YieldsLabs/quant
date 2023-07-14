@@ -79,7 +79,7 @@ impl Series<f64> {
     }
 
     pub fn neg(&self) -> Series<f64> {
-        self.fmap(|val| val.map(|v| if *v == 0.0 { *v } else { -*v }))
+        self.fmap(|val| val.map(|v| v.neg()))
     }
 }
 

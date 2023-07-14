@@ -106,11 +106,9 @@ impl Series<f64> {
     }
 
     pub fn nz(&self, replacement: Option<f64>) -> Self {
-        let replacement = replacement.unwrap_or(0.0);
-
         self.fmap(|opt| match opt {
             Some(v) => Some(*v),
-            None => Some(replacement),
+            None => Some(replacement.unwrap_or(0.0)),
         })
     }
 
