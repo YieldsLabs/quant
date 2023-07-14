@@ -44,7 +44,7 @@ impl<T: Clone> Series<T> {
     pub fn shift(&self, n: usize) -> Self {
         let data = repeat(None)
             .take(n)
-            .chain(self.data.iter().cloned().skip(n))
+            .chain(self.data.iter().cloned().take(self.len() - n))
             .collect();
 
         Self { data }
@@ -174,6 +174,17 @@ mod tests {
         let expected = vec![None, None, None, None];
 
         let result = Series::empty(len);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_shift() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let n = 2;
+        let expected = vec![None, None, Some(1.0), Some(2.0), Some(3.0)];
+
+        let result = Series::from(&source).shift(n);
 
         assert_eq!(result, expected);
     }
