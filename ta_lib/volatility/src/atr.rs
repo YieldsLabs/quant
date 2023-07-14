@@ -1,4 +1,4 @@
-use overlap::{ema::ema, sma::sma, smma::smma, wma::wma};
+use trend::{ema::ema, sma::sma, smma::smma, wma::wma};
 use utils::tr::true_range;
 
 pub fn atr(

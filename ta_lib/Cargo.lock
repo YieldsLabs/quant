@@ -16,13 +16,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "overlap"
-version = "0.1.0"
-dependencies = [
- "core",
-]
-
-[[package]]
 name = "price"
 version = "0.1.0"
 dependencies = [
@@ -48,7 +41,7 @@ name = "volatility"
 version = "0.1.0"
 dependencies = [
  "core",
- "overlap",
+ "trend",
  "utils",
 ]
 
