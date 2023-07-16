@@ -12,15 +12,11 @@ impl Series<f64> {
         let one_minus_alpha = 1.0 - alpha;
 
         let mut ew = Series::empty(len);
-
-        if let Some(val) = self[0] {
-            ew[0] = Some(val);
-        }
+        ew[0] = self[0];
 
         for i in 1..len {
-            let ew_prev = ew[i - 1].unwrap_or(0.0);
-            if let Some(val) = self[i] {
-                ew[i] = Some(alpha * val + one_minus_alpha * ew_prev);
+            if let (Some(ew_prev), Some(current)) = (ew[i - 1], self[i]) {
+                ew[i] = Some(alpha * current + one_minus_alpha * ew_prev);
             }
         }
 
@@ -66,7 +62,7 @@ impl Series<f64> {
         self.ew(period, |period| 1.0 / (period as f64))
     }
 
-    pub fn std(&self, period: usize) -> Self {
+    pub fn variance(&self, period: usize) -> Self {
         let ma = self.ma(period);
 
         self.sliding_map(period, |window, size, i| {
@@ -77,8 +73,12 @@ impl Series<f64> {
                 .map(|v| (v - ma_val).powi(2))
                 .sum::<f64>()
                 / size as f64;
-            Some(variance.sqrt())
+            Some(variance)
         })
+    }
+
+    pub fn std(&self, period: usize) -> Self {
+        self.variance(period).fmap(|val| val.map(|v| v.sqrt()))
     }
 }
 

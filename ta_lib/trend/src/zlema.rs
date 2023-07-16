@@ -6,9 +6,9 @@ pub fn zlema(source: &[f64], period: usize) -> Vec<f64> {
     let ema_first = source.ema(period);
     let ema_second = ema_first.ema(period);
 
-    let diff = &ema_first - &ema_second;
+    let macd_line = &ema_first - &ema_second;
 
-    let zlema = ema_first + &diff;
+    let zlema = ema_first + &macd_line;
 
     zlema.into()
 }
