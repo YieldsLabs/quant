@@ -19,6 +19,10 @@ impl Series<f64> {
         self.fmap(|val| val.map(|v| op(v, scalar)))
     }
 
+    pub fn neg(&self) -> Series<f64> {
+        self.fmap(|val| val.map(|v| v.neg()))
+    }
+
     pub fn add_series(&self, rhs: &Series<f64>) -> Series<f64> {
         self.binary_op_series(rhs, |a, b| a + b)
     }
@@ -77,9 +81,13 @@ impl Series<f64> {
     pub fn sub_scalar(&self, scalar: f64) -> Series<f64> {
         self.unary_op_scalar(scalar, |v, s| v - s)
     }
+}
 
-    pub fn neg(&self) -> Series<f64> {
-        self.fmap(|val| val.map(|v| v.neg()))
+impl Neg for &Series<f64> {
+    type Output = Series<f64>;
+
+    fn neg(self) -> Series<f64> {
+        self.neg()
     }
 }
 
@@ -99,124 +107,73 @@ impl Series<bool> {
     }
 }
 
-impl Add<Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
+macro_rules! impl_series_ops {
+    ($trait_name:ident, $trait_method:ident, $method:ident) => {
+        impl $trait_name<Series<f64>> for &Series<f64> {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: Series<f64>) -> Series<f64> {
+                self.$method(&rhs)
+            }
+        }
 
-    fn add(self, rhs: Series<f64>) -> Series<f64> {
-        self.add_series(&rhs)
-    }
+        impl $trait_name<&Series<f64>> for Series<f64> {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+                self.$method(rhs)
+            }
+        }
+
+        impl $trait_name<&Series<f64>> for &Series<f64> {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+                self.$method(rhs)
+            }
+        }
+
+        impl $trait_name<Series<f64>> for Series<f64> {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: Series<f64>) -> Series<f64> {
+                self.$method(&rhs)
+            }
+        }
+    };
 }
 
-impl Add<&Series<f64>> for Series<f64> {
-    type Output = Series<f64>;
+impl_series_ops!(Add, add, add_series);
+impl_series_ops!(Mul, mul, mul_series);
+impl_series_ops!(Div, div, div_series);
+impl_series_ops!(Sub, sub, sub_series);
 
-    fn add(self, rhs: &Series<f64>) -> Series<f64> {
-        self.add_series(rhs)
-    }
-}
+macro_rules! impl_scalar_ops {
+    ($trait_name:ident, $trait_method:ident, $method:ident) => {
+        impl $trait_name<&Series<f64>> for f64 {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+                rhs.$method(self)
+            }
+        }
 
-impl Add<&Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
+        impl $trait_name<Series<f64>> for f64 {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: Series<f64>) -> Series<f64> {
+                rhs.$method(self)
+            }
+        }
 
-    fn add(self, rhs: &Series<f64>) -> Series<f64> {
-        self.add_series(rhs)
-    }
-}
+        impl $trait_name<f64> for &Series<f64> {
+            type Output = Series<f64>;
+            fn $trait_method(self, scalar: f64) -> Series<f64> {
+                self.$method(scalar)
+            }
+        }
 
-impl Mul<Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn mul(self, rhs: Series<f64>) -> Series<f64> {
-        self.mul_series(&rhs)
-    }
-}
-
-impl Mul<&Series<f64>> for Series<f64> {
-    type Output = Series<f64>;
-
-    fn mul(self, rhs: &Series<f64>) -> Series<f64> {
-        self.mul_series(rhs)
-    }
-}
-
-impl Mul<&Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn mul(self, rhs: &Series<f64>) -> Series<f64> {
-        self.mul_series(rhs)
-    }
-}
-
-impl Div<&Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn div(self, rhs: &Series<f64>) -> Series<f64> {
-        self.div_series(rhs)
-    }
-}
-
-impl Div<&Series<f64>> for Series<f64> {
-    type Output = Series<f64>;
-
-    fn div(self, rhs: &Series<f64>) -> Series<f64> {
-        self.div_series(rhs)
-    }
-}
-
-impl Div<Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn div(self, rhs: Series<f64>) -> Series<f64> {
-        self.div_series(&rhs)
-    }
-}
-
-impl Sub<&Series<f64>> for Series<f64> {
-    type Output = Series<f64>;
-
-    fn sub(self, rhs: &Series<f64>) -> Series<f64> {
-        self.sub_series(rhs)
-    }
-}
-
-impl Sub<Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn sub(self, rhs: Series<f64>) -> Series<f64> {
-        self.sub_series(&rhs)
-    }
-}
-
-impl Sub<&Series<f64>> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn sub(self, rhs: &Series<f64>) -> Series<f64> {
-        self.sub_series(rhs)
-    }
-}
-
-impl Add<f64> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn add(self, scalar: f64) -> Series<f64> {
-        self.add_scalar(scalar)
-    }
-}
-
-impl Mul<f64> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn mul(self, scalar: f64) -> Series<f64> {
-        self.mul_scalar(scalar)
-    }
-}
-
-impl Mul<f64> for Series<f64> {
-    type Output = Series<f64>;
-
-    fn mul(self, scalar: f64) -> Series<f64> {
-        self.mul_scalar(scalar)
-    }
+        impl $trait_name<f64> for Series<f64> {
+            type Output = Series<f64>;
+            fn $trait_method(self, scalar: f64) -> Series<f64> {
+                self.$method(scalar)
+            }
+        }
+    };
 }
 
 impl Div<f64> for &Series<f64> {
@@ -232,46 +189,6 @@ impl Div<f64> for Series<f64> {
 
     fn div(self, scalar: f64) -> Series<f64> {
         self.div_scalar(scalar)
-    }
-}
-
-impl Sub<f64> for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn sub(self, scalar: f64) -> Series<f64> {
-        self.sub_scalar(scalar)
-    }
-}
-
-impl Add<&Series<f64>> for f64 {
-    type Output = Series<f64>;
-
-    fn add(self, rhs: &Series<f64>) -> Series<f64> {
-        rhs.add_scalar(self)
-    }
-}
-
-impl Add<Series<f64>> for f64 {
-    type Output = Series<f64>;
-
-    fn add(self, rhs: Series<f64>) -> Series<f64> {
-        rhs.add_scalar(self)
-    }
-}
-
-impl Mul<&Series<f64>> for f64 {
-    type Output = Series<f64>;
-
-    fn mul(self, rhs: &Series<f64>) -> Series<f64> {
-        rhs.mul_scalar(self)
-    }
-}
-
-impl Mul<Series<f64>> for f64 {
-    type Output = Series<f64>;
-
-    fn mul(self, rhs: Series<f64>) -> Series<f64> {
-        rhs.mul_scalar(self)
     }
 }
 
@@ -293,6 +210,22 @@ impl Div<Series<f64>> for f64 {
     }
 }
 
+impl Sub<f64> for &Series<f64> {
+    type Output = Series<f64>;
+
+    fn sub(self, scalar: f64) -> Series<f64> {
+        self.sub_scalar(scalar)
+    }
+}
+
+impl Sub<f64> for Series<f64> {
+    type Output = Series<f64>;
+
+    fn sub(self, scalar: f64) -> Series<f64> {
+        self.sub_scalar(scalar)
+    }
+}
+
 impl Sub<&Series<f64>> for f64 {
     type Output = Series<f64>;
 
@@ -309,6 +242,9 @@ impl Sub<Series<f64>> for f64 {
     }
 }
 
+impl_scalar_ops!(Add, add, add_scalar);
+impl_scalar_ops!(Mul, mul, mul_scalar);
+
 impl Mul<&Series<f64>> for &Series<bool> {
     type Output = Series<f64>;
 
@@ -322,13 +258,5 @@ impl Mul<&Series<f64>> for Series<bool> {
 
     fn mul(self, rhs: &Series<f64>) -> Series<f64> {
         self.mul_series(rhs)
-    }
-}
-
-impl Neg for &Series<f64> {
-    type Output = Series<f64>;
-
-    fn neg(self) -> Series<f64> {
-        self.neg()
     }
 }
