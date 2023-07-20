@@ -245,18 +245,22 @@ impl Sub<Series<f64>> for f64 {
 impl_scalar_ops!(Add, add, add_scalar);
 impl_scalar_ops!(Mul, mul, mul_scalar);
 
-impl Mul<&Series<f64>> for &Series<bool> {
-    type Output = Series<f64>;
+macro_rules! impl_bool_ops {
+    ($trait_name:ident, $trait_method:ident, $method:ident) => {
+        impl $trait_name<&Series<f64>> for &Series<bool> {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+                self.$method(&rhs)
+            }
+        }
 
-    fn mul(self, rhs: &Series<f64>) -> Series<f64> {
-        self.mul_series(rhs)
-    }
+        impl $trait_name<&Series<f64>> for Series<bool> {
+            type Output = Series<f64>;
+            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+                self.$method(rhs)
+            }
+        }
+    };
 }
 
-impl Mul<&Series<f64>> for Series<bool> {
-    type Output = Series<f64>;
-
-    fn mul(self, rhs: &Series<f64>) -> Series<f64> {
-        self.mul_series(rhs)
-    }
-}
+impl_bool_ops!(Mul, mul, mul_series);
