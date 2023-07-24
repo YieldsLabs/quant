@@ -66,3 +66,19 @@ impl Series<f64> {
         self.compare_series(rhs, |a, b| a <= b)
     }
 }
+
+impl Series<bool> {
+    pub fn and(&self, rhs: &Series<bool>) -> Series<bool> {
+        self.zip_with(rhs, |a, b| match (a, b) {
+            (Some(a_val), Some(b_val)) => Some(*a_val & *b_val),
+            _ => None,
+        })
+    }
+
+    pub fn or(&self, rhs: &Series<bool>) -> Series<bool> {
+        self.zip_with(rhs, |a, b| match (a, b) {
+            (Some(a_val), Some(b_val)) => Some(*a_val | *b_val),
+            _ => None,
+        })
+    }
+}
