@@ -8,7 +8,8 @@ pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bo
 
     (close.shift(1).gt_series(&open.shift(1))
         & high.shift(1).eq_series(&close.shift(1))
-        & low.shift(1).eq_series(&open.shift(1))).into()
+        & low.shift(1).eq_series(&open.shift(1)))
+    .into()
 }
 
 pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bool> {
@@ -19,7 +20,8 @@ pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bo
 
     (close.shift(1).lt_series(&open.shift(1))
         & high.shift(1).eq_series(&open.shift(1))
-        & low.shift(1).eq_series(&close.shift(1))).into()
+        & low.shift(1).eq_series(&close.shift(1)))
+    .into()
 }
 
 #[cfg(test)]
