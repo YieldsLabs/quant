@@ -6,7 +6,7 @@ pub fn mfi(hlc3: &[f64], volume: &[f64], period: usize) -> Vec<f64> {
 
     let changes = hlc3.change(1);
 
-    let volume_hlc3 = volume * &hlc3;
+    let volume_hlc3 = volume * hlc3;
 
     let positive_volume = changes.gt(0.0) * &volume_hlc3;
     let negative_volume = changes.lt(0.0) * &volume_hlc3;
@@ -14,7 +14,7 @@ pub fn mfi(hlc3: &[f64], volume: &[f64], period: usize) -> Vec<f64> {
     let upper = positive_volume.sum(period);
     let lower = negative_volume.sum(period);
 
-    let money_ratio = upper / &lower;
+    let money_ratio = upper / lower;
 
     let mfi = 100.0 - 100.0 / (1.0 + money_ratio);
 

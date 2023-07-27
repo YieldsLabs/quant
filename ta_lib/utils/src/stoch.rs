@@ -8,7 +8,7 @@ pub fn stoch(high: &[f64], low: &[f64], close: &[f64], period: usize) -> Series<
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
-    let stoch = 100.0 * (close - &ll) / &(hh - &ll);
+    let stoch = 100.0 * (close - &ll) / (hh - ll);
 
     stoch
 }

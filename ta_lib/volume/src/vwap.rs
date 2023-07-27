@@ -6,7 +6,7 @@ pub fn vwap(hlc3: &[f64], volume: &[f64]) -> Vec<f64> {
 
     let product = hlc3 * &volume;
 
-    let vwap = product.cumsum() / &volume.cumsum();
+    let vwap = product.cumsum() / volume.cumsum();
 
     vwap.into()
 }

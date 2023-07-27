@@ -5,7 +5,7 @@ pub fn typical_price(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
     let low = Series::from(low);
     let close = Series::from(close);
 
-    let typical_price = (high + &low + &close) / 3.0;
+    let typical_price = (high + low + close) / 3.0;
 
     typical_price.into()
 }

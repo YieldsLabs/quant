@@ -6,7 +6,7 @@ pub fn vo(source: &[f64], short_period: usize, long_period: usize) -> Vec<f64> {
     let vo_short = source.ema(short_period);
     let vo_long = source.ema(long_period);
 
-    let vo = 100.0 * (vo_short - &vo_long) / &vo_long;
+    let vo = 100.0 * (vo_short - &vo_long) / vo_long;
 
     vo.into()
 }

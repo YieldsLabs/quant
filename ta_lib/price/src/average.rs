@@ -6,7 +6,7 @@ pub fn average_price(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> 
     let low = Series::from(low);
     let close = Series::from(close);
 
-    let average_price = (open + &high + &low + &close) / 4.0;
+    let average_price = (open + high + low + close) / 4.0;
 
     average_price.into()
 }

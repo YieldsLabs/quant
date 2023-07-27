@@ -7,7 +7,7 @@ pub fn rsi(source: &[f64], period: usize) -> Vec<f64> {
     let up = changes.max(0.0).smma(period);
     let down = changes.min(0.0).neg().smma(period);
 
-    let rs = up / &down;
+    let rs = up / down;
 
     let rsi = 100.0 - 100.0 / (1.0 + rs);
 

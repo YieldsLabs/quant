@@ -11,7 +11,7 @@ pub fn macd(
     let ema_fast = source.ema(fast_period);
     let ema_slow = source.ema(slow_period);
 
-    let macd_line = ema_fast - &ema_slow;
+    let macd_line = ema_fast - ema_slow;
 
     let signal_line = macd_line.ema(signal_period);
 
