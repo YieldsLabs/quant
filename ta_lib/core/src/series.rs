@@ -148,13 +148,13 @@ impl<T> IntoIterator for Series<T> {
 
 impl Into<Vec<f64>> for Series<f64> {
     fn into(self) -> Vec<f64> {
-        self.into_iter().filter_map(|x| x).collect()
+        self.data.into_iter().map(|x| x.unwrap_or(0.0)).collect()
     }
 }
 
 impl Into<Vec<bool>> for Series<bool> {
     fn into(self) -> Vec<bool> {
-        self.into_iter().filter_map(|x| x).collect()
+        self.data.into_iter().map(|x| x.unwrap_or(false)).collect()
     }
 }
 

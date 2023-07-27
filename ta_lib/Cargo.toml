@@ -2,6 +2,7 @@
 members = [
 "core",
 "momentum",
+"patterns",
 "price",
 "trend",
 "volatility",
