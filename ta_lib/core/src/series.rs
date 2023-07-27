@@ -137,15 +137,42 @@ impl<T: AsRef<[f64]>> From<T> for Series<f64> {
     }
 }
 
+impl<T> IntoIterator for Series<T> {
+    type Item = Option<T>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
+    }
+}
+
 impl Into<Vec<f64>> for Series<f64> {
     fn into(self) -> Vec<f64> {
-        self.data.into_iter().filter_map(|x| x).collect()
+        self.into_iter().filter_map(|x| x).collect()
+    }
+}
+
+impl Into<Vec<bool>> for Series<bool> {
+    fn into(self) -> Vec<bool> {
+        self.into_iter().filter_map(|x| x).collect()
+    }
+}
+
+impl Into<Series<bool>> for Series<f64> {
+    fn into(self) -> Series<bool> {
+        self.fmap(|opt| opt.map(|&f| f != 0.0))
     }
 }
 
 impl PartialEq<Vec<Option<f64>>> for Series<f64> {
     fn eq(&self, other: &Vec<Option<f64>>) -> bool {
         &self.data == other
+    }
+}
+
+impl<T: PartialEq> PartialEq for Series<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
     }
 }
 

@@ -1,4 +1,5 @@
 use crate::series::Series;
+use std::ops::{BitAnd, BitOr};
 
 impl Series<f64> {
     fn compare_series<F>(&self, rhs: &Series<f64>, f: F) -> Series<bool>
@@ -68,17 +69,60 @@ impl Series<f64> {
 }
 
 impl Series<bool> {
-    pub fn and(&self, rhs: &Series<bool>) -> Series<bool> {
+    pub fn and_series(&self, rhs: &Series<bool>) -> Series<bool> {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(*a_val & *b_val),
             _ => None,
         })
     }
 
-    pub fn or(&self, rhs: &Series<bool>) -> Series<bool> {
+    pub fn or_series(&self, rhs: &Series<bool>) -> Series<bool> {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(*a_val | *b_val),
             _ => None,
         })
+    }
+}
+
+impl BitAnd for Series<bool> {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        self.and_series(&rhs)
+    }
+}
+
+impl BitOr for Series<bool> {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        self.or_series(&rhs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bitand() {
+        let a = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 0.0, 0.0]).into();
+
+        let result = a.gt_series(&b) & a.lt_series(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_bitor() {
+        let a = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 1.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
+
+        let result = a.gt_series(&b) | a.lt_series(&b);
+
+        assert_eq!(result, expected);
     }
 }
