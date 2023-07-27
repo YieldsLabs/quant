@@ -16,6 +16,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "patterns"
+version = "0.1.0"
+dependencies = [
+ "core",
+]
+
+[[package]]
 name = "price"
 version = "0.1.0"
 dependencies = [
