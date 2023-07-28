@@ -8,7 +8,7 @@ pub fn zlema(source: &[f64], period: usize) -> Vec<f64> {
 
     let macd_line = &ema_first - &ema_second;
 
-    let zlema = ema_first + &macd_line;
+    let zlema = ema_first + macd_line;
 
     zlema.into()
 }
