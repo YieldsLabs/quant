@@ -30,11 +30,11 @@ mod tests {
 
     #[test]
     fn test_marubozu_bullish() {
-        let open = vec![4.0, 4.0, 4.0, 4.0, 4.0];
-        let high = vec![3.0, 3.0, 3.0, 3.0, 3.0];
-        let low = vec![1.0, 1.0, 1.0, 1.0, 1.0];
-        let close = vec![2.0, 2.5, 2.0, 1.5, 2.0];
-        let expected = vec![false, false, false, false, false];
+        let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
+        let high = vec![4.5, 3.5, 4.5, 3.5, 4.5];
+        let low = vec![4.0, 3.0, 4.0, 3.0, 4.0];
+        let close = vec![4.5, 3.5, 4.5, 3.5, 4.5];
+        let expected = vec![false, true, true, true, true];
 
         let result = bullish(&open, &high, &low, &close);
 
@@ -43,11 +43,11 @@ mod tests {
 
     #[test]
     fn test_marubozu_bearish() {
-        let open = vec![4.0, 4.0, 4.0, 4.0, 4.0];
-        let high = vec![3.0, 3.0, 3.0, 3.0, 3.0];
-        let low = vec![1.0, 1.0, 1.0, 1.0, 1.0];
-        let close = vec![2.0, 2.5, 2.0, 1.5, 2.0];
-        let expected = vec![false, false, false, false, false];
+        let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
+        let high = vec![4.0, 3.0, 4.0, 3.0, 4.0];
+        let low = vec![3.5, 2.5, 3.5, 2.5, 3.5];
+        let close = vec![3.5, 2.5, 3.5, 2.5, 3.5];
+        let expected = vec![false, true, true, true, true];
 
         let result = bearish(&open, &high, &low, &close);
 
