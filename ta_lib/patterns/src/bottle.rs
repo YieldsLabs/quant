@@ -31,10 +31,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_barrier_bullish() {
-        let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let low = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let close = vec![4.5, 3.5, 4.5, 3.5, 4.5];
+    fn test_bottle_bullish() {
+        let open = vec![4.0, 3.0, 4.0, 3.0, 5.0];
+        let low = vec![3.5, 2.5, 3.5, 2.5, 4.5];
+        let close = vec![4.5, 4.0, 5.0, 4.5, 5.5];
         let expected = vec![false, false, false, false, false];
 
         let result = bullish(&open, &low, &close);
@@ -43,10 +43,10 @@ mod tests {
     }
 
     #[test]
-    fn test_barrier_bearish() {
-        let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let high = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let close = vec![3.5, 2.5, 3.5, 2.5, 3.5];
+    fn test_bottle_bearish() {
+        let open = vec![4.0, 5.0, 4.0, 5.0, 4.0];
+        let high = vec![4.5, 5.5, 4.5, 5.5, 4.5];
+        let close = vec![3.5, 4.0, 3.5, 4.0, 3.5];
         let expected = vec![false, false, false, false, false];
 
         let result = bearish(&open, &high, &close);
