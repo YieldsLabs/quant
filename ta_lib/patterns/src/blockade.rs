@@ -30,7 +30,7 @@ pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bo
         & close.shift(4).gt_series(&open.shift(4))
         & high.shift(1).lte_series(&high.shift(4))
         & high.shift(1).gte_series(&close.shift(4))
-        & close.shift(1).gt_series(&low.shift(4))
+        & close.shift(1).lt_series(&low.shift(4))
         & high.shift(2).lte_series(&high.shift(4))
         & high.shift(2).gte_series(&close.shift(4))
         & high.shift(3).lte_series(&high.shift(4))
