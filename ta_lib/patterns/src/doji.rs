@@ -26,9 +26,9 @@ mod tests {
 
     #[test]
     fn test_doji_bullish() {
-        let open = vec![4.0, 4.0, 4.0, 5.0, 5.0];
-        let close = vec![3.0, 4.0, 4.0, 6.0, 5.0];
-        let expected = vec![false, false, false, false, false];
+        let open = vec![4.0, 4.0, 4.0, 4.0, 5.0];
+        let close = vec![5.0, 4.0, 3.0, 4.0, 6.0];
+        let expected = vec![false, false, false, false, true];
 
         let result = bullish(&open, &close);
 
@@ -37,9 +37,9 @@ mod tests {
 
     #[test]
     fn test_doji_bearish() {
-        let open = vec![4.0, 4.0, 4.0, 3.0, 3.0];
-        let close = vec![5.0, 4.0, 4.0, 2.0, 3.0];
-        let expected = vec![false, false, false, false, false];
+        let open = vec![4.0, 4.0, 4.0, 6.0, 5.0];
+        let close = vec![5.0, 4.0, 5.0, 6.0, 4.0];
+        let expected = vec![false, false, false, false, true];
 
         let result = bearish(&open, &close);
 
