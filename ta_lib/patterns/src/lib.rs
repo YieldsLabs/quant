@@ -7,6 +7,7 @@ pub mod doji;
 pub mod double_doji;
 pub mod engulfing;
 pub mod h;
+pub mod harami;
 pub mod hexad;
 pub mod marubozu;
 pub mod on_neck;
