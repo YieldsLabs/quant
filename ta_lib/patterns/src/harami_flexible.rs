@@ -6,8 +6,10 @@ pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bo
     let low = Series::from(low);
     let close = Series::from(close);
 
-    (high.lte(&open.shift(1))
-        & low.gte(&close.shift(1))
+    (close.lt(&open.shift(1))
+        & open.gte(&close.shift(1))
+        & high.lt(&high.shift(1))
+        & low.gt(&low.shift(1))
         & close.gt(&open)
         & close.shift(1).lt(&open.shift(1))
         & close.shift(2).lt(&open.shift(2)))
@@ -20,8 +22,10 @@ pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bo
     let low = Series::from(low);
     let close = Series::from(close);
 
-    (high.lte(&close.shift(1))
-        & low.gte(&open.shift(1))
+    (close.gt(&open.shift(1))
+        & open.lte(&close.shift(1))
+        & high.lt(&high.shift(1))
+        & low.gt(&low.shift(1))
         & close.lt(&open)
         & close.shift(1).gt(&open.shift(1))
         & close.shift(2).gt(&open.shift(2)))
@@ -33,7 +37,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_harami_bullish() {
+    fn test_harami_flexible_bullish() {
         let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
         let high = vec![4.5, 3.5, 4.5, 3.5, 4.5];
         let low = vec![4.0, 3.0, 4.0, 3.0, 4.0];
@@ -46,7 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn test_harami_bearish() {
+    fn test_harami_flexible_bearish() {
         let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
         let high = vec![4.0, 3.0, 4.0, 3.0, 4.0];
         let low = vec![3.5, 2.5, 3.5, 2.5, 3.5];
