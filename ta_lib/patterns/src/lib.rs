@@ -6,4 +6,5 @@ pub mod counterattack;
 pub mod doji;
 pub mod double_doji;
 pub mod marubozu;
+pub mod shrinking;
 pub mod tasuki;
