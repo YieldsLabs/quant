@@ -8,5 +8,6 @@ pub mod double_doji;
 pub mod h;
 pub mod marubozu;
 pub mod shrinking;
+pub mod slingshot;
 pub mod split;
 pub mod tasuki;
