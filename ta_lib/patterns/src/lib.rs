@@ -5,6 +5,7 @@ pub mod breakaway;
 pub mod counterattack;
 pub mod doji;
 pub mod double_doji;
+pub mod h;
 pub mod marubozu;
 pub mod shrinking;
 pub mod split;
