@@ -10,6 +10,7 @@ pub mod h;
 pub mod hexad;
 pub mod marubozu;
 pub mod on_neck;
+pub mod piercing;
 pub mod shrinking;
 pub mod slingshot;
 pub mod split;
