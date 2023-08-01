@@ -6,6 +6,7 @@ pub mod counterattack;
 pub mod doji;
 pub mod double_doji;
 pub mod h;
+pub mod hexad;
 pub mod marubozu;
 pub mod on_neck;
 pub mod shrinking;
