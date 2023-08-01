@@ -14,3 +14,4 @@ pub mod shrinking;
 pub mod slingshot;
 pub mod split;
 pub mod tasuki;
+pub mod three_candles;
