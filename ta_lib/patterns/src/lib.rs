@@ -4,7 +4,7 @@ pub mod bottle;
 pub mod breakaway;
 pub mod counterattack;
 pub mod doji;
-pub mod double_doji;
+pub mod doji_double;
 pub mod engulfing;
 pub mod h;
 pub mod harami_flexible;
