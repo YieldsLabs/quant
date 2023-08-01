@@ -6,6 +6,7 @@ pub mod counterattack;
 pub mod doji;
 pub mod doji_double;
 pub mod engulfing;
+pub mod euphoria;
 pub mod h;
 pub mod hammer;
 pub mod harami_flexible;
