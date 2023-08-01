@@ -7,6 +7,7 @@ pub mod doji;
 pub mod doji_double;
 pub mod engulfing;
 pub mod h;
+pub mod hammer;
 pub mod harami_flexible;
 pub mod harami_strict;
 pub mod hexad;
