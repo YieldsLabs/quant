@@ -31,6 +31,10 @@ impl Series<f64> {
         self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
     }
 
+    pub fn abs(&self) -> Self {
+        self.fmap(|val| val.map(|v| v.abs()))
+    }
+
     pub fn cumsum(&self) -> Self {
         let mut sum = 0.0;
 
@@ -150,6 +154,17 @@ mod tests {
                 _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
             }
         }
+    }
+
+    #[test]
+    fn test_abs() {
+        let source = vec![-1.0, 2.0, -3.0, 4.0, 5.0];
+        let expected = vec![Some(1.0), Some(2.0), Some(3.0), Some(4.0), Some(5.0)];
+        let series = Series::from(&source);
+
+        let result = series.abs();
+
+        assert_eq!(result, expected);
     }
 
     #[test]
