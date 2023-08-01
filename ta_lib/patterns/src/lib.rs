@@ -7,6 +7,7 @@ pub mod doji;
 pub mod doji_double;
 pub mod engulfing;
 pub mod euphoria;
+pub mod euphoria_extreme;
 pub mod h;
 pub mod hammer;
 pub mod harami_flexible;
