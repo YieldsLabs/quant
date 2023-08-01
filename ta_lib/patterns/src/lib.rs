@@ -13,6 +13,7 @@ pub mod hammer;
 pub mod harami_flexible;
 pub mod harami_strict;
 pub mod hexad;
+pub mod kangaroo_tail;
 pub mod marubozu;
 pub mod on_neck;
 pub mod piercing;
