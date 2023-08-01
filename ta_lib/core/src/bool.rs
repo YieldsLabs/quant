@@ -1,86 +1,87 @@
 use crate::series::Series;
 use std::ops::{BitAnd, BitOr};
 
+macro_rules! scalar_comparison {
+    ($($name:ident, $op:tt);* $(;)?) => {
+        $(
+            pub fn $name(&self, scalar: f64) -> Series<bool> {
+                self.compare_scalar(scalar, |a, b| a $op b)
+            }
+        )*
+    };
+}
+
+macro_rules! series_comparison {
+    ($($name:ident, $op:tt);* $(;)?) => {
+        $(
+            pub fn $name(&self, rhs: &Series<f64>) -> Series<bool> {
+                self.compare(rhs, |a, b| a $op b)
+            }
+        )*
+    };
+}
+
+macro_rules! logical_operation {
+    ($($name:ident, $op:tt);* $(;)?) => {
+        $(
+            pub fn $name(&self, rhs: &Series<bool>) -> Series<bool> {
+                self.logical_op(rhs, |a, b| a $op b)
+            }
+        )*
+    };
+}
+
 impl Series<f64> {
-    fn compare_series<F>(&self, rhs: &Series<f64>, f: F) -> Series<bool>
+    fn compare_scalar<F>(&self, scalar: f64, comparator: F) -> Series<bool>
+    where
+        F: Fn(f64, f64) -> bool,
+    {
+        self.fmap(|x| x.map(|v| comparator(*v, scalar)))
+    }
+
+    fn compare<F>(&self, rhs: &Series<f64>, comparator: F) -> Series<bool>
     where
         F: Fn(f64, f64) -> bool,
     {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(f(*a_val, *b_val)),
+            (Some(a_val), Some(b_val)) => Some(comparator(*a_val, *b_val)),
             _ => None,
         })
     }
 
-    fn compare<F>(&self, scalar: f64, f: F) -> Series<bool>
-    where
-        F: Fn(f64, f64) -> bool,
-    {
-        self.fmap(|x| x.map(|v| f(*v, scalar)))
+    scalar_comparison! {
+        seq, ==;
+        sne, !=;
+        sgt, >;
+        sgte, >=;
+        slt, <;
+        slte, <=;
     }
 
-    pub fn eq(&self, scalar: f64) -> Series<bool> {
-        self.compare(scalar, |a, b| a == b)
-    }
-
-    pub fn ne(&self, scalar: f64) -> Series<bool> {
-        self.compare(scalar, |a, b| a != b)
-    }
-
-    pub fn gt(&self, scalar: f64) -> Series<bool> {
-        self.compare(scalar, |a, b| a > b)
-    }
-
-    pub fn gte(&self, scalar: f64) -> Series<bool> {
-        self.compare(scalar, |a, b| a >= b)
-    }
-
-    pub fn lt(&self, scalar: f64) -> Series<bool> {
-        self.compare(scalar, |a, b| a < b)
-    }
-
-    pub fn lte(&self, scalar: f64) -> Series<bool> {
-        self.compare(scalar, |a, b| a <= b)
-    }
-
-    pub fn eq_series(&self, rhs: &Series<f64>) -> Series<bool> {
-        self.compare_series(rhs, |a, b| a == b)
-    }
-
-    pub fn ne_series(&self, rhs: &Series<f64>) -> Series<bool> {
-        self.compare_series(rhs, |a, b| a != b)
-    }
-
-    pub fn gt_series(&self, rhs: &Series<f64>) -> Series<bool> {
-        self.compare_series(rhs, |a, b| a > b)
-    }
-
-    pub fn gte_series(&self, rhs: &Series<f64>) -> Series<bool> {
-        self.compare_series(rhs, |a, b| a >= b)
-    }
-
-    pub fn lt_series(&self, rhs: &Series<f64>) -> Series<bool> {
-        self.compare_series(rhs, |a, b| a < b)
-    }
-
-    pub fn lte_series(&self, rhs: &Series<f64>) -> Series<bool> {
-        self.compare_series(rhs, |a, b| a <= b)
+    series_comparison! {
+        eq, ==;
+        ne, !=;
+        gt, >;
+        gte, >=;
+        lt, <;
+        lte, <=;
     }
 }
 
 impl Series<bool> {
-    pub fn and_series(&self, rhs: &Series<bool>) -> Series<bool> {
+    fn logical_op<F>(&self, rhs: &Series<bool>, operation: F) -> Series<bool>
+    where
+        F: Fn(bool, bool) -> bool,
+    {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(*a_val & *b_val),
+            (Some(a_val), Some(b_val)) => Some(operation(*a_val, *b_val)),
             _ => None,
         })
     }
 
-    pub fn or_series(&self, rhs: &Series<bool>) -> Series<bool> {
-        self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(*a_val | *b_val),
-            _ => None,
-        })
+    logical_operation! {
+        and, &;
+        or, |;
     }
 }
 
@@ -88,7 +89,7 @@ impl BitAnd for Series<bool> {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
-        self.and_series(&rhs)
+        self.and(&rhs)
     }
 }
 
@@ -96,7 +97,7 @@ impl BitOr for Series<bool> {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
-        self.or_series(&rhs)
+        self.or(&rhs)
     }
 }
 
@@ -110,7 +111,7 @@ mod tests {
         let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
         let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 0.0, 0.0]).into();
 
-        let result = a.gt_series(&b) & a.lt_series(&b);
+        let result = a.gt(&b) & a.lt(&b);
 
         assert_eq!(result, expected);
     }
@@ -121,7 +122,7 @@ mod tests {
         let b = Series::from([1.0, 1.0, 1.0, 1.0, 1.0]);
         let expected: Series<bool> = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
 
-        let result = a.gt_series(&b) | a.lt_series(&b);
+        let result = a.gt(&b) | a.lt(&b);
 
         assert_eq!(result, expected);
     }

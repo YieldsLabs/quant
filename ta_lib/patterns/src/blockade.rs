@@ -6,17 +6,17 @@ pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bo
     let low = Series::from(low);
     let close = Series::from(close);
 
-    (close.shift(1).gt_series(&open.shift(1))
-        & close.shift(4).lt_series(&open.shift(4))
-        & low.shift(1).gte_series(&low.shift(4))
-        & low.shift(1).lte_series(&close.shift(4))
-        & close.shift(1).gt_series(&high.shift(4))
-        & low.shift(2).gte_series(&low.shift(4))
-        & low.shift(2).lte_series(&close.shift(4))
-        & low.shift(3).gte_series(&low.shift(4))
-        & low.shift(3).lte_series(&close.shift(4))
-        & high.shift(2).lt_series(&high.shift(4))
-        & high.shift(3).lt_series(&high.shift(4)))
+    (close.shift(1).gt(&open.shift(1))
+        & close.shift(4).lt(&open.shift(4))
+        & low.shift(1).gte(&low.shift(4))
+        & low.shift(1).lte(&close.shift(4))
+        & close.shift(1).gt(&high.shift(4))
+        & low.shift(2).gte(&low.shift(4))
+        & low.shift(2).lte(&close.shift(4))
+        & low.shift(3).gte(&low.shift(4))
+        & low.shift(3).lte(&close.shift(4))
+        & high.shift(2).lt(&high.shift(4))
+        & high.shift(3).lt(&high.shift(4)))
     .into()
 }
 
@@ -26,17 +26,17 @@ pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<bo
     let low = Series::from(low);
     let close = Series::from(close);
 
-    (close.shift(1).lt_series(&open.shift(1))
-        & close.shift(4).gt_series(&open.shift(4))
-        & high.shift(1).lte_series(&high.shift(4))
-        & high.shift(1).gte_series(&close.shift(4))
-        & close.shift(1).lt_series(&low.shift(4))
-        & high.shift(2).lte_series(&high.shift(4))
-        & high.shift(2).gte_series(&close.shift(4))
-        & high.shift(3).lte_series(&high.shift(4))
-        & high.shift(3).gte_series(&close.shift(4))
-        & low.shift(2).gt_series(&low.shift(4))
-        & low.shift(3).gt_series(&low.shift(4)))
+    (close.shift(1).lt(&open.shift(1))
+        & close.shift(4).gt(&open.shift(4))
+        & high.shift(1).lte(&high.shift(4))
+        & high.shift(1).gte(&close.shift(4))
+        & close.shift(1).lt(&low.shift(4))
+        & high.shift(2).lte(&high.shift(4))
+        & high.shift(2).gte(&close.shift(4))
+        & high.shift(3).lte(&high.shift(4))
+        & high.shift(3).gte(&close.shift(4))
+        & low.shift(2).gt(&low.shift(4))
+        & low.shift(3).gt(&low.shift(4)))
     .into()
 }
 

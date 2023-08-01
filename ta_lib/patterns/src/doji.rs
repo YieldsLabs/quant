@@ -4,20 +4,14 @@ pub fn bullish(open: &[f64], close: &[f64]) -> Vec<bool> {
     let open = Series::from(open);
     let close = Series::from(close);
 
-    (close.gt_series(&open)
-        & close.shift(1).eq_series(&open.shift(1))
-        & close.shift(2).lt_series(&open.shift(2)))
-    .into()
+    (close.gt(&open) & close.shift(1).eq(&open.shift(1)) & close.shift(2).lt(&open.shift(2))).into()
 }
 
 pub fn bearish(open: &[f64], close: &[f64]) -> Vec<bool> {
     let open = Series::from(open);
     let close = Series::from(close);
 
-    (close.lt_series(&open)
-        & close.shift(1).eq_series(&open.shift(1))
-        & close.shift(2).gt_series(&open.shift(2)))
-    .into()
+    (close.lt(&open) & close.shift(1).eq(&open.shift(1)) & close.shift(2).gt(&open.shift(2))).into()
 }
 
 #[cfg(test)]

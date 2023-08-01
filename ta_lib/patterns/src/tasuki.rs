@@ -4,12 +4,12 @@ pub fn bullish(open: &[f64], close: &[f64]) -> Vec<bool> {
     let open = Series::from(open);
     let close = Series::from(close);
 
-    (close.lt_series(&open)
-        & close.shift(1).gt_series(&open.shift(1))
-        & close.shift(2).gt_series(&open.shift(2))
-        & close.lt_series(&open.shift(1))
-        & close.gt_series(&close.shift(2))
-        & open.shift(1).gt_series(&close.shift(2)))
+    (close.lt(&open)
+        & close.shift(1).gt(&open.shift(1))
+        & close.shift(2).gt(&open.shift(2))
+        & close.lt(&open.shift(1))
+        & close.gt(&close.shift(2))
+        & open.shift(1).gt(&close.shift(2)))
     .into()
 }
 
@@ -17,12 +17,12 @@ pub fn bearish(open: &[f64], close: &[f64]) -> Vec<bool> {
     let open = Series::from(open);
     let close = Series::from(close);
 
-    (close.gt_series(&open)
-        & close.shift(1).lt_series(&open.shift(1))
-        & close.shift(2).lt_series(&open.shift(2))
-        & close.gt_series(&open.shift(1))
-        & close.lt_series(&close.shift(2))
-        & open.shift(1).lt_series(&close.shift(2)))
+    (close.gt(&open)
+        & close.shift(1).lt(&open.shift(1))
+        & close.shift(2).lt(&open.shift(2))
+        & close.gt(&open.shift(1))
+        & close.lt(&close.shift(2))
+        & open.shift(1).lt(&close.shift(2)))
     .into()
 }
 
