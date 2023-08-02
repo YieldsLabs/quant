@@ -5,22 +5,22 @@ impl Series<f64> {
     where
         F: Fn(usize) -> f64,
     {
-        let len = self.len();
-
         let alpha = alpha_fn(period);
 
         let one_minus_alpha = 1.0 - alpha;
 
-        let mut ew = Series::empty(len);
-        ew[0] = self[0];
+        let mut prev = None;
 
-        for i in 1..len {
-            if let (Some(ew_prev), Some(current)) = (ew[i - 1], self[i]) {
-                ew[i] = Some(alpha * current + one_minus_alpha * ew_prev);
-            }
-        }
+        self.fmap(|current| {
+            let result = if let (Some(curr_val), Some(prev_val)) = (current, prev) {
+                Some(alpha * curr_val + one_minus_alpha * prev_val)
+            } else {
+                current.cloned()
+            };
 
-        ew
+            prev = result;
+            result
+        })
     }
 
     pub fn max(&self, scalar: f64) -> Self {
@@ -196,6 +196,34 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.ma(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_ema() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![Some(1.0), Some(1.5), Some(2.25), Some(3.125), Some(4.0625)];
+        let series = Series::from(&source);
+
+        let result = series.ema(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_smma() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            Some(1.0),
+            Some(1.3333333333333335),
+            Some(1.888888888888889),
+            Some(2.5925925925925926),
+            Some(3.3950617283950617),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.smma(3);
 
         assert_eq!(result, expected);
     }
