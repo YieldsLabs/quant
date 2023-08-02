@@ -66,11 +66,11 @@ impl Series<f64> {
         self.ew(period, |period| 1.0 / (period as f64))
     }
 
-    pub fn variance(&self, period: usize) -> Self {
-        let ma = self.ma(period);
+    pub fn var(&self, period: usize) -> Self {
+        let ma: Vec<f64> = self.ma(period).into();
 
         self.sliding_map(period, |window, size, i| {
-            let ma_val = ma[i].unwrap_or(0.0);
+            let ma_val = ma[i];
             let variance = window
                 .iter()
                 .filter_map(|v| *v)
@@ -82,7 +82,7 @@ impl Series<f64> {
     }
 
     pub fn std(&self, period: usize) -> Self {
-        self.variance(period).fmap(|val| val.map(|v| v.sqrt()))
+        self.var(period).fmap(|val| val.map(|v| v.sqrt()))
     }
 }
 
