@@ -112,12 +112,7 @@ impl Series<f64> {
     }
 
     pub fn change(&self, length: usize) -> Self {
-        let shifted = self.shift(length);
-
-        self.zip_with(&shifted, |current, prev| match (current, prev) {
-            (Some(current_val), Some(prev_val)) => Some(current_val - prev_val),
-            _ => None,
-        })
+        self - self.shift(length)
     }
 
     pub fn highest(&self, period: usize) -> Self {
