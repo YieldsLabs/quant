@@ -4,6 +4,7 @@ members = [
 "momentum",
 "patterns",
 "price",
+"strategy",
 "trend",
 "volatility",
 "volume",

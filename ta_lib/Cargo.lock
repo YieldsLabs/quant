@@ -30,6 +30,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "strategy"
+version = "0.1.0"
+
+[[package]]
 name = "trend"
 version = "0.1.0"
 dependencies = [
