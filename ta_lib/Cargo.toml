@@ -1,13 +1,13 @@
 [workspace]
 members = [
 "core",
-"momentum",
+"indicators/momentum",
+"indicators/trend",
+"indicators/volatility",
+"indicators/volume",
 "patterns",
 "price",
 "strategy",
-"trend",
-"volatility",
-"volume",
 "utils"
 ]
 
