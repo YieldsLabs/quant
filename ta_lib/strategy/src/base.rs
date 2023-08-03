@@ -12,6 +12,51 @@ pub struct OHLCV {
     pub volume: f64,
 }
 
+pub struct OHLCVSeries {
+    pub open: Vec<f64>,
+    pub high: Vec<f64>,
+    pub low: Vec<f64>,
+    pub close: Vec<f64>,
+    pub volume: Vec<f64>,
+}
+
+impl OHLCVSeries {
+    fn new(data: &VecDeque<OHLCV>) -> OHLCVSeries {
+        OHLCVSeries {
+            open: data.iter().map(|ohlcv| ohlcv.open).collect(),
+            high: data.iter().map(|ohlcv| ohlcv.high).collect(),
+            low: data.iter().map(|ohlcv| ohlcv.low).collect(),
+            close: data.iter().map(|ohlcv| ohlcv.close).collect(),
+            volume: data.iter().map(|ohlcv| ohlcv.volume).collect(),
+        }
+    }
+}
+
+trait Price {
+    fn hl2(&self) -> Vec<f64>;
+    fn hlc3(&self) -> Vec<f64>;
+    fn hlcc4(&self) -> Vec<f64>;
+    fn ohlc4(&self) -> Vec<f64>;
+}
+
+impl Price for OHLCVSeries {
+    fn hl2(&self) -> Vec<f64> {
+        median_price(&self.high, &self.low)
+    }
+
+    fn hlc3(&self) -> Vec<f64> {
+        typical_price(&self.high, &self.low, &self.close)
+    }
+
+    fn hlcc4(&self) -> Vec<f64> {
+        wcl(&self.high, &self.low, &self.close)
+    }
+
+    fn ohlc4(&self) -> Vec<f64> {
+        average_price(&self.open, &self.high, &self.low, &self.close)
+    }
+}
+
 #[repr(u32)]
 pub enum Action {
     GoLong = 1,
@@ -27,8 +72,8 @@ pub trait Strategy {
     fn next(&mut self, data: OHLCV) -> Action;
     fn can_process(&self) -> bool;
     fn params(&self) -> HashMap<String, usize>;
-    fn entry(&self) -> (bool, bool);
-    fn exit(&self) -> (bool, bool);
+    fn entry(&self, data: &OHLCVSeries) -> (bool, bool);
+    fn exit(&self, data: &OHLCVSeries) -> (bool, bool);
 }
 
 pub struct BaseStrategy {
@@ -56,8 +101,10 @@ impl Strategy for BaseStrategy {
         }
 
         if self.can_process() {
-            let (go_long, go_short) = self.entry();
-            let (exit_long, exit_short) = self.exit();
+            let series = OHLCVSeries::new(&self.data);
+
+            let (go_long, go_short) = self.entry(&series);
+            let (exit_long, exit_short) = self.exit(&series);
 
             if go_long {
                 return Action::GoLong;
@@ -90,48 +137,12 @@ impl Strategy for BaseStrategy {
         map
     }
 
-    fn entry(&self) -> (bool, bool) {
+    fn entry(&self, _series: &OHLCVSeries) -> (bool, bool) {
         (false, false)
     }
 
-    fn exit(&self) -> (bool, bool) {
+    fn exit(&self, _series: &OHLCVSeries) -> (bool, bool) {
         (false, false)
-    }
-}
-
-pub struct OHLCVSeries {
-    pub open: Vec<f64>,
-    pub high: Vec<f64>,
-    pub low: Vec<f64>,
-    pub close: Vec<f64>,
-    pub volume: Vec<f64>,
-}
-
-impl OHLCVSeries {
-    fn new(data: &VecDeque<OHLCV>) -> OHLCVSeries {
-        OHLCVSeries {
-            open: data.iter().map(|ohlcv| ohlcv.open).collect(),
-            high: data.iter().map(|ohlcv| ohlcv.high).collect(),
-            low: data.iter().map(|ohlcv| ohlcv.low).collect(),
-            close: data.iter().map(|ohlcv| ohlcv.close).collect(),
-            volume: data.iter().map(|ohlcv| ohlcv.volume).collect(),
-        }
-    }
-
-    fn hl2(&self) -> Vec<f64> {
-        median_price(&self.high, &self.low)
-    }
-
-    fn hlc3(&self) -> Vec<f64> {
-        typical_price(&self.high, &self.low, &self.close)
-    }
-
-    fn hlcc4(&self) -> Vec<f64> {
-        wcl(&self.high, &self.low, &self.close)
-    }
-
-    fn ohlc4(&self) -> Vec<f64> {
-        average_price(&self.open, &self.high, &self.low, &self.close)
     }
 }
 
