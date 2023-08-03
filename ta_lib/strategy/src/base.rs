@@ -1,3 +1,4 @@
+use price::{average::average_price, median::median_price, typical::typical_price, wcl::wcl};
 use std::collections::{HashMap, VecDeque};
 
 pub struct OHLCV {
@@ -62,6 +63,10 @@ pub trait StrategySeries {
     fn low(&self) -> Vec<f64>;
     fn close(&self) -> Vec<f64>;
     fn volume(&self) -> Vec<f64>;
+    fn hl2(&self) -> Vec<f64>;
+    fn hlc3(&self) -> Vec<f64>;
+    fn hlcc4(&self) -> Vec<f64>;
+    fn ohlc4(&self) -> Vec<f64>;
 }
 
 impl StrategySeries for BaseStrategy {
@@ -83,6 +88,38 @@ impl StrategySeries for BaseStrategy {
 
     fn volume(&self) -> Vec<f64> {
         self.data.iter().map(|ohlcv| ohlcv.volume).collect()
+    }
+
+    fn hl2(&self) -> Vec<f64> {
+        let high = self.high();
+        let low = self.low();
+
+        median_price(&high, &low)
+    }
+
+    fn hlc3(&self) -> Vec<f64> {
+        let high = self.high();
+        let low = self.low();
+        let close = self.close();
+
+        typical_price(&high, &low, &close)
+    }
+
+    fn hlcc4(&self) -> Vec<f64> {
+        let high = self.high();
+        let low = self.low();
+        let close = self.close();
+
+        wcl(&high, &low, &close)
+    }
+
+    fn ohlc4(&self) -> Vec<f64> {
+        let open = self.open();
+        let high = self.high();
+        let low = self.low();
+        let close = self.close();
+
+        average_price(&open, &high, &low, &close)
     }
 }
 
@@ -128,7 +165,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ohlcv_data() {
+    fn test_strategy_data() {
         let mut strategy = BaseStrategy::new(3);
         let ohlcvs = vec![
             OHLCV {
@@ -170,5 +207,13 @@ mod tests {
         assert_eq!(strategy.low(), vec![1.5, 2.5, 3.5]);
         assert_eq!(strategy.close(), vec![2.5, 3.5, 4.5]);
         assert_eq!(strategy.volume(), vec![200.0, 300.0, 400.0]);
+
+        assert_eq!(strategy.hl2(), vec![2.25, 3.25, 4.25]);
+        assert_eq!(
+            strategy.hlc3(),
+            vec![2.3333333333333335, 3.3333333333333335, 4.333333333333333]
+        );
+        assert_eq!(strategy.hlcc4(), vec![2.375, 3.375, 4.375]);
+        assert_eq!(strategy.ohlc4(), vec![2.25, 3.25, 4.25]);
     }
 }
