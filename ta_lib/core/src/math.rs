@@ -66,6 +66,30 @@ impl Series<f64> {
         self.ew(period, |period| 1.0 / (period as f64))
     }
 
+    pub fn wma(&self, period: usize) -> Self {
+        let len = self.len();
+        let mut wma = Series::empty(len);
+
+        let weight_sum = (period * (period + 1)) as f64 / 2.0;
+
+        let mut sum = 0.0;
+
+        for i in 0..period {
+            let weight = (i + 1) as f64;
+            sum += self[i].unwrap_or(0.0) * weight;
+        }
+
+        wma[period - 1] = Some(sum / weight_sum);
+
+        for i in period..len {
+            sum += (self[i].unwrap_or(0.0) - self[i - period].unwrap_or(0.0)) * period as f64
+                - (weight_sum - period as f64);
+            wma[i] = Some(sum / weight_sum);
+        }
+
+        wma
+    }
+
     pub fn var(&self, period: usize) -> Self {
         let ma: Vec<f64> = self.ma(period).into();
 

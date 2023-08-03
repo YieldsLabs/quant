@@ -1,26 +1,11 @@
 use core::series::Series;
 
 pub fn wma(source: &[f64], period: usize) -> Vec<f64> {
-    let len = source.len();
-    let mut wma = Series::empty(len);
+    let source = Series::from(&source);
 
-    let weight_sum = (period * (period + 1)) as f64 / 2.0;
+    let wma = source.wma(period);
 
-    let mut sum = 0.0;
-
-    for i in 0..period {
-        let weight = (i + 1) as f64;
-        sum += source[i] * weight;
-    }
-
-    wma[period - 1] = Some(sum / weight_sum);
-
-    for i in period..len {
-        sum += (source[i] - source[i - period]) * period as f64 - (weight_sum - period as f64);
-        wma[i] = Some(sum / weight_sum);
-    }
-
-    wma.nz(Some(0.0)).into()
+    wma.into()
 }
 
 #[cfg(test)]
