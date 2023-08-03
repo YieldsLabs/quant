@@ -1,5 +1,8 @@
 use price::{average::average_price, median::median_price, typical::typical_price, wcl::wcl};
-use std::collections::{HashMap, VecDeque};
+use std::{
+    cmp::min,
+    collections::{HashMap, VecDeque},
+};
 
 pub struct OHLCV {
     pub open: f64,
@@ -15,7 +18,6 @@ pub trait Strategy {
     fn next(&mut self, data: OHLCV);
     fn can_process(&self) -> bool;
     fn params(&self) -> HashMap<String, usize>;
-    fn lookback(&self) -> usize;
 }
 
 pub struct BaseStrategy {
@@ -25,6 +27,8 @@ pub struct BaseStrategy {
 
 impl BaseStrategy {
     pub fn new(lookback_period: usize) -> BaseStrategy {
+        let lookback_period = min(lookback_period, Self::DEFAULT_LOOKBACK);
+
         BaseStrategy {
             data: VecDeque::with_capacity(lookback_period),
             lookback_period,
@@ -36,22 +40,18 @@ impl Strategy for BaseStrategy {
     fn next(&mut self, data: OHLCV) {
         self.data.push_back(data);
 
-        if self.data.len() > self.lookback() {
+        if self.data.len() > self.lookback_period {
             self.data.pop_front();
         }
     }
 
-    fn lookback(&self) -> usize {
-        self.lookback_period
-    }
-
     fn can_process(&self) -> bool {
-        self.data.len() == self.lookback()
+        self.data.len() == self.lookback_period
     }
 
     fn params(&self) -> HashMap<String, usize> {
         let mut map = HashMap::new();
-        map.insert(String::from("lookback_period"), self.lookback());
+        map.insert(String::from("lookback_period"), self.lookback_period);
 
         map
     }
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_base_strategy_creation() {
         let strategy = BaseStrategy::new(20);
-        assert_eq!(strategy.lookback(), 20);
+        assert_eq!(strategy.lookback_period, 20);
     }
 
     #[test]
