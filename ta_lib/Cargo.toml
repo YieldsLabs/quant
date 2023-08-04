@@ -7,7 +7,7 @@ members = [
 "indicators/volume",
 "patterns",
 "price",
-"strategy",
+"strategies/base",
 "utils"
 ]
 

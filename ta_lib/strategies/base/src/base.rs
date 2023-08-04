@@ -4,6 +4,7 @@ use std::{
     collections::{HashMap, VecDeque},
 };
 
+#[derive(Debug, Clone, Copy)]
 pub struct OHLCV {
     pub open: f64,
     pub high: f64,

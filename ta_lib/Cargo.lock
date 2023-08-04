@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "base"
+version = "0.1.0"
+dependencies = [
+ "price",
+]
+
+[[package]]
 name = "core"
 version = "0.1.0"
 
@@ -27,13 +34,6 @@ name = "price"
 version = "0.1.0"
 dependencies = [
  "core",
-]
-
-[[package]]
-name = "strategy"
-version = "0.1.0"
-dependencies = [
- "price",
 ]
 
 [[package]]
