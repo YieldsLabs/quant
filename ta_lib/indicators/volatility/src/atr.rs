@@ -12,10 +12,10 @@ pub fn atr(
     let tr = true_range(high, low, close);
 
     match smothing {
-        Some("SMMA") => smma(&tr, period),
+        Some("WMA") => wma(&tr, period),
         Some("SMA") => sma(&tr, period),
         Some("EMA") => ema(&tr, period),
-        _ => wma(&tr, period),
+        _ => smma(&tr, period),
     }
 }
 
@@ -30,7 +30,7 @@ mod tests {
         let close = vec![1.5, 3.0, 4.5];
         let period = 3;
         let epsilon = 0.001;
-        let smothing = Some("SMMA");
+        let smothing = None;
         let expected = vec![0.0, 0.8333, 1.5555];
 
         let result: Vec<f64> = atr(&high, &low, &close, period, smothing).into();
