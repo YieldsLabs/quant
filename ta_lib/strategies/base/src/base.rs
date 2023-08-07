@@ -98,7 +98,7 @@ impl BaseStrategy {
         }
     }
 
-    fn add_data(&mut self, data: OHLCV) {
+    fn store(&mut self, data: OHLCV) {
         self.data.push_back(data);
 
         if self.data.len() > self.lookback_period {
@@ -109,7 +109,7 @@ impl BaseStrategy {
 
 impl Strategy for BaseStrategy {
     fn next(&mut self, data: OHLCV) -> TradeAction {
-        self.add_data(data);
+        self.store(data);
 
         if !self.can_process() {
             return TradeAction::default();
