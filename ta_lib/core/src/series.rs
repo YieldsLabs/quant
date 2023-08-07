@@ -155,7 +155,7 @@ impl Into<Vec<bool>> for Series<bool> {
 
 impl Into<Series<bool>> for Series<f64> {
     fn into(self) -> Series<bool> {
-        self.fmap(|opt| opt.map(|&f| f != 0.0))
+        self.fmap(|opt| opt.and_then(|&f| if f.is_nan() { None } else { Some(f != 0.0) }))
     }
 }
 
