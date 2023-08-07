@@ -27,8 +27,22 @@ impl Series<f64> {
         self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
     }
 
+    pub fn max(&self, rhs: &Series<f64>) -> Self {
+        self.zip_with(rhs, |a, b| match (a, b) {
+            (Some(a_val), Some(b_val)) => Some(a_val.max(*b_val)),
+            _ => None,
+        })
+    }
+
     pub fn smin(&self, scalar: f64) -> Self {
         self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
+    }
+
+    pub fn min(&self, rhs: &Series<f64>) -> Self {
+        self.zip_with(rhs, |a, b| match (a, b) {
+            (Some(a_val), Some(b_val)) => Some(a_val.min(*b_val)),
+            _ => None,
+        })
     }
 
     pub fn abs(&self) -> Self {
@@ -148,6 +162,21 @@ mod tests {
     }
 
     #[test]
+    fn test_max() {
+        let a = Series::from([
+            44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
+        ]);
+        let b = Series::from([34.34, 44.0, 45.15, 43.60, 14.33, 56.83, 45.10, 45.42, 46.84]);
+        let expected = Series::from([
+            44.34, 44.09, 45.15, 43.61, 44.33, 56.83, 45.10, 45.42, 46.84,
+        ]);
+
+        let result = a.max(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_smin() {
         let source = vec![
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
@@ -178,6 +207,19 @@ mod tests {
                 _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
             }
         }
+    }
+
+    #[test]
+    fn test_min() {
+        let a = Series::from([
+            44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
+        ]);
+        let b = Series::from([34.34, 44.0, 45.15, 43.60, 14.33, 56.83, 45.10, 45.42, 46.84]);
+        let expected = Series::from([34.34, 44.0, 44.15, 43.60, 14.33, 44.83, 45.10, 45.42, 45.84]);
+
+        let result = a.min(&b);
+
+        assert_eq!(result, expected);
     }
 
     #[test]
