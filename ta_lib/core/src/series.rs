@@ -127,7 +127,11 @@ impl Series<f64> {
 impl<T: AsRef<[f64]>> From<T> for Series<f64> {
     fn from(item: T) -> Self {
         Self {
-            data: item.as_ref().iter().map(|&x| Some(x)).collect(),
+            data: item
+                .as_ref()
+                .iter()
+                .map(|&x| if x.is_nan() { None } else { Some(x) })
+                .collect(),
         }
     }
 }
@@ -183,6 +187,16 @@ mod tests {
         let result = Series::from(&source);
 
         assert_eq!(result.len(), expected);
+    }
+
+    #[test]
+    fn test_from() {
+        let source = vec![f64::NAN, 1.0, 2.0, 3.0];
+        let expected = vec![None, Some(1.0), Some(2.0), Some(3.0)];
+
+        let result = Series::from(&source);
+
+        assert_eq!(result, expected);
     }
 
     #[test]
