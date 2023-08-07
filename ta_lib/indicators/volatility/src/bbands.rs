@@ -1,6 +1,10 @@
 use core::series::Series;
 
-pub fn bbands(source: &[f64], period: usize, factor: f64) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
+pub fn bbands(
+    source: &[f64],
+    period: usize,
+    factor: f64,
+) -> (Series<f64>, Series<f64>, Series<f64>) {
     let source = Series::from(source);
 
     let middle_band = source.ma(period);
@@ -9,7 +13,7 @@ pub fn bbands(source: &[f64], period: usize, factor: f64) -> (Vec<f64>, Vec<f64>
     let upper_band = &middle_band + &std_mul;
     let lower_band = &middle_band - &std_mul;
 
-    (upper_band.into(), middle_band.into(), lower_band.into())
+    (upper_band, middle_band, lower_band)
 }
 
 #[cfg(test)]
@@ -34,16 +38,20 @@ mod tests {
 
         let (upper_band, middle_band, lower_band) = bbands(&source, period, factor);
 
+        let result_upper_band: Vec<f64> = upper_band.into();
+        let result_middle_band: Vec<f64> = middle_band.into();
+        let result_lower_band: Vec<f64> = lower_band.into();
+
         for i in 0..source.len() {
-            let a = upper_band[i];
+            let a = result_upper_band[i];
             let b = expected_upper_band[i];
             assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b);
 
-            let a = middle_band[i];
+            let a = result_middle_band[i];
             let b = expected_middle_band[i];
             assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b);
 
-            let a = lower_band[i];
+            let a = result_lower_band[i];
             let b = expected_lower_band[i];
             assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b);
         }

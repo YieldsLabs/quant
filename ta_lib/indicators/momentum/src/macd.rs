@@ -5,7 +5,7 @@ pub fn macd(
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
-) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
+) -> (Series<f64>, Series<f64>, Series<f64>) {
     let source = Series::from(source);
 
     let ema_fast = source.ema(fast_period);
@@ -17,7 +17,7 @@ pub fn macd(
 
     let histogram = &macd_line - &signal_line;
 
-    (macd_line.into(), signal_line.into(), histogram.into())
+    (macd_line, signal_line, histogram)
 }
 
 #[cfg(test)]
@@ -45,28 +45,32 @@ mod tests {
         let (macd_line, signal_line, histogram) =
             macd(&source, fast_period, slow_period, signal_period);
 
+        let result_macd_line: Vec<f64> = macd_line.into();
+        let result_signal_line: Vec<f64> = signal_line.into();
+        let result_histogram: Vec<f64> = histogram.into();
+
         for i in 0..source.len() {
             assert!(
-                (macd_line[i] - expected_macd_line[i]).abs() < epsilon,
+                (result_macd_line[i] - expected_macd_line[i]).abs() < epsilon,
                 "at position {}: {} != {}",
                 i,
-                macd_line[i],
+                result_macd_line[i],
                 expected_macd_line[i]
             );
 
             assert!(
-                (signal_line[i] - expected_signal_line[i]).abs() < epsilon,
+                (result_signal_line[i] - expected_signal_line[i]).abs() < epsilon,
                 "at position {}: {} != {}",
                 i,
-                signal_line[i],
+                result_signal_line[i],
                 expected_signal_line[i]
             );
 
             assert!(
-                (histogram[i] - expected_histogram[i]).abs() < epsilon,
+                (result_histogram[i] - expected_histogram[i]).abs() < epsilon,
                 "at position {}: {} != {}",
                 i,
-                histogram[i],
+                result_histogram[i],
                 expected_histogram[i]
             );
         }

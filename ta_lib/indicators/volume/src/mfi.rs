@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn mfi(hlc3: &[f64], volume: &[f64], period: usize) -> Vec<f64> {
+pub fn mfi(hlc3: &[f64], volume: &[f64], period: usize) -> Series<f64> {
     let hlc3 = Series::from(hlc3);
     let volume = Series::from(volume);
 
@@ -18,7 +18,7 @@ pub fn mfi(hlc3: &[f64], volume: &[f64], period: usize) -> Vec<f64> {
 
     let mfi = 100.0 - 100.0 / (1.0 + money_ratio);
 
-    mfi.nz(Some(50.0)).into()
+    mfi.nz(Some(50.0))
 }
 
 #[cfg(test)]
@@ -34,7 +34,7 @@ mod tests {
 
         let expected = vec![50.0, 100.0, 51.9992, 36.1106, 34.2859];
 
-        let result = mfi(&hlc3, &volume, period);
+        let result: Vec<f64> = mfi(&hlc3, &volume, period).into();
 
         for i in 0..hlc3.len() {
             assert!(

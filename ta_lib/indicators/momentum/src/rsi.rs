@@ -1,17 +1,17 @@
 use core::series::Series;
 
-pub fn rsi(source: &[f64], period: usize) -> Vec<f64> {
+pub fn rsi(source: &[f64], period: usize) -> Series<f64> {
     let source = Series::from(source);
     let changes = source.change(1);
 
-    let up = changes.max(0.0).smma(period);
-    let down = changes.min(0.0).neg().smma(period);
+    let up = changes.smax(0.0).smma(period);
+    let down = changes.smin(0.0).neg().smma(period);
 
     let rs = up / down;
 
     let rsi = 100.0 - 100.0 / (1.0 + rs);
 
-    rsi.nz(Some(100.0)).into()
+    rsi.nz(Some(100.0))
 }
 
 #[cfg(test)]
@@ -29,7 +29,7 @@ mod test {
             100.0, 0.0, 22.3602, 6.5478, 56.1559, 69.602669, 74.642227, 79.480508, 84.221979,
         ];
 
-        let result = rsi(&source, period);
+        let result: Vec<f64> = rsi(&source, period).into();
 
         for i in 0..source.len() {
             assert!(

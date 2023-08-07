@@ -1,3 +1,4 @@
+use core::series::Series;
 use trend::{ema::ema, sma::sma, smma::smma, wma::wma};
 use utils::tr::true_range;
 
@@ -7,7 +8,7 @@ pub fn atr(
     close: &[f64],
     period: usize,
     smothing: Option<&str>,
-) -> Vec<f64> {
+) -> Series<f64> {
     let tr = true_range(high, low, close);
 
     match smothing {
@@ -32,7 +33,7 @@ mod tests {
         let smothing = Some("SMMA");
         let expected = vec![0.0, 0.8333, 1.5555];
 
-        let result = atr(&high, &low, &close, period, smothing);
+        let result: Vec<f64> = atr(&high, &low, &close, period, smothing).into();
 
         for i in 0..high.len() {
             assert!(

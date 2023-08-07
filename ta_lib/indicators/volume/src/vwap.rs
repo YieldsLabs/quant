@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn vwap(hlc3: &[f64], volume: &[f64]) -> Vec<f64> {
+pub fn vwap(hlc3: &[f64], volume: &[f64]) -> Series<f64> {
     let hlc3 = Series::from(hlc3);
     let volume = Series::from(volume);
 
@@ -8,7 +8,7 @@ pub fn vwap(hlc3: &[f64], volume: &[f64]) -> Vec<f64> {
 
     let vwap = product.cumsum() / volume.cumsum();
 
-    vwap.into()
+    vwap
 }
 
 #[cfg(test)]
@@ -26,7 +26,7 @@ mod tests {
         let expected = vec![1.5, 2.5, 3.5];
         let epsilon = 0.001;
 
-        let result = vwap(&hlc3, &volume);
+        let result: Vec<f64> = vwap(&hlc3, &volume).into();
 
         for i in 0..high.len() {
             assert!(

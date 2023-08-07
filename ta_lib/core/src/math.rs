@@ -23,11 +23,11 @@ impl Series<f64> {
         })
     }
 
-    pub fn max(&self, scalar: f64) -> Self {
+    pub fn smax(&self, scalar: f64) -> Self {
         self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
     }
 
-    pub fn min(&self, scalar: f64) -> Self {
+    pub fn smin(&self, scalar: f64) -> Self {
         self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
     }
 
@@ -115,7 +115,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_max() {
+    fn test_smax() {
         let source = vec![
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
         ];
@@ -134,7 +134,7 @@ mod tests {
         ];
         let series = Series::from(&source);
 
-        let result = series.change(length).max(0.0);
+        let result = series.change(length).smax(0.0);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {
@@ -148,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn test_min() {
+    fn test_smin() {
         let source = vec![
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
         ];
@@ -167,7 +167,7 @@ mod tests {
         ];
         let series = Series::from(&source);
 
-        let result = series.change(length).min(0.0);
+        let result = series.change(length).smin(0.0);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {
