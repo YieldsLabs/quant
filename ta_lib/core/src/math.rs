@@ -49,6 +49,11 @@ impl Series<f64> {
         self.fmap(|val| val.map(|v| v.abs()))
     }
 
+    pub fn round(&self, places: u32) -> Self {
+        let multiplier = 10f64.powi(places as i32);
+        self.fmap(|val| val.map(|v| (v * multiplier).round() / multiplier))
+    }
+
     pub fn cumsum(&self) -> Self {
         let mut sum = 0.0;
 
@@ -229,6 +234,16 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.abs();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_round() {
+        let source = Series::from([-1.2211, 2.2456, -3.5677, 4.0, 5.3334]);
+        let expected = Series::from([-1.0, 2.0, -4.0, 4.0, 5.0]);
+
+        let result = source.round(0);
 
         assert_eq!(result, expected);
     }
