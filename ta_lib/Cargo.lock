@@ -14,6 +14,7 @@ name = "candlestick"
 version = "0.1.0"
 dependencies = [
  "core",
+ "volatility",
 ]
 
 [[package]]
