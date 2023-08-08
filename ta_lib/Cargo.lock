@@ -10,6 +10,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "candlestick"
+version = "0.1.0"
+dependencies = [
+ "core",
+]
+
+[[package]]
 name = "core"
 version = "0.1.0"
 
@@ -20,13 +27,6 @@ dependencies = [
  "core",
  "price",
  "utils",
-]
-
-[[package]]
-name = "patterns"
-version = "0.1.0"
-dependencies = [
- "core",
 ]
 
 [[package]]

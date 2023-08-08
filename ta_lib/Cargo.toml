@@ -5,7 +5,7 @@ members = [
 "indicators/trend",
 "indicators/volatility",
 "indicators/volume",
-"patterns",
+"patterns/candlestick",
 "price",
 "strategies/base",
 "utils"
