@@ -6,7 +6,7 @@ pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series
     let low = Series::from(low);
     let close = Series::from(close);
 
-    let golden_low = &low.shift(2) + 2.618 * (&high.shift(2) - low.shift(2));
+    let golden_low = low.shift(2) + 2.618 * (high.shift(2) - low.shift(2));
 
     low.lte(&open.shift(1)) & close.shift(1).gt(&golden_low) & close.shift(2).gt(&open.shift(2))
 }
@@ -17,7 +17,7 @@ pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series
     let low = Series::from(low);
     let close = Series::from(close);
 
-    let golden_high = &high.shift(2) - 2.618 * (&high.shift(2) - low.shift(2));
+    let golden_high = high.shift(2) - 2.618 * (high.shift(2) - low.shift(2));
 
     high.gte(&open.shift(1)) & close.shift(1).lt(&golden_high) & close.shift(2).lt(&open.shift(2))
 }
