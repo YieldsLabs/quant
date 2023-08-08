@@ -10,6 +10,7 @@ pub mod double_trouble;
 pub mod engulfing;
 pub mod euphoria;
 pub mod euphoria_extreme;
+pub mod golden;
 pub mod h;
 pub mod hammer;
 pub mod harami_flexible;
