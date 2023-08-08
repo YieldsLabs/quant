@@ -1,9 +1,8 @@
 use core::series::Series;
 use price::{average::average_price, median::median_price, typical::typical_price, wcl::wcl};
-use std::{
-    cmp::max,
-    collections::{HashMap, VecDeque},
-};
+use std::{cmp::max, collections::VecDeque};
+
+const DEFAULT_LOOKBACK: usize = 55;
 
 #[derive(Debug, Clone, Copy)]
 pub struct OHLCV {
@@ -74,27 +73,25 @@ impl Default for TradeAction {
     }
 }
 
-pub trait Strategy {
-    const DEFAULT_LOOKBACK: usize = 55;
-
-    fn next(&mut self, data: OHLCV) -> TradeAction;
-    fn can_process(&self) -> bool;
-    fn params(&self) -> HashMap<String, usize>;
+pub trait StrategySignals {
+    fn parameters(&self) -> Vec<usize>;
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
     fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
-pub struct BaseStrategy {
+pub struct BaseStrategy<S: StrategySignals> {
     data: VecDeque<OHLCV>,
+    strategy: S,
     lookback_period: usize,
 }
 
-impl BaseStrategy {
-    pub fn new(lookback_period: usize) -> BaseStrategy {
-        let lookback_period = max(lookback_period, Self::DEFAULT_LOOKBACK);
+impl<S: StrategySignals> BaseStrategy<S> {
+    pub fn new(lookback_period: usize, strategy: S) -> BaseStrategy<S> {
+        let lookback_period = max(lookback_period, DEFAULT_LOOKBACK);
 
         BaseStrategy {
             data: VecDeque::with_capacity(lookback_period),
+            strategy,
             lookback_period,
         }
     }
@@ -106,10 +103,12 @@ impl BaseStrategy {
             self.data.pop_front();
         }
     }
-}
 
-impl Strategy for BaseStrategy {
-    fn next(&mut self, data: OHLCV) -> TradeAction {
+    fn can_process(&self) -> bool {
+        self.data.len() >= self.lookback_period
+    }
+
+    pub fn next(&mut self, data: OHLCV) -> TradeAction {
         self.store(data);
 
         if !self.can_process() {
@@ -118,8 +117,8 @@ impl Strategy for BaseStrategy {
 
         let series = OHLCVSeries::new(&self.data);
 
-        let (go_long_series, go_short_series) = self.entry(&series);
-        let (exit_long_series, exit_short_series) = self.exit(&series);
+        let (go_long_series, go_short_series) = self.strategy.entry(&series);
+        let (exit_long_series, exit_short_series) = self.strategy.exit(&series);
 
         let go_long = go_long_series
             .into_iter()
@@ -153,23 +152,8 @@ impl Strategy for BaseStrategy {
         }
     }
 
-    fn can_process(&self) -> bool {
-        self.data.len() >= self.lookback_period
-    }
-
-    fn params(&self) -> HashMap<String, usize> {
-        let mut map = HashMap::new();
-        map.insert(String::from("lookback_period"), self.lookback_period);
-
-        map
-    }
-
-    fn entry(&self, _series: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
-    }
-
-    fn exit(&self, _series: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
+    pub fn parameters(&self) -> Vec<usize> {
+        self.strategy.parameters()
     }
 }
 
@@ -177,49 +161,39 @@ impl Strategy for BaseStrategy {
 mod tests {
     use super::*;
 
+    struct DumbStrategy {
+        short_period: usize,
+    }
+
+    impl StrategySignals for DumbStrategy {
+        fn entry(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            (Series::empty(1), Series::empty(1))
+        }
+
+        fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            (Series::empty(1), Series::empty(1))
+        }
+
+        fn parameters(&self) -> Vec<usize> {
+            vec![self.short_period]
+        }
+    }
+
     #[test]
-    fn test_base_strategy_creation() {
-        let strategy = BaseStrategy::new(20);
+    fn test_base_strategy_lookback() {
+        let strategy = BaseStrategy::<DumbStrategy>::new(2, DumbStrategy { short_period: 10 });
         assert_eq!(strategy.lookback_period, 55);
     }
 
     #[test]
-    fn test_base_strategy_can_process() {
-        let mut strategy = BaseStrategy::new(2);
-        assert_eq!(strategy.can_process(), false);
-
-        strategy.next(OHLCV {
-            open: 1.0,
-            high: 2.0,
-            low: 1.0,
-            close: 2.0,
-            volume: 1000.0,
-        });
-        assert_eq!(strategy.can_process(), false);
-
-        for _i in 0..54 {
-            strategy.next(OHLCV {
-                open: 2.0,
-                high: 3.0,
-                low: 2.0,
-                close: 3.0,
-                volume: 2000.0,
-            });
-        }
-
-        assert_eq!(strategy.can_process(), true);
-    }
-
-    #[test]
-    fn test_base_strategy_params() {
-        let strategy = BaseStrategy::new(20);
-        let params = strategy.params();
-        assert_eq!(params.get("lookback_period"), Some(&55));
+    fn test_base_strategy_parameters() {
+        let strategy = BaseStrategy::<DumbStrategy>::new(2, DumbStrategy { short_period: 10 });
+        assert_eq!(strategy.parameters(), vec![10]);
     }
 
     #[test]
     fn test_strategy_data() {
-        let mut strategy = BaseStrategy::new(3);
+        let mut strategy = BaseStrategy::new(3, DumbStrategy { short_period: 10 });
         let ohlcvs = vec![
             OHLCV {
                 open: 1.0,

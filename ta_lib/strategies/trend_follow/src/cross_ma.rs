@@ -1,43 +1,26 @@
-use base::base::{BaseStrategy, OHLCVSeries, Strategy, TradeAction, OHLCV};
+use base::base::{BaseStrategy, OHLCVSeries, StrategySignals};
 use core::series::Series;
 use std::cmp::max;
-use std::collections::HashMap;
 use trend::sma::sma;
 
 pub struct MACrossStrategy {
-    base: BaseStrategy,
     short_period: usize,
     long_period: usize,
 }
 
 impl MACrossStrategy {
-    pub fn new(short_period: usize, long_period: usize) -> Self {
+    pub fn new(short_period: usize, long_period: usize) -> BaseStrategy<MACrossStrategy> {
         let lookback_period = max(short_period, long_period);
-
-        MACrossStrategy {
-            base: BaseStrategy::new(lookback_period),
+        let strategy = MACrossStrategy {
             short_period,
             long_period,
-        }
+        };
+
+        BaseStrategy::new(lookback_period, strategy)
     }
 }
 
-impl Strategy for MACrossStrategy {
-    fn next(&mut self, data: OHLCV) -> TradeAction {
-        self.base.next(data)
-    }
-
-    fn can_process(&self) -> bool {
-        self.base.can_process()
-    }
-
-    fn params(&self) -> HashMap<String, usize> {
-        let mut map = self.base.params();
-        map.insert(String::from("short_period"), self.short_period);
-        map.insert(String::from("long_period"), self.long_period);
-        map
-    }
-
+impl StrategySignals for MACrossStrategy {
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let short_ma = sma(&data.close, self.short_period);
         let long_ma = sma(&data.close, self.long_period);
@@ -48,30 +31,24 @@ impl Strategy for MACrossStrategy {
         (long_signal, short_signal)
     }
 
-    fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        self.base.exit(data)
+    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        (Series::empty(1), Series::empty(1))
+    }
+
+    fn parameters(&self) -> Vec<usize> {
+        vec![self.short_period, self.long_period]
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use base::base::TradeAction;
+    use base::base::{TradeAction, OHLCV};
 
     #[test]
     fn test_macrossstrategy_new() {
-        let strat = MACrossStrategy::new(50, 100);
-        assert_eq!(strat.short_period, 50);
-        assert_eq!(strat.long_period, 100);
-    }
-
-    #[test]
-    fn test_macrossstrategy_params() {
-        let strat = MACrossStrategy::new(50, 100);
-        let params = strat.params();
-        assert_eq!(params.get("lookback_period"), Some(&100));
-        assert_eq!(params.get("short_period"), Some(&50));
-        assert_eq!(params.get("long_period"), Some(&100));
+        let strategy = MACrossStrategy::new(50, 100);
+        assert_eq!(strategy.parameters(), vec![50, 100]);
     }
 
     #[test]
@@ -96,7 +73,6 @@ mod tests {
             volume: 20.0,
         });
 
-        assert_eq!(strat.can_process(), true);
         assert_eq!(result, TradeAction::DoNothing);
     }
 }
