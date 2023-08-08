@@ -59,7 +59,7 @@ impl Price for OHLCVSeries {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TradeAction {
     GoLong(f64),
     GoShort(f64),

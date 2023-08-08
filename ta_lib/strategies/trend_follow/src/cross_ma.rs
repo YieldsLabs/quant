@@ -56,6 +56,7 @@ impl Strategy for MACrossStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use base::base::TradeAction;
 
     #[test]
     fn test_macrossstrategy_new() {
@@ -71,5 +72,31 @@ mod tests {
         assert_eq!(params.get("lookback_period"), Some(&100));
         assert_eq!(params.get("short_period"), Some(&50));
         assert_eq!(params.get("long_period"), Some(&100));
+    }
+
+    #[test]
+    fn test_macrossstrategy_next_do_nothing() {
+        let mut strat = MACrossStrategy::new(50, 100);
+
+        for _i in 0..100 {
+            strat.next(OHLCV {
+                open: 2.0,
+                high: 3.0,
+                low: 2.0,
+                close: 3.0,
+                volume: 2000.0,
+            });
+        }
+
+        let result = strat.next(OHLCV {
+            open: 1.0,
+            high: 1.0,
+            low: 1.0,
+            close: 1.0,
+            volume: 20.0,
+        });
+
+        assert_eq!(strat.can_process(), true);
+        assert_eq!(result, TradeAction::DoNothing);
     }
 }
