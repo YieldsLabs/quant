@@ -7,13 +7,13 @@ impl Series<f64> {
     {
         let alpha = alpha_fn(period);
 
-        let one_minus_alpha = 1.0 - alpha;
+        let beta = 1.0 - alpha;
 
         let mut prev = None;
 
         self.fmap(|current| {
             let result = if let (Some(curr_val), Some(prev_val)) = (current, prev) {
-                Some(alpha * curr_val + one_minus_alpha * prev_val)
+                Some(alpha * curr_val + beta * prev_val)
             } else {
                 current.cloned()
             };
@@ -49,7 +49,7 @@ impl Series<f64> {
         self.fmap(|val| val.map(|v| v.abs()))
     }
 
-    pub fn round(&self, places: u32) -> Self {
+    pub fn round(&self, places: usize) -> Self {
         let multiplier = 10f64.powi(places as i32);
         self.fmap(|val| val.map(|v| (v * multiplier).round() / multiplier))
     }
