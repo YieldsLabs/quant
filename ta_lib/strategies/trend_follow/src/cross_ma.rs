@@ -1,4 +1,5 @@
 use base::base::{BaseStrategy, OHLCVSeries, Strategy, TradeAction, OHLCV};
+use core::series::Series;
 use std::cmp::max;
 use std::collections::HashMap;
 use trend::sma::sma;
@@ -37,20 +38,17 @@ impl Strategy for MACrossStrategy {
         map
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (bool, bool) {
+    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let short_ma = sma(&data.close, self.short_period);
         let long_ma = sma(&data.close, self.long_period);
 
-        let long_signal: Vec<bool> = short_ma.cross_over(&long_ma).into();
-        let short_signal: Vec<bool> = short_ma.cross_under(&long_ma).into();
+        let long_signal = short_ma.cross_over(&long_ma);
+        let short_signal = short_ma.cross_under(&long_ma);
 
-        (
-            long_signal.last().cloned().unwrap_or_default(),
-            short_signal.last().cloned().unwrap_or_default(),
-        )
+        (long_signal, short_signal)
     }
 
-    fn exit(&self, data: &OHLCVSeries) -> (bool, bool) {
+    fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         self.base.exit(data)
     }
 }

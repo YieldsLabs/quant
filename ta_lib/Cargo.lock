@@ -6,6 +6,7 @@ version = 3
 name = "base"
 version = "0.1.0"
 dependencies = [
+ "core",
  "price",
 ]
 
@@ -49,6 +50,7 @@ name = "trend_follow"
 version = "0.1.0"
 dependencies = [
  "base",
+ "core",
  "trend",
 ]
 

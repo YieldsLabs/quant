@@ -1,3 +1,4 @@
+use core::series::Series;
 use price::{average::average_price, median::median_price, typical::typical_price, wcl::wcl};
 use std::{
     cmp::max,
@@ -79,8 +80,8 @@ pub trait Strategy {
     fn next(&mut self, data: OHLCV) -> TradeAction;
     fn can_process(&self) -> bool;
     fn params(&self) -> HashMap<String, usize>;
-    fn entry(&self, data: &OHLCVSeries) -> (bool, bool);
-    fn exit(&self, data: &OHLCVSeries) -> (bool, bool);
+    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub struct BaseStrategy {
@@ -117,8 +118,29 @@ impl Strategy for BaseStrategy {
 
         let series = OHLCVSeries::new(&self.data);
 
-        let (go_long, go_short) = self.entry(&series);
-        let (exit_long, exit_short) = self.exit(&series);
+        let (go_long_series, go_short_series) = self.entry(&series);
+        let (exit_long_series, exit_short_series) = self.exit(&series);
+
+        let go_long = go_long_series
+            .into_iter()
+            .flatten()
+            .last()
+            .unwrap_or_default();
+        let go_short = go_short_series
+            .into_iter()
+            .flatten()
+            .last()
+            .unwrap_or_default();
+        let exit_long = exit_long_series
+            .into_iter()
+            .flatten()
+            .last()
+            .unwrap_or_default();
+        let exit_short = exit_short_series
+            .into_iter()
+            .flatten()
+            .last()
+            .unwrap_or_default();
 
         let suggested_entry = series.hlc3().last().unwrap_or(&std::f64::NAN).clone();
 
@@ -142,12 +164,12 @@ impl Strategy for BaseStrategy {
         map
     }
 
-    fn entry(&self, _series: &OHLCVSeries) -> (bool, bool) {
-        (false, false)
+    fn entry(&self, _series: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        (Series::empty(1), Series::empty(1))
     }
 
-    fn exit(&self, _series: &OHLCVSeries) -> (bool, bool) {
-        (false, false)
+    fn exit(&self, _series: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        (Series::empty(1), Series::empty(1))
     }
 }
 
