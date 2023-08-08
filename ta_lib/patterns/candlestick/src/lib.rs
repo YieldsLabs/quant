@@ -6,6 +6,7 @@ pub mod counterattack;
 pub mod doji;
 pub mod doji_double;
 pub mod doppelganger;
+pub mod double_trouble;
 pub mod engulfing;
 pub mod euphoria;
 pub mod euphoria_extreme;
