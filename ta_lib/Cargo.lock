@@ -45,6 +45,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "trend_follow"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "trend",
+]
+
+[[package]]
 name = "utils"
 version = "0.1.0"
 dependencies = [

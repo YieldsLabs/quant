@@ -1,6 +1,6 @@
 use price::{average::average_price, median::median_price, typical::typical_price, wcl::wcl};
 use std::{
-    cmp::min,
+    cmp::max,
     collections::{HashMap, VecDeque},
 };
 
@@ -90,7 +90,7 @@ pub struct BaseStrategy {
 
 impl BaseStrategy {
     pub fn new(lookback_period: usize) -> BaseStrategy {
-        let lookback_period = min(lookback_period, Self::DEFAULT_LOOKBACK);
+        let lookback_period = max(lookback_period, Self::DEFAULT_LOOKBACK);
 
         BaseStrategy {
             data: VecDeque::with_capacity(lookback_period),
@@ -158,7 +158,7 @@ mod tests {
     #[test]
     fn test_base_strategy_creation() {
         let strategy = BaseStrategy::new(20);
-        assert_eq!(strategy.lookback_period, 20);
+        assert_eq!(strategy.lookback_period, 55);
     }
 
     #[test]
@@ -175,13 +175,16 @@ mod tests {
         });
         assert_eq!(strategy.can_process(), false);
 
-        strategy.next(OHLCV {
-            open: 2.0,
-            high: 3.0,
-            low: 2.0,
-            close: 3.0,
-            volume: 2000.0,
-        });
+        for _i in 0..54 {
+            strategy.next(OHLCV {
+                open: 2.0,
+                high: 3.0,
+                low: 2.0,
+                close: 3.0,
+                volume: 2000.0,
+            });
+        }
+
         assert_eq!(strategy.can_process(), true);
     }
 
@@ -189,7 +192,7 @@ mod tests {
     fn test_base_strategy_params() {
         let strategy = BaseStrategy::new(20);
         let params = strategy.params();
-        assert_eq!(params.get("lookback_period"), Some(&20));
+        assert_eq!(params.get("lookback_period"), Some(&55));
     }
 
     #[test]
@@ -232,18 +235,23 @@ mod tests {
 
         let series = OHLCVSeries::new(&strategy.data);
 
-        assert_eq!(series.open, vec![2.0, 3.0, 4.0]);
-        assert_eq!(series.high, vec![3.0, 4.0, 5.0]);
-        assert_eq!(series.low, vec![1.5, 2.5, 3.5]);
-        assert_eq!(series.close, vec![2.5, 3.5, 4.5]);
-        assert_eq!(series.volume, vec![200.0, 300.0, 400.0]);
+        assert_eq!(series.open, vec![1.0, 2.0, 3.0, 4.0]);
+        assert_eq!(series.high, vec![2.0, 3.0, 4.0, 5.0]);
+        assert_eq!(series.low, vec![0.5, 1.5, 2.5, 3.5]);
+        assert_eq!(series.close, vec![1.5, 2.5, 3.5, 4.5]);
+        assert_eq!(series.volume, vec![100.0, 200.0, 300.0, 400.0]);
 
-        assert_eq!(series.hl2(), vec![2.25, 3.25, 4.25]);
+        assert_eq!(series.hl2(), vec![1.25, 2.25, 3.25, 4.25]);
         assert_eq!(
             series.hlc3(),
-            vec![2.3333333333333335, 3.3333333333333335, 4.333333333333333]
+            vec![
+                1.3333333333333333,
+                2.3333333333333335,
+                3.3333333333333335,
+                4.333333333333333
+            ]
         );
-        assert_eq!(series.hlcc4(), vec![2.375, 3.375, 4.375]);
-        assert_eq!(series.ohlc4(), vec![2.25, 3.25, 4.25]);
+        assert_eq!(series.hlcc4(), vec![1.375, 2.375, 3.375, 4.375]);
+        assert_eq!(series.ohlc4(), vec![1.25, 2.25, 3.25, 4.25]);
     }
 }

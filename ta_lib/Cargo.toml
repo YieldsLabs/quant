@@ -8,6 +8,7 @@ members = [
 "patterns/candlestick",
 "price",
 "strategies/base",
+"strategies/trend_follow",
 "utils"
 ]
 
