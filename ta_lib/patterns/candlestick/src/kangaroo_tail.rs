@@ -7,7 +7,7 @@ pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series
     let close = Series::from(close);
 
     let range = &high - &low;
-    let two_third_low_range = &range * 0.66 + &low;
+    let two_third_low_range = &low - &range * 0.66;
 
     close.gt(&two_third_low_range)
         & open.gt(&two_third_low_range)
