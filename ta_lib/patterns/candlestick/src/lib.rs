@@ -15,6 +15,7 @@ pub mod harami_strict;
 pub mod hexad;
 pub mod kangaroo_tail;
 pub mod marubozu;
+pub mod master_candle;
 pub mod on_neck;
 pub mod piercing;
 pub mod shrinking;
