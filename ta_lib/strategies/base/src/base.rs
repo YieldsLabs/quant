@@ -79,6 +79,11 @@ pub trait StrategySignals {
     fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
+pub trait Strategy {
+    fn parameters(&self) -> Vec<usize>;
+    fn next(&mut self, data: OHLCV) -> TradeAction;
+}
+
 pub struct BaseStrategy<S: StrategySignals> {
     data: VecDeque<OHLCV>,
     strategy: S,
@@ -86,7 +91,7 @@ pub struct BaseStrategy<S: StrategySignals> {
 }
 
 impl<S: StrategySignals> BaseStrategy<S> {
-    pub fn new(lookback_period: usize, strategy: S) -> BaseStrategy<S> {
+    pub fn new(strategy: S, lookback_period: usize) -> BaseStrategy<S> {
         let lookback_period = max(lookback_period, DEFAULT_LOOKBACK);
 
         BaseStrategy {
@@ -107,8 +112,10 @@ impl<S: StrategySignals> BaseStrategy<S> {
     fn can_process(&self) -> bool {
         self.data.len() >= self.lookback_period
     }
+}
 
-    pub fn next(&mut self, data: OHLCV) -> TradeAction {
+impl<S: StrategySignals> Strategy for BaseStrategy<S> {
+    fn next(&mut self, data: OHLCV) -> TradeAction {
         self.store(data);
 
         if !self.can_process() {
@@ -152,7 +159,7 @@ impl<S: StrategySignals> BaseStrategy<S> {
         }
     }
 
-    pub fn parameters(&self) -> Vec<usize> {
+    fn parameters(&self) -> Vec<usize> {
         self.strategy.parameters()
     }
 }
@@ -181,19 +188,19 @@ mod tests {
 
     #[test]
     fn test_base_strategy_lookback() {
-        let strategy = BaseStrategy::<DumbStrategy>::new(2, DumbStrategy { short_period: 10 });
+        let strategy = BaseStrategy::<DumbStrategy>::new(DumbStrategy { short_period: 10 }, 2);
         assert_eq!(strategy.lookback_period, 55);
     }
 
     #[test]
     fn test_base_strategy_parameters() {
-        let strategy = BaseStrategy::<DumbStrategy>::new(2, DumbStrategy { short_period: 10 });
+        let strategy = BaseStrategy::<DumbStrategy>::new(DumbStrategy { short_period: 10 }, 2);
         assert_eq!(strategy.parameters(), vec![10]);
     }
 
     #[test]
     fn test_strategy_data() {
-        let mut strategy = BaseStrategy::new(3, DumbStrategy { short_period: 10 });
+        let mut strategy = BaseStrategy::new(DumbStrategy { short_period: 10 }, 3);
         let ohlcvs = vec![
             OHLCV {
                 open: 1.0,

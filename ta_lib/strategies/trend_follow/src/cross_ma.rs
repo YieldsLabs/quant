@@ -1,4 +1,4 @@
-use base::base::{BaseStrategy, OHLCVSeries, StrategySignals};
+use base::base::{BaseStrategy, OHLCVSeries, Strategy, StrategySignals};
 use core::series::Series;
 use std::cmp::max;
 use trend::sma::sma;
@@ -16,7 +16,7 @@ impl MACrossStrategy {
             long_period,
         };
 
-        BaseStrategy::new(lookback_period, strategy)
+        BaseStrategy::new(strategy, lookback_period)
     }
 }
 
