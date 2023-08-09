@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn aosc(hl2: &[f64], short_period: usize, long_period: usize) -> Series<f64> {
+pub fn aosc(hl2: &[f32], short_period: usize, long_period: usize) -> Series<f32> {
     let hl2 = Series::from(hl2);
 
     let ao_short = hl2.ma(short_period);
@@ -25,7 +25,7 @@ mod tests {
         let long_period = 4;
         let expected = vec![0.0, 0.0, 0.5, 1.0, 1.0];
 
-        let result: Vec<f64> = aosc(&hl2, short_period, long_period).into();
+        let result: Vec<f32> = aosc(&hl2, short_period, long_period).into();
 
         assert_eq!(result, expected);
     }

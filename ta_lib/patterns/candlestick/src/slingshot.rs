@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series<bool> {
+pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
     let open = Series::from(open);
     let high = Series::from(high);
     let low = Series::from(low);
@@ -16,7 +16,7 @@ pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series
         & low.shift(1).gt(&close.shift(4))
 }
 
-pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series<bool> {
+pub fn bearish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
     let open = Series::from(open);
     let high = Series::from(high);
     let low = Series::from(low);

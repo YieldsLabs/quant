@@ -6,19 +6,19 @@ const DEFAULT_LOOKBACK: usize = 55;
 
 #[derive(Debug, Clone, Copy)]
 pub struct OHLCV {
-    pub open: f64,
-    pub high: f64,
-    pub low: f64,
-    pub close: f64,
-    pub volume: f64,
+    pub open: f32,
+    pub high: f32,
+    pub low: f32,
+    pub close: f32,
+    pub volume: f32,
 }
 
 pub struct OHLCVSeries {
-    pub open: Vec<f64>,
-    pub high: Vec<f64>,
-    pub low: Vec<f64>,
-    pub close: Vec<f64>,
-    pub volume: Vec<f64>,
+    pub open: Vec<f32>,
+    pub high: Vec<f32>,
+    pub low: Vec<f32>,
+    pub close: Vec<f32>,
+    pub volume: Vec<f32>,
 }
 
 impl OHLCVSeries {
@@ -34,34 +34,34 @@ impl OHLCVSeries {
 }
 
 trait Price {
-    fn hl2(&self) -> Vec<f64>;
-    fn hlc3(&self) -> Vec<f64>;
-    fn hlcc4(&self) -> Vec<f64>;
-    fn ohlc4(&self) -> Vec<f64>;
+    fn hl2(&self) -> Vec<f32>;
+    fn hlc3(&self) -> Vec<f32>;
+    fn hlcc4(&self) -> Vec<f32>;
+    fn ohlc4(&self) -> Vec<f32>;
 }
 
 impl Price for OHLCVSeries {
-    fn hl2(&self) -> Vec<f64> {
+    fn hl2(&self) -> Vec<f32> {
         median_price(&self.high, &self.low)
     }
 
-    fn hlc3(&self) -> Vec<f64> {
+    fn hlc3(&self) -> Vec<f32> {
         typical_price(&self.high, &self.low, &self.close)
     }
 
-    fn hlcc4(&self) -> Vec<f64> {
+    fn hlcc4(&self) -> Vec<f32> {
         wcl(&self.high, &self.low, &self.close)
     }
 
-    fn ohlc4(&self) -> Vec<f64> {
+    fn ohlc4(&self) -> Vec<f32> {
         average_price(&self.open, &self.high, &self.low, &self.close)
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TradeAction {
-    GoLong(f64),
-    GoShort(f64),
+    GoLong(f32),
+    GoShort(f32),
     ExitLong,
     ExitShort,
     DoNothing,
@@ -141,7 +141,7 @@ impl<S: StrategySignals> BaseStrategy<S> {
             .last()
             .unwrap_or_default();
 
-        let suggested_entry = series.hlc3().last().unwrap_or(&std::f64::NAN).clone();
+        let suggested_entry = series.hlc3().last().unwrap_or(&std::f32::NAN).clone();
 
         match (go_long, go_short, exit_long, exit_short) {
             (true, _, _, _) => TradeAction::GoLong(suggested_entry),

@@ -1,4 +1,4 @@
-pub fn true_range(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
+pub fn true_range(high: &[f32], low: &[f32], close: &[f32]) -> Vec<f32> {
     let len = high.len();
 
     let mut true_range = vec![0.0; len];
@@ -7,9 +7,9 @@ pub fn true_range(high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
         let tr = if close[i - 1].is_nan() {
             high[i] - low[i]
         } else {
-            f64::max(
-                f64::max(high[i] - low[i], f64::abs(high[i] - close[i - 1])),
-                f64::abs(low[i] - close[i - 1]),
+            f32::max(
+                f32::max(high[i] - low[i], f32::abs(high[i] - close[i - 1])),
+                f32::abs(low[i] - close[i - 1]),
             )
         };
 

@@ -2,13 +2,13 @@ use core::series::Series;
 use utils::stoch::stoch;
 
 pub fn stochosc(
-    high: &[f64],
-    low: &[f64],
-    close: &[f64],
+    high: &[f32],
+    low: &[f32],
+    close: &[f32],
     period: usize,
     k_period: usize,
     d_period: usize,
-) -> (Series<f64>, Series<f64>) {
+) -> (Series<f32>, Series<f32>) {
     let stoch = stoch(high, low, close, period);
 
     let k = stoch.ma(k_period);
@@ -37,8 +37,8 @@ mod tests {
 
         let (k, d) = stochosc(&high, &low, &close, period, k_period, d_period);
 
-        let result_k: Vec<f64> = k.into();
-        let result_d: Vec<f64> = d.into();
+        let result_k: Vec<f32> = k.into();
+        let result_d: Vec<f32> = d.into();
 
         for i in 0..result_k.len() {
             assert!(

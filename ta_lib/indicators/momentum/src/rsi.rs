@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn rsi(source: &[f64], period: usize) -> Series<f64> {
+pub fn rsi(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
     let changes = source.change(1);
 
@@ -29,7 +29,7 @@ mod test {
             100.0, 0.0, 22.3602, 6.5478, 56.1559, 69.602669, 74.642227, 79.480508, 84.221979,
         ];
 
-        let result: Vec<f64> = rsi(&source, period).into();
+        let result: Vec<f32> = rsi(&source, period).into();
 
         for i in 0..source.len() {
             assert!(

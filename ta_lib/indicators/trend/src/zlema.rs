@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn zlema(source: &[f64], period: usize) -> Series<f64> {
+pub fn zlema(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
     let ema_first = source.ema(period);
@@ -23,7 +23,7 @@ mod tests {
         let period = 3;
         let expected = vec![100.0, 103.75, 108.75, 114.0625, 119.375];
 
-        let result: Vec<f64> = zlema(&source, period).into();
+        let result: Vec<f32> = zlema(&source, period).into();
 
         assert_eq!(result, expected);
     }

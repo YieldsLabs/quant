@@ -4,7 +4,7 @@ use std::ops::{BitAnd, BitOr};
 macro_rules! scalar_comparison {
     ($($name:ident, $op:tt);* $(;)?) => {
         $(
-            pub fn $name(&self, scalar: f64) -> Series<bool> {
+            pub fn $name(&self, scalar: f32) -> Series<bool> {
                 self.compare_scalar(scalar, |a, b| a $op b)
             }
         )*
@@ -14,7 +14,7 @@ macro_rules! scalar_comparison {
 macro_rules! series_comparison {
     ($($name:ident, $op:tt);* $(;)?) => {
         $(
-            pub fn $name(&self, rhs: &Series<f64>) -> Series<bool> {
+            pub fn $name(&self, rhs: &Series<f32>) -> Series<bool> {
                 self.compare(rhs, |a, b| a $op b)
             }
         )*
@@ -31,17 +31,17 @@ macro_rules! logical_operation {
     };
 }
 
-impl Series<f64> {
-    fn compare_scalar<F>(&self, scalar: f64, comparator: F) -> Series<bool>
+impl Series<f32> {
+    fn compare_scalar<F>(&self, scalar: f32, comparator: F) -> Series<bool>
     where
-        F: Fn(f64, f64) -> bool,
+        F: Fn(f32, f32) -> bool,
     {
         self.fmap(|x| x.map(|v| comparator(*v, scalar)))
     }
 
-    fn compare<F>(&self, rhs: &Series<f64>, comparator: F) -> Series<bool>
+    fn compare<F>(&self, rhs: &Series<f32>, comparator: F) -> Series<bool>
     where
-        F: Fn(f64, f64) -> bool,
+        F: Fn(f32, f32) -> bool,
     {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(comparator(*a_val, *b_val)),

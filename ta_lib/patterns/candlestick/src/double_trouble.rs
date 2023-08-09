@@ -1,7 +1,7 @@
 use core::series::Series;
 use volatility::atr::atr;
 
-pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series<bool> {
+pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
     let atr = atr(high, low, close, 10, None);
     let open = Series::from(open);
     let close = Series::from(close);
@@ -12,7 +12,7 @@ pub fn bullish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series
         & (&close - &open).gt(&(2.0 * atr.shift(1)))
 }
 
-pub fn bearish(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Series<bool> {
+pub fn bearish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
     let atr = atr(high, low, close, 10, None);
     let open = Series::from(open);
     let close = Series::from(close);

@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn stoch(high: &[f64], low: &[f64], close: &[f64], period: usize) -> Series<f64> {
+pub fn stoch(high: &[f32], low: &[f32], close: &[f32], period: usize) -> Series<f32> {
     let high = Series::from(high);
     let low = Series::from(low);
     let close = Series::from(close);

@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn bullish(open: &[f64], close: &[f64]) -> Series<bool> {
+pub fn bullish(open: &[f32], close: &[f32]) -> Series<bool> {
     let open = Series::from(open);
     let close = Series::from(close);
 
@@ -11,7 +11,7 @@ pub fn bullish(open: &[f64], close: &[f64]) -> Series<bool> {
         & close.gte(&((close.shift(1) + open.shift(1)) / 2.0))
 }
 
-pub fn bearish(open: &[f64], close: &[f64]) -> Series<bool> {
+pub fn bearish(open: &[f32], close: &[f32]) -> Series<bool> {
     let open = Series::from(open);
     let close = Series::from(close);
 

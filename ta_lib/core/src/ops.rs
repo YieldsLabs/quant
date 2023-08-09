@@ -1,10 +1,10 @@
 use crate::series::Series;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-impl Series<f64> {
-    fn binary_op_series<F>(&self, rhs: &Series<f64>, op: F) -> Series<f64>
+impl Series<f32> {
+    fn binary_op_series<F>(&self, rhs: &Series<f32>, op: F) -> Series<f32>
     where
-        F: Fn(&f64, &f64) -> f64,
+        F: Fn(&f32, &f32) -> f32,
     {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(op(a_val, b_val)),
@@ -12,33 +12,33 @@ impl Series<f64> {
         })
     }
 
-    fn unary_op_scalar<F>(&self, scalar: f64, op: F) -> Series<f64>
+    fn unary_op_scalar<F>(&self, scalar: f32, op: F) -> Series<f32>
     where
-        F: Fn(&f64, f64) -> f64,
+        F: Fn(&f32, f32) -> f32,
     {
         self.fmap(|val| val.map(|v| op(v, scalar)))
     }
 
-    pub fn neg(&self) -> Series<f64> {
+    pub fn neg(&self) -> Series<f32> {
         self.fmap(|val| val.map(|v| v.neg()))
     }
 
-    pub fn add_series(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn add_series(&self, rhs: &Series<f32>) -> Series<f32> {
         self.binary_op_series(rhs, |a, b| a + b)
     }
 
-    pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn mul_series(&self, rhs: &Series<f32>) -> Series<f32> {
         self.binary_op_series(rhs, |a, b| a * b)
     }
 
-    pub fn div_series(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn div_series(&self, rhs: &Series<f32>) -> Series<f32> {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => {
                 if *b_val == 0.0 {
                     if *a_val > 0.0 {
-                        Some(std::f64::INFINITY)
+                        Some(std::f32::INFINITY)
                     } else if *a_val < 0.0 {
-                        Some(std::f64::NEG_INFINITY)
+                        Some(std::f32::NEG_INFINITY)
                     } else {
                         None
                     }
@@ -50,25 +50,25 @@ impl Series<f64> {
         })
     }
 
-    pub fn sub_series(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn sub_series(&self, rhs: &Series<f32>) -> Series<f32> {
         self.binary_op_series(rhs, |a, b| a - b)
     }
 
-    pub fn add_scalar(&self, scalar: f64) -> Series<f64> {
+    pub fn add_scalar(&self, scalar: f32) -> Series<f32> {
         self.unary_op_scalar(scalar, |v, s| v + s)
     }
 
-    pub fn mul_scalar(&self, scalar: f64) -> Series<f64> {
+    pub fn mul_scalar(&self, scalar: f32) -> Series<f32> {
         self.unary_op_scalar(scalar, |v, s| v * s)
     }
 
-    pub fn div_scalar(&self, scalar: f64) -> Series<f64> {
+    pub fn div_scalar(&self, scalar: f32) -> Series<f32> {
         self.unary_op_scalar(scalar, |v, s| {
             if *v == 0.0 {
                 if s > 0.0 {
-                    std::f64::INFINITY
+                    std::f32::INFINITY
                 } else if s < 0.0 {
-                    std::f64::NEG_INFINITY
+                    std::f32::NEG_INFINITY
                 } else {
                     0.0
                 }
@@ -78,23 +78,23 @@ impl Series<f64> {
         })
     }
 
-    pub fn sub_scalar(&self, scalar: f64) -> Series<f64> {
+    pub fn sub_scalar(&self, scalar: f32) -> Series<f32> {
         self.unary_op_scalar(scalar, |v, s| v - s)
     }
 }
 
-impl Neg for &Series<f64> {
-    type Output = Series<f64>;
+impl Neg for &Series<f32> {
+    type Output = Series<f32>;
 
-    fn neg(self) -> Series<f64> {
+    fn neg(self) -> Series<f32> {
         self.neg()
     }
 }
 
 impl Series<bool> {
-    fn bool_op_series<F>(&self, rhs: &Series<f64>, op: F) -> Series<f64>
+    fn bool_op_series<F>(&self, rhs: &Series<f32>, op: F) -> Series<f32>
     where
-        F: Fn(&bool, &f64) -> f64,
+        F: Fn(&bool, &f32) -> f32,
     {
         self.zip_with(rhs, |b, a| match (b, a) {
             (Some(b_val), Some(a_val)) => Some(op(b_val, a_val)),
@@ -102,37 +102,37 @@ impl Series<bool> {
         })
     }
 
-    pub fn mul_series(&self, rhs: &Series<f64>) -> Series<f64> {
+    pub fn mul_series(&self, rhs: &Series<f32>) -> Series<f32> {
         self.bool_op_series(rhs, |b, a| if *b { *a } else { 0.0 })
     }
 }
 
 macro_rules! impl_series_ops {
     ($trait_name:ident, $trait_method:ident, $method:ident) => {
-        impl $trait_name<Series<f64>> for &Series<f64> {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: Series<f64>) -> Series<f64> {
+        impl $trait_name<Series<f32>> for &Series<f32> {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: Series<f32>) -> Series<f32> {
                 self.$method(&rhs)
             }
         }
 
-        impl $trait_name<&Series<f64>> for Series<f64> {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+        impl $trait_name<&Series<f32>> for Series<f32> {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
                 self.$method(rhs)
             }
         }
 
-        impl $trait_name<&Series<f64>> for &Series<f64> {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+        impl $trait_name<&Series<f32>> for &Series<f32> {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
                 self.$method(rhs)
             }
         }
 
-        impl $trait_name<Series<f64>> for Series<f64> {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: Series<f64>) -> Series<f64> {
+        impl $trait_name<Series<f32>> for Series<f32> {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: Series<f32>) -> Series<f32> {
                 self.$method(&rhs)
             }
         }
@@ -146,98 +146,98 @@ impl_series_ops!(Sub, sub, sub_series);
 
 macro_rules! impl_scalar_ops {
     ($trait_name:ident, $trait_method:ident, $method:ident) => {
-        impl $trait_name<&Series<f64>> for f64 {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+        impl $trait_name<&Series<f32>> for f32 {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
                 rhs.$method(self)
             }
         }
 
-        impl $trait_name<Series<f64>> for f64 {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: Series<f64>) -> Series<f64> {
+        impl $trait_name<Series<f32>> for f32 {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: Series<f32>) -> Series<f32> {
                 rhs.$method(self)
             }
         }
 
-        impl $trait_name<f64> for &Series<f64> {
-            type Output = Series<f64>;
-            fn $trait_method(self, scalar: f64) -> Series<f64> {
+        impl $trait_name<f32> for &Series<f32> {
+            type Output = Series<f32>;
+            fn $trait_method(self, scalar: f32) -> Series<f32> {
                 self.$method(scalar)
             }
         }
 
-        impl $trait_name<f64> for Series<f64> {
-            type Output = Series<f64>;
-            fn $trait_method(self, scalar: f64) -> Series<f64> {
+        impl $trait_name<f32> for Series<f32> {
+            type Output = Series<f32>;
+            fn $trait_method(self, scalar: f32) -> Series<f32> {
                 self.$method(scalar)
             }
         }
     };
 }
 
-impl Div<f64> for &Series<f64> {
-    type Output = Series<f64>;
+impl Div<f32> for &Series<f32> {
+    type Output = Series<f32>;
 
-    fn div(self, scalar: f64) -> Series<f64> {
+    fn div(self, scalar: f32) -> Series<f32> {
         self.div_scalar(scalar)
     }
 }
 
-impl Div<f64> for Series<f64> {
-    type Output = Series<f64>;
+impl Div<f32> for Series<f32> {
+    type Output = Series<f32>;
 
-    fn div(self, scalar: f64) -> Series<f64> {
+    fn div(self, scalar: f32) -> Series<f32> {
         self.div_scalar(scalar)
     }
 }
 
-impl Div<&Series<f64>> for f64 {
-    type Output = Series<f64>;
+impl Div<&Series<f32>> for f32 {
+    type Output = Series<f32>;
 
-    fn div(self, rhs: &Series<f64>) -> Series<f64> {
+    fn div(self, rhs: &Series<f32>) -> Series<f32> {
         let scalars = vec![self; rhs.len()];
         Series::from(&scalars).div_series(&rhs)
     }
 }
 
-impl Div<Series<f64>> for f64 {
-    type Output = Series<f64>;
+impl Div<Series<f32>> for f32 {
+    type Output = Series<f32>;
 
-    fn div(self, rhs: Series<f64>) -> Series<f64> {
+    fn div(self, rhs: Series<f32>) -> Series<f32> {
         let scalars = vec![self; rhs.len()];
         Series::from(&scalars).div_series(&rhs)
     }
 }
 
-impl Sub<f64> for &Series<f64> {
-    type Output = Series<f64>;
+impl Sub<f32> for &Series<f32> {
+    type Output = Series<f32>;
 
-    fn sub(self, scalar: f64) -> Series<f64> {
+    fn sub(self, scalar: f32) -> Series<f32> {
         self.sub_scalar(scalar)
     }
 }
 
-impl Sub<f64> for Series<f64> {
-    type Output = Series<f64>;
+impl Sub<f32> for Series<f32> {
+    type Output = Series<f32>;
 
-    fn sub(self, scalar: f64) -> Series<f64> {
+    fn sub(self, scalar: f32) -> Series<f32> {
         self.sub_scalar(scalar)
     }
 }
 
-impl Sub<&Series<f64>> for f64 {
-    type Output = Series<f64>;
+impl Sub<&Series<f32>> for f32 {
+    type Output = Series<f32>;
 
-    fn sub(self, rhs: &Series<f64>) -> Series<f64> {
+    fn sub(self, rhs: &Series<f32>) -> Series<f32> {
         rhs.neg().sub_scalar(-self)
     }
 }
 
-impl Sub<Series<f64>> for f64 {
-    type Output = Series<f64>;
+impl Sub<Series<f32>> for f32 {
+    type Output = Series<f32>;
 
-    fn sub(self, rhs: Series<f64>) -> Series<f64> {
+    fn sub(self, rhs: Series<f32>) -> Series<f32> {
         rhs.neg().sub_scalar(-self)
     }
 }
@@ -247,16 +247,16 @@ impl_scalar_ops!(Mul, mul, mul_scalar);
 
 macro_rules! impl_bool_ops {
     ($trait_name:ident, $trait_method:ident, $method:ident) => {
-        impl $trait_name<&Series<f64>> for &Series<bool> {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+        impl $trait_name<&Series<f32>> for &Series<bool> {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
                 self.$method(&rhs)
             }
         }
 
-        impl $trait_name<&Series<f64>> for Series<bool> {
-            type Output = Series<f64>;
-            fn $trait_method(self, rhs: &Series<f64>) -> Series<f64> {
+        impl $trait_name<&Series<f32>> for Series<bool> {
+            type Output = Series<f32>;
+            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
                 self.$method(rhs)
             }
         }

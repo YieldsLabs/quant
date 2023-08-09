@@ -1,10 +1,10 @@
 use core::series::Series;
 
 pub fn bbands(
-    source: &[f64],
+    source: &[f32],
     period: usize,
-    factor: f64,
-) -> (Series<f64>, Series<f64>, Series<f64>) {
+    factor: f32,
+) -> (Series<f32>, Series<f32>, Series<f32>) {
     let source = Series::from(source);
 
     let middle_band = source.ma(period);
@@ -38,9 +38,9 @@ mod tests {
 
         let (upper_band, middle_band, lower_band) = bbands(&source, period, factor);
 
-        let result_upper_band: Vec<f64> = upper_band.into();
-        let result_middle_band: Vec<f64> = middle_band.into();
-        let result_lower_band: Vec<f64> = lower_band.into();
+        let result_upper_band: Vec<f32> = upper_band.into();
+        let result_middle_band: Vec<f32> = middle_band.into();
+        let result_lower_band: Vec<f32> = lower_band.into();
 
         for i in 0..source.len() {
             let a = result_upper_band[i];

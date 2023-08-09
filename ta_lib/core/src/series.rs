@@ -88,10 +88,10 @@ impl<T> IndexMut<usize> for Series<T> {
     }
 }
 
-impl Series<f64> {
+impl Series<f32> {
     fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
     where
-        F: Fn(Option<&f64>, Option<&f64>) -> bool,
+        F: Fn(Option<&f32>, Option<&f32>) -> bool,
     {
         self.sliding_map(period, |window, _, _| {
             window.iter().fold(None, |acc, x| {
@@ -104,7 +104,7 @@ impl Series<f64> {
         })
     }
 
-    pub fn nz(&self, replacement: Option<f64>) -> Self {
+    pub fn nz(&self, replacement: Option<f32>) -> Self {
         self.fmap(|opt| match opt {
             Some(v) => Some(*v),
             None => Some(replacement.unwrap_or(0.0)),
@@ -124,7 +124,7 @@ impl Series<f64> {
     }
 }
 
-impl<T: AsRef<[f64]>> From<T> for Series<f64> {
+impl<T: AsRef<[f32]>> From<T> for Series<f32> {
     fn from(item: T) -> Self {
         Self {
             data: item
@@ -145,8 +145,8 @@ impl<T> IntoIterator for Series<T> {
     }
 }
 
-impl Into<Vec<f64>> for Series<f64> {
-    fn into(self) -> Vec<f64> {
+impl Into<Vec<f32>> for Series<f32> {
+    fn into(self) -> Vec<f32> {
         self.data.into_iter().map(|x| x.unwrap_or(0.0)).collect()
     }
 }
@@ -157,14 +157,14 @@ impl Into<Vec<bool>> for Series<bool> {
     }
 }
 
-impl Into<Series<bool>> for Series<f64> {
+impl Into<Series<bool>> for Series<f32> {
     fn into(self) -> Series<bool> {
         self.fmap(|opt| opt.and_then(|&f| if f.is_nan() { None } else { Some(f != 0.0) }))
     }
 }
 
-impl PartialEq<Vec<Option<f64>>> for Series<f64> {
-    fn eq(&self, other: &Vec<Option<f64>>) -> bool {
+impl PartialEq<Vec<Option<f32>>> for Series<f32> {
+    fn eq(&self, other: &Vec<Option<f32>>) -> bool {
         &self.data == other
     }
 }
@@ -191,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_from() {
-        let source = vec![f64::NAN, 1.0, 2.0, 3.0];
+        let source = vec![f32::NAN, 1.0, 2.0, 3.0];
         let expected = vec![None, Some(1.0), Some(2.0), Some(3.0)];
 
         let result = Series::from(&source);
@@ -231,7 +231,7 @@ mod tests {
             None,
             Some(-0.25),
             Some(0.0599),
-            Some(-0.539),
+            Some(-0.540),
             Some(0.7199),
             Some(0.5),
             Some(0.2700),

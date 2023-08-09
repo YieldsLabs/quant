@@ -1,9 +1,9 @@
 use crate::series::Series;
 
-impl Series<f64> {
+impl Series<f32> {
     fn ew<F>(&self, period: usize, alpha_fn: F) -> Self
     where
-        F: Fn(usize) -> f64,
+        F: Fn(usize) -> f32,
     {
         let alpha = alpha_fn(period);
 
@@ -23,22 +23,22 @@ impl Series<f64> {
         })
     }
 
-    pub fn smax(&self, scalar: f64) -> Self {
+    pub fn smax(&self, scalar: f32) -> Self {
         self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
     }
 
-    pub fn max(&self, rhs: &Series<f64>) -> Self {
+    pub fn max(&self, rhs: &Series<f32>) -> Self {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(a_val.max(*b_val)),
             _ => None,
         })
     }
 
-    pub fn smin(&self, scalar: f64) -> Self {
+    pub fn smin(&self, scalar: f32) -> Self {
         self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
     }
 
-    pub fn min(&self, rhs: &Series<f64>) -> Self {
+    pub fn min(&self, rhs: &Series<f32>) -> Self {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(a_val.min(*b_val)),
             _ => None,
@@ -50,7 +50,7 @@ impl Series<f64> {
     }
 
     pub fn round(&self, places: usize) -> Self {
-        let multiplier = 10f64.powi(places as i32);
+        let multiplier = 10f32.powi(places as i32);
         self.fmap(|val| val.map(|v| (v * multiplier).round() / multiplier))
     }
 
@@ -73,36 +73,36 @@ impl Series<f64> {
 
     pub fn ma(&self, period: usize) -> Self {
         self.sliding_map(period, |window, size, _| {
-            Some(window.iter().filter_map(|v| *v).sum::<f64>() / size as f64)
+            Some(window.iter().filter_map(|v| *v).sum::<f32>() / size as f32)
         })
     }
 
     pub fn ema(&self, period: usize) -> Self {
-        self.ew(period, |period| 2.0 / (period as f64 + 1.0))
+        self.ew(period, |period| 2.0 / (period as f32 + 1.0))
     }
 
     pub fn smma(&self, period: usize) -> Self {
-        self.ew(period, |period| 1.0 / (period as f64))
+        self.ew(period, |period| 1.0 / (period as f32))
     }
 
     pub fn wma(&self, period: usize) -> Self {
         let len = self.len();
         let mut wma = Series::empty(len);
 
-        let weight_sum = (period * (period + 1)) as f64 / 2.0;
+        let weight_sum = (period * (period + 1)) as f32 / 2.0;
 
         let mut sum = 0.0;
 
         for i in 0..period {
-            let weight = (i + 1) as f64;
+            let weight = (i + 1) as f32;
             sum += self[i].unwrap_or(0.0) * weight;
         }
 
         wma[period - 1] = Some(sum / weight_sum);
 
         for i in period..len {
-            sum += (self[i].unwrap_or(0.0) - self[i - period].unwrap_or(0.0)) * period as f64
-                - (weight_sum - period as f64);
+            sum += (self[i].unwrap_or(0.0) - self[i - period].unwrap_or(0.0)) * period as f32
+                - (weight_sum - period as f32);
             wma[i] = Some(sum / weight_sum);
         }
 
@@ -110,7 +110,7 @@ impl Series<f64> {
     }
 
     pub fn var(&self, period: usize) -> Self {
-        let ma: Vec<f64> = self.ma(period).into();
+        let ma: Vec<f32> = self.ma(period).into();
 
         self.sliding_map(period, |window, size, i| {
             let ma_val = ma[i];
@@ -118,8 +118,8 @@ impl Series<f64> {
                 .iter()
                 .filter_map(|v| *v)
                 .map(|v| (v - ma_val).powi(2))
-                .sum::<f64>()
-                / size as f64;
+                .sum::<f32>()
+                / size as f32;
             Some(variance)
         })
     }
@@ -297,10 +297,10 @@ mod tests {
         let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let expected = vec![
             Some(1.0),
-            Some(1.3333333333333335),
-            Some(1.888888888888889),
-            Some(2.5925925925925926),
-            Some(3.3950617283950617),
+            Some(1.3333333),
+            Some(1.8888888),
+            Some(2.5925925),
+            Some(3.3950615),
         ];
         let series = Series::from(&source);
 

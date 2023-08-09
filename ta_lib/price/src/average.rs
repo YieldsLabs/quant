@@ -1,6 +1,6 @@
 use core::series::Series;
 
-pub fn average_price(open: &[f64], high: &[f64], low: &[f64], close: &[f64]) -> Vec<f64> {
+pub fn average_price(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Vec<f32> {
     let open = Series::from(open);
     let high = Series::from(high);
     let low = Series::from(low);

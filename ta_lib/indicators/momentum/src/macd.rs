@@ -1,11 +1,11 @@
 use core::series::Series;
 
 pub fn macd(
-    source: &[f64],
+    source: &[f32],
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
-) -> (Series<f64>, Series<f64>, Series<f64>) {
+) -> (Series<f32>, Series<f32>, Series<f32>) {
     let source = Series::from(source);
 
     let ema_fast = source.ema(fast_period);
@@ -45,9 +45,9 @@ mod tests {
         let (macd_line, signal_line, histogram) =
             macd(&source, fast_period, slow_period, signal_period);
 
-        let result_macd_line: Vec<f64> = macd_line.into();
-        let result_signal_line: Vec<f64> = signal_line.into();
-        let result_histogram: Vec<f64> = histogram.into();
+        let result_macd_line: Vec<f32> = macd_line.into();
+        let result_signal_line: Vec<f32> = signal_line.into();
+        let result_histogram: Vec<f32> = histogram.into();
 
         for i in 0..source.len() {
             assert!(
