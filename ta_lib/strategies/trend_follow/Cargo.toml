@@ -7,3 +7,6 @@ edition = "2021"
 core = { path = "../../core" }
 base = { path = "../base" }
 trend = { path = "../../indicators/trend" }
+
+[lib]
+crate-type = ["cdylib", "rlib"]

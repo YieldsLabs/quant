@@ -40,6 +40,16 @@ impl StrategySignals for MACrossStrategy {
     }
 }
 
+#[no_mangle]
+pub extern "C" fn create_macross_strategy(
+    short_period: usize,
+    long_period: usize,
+) -> *mut dyn Strategy {
+    let strategy = MACrossStrategy::new(short_period, long_period);
+    let boxed_strategy: Box<dyn Strategy> = Box::new(strategy);
+    Box::into_raw(boxed_strategy)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
