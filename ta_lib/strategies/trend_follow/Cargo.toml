@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+once_cell = "*"
 core = { path = "../../core" }
 base = { path = "../base" }
 trend = { path = "../../indicators/trend" }
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]

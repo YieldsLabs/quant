@@ -1,6 +1,5 @@
-use base::base::{BaseStrategy, OHLCVSeries, Strategy, StrategySignals};
+use base::base::{register_strategy, BaseStrategy, OHLCVSeries, Strategy, StrategySignals};
 use core::series::Series;
-use std::cmp::max;
 use trend::sma::sma;
 
 pub struct MACrossStrategy {
@@ -10,7 +9,7 @@ pub struct MACrossStrategy {
 
 impl MACrossStrategy {
     pub fn new(short_period: usize, long_period: usize) -> BaseStrategy<MACrossStrategy> {
-        let lookback_period = max(short_period, long_period);
+        let lookback_period = std::cmp::max(short_period, long_period);
         let strategy = MACrossStrategy {
             short_period,
             long_period,
@@ -35,19 +34,15 @@ impl StrategySignals for MACrossStrategy {
         (Series::empty(1), Series::empty(1))
     }
 
-    fn parameters(&self) -> Vec<usize> {
-        vec![self.short_period, self.long_period]
+    fn id(&self) -> String {
+        format!("CROSSMA_{}_{}", self.short_period, self.long_period)
     }
 }
 
 #[no_mangle]
-pub extern "C" fn create_macross_strategy(
-    short_period: usize,
-    long_period: usize,
-) -> *mut dyn Strategy {
+pub fn register_crossma(short_period: usize, long_period: usize) -> i32 {
     let strategy = MACrossStrategy::new(short_period, long_period);
-    let boxed_strategy: Box<dyn Strategy> = Box::new(strategy);
-    Box::into_raw(boxed_strategy)
+    register_strategy(Box::new(strategy))
 }
 
 #[cfg(test)]
@@ -58,7 +53,7 @@ mod tests {
     #[test]
     fn test_macrossstrategy_new() {
         let strategy = MACrossStrategy::new(50, 100);
-        assert_eq!(strategy.parameters(), vec![50, 100]);
+        assert_eq!(strategy.id(), "_STRTGCROSSMA_50_100");
     }
 
     #[test]
