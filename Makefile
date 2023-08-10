@@ -10,4 +10,4 @@ check:
 	cargo clippy --all-features --all-targets --workspace --manifest-path=$(TA_LIB_PATH)
 
 build:
-	cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
+	RUSTFLAGS="-C target-feature=+multivalue" cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
