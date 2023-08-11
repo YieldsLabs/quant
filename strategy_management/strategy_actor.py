@@ -3,13 +3,14 @@ from core.events.ohlcv import OHLCV
 from  wasmtime import Memory, Store, Linker, WasiConfig, Module
 
 class StrategyActor:
-    def __init__(self, linker: Linker, store: Store, module: Module):
+    def __init__(self, strategy: str, linker: Linker, store: Store, module: Module):
         self.store = store
         self.instance = linker.instantiate(self.store, module)
         self.strategy_id = None
+        self.strategy = strategy
 
-    def start(self, strategy, *args):
-        self.strategy_id = self.instance.exports(self.store)[f"register_{strategy}"](self.store, *args)
+    def start(self, *args):
+        self.strategy_id = self.instance.exports(self.store)[f"register_{self.strategy}"](self.store, *args)
 
     def stop(self):
         self.instance.exports(self.store)[f"unregister_strategy"](self.store, self.strategy_id)
@@ -57,6 +58,6 @@ class StrategyActorFactory:
         self.store.set_wasi(wasi_config)
         self.linker.define_wasi()
 
-    def create_actor(self, wasm_path):
+    def create_actor(self, wasm_path, strategy):
         module = Module.from_file(self.store.engine, wasm_path)
-        return StrategyActor(self.linker, self.store, module)
+        return StrategyActor(strategy, self.linker, self.store, module)
