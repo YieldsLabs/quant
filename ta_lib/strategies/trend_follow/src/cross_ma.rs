@@ -1,16 +1,16 @@
-use base::base::{register_strategy, BaseStrategy, OHLCVSeries, Strategy, StrategySignals};
+use base::{BaseStrategy, OHLCVSeries, StrategySignals};
 use core::series::Series;
 use trend::sma::sma;
 
-pub struct MACrossStrategy {
+pub struct CrossMAStrategy {
     short_period: usize,
     long_period: usize,
 }
 
-impl MACrossStrategy {
-    pub fn new(short_period: usize, long_period: usize) -> BaseStrategy<MACrossStrategy> {
+impl CrossMAStrategy {
+    pub fn new(short_period: usize, long_period: usize) -> BaseStrategy<CrossMAStrategy> {
         let lookback_period = std::cmp::max(short_period, long_period);
-        let strategy = MACrossStrategy {
+        let strategy = CrossMAStrategy {
             short_period,
             long_period,
         };
@@ -19,7 +19,11 @@ impl MACrossStrategy {
     }
 }
 
-impl StrategySignals for MACrossStrategy {
+impl StrategySignals for CrossMAStrategy {
+    fn signal_id(&self) -> String {
+        format!("CROSSMA_{}_{}", self.short_period, self.long_period)
+    }
+
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let short_ma = sma(&data.close, self.short_period);
         let long_ma = sma(&data.close, self.long_period);
@@ -33,32 +37,22 @@ impl StrategySignals for MACrossStrategy {
     fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (Series::empty(1), Series::empty(1))
     }
-
-    fn id(&self) -> String {
-        format!("CROSSMA_{}_{}", self.short_period, self.long_period)
-    }
-}
-
-#[no_mangle]
-pub fn register_crossma(short_period: usize, long_period: usize) -> i32 {
-    let strategy = MACrossStrategy::new(short_period, long_period);
-    register_strategy(Box::new(strategy))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use base::base::{TradeAction, OHLCV};
+    use base::{TradeAction, TradingStrategy, OHLCV};
 
     #[test]
-    fn test_macrossstrategy_new() {
-        let strategy = MACrossStrategy::new(50, 100);
-        assert_eq!(strategy.id(), "_STRTGCROSSMA_50_100");
+    fn test_crossmatrategy_new() {
+        let strategy = CrossMAStrategy::new(50, 100);
+        assert_eq!(strategy.strategy_id(), "_STRTGCROSSMA_50_100");
     }
 
     #[test]
-    fn test_macrossstrategy_next_do_nothing() {
-        let mut strat = MACrossStrategy::new(50, 100);
+    fn test_crossmastrategy_next_do_nothing() {
+        let mut strat = CrossMAStrategy::new(50, 100);
 
         for _i in 0..100 {
             strat.next(OHLCV {

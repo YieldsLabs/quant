@@ -1,82 +1,10 @@
-#![feature(alloc)]
-extern crate alloc;
+use crate::model::OHLCV;
+use crate::price::Price;
+use crate::OHLCVSeries;
 use core::series::Series;
-use once_cell::sync::Lazy;
-use price::{average::average_price, median::median_price, typical::typical_price, wcl::wcl};
-use std::alloc::Layout;
-use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::sync::RwLock;
 
 const DEFAULT_LOOKBACK: usize = 55;
-
-#[derive(Debug, Copy, Clone)]
-pub struct OHLCV {
-    pub open: f32,
-    pub high: f32,
-    pub low: f32,
-    pub close: f32,
-    pub volume: f32,
-}
-
-#[derive(Debug, Clone)]
-pub struct OHLCVSeries {
-    pub open: Vec<f32>,
-    pub high: Vec<f32>,
-    pub low: Vec<f32>,
-    pub close: Vec<f32>,
-    pub volume: Vec<f32>,
-}
-
-impl OHLCVSeries {
-    fn from_data(data: &VecDeque<OHLCV>) -> Self {
-        let len = data.len();
-
-        let mut open = Vec::with_capacity(len);
-        let mut high = Vec::with_capacity(len);
-        let mut low = Vec::with_capacity(len);
-        let mut close = Vec::with_capacity(len);
-        let mut volume = Vec::with_capacity(len);
-
-        for ohlcv in data.iter() {
-            open.push(ohlcv.open);
-            high.push(ohlcv.high);
-            low.push(ohlcv.low);
-            close.push(ohlcv.close);
-            volume.push(ohlcv.volume);
-        }
-
-        Self {
-            open,
-            high,
-            low,
-            close,
-            volume,
-        }
-    }
-}
-
-trait Price {
-    fn hl2(&self) -> Vec<f32>;
-    fn hlc3(&self) -> Vec<f32>;
-    fn hlcc4(&self) -> Vec<f32>;
-    fn ohlc4(&self) -> Vec<f32>;
-}
-
-impl Price for OHLCVSeries {
-    fn hl2(&self) -> Vec<f32> {
-        median_price(&self.high, &self.low)
-    }
-    fn hlc3(&self) -> Vec<f32> {
-        typical_price(&self.high, &self.low, &self.close)
-    }
-    fn hlcc4(&self) -> Vec<f32> {
-        wcl(&self.high, &self.low, &self.close)
-    }
-    fn ohlc4(&self) -> Vec<f32> {
-        average_price(&self.open, &self.high, &self.low, &self.close)
-    }
-}
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {
@@ -88,30 +16,30 @@ pub enum TradeAction {
 }
 
 pub trait StrategySignals {
-    fn id(&self) -> String;
+    fn signal_id(&self) -> String;
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
     fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
-pub trait Strategy {
+pub trait TradingStrategy {
+    fn strategy_id(&self) -> String;
     fn next(&mut self, ohlcv: OHLCV) -> TradeAction;
-    fn id(&self) -> String;
 }
 
 pub struct BaseStrategy<S: StrategySignals> {
     data: VecDeque<OHLCV>,
-    strategy: S,
+    signal: S,
     lookback_period: usize,
 }
 
 impl<S: StrategySignals> BaseStrategy<S> {
-    pub fn new(strategy: S, lookback_period: usize) -> Self {
+    pub fn new(signal: S, lookback_period: usize) -> Self {
         let adjusted_lookback = std::cmp::max(lookback_period, DEFAULT_LOOKBACK);
 
         Self {
             data: VecDeque::with_capacity(adjusted_lookback),
             lookback_period: adjusted_lookback,
-            strategy,
+            signal,
         }
     }
 
@@ -128,7 +56,7 @@ impl<S: StrategySignals> BaseStrategy<S> {
     }
 }
 
-impl<S: StrategySignals> Strategy for BaseStrategy<S> {
+impl<S: StrategySignals> TradingStrategy for BaseStrategy<S> {
     fn next(&mut self, data: OHLCV) -> TradeAction {
         self.store(data);
 
@@ -138,8 +66,8 @@ impl<S: StrategySignals> Strategy for BaseStrategy<S> {
 
         let series = OHLCVSeries::from_data(&self.data);
 
-        let (go_long_series, go_short_series) = self.strategy.entry(&series);
-        let (exit_long_series, exit_short_series) = self.strategy.exit(&series);
+        let (go_long_series, go_short_series) = self.signal.entry(&series);
+        let (exit_long_series, exit_short_series) = self.signal.exit(&series);
 
         let go_long = go_long_series
             .into_iter()
@@ -173,92 +101,17 @@ impl<S: StrategySignals> Strategy for BaseStrategy<S> {
         }
     }
 
-    fn id(&self) -> String {
-        format!("_STRTG{}", self.strategy.id())
-    }
-}
-
-static STRATEGY_ID_TO_INSTANCE: Lazy<
-    RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>,
-> = Lazy::new(|| RwLock::new(HashMap::new()));
-
-static STRATEGY_ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
-
-pub fn register_strategy(strategy: Box<dyn Strategy + Send + Sync + 'static>) -> i32 {
-    let mut id_counter = STRATEGY_ID_COUNTER.write().unwrap();
-    *id_counter += 1;
-
-    let current_id = *id_counter;
-    STRATEGY_ID_TO_INSTANCE
-        .write()
-        .unwrap()
-        .insert(current_id, strategy);
-
-    current_id
-}
-
-#[no_mangle]
-pub fn unregister_strategy(strategy_id: i32) -> i32 {
-    let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
-    strategies.remove(&strategy_id).is_some() as i32
-}
-
-#[no_mangle]
-pub fn strategy_parameters(strategy_id: i32) -> (i32, i32) {
-    let strategies = STRATEGY_ID_TO_INSTANCE.read().unwrap();
-    if let Some(strategy) = strategies.get(&strategy_id) {
-        let id = strategy.id();
-
-        let bytes = id.as_bytes();
-
-        let result_ptr = unsafe {
-            let ptr = alloc::alloc::alloc(Layout::from_size_align(bytes.len(), 1).unwrap());
-            ptr.copy_from_nonoverlapping(bytes.as_ptr(), bytes.len());
-            ptr as i32
-        };
-
-        (result_ptr, bytes.len() as i32)
-    } else {
-        (-1, -1)
-    }
-}
-
-#[no_mangle]
-pub fn strategy_next(
-    strategy_id: i32,
-    open: f32,
-    high: f32,
-    low: f32,
-    close: f32,
-    volume: f32,
-) -> (f32, f32) {
-    let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
-    if let Some(strategy) = strategies.get_mut(&strategy_id) {
-        let ohlcv = OHLCV {
-            open,
-            high,
-            low,
-            close,
-            volume,
-        };
-
-        let result = strategy.next(ohlcv);
-
-        match result {
-            TradeAction::GoLong(price) => (1.0, price),
-            TradeAction::GoShort(price) => (2.0, price),
-            TradeAction::ExitLong => (3.0, 0.0),
-            TradeAction::ExitShort => (4.0, 0.0),
-            TradeAction::DoNothing => (0.0, 0.0),
-        }
-    } else {
-        (-1.0, 0.0)
+    fn strategy_id(&self) -> String {
+        format!("_STRTG{}", self.signal.signal_id())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::price::Price;
+    use crate::strategy::TradingStrategy;
+    use crate::{BaseStrategy, OHLCVSeries, StrategySignals, OHLCV};
+    use core::series::Series;
 
     struct DumbStrategy {
         short_period: usize,
@@ -273,7 +126,7 @@ mod tests {
             (Series::empty(1), Series::empty(1))
         }
 
-        fn id(&self) -> String {
+        fn signal_id(&self) -> String {
             format!("DUMB_{}", self.short_period)
         }
     }
@@ -287,7 +140,7 @@ mod tests {
     #[test]
     fn test_base_strategy_id() {
         let strategy = BaseStrategy::<DumbStrategy>::new(DumbStrategy { short_period: 10 }, 2);
-        assert_eq!(strategy.id(), "_STRTGDUMB_10");
+        assert_eq!(strategy.strategy_id(), "_STRTGDUMB_10");
     }
 
     #[test]
