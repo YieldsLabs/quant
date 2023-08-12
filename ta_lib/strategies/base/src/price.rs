@@ -1,5 +1,5 @@
 use crate::OHLCVSeries;
-use price::{average::average_price, median::median_price, typical::typical_price, wcl::wcl};
+use price::{average_price, median_price, typical_price, wcl};
 
 pub trait Price {
     fn hl2(&self) -> Vec<f32>;

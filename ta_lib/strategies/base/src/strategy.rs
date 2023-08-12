@@ -44,11 +44,11 @@ impl<S: StrategySignals> BaseStrategy<S> {
     }
 
     fn store(&mut self, data: OHLCV) {
-        self.data.push_back(data);
-
-        if self.data.len() > self.lookback_period {
+        if self.data.len() >= self.lookback_period {
             self.data.pop_front();
         }
+
+        self.data.push_back(data);
     }
 
     fn can_process(&self) -> bool {

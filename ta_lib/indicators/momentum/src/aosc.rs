@@ -14,7 +14,7 @@ pub fn aosc(hl2: &[f32], short_period: usize, long_period: usize) -> Series<f32>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use price::median::median_price;
+    use price::median_price;
 
     #[test]
     fn test_aosc() {
