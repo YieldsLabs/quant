@@ -1,6 +1,6 @@
 import ctypes
 from core.events.ohlcv import OHLCV
-from  wasmtime import Memory, Store, Linker, WasiConfig, Module
+from wasmtime import Memory, Store, Linker, WasiConfig, Module
 
 class StrategyActor:
     def __init__(self, strategy: str, linker: Linker, store: Store, module: Module):
@@ -13,6 +13,9 @@ class StrategyActor:
         self.strategy_id = self.instance.exports(self.store)[f"register_{self.strategy}"](self.store, *args)
 
     def stop(self):
+        if self.strategy_id is None:
+            raise RuntimeError("Strategy is not started")
+
         self.instance.exports(self.store)[f"unregister_strategy"](self.store, self.strategy_id)
         self.strategy_id = None
 
