@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn test_crossmatrategy_new() {
         let strategy = CrossMAStrategy::new(50, 100, 14, 2.0);
-        assert_eq!(strategy.id(), "_STRTGCROSSMA_50_100_STPLSSATR_14_2");
+        assert_eq!(strategy.id(), "_STRTGCROSSMA_50_100_STPLSSATR_14_2.0");
     }
 
     #[test]

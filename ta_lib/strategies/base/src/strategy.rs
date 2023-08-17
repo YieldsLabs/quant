@@ -169,7 +169,7 @@ mod tests {
 
     impl StopLoss for MockStopLoss {
         fn id(&self) -> String {
-            format!("SL_{}", self.multi)
+            format!("SL_{:.1}", self.multi)
         }
 
         fn next(&self, _data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
@@ -197,7 +197,7 @@ mod tests {
             MockStopLoss { multi: 2.0 },
             2,
         );
-        assert_eq!(strategy.id(), "_STRTGMOCK_10_STPLSSSL_2");
+        assert_eq!(strategy.id(), "_STRTGMOCK_10_STPLSSSL_2.0");
     }
 
     #[test]
