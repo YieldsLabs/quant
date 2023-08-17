@@ -164,7 +164,7 @@ mod tests {
     }
 
     struct MockStopLoss {
-        multi: usize,
+        multi: f32,
     }
 
     impl StopLoss for MockStopLoss {
@@ -174,8 +174,8 @@ mod tests {
 
         fn next(&self, _data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
             (
-                Series::from([5.0]) * self.multi as f32,
-                Series::from([6.0]) * self.multi as f32,
+                Series::from([5.0]) * self.multi,
+                Series::from([6.0]) * self.multi,
             )
         }
     }
@@ -184,7 +184,7 @@ mod tests {
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
             MockStrategy { short_period: 10 },
-            MockStopLoss { multi: 2 },
+            MockStopLoss { multi: 2.0 },
             2,
         );
         assert_eq!(strategy.lookback_period, 55);
@@ -194,7 +194,7 @@ mod tests {
     fn test_base_strategy_id() {
         let strategy = BaseStrategy::new(
             MockStrategy { short_period: 10 },
-            MockStopLoss { multi: 2 },
+            MockStopLoss { multi: 2.0 },
             2,
         );
         assert_eq!(strategy.id(), "_STRTGMOCK_10_STPLSSSL_2");
@@ -204,7 +204,7 @@ mod tests {
     fn test_strategy_data() {
         let mut strategy = BaseStrategy::new(
             MockStrategy { short_period: 10 },
-            MockStopLoss { multi: 2 },
+            MockStopLoss { multi: 2.0 },
             3,
         );
         let ohlcvs = vec![

@@ -13,7 +13,7 @@ impl CrossMAStrategy {
         short_period: usize,
         long_period: usize,
         atr_period: usize,
-        stop_loss_multi: usize,
+        stop_loss_multi: f32,
     ) -> BaseStrategy<CrossMAStrategy, ATRStopLoss> {
         let lookback_period = std::cmp::max(short_period, long_period);
         let signal = CrossMAStrategy {
@@ -57,13 +57,13 @@ mod tests {
 
     #[test]
     fn test_crossmatrategy_new() {
-        let strategy = CrossMAStrategy::new(50, 100, 14, 2);
+        let strategy = CrossMAStrategy::new(50, 100, 14, 2.0);
         assert_eq!(strategy.id(), "_STRTGCROSSMA_50_100_STPLSSATR_14_2");
     }
 
     #[test]
     fn test_crossmastrategy_next_do_nothing() {
-        let mut strat = CrossMAStrategy::new(50, 100, 14, 2);
+        let mut strat = CrossMAStrategy::new(50, 100, 14, 2.0);
 
         for _i in 0..100 {
             strat.next(OHLCV {

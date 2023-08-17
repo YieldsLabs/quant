@@ -4,7 +4,7 @@ use volatility::atr::atr;
 
 pub struct ATRStopLoss {
     pub atr_period: usize,
-    pub multi: usize,
+    pub multi: f32,
 }
 
 impl StopLoss for ATRStopLoss {
@@ -14,11 +14,14 @@ impl StopLoss for ATRStopLoss {
 
     fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
         let atr = atr(&data.high, &data.low, &data.close, self.atr_period, None);
-        let series = Series::from(&data.close);
-        let atr_multi = atr * self.multi as f32;
 
-        let long_stop_loss = &series - &atr_multi;
-        let short_stop_loss = &series + &atr_multi;
+        let high = Series::from(&data.high);
+        let low = Series::from(&data.low);
+
+        let atr_multi = atr * self.multi;
+
+        let long_stop_loss = low - &atr_multi;
+        let short_stop_loss = high + &atr_multi;
 
         (long_stop_loss, short_stop_loss)
     }
@@ -32,7 +35,7 @@ mod tests {
     fn test_atr_stop_loss_id() {
         let atr_stop_loss = ATRStopLoss {
             atr_period: 14,
-            multi: 2,
+            multi: 2.0,
         };
 
         assert_eq!(atr_stop_loss.id(), "ATR_14_2");
