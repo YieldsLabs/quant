@@ -1,16 +1,16 @@
-use crate::{TradeAction, TradingStrategy, OHLCV};
+use crate::{Strategy, TradeAction, OHLCV};
 use once_cell::sync::Lazy;
 use std::alloc::Layout;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
 static STRATEGY_ID_TO_INSTANCE: Lazy<
-    RwLock<HashMap<i32, Box<dyn TradingStrategy + Send + Sync + 'static>>>,
+    RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>,
 > = Lazy::new(|| RwLock::new(HashMap::new()));
 
 static STRATEGY_ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
 
-pub fn register_strategy(strategy: Box<dyn TradingStrategy + Send + Sync + 'static>) -> i32 {
+pub fn register_strategy(strategy: Box<dyn Strategy + Send + Sync + 'static>) -> i32 {
     let mut id_counter = STRATEGY_ID_COUNTER.write().unwrap();
     *id_counter += 1;
 
@@ -33,7 +33,7 @@ pub fn unregister_strategy(strategy_id: i32) -> i32 {
 pub fn strategy_parameters(strategy_id: i32) -> (i32, i32) {
     let strategies = STRATEGY_ID_TO_INSTANCE.read().unwrap();
     if let Some(strategy) = strategies.get(&strategy_id) {
-        let id = strategy.strategy_id();
+        let id = strategy.id();
 
         let bytes = id.as_bytes();
 
@@ -79,5 +79,15 @@ pub fn strategy_next(
         }
     } else {
         (-1.0, 0.0)
+    }
+}
+
+#[no_mangle]
+pub fn strategy_stop_loss(strategy_id: i32) -> (f32, f32) {
+    let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
+    if let Some(strategy) = strategies.get_mut(&strategy_id) {
+        strategy.stop_loss()
+    } else {
+        (-1.0, -1.0)
     }
 }

@@ -15,31 +15,39 @@ pub enum TradeAction {
     DoNothing,
 }
 
-pub trait StrategySignals {
-    fn signal_id(&self) -> String;
+pub trait Signals {
+    fn id(&self) -> String;
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
     fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
-pub trait TradingStrategy {
-    fn strategy_id(&self) -> String;
-    fn next(&mut self, ohlcv: OHLCV) -> TradeAction;
+pub trait StopLoss {
+    fn id(&self) -> String;
+    fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>);
 }
 
-pub struct BaseStrategy<S: StrategySignals> {
+pub trait Strategy {
+    fn id(&self) -> String;
+    fn next(&mut self, ohlcv: OHLCV) -> TradeAction;
+    fn stop_loss(&self) -> (f32, f32);
+}
+
+pub struct BaseStrategy<S: Signals, L: StopLoss> {
     data: VecDeque<OHLCV>,
     signal: S,
+    stop_loss: L,
     lookback_period: usize,
 }
 
-impl<S: StrategySignals> BaseStrategy<S> {
-    pub fn new(signal: S, lookback_period: usize) -> Self {
+impl<S: Signals, L: StopLoss> BaseStrategy<S, L> {
+    pub fn new(signal: S, stop_loss: L, lookback_period: usize) -> Self {
         let adjusted_lookback = std::cmp::max(lookback_period, DEFAULT_LOOKBACK);
 
         Self {
             data: VecDeque::with_capacity(adjusted_lookback),
             lookback_period: adjusted_lookback,
             signal,
+            stop_loss,
         }
     }
 
@@ -56,7 +64,11 @@ impl<S: StrategySignals> BaseStrategy<S> {
     }
 }
 
-impl<S: StrategySignals> TradingStrategy for BaseStrategy<S> {
+impl<S: Signals, L: StopLoss> Strategy for BaseStrategy<S, L> {
+    fn id(&self) -> String {
+        format!("_STRTG{}_STPLSS{}", self.signal.id(), self.stop_loss.id())
+    }
+
     fn next(&mut self, data: OHLCV) -> TradeAction {
         self.store(data);
 
@@ -101,23 +113,47 @@ impl<S: StrategySignals> TradingStrategy for BaseStrategy<S> {
         }
     }
 
-    fn strategy_id(&self) -> String {
-        format!("_STRTG{}", self.signal.signal_id())
+    fn stop_loss(&self) -> (f32, f32) {
+        if !self.can_process() {
+            return (-1.0, -1.0);
+        }
+
+        let series = OHLCVSeries::from_data(&self.data);
+
+        let (stop_loss_long_series, stop_loss_short_series) = self.stop_loss.next(&series);
+
+        let stop_loss_long = stop_loss_long_series
+            .into_iter()
+            .flatten()
+            .last()
+            .unwrap_or_default();
+
+        let stop_loss_short = stop_loss_short_series
+            .into_iter()
+            .flatten()
+            .last()
+            .unwrap_or_default();
+
+        (stop_loss_long, stop_loss_short)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::price::Price;
-    use crate::strategy::TradingStrategy;
-    use crate::{BaseStrategy, OHLCVSeries, StrategySignals, OHLCV};
+    use crate::strategy::{StopLoss, Strategy};
+    use crate::{BaseStrategy, OHLCVSeries, Signals, OHLCV};
     use core::series::Series;
 
-    struct DumbStrategy {
+    struct MockStrategy {
         short_period: usize,
     }
 
-    impl StrategySignals for DumbStrategy {
+    impl Signals for MockStrategy {
+        fn id(&self) -> String {
+            format!("MOCK_{}", self.short_period)
+        }
+
         fn entry(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             (Series::empty(1), Series::empty(1))
         }
@@ -125,27 +161,52 @@ mod tests {
         fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             (Series::empty(1), Series::empty(1))
         }
+    }
 
-        fn signal_id(&self) -> String {
-            format!("DUMB_{}", self.short_period)
+    struct MockStopLoss {
+        multi: usize,
+    }
+
+    impl StopLoss for MockStopLoss {
+        fn id(&self) -> String {
+            format!("SL_{}", self.multi)
+        }
+
+        fn next(&self, _data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
+            (
+                Series::from([5.0]) * self.multi as f32,
+                Series::from([6.0]) * self.multi as f32,
+            )
         }
     }
 
     #[test]
     fn test_base_strategy_lookback() {
-        let strategy = BaseStrategy::<DumbStrategy>::new(DumbStrategy { short_period: 10 }, 2);
+        let strategy = BaseStrategy::new(
+            MockStrategy { short_period: 10 },
+            MockStopLoss { multi: 2 },
+            2,
+        );
         assert_eq!(strategy.lookback_period, 55);
     }
 
     #[test]
     fn test_base_strategy_id() {
-        let strategy = BaseStrategy::<DumbStrategy>::new(DumbStrategy { short_period: 10 }, 2);
-        assert_eq!(strategy.strategy_id(), "_STRTGDUMB_10");
+        let strategy = BaseStrategy::new(
+            MockStrategy { short_period: 10 },
+            MockStopLoss { multi: 2 },
+            2,
+        );
+        assert_eq!(strategy.id(), "_STRTGMOCK_10_STPLSSSL_2");
     }
 
     #[test]
     fn test_strategy_data() {
-        let mut strategy = BaseStrategy::new(DumbStrategy { short_period: 10 }, 3);
+        let mut strategy = BaseStrategy::new(
+            MockStrategy { short_period: 10 },
+            MockStopLoss { multi: 2 },
+            3,
+        );
         let ohlcvs = vec![
             OHLCV {
                 open: 1.0,

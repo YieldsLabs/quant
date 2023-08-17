@@ -7,4 +7,4 @@ mod strategy;
 
 pub use ffi::*;
 pub use model::{OHLCVSeries, OHLCV};
-pub use strategy::{BaseStrategy, StrategySignals, TradeAction, TradingStrategy};
+pub use strategy::{BaseStrategy, Signals, StopLoss, Strategy, TradeAction};

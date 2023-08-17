@@ -9,6 +9,7 @@ members = [
 "price",
 "strategies/base",
 "strategies/trend_follow",
+"strategies/shared/stop_loss",
 "utils"
 ]
 

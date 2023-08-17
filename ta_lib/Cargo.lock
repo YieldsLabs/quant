@@ -46,6 +46,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "stop_loss"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "volatility",
+]
+
+[[package]]
 name = "trend"
 version = "0.1.0"
 dependencies = [
@@ -59,6 +68,7 @@ dependencies = [
  "base",
  "core",
  "once_cell",
+ "stop_loss",
  "trend",
 ]
 

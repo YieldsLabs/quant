@@ -8,6 +8,7 @@ once_cell = "*"
 core = { path = "../../core" }
 base = { path = "../base" }
 trend = { path = "../../indicators/trend" }
+stop_loss = { path = "../shared/stop_loss" }
 
 [lib]
 crate-type = ["cdylib"]

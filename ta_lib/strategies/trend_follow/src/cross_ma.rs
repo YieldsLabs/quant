@@ -1,5 +1,6 @@
-use base::{BaseStrategy, OHLCVSeries, StrategySignals};
+use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
+use stop_loss::ATRStopLoss;
 use trend::sma::sma;
 
 pub struct CrossMAStrategy {
@@ -8,19 +9,29 @@ pub struct CrossMAStrategy {
 }
 
 impl CrossMAStrategy {
-    pub fn new(short_period: usize, long_period: usize) -> BaseStrategy<CrossMAStrategy> {
+    pub fn new(
+        short_period: usize,
+        long_period: usize,
+        atr_period: usize,
+        stop_loss_multi: usize,
+    ) -> BaseStrategy<CrossMAStrategy, ATRStopLoss> {
         let lookback_period = std::cmp::max(short_period, long_period);
-        let strategy = CrossMAStrategy {
+        let signal = CrossMAStrategy {
             short_period,
             long_period,
         };
 
-        BaseStrategy::new(strategy, lookback_period)
+        let stop_loss = ATRStopLoss {
+            atr_period,
+            multi: stop_loss_multi,
+        };
+
+        BaseStrategy::new(signal, stop_loss, lookback_period)
     }
 }
 
-impl StrategySignals for CrossMAStrategy {
-    fn signal_id(&self) -> String {
+impl Signals for CrossMAStrategy {
+    fn id(&self) -> String {
         format!("CROSSMA_{}_{}", self.short_period, self.long_period)
     }
 
@@ -42,17 +53,17 @@ impl StrategySignals for CrossMAStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use base::{TradeAction, TradingStrategy, OHLCV};
+    use base::{Strategy, TradeAction, OHLCV};
 
     #[test]
     fn test_crossmatrategy_new() {
-        let strategy = CrossMAStrategy::new(50, 100);
-        assert_eq!(strategy.strategy_id(), "_STRTGCROSSMA_50_100");
+        let strategy = CrossMAStrategy::new(50, 100, 14, 2);
+        assert_eq!(strategy.id(), "_STRTGCROSSMA_50_100_STPLSSATR_14_2");
     }
 
     #[test]
     fn test_crossmastrategy_next_do_nothing() {
-        let mut strat = CrossMAStrategy::new(50, 100);
+        let mut strat = CrossMAStrategy::new(50, 100, 14, 2);
 
         for _i in 0..100 {
             strat.next(OHLCV {
