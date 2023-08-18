@@ -86,7 +86,9 @@ pub fn strategy_next(
 pub fn strategy_stop_loss(strategy_id: i32) -> (f32, f32) {
     let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
     if let Some(strategy) = strategies.get_mut(&strategy_id) {
-        strategy.stop_loss()
+        let stop_loss_levels = strategy.stop_loss();
+
+        (stop_loss_levels.long, stop_loss_levels.short)
     } else {
         (-1.0, -1.0)
     }

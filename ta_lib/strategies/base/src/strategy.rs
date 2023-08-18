@@ -1,7 +1,5 @@
-use crate::model::OHLCV;
 use crate::price::Price;
-use crate::OHLCVSeries;
-use core::series::Series;
+use crate::{OHLCVSeries, Signals, StopLoss, Strategy, OHLCV};
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
@@ -15,21 +13,10 @@ pub enum TradeAction {
     DoNothing,
 }
 
-pub trait Signals {
-    fn id(&self) -> String;
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
-    fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
-}
-
-pub trait StopLoss {
-    fn id(&self) -> String;
-    fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>);
-}
-
-pub trait Strategy {
-    fn id(&self) -> String;
-    fn next(&mut self, ohlcv: OHLCV) -> TradeAction;
-    fn stop_loss(&self) -> (f32, f32);
+#[derive(Debug)]
+pub struct StopLossLevels {
+    pub long: f32,
+    pub short: f32,
 }
 
 pub struct BaseStrategy<S: Signals, L: StopLoss> {
@@ -113,9 +100,12 @@ impl<S: Signals, L: StopLoss> Strategy for BaseStrategy<S, L> {
         }
     }
 
-    fn stop_loss(&self) -> (f32, f32) {
+    fn stop_loss(&self) -> StopLossLevels {
         if !self.can_process() {
-            return (-1.0, -1.0);
+            return StopLossLevels {
+                long: -1.0,
+                short: -1.0,
+            };
         }
 
         let series = OHLCVSeries::from_data(&self.data);
@@ -134,15 +124,17 @@ impl<S: Signals, L: StopLoss> Strategy for BaseStrategy<S, L> {
             .last()
             .unwrap_or_default();
 
-        (stop_loss_long, stop_loss_short)
+        StopLossLevels {
+            long: stop_loss_long,
+            short: stop_loss_short,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::price::Price;
-    use crate::strategy::{StopLoss, Strategy};
-    use crate::{BaseStrategy, OHLCVSeries, Signals, OHLCV};
+    use crate::{BaseStrategy, OHLCVSeries, Signals, StopLoss, Strategy, OHLCV};
     use core::series::Series;
 
     struct MockStrategy {
