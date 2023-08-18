@@ -1,34 +1,30 @@
+import asyncio
 import ctypes
-from core.events.ohlcv import OHLCV
-from wasmtime import Memory, Store, Linker, WasiConfig, Module
+from enum import Enum
+from wasmtime import Memory, Store, Linker, Module
 
-class StrategyActor:
-    def __init__(self, strategy: str, linker: Linker, store: Store, module: Module):
+from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
+from core.events.ohlcv import NewMarketDataReceived
+
+from .abstract_actor import AbsctractActor
+
+
+class Action(Enum):
+    GO_LONG = 1.0
+    GO_SHORT = 2.0
+    EXIT_LONG = 3.0
+    EXIT_SHORT = 4.0
+
+
+class StrategyActor(AbsctractActor):
+    def __init__(self, strategy: str, parameters: tuple[int], linker: Linker, store: Store, module: Module):
+        super().__init__()
+        self.strategy = strategy
+        self.parameters = parameters
         self.store = store
         self.instance = linker.instantiate(self.store, module)
         self.strategy_id = None
-        self.strategy = strategy
 
-    def start(self, *args):
-        self.strategy_id = self.instance.exports(self.store)[f"register_{self.strategy}"](self.store, *args)
-
-    def stop(self):
-        if self.strategy_id is None:
-            raise RuntimeError("Strategy is not started")
-
-        self.instance.exports(self.store)[f"unregister_strategy"](self.store, self.strategy_id)
-        self.strategy_id = None
-
-    def next(self, data: OHLCV):
-        if self.strategy_id is None:
-            raise RuntimeError("Strategy is not started")
-        
-        strategy_next = self.instance.exports(self.store)["strategy_next"]
-
-        result = strategy_next(self.store, self.strategy_id, data.open, data.high, data.low, data.close, data.volume)
-
-        return result
-    
     @property
     def id(self):
         if self.strategy_id is None:
@@ -40,6 +36,49 @@ class StrategyActor:
 
         return self._get_string_from_memory(self.store, memory, params[0], params[1])
 
+    def start(self):
+        if self.strategy_id:
+            raise RuntimeError("Strategy is running")
+
+        self.strategy_id = self.instance.exports(self.store)[f"register_{self.strategy}"](self.store, *self.parameters)
+        self.dispatcher.register(NewMarketDataReceived, self.next)
+
+    def stop(self):
+        if self.strategy_id is None:
+            raise RuntimeError("Strategy is not started")
+
+        self.instance.exports(self.store)[f"unregister_strategy"](self.store, self.strategy_id)
+        self.strategy_id = None
+        self.dispatcher.unregister(NewMarketDataReceived, self.next)
+
+    async def next(self, event: NewMarketDataReceived):
+        if self.strategy_id is None:
+            raise RuntimeError("Strategy is not started")
+
+        strategy_next = self.instance.exports(self.store)["strategy_next"]
+        strategy_stop_loss = self.instance.exports(self.store)["strategy_stop_loss"]
+
+        data = event.ohlcv
+        symbol = event.symbol
+        timeframe = event.timeframe
+
+        [action, price] = strategy_next(self.store, self.strategy_id, data.open, data.high, data.low, data.close, data.volume)
+        [long_stop_loss, short_stop_loss] = strategy_stop_loss(self.store, self.strategy_id)
+
+        tasks = []
+
+        match action:
+            case Action.GO_LONG.value: tasks.append(self.dispatcher.dispatch(
+                GoLongSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, entry=price, stop_loss=long_stop_loss)))
+            case Action.GO_SHORT.value: tasks.append(self.dispatcher.dispatch(
+                GoShortSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, entry=price, stop_loss=short_stop_loss)))
+            case Action.EXIT_LONG.value: tasks.append(self.dispatcher.dispatch(
+                ExitLongSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, exit=event.ohlcv.close)))
+            case Action.EXIT_SHORT.value: tasks.append(self.dispatcher.dispatch(
+                ExitShortSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, exit=event.ohlcv.close)))
+
+        await asyncio.gather(*tasks)
+
     @staticmethod
     def _get_string_from_memory(store: Store, memory: Memory, pointer, length):
         data_ptr = memory.data_ptr(store)
@@ -50,17 +89,5 @@ class StrategyActor:
             raise ValueError("Pointer and length exceed memory bounds")
 
         byte_array = (ctypes.c_char * length).from_address(final_address)
-        
+
         return byte_array.value.decode('utf-8')
-
-class StrategyActorFactory:
-    def __init__(self):
-        self.store = Store()
-        self.linker = Linker(self.store.engine)
-        wasi_config = WasiConfig()
-        self.store.set_wasi(wasi_config)
-        self.linker.define_wasi()
-
-    def create_actor(self, wasm_path, strategy):
-        module = Module.from_file(self.store.engine, wasm_path)
-        return StrategyActor(strategy, self.linker, self.store, module)
