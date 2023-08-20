@@ -26,7 +26,7 @@ class TradingSystem(AbstractSystem):
         self.context = context
         self.state = state
         self.strategies = [
-            ['./strategy/trend_follow.wasm', 'crossma', [50, 100, 14, 1.5]]
+            ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
         ]
         self.strategy_actors = []
 
@@ -54,7 +54,7 @@ class TradingSystem(AbstractSystem):
         shuffle(symbols_and_timeframes)
 
         self.strategy_actors = [
-            self.context.strategy_factory.create_actor(symbol, timeframe, strategy[0], strategy[1], strategy[2])
+            self.context.strategy_factory.create_actor(symbol, timeframe, f'./strategy/{strategy[0]}.wasm', strategy[1], strategy[2])
             for symbol, timeframe in symbols_and_timeframes
             for strategy in self.strategies
         ]
@@ -71,15 +71,13 @@ class TradingSystem(AbstractSystem):
     async def _run_trading(self):
         top_strategies = await self.context.portfolio.get_top_strategies(3)
 
-        symbols = [strategy[0] for strategy in top_strategies]
-        timeframes = [strategy[1] for strategy in top_strategies]
+        symbols_and_timeframes = [(strategy[0], strategy[1]) for strategy in top_strategies]
         strategies = [strategy[2] for strategy in top_strategies]
 
-        for symbol in symbols:
+        for symbol, _ in symbols_and_timeframes:
             self.context.broker.set_settings(symbol, self.context.leverage, position_mode=PositionMode.ONE_WAY, margin_mode=MarginMode.ISOLATED)
 
         with create_trader(self.context.broker, live_trading=self.context.live_mode):
-            symbols_and_timeframes = list(product(symbols, timeframes))
             actors = [
                 actor
                 for symbol, timeframe in symbols_and_timeframes
