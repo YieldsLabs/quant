@@ -47,8 +47,7 @@ class TradingSystem(AbstractSystem):
     async def _run_backtest(self):
         await self.context.portfolio.initialize_account()
         
-        # symbols = await self.context.datasource.symbols()
-        symbols = ['ETHUSDT']
+        symbols = await self.context.datasource.symbols()
         symbols_and_timeframes = list(product(symbols, self.context.timeframes))
 
         shuffle(symbols_and_timeframes)
