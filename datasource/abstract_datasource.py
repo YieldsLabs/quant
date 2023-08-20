@@ -8,7 +8,7 @@ class AbstractDatasource(ABC):
     @abstractmethod
     def fetch(self, symbol: str, timeframe: Timeframe, lookback: int):
         pass
-
+    
     @abstractmethod
     def account_size(self) -> float:
         pass

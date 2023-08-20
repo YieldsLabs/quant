@@ -9,7 +9,7 @@ pub struct ATRStopLoss {
 
 impl StopLoss for ATRStopLoss {
     fn id(&self) -> String {
-        format!("ATR_{}_{:.1}", self.atr_period, self.multi)
+        format!("ATR_{}:{:.1}", self.atr_period, self.multi)
     }
 
     fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
@@ -38,6 +38,6 @@ mod tests {
             multi: 2.0,
         };
 
-        assert_eq!(atr_stop_loss.id(), "ATR_14_2.0");
+        assert_eq!(atr_stop_loss.id(), "ATR_14:2.0");
     }
 }

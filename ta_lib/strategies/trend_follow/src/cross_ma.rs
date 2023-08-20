@@ -32,7 +32,7 @@ impl CrossMAStrategy {
 
 impl Signals for CrossMAStrategy {
     fn id(&self) -> String {
-        format!("CROSSMA_{}_{}", self.short_period, self.long_period)
+        format!("CROSSMA_{}:{}", self.short_period, self.long_period)
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn test_crossmatrategy_new() {
         let strategy = CrossMAStrategy::new(50, 100, 14, 2.0);
-        assert_eq!(strategy.id(), "_STRTGCROSSMA_50_100_STPLSSATR_14_2.0");
+        assert_eq!(strategy.id(), "_STRTGCROSSMA_50:100_STPLSSATR_14:2.0");
     }
 
     #[test]

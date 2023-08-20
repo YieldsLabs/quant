@@ -11,7 +11,6 @@ class StrategyEntryEvent(Event):
     strategy: str
     entry: float
     stop_loss: float
-    risk_reward_ratio: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
 
@@ -21,7 +20,7 @@ class StrategyExitEvent(Event):
     timeframe: Timeframe
     strategy: str
     exit: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
 
 @dataclass(frozen=True)

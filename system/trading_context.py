@@ -1,27 +1,23 @@
-from typing import Type
+from dataclasses import dataclass
+from typing import List, Type
 
-from analytics.abstract_analytics import AbstractAnalytics
+from backtest.lookback import Lookback
 from broker.abstract_broker import AbstractBroker
+from core.timeframe import Timeframe
 from datasource.abstract_datasource import AbstractDatasource
 from datasource.abstract_ws import AbstractWS
-from optimization.abstract_optimization import AbstractOptimization
-from optimization.backtest import Backtest, Lookback
-from portfolio_management.portfolio_manager import PortfolioManager
-from risk_management.risk_manager import RiskManager
+from portfolio_management.abstract_portfolio_manager import AbstractPortfolioManager
+from strategy_management.abstract_strategy_factory import AbsctractStrategyActorFactory
 
 
+@dataclass
 class TradingContext:
-    def __init__(self, datasource: Type[AbstractDatasource], ws_handler: Type[AbstractWS], broker: Type[AbstractBroker], analytics: Type[AbstractAnalytics], optimization: Type[AbstractOptimization], lookback: Lookback, leverage: int, risk_per_trade: float, live_mode: bool):
-        self.datasource = datasource
-        self.ws_handler = ws_handler
-        self.broker = broker
-        self.optimization = optimization
-        self.analytics = analytics
-        self.leverage = leverage
-        self.lookback = lookback
-        self.risk_per_trade = risk_per_trade
-        self.live_mode = live_mode
-
-        self.portfolio_manager = PortfolioManager(datasource, self.leverage, self.risk_per_trade)
-        self.risk_manager = RiskManager()
-        self.backtest = Backtest(datasource)
+    strategy_factory: Type[AbsctractStrategyActorFactory]
+    datasource: Type[AbstractDatasource]
+    ws_handler: Type[AbstractWS]
+    broker: Type[AbstractBroker]
+    portfolio: Type[AbstractPortfolioManager]
+    timeframes: List[Timeframe]
+    lookback: Lookback
+    leverage: int
+    live_mode: bool

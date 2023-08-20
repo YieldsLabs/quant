@@ -7,9 +7,6 @@ from core.position import Order, OrderSide
 from .abstract_trader import AbstractTrader
 
 
-TradeEvent = Union[LongPositionOpened, ShortPositionOpened]
-
-
 class PaperTrader(AbstractTrader):
     def __init__(self, slippage: float = 0.01):
         super().__init__()
@@ -28,12 +25,12 @@ class PaperTrader(AbstractTrader):
         await self.dispatcher.dispatch(
             PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
 
-    async def trade(self, event: TradeEvent):
+    async def trade(self, event: Union[LongPositionOpened, ShortPositionOpened]):
         order_side = OrderSide.BUY if isinstance(event, LongPositionOpened) else OrderSide.SELL
 
         entry_price = self._apply_slippage(event.entry, order_side)
 
-        order = Order(side=order_side, price=entry_price, size=event.size, stop_loss=event.stop_loss)
+        order = Order(side=order_side, price=entry_price, size=event.size)
 
         await self.dispatcher.dispatch(
             OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))

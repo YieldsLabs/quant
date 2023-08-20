@@ -1,8 +1,9 @@
 from core.abstract_event_manager import AbstractEventManager
 from core.event_decorators import register_handler
+from core.events.backtest import BacktestStarted
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.portfolio import PortfolioPerformanceUpdated
-from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, ClosedPositionUpdated, ClosePositionPrepared, LongPositionOpened, ShortPositionOpened
+from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, ClosePositionPrepared, LongPositionOpened, ShortPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 
@@ -13,6 +14,11 @@ class LogSync(AbstractEventManager):
 
     @register_handler(NewMarketDataReceived)
     async def _on_market(self, event: NewMarketDataReceived):
+        print('----------------------------------------------------->')
+        print(event)
+
+    @register_handler(BacktestStarted)
+    async def _on_backtest(self, event: BacktestStarted):
         print('----------------------------------------------------->')
         print(event)
 
@@ -68,11 +74,6 @@ class LogSync(AbstractEventManager):
 
     @register_handler(PositionClosed)
     async def _on_closed_position(self, event: PositionClosed):
-        print('----------------------------------------------------->')
-        print(event)
-
-    @register_handler(ClosedPositionUpdated)
-    async def _on_closed_position_updated(self, event: ClosedPositionUpdated):
         print('----------------------------------------------------->')
         print(event)
 

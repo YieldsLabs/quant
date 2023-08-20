@@ -1,7 +1,6 @@
 import asyncio
 from typing import Any, AsyncIterable, Dict, Tuple
 
-from .throughput_monitor import ThroughputMonitor
 from .event_handler import EventHandler
 from .events.base_event import Event
 
@@ -12,13 +11,10 @@ class EventWorker:
         self.cancel_event = cancel_event
         self.queue = asyncio.Queue()
         self.task = asyncio.create_task(self._process_events())
-        self.throughput_monitor = ThroughputMonitor()
 
     async def _process_events(self):
         async for event, args, kwargs in self._get_event_stream():
             await self.event_handler.handle_event(event, *args, **kwargs)
-
-            self.throughput_monitor.event_processed()
 
     async def _get_event_stream(self) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
         while not self.cancel_event.is_set():

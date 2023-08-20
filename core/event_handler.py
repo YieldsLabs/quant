@@ -36,6 +36,7 @@ class EventHandler:
         try:
             await self._execute_handler(handler, event, *args, **kwargs)
         except Exception as e:
+            print(e)
             self._dead_letter_queue.append((event, e))
 
     async def _execute_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:

@@ -4,7 +4,7 @@ import pandas as pd
 
 from core.abstract_event_manager import AbstractEventManager
 from core.event_decorators import register_handler
-from core.events.portfolio import PortfolioPerformance, PortfolioPerformanceUpdated
+from core.events.portfolio import BasicPortfolioPerformance, AdvancedPortfolioPerformance, PortfolioPerformanceUpdated
 
 
 class CSVSync(AbstractEventManager):
@@ -15,8 +15,8 @@ class CSVSync(AbstractEventManager):
         super().__init__()
         self.perf_columns = [
             'timestamp',
-            'strategy_id',
-        ] + list(PortfolioPerformance.__annotations__.keys())
+            'strategy',
+        ] + list(BasicPortfolioPerformance.__annotations__.keys()) + list(AdvancedPortfolioPerformance.__annotations__.keys())
 
         self.perf_event = {}
         self._save_task = None
@@ -27,7 +27,7 @@ class CSVSync(AbstractEventManager):
     @register_handler(PortfolioPerformanceUpdated)
     async def _on_portfolio_performance(self, event: PortfolioPerformanceUpdated):
         async with self.lock:
-            self.perf_event[event.strategy_id] = self._event_to_dict(event)
+            self.perf_event[event.strategy] = self._event_to_dict(event)
 
     async def _periodic_save(self):
         while True:
@@ -43,6 +43,7 @@ class CSVSync(AbstractEventManager):
 
     @staticmethod
     def _event_to_dict(event):
-        event_dict = {'timestamp': int(event.meta.timestamp), 'strategy_id': event.strategy_id}
-        event_dict.update(event.performance.to_dict())
+        event_dict = {'timestamp': int(event.meta.timestamp), 'strategy': event.strategy}
+        event_dict.update(event.basic.to_dict())
+        event_dict.update(event.advanced.to_dict())
         return event_dict

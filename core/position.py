@@ -27,7 +27,6 @@ class Order:
     side: OrderSide
     price: float
     size: float
-    stop_loss: Optional[float]
     id: Optional[str] = None
     timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
@@ -58,6 +57,20 @@ class Position:
     @property
     def closed_key(self) -> str:
         return f"{self.symbol}_{self.closed_timestamp}"
+    
+    @property
+    def pnl(self) -> float:
+        pnl = 0.0
+        
+        if not self.closed:
+            return pnl
+
+        if self.side == PositionSide.LONG:
+            pnl = (self.exit_price - self.entry_price) * self.size
+        elif self.side == PositionSide.SHORT:
+            pnl = (self.entry_price - self.exit_price) * self.size
+
+        return pnl
 
     def add_order(self, order: Order):
         self.orders.append(order)
@@ -74,16 +87,3 @@ class Position:
             self.entry_price = execution_price
         else:
             self.exit_price = execution_price
-
-    def calculate_pnl(self) -> float | None:
-        if not self.closed:
-            return None
-
-        pnl = 0.0
-
-        if self.side == PositionSide.LONG:
-            pnl = (self.exit_price - self.entry_price) * self.size
-        elif self.side == PositionSide.SHORT:
-            pnl = (self.entry_price - self.exit_price) * self.size
-
-        return pnl

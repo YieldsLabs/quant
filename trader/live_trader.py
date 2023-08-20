@@ -10,9 +10,6 @@ from core.position import Order, OrderSide
 from .abstract_trader import AbstractTrader
 
 
-TradeEvent = Union[LongPositionOpened, ShortPositionOpened]
-
-
 class LiveTrader(AbstractTrader):
     def __init__(self, broker: Type[AbstractBroker]):
         super().__init__()
@@ -38,7 +35,7 @@ class LiveTrader(AbstractTrader):
         except Exception as e:
             self.logger.error(f"Error closing position for {event.symbol}: {e}")
 
-    async def trade(self, event: TradeEvent):
+    async def trade(self, event: Union[LongPositionOpened, ShortPositionOpened]):
         order_side = OrderSide.BUY if isinstance(event, LongPositionOpened) else OrderSide.SELL
 
         order_params = {
@@ -51,7 +48,7 @@ class LiveTrader(AbstractTrader):
             current_order_id = await asyncio.to_thread(self.broker.place_market_order, **order_params)
             position = await asyncio.to_thread(self.broker.get_open_position, event.symbol)
 
-            order = Order(id=current_order_id, side=order_side, size=event.size, price=position['entry_price'], stop_loss=event.stop_loss)
+            order = Order(id=current_order_id, side=order_side, size=position['position_size'], price=position['entry_price'])
 
             await self.dispatcher.dispatch(
                 OrderFilled(symbol=event.symbol, timeframe=event.timeframe, order=order))

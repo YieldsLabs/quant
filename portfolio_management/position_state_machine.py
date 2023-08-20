@@ -61,7 +61,6 @@ class PositionStateMachine:
     async def process_event(self, event: PortfolioEvent):
         symbol = event.symbol
         state = self.get_state(symbol)
-
         next_state, handler = self._state_handlers.get((state, type(event)), (state, None))
 
         if handler is None or not await handler(event):

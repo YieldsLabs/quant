@@ -17,7 +17,7 @@ class SingletonMeta(type):
 
 
 class EventDispatcher(metaclass=SingletonMeta):
-    def __init__(self, num_workers: int = os.cpu_count() + 1, num_priority_group: int = 5):
+    def __init__(self, num_workers: int = os.cpu_count() + 1, num_priority_group: int = 4):
         self.event_handler = EventHandler()
         self.cancel_event = asyncio.Event()
         self.worker_pool = WorkerPool(num_priority_group, num_workers, self.event_handler, self.cancel_event)

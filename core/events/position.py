@@ -4,7 +4,7 @@ from typing import List, Optional
 from .ohlcv import OHLCV
 from .base_event import Event, EventMeta
 from ..timeframe import Timeframe
-from ..position import Order, Position, PositionSide
+from ..position import Order, PositionSide
 
 
 @dataclass(frozen=True)
@@ -63,11 +63,4 @@ class PositionClosed(Event):
     symbol: str
     timeframe: Timeframe
     exit_price: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
-
-
-@dataclass(frozen=True)
-class ClosedPositionUpdated(Event):
-    strategy_id: str
-    position: List[Position]
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
