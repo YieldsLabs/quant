@@ -64,7 +64,6 @@ class TradingSystem(AbstractSystem):
 
     async def _run_trading(self):
         top_strategies = await self.context.portfolio.get_top_strategies(10)
-        print(top_strategies)
 
         symbols = [strategy[0] for strategy in top_strategies]
         timeframes = [strategy[1] for strategy in top_strategies]
