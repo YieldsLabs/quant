@@ -12,9 +12,19 @@ class AbstractActor(AbstractEventManager):
 
     @property
     @abstractmethod
-    def name(self) -> str:
+    def strategy(self) -> str:
         pass
-    
+
+    @property
+    @abstractmethod
+    def symbol(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def timeframe(self) -> str:
+        pass
+
     @property
     @abstractmethod
     def running(self) -> bool:

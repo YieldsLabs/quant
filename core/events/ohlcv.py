@@ -22,4 +22,4 @@ class NewMarketDataReceived(Event):
     symbol: str
     timeframe: Timeframe
     ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))

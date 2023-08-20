@@ -13,30 +13,31 @@ class Backtest(AbstractBacktest):
         super().__init__()
 
     @register_handler(BacktestStarted)
-    async def run(self, event: BacktestStarted):
-        for symbol, timeframe in event.symbols_timeframes:
-            actor = event.actor
-            iterator = event.datasource.fetch(symbol, timeframe, TIMEFRAMES_TO_LOOKBACK[(event.lookback, timeframe)])
+    async def _on_backtest(self, event: BacktestStarted):
+        actor = event.actor
+        symbol = actor.symbol
+        timeframe = actor.timeframe
 
-            if actor.running:
-                actor.stop()
-            
-            actor.start()
+        iterator = event.datasource.fetch(symbol, timeframe, TIMEFRAMES_TO_LOOKBACK[(event.lookback, timeframe)])
 
-            async for data in iterator:
-                await self._process_historical_data(symbol, timeframe, data)
+        if actor.running:
+            actor.stop()
 
-            last_row = iterator.get_last_row()
+        actor.start()
 
-            if last_row:
-                last_close = last_row[-2]
-                await self.dispatcher.dispatch(ClosePositionPrepared(symbol, timeframe, last_close))
+        async for data in iterator:
+            await self._process_historical_data(symbol, timeframe, data)
 
-            if actor.running:
-                actor.stop()
+        last_row = iterator.get_last_row()
+
+        if last_row:
+            last_close = last_row[-2]
+            await self.dispatcher.dispatch(ClosePositionPrepared(symbol, timeframe, last_close))
+
+        if actor.running:
+            actor.stop()
 
     async def _process_historical_data(self, symbol: str, timeframe: Timeframe, data):
         timestamp, open, high, low, close, volume = data
         ohlcv = OHLCV(timestamp, float(open), float(high), float(low), float(close), float(volume))
-        
         await self.dispatcher.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv))

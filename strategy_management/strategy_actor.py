@@ -5,6 +5,7 @@ from wasmtime import Memory, Store, Linker, Module
 
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.events.ohlcv import NewMarketDataReceived
+from core.timeframe import Timeframe
 
 from .abstract_actor import AbstractActor
 
@@ -17,9 +18,11 @@ class Action(Enum):
 
 
 class StrategyActor(AbstractActor):
-    def __init__(self, strategy: str, parameters: tuple[int], linker: Linker, store: Store, module: Module):
+    def __init__(self, symbol: str, timeframe: Timeframe, strategy: str, parameters: tuple[int], linker: Linker, store: Store, module: Module):
         super().__init__()
-        self.strategy = strategy
+        self._symbol = symbol
+        self._timeframe = timeframe
+        self._strategy = strategy
         self.parameters = parameters
         self.store = store
         self.instance = linker.instantiate(self.store, module)
@@ -37,8 +40,16 @@ class StrategyActor(AbstractActor):
         return self._get_string_from_memory(self.store, memory, params[0], params[1])
 
     @property
-    def name(self):
-        return self.strategy
+    def strategy(self):
+        return self._strategy
+
+    @property
+    def symbol(self):
+        return self._symbol
+
+    @property
+    def timeframe(self):
+        return self._timeframe
 
     @property
     def running(self):

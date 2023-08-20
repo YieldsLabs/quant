@@ -1,10 +1,10 @@
 from wasmtime import Store, Linker, WasiConfig, Module
 
-from .abstract_strategy_factory import AbsctractStrategyActorFactory
+from .abstract_strategy_factory import AbstractStrategyActorFactory
 from .strategy_actor import StrategyActor
 
 
-class StrategyActorFactory(AbsctractStrategyActorFactory):
+class StrategyActorFactory(AbstractStrategyActorFactory):
     def __init__(self):
         self.store = Store()
         self.linker = Linker(self.store.engine)
@@ -13,7 +13,7 @@ class StrategyActorFactory(AbsctractStrategyActorFactory):
         self.store.set_wasi(wasi_config)
         self.linker.define_wasi()
 
-    def create_actor(self, wasm_path, strategy, parameters):
+    def create_actor(self, symbol, timeframe, wasm_path, strategy, parameters):
         module = Module.from_file(self.store.engine, wasm_path)
 
-        return StrategyActor(strategy, parameters, self.linker, self.store, module)
+        return StrategyActor(symbol, timeframe, strategy, parameters, self.linker, self.store, module)

@@ -22,7 +22,7 @@ class BasicPortfolioPerformance:
 
     def to_dict(self):
         return asdict(self)
-    
+
 
 @dataclass(frozen=True)
 class AdvancedPortfolioPerformance:
@@ -51,4 +51,4 @@ class PortfolioPerformanceUpdated(Event):
     strategy: str
     basic: BasicPortfolioPerformance
     advanced: AdvancedPortfolioPerformance
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=5))

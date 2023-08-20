@@ -7,12 +7,12 @@ from core.timeframe import Timeframe
 from datasource.abstract_datasource import AbstractDatasource
 from datasource.abstract_ws import AbstractWS
 from portfolio_management.abstract_portfolio_manager import AbstractPortfolioManager
-from strategy_management.abstract_strategy_factory import AbsctractStrategyActorFactory
+from strategy_management.abstract_strategy_factory import AbstractStrategyActorFactory
 
 
 @dataclass
 class TradingContext:
-    strategy_factory: Type[AbsctractStrategyActorFactory]
+    strategy_factory: Type[AbstractStrategyActorFactory]
     datasource: Type[AbstractDatasource]
     ws_handler: Type[AbstractWS]
     broker: Type[AbstractBroker]

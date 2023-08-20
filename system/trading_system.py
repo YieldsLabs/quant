@@ -25,9 +25,10 @@ class TradingSystem(AbstractSystem):
         super().__init__()
         self.context = context
         self.state = state
-        self.strategy_actors = [
-            self.context.strategy_factory.create_actor('./strategy/trend_follow.wasm', 'crossma', [50, 100, 14, 1.5]),
+        self.strategies = [
+            ['./strategy/trend_follow.wasm', 'crossma', [50, 100, 14, 1.5]]
         ]
+        self.strategy_actors = []
 
     async def start(self):
         while True:
@@ -46,41 +47,51 @@ class TradingSystem(AbstractSystem):
 
     async def _run_backtest(self):
         await self.context.portfolio.initialize_account()
-        
+
         symbols = await self.context.datasource.symbols()
         symbols_and_timeframes = list(product(symbols, self.context.timeframes))
 
         shuffle(symbols_and_timeframes)
-        shuffle(self.strategy_actors)
+
+        self.strategy_actors = [
+            self.context.strategy_factory.create_actor(symbol, timeframe, strategy[0], strategy[1], strategy[2])
+            for symbol, timeframe in symbols_and_timeframes
+            for strategy in self.strategies
+        ]
 
         with create_trader(self.context.broker):
             for actor in self.strategy_actors:
                 await self.dispatcher.dispatch(
-                    BacktestStarted(self.context.datasource, actor, symbols_and_timeframes, self.context.lookback))
-            await self.dispatcher.wait()
+                    BacktestStarted(self.context.datasource, actor, self.context.lookback))
+                await self.dispatcher.wait()
 
     async def _run_optimization(self):
         await asyncio.sleep(0.1)
 
     async def _run_trading(self):
-        top_strategies = await self.context.portfolio.get_top_strategies(10)
+        top_strategies = await self.context.portfolio.get_top_strategies(3)
 
         symbols = [strategy[0] for strategy in top_strategies]
         timeframes = [strategy[1] for strategy in top_strategies]
         strategies = [strategy[2] for strategy in top_strategies]
 
         for symbol in symbols:
-             self.context.broker.set_settings(symbol, self.context.leverage, position_mode=PositionMode.ONE_WAY, margin_mode=MarginMode.ISOLATED)
+            self.context.broker.set_settings(symbol, self.context.leverage, position_mode=PositionMode.ONE_WAY, margin_mode=MarginMode.ISOLATED)
 
         with create_trader(self.context.broker, live_trading=self.context.live_mode):
-            actors = [actor for strategy in strategies for actor in self.strategy_actors if actor.name == strategy[0]]
-            
+            symbols_and_timeframes = list(product(symbols, timeframes))
+            actors = [
+                actor
+                for symbol, timeframe in symbols_and_timeframes
+                for strategy in strategies
+                for actor in self.strategy_actors
+                if actor.strategy == strategy[0] and actor.timeframe == timeframe and actor.symbol == symbol
+            ]
+
             for actor in actors:
                 if actor.running:
                     actor.stop()
-            
+
                 actor.start()
-            
-            symbols_and_timeframes = list(product(symbols, timeframes))
-            
+
             await self.context.ws_handler.subscribe(symbols_and_timeframes)
