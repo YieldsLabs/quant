@@ -13,7 +13,7 @@ def parse_meta_label(label: str):
     def parse_params(params_str: str):
         return [float(p) if '.' in p else int(p) for p in params_str.split(':')]
 
-    pattern = r"([A-Z]+[A-Z\d]+)_(\d+[smhd])_STRTG([A-Z]+)_([\d:.]+)_STPLSS([A-Z]+)_([\d:.]+)"
+    pattern = r"([A-Z\d]+)_(\d+[smhd])_STRTG([A-Z]+)_([\d:.]+)_STPLSS([A-Z]+)_([\d:.]+)"
     matches = re.match(pattern, label)
 
     symbol = matches.group(1)
