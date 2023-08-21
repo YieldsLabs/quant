@@ -1,5 +1,4 @@
 import asyncio
-from functools import partial
 import pandas as pd
 
 from core.abstract_event_manager import AbstractEventManager
@@ -8,7 +7,7 @@ from core.events.portfolio import BasicPortfolioPerformance, AdvancedPortfolioPe
 
 
 class CSVSync(AbstractEventManager):
-    SAVE_INTERVAL = 10
+    SAVE_INTERVAL = 5
     PERFORMANCE_CSV = "strategy_performance.csv"
 
     def __init__(self):
@@ -32,14 +31,14 @@ class CSVSync(AbstractEventManager):
     async def _periodic_save(self):
         while True:
             await asyncio.sleep(self.SAVE_INTERVAL)
-            await self.save_to_csv()
+            self.save_to_csv()
 
     def start_save_task(self):
         self._save_task = asyncio.create_task(self._periodic_save())
 
-    async def save_to_csv(self):
+    def save_to_csv(self):
         perf_df = pd.DataFrame.from_records(list(self.perf_event.values()), columns=self.perf_columns)
-        await asyncio.to_thread(partial(perf_df.to_csv, self.PERFORMANCE_CSV, index=False))
+        perf_df.to_csv(self.PERFORMANCE_CSV, index=False)
 
     @staticmethod
     def _event_to_dict(event):
