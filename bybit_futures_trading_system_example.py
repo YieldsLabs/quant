@@ -24,10 +24,10 @@ IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
 
 async def main():
-    lookback = Lookback.ONE_MONTH
+    lookback = Lookback.THREE_MONTH
     initial_account_size = 1000
     risk_per_trade = 0.0015
-    risk_reward_ratio = 1.5
+    risk_reward_ratio = 6.0
     leverage = 1
     timeframes = [
         Timeframe.ONE_MINUTE,
@@ -76,4 +76,5 @@ async def main():
         system_task.cancel()
         ws_handler_task.cancel()
 
-asyncio.run(main())
+with asyncio.Runner() as runner:
+    runner.run(main())

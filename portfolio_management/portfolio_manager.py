@@ -177,8 +177,11 @@ class PortfolioManager(AbstractPortfolioManager):
 
     async def update_position_performance(self, position: Position):
         strategy = position.strategy_id
-        basic = await self.position_storage.basic_performance(strategy, self.initial_account_size, self.risk_per_trade)
-        advanced = await self.position_storage.advanced_performance(strategy, self.initial_account_size)
+        
+        closed_positions = await self.position_storage.filter_positions_by_strategy(strategy)
+        
+        basic = self.position_storage.basic_performance(closed_positions, self.initial_account_size, self.risk_per_trade)
+        advanced = self.position_storage.advanced_performance(closed_positions, self.initial_account_size)
 
         await self.dispatcher.dispatch(
             PortfolioPerformanceUpdated(strategy=strategy, basic=basic, advanced=advanced)

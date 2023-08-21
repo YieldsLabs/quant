@@ -32,7 +32,7 @@ class StrategyActor(AbstractActor):
     @property
     def id(self):
         if not self.running:
-            raise RuntimeError("Strategy is not started")
+            raise RuntimeError("ID: strategy is not started")
 
         params = self.exports["strategy_parameters"](self.store, self.strategy_id)
         memory = self.exports["memory"]
@@ -57,14 +57,14 @@ class StrategyActor(AbstractActor):
 
     def start(self):
         if self.running:
-            raise RuntimeError("Strategy is running")
+            raise RuntimeError("Start: strategy is running")
 
         self.strategy_id = self.exports[f"register_{self.strategy}"](self.store, *self.parameters)
         self.dispatcher.register(NewMarketDataReceived, self.next)
 
     def stop(self):
         if not self.running:
-            raise RuntimeError("Strategy is not started")
+            raise RuntimeError("Stop: strategy is not started")
 
         self.exports[f"unregister_strategy"](self.store, self.strategy_id)
         self.strategy_id = None
@@ -72,7 +72,7 @@ class StrategyActor(AbstractActor):
 
     async def next(self, event: NewMarketDataReceived):
         if not self.running:
-            raise RuntimeError("Strategy is not started")
+            raise RuntimeError("Next: strategy is not started")
 
         data = event.ohlcv
         symbol = event.symbol
@@ -102,7 +102,7 @@ class StrategyActor(AbstractActor):
         final_address = data_address + pointer
 
         if pointer + length > memory.data_len(store):
-            raise ValueError("Pointer and length exceed memory bounds")
+            raise ValueError("Memory: pointer and length exceed memory bounds")
 
         byte_array = (ctypes.c_char * length).from_address(final_address)
 
