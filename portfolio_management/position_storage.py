@@ -37,21 +37,31 @@ class PositionStorage:
                 position.update_prices(order.price)
                 self._active_positions_data['data'][symbol] = position
 
-    async def add_closed_position(self, position: Position, exit_price: float):
-        async with self._closed_positions_data['lock']:
-            position.close_position(exit_price)
-            self._closed_positions_data['data'].setdefault(position.closed_key, position)
+    async def close_position(self, symbol: str, exit_price: float):
+        active_position = await self._get_and_remove_active_position(symbol)
+        if active_position:
+            await self._mark_position_as_closed(active_position, exit_price)
 
-    def _get_positions_for_strategy(self, strategy_id: str) -> List[Position]:
-        return [position for position in self._closed_positions_data['data'].values() if position.strategy_id == strategy_id]
-    
+    async def _get_and_remove_active_position(self, symbol: str):
+        async with self._active_positions_data['lock']:
+            return self._active_positions_data['data'].pop(symbol, None)
+
+    async def _mark_position_as_closed(self, active_position, exit_price: float):
+        active_position.close_position(exit_price)
+
+        async with self._closed_positions_data['lock']:
+            self._closed_positions_data['data'].setdefault(active_position.closed_key, active_position)
+
+    def _get_positions_for_strategy(self, strategy: str) -> List[Position]:
+        return [position for position in self._closed_positions_data['data'].values() if position.strategy == strategy]
+
     def _get_unique_strategies(self):
-        return list(set([pos.strategy_id for pos in self._closed_positions_data['data'].values()]))
-    
+        return list(set([pos.strategy for pos in self._closed_positions_data['data'].values()]))
+
     async def filter_positions_by_strategy(self, strategy: str) -> List[Position]:
         async with self._closed_positions_data['lock']:
             return self._get_positions_for_strategy(strategy)
-        
+
     async def total_pnl(self) -> float:
         async with self._closed_positions_data['lock']:
             unique_strategies = self._get_unique_strategies()

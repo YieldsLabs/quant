@@ -38,7 +38,7 @@ class Position:
     def __init__(self, symbol: str, timeframe: Timeframe, strategy: str, side: PositionSide, size: float, entry: float, risk_reward_ratio: float, stop_loss: Optional[float] = None):
         self.symbol = symbol
         self.timeframe = timeframe
-        self.strategy = strategy
+        self._strategy = strategy
         self.size = size
         self.side = side
         self.entry_price = entry
@@ -51,17 +51,17 @@ class Position:
         self.closed_timestamp = self.open_timestamp
 
     @property
-    def strategy_id(self) -> str:
-        return f'{self.symbol}_{self.timeframe}{self.strategy}'
+    def strategy(self) -> str:
+        return f'{self.symbol}_{self.timeframe}{self._strategy}'
 
     @property
     def closed_key(self) -> str:
         return f"{self.symbol}_{self.closed_timestamp}"
-    
+
     @property
     def pnl(self) -> float:
         pnl = 0.0
-        
+
         if not self.closed:
             return pnl
 

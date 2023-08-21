@@ -1,4 +1,3 @@
-import asyncio
 from typing import Type, Union
 import logging
 
@@ -26,7 +25,7 @@ class LiveTrader(AbstractTrader):
 
     @register_handler(ClosePositionPrepared)
     async def _on_close_position(self, event: ClosePositionPrepared):
-        await asyncio.to_thread(self.broker.close_position, event.symbol)
+        self.broker.close_position(event.symbol)
 
         await self.dispatcher.dispatch(
             PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
@@ -41,8 +40,8 @@ class LiveTrader(AbstractTrader):
         }
 
         try:
-            current_order_id = await asyncio.to_thread(self.broker.place_market_order, **order_params)
-            position = await asyncio.to_thread(self.broker.get_open_position, event.symbol)
+            current_order_id = self.broker.place_market_order(**order_params)
+            position = self.broker.get_open_position(event.symbol)
 
             order = Order(id=current_order_id, side=order_side, size=position['position_size'], price=position['entry_price'])
 

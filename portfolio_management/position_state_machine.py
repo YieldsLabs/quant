@@ -32,13 +32,15 @@ class PositionStateMachine:
                 GoShortSignalReceived: (PositionState.OPENING, portfolio_manager.handle_open_position)
             },
             PositionState.OPENING: {
-                OrderFilled: (PositionState.OPENED, portfolio_manager.handle_order_filled)
+                OrderFilled: (PositionState.OPENED, portfolio_manager.handle_order_filled),
+                PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position),
             },
             PositionState.OPENED: {
                 NewMarketDataReceived: (PositionState.OPENED, portfolio_manager.handle_market),
                 ExitLongSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
                 ExitShortSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
-                RiskThresholdBreached: (PositionState.CLOSING, portfolio_manager.handle_exit)
+                RiskThresholdBreached: (PositionState.CLOSING, portfolio_manager.handle_exit),
+                PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position)
             },
             PositionState.CLOSING: {
                 PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position)

@@ -97,8 +97,10 @@ class PortfolioManager(AbstractPortfolioManager):
         if active_position is None:
             return False
 
-        await self.close_position(active_position, event.exit_price)
-        await self.update_position_performance(active_position)
+        strategy = active_position.strategy
+
+        await self.position_storage.close_position(event.symbol, event.exit_price)
+        await self.update_position_performance(strategy)
 
         return True
 
@@ -141,16 +143,12 @@ class PortfolioManager(AbstractPortfolioManager):
 
         return True
 
-    async def close_position(self, position: Position, exit_price: float):
-        await self.position_storage.add_closed_position(position, exit_price)
-        await self.position_storage.remove_active_position(position.symbol)
-
     async def create_position(self, event: Union[GoLongSignalReceived, GoShortSignalReceived]) -> Position:
         trading_fee, min_position_size, position_precision, price_precision = await self.datasource.fee_and_precisions(event.symbol)
 
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
         entry_price = round(event.entry, price_precision)
-        
+
         account_size = self.initial_account_size + await self.position_storage.total_pnl()
 
         size = PositionSizer.calculate_position_size(
@@ -177,11 +175,9 @@ class PortfolioManager(AbstractPortfolioManager):
             stop_loss=stop_loss_price
         )
 
-    async def update_position_performance(self, position: Position):
-        strategy = position.strategy_id
-        
+    async def update_position_performance(self, strategy: str):
         closed_positions = await self.position_storage.filter_positions_by_strategy(strategy)
-        
+
         basic = self.position_storage.basic_performance(closed_positions, self.initial_account_size, self.risk_per_trade)
         advanced = self.position_storage.advanced_performance(closed_positions, self.initial_account_size)
 
@@ -209,11 +205,11 @@ class PortfolioManager(AbstractPortfolioManager):
 
     def can_close_position(self, position_side: PositionSide, entry: float, event: Union[ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached], profit_threshold: float = 0.05) -> bool:
         if isinstance(event, ExitLongSignalReceived) and (position_side == PositionSide.LONG):
-            if (entry < event.exit) and abs(entry - event.exit) >= profit_threshold:
+            if entry < event.exit:
                 return True
 
         if isinstance(event, ExitShortSignalReceived) and (position_side == PositionSide.SHORT):
-            if (entry > event.exit) and abs(entry - event.exit) >= profit_threshold:
+            if entry > event.exit:
                 return True
 
         if isinstance(event, RiskThresholdBreached) and (position_side == event.side):
