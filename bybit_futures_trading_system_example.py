@@ -43,14 +43,15 @@ async def main():
     CSVSync()
 
     Backtest()
-    RiskManager()
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
     strategy_factory = StrategyActorFactory()
+    risk = RiskManager()
     portfolio = PortfolioManager(
         datasource,
+        risk,
         initial_account_size=initial_account_size,
         leverage=leverage,
         risk_reward_ratio=risk_reward_ratio,
