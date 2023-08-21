@@ -3,12 +3,14 @@ from typing import Type, Union
 from core.event_decorators import register_handler
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.portfolio import PortfolioPerformanceUpdated
-from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, LongPositionOpened, ClosePositionPrepared, ShortPositionOpened
+from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, ClosePositionPrepared, ShortPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
+from core.interfaces.abstract_risk_manager import AbstractRiskManager
 from core.models.position import Position, PositionSide
 from core.interfaces.abstract_datasource import AbstractDatasource
 from core.interfaces.abstract_portfolio_manager import AbstractPortfolioManager
+from core.models.risk import RiskType
 
 from .position_state_machine import PositionStateMachine
 from .position_sizer import PositionSizer
@@ -16,9 +18,11 @@ from .position_storage import PositionStorage
 
 
 class PortfolioManager(AbstractPortfolioManager):
-    def __init__(self, datasource: Type[AbstractDatasource], initial_account_size: int = 1000, leverage: int = 1, risk_reward_ratio: int = 1.5, risk_per_trade: float = 0.001):
+    def __init__(self, datasource: Type[AbstractDatasource], risk: Type[AbstractRiskManager], initial_account_size: int = 1000, leverage: int = 1, risk_reward_ratio: int = 1.5, risk_per_trade: float = 0.001):
         super().__init__()
         self.datasource = datasource
+        self.risk = risk
+        self.risk_type = RiskType.BREAK_EVEN
         self.initial_account_size = initial_account_size
         self.leverage = leverage
         self.risk_reward_ratio = risk_reward_ratio
@@ -104,26 +108,25 @@ class PortfolioManager(AbstractPortfolioManager):
 
         return True
 
-    async def handle_market(self, event: NewMarketDataReceived) -> bool:
+    async def handle_risk(self, event: NewMarketDataReceived) -> bool:
         active_position = await self.position_storage.get_active_position(event.symbol)
 
         if active_position is None:
             return False
+        
+        ohlcv = event.ohlcv
+        symbol = event.symbol
+        timeframe = event.timeframe
+        position_side = active_position.side
+        position_size = active_position.size
+        entry_price = active_position.entry_price
+        stop_loss_price = active_position.stop_loss_price
+        risk_reward_ratio = active_position.risk_reward_ratio
+        strategy = active_position.strategy
+        risk_per_trade = self.risk_per_trade
+        risk_type = self.risk_type
 
-        await self.dispatcher.dispatch(
-            ActivePositionOpened(
-                symbol=active_position.symbol,
-                timeframe=active_position.timeframe,
-                side=active_position.side,
-                size=active_position.size,
-                entry=active_position.entry_price,
-                stop_loss=active_position.stop_loss_price,
-                risk_reward_ratio=active_position.risk_reward_ratio,
-                strategy=active_position.strategy,
-                risk_per_trade=self.risk_per_trade,
-                ohlcv=event.ohlcv
-            )
-        )
+        await self.risk.next(symbol, timeframe, strategy, ohlcv, risk_type, position_side, position_size, entry_price, stop_loss_price, risk_reward_ratio, risk_per_trade)
 
         return True
 

@@ -45,21 +45,6 @@ class ClosePositionPrepared(Event):
 
 
 @dataclass(frozen=True)
-class ActivePositionOpened(Event):
-    symbol: str
-    timeframe: Timeframe
-    side: PositionSide
-    size: float
-    entry: float
-    stop_loss: Optional[float]
-    risk_reward_ratio: float
-    risk_per_trade: float
-    ohlcv: OHLCV
-    strategy: str
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
-
-
-@dataclass(frozen=True)
 class PositionClosed(Event):
     symbol: str
     timeframe: Timeframe

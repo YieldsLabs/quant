@@ -1,6 +1,4 @@
-from core.event_decorators import register_handler
 from core.models.ohlcv import OHLCV
-from core.events.position import ActivePositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.models.position import PositionSide
 from core.models.risk import RiskType
@@ -11,37 +9,31 @@ from .take_profit.finders.risk_reward_take_profit_finder import RiskRewardTakePr
 
 
 class RiskManager(AbstractRiskManager):
-    def __init__(self, risk_type: RiskType = RiskType.BREAK_EVEN):
+    def __init__(self):
         super().__init__()
-        self.risk_type = risk_type
         self.break_even_strategy = BreakEvenStopLossStrategy()
 
-    @register_handler(ActivePositionOpened)
-    async def _on_risk(self, event: ActivePositionOpened):
-        symbol, timeframe, position_side, position_size, entry_price, stop_loss_price, risk_reward_ratio, risk_per_trade, ohlcv, strategy = self._unpack_event(event)
+    async def next(self, symbol, timeframe, strategy, ohlcv, risk_type, position_side, position_size, entry_price, stop_loss_price, risk_reward_ratio, risk_per_trade):
         take_profit_price = self._calculate_take_profit_price(risk_reward_ratio, entry_price, stop_loss_price)
 
-        if self.risk_type == RiskType.BREAK_EVEN and stop_loss_price is not None:
-            stop_loss_price = await self._calculate_break_even_stop_loss(symbol, timeframe, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
-
+        if risk_type == RiskType.BREAK_EVEN and stop_loss_price is not None:
+            stop_loss_price = await self._calculate_break_even_stop_loss(strategy, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade)
+        
         if self._should_exit(position_side, stop_loss_price, take_profit_price, ohlcv):
             await self._process_exit(symbol, timeframe, position_side, strategy, ohlcv, take_profit_price, stop_loss_price)
 
-    async def _calculate_break_even_stop_loss(self, symbol, timeframe, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade):
-        return await self.break_even_strategy.next(symbol, timeframe, position_side, position_size, stop_loss_price, entry_price, ohlcv.low, ohlcv.high, risk_per_trade)
+    async def _calculate_break_even_stop_loss(self, strategy, position_side, position_size, stop_loss_price, entry_price, ohlcv, risk_per_trade):
+        return await self.break_even_strategy.next(strategy, position_side, position_size, stop_loss_price, entry_price, ohlcv.low, ohlcv.high, risk_per_trade)
 
     def _calculate_take_profit_price(self, risk_reward_ratio, entry_price, stop_loss_price):
         return RiskRewardTakeProfitFinder(risk_reward_ratio).next(entry_price, stop_loss_price)
 
     async def _process_exit(self, symbol, timeframe, position_side, strategy, ohlcv, take_profit_price, stop_loss_price):
-        await self.break_even_strategy.reset(symbol, timeframe, position_side)
+        await self.break_even_strategy.reset(strategy, position_side)
 
         exit_price = self._calculate_exit_price(position_side, ohlcv.close, take_profit_price, stop_loss_price)
 
         await self.dispatcher.dispatch(RiskThresholdBreached(symbol=symbol, timeframe=timeframe, side=position_side, strategy=strategy, exit=exit_price))
-
-    def _unpack_event(self, event: ActivePositionOpened):
-        return event.symbol, event.timeframe, event.side, event.size, event.entry, event.stop_loss, event.risk_reward_ratio, event.risk_per_trade, event.ohlcv, event.strategy
 
     def _should_exit(self, position_side: PositionSide, stop_loss_price: float | None, take_profit_price: float | None, ohlcv: OHLCV):
         if position_side == PositionSide.LONG:
