@@ -1,11 +1,11 @@
 from core.event_decorators import register_handler
 from core.events.backtest import BacktestStarted
-from core.events.ohlcv import OHLCV, NewMarketDataReceived
+from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import PositionClosed
-from core.timeframe import Timeframe
-
-from .abstract_backtest import AbstractBacktest
-from .lookback import TIMEFRAMES_TO_LOOKBACK
+from core.models.timeframe import Timeframe
+from core.models.ohlcv import OHLCV
+from core.models.lookback import TIMEFRAMES_TO_LOOKBACK
+from core.interfaces.abstract_backtest import AbstractBacktest
 
 
 class Backtest(AbstractBacktest):
@@ -35,8 +35,8 @@ class Backtest(AbstractBacktest):
             actor.stop()
 
     async def _process_historical_data(self, symbol: str, timeframe: Timeframe, data):
-        timestamp, open, high, low, close, volume = data
-        ohlcv = OHLCV(timestamp, float(open), float(high), float(low), float(close), float(volume))
+        ohlcv = OHLCV.from_raw(data)
+
         await self.dispatcher.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv))
 
     def _ensure_actor_state(self, actor):

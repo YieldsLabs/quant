@@ -6,13 +6,13 @@ from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import ActivePositionOpened, PositionClosed, OrderFilled, LongPositionOpened, ClosePositionPrepared, ShortPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
-from core.position import Position, PositionSide
-from datasource.abstract_datasource import AbstractDatasource
+from core.models.position import Position, PositionSide
+from core.interfaces.abstract_datasource import AbstractDatasource
+from core.interfaces.abstract_portfolio_manager import AbstractPortfolioManager
 
 from .position_state_machine import PositionStateMachine
 from .position_sizer import PositionSizer
 from .position_storage import PositionStorage
-from .abstract_portfolio_manager import AbstractPortfolioManager
 
 
 class PortfolioManager(AbstractPortfolioManager):

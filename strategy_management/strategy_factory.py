@@ -1,6 +1,7 @@
 from wasmtime import Store, Linker, WasiConfig, Module
 
-from .abstract_strategy_factory import AbstractStrategyActorFactory
+from core.interfaces.abstract_strategy_factory import AbstractStrategyActorFactory
+
 from .strategy_actor import StrategyActor
 
 

@@ -1,13 +1,11 @@
 import ccxt
 import math
-
-from core.position import PositionSide
-from datasource.retry import retry
 from ccxt.base.errors import RequestTimeout, NetworkError
 
-from .abstract_broker import AbstractBroker
-from .margin_mode import MarginMode
-from .position_mode import PositionMode
+from core.models.position import PositionSide
+from core.models.broker import MarginMode, PositionMode
+from datasource.retry import retry
+from core.interfaces.abstract_broker import AbstractBroker
 
 
 class FuturesBybitBroker(AbstractBroker):

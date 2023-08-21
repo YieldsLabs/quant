@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from .base_event import Event, EventMeta
-from ..timeframe import Timeframe
+from ..models.timeframe import Timeframe
 
 
 @dataclass(frozen=True)

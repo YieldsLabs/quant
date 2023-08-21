@@ -2,10 +2,10 @@ import asyncio
 from aiocache import cached
 from typing import Type
 
-from broker.abstract_broker import AbstractBroker
-from core.timeframe import Timeframe
+from core.interfaces.abstract_broker import AbstractBroker
+from core.models.timeframe import Timeframe
+from core.interfaces.abstract_datasource import AbstractDatasource
 
-from .abstract_datasource import AbstractDatasource
 from .retry import retry
 
 

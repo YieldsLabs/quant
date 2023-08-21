@@ -1,17 +1,9 @@
-from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
+from .order import Order
 from .timeframe import Timeframe
-
-
-class OrderSide(Enum):
-    BUY = "buy"
-    SELL = "sell"
-
-    def __str__(self):
-        return self.value
 
 
 class PositionSide(Enum):
@@ -20,18 +12,6 @@ class PositionSide(Enum):
 
     def __str__(self):
         return self.value
-
-
-@dataclass
-class Order:
-    side: OrderSide
-    price: float
-    size: float
-    id: Optional[str] = None
-    timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
-
-    def to_dict(self):
-        return asdict(self)
 
 
 class Position:

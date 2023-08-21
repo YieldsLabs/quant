@@ -1,7 +1,7 @@
 import asyncio
 
-from core.position import PositionSide
-from core.timeframe import Timeframe
+from core.models.position import PositionSide
+from core.models.timeframe import Timeframe
 
 
 class BreakEvenStopLossStrategy:

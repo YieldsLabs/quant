@@ -1,6 +1,6 @@
 from enum import Enum
 
-from core.timeframe import Timeframe
+from .timeframe import Timeframe
 
 
 class Lookback(Enum):

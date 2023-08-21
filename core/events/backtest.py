@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Type
 
-from backtest.lookback import Lookback
-from datasource.abstract_datasource import AbstractDatasource
-from strategy_management.abstract_actor import AbstractActor
-
 from .base_event import Event, EventMeta
+
+from ..interfaces.abstract_datasource import AbstractDatasource
+from ..interfaces.abstract_actor import AbstractActor
+from ..models.lookback import Lookback
 
 
 @dataclass(frozen=True)

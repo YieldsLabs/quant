@@ -1,8 +1,8 @@
 import asyncio
 from typing import List, Optional
 
-from core.events.portfolio import AdvancedPortfolioPerformance, BasicPortfolioPerformance
-from core.position import Order, Position
+from core.models.portfolio import AdvancedPortfolioPerformance, BasicPortfolioPerformance
+from core.models.position import Order, Position
 from labels.parse_label import parse_meta_label
 
 from .portfolio_advanced_performance import PortfolioAdvancedPerformance

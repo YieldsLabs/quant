@@ -1,7 +1,8 @@
 from abc import abstractmethod
 
-from core.abstract_event_manager import AbstractEventManager
-from core.events.ohlcv import OHLCV
+from .abstract_event_manager import AbstractEventManager
+
+from ..models.ohlcv import OHLCV
 
 
 class AbstractActor(AbstractEventManager):

@@ -2,11 +2,12 @@ import asyncio
 import json
 import websockets
 
-from core.events.ohlcv import OHLCV, NewMarketDataReceived
-from core.timeframe import Timeframe
+from core.events.ohlcv import NewMarketDataReceived
+from core.models.timeframe import Timeframe
+from core.models.ohlcv import OHLCV
+from core.interfaces.abstract_ws import AbstractWS
 
 from .retry import retry
-from .abstract_ws import AbstractWS
 
 
 class BybitWSHandler(AbstractWS):
@@ -97,14 +98,7 @@ class BybitWSHandler(AbstractWS):
                 await self.ws.close()
 
     def parse_candle_message(self, symbol, interval, data):
-        ohlcv = OHLCV(
-            timestamp=int(data["timestamp"]),
-            open=float(data["open"]),
-            high=float(data["high"]),
-            low=float(data["low"]),
-            close=float(data["close"]),
-            volume=float(data["volume"]),
-        )
+        ohlcv = OHLCV.from_raw(data)
 
         return NewMarketDataReceived(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
 

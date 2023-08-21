@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from typing import List, Tuple
 
-from core.abstract_event_manager import AbstractEventManager
-from core.timeframe import Timeframe
+from ..interfaces.abstract_event_manager import AbstractEventManager
+from ..models.timeframe import Timeframe
 
 
 class AbstractWS(AbstractEventManager):

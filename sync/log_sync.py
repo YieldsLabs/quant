@@ -1,4 +1,4 @@
-from core.abstract_event_manager import AbstractEventManager
+from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.event_decorators import register_handler
 from core.events.backtest import BacktestStarted
 from core.events.ohlcv import NewMarketDataReceived

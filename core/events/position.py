@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 
-from .ohlcv import OHLCV
 from .base_event import Event, EventMeta
-from ..timeframe import Timeframe
-from ..position import Order, PositionSide
+
+from ..models.ohlcv import OHLCV
+from ..models.timeframe import Timeframe
+from ..models.position import Order, PositionSide
 
 
 @dataclass(frozen=True)

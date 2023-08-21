@@ -1,7 +1,8 @@
 from typing import Type
-from broker.abstract_broker import AbstractBroker
 
-from .abstract_trader import AbstractTrader
+from core.interfaces.abstract_broker import AbstractBroker
+from core.interfaces.abstract_trader import AbstractTrader
+
 from .live_trader import LiveTrader
 from .paper_trader import PaperTrader
 

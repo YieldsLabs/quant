@@ -1,6 +1,6 @@
 import re
 
-from core.timeframe import Timeframe
+from core.models.timeframe import Timeframe
 
 
 def get_timeframe_from_string(input_string):

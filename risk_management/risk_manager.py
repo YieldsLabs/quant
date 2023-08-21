@@ -1,10 +1,11 @@
 from core.event_decorators import register_handler
-from core.events.ohlcv import OHLCV
+from core.models.ohlcv import OHLCV
 from core.events.position import ActivePositionOpened
-from core.events.risk import RiskThresholdBreached, RiskType
-from core.position import PositionSide
+from core.events.risk import RiskThresholdBreached
+from core.models.position import PositionSide
+from core.models.risk import RiskType
+from core.interfaces.abstract_risk_manager import AbstractRiskManager
 
-from .abstract_risk_manager import AbstractRiskManager
 from .stop_loss.strategy.break_even import BreakEvenStopLossStrategy
 from .take_profit.finders.risk_reward_take_profit_finder import RiskRewardTakeProfitFinder
 

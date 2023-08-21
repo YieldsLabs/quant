@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from core.timeframe import Timeframe
+from ..models.timeframe import Timeframe
 
 
 class AbstractDatasource(ABC):

@@ -1,8 +1,8 @@
 from abc import abstractmethod
 
-from core.timeframe import Timeframe
-
 from .abstract_actor import AbstractActor
+
+from ..models.timeframe import Timeframe
 
 
 class AbstractStrategyActorFactory:

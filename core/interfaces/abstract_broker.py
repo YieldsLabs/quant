@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 
-from core.position import OrderSide
+from core.models.order import OrderSide
 
-from .margin_mode import MarginMode
-from .position_mode import PositionMode
+from ..models.broker import MarginMode, PositionMode
 
 
 class AbstractBroker(ABC):

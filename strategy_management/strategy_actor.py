@@ -6,9 +6,8 @@ from wasmtime import Memory, Store
 
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.events.ohlcv import NewMarketDataReceived
-from core.timeframe import Timeframe
-
-from .abstract_actor import AbstractActor
+from core.models.timeframe import Timeframe
+from core.interfaces.abstract_actor import AbstractActor
 
 
 class Action(Enum):

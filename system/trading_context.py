@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import Any, List, Type
 
-from backtest.lookback import Lookback
-from broker.abstract_broker import AbstractBroker
-from core.timeframe import Timeframe
-from datasource.abstract_datasource import AbstractDatasource
-from datasource.abstract_ws import AbstractWS
-from portfolio_management.abstract_portfolio_manager import AbstractPortfolioManager
-from strategy_management.abstract_strategy_factory import AbstractStrategyActorFactory
+from core.models.lookback import Lookback
+from core.interfaces.abstract_broker import AbstractBroker
+from core.models.timeframe import Timeframe
+from core.interfaces.abstract_datasource import AbstractDatasource
+from core.interfaces.abstract_ws import AbstractWS
+from core.interfaces.abstract_portfolio_manager import AbstractPortfolioManager
+from core.interfaces.abstract_strategy_factory import AbstractStrategyActorFactory
 
 
 @dataclass

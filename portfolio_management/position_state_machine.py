@@ -6,8 +6,7 @@ from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import OrderFilled, PositionClosed
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
-
-from .abstract_portfolio_manager import AbstractPortfolioManager
+from core.interfaces.abstract_portfolio_manager import AbstractPortfolioManager
 
 
 class PositionState(Enum):

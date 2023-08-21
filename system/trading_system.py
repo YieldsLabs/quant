@@ -2,13 +2,12 @@ import asyncio
 from enum import Enum, auto
 from itertools import product
 from random import shuffle
-from broker.margin_mode import MarginMode
-from broker.position_mode import PositionMode
 
+from core.models.broker import MarginMode, PositionMode
 from core.events.backtest import BacktestStarted
 from trader.create_trader import create_trader
+from core.interfaces.abstract_system import AbstractSystem
 
-from .abstract_system import AbstractSystem
 from .trading_context import TradingContext
 
 

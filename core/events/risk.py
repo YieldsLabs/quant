@@ -1,13 +1,9 @@
 from dataclasses import dataclass, field
-from enum import Enum, auto
 
 from .base_event import Event, EventMeta
-from ..position import PositionSide
-from ..timeframe import Timeframe
 
-
-class RiskType(Enum):
-    BREAK_EVEN = auto()
+from ..models.position import PositionSide
+from ..models.timeframe import Timeframe
 
 
 @dataclass(frozen=True)

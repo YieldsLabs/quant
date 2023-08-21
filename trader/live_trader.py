@@ -1,12 +1,11 @@
 from typing import Type, Union
 import logging
 
-from broker.abstract_broker import AbstractBroker
+from core.interfaces.abstract_broker import AbstractBroker
 from core.event_decorators import register_handler
 from core.events.position import PositionClosed, LongPositionOpened, ShortPositionOpened, ClosePositionPrepared, OrderFilled
-from core.position import Order, OrderSide
-
-from .abstract_trader import AbstractTrader
+from core.models.order import Order, OrderSide
+from core.interfaces.abstract_trader import AbstractTrader
 
 
 class LiveTrader(AbstractTrader):

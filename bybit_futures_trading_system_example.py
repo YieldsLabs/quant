@@ -2,12 +2,12 @@ import asyncio
 from dotenv import load_dotenv
 import os
 
-from core.timeframe import Timeframe
+from core.models.timeframe import Timeframe
+from core.models.lookback import Lookback
 from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
 from backtest.backtest import Backtest
-from backtest.lookback import Lookback
 from portfolio_management.portfolio_manager import PortfolioManager
 from risk_management.risk_manager import RiskManager
 from strategy_management.strategy_factory import StrategyActorFactory
@@ -27,7 +27,7 @@ async def main():
     lookback = Lookback.THREE_MONTH
     initial_account_size = 1000
     risk_per_trade = 0.0015
-    risk_reward_ratio = 6.0
+    risk_reward_ratio = 2.0
     leverage = 1
     timeframes = [
         Timeframe.ONE_MINUTE,
