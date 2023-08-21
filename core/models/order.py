@@ -17,7 +17,6 @@ class Order:
     side: OrderSide
     price: float
     size: float
-    stop_loss: Optional[float]
     id: Optional[str] = None
     timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
