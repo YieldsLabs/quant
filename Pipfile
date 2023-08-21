@@ -12,7 +12,6 @@ websockets = "*"
 aiocache = "*"
 uuid = "*"
 scikit-learn = "*"
-joblib = "*"
 wasmtime = "*"
 
 [dev-packages]

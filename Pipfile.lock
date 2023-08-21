@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f341989c6fec51bce9e171b8be374631faa3b37b0524476c172ec14a79796264"
+            "sha256": "8b30463bb020f2523ff37272a38f95eb3b5829810824d2b80595c370e8d2b4f2"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -152,11 +152,11 @@
         },
         "ccxt": {
             "hashes": [
-                "sha256:00996c081d58efc36f086dc1e30d131fcc5dc3775da370990d49299885a41da2",
-                "sha256:c3059259fb8f5fe0ca11a9fd50bfabb845220c0f6d0a4f6fdbee53e464de7dae"
+                "sha256:bf440f18c97db312003944d0f34a5ec749a16e5656644ea8bdfa0c6fd7bb67b2",
+                "sha256:df7cb1e347dab7d7005c7b0aaa95782cd59ffddad3fe1b2865893f267d0c2b60"
             ],
             "index": "pypi",
-            "version": "==4.0.69"
+            "version": "==4.0.70"
         },
         "certifi": {
             "hashes": [
@@ -425,7 +425,7 @@
                 "sha256:92f865e621e17784e7955080b6d042489e3b8e294949cc44c6eac304f59772b1",
                 "sha256:ef4331c65f239985f3f2220ecc87db222f08fd22097a3dd5698f693875f8cbb9"
             ],
-            "index": "pypi",
+            "markers": "python_version >= '3.7'",
             "version": "==1.3.2"
         },
         "multidict": {
