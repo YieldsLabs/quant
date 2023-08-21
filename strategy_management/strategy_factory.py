@@ -5,15 +5,16 @@ from .strategy_actor import StrategyActor
 
 
 class StrategyActorFactory(AbstractStrategyActorFactory):
-    def __init__(self):
-        self.store = Store()
-        self.linker = Linker(self.store.engine)
+    def create_actor(self, symbol, timeframe, wasm_path, strategy, parameters):
+        store = Store()
         wasi_config = WasiConfig()
         wasi_config.wasm_multi_value = True
-        self.store.set_wasi(wasi_config)
-        self.linker.define_wasi()
+        linker = Linker(store.engine)
+        store.set_wasi(wasi_config)
+        linker.define_wasi()
 
-    def create_actor(self, symbol, timeframe, wasm_path, strategy, parameters):
-        module = Module.from_file(self.store.engine, wasm_path)
+        module = Module.from_file(store.engine, wasm_path)
+        instance = linker.instantiate(store, module)
+        exports = instance.exports(store)
 
-        return StrategyActor(symbol, timeframe, strategy, parameters, self.linker, self.store, module)
+        return StrategyActor(symbol, timeframe, strategy, parameters, store, exports)

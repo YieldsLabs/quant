@@ -1,7 +1,8 @@
 import asyncio
 import ctypes
 from enum import Enum
-from wasmtime import Memory, Store, Linker, Module
+from typing import Any
+from wasmtime import Memory, Store
 
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.events.ohlcv import NewMarketDataReceived
@@ -18,14 +19,14 @@ class Action(Enum):
 
 
 class StrategyActor(AbstractActor):
-    def __init__(self, symbol: str, timeframe: Timeframe, strategy: str, parameters: tuple[int], linker: Linker, store: Store, module: Module):
+    def __init__(self, symbol: str, timeframe: Timeframe, strategy: str, parameters: tuple[int], store: Store, exports: Any):
         super().__init__()
         self._symbol = symbol
         self._timeframe = timeframe
         self._strategy = strategy
         self.parameters = parameters
         self.store = store
-        self.instance = linker.instantiate(self.store, module)
+        self.exports = exports
         self.strategy_id = None
 
     @property
@@ -33,9 +34,8 @@ class StrategyActor(AbstractActor):
         if not self.running:
             raise RuntimeError("Strategy is not started")
 
-        exports = self.instance.exports(self.store)
-        params = exports["strategy_parameters"](self.store, self.strategy_id)
-        memory = exports["memory"]
+        params = self.exports["strategy_parameters"](self.store, self.strategy_id)
+        memory = self.exports["memory"]
 
         return self._get_string_from_memory(self.store, memory, params[0], params[1])
 
@@ -59,14 +59,14 @@ class StrategyActor(AbstractActor):
         if self.running:
             raise RuntimeError("Strategy is running")
 
-        self.strategy_id = self.instance.exports(self.store)[f"register_{self.strategy}"](self.store, *self.parameters)
+        self.strategy_id = self.exports[f"register_{self.strategy}"](self.store, *self.parameters)
         self.dispatcher.register(NewMarketDataReceived, self.next)
 
     def stop(self):
         if not self.running:
             raise RuntimeError("Strategy is not started")
 
-        self.instance.exports(self.store)[f"unregister_strategy"](self.store, self.strategy_id)
+        self.exports[f"unregister_strategy"](self.store, self.strategy_id)
         self.strategy_id = None
         self.dispatcher.unregister(NewMarketDataReceived, self.next)
 
@@ -74,15 +74,12 @@ class StrategyActor(AbstractActor):
         if not self.running:
             raise RuntimeError("Strategy is not started")
 
-        strategy_next = self.instance.exports(self.store)["strategy_next"]
-        strategy_stop_loss = self.instance.exports(self.store)["strategy_stop_loss"]
-
         data = event.ohlcv
         symbol = event.symbol
         timeframe = event.timeframe
 
-        [action, price] = strategy_next(self.store, self.strategy_id, data.open, data.high, data.low, data.close, data.volume)
-        [long_stop_loss, short_stop_loss] = strategy_stop_loss(self.store, self.strategy_id)
+        [action, price] = self.exports["strategy_next"](self.store, self.strategy_id, data.open, data.high, data.low, data.close, data.volume)
+        [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](self.store, self.strategy_id)
 
         tasks = []
 
