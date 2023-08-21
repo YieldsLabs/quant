@@ -35,6 +35,10 @@ async def main():
         Timeframe.FIFTEEN_MINUTES
     ]
 
+    strategies = [
+        ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
+    ]
+
     LogSync()
     CSVSync()
 
@@ -60,6 +64,7 @@ async def main():
         broker,
         portfolio,
         timeframes,
+        strategies,
         lookback,
         leverage,
         IS_LIVE_MODE

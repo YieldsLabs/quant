@@ -25,9 +25,6 @@ class TradingSystem(AbstractSystem):
         super().__init__()
         self.context = context
         self.state = state
-        self.strategies = [
-            ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
-        ]
         self.strategy_actors = []
 
     async def start(self):
@@ -56,7 +53,7 @@ class TradingSystem(AbstractSystem):
         self.strategy_actors = [
             self.context.strategy_factory.create_actor(symbol, timeframe, f'./strategy/{strategy[0]}.wasm', strategy[1], strategy[2])
             for symbol, timeframe in symbols_and_timeframes
-            for strategy in self.strategies
+            for strategy in self.context.strategies
         ]
 
         with create_trader(self.context.broker):

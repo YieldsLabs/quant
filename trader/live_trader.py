@@ -26,14 +26,10 @@ class LiveTrader(AbstractTrader):
 
     @register_handler(ClosePositionPrepared)
     async def _on_close_position(self, event: ClosePositionPrepared):
-        try:
-            await asyncio.to_thread(self.broker.close_position, event.symbol)
+        await asyncio.to_thread(self.broker.close_position, event.symbol)
 
-            await self.dispatcher.dispatch(
-                PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
-
-        except Exception as e:
-            self.logger.error(f"Error closing position for {event.symbol}: {e}")
+        await self.dispatcher.dispatch(
+            PositionClosed(symbol=event.symbol, timeframe=event.timeframe, exit_price=event.exit_price))
 
     async def trade(self, event: Union[LongPositionOpened, ShortPositionOpened]):
         order_side = OrderSide.BUY if isinstance(event, LongPositionOpened) else OrderSide.SELL

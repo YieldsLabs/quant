@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Type
+from typing import Any, List, Type
 
 from backtest.lookback import Lookback
 from broker.abstract_broker import AbstractBroker
@@ -18,6 +18,7 @@ class TradingContext:
     broker: Type[AbstractBroker]
     portfolio: Type[AbstractPortfolioManager]
     timeframes: List[Timeframe]
+    strategies: List[List[Any]]
     lookback: Lookback
     leverage: int
     live_mode: bool
