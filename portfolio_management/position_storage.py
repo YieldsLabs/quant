@@ -45,9 +45,22 @@ class PositionStorage:
     def _get_positions_for_strategy(self, strategy_id: str) -> List[Position]:
         return [position for position in self._closed_positions_data['data'].values() if position.strategy_id == strategy_id]
     
+    def _get_unique_strategies(self):
+        return list(set([pos.strategy_id for pos in self._closed_positions_data['data'].values()]))
+    
     async def filter_positions_by_strategy(self, strategy: str) -> List[Position]:
         async with self._closed_positions_data['lock']:
             return self._get_positions_for_strategy(strategy)
+        
+    async def total_pnl(self) -> float:
+        async with self._closed_positions_data['lock']:
+            unique_strategies = self._get_unique_strategies()
+
+            return sum([
+                position.pnl
+                for strategy in unique_strategies
+                for position in self._get_positions_for_strategy(strategy)
+            ])
 
     def basic_performance(self, closed_positions: List[Position], initial_account_size: int, risk_per_trade: int) -> BasicPortfolioPerformance:
         return self.basic.next(closed_positions, initial_account_size, risk_per_trade)
@@ -57,7 +70,7 @@ class PositionStorage:
 
     async def get_top_strategies(self, initial_account_size: int, num: int = 5) -> List[str]:
         async with self._closed_positions_data['lock']:
-            unique_strategies = list(set([pos.strategy_id for pos in self._closed_positions_data['data'].values()]))
+            unique_strategies = self._get_unique_strategies()
 
             strategy_performances = [
                 (strategy, self.advanced_performance(self._get_positions_for_strategy(strategy), initial_account_size))

@@ -150,9 +150,11 @@ class PortfolioManager(AbstractPortfolioManager):
 
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
         entry_price = round(event.entry, price_precision)
+        
+        account_size = self.initial_account_size + await self.position_storage.total_pnl()
 
         size = PositionSizer.calculate_position_size(
-            self.initial_account_size,
+            account_size,
             entry_price,
             trading_fee,
             min_position_size,
