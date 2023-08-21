@@ -3,7 +3,8 @@ from functools import partial, wraps
 import inspect
 from typing import Callable, Type
 
-from .event_dispatcher import EventDispatcher
+from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
+
 from .events.base_event import Event
 
 

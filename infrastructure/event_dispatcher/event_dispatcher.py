@@ -2,9 +2,10 @@ import asyncio
 import os
 from typing import Callable, Type
 
+from core.events.base_event import Event, EventEnded
+
 from .worker_pool import WorkerPool
 from .event_handler import EventHandler
-from .events.base_event import Event, EventEnded
 
 
 class SingletonMeta(type):

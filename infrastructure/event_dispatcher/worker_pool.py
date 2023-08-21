@@ -1,6 +1,7 @@
 import asyncio
 
-from .events.base_event import Event
+from core.events.base_event import Event
+
 from .event_worker import EventWorker
 from .load_balancer import LoadBalancer
 from .event_handler import EventHandler

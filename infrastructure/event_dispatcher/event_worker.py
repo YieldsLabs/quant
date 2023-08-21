@@ -1,8 +1,9 @@
 import asyncio
 from typing import Any, AsyncIterable, Dict, Tuple
 
+from core.events.base_event import Event
+
 from .event_handler import EventHandler
-from .events.base_event import Event
 
 
 class EventWorker:
