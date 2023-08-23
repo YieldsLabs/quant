@@ -1,9 +1,10 @@
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
+from .strategy import Strategy
 from .order import Order
-from .timeframe import Timeframe
 
 
 class PositionSide(Enum):
@@ -14,29 +15,24 @@ class PositionSide(Enum):
         return self.value
 
 
+@dataclass(frozen=True)
 class Position:
-    def __init__(self, symbol: str, timeframe: Timeframe, strategy: str, side: PositionSide, size: float, entry: float, risk_reward_ratio: float, stop_loss: Optional[float] = None):
-        self.symbol = symbol
-        self.timeframe = timeframe
-        self._strategy = strategy
-        self.size = size
-        self.side = side
-        self.entry_price = entry
-        self.exit_price = entry
-        self.stop_loss_price = stop_loss
-        self.risk_reward_ratio = risk_reward_ratio
-        self.orders: List[Order] = []
-        self.closed = False
-        self.open_timestamp = datetime.now().timestamp()
-        self.closed_timestamp = self.open_timestamp
-
-    @property
-    def strategy(self) -> str:
-        return f'{self.symbol}_{self.timeframe}{self._strategy}'
+    strategy: Strategy
+    side: PositionSide
+    size: float
+    entry_price: float
+    risk_reward_ratio: float
+    risk_per_trade: float
+    stop_loss_price: Optional[float] = None
+    orders: List[Order] = field(default_factory=list)
+    closed: bool = False
+    open_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
+    closed_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
+    exit_price: float = field(default_factory=lambda: 0.0001)
 
     @property
     def closed_key(self) -> str:
-        return f"{self.symbol}_{self.closed_timestamp}"
+        return f"{self.strategy}_{int(self.closed_timestamp)}"
 
     @property
     def pnl(self) -> float:
@@ -52,18 +48,22 @@ class Position:
 
         return pnl
 
-    def add_order(self, order: Order):
-        self.orders.append(order)
+    def add_order(self, order: Order) -> 'Position':
+        return replace(self, orders=self.orders + [order])
 
-    def close_position(self, exit_price):
+    def close_position(self, exit_price: float) -> 'Position':
         if self.closed:
-            return
-        self.closed = True
-        self.closed_timestamp = datetime.now().timestamp()
-        self.update_prices(exit_price)
+            return self
 
-    def update_prices(self, execution_price):
+        return replace(
+            self, 
+            closed=True, 
+            closed_timestamp=datetime.now().timestamp(), 
+            exit_price=exit_price
+        )
+
+    def update_prices(self, execution_price: float) -> 'Position':
         if not self.closed:
-            self.entry_price = execution_price
+            return replace(self, entry_price=execution_price)
         else:
-            self.exit_price = execution_price
+            return replace(self, exit_price=execution_price)

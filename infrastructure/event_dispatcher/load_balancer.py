@@ -5,11 +5,12 @@ class LoadBalancer:
     def __init__(self, priority_groups: int):
         self._group_event_counts = np.zeros(priority_groups)
         self._initialize_load_balancer(priority_groups)
+        self._group_event_counts_threshold = 1e4
 
     def _initialize_load_balancer(self, priority_groups: int):
-        self._kp = 1.5
-        self._ki = 0.8
-        self._kd = 0.5
+        self._kp = 1.0
+        self._ki = 0.5
+        self._kd = 0.1
         self._integral_errors = np.zeros(priority_groups)
         self._previous_errors = np.zeros(priority_groups)
         self._target_ratios = 1 / (np.arange(priority_groups) + 1)
@@ -17,6 +18,9 @@ class LoadBalancer:
     def register_event(self, priority_group: int):
         if 0 <= priority_group < len(self._group_event_counts):
             self._group_event_counts[priority_group] += 1
+            
+            if self._group_event_counts.max() > self._group_event_counts_threshold:
+                self._group_event_counts *= 0.5
         else:
             raise ValueError("Invalid priority group!")
 

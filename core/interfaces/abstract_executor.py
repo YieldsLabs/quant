@@ -6,7 +6,7 @@ from .abstract_event_manager import AbstractEventManager
 from ..events.position import LongPositionOpened, ShortPositionOpened
 
 
-class AbstractTrader(AbstractEventManager):
+class AbstractExecutor(AbstractEventManager):
     @abstractmethod
-    def trade(self, event: Union[LongPositionOpened, ShortPositionOpened]):
+    def execute_order(self, event: Union[LongPositionOpened, ShortPositionOpened]):
         pass

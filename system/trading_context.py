@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, List, Type
 
+from core.interfaces.abstract_executor_factory import AbstractExecutorFactory
 from core.models.lookback import Lookback
 from core.interfaces.abstract_broker import AbstractBroker
 from core.models.timeframe import Timeframe
@@ -13,6 +14,7 @@ from core.interfaces.abstract_strategy_factory import AbstractStrategyActorFacto
 @dataclass
 class TradingContext:
     strategy_factory: Type[AbstractStrategyActorFactory]
+    executor_factory: Type[AbstractExecutorFactory]
     datasource: Type[AbstractDatasource]
     ws_handler: Type[AbstractWS]
     broker: Type[AbstractBroker]

@@ -13,6 +13,10 @@ class EventHandler:
         self._event_handlers: Dict[Type[Event], List[HandlerType]] = {}
         self._dead_letter_queue: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
 
+    @property
+    def dlq(self):
+        return self._dead_letter_queue
+
     def register(self, event_class: Type[Event], handler: HandlerType) -> None:
         if event_class in self._event_handlers:
             self._event_handlers[event_class].append(handler)

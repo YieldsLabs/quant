@@ -35,7 +35,6 @@ class PositionStateMachine:
                 PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position),
             },
             PositionState.OPENED: {
-                NewMarketDataReceived: (PositionState.OPENED, portfolio_manager.handle_risk),
                 ExitLongSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
                 ExitShortSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
                 RiskThresholdBreached: (PositionState.CLOSING, portfolio_manager.handle_exit),
@@ -60,9 +59,9 @@ class PositionStateMachine:
             self.state[symbol] = state
 
     async def process_event(self, event: PortfolioEvent):
-        symbol = event.symbol
+        symbol = event.strategy.symbol
         state = self.get_state(symbol)
-        next_state, handler = self._state_handlers.get((state, type(event)), (state, None))
+        next_state, handler = self._state_handlers.get((state, type(event)), (state, None))     
 
         if handler is None or not await handler(event):
             return

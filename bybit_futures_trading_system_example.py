@@ -8,12 +8,12 @@ from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
 from backtest.backtest import Backtest
+from executor.executor_factory import ExecutorFactory
 from portfolio_management.portfolio_manager import PortfolioManager
-from risk_management.risk_manager import RiskManager
 from strategy_management.strategy_factory import StrategyActorFactory
 from sync.csv_sync import CSVSync
 from sync.log_sync import LogSync
-from system.trading_system import TradingContext, TradingSystem
+from system.trend_system import TradingContext, TrendSystem
 
 load_dotenv()
 
@@ -28,6 +28,7 @@ async def main():
     initial_account_size = 1000
     risk_per_trade = 0.0015
     risk_reward_ratio = 2.0
+    slippage = 0.008
     leverage = 1
     timeframes = [
         Timeframe.ONE_MINUTE,
@@ -48,10 +49,10 @@ async def main():
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
     strategy_factory = StrategyActorFactory()
-    risk = RiskManager()
+    executor_factory = ExecutorFactory(broker, slippage)
+
     portfolio = PortfolioManager(
         datasource,
-        risk,
         initial_account_size=initial_account_size,
         leverage=leverage,
         risk_reward_ratio=risk_reward_ratio,
@@ -60,6 +61,7 @@ async def main():
 
     context = TradingContext(
         strategy_factory,
+        executor_factory,
         datasource,
         ws_handler,
         broker,
@@ -71,7 +73,7 @@ async def main():
         IS_LIVE_MODE
     )
 
-    trading_system = TradingSystem(context)
+    trading_system = TrendSystem(context)
 
     system_task = asyncio.create_task(trading_system.start())
     ws_handler_task = asyncio.create_task(ws_handler.run())

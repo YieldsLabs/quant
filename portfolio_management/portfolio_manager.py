@@ -1,28 +1,26 @@
 from typing import Type, Union
 
-from core.event_decorators import register_handler
-from core.events.ohlcv import NewMarketDataReceived
+from core.event_decorators import event_handler
 from core.events.portfolio import PortfolioPerformanceUpdated
-from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, ClosePositionPrepared, ShortPositionOpened
+from core.events.position import PositionClosed, OrderFilled, LongPositionOpened, ShortPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
-from core.interfaces.abstract_risk_manager import AbstractRiskManager
 from core.models.position import Position, PositionSide
 from core.interfaces.abstract_datasource import AbstractDatasource
 from core.interfaces.abstract_portfolio_manager import AbstractPortfolioManager
-from core.models.risk import RiskType
+from core.models.strategy import Strategy
 
+from .position_risk_actor import PositionRiskActor
+from .position_risk_break_even_strategy import BreakEvenStrategy
 from .position_state_machine import PositionStateMachine
 from .position_sizer import PositionSizer
 from .position_storage import PositionStorage
 
 
 class PortfolioManager(AbstractPortfolioManager):
-    def __init__(self, datasource: Type[AbstractDatasource], risk: Type[AbstractRiskManager], initial_account_size: int = 1000, leverage: int = 1, risk_reward_ratio: int = 1.5, risk_per_trade: float = 0.001):
+    def __init__(self, datasource: Type[AbstractDatasource], initial_account_size: int = 1000, leverage: int = 1, risk_reward_ratio: int = 1.5, risk_per_trade: float = 0.001):
         super().__init__()
         self.datasource = datasource
-        self.risk = risk
-        self.risk_type = RiskType.BREAK_EVEN
         self.initial_account_size = initial_account_size
         self.leverage = leverage
         self.risk_reward_ratio = risk_reward_ratio
@@ -30,6 +28,10 @@ class PortfolioManager(AbstractPortfolioManager):
 
         self.position_storage = PositionStorage()
         self.sm = PositionStateMachine(self)
+        self.risk_actor = PositionRiskActor(
+            BreakEvenStrategy(),
+            self.position_storage,
+        )
 
     async def initialize_account(self):
         self.initial_account_size = await self.datasource.account_size()
@@ -37,47 +39,67 @@ class PortfolioManager(AbstractPortfolioManager):
     async def get_top_strategies(self, n):
         return await self.position_storage.get_top_strategies(self.initial_account_size, n)
 
-    @register_handler(NewMarketDataReceived)
-    async def _on_market(self, event: NewMarketDataReceived):
-        await self.sm.process_event(event)
-
-    @register_handler(GoLongSignalReceived)
+    @event_handler(GoLongSignalReceived)
     async def _on_go_long(self, event: GoLongSignalReceived):
+        if await self.position_storage.has_active_position(event.strategy.symbol):
+            return
+    
         await self.sm.process_event(event)
 
-    @register_handler(GoShortSignalReceived)
+    @event_handler(GoShortSignalReceived)
     async def _on_go_short(self, event: GoShortSignalReceived):
+        if await self.position_storage.has_active_position(event.strategy.symbol):
+            return
+        
         await self.sm.process_event(event)
 
-    @register_handler(ExitLongSignalReceived)
+    @event_handler(ExitLongSignalReceived)
     async def _on_exit_long(self, event: ExitLongSignalReceived):
+        if not await self.position_storage.has_active_position(event.strategy.symbol):
+            return
+        
         await self.sm.process_event(event)
 
-    @register_handler(ExitShortSignalReceived)
+    @event_handler(ExitShortSignalReceived)
     async def _on_exit_short(self, event: ExitShortSignalReceived):
+        if not await self.position_storage.has_active_position(event.strategy.symbol):
+            return
+
         await self.sm.process_event(event)
 
-    @register_handler(RiskThresholdBreached)
+    @event_handler(RiskThresholdBreached)
     async def _on_exit_risk(self, event: RiskThresholdBreached):
+        if not await self.position_storage.has_active_position(event.strategy.symbol):
+            return
+
         await self.sm.process_event(event)
 
-    @register_handler(OrderFilled)
+    @event_handler(OrderFilled)
     async def _on_order_filled(self, event: OrderFilled):
+        if not await self.position_storage.has_active_position(event.strategy.symbol):
+            return
+        
+        if self.risk_actor.running:
+            self.risk_actor.stop()
+        
+        self.risk_actor.start()
+        
         await self.sm.process_event(event)
 
-    @register_handler(PositionClosed)
+    @event_handler(PositionClosed)
     async def _on_closed_position(self, event: PositionClosed):
+        if not await self.position_storage.has_active_position(event.strategy.symbol):
+            return
+        
+        if self.risk_actor.running:
+            self.risk_actor.stop()
+
         await self.sm.process_event(event)
 
     async def handle_open_position(self, event: Union[GoLongSignalReceived, GoShortSignalReceived]) -> bool:
-        active_position = await self.position_storage.get_active_position(event.symbol)
-
-        if active_position is not None:
-            return False
-
         position = await self.create_position(event)
 
-        await self.position_storage.add_active_position(event.symbol, position)
+        await self.position_storage.add_active_position(event.strategy.symbol, position)
 
         open_position_event = self.create_open_position_event(position)
 
@@ -86,60 +108,28 @@ class PortfolioManager(AbstractPortfolioManager):
         return True
 
     async def handle_order_filled(self, event: OrderFilled) -> bool:
-        active_position = await self.position_storage.get_active_position(event.symbol)
-
-        if active_position is None:
-            return False
-
-        await self.position_storage.add_order(event.symbol, event.order)
+        await self.position_storage.add_order(event.strategy.symbol, event.order)
 
         return True
 
     async def handle_closed_position(self, event: PositionClosed) -> bool:
-        active_position = await self.position_storage.get_active_position(event.symbol)
+        strategy = event.strategy
+        symbol = strategy.symbol
 
-        if active_position is None:
-            return False
-
-        strategy = active_position.strategy
-
-        await self.position_storage.close_position(event.symbol, event.exit_price)
+        await self.position_storage.close_position(symbol, event.exit_price)
         await self.update_position_performance(strategy)
 
         return True
 
-    async def handle_risk(self, event: NewMarketDataReceived) -> bool:
-        active_position = await self.position_storage.get_active_position(event.symbol)
-
-        if active_position is None:
-            return False
-        
-        ohlcv = event.ohlcv
-        symbol = event.symbol
-        timeframe = event.timeframe
-        position_side = active_position.side
-        position_size = active_position.size
-        entry_price = active_position.entry_price
-        stop_loss_price = active_position.stop_loss_price
-        risk_reward_ratio = active_position.risk_reward_ratio
-        strategy = active_position.strategy
-        risk_per_trade = self.risk_per_trade
-        risk_type = self.risk_type
-
-        await self.risk.next(symbol, timeframe, strategy, ohlcv, risk_type, position_side, position_size, entry_price, stop_loss_price, risk_reward_ratio, risk_per_trade)
-
-        return True
-
     async def handle_exit(self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached]) -> bool:
-        active_position = await self.position_storage.get_active_position(event.symbol)
-
-        if active_position is None or (event.strategy != active_position.strategy) or not self.can_close_position(active_position.side, active_position.entry_price, event):
+        active_position = await self.position_storage.get_active_position(event.strategy.symbol)
+        
+        if (event.strategy != active_position.strategy) or not self.can_close_position(active_position.side, active_position.entry_price, event):
             return False
 
         await self.dispatcher.dispatch(
-            ClosePositionPrepared(
-                symbol=event.symbol,
-                timeframe=event.timeframe,
+            PositionClosed(
+                strategy=active_position.strategy,
                 exit_price=event.exit
             )
         )
@@ -147,14 +137,14 @@ class PortfolioManager(AbstractPortfolioManager):
         return True
 
     async def create_position(self, event: Union[GoLongSignalReceived, GoShortSignalReceived]) -> Position:
-        trading_fee, min_position_size, position_precision, price_precision = await self.datasource.fee_and_precisions(event.symbol)
+        trading_fee, min_position_size, position_precision, price_precision = await self.datasource.fee_and_precisions(event.strategy.symbol)
 
         stop_loss_price = round(event.stop_loss, price_precision) if event.stop_loss else None
         entry_price = round(event.entry, price_precision)
 
         account_size = self.initial_account_size + await self.position_storage.total_pnl()
 
-        size = PositionSizer.calculate_position_size(
+        position_size = PositionSizer.calculate(
             account_size,
             entry_price,
             trading_fee,
@@ -168,17 +158,16 @@ class PortfolioManager(AbstractPortfolioManager):
         position_side = PositionSide.LONG if isinstance(event, GoLongSignalReceived) else PositionSide.SHORT
 
         return Position(
-            symbol=event.symbol,
-            timeframe=event.timeframe,
-            strategy=event.strategy,
-            size=size,
-            entry=entry_price,
-            side=position_side,
-            risk_reward_ratio=self.risk_reward_ratio,
-            stop_loss=stop_loss_price
+            event.strategy,
+            position_side,
+            position_size,
+            entry_price,
+            self.risk_reward_ratio,
+            self.risk_per_trade,
+            stop_loss_price
         )
 
-    async def update_position_performance(self, strategy: str):
+    async def update_position_performance(self, strategy: Strategy):
         closed_positions = await self.position_storage.filter_positions_by_strategy(strategy)
 
         basic = self.position_storage.basic_performance(closed_positions, self.initial_account_size, self.risk_per_trade)
@@ -191,16 +180,14 @@ class PortfolioManager(AbstractPortfolioManager):
     def create_open_position_event(self, position: Position) -> Union[LongPositionOpened, ShortPositionOpened]:
         if position.side == PositionSide.LONG:
             return LongPositionOpened(
-                symbol=position.symbol,
-                timeframe=position.timeframe,
+                strategy=position.strategy,
                 size=position.size,
                 entry=position.entry_price,
                 stop_loss=position.stop_loss_price
             )
         else:
             return ShortPositionOpened(
-                symbol=position.symbol,
-                timeframe=position.timeframe,
+                strategy=position.strategy,
                 size=position.size,
                 entry=position.entry_price,
                 stop_loss=position.stop_loss_price

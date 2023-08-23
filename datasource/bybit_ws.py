@@ -98,7 +98,7 @@ class BybitWSHandler(AbstractWS):
                 await self.ws.close()
 
     def parse_candle_message(self, symbol, interval, data):
-        ohlcv = OHLCV.from_raw([data[key] for key in ['timestamp', 'open', 'high', 'low', 'close', 'volume']])
+        ohlcv = OHLCV.from_dict(data)
 
         return NewMarketDataReceived(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
 

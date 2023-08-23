@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from .base_event import Event, EventMeta
 
@@ -11,4 +11,4 @@ class NewMarketDataReceived(Event):
     symbol: str
     timeframe: Timeframe
     ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))

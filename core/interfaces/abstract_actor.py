@@ -2,28 +2,14 @@ from abc import abstractmethod
 
 from .abstract_event_manager import AbstractEventManager
 
-from ..models.ohlcv import OHLCV
+from ..models.strategy import Strategy
+from ..events.ohlcv import NewMarketDataReceived
 
 
 class AbstractActor(AbstractEventManager):
     @property
     @abstractmethod
-    def id(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def strategy(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def symbol(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def timeframe(self) -> str:
+    def strategy(self) -> Strategy:
         pass
 
     @property
@@ -40,5 +26,5 @@ class AbstractActor(AbstractEventManager):
         pass
 
     @abstractmethod
-    def next(self, data: OHLCV):
+    def next(self, event: NewMarketDataReceived):
         pass

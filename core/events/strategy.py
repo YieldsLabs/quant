@@ -1,26 +1,23 @@
 from dataclasses import dataclass, field
 
 from .base_event import Event, EventMeta
-from ..models.timeframe import Timeframe
+
+from ..models.strategy import Strategy
 
 
 @dataclass(frozen=True)
 class StrategyEntryEvent(Event):
-    symbol: str
-    timeframe: Timeframe
-    strategy: str
+    strategy: Strategy
     entry: float
     stop_loss: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=5))
 
 
 @dataclass(frozen=True)
 class StrategyExitEvent(Event):
-    symbol: str
-    timeframe: Timeframe
-    strategy: str
+    strategy: Strategy
     exit: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=6))
 
 
 @dataclass(frozen=True)

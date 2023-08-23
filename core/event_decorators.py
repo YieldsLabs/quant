@@ -32,10 +32,11 @@ def eda(cls: Type):
         def __del__(self):
             self._unregister()
 
-        def __enter__(self):
+        async def __aenter__(self):
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            await self.dispatcher.wait()
             self._unregister()
 
     Wrapped.__name__ = cls.__name__
@@ -47,7 +48,7 @@ def eda(cls: Type):
     return Wrapped
 
 
-def register_handler(event_type: Type[Event]) -> Callable[[Callable], Callable]:
+def event_handler(event_type: Type[Event]) -> Callable[[Callable], Callable]:
     def decorator(handler: Callable) -> Callable:
         if asyncio.iscoroutinefunction(handler):
             async def async_wrapped_handler(self, event: Event):

@@ -3,7 +3,7 @@ from typing import Optional
 
 class PositionSizer:
     @staticmethod
-    def calculate_position_size(
+    def calculate(
         account_size: float,
         entry_price: float,
         trading_fee: float,

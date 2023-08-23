@@ -2,6 +2,7 @@ import asyncio
 import ctypes
 from enum import Enum
 from typing import Any
+from core.models.strategy import Strategy
 from wasmtime import Memory, Store
 
 from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
@@ -18,81 +19,84 @@ class Action(Enum):
 
 
 class StrategyActor(AbstractActor):
-    def __init__(self, symbol: str, timeframe: Timeframe, strategy: str, parameters: tuple[int], store: Store, exports: Any):
+    def __init__(self, symbol: str, timeframe: Timeframe, strategy_name: str, parameters: tuple[int], store: Store, exports: Any):
         super().__init__()
         self._symbol = symbol
         self._timeframe = timeframe
-        self._strategy = strategy
+        self._strategy_name = strategy_name
+        self._strategy = None
+
         self.parameters = parameters
         self.store = store
         self.exports = exports
-        self.strategy_id = None
-
-    @property
-    def id(self):
-        if not self.running:
-            raise RuntimeError("ID: strategy is not started")
-
-        params = self.exports["strategy_parameters"](self.store, self.strategy_id)
-        memory = self.exports["memory"]
-
-        return self._get_string_from_memory(self.store, memory, params[0], params[1])
+        self.register_id = None
+        self._register_id_lock = asyncio.Lock()
 
     @property
     def strategy(self):
         return self._strategy
 
     @property
-    def symbol(self):
-        return self._symbol
-
-    @property
-    def timeframe(self):
-        return self._timeframe
-
-    @property
     def running(self):
-        return self.strategy_id is not None
+        return self.register_id
 
-    def start(self):
+    async def start(self):
         if self.running:
             raise RuntimeError("Start: strategy is running")
 
-        self.strategy_id = self.exports[f"register_{self.strategy}"](self.store, *self.parameters)
-        self.dispatcher.register(NewMarketDataReceived, self.next)
+        async with self._register_id_lock:
+            self.register_id = self.exports[f"register_{self._strategy_name}"](self.store, *self.parameters)
+            self._set_strategy()
 
-    def stop(self):
+        self.dispatcher.register(NewMarketDataReceived, self._strategy_event_filter)
+
+    async def stop(self):
         if not self.running:
             raise RuntimeError("Stop: strategy is not started")
 
-        self.exports[f"unregister_strategy"](self.store, self.strategy_id)
-        self.strategy_id = None
-        self.dispatcher.unregister(NewMarketDataReceived, self.next)
+        async with self._register_id_lock:
+            self.exports[f"unregister_strategy"](self.store, self.register_id)
+            self.register_id = None
+    
+        self.dispatcher.unregister(NewMarketDataReceived, self._strategy_event_filter)
 
     async def next(self, event: NewMarketDataReceived):
         if not self.running:
             raise RuntimeError("Next: strategy is not started")
-
+        
         data = event.ohlcv
-        symbol = event.symbol
-        timeframe = event.timeframe
 
-        [action, price] = self.exports["strategy_next"](self.store, self.strategy_id, data.open, data.high, data.low, data.close, data.volume)
-        [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](self.store, self.strategy_id)
+        [action, price] = self.exports["strategy_next"](self.store, self.register_id, data.open, data.high, data.low, data.close, data.volume)
+        [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](self.store, self.register_id)
 
         tasks = []
 
         match action:
             case Action.GO_LONG.value: tasks.append(self.dispatcher.dispatch(
-                GoLongSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, entry=price, stop_loss=long_stop_loss)))
+                GoLongSignalReceived(strategy=self.strategy, entry=price, stop_loss=long_stop_loss)))
             case Action.GO_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                GoShortSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, entry=price, stop_loss=short_stop_loss)))
+                GoShortSignalReceived(strategy=self.strategy, entry=price, stop_loss=short_stop_loss)))
             case Action.EXIT_LONG.value: tasks.append(self.dispatcher.dispatch(
-                ExitLongSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, exit=event.ohlcv.close)))
+                ExitLongSignalReceived(strategy=self.strategy, exit=event.ohlcv.close)))
             case Action.EXIT_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                ExitShortSignalReceived(symbol=symbol, strategy=self.id, timeframe=timeframe, exit=event.ohlcv.close)))
+                ExitShortSignalReceived(strategy=self.strategy, exit=event.ohlcv.close)))
 
         await asyncio.gather(*tasks)
+
+    async def _strategy_event_filter(self, event: NewMarketDataReceived):
+        if event.symbol == self._symbol and event.timeframe == self._timeframe:
+            await self.next(event)
+
+    def _set_strategy(self):
+        if not self.running:
+            raise RuntimeError("ID: strategy is not registered")
+        
+        params = self.exports["strategy_parameters"](self.store, self.register_id)
+        memory = self.exports["memory"]
+
+        strategy_parameters = self._get_string_from_memory(self.store, memory, params[0], params[1])
+
+        self._strategy = Strategy.from_label(f'{self._symbol}_{self._timeframe}{strategy_parameters}')
 
     @staticmethod
     def _get_string_from_memory(store: Store, memory: Memory, pointer, length):
