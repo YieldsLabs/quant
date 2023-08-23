@@ -1,6 +1,6 @@
 import asyncio
 from enum import Enum, auto
-from typing import Callable, Dict, Type, Union
+from typing import Callable, Tuple, Type, Union
 
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import OrderFilled, PositionClosed
@@ -21,49 +21,57 @@ HandlerFunction = Callable[[PortfolioEvent], bool]
 
 
 class PositionStateMachine:
+    TRANSITIONS = {
+        PositionState.IDLE: {
+            GoLongSignalReceived: (PositionState.OPENING, "handle_open_position"),
+            GoShortSignalReceived: (PositionState.OPENING, "handle_open_position")
+        },
+        PositionState.OPENING: {
+            OrderFilled: (PositionState.OPENED, "handle_order_filled"),
+            PositionClosed: (PositionState.IDLE, "handle_closed_position")
+        },
+        PositionState.OPENED: {
+            ExitLongSignalReceived: (PositionState.CLOSING, "handle_exit"),
+            ExitShortSignalReceived: (PositionState.CLOSING, "handle_exit"),
+            RiskThresholdBreached: (PositionState.CLOSING, "handle_exit"),
+            PositionClosed: (PositionState.IDLE, "handle_closed_position")
+        },
+        PositionState.CLOSING: {
+            PositionClosed: (PositionState.IDLE, "handle_closed_position")
+        }
+    }
+
     def __init__(self, portfolio_manager: Type[AbstractPortfolioManager]):
-        self.state: Dict[str, PositionState] = {}
+        self.state: Tuple[str, PositionState] = ()
+        self.portfolio_manager = portfolio_manager
         self.state_lock = asyncio.Lock()
 
-        transitions = {
-            PositionState.IDLE: {
-                GoLongSignalReceived: (PositionState.OPENING, portfolio_manager.handle_open_position),
-                GoShortSignalReceived: (PositionState.OPENING, portfolio_manager.handle_open_position)
-            },
-            PositionState.OPENING: {
-                OrderFilled: (PositionState.OPENED, portfolio_manager.handle_order_filled),
-                PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position),
-            },
-            PositionState.OPENED: {
-                ExitLongSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
-                ExitShortSignalReceived: (PositionState.CLOSING, portfolio_manager.handle_exit),
-                RiskThresholdBreached: (PositionState.CLOSING, portfolio_manager.handle_exit),
-                PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position)
-            },
-            PositionState.CLOSING: {
-                PositionClosed: (PositionState.IDLE, portfolio_manager.handle_closed_position)
-            }
-        }
-
-        self._state_handlers: Dict[(PositionState, Type[PortfolioEvent]), HandlerFunction] = {}
-
-        for state, event_dict in transitions.items():
-            for event, (next_state, handler) in event_dict.items():
-                self._state_handlers[(state, event)] = (next_state, handler)
-
     def get_state(self, symbol: str) -> PositionState:
-        return self.state.get(symbol, PositionState.IDLE)
+        for s, state in self.state:
+            if s == symbol:
+                return state
+        return PositionState.IDLE
 
-    async def set_state(self, symbol: str, state: PositionState):
-        async with self.state_lock:
-            self.state[symbol] = state
+    def set_state(self, symbol: str, state: PositionState) -> Tuple[str, PositionState]:
+        new_state = [(s, state) if s == symbol else (s, st) for s, st in self.state]
+        
+        if symbol not in [s for s, _ in new_state]:
+            new_state.append((symbol, state))
+        
+        return tuple(new_state)
 
     async def process_event(self, event: PortfolioEvent):
         symbol = event.strategy.symbol
         state = self.get_state(symbol)
-        next_state, handler = self._state_handlers.get((state, type(event)), (state, None))     
+        next_state, handler_name = self.TRANSITIONS.get(state, {}).get(type(event), (None, None))
+        
+        if not handler_name:
+            return
+    
+        handler = getattr(self.portfolio_manager, handler_name)
 
-        if handler is None or not await handler(event):
+        if not await handler(event):
             return
 
-        await self.set_state(symbol, next_state)
+        async with self.state_lock:
+            self.state = self.set_state(symbol, next_state)

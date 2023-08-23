@@ -68,14 +68,7 @@ class TrendSystem(AbstractSystem):
         await asyncio.sleep(0.1)
 
     async def _run_trading(self):
-        print('Run trading')
-        active_pos = await self.context.portfolio.get_all_active_positions()
-
-        print(active_pos)
-
         top_strategies = await self.context.portfolio.get_top_strategies(3)
-
-        print(top_strategies)
 
         if len(top_strategies) == 0:
             return
