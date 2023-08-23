@@ -43,7 +43,7 @@ class Strategy:
         return cls(
             symbol,
             parse_timeframe(timeframe),
-            strategy_name,
+            strategy_name.lower(),
             strategy_params,
             stop_loss_type,
             stop_loss_params

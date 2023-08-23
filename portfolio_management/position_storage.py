@@ -89,7 +89,7 @@ class PositionStorage(AbstractPositionStorage):
     def _get_unique_strategies(self) -> List[str]:
         return list(set(pos.strategy for pos in self.closed.positions.values()))
 
-    async def filter_positions_by_strategy(self, strategy: Strategy) -> List[Position]:
+    async def get_closed_positions(self, strategy: Strategy) -> List[Position]:
         async with self._closed_positions_lock:
             return self._get_positions_for_strategy(strategy)
 
@@ -97,18 +97,20 @@ class PositionStorage(AbstractPositionStorage):
         async with self._closed_positions_lock:
             return sum(position.pnl for position in self.closed.positions.values())
 
-    def basic_performance(self, closed_positions: List[Position], initial_account_size: int, risk_per_trade: int) -> BasicPortfolioPerformance:
-        return self.basic.next(closed_positions, initial_account_size, risk_per_trade)
+    async def basic_performance(self, closed_positions: List[Position], initial_account_size: int, risk_per_trade: int) -> BasicPortfolioPerformance:
+        async with self._closed_positions_lock:
+            return self.basic.next(closed_positions, initial_account_size, risk_per_trade)
 
-    def advanced_performance(self, closed_positions: List[Position], initial_account_size: int) -> AdvancedPortfolioPerformance:
-        return self.advanced.next(closed_positions, initial_account_size)
+    async def advanced_performance(self, closed_positions: List[Position], initial_account_size: int) -> AdvancedPortfolioPerformance:
+        async with self._closed_positions_lock:
+            return self.advanced.next(closed_positions, initial_account_size)
 
     async def get_top_strategies(self, initial_account_size: int, num: int = 5) -> List[str]:
         async with self._closed_positions_lock:
             unique_strategies = self._get_unique_strategies()
 
             strategy_performances = [
-                (strategy, self.advanced_performance(self._get_positions_for_strategy(strategy), initial_account_size))
+                (strategy, self.advanced.next(self._get_positions_for_strategy(strategy), initial_account_size))
                 for strategy in unique_strategies
             ]
 
