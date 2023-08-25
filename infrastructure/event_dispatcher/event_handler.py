@@ -3,7 +3,7 @@ from collections import deque
 from functools import partial
 from typing import Any, Callable, Deque, Dict, List, Tuple, Type, Union
 
-from core.events.base_event import Event
+from core.events.base import Event
 
 HandlerType = Union[partial, Callable[..., Any]]
 

@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.models.order import OrderSide
-
+from ..models.side import OrderSide
 from ..models.broker import MarginMode, PositionMode
 
 
@@ -15,7 +14,7 @@ class AbstractBroker(ABC):
         pass
 
     @abstractmethod
-    def get_symbol_info(self, symbol: str):
+    def get_symbol(self, symbol: str):
         pass
 
     @abstractmethod
@@ -27,7 +26,7 @@ class AbstractBroker(ABC):
         pass
 
     @abstractmethod
-    def get_historical_data(self, symbol: str, timeframe: str, lookback=1000):
+    def get_historical_data(self, symbol: str, timeframe: str, lookback: int, batch_size: int):
         pass
 
     @abstractmethod

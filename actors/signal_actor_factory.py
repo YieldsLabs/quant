@@ -1,11 +1,11 @@
 from wasmtime import Store, Linker, WasiConfig, Module
 
-from core.interfaces.abstract_strategy_factory import AbstractStrategyActorFactory
+from core.interfaces.abstract_signal_actor_factory import AbstractSignalActorFactory
 
-from .strategy_actor import StrategyActor
+from .signal_actor import SignalActor
 
 
-class StrategyActorFactory(AbstractStrategyActorFactory):
+class SignalActorFactory(AbstractSignalActorFactory):
     def create_actor(self, symbol, timeframe, wasm_path, strategy, parameters):
         store = Store()
         wasi_config = WasiConfig()
@@ -18,4 +18,4 @@ class StrategyActorFactory(AbstractStrategyActorFactory):
         instance = linker.instantiate(store, module)
         exports = instance.exports(store)
 
-        return StrategyActor(symbol, timeframe, strategy, parameters, store, exports)
+        return SignalActor(symbol, timeframe, strategy, parameters, store, exports)

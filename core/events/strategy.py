@@ -1,40 +1,40 @@
 from dataclasses import dataclass, field
 
-from .base_event import Event, EventMeta
+from .base import Event, EventMeta
 
-from ..models.strategy import Strategy
+from ..models.signal import Signal
 
 
 @dataclass(frozen=True)
-class StrategyEntryEvent(Event):
-    strategy: Strategy
-    entry: float
+class SignalEntryEvent(Event):
+    signal: Signal
+    entry_price: float
     stop_loss: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=5))
 
 
 @dataclass(frozen=True)
-class StrategyExitEvent(Event):
-    strategy: Strategy
-    exit: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=6))
+class SignalExitEvent(Event):
+    signal: Signal
+    exit_price: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
 
 @dataclass(frozen=True)
-class GoLongSignalReceived(StrategyEntryEvent):
+class GoLongSignalReceived(SignalEntryEvent):
     pass
 
 
 @dataclass(frozen=True)
-class GoShortSignalReceived(StrategyEntryEvent):
+class GoShortSignalReceived(SignalEntryEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ExitLongSignalReceived(StrategyExitEvent):
+class ExitLongSignalReceived(SignalExitEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ExitShortSignalReceived(StrategyExitEvent):
+class ExitShortSignalReceived(SignalExitEvent):
     pass

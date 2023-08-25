@@ -8,7 +8,7 @@ from .live_executor import LiveExecutor
 from .paper_executor import PaperExecutor
 
 class ExecutorFactory(AbstractExecutorFactory):
-    def __init__(self, broker: Type[AbstractBroker], slippage: float):
+    def __init__(self, broker: AbstractBroker, slippage: float):
         self.broker = broker
         self.slippage = slippage
 

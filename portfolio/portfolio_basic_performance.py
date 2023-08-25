@@ -13,7 +13,7 @@ class PortfolioBasicPerformance:
         if total_trades == 0:
             return BasicPortfolioPerformance(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         
-        pnl = np.array([position.pnl for position in positions])
+        pnl = np.array([position.pnl for position in positions if len(position.orders) > 0])
         
         pnl_positive = pnl > 0
         successful_trades = pnl_positive.sum()

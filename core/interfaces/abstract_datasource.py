@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from ..models.symbol import Symbol
 from ..models.timeframe import Timeframe
 
 
@@ -14,9 +15,9 @@ class AbstractDatasource(ABC):
         pass
 
     @abstractmethod
-    def symbols(self) -> List[str]:
+    def symbols(self) -> List[Symbol]:
         pass
 
     @abstractmethod
-    def fee_and_precisions(self, symbol: str):
+    def symbol(self, name) -> Symbol:
         pass

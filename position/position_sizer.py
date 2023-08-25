@@ -16,18 +16,16 @@ class PositionSizer:
         account_size *= leverage
         risk_amount = risk_per_trade * account_size
 
-        if stop_loss_price and entry_price:
+        if stop_loss_price is not None and entry_price is not None:
             price_difference = abs(entry_price - stop_loss_price) * (1 + trading_fee)
         else:
-            price_difference = 1
+            raise ValueError("Both entry_price and stop_loss_price must be provided.")
 
-        if price_difference != 0:
-            position_size = risk_amount / price_difference
-        else:
-            position_size = 1
+        if price_difference == 0:
+            raise ValueError("Price difference cannot be zero.")
 
+        position_size = risk_amount / price_difference
         adjusted_position_size = max(position_size, min_position_size)
-
         rounded_position_size = round(adjusted_position_size, position_precision)
 
         return rounded_position_size

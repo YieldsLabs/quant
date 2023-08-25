@@ -9,10 +9,14 @@ from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
 from backtest.backtest import Backtest
 from executor.executor_factory import ExecutorFactory
-from portfolio_management.portfolio_manager import PortfolioManager
-from strategy_management.strategy_factory import StrategyActorFactory
+from position.position_factory import PositionFactory
+from position.position_manager import PositionManager
+from position.position_storage import PositionStorage
+from actors.position_risk_actor_factory import PositionRiskActorFactory
+from actors.signal_actor_factory import SignalActorFactory
 from sync.csv_sync import CSVSync
 from sync.log_sync import LogSync
+from actors.supervisor import Supervisor
 from system.trend_system import TradingContext, TrendSystem
 
 load_dotenv()
@@ -25,13 +29,16 @@ IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
 async def main():
     lookback = Lookback.THREE_MONTH
+    batch_size = 34
     initial_account_size = 1000
     risk_per_trade = 0.0015
     risk_reward_ratio = 2.0
+    risk_buffer = 0.01
+    event_cooldown = 3
     slippage = 0.008
     leverage = 1
     timeframes = [
-        Timeframe.ONE_MINUTE,
+        # Timeframe.ONE_MINUTE,
         Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES
     ]
@@ -44,31 +51,31 @@ async def main():
     CSVSync()
 
     Backtest()
+    PositionStorage()
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
-    strategy_factory = StrategyActorFactory()
-    executor_factory = ExecutorFactory(broker, slippage)
 
-    portfolio = PortfolioManager(
-        datasource,
-        initial_account_size=initial_account_size,
-        leverage=leverage,
-        risk_reward_ratio=risk_reward_ratio,
-        risk_per_trade=risk_per_trade
+    Supervisor(
+        SignalActorFactory(),
+        PositionRiskActorFactory(risk_buffer, event_cooldown)
+    )
+
+    PositionManager(
+        PositionFactory(leverage, risk_per_trade, risk_reward_ratio),
+        initial_account_size
     )
 
     context = TradingContext(
-        strategy_factory,
-        executor_factory,
+        ExecutorFactory(broker, slippage),
         datasource,
         ws_handler,
         broker,
-        portfolio,
         timeframes,
         strategies,
         lookback,
+        batch_size,
         leverage,
         IS_LIVE_MODE
     )

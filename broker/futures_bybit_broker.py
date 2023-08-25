@@ -2,9 +2,10 @@ import ccxt
 import math
 from ccxt.base.errors import RequestTimeout, NetworkError
 
-from core.models.position import PositionSide
-from core.models.broker import MarginMode, PositionMode
 from datasource.retry import retry
+from core.models.side import PositionSide
+from core.models.broker import MarginMode, PositionMode
+from core.models.symbol import Symbol
 from core.interfaces.abstract_broker import AbstractBroker
 
 
@@ -108,17 +109,19 @@ class FuturesBybitBroker(AbstractBroker):
         balance = self.exchange.fetch_balance()
         return float(balance['total'][currency])
 
-    def get_symbol_info(self, symbol):
-        market_info = self.exchange.fetch_markets()
-        symbol_info = [market for market in market_info if market['id'] == symbol and market['linear']][0]
+    def _get_symbol_meta(self, market):
+        taker_fee = market.get('taker', 0)
+        maker_fee = market.get('maker', 0)
+        
+        limits = market.get('limits', {})
+        min_position_size = limits.get('amount', {}).get('min', 0)
+        min_position_price = limits.get('price', {}).get('min', 0)
 
-        trading_fee = symbol_info.get('taker', 0) + symbol_info.get('maker', 0)
-        min_position_size = symbol_info.get('amount', {}).get('min', 1.0)
+        precision = market.get('precision', {})
+        position_precision = precision.get('amount', 0)
+        price_precision = precision.get('price', 0)
 
-        position_precision = symbol_info.get('precision', {}).get('amount', 0)
-        price_precision = symbol_info.get('precision', {}).get('price', 0)
-
-        return trading_fee, min_position_size, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
+        return taker_fee, maker_fee, min_position_size, min_position_price, int(abs(math.log10(position_precision))), int(abs(math.log10(price_precision)))
 
     def get_open_position(self, symbol):
         positions = self.exchange.fetch_positions(symbol)
@@ -139,22 +142,41 @@ class FuturesBybitBroker(AbstractBroker):
         return None
 
     def get_symbols(self):
+        symbols = []
         markets = self.exchange.fetch_markets()
-        return [market_info['id'] for market_info in markets if market_info['linear'] and not market_info['type'] == 'future' and market_info['settle'] == 'USDT']
+        markets = [market_info for market_info in markets if market_info['linear'] and not market_info['type'] == 'future' and market_info['settle'] == 'USDT']
+
+        for market in markets:
+            taker_fee, maker_fee, min_position_size, min_price_size, position_precision, price_precision = self._get_symbol_meta(market)
+            
+            symbols.append(Symbol(
+                market['id'],
+                taker_fee,
+                maker_fee,
+                min_position_size,
+                min_price_size,
+                position_precision,
+                price_precision
+            ))
+
+        return symbols
+    
+    def get_symbol(self, name):
+        return [symbol for symbol in self.get_symbols() if symbol.name == name][0]
 
     @retry(max_retries=7, handled_exceptions=(RequestTimeout, NetworkError))
     def _fetch(self, symbol, timeframe, start_time, current_limit):
         return self.exchange.fetch_ohlcv(
             symbol, timeframe, since=start_time, limit=current_limit)
 
-    def get_historical_data(self, symbol, timeframe, lookback=1000):
+    def get_historical_data(self, symbol, timeframe, lookback, batch_size):
         start_time = self.exchange.milliseconds() - lookback * \
             self.exchange.parse_timeframe(timeframe) * 1000
 
         fetched_ohlcv = 0
 
         while fetched_ohlcv < lookback:
-            current_limit = min(lookback - fetched_ohlcv, 1000)
+            current_limit = min(lookback - fetched_ohlcv, batch_size)
 
             current_ohlcv = self._fetch(symbol, timeframe, start_time, current_limit)
 

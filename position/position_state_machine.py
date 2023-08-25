@@ -1,49 +1,48 @@
 import asyncio
 from enum import Enum, auto
 from typing import Callable, Tuple, Type, Union
+from core.events.backtest import BacktestEnded
 
 from core.events.ohlcv import NewMarketDataReceived
-from core.events.position import OrderFilled, PositionClosed
+from core.events.order import OrderFilled
 from core.events.risk import RiskThresholdBreached
 from core.events.strategy import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
-from core.interfaces.abstract_portfolio_manager import AbstractPortfolioManager
+from core.interfaces.abstract_position_manager import AbstractPositionManager
+from core.models.signal import Signal
 
 
 class PositionState(Enum):
     IDLE = auto()
-    OPENING = auto()
+    WAITING_ORDER = auto()
     OPENED = auto()
-    CLOSING = auto()
+    CLEANUP = auto()
 
 
-PortfolioEvent = Union[GoLongSignalReceived, GoShortSignalReceived, ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached, OrderFilled, PositionClosed, NewMarketDataReceived]
+PortfolioEvent = Union[GoLongSignalReceived, GoShortSignalReceived, ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached, OrderFilled, NewMarketDataReceived, BacktestEnded]
 HandlerFunction = Callable[[PortfolioEvent], bool]
 
 
 class PositionStateMachine:
     TRANSITIONS = {
         PositionState.IDLE: {
-            GoLongSignalReceived: (PositionState.OPENING, "handle_open_position"),
-            GoShortSignalReceived: (PositionState.OPENING, "handle_open_position")
+            GoLongSignalReceived: (PositionState.WAITING_ORDER, "handle_open_position"),
+            GoShortSignalReceived: (PositionState.WAITING_ORDER, "handle_open_position")
         },
-        PositionState.OPENING: {
+        PositionState.WAITING_ORDER: {
             OrderFilled: (PositionState.OPENED, "handle_order_filled"),
-            PositionClosed: (PositionState.IDLE, "handle_closed_position")
+            BacktestEnded:(PositionState.CLEANUP, "handle_backtest_end"),
         },
         PositionState.OPENED: {
-            ExitLongSignalReceived: (PositionState.CLOSING, "handle_exit"),
-            ExitShortSignalReceived: (PositionState.CLOSING, "handle_exit"),
-            RiskThresholdBreached: (PositionState.CLOSING, "handle_exit"),
-            PositionClosed: (PositionState.IDLE, "handle_closed_position")
+            ExitLongSignalReceived: (PositionState.IDLE, "handle_exit"),
+            ExitShortSignalReceived: (PositionState.IDLE, "handle_exit"),
+            RiskThresholdBreached: (PositionState.IDLE, "handle_exit"),
+            BacktestEnded:(PositionState.CLEANUP, "handle_backtest_end"),
         },
-        PositionState.CLOSING: {
-            PositionClosed: (PositionState.IDLE, "handle_closed_position")
-        }
     }
 
-    def __init__(self, portfolio_manager: Type[AbstractPortfolioManager]):
+    def __init__(self, position_manager: Type[AbstractPositionManager]):
         self.state: Tuple[str, PositionState] = ()
-        self.portfolio_manager = portfolio_manager
+        self.position_manager = position_manager
         self.state_lock = asyncio.Lock()
 
     def get_state(self, symbol: str) -> PositionState:
@@ -60,15 +59,15 @@ class PositionStateMachine:
         
         return tuple(new_state)
 
-    async def process_event(self, event: PortfolioEvent):
-        symbol = event.strategy.symbol
+    async def process_event(self, signal: Signal, event: PortfolioEvent):
+        symbol = signal.symbol
         state = self.get_state(symbol)
         next_state, handler_name = self.TRANSITIONS.get(state, {}).get(type(event), (None, None))
         
         if not handler_name:
             return
     
-        handler = getattr(self.portfolio_manager, handler_name)
+        handler = getattr(self.position_manager, handler_name)
 
         if not await handler(event):
             return
