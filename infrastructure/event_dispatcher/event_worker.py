@@ -5,20 +5,26 @@ from core.events.base import Event
 
 from .event_handler import EventHandler
 
+from concurrent.futures import ThreadPoolExecutor
+
+executor = ThreadPoolExecutor()
 
 class EventWorker:
     def __init__(self, event_handler: EventHandler, cancel_event: asyncio.Event):
         self.event_handler = event_handler
         self.cancel_event = cancel_event
+        self.worker_load = None
         self.events_in_queue = set()
         self.queue = asyncio.Queue()
         self.task = asyncio.create_task(self._process_events())
 
+    def set_worker_load(self, worker_load):
+        self.worker_load = worker_load
+
     async def _process_events(self):
         async for event, args, kwargs in self._get_event_stream():
-            # print(event)
             await self.event_handler.handle_event(event, *args, **kwargs)
-
+            
     async def _get_event_stream(self) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
         while not self.cancel_event.is_set():
             event, args, kwargs = await self.queue.get()

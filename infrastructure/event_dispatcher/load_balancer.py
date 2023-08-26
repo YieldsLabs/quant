@@ -11,7 +11,7 @@ class LoadBalancer:
         self._group_event_counts_threshold = 1e4
 
     def _initialize_load_balancer(self, priority_groups: int):
-        self._kp = 0.5
+        self._kp = 0.3
         self._ki = 0.6
         self._kd = 0.1
         self._integral_errors = np.zeros(priority_groups)
@@ -46,9 +46,6 @@ class LoadBalancer:
         control_outputs = (self._kp * errors
                            + self._ki * self._integral_errors
                            + self._kd * derivative_errors)
-
-        # weights = np.abs(control_outputs)
-        # weights /= weights.sum()
 
         weights = softmax(control_outputs)
 

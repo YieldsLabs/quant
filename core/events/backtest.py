@@ -11,4 +11,4 @@ class BacktestEnded(Event):
     symbol: Symbol
     timeframe: Timeframe
     exit_price: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))

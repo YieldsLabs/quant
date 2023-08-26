@@ -34,7 +34,8 @@ class EventHandler:
         event_type = type(event)
 
         if event_type in self._event_handlers:
-            await asyncio.gather(*[self._call_handler(handler, event, *args, **kwargs) for handler in self._event_handlers[event_type]])
+            for handler in self._event_handlers[event_type]:
+                await self._call_handler(handler, event, *args, **kwargs)
 
     async def _call_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         try:
@@ -45,6 +46,6 @@ class EventHandler:
 
     async def _execute_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         if asyncio.iscoroutinefunction(handler):
-            await handler(event, *args, **kwargs)
+            asyncio.create_task(handler(event, *args, **kwargs))
         else:
             await asyncio.to_thread(handler, event, *args, **kwargs)

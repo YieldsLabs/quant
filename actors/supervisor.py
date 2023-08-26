@@ -50,10 +50,9 @@ class Supervisor(AbstractEventManager):
                 return
             
             actor = self.position_risk_factory.create_actor(command.position)
+
             await actor.start()
-            
-            print('Risk actor start')
-            
+
             self.risk_actors[key] = actor
 
     @command_handler(SignalActorStop)
@@ -82,6 +81,5 @@ class Supervisor(AbstractEventManager):
                     await actor.stop()
                 
                 del self.risk_actors[key]
-                print('Risk actor stop')
 
 

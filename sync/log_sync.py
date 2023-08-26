@@ -7,7 +7,7 @@ from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import  PositionClosed, LongPositionOpened, ShortPositionOpened
 from core.events.order import OrderFilled
 from core.events.risk import RiskThresholdBreached
-from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
+from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 
 
 class LogSync(AbstractEventManager):
@@ -25,40 +25,40 @@ class LogSync(AbstractEventManager):
     # @event_handler(NewMarketDataReceived)
     # async def _log_market(self, event: NewMarketDataReceived):
     #     print('----------------------------------------------------->')
+    #     async with self.lock:
+    #         self.counter += 1
+    #         print(self.counter)
     #     print(event)
 
-    @event_handler(GoLongSignalReceived)
-    async def _log_go_long(self, event: GoLongSignalReceived):
-        print('----------------------------------------------------->')
-        print(event)
+    # @event_handler(GoLongSignalReceived)
+    # async def _log_go_long(self, event: GoLongSignalReceived):
+    #     print('----------------------------------------------------->')
+    #     print(event)
 
-    @event_handler(GoShortSignalReceived)
-    async def _log_go_short(self, event: GoShortSignalReceived):
-        print('----------------------------------------------------->')
-        print(event)
+    # @event_handler(GoShortSignalReceived)
+    # async def _log_go_short(self, event: GoShortSignalReceived):
+    #     print('----------------------------------------------------->')
+    #     print(event)
 
     @event_handler(OrderFilled)
     async def _log_fill_order(self, event: OrderFilled):
         print('----------------------------------------------------->')
-        async with self.lock:
-            self.counter += 1
-            print(self.counter)
         print(event)
 
-    @event_handler(LongPositionOpened)
-    async def _log_open_long_position(self, event: LongPositionOpened):
-        print('----------------------------------------------------->')
-        print(event)
-
-    @event_handler(ShortPositionOpened)
-    async def _log_open_short_position(self, event: ShortPositionOpened):
-        print('----------------------------------------------------->')
-        print(event)
-
-    # @event_handler(RiskThresholdBreached)
-    # async def _log_exit_risk(self, event: RiskThresholdBreached):
+    # @event_handler(LongPositionOpened)
+    # async def _log_open_long_position(self, event: LongPositionOpened):
     #     print('----------------------------------------------------->')
     #     print(event)
+
+    # @event_handler(ShortPositionOpened)
+    # async def _log_open_short_position(self, event: ShortPositionOpened):
+    #     print('----------------------------------------------------->')
+    #     print(event)
+
+    @event_handler(RiskThresholdBreached)
+    async def _log_exit_risk(self, event: RiskThresholdBreached):
+        print('----------------------------------------------------->')
+        print(event)
 
     # @event_handler(ExitLongSignalReceived)
     # async def _log_exit_long(self, event: ExitLongSignalReceived):

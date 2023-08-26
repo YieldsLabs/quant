@@ -1,6 +1,7 @@
 import asyncio
 import os
 from typing import Any, Callable, Type
+import time
 
 from core.events.base import Event, EventEnded
 from core.commands.base import Command
@@ -20,13 +21,13 @@ class SingletonMeta(type):
 
 
 class EventDispatcher(metaclass=SingletonMeta):
-    def __init__(self, num_workers: int = os.cpu_count(), priority_multi: int = 2):
+    def __init__(self, num_workers: int = os.cpu_count() // 3, multi: int = 2):
         self.event_handler = EventHandler()
         self.cancel_event = asyncio.Event()
 
-        self.command_worker_pool = WorkerPool(num_workers, num_workers * priority_multi, self.event_handler, self.cancel_event)
-        self.query_worker_pool = WorkerPool(num_workers, num_workers * priority_multi, self.event_handler, self.cancel_event)
-        self.event_worker_pool = WorkerPool(num_workers, num_workers * priority_multi, self.event_handler, self.cancel_event)
+        self.command_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
+        self.query_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
+        self.event_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
 
     def register(self, event_class: Type[Event], handler: Callable) -> None:
         self.event_handler.register(event_class, handler)
@@ -35,14 +36,32 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.event_handler.unregister(event_class, handler)
 
     async def execute(self, command: Command, *args, **kwargs) -> None:
-        await self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs)
+        start_time = time.time() 
 
+        await self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs)
+        
+        print("Wait command")
+        
         await command.wait_for_execution()
+        
+        end_time = time.time()
+
+        print(f"Command finished in {end_time - start_time:.2f} seconds")
     
     async def query(self, query: Query, *args, **kwargs) -> Any:
-        await self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs)
+        start_time = time.time()
 
-        return await query.wait_for_response()
+        await self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs)
+        
+        print("Wait query")
+        
+        result = await query.wait_for_response()
+
+        end_time = time.time()
+
+        print(f"Query finished in {end_time - start_time:.2f} seconds")
+        
+        return result
     
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)

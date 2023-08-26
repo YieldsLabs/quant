@@ -6,7 +6,7 @@ from core.models.signal import Signal
 from core.models.strategy import Strategy
 from wasmtime import Memory, Store
 
-from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
+from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.events.ohlcv import NewMarketDataReceived
 from core.models.timeframe import Timeframe
 from core.interfaces.abstract_actor import AbstractActor
@@ -73,13 +73,13 @@ class SignalActor(AbstractActor):
 
         match action:
             case Action.GO_LONG.value: tasks.append(self.dispatcher.dispatch(
-                GoLongSignalReceived(signal=signal, entry_price=price, stop_loss=long_stop_loss)))
+                GoLongSignalReceived(signal=signal, ohlcv=data, entry_price=price, stop_loss=long_stop_loss)))
             case Action.GO_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                GoShortSignalReceived(signal=signal, entry_price=price, stop_loss=short_stop_loss)))
+                GoShortSignalReceived(signal=signal, ohlcv=data, entry_price=price, stop_loss=short_stop_loss)))
             case Action.EXIT_LONG.value: tasks.append(self.dispatcher.dispatch(
-                ExitLongSignalReceived(signal=signal, exit_price=event.ohlcv.close)))
+                ExitLongSignalReceived(signal=signal, ohlcv=data, exit_price=event.ohlcv.close)))
             case Action.EXIT_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                ExitShortSignalReceived(signal=signal, exit_price=event.ohlcv.close)))
+                ExitShortSignalReceived(signal=signal, ohlcv=data, exit_price=event.ohlcv.close)))
 
         await asyncio.gather(*tasks)
 

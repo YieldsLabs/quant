@@ -1,12 +1,12 @@
 import asyncio
 from enum import Enum, auto
-from typing import Callable, Tuple, Type, Union
+from typing import Callable, Dict, Type, Union
 from core.events.backtest import BacktestEnded
 
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.order import OrderFilled
 from core.events.risk import RiskThresholdBreached
-from core.events.strategy import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
+from core.events.signal import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
 from core.interfaces.abstract_position_manager import AbstractPositionManager
 from core.models.signal import Signal
 
@@ -24,53 +24,44 @@ HandlerFunction = Callable[[PortfolioEvent], bool]
 
 class PositionStateMachine:
     TRANSITIONS = {
-        PositionState.IDLE: {
-            GoLongSignalReceived: (PositionState.WAITING_ORDER, "handle_open_position"),
-            GoShortSignalReceived: (PositionState.WAITING_ORDER, "handle_open_position")
-        },
-        PositionState.WAITING_ORDER: {
-            OrderFilled: (PositionState.OPENED, "handle_order_filled"),
-            BacktestEnded:(PositionState.CLEANUP, "handle_backtest_end"),
-        },
-        PositionState.OPENED: {
-            ExitLongSignalReceived: (PositionState.IDLE, "handle_exit"),
-            ExitShortSignalReceived: (PositionState.IDLE, "handle_exit"),
-            RiskThresholdBreached: (PositionState.IDLE, "handle_exit"),
-            BacktestEnded:(PositionState.CLEANUP, "handle_backtest_end"),
-        },
+        (PositionState.IDLE, GoLongSignalReceived): (PositionState.WAITING_ORDER, "handle_open_position"),
+        (PositionState.IDLE, GoShortSignalReceived): (PositionState.WAITING_ORDER, "handle_open_position"),
+        (PositionState.WAITING_ORDER, OrderFilled): (PositionState.OPENED, "handle_order_filled"),
+        (PositionState.WAITING_ORDER, BacktestEnded): (PositionState.CLEANUP, "handle_backtest_end"),
+        (PositionState.OPENED, ExitLongSignalReceived): (PositionState.IDLE, "handle_exit"),
+        (PositionState.OPENED, ExitShortSignalReceived): (PositionState.IDLE, "handle_exit"),
+        (PositionState.OPENED, RiskThresholdBreached): (PositionState.IDLE, "handle_exit"),
+        (PositionState.OPENED, BacktestEnded): (PositionState.CLEANUP, "handle_backtest_end"),
     }
 
     def __init__(self, position_manager: Type[AbstractPositionManager]):
-        self.state: Tuple[str, PositionState] = ()
-        self.position_manager = position_manager
-        self.state_lock = asyncio.Lock()
+        self._state: Dict[str, PositionState] = {}
+        self._position_manager = position_manager
+        self._state_lock = asyncio.Lock()
 
-    def get_state(self, symbol: str) -> PositionState:
-        for s, state in self.state:
-            if s == symbol:
-                return state
-        return PositionState.IDLE
+    async def _get_state(self, symbol: str) -> PositionState:
+        async with self._state_lock:
+            return self._state.get(symbol, PositionState.IDLE)
 
-    def set_state(self, symbol: str, state: PositionState) -> Tuple[str, PositionState]:
-        new_state = [(s, state) if s == symbol else (s, st) for s, st in self.state]
-        
-        if symbol not in [s for s, _ in new_state]:
-            new_state.append((symbol, state))
-        
-        return tuple(new_state)
+    async def _set_state(self, symbol: str, state: PositionState) -> None:
+        async with self._state_lock:
+            self._state[symbol] = state
 
     async def process_event(self, signal: Signal, event: PortfolioEvent):
         symbol = signal.symbol
-        state = self.get_state(symbol)
-        next_state, handler_name = self.TRANSITIONS.get(state, {}).get(type(event), (None, None))
+        current_state = await self._get_state(symbol)
         
-        if not handler_name:
-            return
-    
-        handler = getattr(self.position_manager, handler_name)
+        if not self._is_valid_state(current_state, event):
+            raise ValueError(f"Cannot process event for symbol {symbol} in state {current_state}")
+
+        next_state, handler_name = self.TRANSITIONS[(current_state, type(event))]
+        
+        handler = getattr(self._position_manager, handler_name)
 
         if not await handler(event):
             return
 
-        async with self.state_lock:
-            self.state = self.set_state(symbol, next_state)
+        await self._set_state(symbol, next_state)
+
+    def _is_valid_state(self, state: PositionState, event: PortfolioEvent) -> bool:
+        return (state, type(event)) in self.TRANSITIONS

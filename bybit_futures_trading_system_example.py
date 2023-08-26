@@ -1,6 +1,7 @@
 import asyncio
 from dotenv import load_dotenv
 import os
+import uvloop
 
 from core.models.timeframe import Timeframe
 from core.models.lookback import Lookback
@@ -21,6 +22,8 @@ from system.trend_system import TradingContext, TrendSystem
 
 load_dotenv()
 
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 WSS = os.getenv('WSS')
@@ -28,23 +31,23 @@ IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
 
 async def main():
-    lookback = Lookback.THREE_MONTH
+    lookback = Lookback.ONE_MONTH
     batch_size = 34
     initial_account_size = 1000
     risk_per_trade = 0.0015
-    risk_reward_ratio = 2.0
+    risk_reward_ratio = 2
     risk_buffer = 0.01
-    event_cooldown = 3
+    event_cooldown = 2.8
     slippage = 0.008
     leverage = 1
     timeframes = [
         # Timeframe.ONE_MINUTE,
-        Timeframe.FIVE_MINUTES,
+        # Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES
     ]
 
     strategies = [
-        ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
+        ['trend_follow', 'crossma', [50, 200, 14, 1.5]]
     ]
 
     LogSync()

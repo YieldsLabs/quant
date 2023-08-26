@@ -9,7 +9,7 @@ from core.events.backtest import BacktestEnded
 from core.events.position import LongPositionOpened, ShortPositionOpened
 from core.events.order import OrderFilled
 from core.events.risk import RiskThresholdBreached
-from core.events.strategy import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
+from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.position import Position
 from core.models.side import PositionSide
@@ -78,7 +78,7 @@ class PositionManager(AbstractPositionManager):
             await self.sm.process_event(event.position.signal, event)
 
     @event_handler(BacktestEnded)
-    async def _on_order_filled(self, event: BacktestEnded):
+    async def _on_backtest_ended(self, event: BacktestEnded):
         if await self.is_event_stale(event, event):
             return
         
@@ -98,27 +98,25 @@ class PositionManager(AbstractPositionManager):
             event.stop_loss
         )
 
-        await self.dispatcher.execute(PositionOpen(position)),
-        await self.dispatcher.dispatch(self.create_open_position_event(position)),
-        await self.dispatcher.execute(PositionRiskActorStart(position))
+        await self.dispatcher.execute(PositionOpen(position))
+        await self.dispatcher.dispatch(self.create_open_position_event(position))
 
         return True
 
     async def handle_order_filled(self, event: OrderFilled) -> bool:
+        await self.dispatcher.execute(PositionRiskActorStart(event.position))
         await self.dispatcher.execute(PositionUpdate(event.position))
-
+        
         return True
 
     async def handle_exit(self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached]) -> bool:
-        print('Exit')
         position = await self.dispatcher.query(PositionBySignal(event.signal))
 
         if position and self.can_close_position(event, position):
             closed_position = position.close().update_prices(event.exit_price)
             
-            
-            await self.dispatcher.execute(PositionClose(closed_position)),
             await self.dispatcher.execute(PositionRiskActorStop(closed_position))
+            await self.dispatcher.execute(PositionClose(closed_position))
             
             return True
         
@@ -130,10 +128,8 @@ class PositionManager(AbstractPositionManager):
         if position:
             closed_position = position.close().update_prices(event.exit_price)
             
-            await asyncio.gather(
-                self.dispatcher.execute(PositionClose(closed_position)),
-                self.dispatcher.execute(PositionRiskActorStop(closed_position))
-            )
+            await self.dispatcher.execute(PositionRiskActorStop(closed_position))
+            await self.dispatcher.execute(PositionClose(closed_position))
             
             return True
         
@@ -146,18 +142,15 @@ class PositionManager(AbstractPositionManager):
         else:
             return ShortPositionOpened(position)
 
-    def can_close_position(self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached], position: Position) -> bool:
-        position_side = position.side
-
-        if isinstance(event, ExitLongSignalReceived) and (position_side == PositionSide.LONG):
-            if position.entry_price < event.exit_price:
-                return True
-
-        if isinstance(event, ExitShortSignalReceived) and (position_side == PositionSide.SHORT):
-            if position.entry_price > event.exit_price:
-                return True
-
-        if isinstance(event, RiskThresholdBreached) and (position_side == event.side):
+    @staticmethod
+    def can_close_position(event, position: Position) -> bool:
+        if position.side == PositionSide.LONG and isinstance(event, ExitLongSignalReceived):
+            return position.entry_price < event.exit_price
+        
+        if position.side == PositionSide.SHORT and isinstance(event, ExitShortSignalReceived):
+            return position.entry_price > event.exit_price
+        
+        if isinstance(event, RiskThresholdBreached) and position.side == event.side:
             return True
-
+        
         return False
