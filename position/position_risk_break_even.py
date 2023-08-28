@@ -1,10 +1,11 @@
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.models.ohlcv import OHLCV
-from core.models.side import PositionSide
+from core.models.position import PositionSide
 
 
 class BreakEvenStrategy(AbstractPositionRiskStrategy):
     def __init__(self, risk_per_trade: float):
+        super().__init__()
         self.risk_per_trade = risk_per_trade
 
     def next(self, side: PositionSide, entry_price: float, stop_loss_price: float, ohlcv: OHLCV) -> float:

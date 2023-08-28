@@ -3,14 +3,10 @@ from enum import Enum, auto
 from itertools import product
 from random import shuffle
 
-from core.commands.account import AccountUpdate
-
 from core.commands.backtest import BacktestRun
-from core.commands.position import PositionCloseAll
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
-from core.queries.broker import GetSymbols
-from core.queries.position import PositionAll
+from core.queries.broker import GetAccountBalance, GetSymbols
 
 from .trading_context import TradingContext
 
@@ -45,8 +41,15 @@ class TrendSystem(AbstractSystem):
                     return
 
     async def _run_backtest(self):
-        async for signal, executor in self._generate_actors():
-            await asyncio.gather(signal.start(), executor.start())
+        async for signal, position, risk, executor in self._generate_actors():
+            self.signals.append(signal)
+            
+            await asyncio.gather(
+                signal.start(),
+                risk.start(),
+                position.start(),
+                executor.start()
+            )
 
             await self.dispatcher.execute(
                 BacktestRun(
@@ -57,9 +60,12 @@ class TrendSystem(AbstractSystem):
                     self.context.batch_size
                 ))
 
-            await asyncio.gather(signal.stop(), executor.stop())
-
-            self.signals.append(signal)
+            await asyncio.gather(
+                signal.stop(),
+                risk.stop(),
+                position.stop(),
+                executor.stop()
+            )
 
     async def _run_optimization(self):
         await asyncio.sleep(0.1)
@@ -92,18 +98,23 @@ class TrendSystem(AbstractSystem):
 
 
     async def _generate_actors(self):
-        symbols = await self.dispatcher.query(GetSymbols())
+        symbols  = await self.dispatcher.query(GetSymbols())
+        account_size = await self.dispatcher.query(GetAccountBalance())
+        
         symbols_and_timeframes = list(product(symbols, self.context.timeframes))
         shuffle(symbols_and_timeframes)
     
         for symbol, timeframe in symbols_and_timeframes:
+            executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=False)
+            position_actor = self.context.position_factory.create_actor(symbol, timeframe, account_size)
+            risk_actor = self.context.risk_factory.create_actor(symbol, timeframe)
+
             for strategy in self.context.strategies:
                 strategy_path = f'./wasm/{strategy[0]}.wasm'
                 strategy_name = strategy[1]
                 strategy_parameters = strategy[2]
                 
                 signal_actor = self.context.signal_factory.create_actor(symbol, timeframe, strategy_path, strategy_name, strategy_parameters)
-                executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=False)
 
-                yield signal_actor, executor_actor
+                yield signal_actor, position_actor, risk_actor, executor_actor
 

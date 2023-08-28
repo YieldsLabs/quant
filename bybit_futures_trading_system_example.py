@@ -1,7 +1,6 @@
 import asyncio
 from dotenv import load_dotenv
 import os
-from sync.log_sync import LogSync
 import uvloop
 
 from core.models.timeframe import Timeframe
@@ -9,9 +8,13 @@ from core.models.lookback import Lookback
 from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
 from backtest.backtest import Backtest
-from executor.executor_factory import ExecutorFactory
+from executor.executor_actor_factory import ExecutorActorFactory
 from strategy.signal_actor_factory import SignalActorFactory
 from system.trend_system import TradingContext, TrendSystem
+from position.position_actor_factory import PositionActorFactory
+from position.position_factory import PositionFactory
+from risk.risk_actor_factory import RiskActorFactory
+from sync.log_sync import LogSync
 
 load_dotenv()
 
@@ -26,7 +29,6 @@ IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 async def main():
     lookback = Lookback.ONE_MONTH
     batch_size = 34
-    initial_account_size = 1000
     risk_per_trade = 0.0015
     risk_reward_ratio = 2
     risk_buffer = 0.01
@@ -43,8 +45,6 @@ async def main():
     ]
 
     LogSync()
-    # CSVSync()
-
     Backtest()
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
@@ -53,7 +53,11 @@ async def main():
     context = TradingContext(
         datasource,
         SignalActorFactory(),
-        ExecutorFactory(slippage),
+        ExecutorActorFactory(slippage),
+        PositionActorFactory(
+            PositionFactory(leverage, risk_per_trade, risk_reward_ratio)
+        ),
+        RiskActorFactory(risk_buffer),
         timeframes,
         strategies,
         lookback,

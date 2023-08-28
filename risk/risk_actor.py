@@ -1,25 +1,34 @@
 import asyncio
+from typing import Union
 
 from core.events.ohlcv import NewMarketDataReceived
+from core.events.position import PositionClosed, PositionOpened
 from core.interfaces.abstract_actor import AbstractActor
 from core.models.ohlcv import OHLCV
 from core.events.risk import RiskThresholdBreached
 from core.models.position import Position, PositionSide
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
+RiskEvent = Union[NewMarketDataReceived, PositionOpened, PositionClosed]
 
-class PositionRiskActor(AbstractActor):
+class RiskActor(AbstractActor):
     def __init__(self, 
-                position: Position,
+                symbol: Symbol,
+                timeframe: Timeframe,
                 risk_buffer: float,
-                event_cooldown: float
         ):
         super().__init__()
+        self._symbol = symbol
+        self._timeframe = timeframe
+        self._position = None
         self._lock = asyncio.Lock()
         self._running = False
-        self._position = position
-        self.last_event_time = None
         self.risk_buffer = risk_buffer
-        self.event_cooldown = event_cooldown
+
+    @property
+    def id(self):
+        return f"{self._symbol}_{self._timeframe}"
 
     @property
     async def running(self):
@@ -33,8 +42,9 @@ class PositionRiskActor(AbstractActor):
         async with self._lock:
             self._running = True
 
-        self.last_event_time = None
-        self.dispatcher.register(NewMarketDataReceived, self._position_event_filter)
+        self.dispatcher.register(NewMarketDataReceived, self._market_event_filter)
+        self.dispatcher.register(PositionOpened, self._position_event_filter)
+        self.dispatcher.register(PositionClosed, self._position_event_filter)
 
     async def stop(self):
         if not await self.running:
@@ -43,41 +53,46 @@ class PositionRiskActor(AbstractActor):
         async with self._lock:
             self._running = False
 
-        self.last_event_time = None
-        self.dispatcher.unregister(NewMarketDataReceived, self._position_event_filter)
+        self.dispatcher.unregister(NewMarketDataReceived, self._market_event_filter)
+        self.dispatcher.unregister(PositionOpened, self._position_event_filter)
+        self.dispatcher.unregister(PositionClosed, self._position_event_filter)
     
-    async def next(self, event: NewMarketDataReceived):
+    async def handle(self, event: RiskEvent):
+        if isinstance(event, NewMarketDataReceived):
+            await self.handle_risk(event)
+        elif isinstance(event, PositionOpened):
+            self._position = event.position
+        elif isinstance(event, PositionClosed):
+            self._position = None
+        
+    async def handle_risk(self, event: NewMarketDataReceived):
         current_position = self._position
         
         next_position = current_position.next(event.ohlcv)
 
         if self._should_exit(next_position, event.ohlcv):
             await self._process_exit(current_position, event.ohlcv)
-        else:
-            self._position = next_position
 
-    async def _position_event_filter(self, event: NewMarketDataReceived):
-        if event.symbol == self._position.signal.symbol and event.timeframe == self._position.signal.timeframe:
-            await self.next(event)
+    async def _position_event_filter(self, event: PositionOpened):
+        signal = event.position.signal
+    
+        if self._symbol == signal.symbol and self._timeframe == signal.timeframe:
+            await self.handle(event)
+
+    async def _market_event_filter(self, event: NewMarketDataReceived):
+        if event.symbol == self._symbol and event.timeframe == self._timeframe and self._position:
+            await self.handle(event)
 
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)
 
-        await self.dispatcher.dispatch(RiskThresholdBreached(position.signal, position.side, exit_price))
+        await self.dispatcher.dispatch(RiskThresholdBreached(position, exit_price))
 
     def _should_exit(self, next_position: Position, ohlcv: OHLCV):
-        current_time = asyncio.get_event_loop().time()
-        
-        if self.last_event_time and (current_time - self.last_event_time) < self.event_cooldown:
-            return False
-    
         if next_position.side == PositionSide.LONG:
             should_exit = self._long_exit_conditions(next_position.stop_loss_price, next_position.take_profit_price, ohlcv.low, ohlcv.high, self.risk_buffer)
         elif next_position.side == PositionSide.SHORT:
             should_exit = self._short_exit_conditions(next_position.stop_loss_price, next_position.take_profit_price, ohlcv.low, ohlcv.high, self.risk_buffer)
-
-        if should_exit:
-            self.last_event_time = current_time
 
         return should_exit
 

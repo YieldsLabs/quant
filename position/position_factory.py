@@ -1,14 +1,15 @@
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.position import Position, PositionSide
 from core.models.signal import Signal, SignalSide
-from position.position_risk_break_even import BreakEvenStrategy
-from position.position_take_profit_rr import PositionRRTakeProfit
 
+from .position_risk_break_even import BreakEvenStrategy
+from .position_take_profit_rr import PositionRRTakeProfit
 from .position_sizer import PositionSizer
 
 
 class PositionFactory(AbstractPositionFactory):
     def __init__(self, leverage: float, risk_per_trade: float, risk_reward_ratio: float):
+        super().__init__()
         self.leverage = leverage
         self.risk_per_trade = risk_per_trade
         self.risk_reward_ratio = risk_reward_ratio

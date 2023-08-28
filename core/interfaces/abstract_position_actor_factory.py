@@ -6,7 +6,7 @@ from ..models.symbol import Symbol
 from ..models.timeframe import Timeframe
 
 
-class AbstractExecutorFactory(ABC):
+class AbstractPositionActorFactory(ABC):
     @abstractmethod
-    def create_actor(self, symbol: Symbol, timeframe: Timeframe, live: bool) -> AbstractActor:
+    def create_actor(self, symbol: Symbol, timeframe: Timeframe, account_size: int) -> AbstractActor:
         pass

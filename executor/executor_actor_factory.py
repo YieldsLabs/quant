@@ -1,12 +1,12 @@
 from core.interfaces.abstract_actor import AbstractActor
-from core.interfaces.abstract_executor_factory import AbstractExecutorFactory
+from core.interfaces.abstract_executor_actor_factory import AbstractExecutorActorFactory
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
 from .live_executor import LiveExecutor
 from .paper_executor import PaperExecutor
 
-class ExecutorFactory(AbstractExecutorFactory):
+class ExecutorActorFactory(AbstractExecutorActorFactory):
     def __init__(self, slippage: float):
         super().__init__()
         self.slippage = slippage

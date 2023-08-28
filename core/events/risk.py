@@ -2,13 +2,11 @@ from dataclasses import dataclass, field
 
 from .base import Event, EventMeta
 
-from ..models.position import PositionSide
-from ..models.signal import Signal
+from ..models.position import Position
 
 
 @dataclass(frozen=True)
 class RiskThresholdBreached(Event):
-    signal: Signal
-    side: PositionSide
+    position: Position
     exit_price: float
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
