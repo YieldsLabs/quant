@@ -41,61 +41,23 @@ class TrendSystem(AbstractSystem):
                     return
 
     async def _run_backtest(self):
-        async for signal, position, risk, executor in self._generate_actors():
-            self.signals.append(signal)
-            
-            await asyncio.gather(
-                signal.start(),
-                risk.start(),
-                position.start(),
-                executor.start()
-            )
+        async for actors in self._generate_actors():
+            await asyncio.gather(*[actor.start() for actor in actors])
+
+            signal = actors[0]
 
             await self.dispatcher.execute(
-                BacktestRun(
-                    self.context.datasource,
-                    signal.symbol,
-                    signal.timeframe,
-                    self.context.lookback,
-                    self.context.batch_size
-                ))
+                BacktestRun(self.context.datasource, signal.symbol, signal.timeframe, self.context.lookback, self.context.batch_size))
 
-            await asyncio.gather(
-                signal.stop(),
-                risk.stop(),
-                position.stop(),
-                executor.stop()
-            )
+            await asyncio.gather(*[actor.stop() for actor in actors])
 
+            self.signals.append(signal)
+            
     async def _run_optimization(self):
         await asyncio.sleep(0.1)
 
     async def _run_trading(self):
         print('Run trading')
-        # top_strategies = await self.context.portfolio.get_top_strategies(3)
-
-        # print(top_strategies)
-
-        # if len(top_strategies) == 0:
-        #     return
-
-        # uniq_symbols = list(set([strategy.symbol for strategy in top_strategies]))
-
-        # for symbol in uniq_symbols:
-        #     self.context.broker.set_settings(symbol, self.context.leverage, position_mode=PositionMode.ONE_WAY, margin_mode=MarginMode.ISOLATED)
-
-        # async with self.context.executor_factory.create_executor(self.context.live_mode):
-        #     actors = list({
-        #         actor
-        #         for strategy in top_strategies
-        #         for actor in self.strategy_actors
-        #         if actor.strategy == strategy
-        #     })
-
-        #     symbols_and_timeframes = [(actor.strategy.symbol, actor.strategy.timeframe) for actor in actors]
-            
-        #     await self.context.ws_handler.subscribe(symbols_and_timeframes)
-
 
     async def _generate_actors(self):
         symbols  = await self.dispatcher.query(GetSymbols())
@@ -109,10 +71,8 @@ class TrendSystem(AbstractSystem):
             position_actor = self.context.position_factory.create_actor(symbol, timeframe, account_size)
             risk_actor = self.context.risk_factory.create_actor(symbol, timeframe)
 
-            for strategy in self.context.strategies:
-                strategy_path = f'./wasm/{strategy[0]}.wasm'
-                strategy_name = strategy[1]
-                strategy_parameters = strategy[2]
+            for path, strategy_name, strategy_parameters in self.context.strategies:
+                strategy_path = f'./wasm/{path}.wasm'
                 
                 signal_actor = self.context.signal_factory.create_actor(symbol, timeframe, strategy_path, strategy_name, strategy_parameters)
 
