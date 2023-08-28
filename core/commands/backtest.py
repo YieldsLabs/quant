@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from .base import Command
 
-from ..models.symbol import Symbol
 from ..interfaces.abstract_datasource import AbstractDatasource
+from ..models.symbol import Symbol
 from ..models.lookback import TIMEFRAMES_TO_LOOKBACK, Lookback
 
 

@@ -23,8 +23,8 @@ class Action(Enum):
 class SignalActor(AbstractActor):
     def __init__(self, symbol: str, timeframe: Timeframe, strategy_name: str, parameters: tuple[int], store: Store, exports: Any):
         super().__init__()
-        self._symbol = symbol
-        self._timeframe = timeframe
+        self.symbol = symbol
+        self.timeframe = timeframe
         self._strategy_name = strategy_name
         self._strategy = None
 
@@ -39,14 +39,14 @@ class SignalActor(AbstractActor):
         if not self._strategy:
             raise RuntimeError("Id: Strategy is not started")
         
-        return str(self._strategy)
+        return f"{self.symbol}_{self.timeframe}{self._strategy}"
 
     @property
     def running(self):
         return bool(self.register_id)
 
     async def start(self):
-        if await self.running:
+        if self.running:
             raise RuntimeError("Start: strategy is running")
 
         async with self._lock:
@@ -56,7 +56,7 @@ class SignalActor(AbstractActor):
         self.dispatcher.register(NewMarketDataReceived, self._signal_event_filter)
 
     async def stop(self):
-        if not await self.running:
+        if not self.running:
             raise RuntimeError("Stop: strategy is not started")
 
         async with self._lock:
@@ -64,8 +64,8 @@ class SignalActor(AbstractActor):
     
         self.dispatcher.unregister(NewMarketDataReceived, self._signal_event_filter)
 
-    async def next(self, event: NewMarketDataReceived):
-        if not await self.running:
+    async def handle(self, event: NewMarketDataReceived):
+        if not self.running:
             return
     
         data = event.ohlcv
@@ -93,8 +93,8 @@ class SignalActor(AbstractActor):
         self.register_id = None
     
     async def _signal_event_filter(self, event: NewMarketDataReceived):
-        if event.symbol == self._symbol and event.timeframe == self._timeframe:
-            await self.next(event)
+        if event.symbol == self.symbol and event.timeframe == self.timeframe:
+            await self.handle(event)
 
     def _set_strategy(self):
         params = self.exports["strategy_parameters"](self.store, self.register_id)
@@ -105,19 +105,19 @@ class SignalActor(AbstractActor):
 
     async def _dispatch_go_long_signal(self, data, price, stop_loss):
         await self.dispatcher.dispatch(
-            GoLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+            GoLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_go_short_signal(self, data, price, stop_loss):
         await self.dispatcher.dispatch(
-            GoShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+            GoShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_exit_long_signal(self, data, exit_price):
         await self.dispatcher.dispatch(
-            ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
+            ExitLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
 
     async def _dispatch_exit_short_signal(self, data, exit_price):
         await self.dispatcher.dispatch(
-            ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))
+            ExitShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))
 
     @staticmethod
     @lru_cache(maxsize=None)

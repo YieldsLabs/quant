@@ -1,7 +1,6 @@
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
-from core.models.position import Position
-from core.models.side import PositionSide
-from core.models.signal import Signal
+from core.models.position import Position, PositionSide
+from core.models.signal import Signal, SignalSide
 from position.position_risk_break_even import BreakEvenStrategy
 from position.position_take_profit_rr import PositionRRTakeProfit
 
@@ -14,8 +13,9 @@ class PositionFactory(AbstractPositionFactory):
         self.risk_per_trade = risk_per_trade
         self.risk_reward_ratio = risk_reward_ratio
 
-    def create_position(self, signal: Signal, side: PositionSide, account_size: float, entry_price: float, stop_loss_price: float | None) -> Position:
+    def create_position(self, signal: Signal, account_size: float, entry_price: float, stop_loss_price: float | None) -> Position:
         symbol = signal.symbol
+        
         stop_loss_price = round(stop_loss_price, symbol.price_precision) if stop_loss_price else None
         entry_price = round(entry_price, symbol.price_precision)
 
@@ -30,12 +30,13 @@ class PositionFactory(AbstractPositionFactory):
             self.risk_per_trade
         )
 
+        position_side = PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
         risk_strategy = BreakEvenStrategy(self.risk_per_trade)
         take_profit_strategy = PositionRRTakeProfit(self.risk_reward_ratio)
 
         return Position(
             signal,
-            side,
+            position_side,
             position_size,
             entry_price,
             risk_strategy,

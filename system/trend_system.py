@@ -4,12 +4,12 @@ from itertools import product
 from random import shuffle
 
 from core.commands.account import AccountUpdate
-from core.commands.actor import SignalActorStart, SignalActorStop
 
 from core.commands.backtest import BacktestRun
 from core.commands.position import PositionCloseAll
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
+from core.queries.broker import GetSymbols
 from core.queries.position import PositionAll
 
 from .trading_context import TradingContext
@@ -27,6 +27,7 @@ class TrendSystem(AbstractSystem):
         super().__init__()
         self.context = context
         self.state = state
+        self.signals = []
 
     async def start(self):
         while True:
@@ -44,38 +45,27 @@ class TrendSystem(AbstractSystem):
                     return
 
     async def _run_backtest(self):
-        symbols = await self.context.datasource.symbols()
+        async for signal, executor in self._generate_actors():
+            await asyncio.gather(signal.start(), executor.start())
 
-        symbols_and_timeframes = list(product(symbols, self.context.timeframes))
-        
-        shuffle(symbols_and_timeframes)
+            await self.dispatcher.execute(
+                BacktestRun(
+                    self.context.datasource,
+                    signal.symbol,
+                    signal.timeframe,
+                    self.context.lookback,
+                    self.context.batch_size
+                ))
 
-        strategies = [
-            (symbol, timeframe, f'./signal/{strategy[0]}.wasm', strategy[1], strategy[2])
-            for symbol, timeframe in symbols_and_timeframes
-            for strategy in self.context.strategies
-        ]
+            await asyncio.gather(signal.stop(), executor.stop())
 
-        async with self.context.executor_factory.create_executor(live=False):
-            for symbol, timeframe, path, strategy_name, strategy_parameters in strategies:
-                await self.dispatcher.execute(SignalActorStart(symbol, timeframe, path, strategy_name, strategy_parameters))
-
-                amount = await self.context.datasource.account_size()
-
-                await self.dispatcher.execute(AccountUpdate(amount))
-
-                await self.dispatcher.execute(
-                    BacktestRun(self.context.datasource, symbol, timeframe, self.context.lookback, self.context.batch_size))
-                
-        for symbol, timeframe in symbols_and_timeframes:
-            await self.dispatcher.execute(SignalActorStop(symbol, timeframe))
+            self.signals.append(signal)
 
     async def _run_optimization(self):
         await asyncio.sleep(0.1)
 
     async def _run_trading(self):
         print('Run trading')
-        print(await self.dispatcher.query(PositionAll()))
         # top_strategies = await self.context.portfolio.get_top_strategies(3)
 
         # print(top_strategies)
@@ -96,9 +86,24 @@ class TrendSystem(AbstractSystem):
         #         if actor.strategy == strategy
         #     })
 
-        #     for actor in actors:
-        #         await self._ensure_actor_state(actor)
-
         #     symbols_and_timeframes = [(actor.strategy.symbol, actor.strategy.timeframe) for actor in actors]
             
         #     await self.context.ws_handler.subscribe(symbols_and_timeframes)
+
+
+    async def _generate_actors(self):
+        symbols = await self.dispatcher.query(GetSymbols())
+        symbols_and_timeframes = list(product(symbols, self.context.timeframes))
+        shuffle(symbols_and_timeframes)
+    
+        for symbol, timeframe in symbols_and_timeframes:
+            for strategy in self.context.strategies:
+                strategy_path = f'./wasm/{strategy[0]}.wasm'
+                strategy_name = strategy[1]
+                strategy_parameters = strategy[2]
+                
+                signal_actor = self.context.signal_factory.create_actor(symbol, timeframe, strategy_path, strategy_name, strategy_parameters)
+                executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=False)
+
+                yield signal_actor, executor_actor
+

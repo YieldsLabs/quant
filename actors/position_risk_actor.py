@@ -4,8 +4,7 @@ from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_actor import AbstractActor
 from core.models.ohlcv import OHLCV
 from core.events.risk import RiskThresholdBreached
-from core.models.position import Position
-from core.models.side import PositionSide
+from core.models.position import Position, PositionSide
 
 
 class PositionRiskActor(AbstractActor):

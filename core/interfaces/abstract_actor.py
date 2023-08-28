@@ -1,10 +1,13 @@
 from abc import abstractmethod
+from typing import Union
 
 from .abstract_event_manager import AbstractEventManager
 
-from ..models.signal import Signal
+from ..events.position import PositionInitialized, PositionClosed
 from ..events.ohlcv import NewMarketDataReceived
 
+
+ActorEvent = Union[NewMarketDataReceived, PositionInitialized, PositionClosed]
 
 class AbstractActor(AbstractEventManager):
     @property
@@ -26,5 +29,5 @@ class AbstractActor(AbstractEventManager):
         pass
 
     @abstractmethod
-    def next(self, event: NewMarketDataReceived):
+    def handle(self, event: ActorEvent):
         pass

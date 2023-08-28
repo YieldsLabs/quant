@@ -1,14 +1,10 @@
 import asyncio
-from aiocache import cached
 from typing import Type
 
 from core.interfaces.abstract_broker import AbstractBroker
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.interfaces.abstract_datasource import AbstractDatasource
-
-from .retry import retry
-
 
 class AsyncHistoricalData:
     def __init__(self, broker: AbstractBroker, symbol: Symbol, timeframe: Timeframe, lookback: int, batch_size: int):
@@ -50,38 +46,9 @@ class AsyncHistoricalData:
     def get_last_row(self):
         return self.last_row
 
-
 class BybitDataSource(AbstractDatasource):
-    def __init__(self, broker: Type[AbstractBroker]):
+    def __init__(self, broker: AbstractBroker):
         self.broker = broker
-        self.cache_lock = asyncio.Lock()
-
-    async def _account_size(self):
-        return await asyncio.to_thread(self.broker.get_account_balance)
-
-    async def _symbols(self):
-        return await asyncio.to_thread(self.broker.get_symbols)
-    
-    async def _symbol(self, name):
-        return await asyncio.to_thread(self.broker.get_symbol, name)
 
     def fetch(self, symbol: Symbol, timeframe: Timeframe, lookback: int, batch_size: int):
         return AsyncHistoricalData(self.broker, symbol.name, timeframe.value, lookback, batch_size)
-
-    @retry(max_retries=7, initial_retry_delay=3)
-    @cached(ttl=10)
-    async def account_size(self):
-        async with self.cache_lock:
-            return await self._account_size()
-
-    @retry(max_retries=7, initial_retry_delay=3)
-    @cached(ttl=300)
-    async def symbols(self):
-        async with self.cache_lock:
-            return await self._symbols()
-        
-    @retry(max_retries=7, initial_retry_delay=3)
-    @cached(ttl=300)
-    async def symbol(self, name):
-        async with self.cache_lock:
-            return await self._symbol(name)

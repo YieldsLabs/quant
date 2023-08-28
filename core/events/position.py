@@ -12,13 +12,20 @@ class PositionEvent(Event):
 
 
 @dataclass(frozen=True)
-class LongPositionOpened(PositionEvent):
+class PositionInitialized(PositionEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ShortPositionOpened(PositionEvent):
-    pass
+class PositionOpened(Event):
+    position: Position
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
+
+
+@dataclass(frozen=True)
+class PositionCloseRequested(Event):
+    position: Position
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
 
 
 @dataclass(frozen=True)

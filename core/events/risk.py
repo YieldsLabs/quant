@@ -1,9 +1,8 @@
 from dataclasses import dataclass, field
 
-from core.models.side import PositionSide
-
 from .base import Event, EventMeta
 
+from ..models.position import PositionSide
 from ..models.signal import Signal
 
 

@@ -6,6 +6,9 @@ from .signal_actor import SignalActor
 
 
 class SignalActorFactory(AbstractSignalActorFactory):
+    def __init__(self):
+        super().__init__()
+    
     def create_actor(self, symbol, timeframe, wasm_path, strategy, parameters):
         store = Store()
         wasi_config = WasiConfig()

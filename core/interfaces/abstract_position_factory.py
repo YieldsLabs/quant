@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 
-from ..models.position import Position, PositionSide
-from ..models.side import PositionSide
-from ..models.strategy import Strategy
+from ..models.signal import Signal
+from ..models.position import Position
 
 class AbstractPositionFactory(ABC):
     @abstractmethod
-    def create_position(self, strategy: Strategy, position_side: PositionSide, account_size: float, entry_price: float, stop_loss_price: float | None) -> Position:
+    def create_position(self, signal: Signal, account_size: float, entry_price: float, stop_loss: float | None) -> Position:
         pass

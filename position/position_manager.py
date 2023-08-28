@@ -85,13 +85,10 @@ class PositionManager(AbstractPositionManager):
             await self.sm.process_event(event, event)
 
     async def handle_open_position(self, event: Union[GoLongSignalReceived, GoShortSignalReceived]) -> bool:
-        position_side = PositionSide.LONG if isinstance(event, GoLongSignalReceived) else PositionSide.SHORT
-        
         account_size = self.account_size
 
         position = self.position_factory.create_position(
             event.signal,
-            position_side,
             account_size,
             event.entry_price,
             event.stop_loss

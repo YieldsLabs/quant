@@ -1,19 +1,18 @@
-from typing import Type
-
-from core.interfaces.abstract_broker import AbstractBroker
-from core.interfaces.abstract_executor import AbstractExecutor
+from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_executor_factory import AbstractExecutorFactory
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
 from .live_executor import LiveExecutor
 from .paper_executor import PaperExecutor
 
 class ExecutorFactory(AbstractExecutorFactory):
-    def __init__(self, broker: AbstractBroker, slippage: float):
-        self.broker = broker
+    def __init__(self, slippage: float):
+        super().__init__()
         self.slippage = slippage
 
-    def create_executor(self, live: bool = False) -> AbstractExecutor:
+    def create_actor(self, symbol: Symbol, timeframe: Timeframe, live: bool = False) -> AbstractActor:
         if live:
-            return LiveExecutor(self.broker)
+            return LiveExecutor(symbol, timeframe)
         else:
-            return PaperExecutor(self.slippage)
+            return PaperExecutor(symbol, timeframe, self.slippage)
