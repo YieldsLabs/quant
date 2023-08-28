@@ -9,6 +9,11 @@ from ..events.ohlcv import NewMarketDataReceived
 class AbstractActor(AbstractEventManager):
     @property
     @abstractmethod
+    def id(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
     def running(self) -> bool:
         pass
 

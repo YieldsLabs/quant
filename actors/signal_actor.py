@@ -1,6 +1,7 @@
 import asyncio
 import ctypes
 from enum import Enum
+from functools import lru_cache
 from typing import Any
 from wasmtime import Memory, Store
 
@@ -25,7 +26,7 @@ class SignalActor(AbstractActor):
         self._symbol = symbol
         self._timeframe = timeframe
         self._strategy_name = strategy_name
-        self._signal = None
+        self._strategy = None
 
         self.parameters = parameters
         self.store = store
@@ -34,9 +35,15 @@ class SignalActor(AbstractActor):
         self._lock = asyncio.Lock()
 
     @property
-    async def running(self):
-        async with self._lock:
-            return bool(self.register_id)
+    def id(self):
+        if not self._strategy:
+            raise RuntimeError("Id: Strategy is not started")
+        
+        return str(self._strategy)
+
+    @property
+    def running(self):
+        return bool(self.register_id)
 
     async def start(self):
         if await self.running:
@@ -113,6 +120,7 @@ class SignalActor(AbstractActor):
             ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))
 
     @staticmethod
+    @lru_cache(maxsize=None)
     def _get_string_from_memory(store: Store, memory: Memory, pointer, length):
         data_ptr = memory.data_ptr(store)
         data_address = ctypes.addressof(data_ptr.contents)
