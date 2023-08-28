@@ -36,7 +36,7 @@ class SignalActor(AbstractActor):
     @property
     async def running(self):
         async with self._lock:
-            return self.register_id
+            return bool(self.register_id)
 
     async def start(self):
         if await self.running:
@@ -69,8 +69,8 @@ class SignalActor(AbstractActor):
         action_dispatch_map = {
             Action.GO_LONG.value: lambda: self._dispatch_go_long_signal(data, price, long_stop_loss),
             Action.GO_SHORT.value: lambda: self._dispatch_go_short_signal(data, price, short_stop_loss),
-            Action.EXIT_LONG.value: lambda: self._dispatch_exit_long_signal(data, event),
-            Action.EXIT_SHORT.value: lambda: self._dispatch_exit_short_signal(data, event)
+            Action.EXIT_LONG.value: lambda: self._dispatch_exit_long_signal(data, data.close),
+            Action.EXIT_SHORT.value: lambda: self._dispatch_exit_short_signal(data, data.close)
         }
 
         dispatch_func = action_dispatch_map.get(action)
@@ -104,13 +104,13 @@ class SignalActor(AbstractActor):
         await self.dispatcher.dispatch(
             GoShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
-    async def _dispatch_exit_long_signal(self, data, event):
+    async def _dispatch_exit_long_signal(self, data, exit_price):
         await self.dispatcher.dispatch(
-            ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=event.ohlcv.close))
+            ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
 
-    async def _dispatch_exit_short_signal(self, data, event):
+    async def _dispatch_exit_short_signal(self, data, exit_price):
         await self.dispatcher.dispatch(
-            ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=event.ohlcv.close))
+            ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))
 
     @staticmethod
     def _get_string_from_memory(store: Store, memory: Memory, pointer, length):
