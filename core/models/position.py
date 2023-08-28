@@ -1,14 +1,22 @@
 from dataclasses import dataclass, field, replace
 from datetime import datetime
-from typing import List, Optional, Tuple
+from enum import Enum
+from typing import Optional, Tuple
 
 from .ohlcv import OHLCV
 from .signal import Signal
-from .side import PositionSide
 from .order import Order
 
 from ..interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from ..interfaces.abstract_position_take_profit_strategy import AbstractPositionTakeProfitStrategy
+
+
+class PositionSide(Enum):
+    LONG = "long"
+    SHORT = "short"
+
+    def __str__(self):
+        return self.value
 
 
 @dataclass(frozen=True)

@@ -102,9 +102,3 @@ class TrendSystem(AbstractSystem):
         #     symbols_and_timeframes = [(actor.strategy.symbol, actor.strategy.timeframe) for actor in actors]
             
         #     await self.context.ws_handler.subscribe(symbols_and_timeframes)
-
-    async def _ensure_actor_state(self, actor):
-        if await actor.running:
-            await actor.stop()
-
-        await actor.start()

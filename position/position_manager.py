@@ -1,4 +1,3 @@
-import asyncio
 from typing import Union
 
 from core.commands.account import AccountUpdate

@@ -2,6 +2,7 @@ import asyncio
 import ctypes
 from enum import Enum
 from typing import Any
+from core.models.side import SignalSide
 from core.models.signal import Signal
 from core.models.strategy import Strategy
 from wasmtime import Memory, Store
@@ -67,19 +68,17 @@ class SignalActor(AbstractActor):
         [action, price] = self.exports["strategy_next"](self.store, self.register_id, data.open, data.high, data.low, data.close, data.volume)
         [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](self.store, self.register_id)
 
-        signal = Signal(self._symbol, self._timeframe, self._strategy)
-
         tasks = []
 
         match action:
             case Action.GO_LONG.value: tasks.append(self.dispatcher.dispatch(
-                GoLongSignalReceived(signal=signal, ohlcv=data, entry_price=price, stop_loss=long_stop_loss)))
+                GoLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=long_stop_loss)))
             case Action.GO_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                GoShortSignalReceived(signal=signal, ohlcv=data, entry_price=price, stop_loss=short_stop_loss)))
+                GoShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=short_stop_loss)))
             case Action.EXIT_LONG.value: tasks.append(self.dispatcher.dispatch(
-                ExitLongSignalReceived(signal=signal, ohlcv=data, exit_price=event.ohlcv.close)))
+                ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=event.ohlcv.close)))
             case Action.EXIT_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                ExitShortSignalReceived(signal=signal, ohlcv=data, exit_price=event.ohlcv.close)))
+                ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=event.ohlcv.close)))
 
         await asyncio.gather(*tasks)
 

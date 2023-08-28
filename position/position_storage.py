@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 class PositionStorage(AbstractPositionStorage):
     def __init__(self):
         super().__init__()
-        self.data = {}  # Replaced namedtuple with a simple dictionary
+        self.data = {}
         self._positions_lock = asyncio.Lock()
 
     @asynccontextmanager
