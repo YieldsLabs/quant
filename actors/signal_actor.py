@@ -2,11 +2,10 @@ import asyncio
 import ctypes
 from enum import Enum
 from typing import Any
-from core.models.side import SignalSide
-from core.models.signal import Signal
-from core.models.strategy import Strategy
 from wasmtime import Memory, Store
 
+from core.models.signal import Signal, SignalSide
+from core.models.strategy import Strategy
 from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.events.ohlcv import NewMarketDataReceived
 from core.models.timeframe import Timeframe
@@ -44,7 +43,7 @@ class SignalActor(AbstractActor):
             raise RuntimeError("Start: strategy is running")
 
         async with self._lock:
-            self.register_id = self.exports[f"register_{self._strategy_name}"](self.store, *self.parameters)
+            self._register_strategy()
             self._set_strategy()
 
         self.dispatcher.register(NewMarketDataReceived, self._signal_event_filter)
@@ -54,8 +53,7 @@ class SignalActor(AbstractActor):
             raise RuntimeError("Stop: strategy is not started")
 
         async with self._lock:
-            self.exports[f"unregister_strategy"](self.store, self.register_id)
-            self.register_id = None
+            self._unregister_strategy()
     
         self.dispatcher.unregister(NewMarketDataReceived, self._signal_event_filter)
 
@@ -68,20 +66,25 @@ class SignalActor(AbstractActor):
         [action, price] = self.exports["strategy_next"](self.store, self.register_id, data.open, data.high, data.low, data.close, data.volume)
         [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](self.store, self.register_id)
 
-        tasks = []
+        action_dispatch_map = {
+            Action.GO_LONG.value: lambda: self._dispatch_go_long_signal(data, price, long_stop_loss),
+            Action.GO_SHORT.value: lambda: self._dispatch_go_short_signal(data, price, short_stop_loss),
+            Action.EXIT_LONG.value: lambda: self._dispatch_exit_long_signal(data, event),
+            Action.EXIT_SHORT.value: lambda: self._dispatch_exit_short_signal(data, event)
+        }
 
-        match action:
-            case Action.GO_LONG.value: tasks.append(self.dispatcher.dispatch(
-                GoLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=long_stop_loss)))
-            case Action.GO_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                GoShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=short_stop_loss)))
-            case Action.EXIT_LONG.value: tasks.append(self.dispatcher.dispatch(
-                ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=event.ohlcv.close)))
-            case Action.EXIT_SHORT.value: tasks.append(self.dispatcher.dispatch(
-                ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=event.ohlcv.close)))
+        dispatch_func = action_dispatch_map.get(action)
+        
+        if dispatch_func:
+            await dispatch_func()
 
-        await asyncio.gather(*tasks)
+    def _register_strategy(self):
+        self.register_id = self.exports[f"register_{self._strategy_name}"](self.store, *self.parameters)
 
+    def _unregister_strategy(self):
+        self.exports["unregister_strategy"](self.store, self.register_id)
+        self.register_id = None
+    
     async def _signal_event_filter(self, event: NewMarketDataReceived):
         if event.symbol == self._symbol and event.timeframe == self._timeframe:
             await self.next(event)
@@ -91,7 +94,23 @@ class SignalActor(AbstractActor):
         memory = self.exports["memory"]
 
         strategy_parameters = self._get_string_from_memory(self.store, memory, params[0], params[1])
-        self._strategy = Strategy.from_label(f'{strategy_parameters}')
+        self._strategy = Strategy.from_label(strategy_parameters)
+
+    async def _dispatch_go_long_signal(self, data, price, stop_loss):
+        await self.dispatcher.dispatch(
+            GoLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+
+    async def _dispatch_go_short_signal(self, data, price, stop_loss):
+        await self.dispatcher.dispatch(
+            GoShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+
+    async def _dispatch_exit_long_signal(self, data, event):
+        await self.dispatcher.dispatch(
+            ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=event.ohlcv.close))
+
+    async def _dispatch_exit_short_signal(self, data, event):
+        await self.dispatcher.dispatch(
+            ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=event.ohlcv.close))
 
     @staticmethod
     def _get_string_from_memory(store: Store, memory: Memory, pointer, length):
