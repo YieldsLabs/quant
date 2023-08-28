@@ -72,9 +72,7 @@ class TrendSystem(AbstractSystem):
             risk_actor = self.context.risk_factory.create_actor(symbol, timeframe)
 
             for path, strategy_name, strategy_parameters in self.context.strategies:
-                strategy_path = f'./wasm/{path}.wasm'
-                
-                signal_actor = self.context.signal_factory.create_actor(symbol, timeframe, strategy_path, strategy_name, strategy_parameters)
+                signal_actor = self.context.signal_factory.create_actor(symbol, timeframe, f'./wasm/{path}.wasm', strategy_name, strategy_parameters)
 
                 yield signal_actor, position_actor, risk_actor, executor_actor
 
