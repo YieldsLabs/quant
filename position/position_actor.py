@@ -89,7 +89,7 @@ class PositionActor(AbstractActor):
                 await self.handle(event)
 
     async def _is_event_stale(self, signal, event) -> bool:
-        position = await self.state.get_position(signal)
+        position = await self.state.retrieve_position(signal)
         
         return position and position.last_modified > event.meta.timestamp
 
@@ -103,19 +103,19 @@ class PositionActor(AbstractActor):
             event.stop_loss
         )
 
-        await self.state.open_position(position)
+        await self.state.store_position(position)
 
         await self.dispatcher.dispatch(PositionInitialized(position))
 
         return True
 
     async def handle_position_opened(self, event: PositionOpened) -> bool:
-        await self.state.update_position(event.position)
+        await self.state.update_stored_position(event.position)
         
         return True
     
     async def handle_position_closed(self, event: PositionClosed) -> bool:
-        await self.state.close_position(event.position)
+        await self.state.close_stored_position(event.position)
         
         return True
 
@@ -125,12 +125,12 @@ class PositionActor(AbstractActor):
         else:
             signal = event.position.signal
         
-        position = await self.state.get_position(signal)
+        position = await self.state.retrieve_position(signal)
 
         if position and self.can_close_position(event, position):
             closed_position = position.close().update_prices(event.exit_price)
             
-            await self.state.update_position(closed_position)
+            await self.state.update_stored_position(closed_position)
 
             await self.dispatcher.dispatch(PositionCloseRequested(closed_position))
             
