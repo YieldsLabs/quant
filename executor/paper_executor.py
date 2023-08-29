@@ -21,7 +21,7 @@ class PaperExecutor(AbstractActor):
 
     @property
     def id(self):
-        return f"{self.symbol}_{self.timeframe}_LIVE"
+        return f"{self.symbol}_{self.timeframe}_PAPER"
     
     @property
     def running(self) -> bool:

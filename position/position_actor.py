@@ -1,7 +1,6 @@
 import asyncio
 from typing import Union
 
-
 from core.events.position import PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
@@ -10,6 +9,7 @@ from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.position import Position, PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.portfolio import GetTotalPnL
 
 from .position_storage import PositionStorage
 from .position_state_machine import PositionStateMachine
@@ -48,7 +48,7 @@ class PositionActor(AbstractActor):
     
     async def start(self):
         if await self.running:
-            raise RuntimeError("Start: risk is running")
+            raise RuntimeError("Start: position is running")
 
         async with self._lock:
             self._running = True
@@ -59,7 +59,7 @@ class PositionActor(AbstractActor):
 
     async def stop(self):
         if not await self.running:
-            raise RuntimeError("Stop: risk is not started")
+            raise RuntimeError("Stop: position is not started")
         
         async with self._lock:
             self._running = False
@@ -94,7 +94,7 @@ class PositionActor(AbstractActor):
         return position and position.last_modified > event.meta.timestamp
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        account_size = self.account_size
+        account_size = self.account_size + await self.dispatcher.query(GetTotalPnL(event.signal.strategy))
 
         position = self.position_factory.create_position(
             event.signal,

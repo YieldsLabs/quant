@@ -1,37 +1,24 @@
 from core.event_decorators import event_handler, query_handler
-from core.events.position import PositionClosed, PositionOpened
+from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.queries.portfolio import GetDrawdown, GetEquity, GetOpenPositions, GetTopStrategy, GetTotalPnL
+from core.queries.portfolio import GetTopStrategy, GetTotalPnL
+from portfolio.portfolio_storage import PortfolioStorage
 
 
 class Portfolio(AbstractEventManager):
-    def __init__(self):
+    def __init__(self, risk_per_trade: int):
         super().__init__()
+        self.state = PortfolioStorage()
+        self.risk_per_trade = risk_per_trade
 
-    @event_handler(PositionOpened)
-    def handle_open_position(self, event: PositionOpened):
-        pass
-    
     @event_handler(PositionClosed)
-    def handle_close_positon(self, event: PositionClosed):
-        pass
+    async def handle_close_positon(self, event: PositionClosed):
+        await self.state.update(event.position)
 
     @query_handler(GetTopStrategy)
-    def top_strategy(self, query: GetTopStrategy):
-        pass
-
-    @query_handler(GetOpenPositions)
-    def open_positions(self, query: GetOpenPositions):
-        pass
-
-    @query_handler(GetEquity)
-    def equity(self, query: GetEquity):
-        pass
-    
-    @query_handler(GetDrawdown)
-    def drawdown(self, query: GetDrawdown):
-        pass
+    async def top_strategy(self, query: GetTopStrategy):
+         return await self.state.get_top_strategy(query.strategy)
 
     @query_handler(GetTotalPnL)
-    def total_pnl(self, query: GetTotalPnL):
-        pass
+    async def total_pnl(self, query: GetTotalPnL):
+        return await self.state.get_pnl(query.strategy)

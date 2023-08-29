@@ -48,7 +48,7 @@ async def main():
     LogSync()
 
     Backtest()
-    Portfolio()
+    Portfolio(risk_per_trade)
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     datasource = BybitDataSource(broker)

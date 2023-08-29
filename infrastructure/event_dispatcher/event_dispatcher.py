@@ -21,13 +21,13 @@ class SingletonMeta(type):
 
 
 class EventDispatcher(metaclass=SingletonMeta):
-    def __init__(self, num_workers: int = os.cpu_count() // 3, multi: int = 2):
+    def __init__(self, num_workers: int = os.cpu_count(), multi: int = 2):
         self.event_handler = EventHandler()
         self.cancel_event = asyncio.Event()
 
         self.command_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
-        self.query_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
-        self.event_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
+        self.query_worker_pool = WorkerPool(num_workers // 2, num_workers // 2 * multi, self.event_handler, self.cancel_event)
+        self.event_worker_pool = WorkerPool(num_workers // 2, num_workers // 2 * multi, self.event_handler, self.cancel_event)
 
     def register(self, event_class: Type[Event], handler: Callable) -> None:
         self.event_handler.register(event_class, handler)

@@ -15,40 +15,40 @@ class LogSync(AbstractEventManager):
         self.lock = asyncio.Lock()
         self.counter = 0
 
-    # @event_handler(NewMarketDataReceived)
-    # async def _log_market(self, event: NewMarketDataReceived):
-    #     print('----------------------------------------------------->')
+    @event_handler(NewMarketDataReceived)
+    async def _log_market(self, event: NewMarketDataReceived):
+        print('----------------------------------------------------->')
         
-    #     async with self.lock:
-    #         self.counter += 1
-    #         print(self.counter)
+        async with self.lock:
+            self.counter += 1
+            print(self.counter)
         
-    #     print(event)
+        print(event)
 
-    # @event_handler(GoLongSignalReceived)
-    # async def _log_go_long(self, event: GoLongSignalReceived):
-    #     print('----------------------------------------------------->')
-    #     print(event)
+    @event_handler(GoLongSignalReceived)
+    async def _log_go_long(self, event: GoLongSignalReceived):
+        print('----------------------------------------------------->')
+        print(event)
 
-    # @event_handler(GoShortSignalReceived)
-    # async def _log_go_short(self, event: GoShortSignalReceived):
-    #     print('----------------------------------------------------->')
-    #     print(event)
+    @event_handler(GoShortSignalReceived)
+    async def _log_go_short(self, event: GoShortSignalReceived):
+        print('----------------------------------------------------->')
+        print(event)
 
-    # @event_handler(PositionInitialized)
-    # async def _log_position_init(self, event: PositionInitialized):
-    #     print('----------------------------------------------------->')
-    #     print(event)
+    @event_handler(PositionInitialized)
+    async def _log_position_init(self, event: PositionInitialized):
+        print('----------------------------------------------------->')
+        print(event)
     
-    # @event_handler(PositionOpened)
-    # async def _log_position_opened(self, event: PositionOpened):
-    #     print('----------------------------------------------------->')
-    #     print(event)
+    @event_handler(PositionOpened)
+    async def _log_position_opened(self, event: PositionOpened):
+        print('----------------------------------------------------->')
+        print(event)
 
-    # @event_handler(PositionCloseRequested)
-    # async def _log_position_close_req(self, event: PositionCloseRequested):
-    #     print('----------------------------------------------------->')
-    #     print(event)
+    @event_handler(PositionCloseRequested)
+    async def _log_position_close_req(self, event: PositionCloseRequested):
+        print('----------------------------------------------------->')
+        print(event)
 
     @event_handler(PositionClosed)
     async def _log_closed_position(self, event: PositionClosed):
