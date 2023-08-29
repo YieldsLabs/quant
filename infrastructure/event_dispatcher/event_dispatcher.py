@@ -36,33 +36,15 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.event_handler.unregister(event_class, handler)
 
     async def execute(self, command: Command, *args, **kwargs) -> None:
-        start_time = time.time() 
-
         await self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs)
         
-        print("Wait command")
-        
         await command.wait_for_execution()
-        
-        end_time = time.time()
-
-        print(f"Command finished in {end_time - start_time:.2f} seconds")
     
     async def query(self, query: Query, *args, **kwargs) -> Any:
-        start_time = time.time()
-
         await self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs)
-        
-        print("Wait query")
-        
-        result = await query.wait_for_response()
 
-        end_time = time.time()
+        return await query.wait_for_response()
 
-        print(f"Query finished in {end_time - start_time:.2f} seconds")
-        
-        return result
-    
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)
     

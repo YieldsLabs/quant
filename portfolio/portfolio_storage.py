@@ -1,31 +1,40 @@
 import asyncio
-from typing import Dict, Tuple
+from typing import Dict
 
+from core.models.portfolio import Performance
 from core.models.position import Position
+from core.models.signal import Signal
 from core.models.strategy import Strategy
-from portfolio.performance import Performance
 
 
 class PortfolioStorage:
     def __init__(self):
-        self.data: Dict[Strategy, Tuple[Performance]] = {}
+        self.data: Dict[Strategy, Performance] = {}
         self._lock = asyncio.Lock()
 
-    async def update(self, position: Position, account_size: int, risk_per_trade: float):
+    async def next(self, position: Position, account_size: int, risk_per_trade: float):
         async with self._lock:
-            (performance) = self.data.get(position.signal.strategy, (Performance(account_size, risk_per_trade)))
-            performance.next(position.pnl)
-            self.data[position.signal.strategy] = (performance)
+            key = position.signal
+            performance = self.data.get(key)
 
-    async def get_total_pnl(self, position: Position):
-        async with self._lock:
-            data = self.data.get(position.signal.strategy)
-            return data[0].total_pnl if data else 0
+            if performance:
+                self.data[key] = performance.next(position.pnl)
+            else:
+                self.data[key] = Performance(account_size, risk_per_trade).next(position.pnl)
 
-        
-    async def get_top_strategy(self, position: Position):
+    async def get(self, position: Position):
         async with self._lock:
-            return ''
+            return self.data.get(position.signal)
+
+    async def get_total_pnl(self, signal: Signal):
+        async with self._lock:
+            performance = self.data.get(signal)
+            return performance.total_pnl if performance else 0
+   
+    async def get_top_signals(self, num: int):
+        async with self._lock:
+            sorted_signals = sorted(self.data.keys(), key=lambda signal: self.data[signal].total_pnl, reverse=True)
+            return sorted_signals[:num]
 
     
 

@@ -15,33 +15,31 @@ class PortfolioBasicPerformance:
         
         pnl = np.array([position.pnl for position in positions if len(position.orders) > 0])
         
-        pnl_positive = pnl > 0
-        successful_trades = pnl_positive.sum()
-        win_rate = successful_trades / total_trades
-        total_pnl = pnl.sum()
-        average_pnl = pnl.mean()
-        rate_of_return = self._rate_of_return(total_pnl, initial_account_size)
-        risk_of_ruin = self._risk_of_ruin(win_rate, initial_account_size, risk_per_trade)
+        # pnl_positive = pnl > 0
+        # successful_trades = pnl_positive.sum()
+        # win_rate = successful_trades / total_trades
+        # total_pnl = pnl.sum()
+        # average_pnl = pnl.mean()
+        
         annualized_return = self._annualized_return(rate_of_return, total_trades, self.periods_per_year)
         annualized_volatility = self._annualized_volatility(pnl, initial_account_size, self.periods_per_year)
+        
         max_drawdown = self._max_drawdown(pnl, initial_account_size)
         max_consecutive_wins = self._max_streak(pnl_positive, True)
         max_consecutive_losses = self._max_streak(pnl_positive, False)
+        
+        rate_of_return = self._rate_of_return(total_pnl, initial_account_size)
+        risk_of_ruin = self._risk_of_ruin(win_rate, initial_account_size, risk_per_trade)
         recovery_factor = self._recovery_factor(pnl, max_drawdown)
         calmar_ratio = self._calmar_ratio(rate_of_return, max_drawdown)
 
         return BasicPortfolioPerformance(
-            total_trades=total_trades,
-            successful_trades=successful_trades,
-            win_rate=win_rate,
+            max_consecutive_wins=max_consecutive_wins,
+            max_consecutive_losses=max_consecutive_losses,
             risk_of_ruin=risk_of_ruin,
             rate_of_return=rate_of_return,
             annualized_return=annualized_return,
             annualized_volatility=annualized_volatility,
-            total_pnl=total_pnl,
-            average_pnl=average_pnl,
-            max_consecutive_wins=max_consecutive_wins,
-            max_consecutive_losses=max_consecutive_losses,
             max_drawdown=max_drawdown,
             recovery_factor=recovery_factor,
             calmar_ratio=calmar_ratio

@@ -1,8 +1,9 @@
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler, event_handler, query_handler
+from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.queries.portfolio import GetTopStrategy, GetTotalPnL
+from core.queries.portfolio import GetTopSignals, GetTotalPnL
 from portfolio.portfolio_storage import PortfolioStorage
 
 
@@ -19,12 +20,16 @@ class Portfolio(AbstractEventManager):
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
-        await self.state.update(event.position, self.account_size, self.risk_per_trade)
+        await self.state.next(event.position, self.account_size, self.risk_per_trade)
+        signal = event.position.signal
+        performance = await self.state.get(event.position)
+        
+        await self.dispatcher.dispatch(PortfolioPerformanceUpdated(signal, performance))
 
-    @query_handler(GetTopStrategy)
-    async def top_strategy(self, query: GetTopStrategy):
-         return await self.state.get_top_strategy(query.strategy)
+    @query_handler(GetTopSignals)
+    async def top_strategy(self, query: GetTopSignals):
+         return await self.state.get_top_signals(query.num)
 
     @query_handler(GetTotalPnL)
     async def total_pnl(self, query: GetTotalPnL):
-        return await self.state.get_total_pnl(query.strategy)
+        return await self.state.get_total_pnl(query.signal)

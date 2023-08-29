@@ -8,6 +8,7 @@ from core.commands.backtest import BacktestRun
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
 from core.queries.broker import GetAccountBalance, GetSymbols
+from core.queries.portfolio import GetTopSignals
 
 from .trading_context import TradingContext
 
@@ -58,7 +59,8 @@ class TrendSystem(AbstractSystem):
         await asyncio.sleep(0.1)
 
     async def _run_trading(self):
-        print('Run trading')
+       top_signals = await self.dispatcher.query(GetTopSignals(num=5))
+       print(top_signals)
 
     async def _generate_actors(self):
         account_size = await self.dispatcher.query(GetAccountBalance())

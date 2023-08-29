@@ -1,31 +1,16 @@
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List
 
-from core.models.position import Position
-from core.models.strategy import Strategy
-from core.queries.base import Query
+from .base import Query
+
+from ..models.signal import Signal
 
 
 @dataclass(frozen=True)
-class GetTopStrategy(Query[List[Strategy]]):
+class GetTopSignals(Query[List[Signal]]):
     num: int = 5
 
 
 @dataclass(frozen=True)
-class GetOpenPositions(Query[List[Position]]):
-    strategy: Strategy
-
-
-@dataclass(frozen=True)
 class GetTotalPnL(Query[float]):
-    strategy: Strategy
-
-
-@dataclass(frozen=True)
-class GetEquity(Query[List[Tuple[int, float]]]):
-    strategy: Strategy
-
-
-@dataclass(frozen=True)
-class GetDrawdown(Query[List[Tuple[int, float]]]):
-    strategy: Strategy
+    signal: Signal

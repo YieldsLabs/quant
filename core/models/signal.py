@@ -10,7 +10,7 @@ class SignalSide(Enum):
     SELL = "sell"
 
     def __str__(self):
-        return self.value
+        return self.value.upper()
 
 @dataclass(frozen=True)
 class Signal:
@@ -20,7 +20,7 @@ class Signal:
     side: SignalSide
 
     def __str__(self) -> str:
-        return f"{self.symbol.name}_{self.timeframe}_{self.strategy}"
+        return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
     
     def __hash__(self) -> int:
-        return hash(self.symbol) ^ hash(self.timeframe) ^ hash(self.strategy)
+        return hash(self.symbol) ^ hash(self.timeframe) ^ hash(self.strategy) ^ hash(self.side)

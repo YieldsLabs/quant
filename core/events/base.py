@@ -6,7 +6,7 @@ import uuid
 @dataclass
 class EventMeta:
     key: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: int = field(default_factory=lambda: int(datetime.now().timestamp()))
+    timestamp: int = field(default_factory=lambda: datetime.now().timestamp())
     priority: int = field(default_factory=lambda: 1)
     version: int = field(default_factory=lambda: 1)
 

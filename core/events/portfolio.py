@@ -2,13 +2,12 @@ from dataclasses import dataclass, field
 
 from .base import Event, EventMeta
 
-from ..models.portfolio import AdvancedPortfolioPerformance, BasicPortfolioPerformance
-from ..models.strategy import Strategy
+from ..models.signal import Signal
+from ..models.portfolio import Performance
 
 
 @dataclass(frozen=True)
 class PortfolioPerformanceUpdated(Event):
-    strategy: Strategy
-    basic: BasicPortfolioPerformance
-    advanced: AdvancedPortfolioPerformance
+    signal: Signal
+    performance: Performance
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=7))

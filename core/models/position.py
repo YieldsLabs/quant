@@ -31,9 +31,9 @@ class Position:
     closed: bool = False
     stop_loss_price: Optional[float] = None
     take_profit_price: Optional[float] = field(init=False)
-    open_timestamp: float = field(default_factory=lambda: int(datetime.now().timestamp()))
-    closed_timestamp: float = field(default_factory=lambda: int(datetime.now().timestamp()))
-    last_modified: float = field(default_factory=lambda: int(datetime.now().timestamp()))
+    open_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
+    closed_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
+    last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     exit_price: float = field(default_factory=lambda: 0.0001)
 
     @property
@@ -62,7 +62,7 @@ class Position:
         return replace(
             self,
             orders=self.orders + (order,),
-            last_modified=int(datetime.now().timestamp())
+            last_modified=datetime.now().timestamp()
         )
 
     def close(self) -> 'Position':
@@ -72,12 +72,12 @@ class Position:
         return replace(
             self, 
             closed=True,
-            last_modified=int(datetime.now().timestamp()),
-            closed_timestamp=int(datetime.now().timestamp()),
+            last_modified=datetime.now().timestamp(),
+            closed_timestamp=datetime.now().timestamp(),
         )
 
     def update_prices(self, execution_price: float) -> 'Position':
-        last_modified = int(datetime.now().timestamp())
+        last_modified = datetime.now().timestamp()
         
         if not self.closed:
             return replace(
@@ -91,7 +91,6 @@ class Position:
                 exit_price=execution_price,
                 last_modified=last_modified
             )
-        
     
     def next(self, ohlcv: OHLCV) -> 'Position':
         # next_stop_loss = self.risk_strategy.next(self.side, self.entry_price, self.stop_loss_price, ohlcv)

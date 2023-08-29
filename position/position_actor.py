@@ -100,7 +100,7 @@ class PositionActor(AbstractActor):
         self.account_size = command.amount
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        account_size = self.account_size + await self.dispatcher.query(GetTotalPnL(event.signal.strategy))
+        account_size = self.account_size + await self.dispatcher.query(GetTotalPnL(event.signal))
 
         position = self.position_factory.create_position(
             event.signal,
