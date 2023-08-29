@@ -21,13 +21,19 @@ class Portfolio(AbstractEventManager):
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
         await self.state.next(event.position, self.account_size, self.risk_per_trade)
+        
         signal = event.position.signal
+        timeframe = signal.timeframe
+        symbol = signal.symbol
+        strategy = signal.strategy
+
         performance = await self.state.get(event.position)
         
-        await self.dispatcher.dispatch(PortfolioPerformanceUpdated(signal, performance))
+        await self.dispatcher.dispatch(
+            PortfolioPerformanceUpdated(strategy, timeframe, symbol, performance))
 
     @query_handler(GetTopSignals)
-    async def top_strategy(self, query: GetTopSignals):
+    async def top_signals(self, query: GetTopSignals):
          return await self.state.get_top_signals(query.num)
 
     @query_handler(GetTotalPnL)

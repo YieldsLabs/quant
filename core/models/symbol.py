@@ -17,3 +17,6 @@ class Symbol:
     
     def __str__(self):
         return self.name
+    
+    def __repr__(self) -> str:
+        return f"Symbol({self.name})"
