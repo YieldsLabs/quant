@@ -60,8 +60,9 @@ class TrendSystem(AbstractSystem):
         print('Run trading')
 
     async def _generate_actors(self):
-        symbols  = await self.dispatcher.query(GetSymbols())
+        symbols = await self.dispatcher.query(GetSymbols())
         account_size = await self.dispatcher.query(GetAccountBalance())
+        symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
         
         symbols_and_timeframes = list(product(symbols, self.context.timeframes))
         shuffle(symbols_and_timeframes)
@@ -72,7 +73,8 @@ class TrendSystem(AbstractSystem):
             risk_actor = self.context.risk_factory.create_actor(symbol, timeframe)
 
             for path, strategy_name, strategy_parameters in self.context.strategies:
-                signal_actor = self.context.signal_factory.create_actor(symbol, timeframe, f'./wasm/{path}.wasm', strategy_name, strategy_parameters)
+                signal_actor = self.context.signal_factory.create_actor(
+                    symbol, timeframe, f'./wasm/{path}.wasm', strategy_name, strategy_parameters)
 
                 yield signal_actor, position_actor, risk_actor, executor_actor
 

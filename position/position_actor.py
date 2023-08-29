@@ -83,7 +83,7 @@ class PositionActor(AbstractActor):
 
         if self._symbol == signal.symbol and self._timeframe == signal.timeframe:
             if isinstance(event, (self.SIGNAL_EVENTS)):
-                if not await self.state.has_position(signal):
+                if not await self.state.position_exists(signal):
                     await self.handle(event)
             elif not await self._is_event_stale(signal, event):
                 await self.handle(event)

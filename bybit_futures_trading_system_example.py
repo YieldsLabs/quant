@@ -14,6 +14,7 @@ from system.trend_system import TradingContext, TrendSystem
 from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
 from risk.risk_actor_factory import RiskActorFactory
+from portfolio.portfolio import Portfolio
 from sync.log_sync import LogSync
 
 load_dotenv()
@@ -28,24 +29,26 @@ IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
 async def main():
     lookback = Lookback.ONE_MONTH
-    batch_size = 34
+    batch_size = 55
     risk_per_trade = 0.0015
     risk_reward_ratio = 2
     risk_buffer = 0.01
     slippage = 0.008
     leverage = 1
     timeframes = [
-        # Timeframe.ONE_MINUTE,
-        # Timeframe.FIVE_MINUTES,
+        Timeframe.ONE_MINUTE,
+        Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES
     ]
-
+    symbols = ['ETHUSDT', 'SOLUSDT']
     strategies = [
         ['trend_follow', 'crossma', [50, 200, 14, 1.5]]
     ]
 
     LogSync()
+
     Backtest()
+    Portfolio()
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     datasource = BybitDataSource(broker)
@@ -60,6 +63,7 @@ async def main():
         RiskActorFactory(risk_buffer),
         timeframes,
         strategies,
+        symbols,
         lookback,
         batch_size,
         leverage,

@@ -6,26 +6,6 @@ from .load_balancer import LoadBalancer
 from .event_worker import EventWorker
 from .event_handler import EventHandler
 
-import heapq
-
-class WorkerLoad:
-    def __init__(self, worker):
-        self.worker = worker
-        self.current_load = 0
-
-    def assign(self, event):
-        self.current_load += 1
-
-    def complete(self, event):
-        self.current_load -= 1
-
-    def __lt__(self, other):
-        return self.current_load < other.current_load
-    
-    def __eq__(self, other: 'WorkerLoad') -> bool:
-        return self.load == other.load
-
-
 class WorkerPool:
     def __init__(self, num_workers: int, num_priority_group: int, event_handler: EventHandler, cancel_event: asyncio.Event):
         self.workers = [EventWorker(event_handler, cancel_event) for _ in range(num_workers)]

@@ -35,17 +35,17 @@ class EventHandler:
 
         if event_type in self._event_handlers:
             for handler in self._event_handlers[event_type]:
-                await self._call_handler(handler, event, *args, **kwargs)
+                asyncio.create_task(self._call_handler(handler, event, *args, **kwargs))
 
     async def _call_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         try:
-            await self._execute_handler(handler, event, *args, **kwargs)
+            await self._create_handler(handler, event, *args, **kwargs)
         except Exception as e:
             print(e)
             self._dead_letter_queue.append((event, e))
 
-    async def _execute_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
+    async def _create_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         if asyncio.iscoroutinefunction(handler):
-            asyncio.create_task(handler(event, *args, **kwargs))
+            await handler(event, *args, **kwargs)
         else:
             await asyncio.to_thread(handler, event, *args, **kwargs)

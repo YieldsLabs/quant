@@ -19,6 +19,7 @@ class TradingContext:
     risk_factory: AbstractRiskActorFactory
     timeframes: List[Timeframe]
     strategies: List[List[Any]]
+    symbols: List[str]
     lookback: Lookback
     batch_size: int
     leverage: int

@@ -8,7 +8,6 @@ from core.models.signal import Signal
 
 class PositionStorage:
     def __init__(self):
-        super().__init__()
         self.data = {}
         self._lock = asyncio.Lock()
 
@@ -17,45 +16,42 @@ class PositionStorage:
         async with self._lock:
             yield self.data
 
-    async def open_position(self, position: Position):
-       async with self._locked_data() as data:
-            key = (position.signal.symbol, position.signal.timeframe)
-            data[key] = position
+    def _get_key(self, signal: Signal) -> tuple:
+        return (signal.symbol, signal.timeframe)
 
-    async def remove_position(self, position: Position):
+    async def store_position(self, position: Position):
         async with self._locked_data() as data:
-            key = (position.signal.symbol, position.signal.timeframe)
-            data.pop(key, None)
+            data[self._get_key(position.signal)] = position
+
+    async def delete_position(self, position: Position):
+        async with self._locked_data() as data:
+            data.pop(self._get_key(position.signal), None)
     
-    async def has_position(self, signal: Signal):
+    async def position_exists(self, signal: Signal) -> bool:
         async with self._locked_data() as data:
-            key = (signal.symbol, signal.timeframe)
-            
-            return key in data
+            return self._get_key(signal) in data
 
-    async def get_positions(self):
+    async def retrieve_all_positions(self) -> list:
         async with self._locked_data() as data:
             return list(data.values())
 
-    async def get_position(self, signal: Signal):
+    async def retrieve_position(self, signal: Signal) -> Optional[Position]:
         async with self._locked_data() as data:
-            key = (signal.symbol, signal.timeframe)
-            
-            return data.get(key)
+            return data.get(self._get_key(signal))
 
-    async def update_position(self, position: Position):
-        stored_position = await self._fetch_and_remove_position(position)
+    async def update_stored_position(self, position: Position):
+        existing_position = await self._extract_position(position.signal)
         
-        if stored_position:
-            await self.open_position(position)
+        if existing_position:
+            await self.store_position(position)
 
-    async def close_position(self, position: Position):
-        await self._fetch_and_remove_position(position)
+    async def close_stored_position(self, position: Position):
+        await self._extract_position(position.signal)
 
-    async def _fetch_and_remove_position(self, position: Position) -> Optional[Position]:
-        stored_position = await self.get_position(position.signal)
+    async def _extract_position(self, signal: Signal) -> Optional[Position]:
+        position = await self.retrieve_position(signal)
         
-        if stored_position:
-            await self.remove_position(stored_position)
+        if position:
+            await self.delete_position(position)
         
-        return stored_position
+        return position

@@ -22,7 +22,7 @@ class LiveExecutor(AbstractActor):
 
     @property
     def id(self):
-        return f"{self.symbol}_{self.timeframe}_PAPER"
+        return f"{self.symbol}_{self.timeframe}_LIVE"
     
     @property
     def running(self) -> bool:
