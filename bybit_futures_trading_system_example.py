@@ -35,6 +35,7 @@ async def main():
     risk_buffer = 0.01
     slippage = 0.008
     leverage = 1
+    initial_account_size = 1000
     timeframes = [
         Timeframe.ONE_MINUTE,
         Timeframe.FIVE_MINUTES,
@@ -48,7 +49,7 @@ async def main():
     LogSync()
 
     Backtest()
-    Portfolio(risk_per_trade)
+    Portfolio(initial_account_size, risk_per_trade)
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     datasource = BybitDataSource(broker)
@@ -58,6 +59,7 @@ async def main():
         SignalActorFactory(),
         ExecutorActorFactory(slippage),
         PositionActorFactory(
+            initial_account_size,
             PositionFactory(leverage, risk_per_trade, risk_reward_ratio)
         ),
         RiskActorFactory(risk_buffer),

@@ -1,6 +1,8 @@
 import asyncio
 from typing import Union
 
+from core.commands.account import UpdateAccountSize
+from core.event_decorators import command_handler
 from core.events.position import PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
@@ -92,6 +94,10 @@ class PositionActor(AbstractActor):
         position = await self.state.retrieve_position(signal)
         
         return position and position.last_modified > event.meta.timestamp
+    
+    @command_handler(UpdateAccountSize)
+    async def update_account_size(self, command: UpdateAccountSize):
+        self.account_size = command.amount
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         account_size = self.account_size + await self.dispatcher.query(GetTotalPnL(event.signal.strategy))

@@ -3,6 +3,7 @@ from enum import Enum, auto
 from itertools import product
 from random import shuffle
 
+from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
@@ -60,16 +61,17 @@ class TrendSystem(AbstractSystem):
         print('Run trading')
 
     async def _generate_actors(self):
-        symbols = await self.dispatcher.query(GetSymbols())
         account_size = await self.dispatcher.query(GetAccountBalance())
-        symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
+        await self.dispatcher.execute(UpdateAccountSize(account_size))
         
+        symbols = await self.dispatcher.query(GetSymbols())
+        symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
         symbols_and_timeframes = list(product(symbols, self.context.timeframes))
         shuffle(symbols_and_timeframes)
     
         for symbol, timeframe in symbols_and_timeframes:
             executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=False)
-            position_actor = self.context.position_factory.create_actor(symbol, timeframe, account_size)
+            position_actor = self.context.position_factory.create_actor(symbol, timeframe)
             risk_actor = self.context.risk_factory.create_actor(symbol, timeframe)
 
             for path, strategy_name, strategy_parameters in self.context.strategies:

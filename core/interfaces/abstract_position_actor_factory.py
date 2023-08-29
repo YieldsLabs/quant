@@ -8,5 +8,5 @@ from ..models.timeframe import Timeframe
 
 class AbstractPositionActorFactory(ABC):
     @abstractmethod
-    def create_actor(self, symbol: Symbol, timeframe: Timeframe, account_size: int) -> AbstractActor:
+    def create_actor(self, symbol: Symbol, timeframe: Timeframe) -> AbstractActor:
         pass
