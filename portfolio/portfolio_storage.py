@@ -37,7 +37,7 @@ class PortfolioStorage:
    
     async def get_top_signals(self, num: int):
         async with self._lock:
-            sorted_signals = sorted(self.data.keys(), key=lambda key: self.data[key].total_pnl, reverse=True)
+            sorted_signals = sorted(self.data.keys(), key=lambda key: self.data[key].calmar_ratio, reverse=True)
             
             return sorted_signals[:num]
         
