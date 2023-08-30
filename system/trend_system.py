@@ -79,7 +79,10 @@ class TrendSystem(AbstractSystem):
          
     async def _generate_backtest_actors(self):
         symbols = await self.dispatcher.query(GetSymbols())
-        symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols if len(self.context.symbols) > 0]
+
+        if len(self.context.symbols) > 0:
+            symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
+        
         shuffle(symbols)
         symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
 
