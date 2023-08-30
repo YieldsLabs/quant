@@ -11,7 +11,7 @@ class BreakEvenStrategy(AbstractPositionRiskStrategy):
     def next(self, side: PositionSide, entry_price: float, stop_loss_price: float, ohlcv: OHLCV) -> float:
         new_stop_loss_price = ohlcv.high - (ohlcv.high - stop_loss_price) * self.risk_per_trade if side == PositionSide.LONG else ohlcv.low + (stop_loss_price - ohlcv.low) * self.risk_per_trade
 
-        if (side == PositionSide.LONG and new_stop_loss_price > entry_price) or (side == PositionSide.SHORT and new_stop_loss_price < entry_price):
-            return new_stop_loss_price
+        if (side == PositionSide.LONG and new_stop_loss_price >= entry_price) or (side == PositionSide.SHORT and new_stop_loss_price <= entry_price):
+            return entry_price
 
         return stop_loss_price

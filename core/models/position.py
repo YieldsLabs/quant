@@ -93,11 +93,11 @@ class Position:
             )
     
     def next(self, ohlcv: OHLCV) -> 'Position':
-        # next_stop_loss = self.risk_strategy.next(self.side, self.entry_price, self.stop_loss_price, ohlcv)
+        next_stop_loss = self.risk_strategy.next(self.side, self.entry_price, self.stop_loss_price, ohlcv)
         
         return replace(
             self,
-            stop_loss_price = self.stop_loss_price
+            stop_loss_price = next_stop_loss
         )
     
     def __post_init__(self):
