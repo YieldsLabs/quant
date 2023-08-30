@@ -2,6 +2,8 @@ import asyncio
 import json
 import websockets
 
+from core.commands.broker import Subscribe
+from core.event_decorators import command_handler
 from core.events.ohlcv import NewMarketDataReceived
 from core.models.timeframe import Timeframe
 from core.models.ohlcv import OHLCV
@@ -100,11 +102,13 @@ class BybitWSHandler(AbstractWS):
         ohlcv = OHLCV.from_dict(data)
         return NewMarketDataReceived(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
 
-    async def subscribe(self, command):
+
+    @command_handler(Subscribe)
+    async def subscribe(self, command: Subscribe):
         if self.ws is None:
             raise ValueError('Initialize ws')
 
-        channels = [f"kline.{self.INTERVALS[timeframe]}.{symbol}" for (symbol, timeframe) in timeframes_and_symbols]
+        channels = [f"kline.{self.INTERVALS[timeframe]}.{symbol}" for (symbol, timeframe) in command.symbols_and_timeframes]
 
         for channel in channels:
             await self.ws.send(json.dumps({"op": "subscribe", "args": [channel]}))

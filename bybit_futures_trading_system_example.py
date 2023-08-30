@@ -7,6 +7,7 @@ from core.models.timeframe import Timeframe
 from core.models.lookback import Lookback
 from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
+from datasource.bybit_ws import BybitWSHandler
 from backtest.backtest import Backtest
 from executor.executor_actor_factory import ExecutorActorFactory
 from strategy.signal_actor_factory import SignalActorFactory
@@ -29,7 +30,7 @@ IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
 async def main():
     lookback = Lookback.ONE_MONTH
-    batch_size = 55
+    batch_size = 144
     risk_per_trade = 0.0015
     risk_reward_ratio = 2
     risk_buffer = 0.01
@@ -41,7 +42,7 @@ async def main():
         Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES,
     ]
-    symbols = ['ETHUSDT', 'SOLUSDT', 'APEUSDT', 'MATICUSDT']
+    symbols = ['SOLUSDT', 'APEUSDT', 'MATICUSDT']
     strategies = [
         ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
     ]
@@ -53,6 +54,7 @@ async def main():
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     datasource = BybitDataSource(broker)
+    ws_handler = BybitWSHandler(WSS)
 
     context = TradingContext(
         datasource,
@@ -75,13 +77,13 @@ async def main():
     trading_system = TrendSystem(context)
 
     system_task = asyncio.create_task(trading_system.start())
-    # ws_handler_task = asyncio.create_task(ws_handler.run())
+    ws_handler_task = asyncio.create_task(ws_handler.run())
 
     try:
         await asyncio.gather(system_task)
     finally:
         system_task.cancel()
-        # ws_handler_task.cancel()
+        ws_handler_task.cancel()
 
 with asyncio.Runner() as runner:
     runner.run(main())

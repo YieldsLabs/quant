@@ -35,12 +35,12 @@ class Portfolio(AbstractEventManager):
             PortfolioPerformanceUpdated(strategy, timeframe, symbol, performance))
         
         await self.strategy.next(strategy, symbol, [
-            performance.max_drawdown,
             performance.calmar_ratio,
             performance.ulcer_index,
             performance.var,
             performance.sharpe_ratio,
-            performance.profit_factor
+            performance.profit_factor,
+            performance.max_drawdown
         ])
 
     @query_handler(GetTopStrategy)

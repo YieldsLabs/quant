@@ -5,6 +5,7 @@ from random import shuffle
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
+from core.commands.broker import Subscribe, UpdateSettings
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
 from core.queries.broker import GetAccountBalance, GetSymbols
@@ -32,13 +33,10 @@ class TrendSystem(AbstractSystem):
             match self.state:
                 case SystemState.BACKTESTING:
                     await self._run_backtest()
-                    self.state = SystemState.OPTIMIZATION
                 case SystemState.OPTIMIZATION:
                     await self._run_optimization()
-                    self.state = SystemState.TRADING
                 case SystemState.TRADING:
                     await self._run_trading()
-                    self.state = SystemState.STOPPED
                 case SystemState.STOPPED:
                     return
 
@@ -54,14 +52,26 @@ class TrendSystem(AbstractSystem):
             await asyncio.gather(*[actor.stop() for actor in actors])
 
             self.signals.append(signal)
+
+        self.state = SystemState.OPTIMIZATION
             
     async def _run_optimization(self):
        strategies = await self.dispatcher.query(GetTopStrategy(num=20))
        print(strategies)
+       
+       self.state = SystemState.TRADING
 
     async def _run_trading(self):
-       strategies = await self.dispatcher.query(GetTopStrategy(num=5))
-       print(strategies)
+        strategies = await self.dispatcher.query(GetTopStrategy(num=1))
+        symbols = [strategy[1] for strategy in strategies]
+
+        for symbol in symbols:
+            await self.dispatcher.execute(
+                UpdateSettings(symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
+   
+        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
+       
+        await self.dispatcher.execute(Subscribe(symbols_and_timeframes))
 
     async def _generate_actors(self):
         account_size = await self.dispatcher.query(GetAccountBalance())
@@ -71,7 +81,7 @@ class TrendSystem(AbstractSystem):
         symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols if len(self.context.symbols) > 0]
         shuffle(symbols)
         symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
-   
+
         for symbol, timeframe in symbols_and_timeframes:
             executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=False)
             position_actor = self.context.position_factory.create_actor(symbol, timeframe)
