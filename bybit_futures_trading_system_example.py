@@ -43,8 +43,10 @@ async def main():
         Timeframe.FIFTEEN_MINUTES,
     ]
     symbols = ['SOLUSDT', 'APEUSDT', 'MATICUSDT']
-    strategies = [
-        ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
+    
+    trend_follow_path = './wasm/trend_follow.wasm'
+    trend_follow_strategies = [
+        ['crossma', [50, 100, 14, 1.5]]
     ]
 
     LogSync()
@@ -66,7 +68,8 @@ async def main():
         ),
         RiskActorFactory(risk_buffer),
         timeframes,
-        strategies,
+        trend_follow_path,
+        trend_follow_strategies,
         symbols,
         lookback,
         batch_size,

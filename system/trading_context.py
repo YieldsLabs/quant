@@ -18,6 +18,7 @@ class TradingContext:
     position_factory: AbstractPositionActorFactory
     risk_factory: AbstractRiskActorFactory
     timeframes: List[Timeframe]
+    strategy_path: str
     strategies: List[List[Any]]
     symbols: List[str]
     lookback: Lookback

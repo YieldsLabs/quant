@@ -11,8 +11,8 @@ class Strategy:
     stop_loss_parameters: Tuple[Any, ...]
 
     @property
-    def hyperparameters(self) -> Tuple[Any, ...]:
-        return self.parameters + (self.stop_loss_type,) + self.stop_loss_parameters
+    def hyperparameters(self):
+        return list(self.parameters + self.stop_loss_parameters)
 
     @classmethod
     def from_label(cls, label: str) -> 'Strategy':
