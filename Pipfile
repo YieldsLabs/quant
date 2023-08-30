@@ -13,6 +13,7 @@ aiocache = "*"
 uuid = "*"
 scikit-learn = "*"
 wasmtime = "*"
+uvloop = "*"
 
 [dev-packages]
 flake8 = "*"

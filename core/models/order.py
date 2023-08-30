@@ -1,24 +1,21 @@
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+import uuid
+
+class OrderStatus(Enum):
+    PENDING = "pending"
+    EXECUTED = "executed"
+    FAILED = "failed"
 
 
-class OrderSide(Enum):
-    BUY = "buy"
-    SELL = "sell"
-
-    def __str__(self):
-        return self.value
-
-
-@dataclass
+@dataclass(frozen=True)
 class Order:
-    side: OrderSide
+    status: OrderStatus
     price: float
     size: float
-    id: Optional[str] = None
-    timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: float = field(default_factory=lambda: int(datetime.now().timestamp()))
 
     def to_dict(self):
         return asdict(self)

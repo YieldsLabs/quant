@@ -2,12 +2,13 @@ import asyncio
 import json
 import websockets
 
+from core.commands.broker import Subscribe
+from core.event_decorators import command_handler
 from core.events.ohlcv import NewMarketDataReceived
 from core.models.timeframe import Timeframe
 from core.models.ohlcv import OHLCV
 from core.interfaces.abstract_ws import AbstractWS
-
-from .retry import retry
+from broker.retry import retry
 
 
 class BybitWSHandler(AbstractWS):
@@ -99,14 +100,15 @@ class BybitWSHandler(AbstractWS):
 
     def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV.from_dict(data)
-
         return NewMarketDataReceived(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
 
-    async def subscribe(self, timeframes_and_symbols):
+
+    @command_handler(Subscribe)
+    async def subscribe(self, command: Subscribe):
         if self.ws is None:
             raise ValueError('Initialize ws')
 
-        channels = [f"kline.{self.INTERVALS[timeframe]}.{symbol}" for (symbol, timeframe) in timeframes_and_symbols]
+        channels = [f"kline.{self.INTERVALS[timeframe]}.{symbol}" for (symbol, timeframe) in command.symbols_and_timeframes]
 
         for channel in channels:
             await self.ws.send(json.dumps({"op": "subscribe", "args": [channel]}))

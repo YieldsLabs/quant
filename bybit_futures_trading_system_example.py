@@ -1,6 +1,7 @@
 import asyncio
 from dotenv import load_dotenv
 import os
+import uvloop
 
 from core.models.timeframe import Timeframe
 from core.models.lookback import Lookback
@@ -8,14 +9,18 @@ from broker.futures_bybit_broker import FuturesBybitBroker
 from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
 from backtest.backtest import Backtest
-from executor.executor_factory import ExecutorFactory
-from portfolio_management.portfolio_manager import PortfolioManager
-from strategy_management.strategy_factory import StrategyActorFactory
-from sync.csv_sync import CSVSync
-from sync.log_sync import LogSync
+from executor.executor_actor_factory import ExecutorActorFactory
+from strategy.signal_actor_factory import SignalActorFactory
 from system.trend_system import TradingContext, TrendSystem
+from position.position_actor_factory import PositionActorFactory
+from position.position_factory import PositionFactory
+from risk.risk_actor_factory import RiskActorFactory
+from portfolio.portfolio import Portfolio
+from sync.log_sync import LogSync
 
 load_dotenv()
+
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
@@ -24,51 +29,50 @@ IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 
 
 async def main():
-    lookback = Lookback.THREE_MONTH
-    initial_account_size = 1000
+    lookback = Lookback.ONE_MONTH
+    batch_size = 144
     risk_per_trade = 0.0015
-    risk_reward_ratio = 2.0
+    risk_reward_ratio = 2
+    risk_buffer = 0.01
     slippage = 0.008
     leverage = 1
+    initial_account_size = 1000
     timeframes = [
         Timeframe.ONE_MINUTE,
         Timeframe.FIVE_MINUTES,
-        Timeframe.FIFTEEN_MINUTES
+        Timeframe.FIFTEEN_MINUTES,
     ]
-
-    strategies = [
-        ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
+    symbols = ['SOLUSDT', 'APEUSDT', 'MATICUSDT']
+    
+    trend_follow_path = './wasm/trend_follow.wasm'
+    trend_follow_strategies = [
+        ['crossma', [50, 100, 14, 1.5]]
     ]
 
     LogSync()
-    CSVSync()
 
     Backtest()
+    Portfolio(initial_account_size, risk_per_trade)
 
     broker = FuturesBybitBroker(API_KEY, API_SECRET)
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
-    strategy_factory = StrategyActorFactory()
-    executor_factory = ExecutorFactory(broker, slippage)
-
-    portfolio = PortfolioManager(
-        datasource,
-        initial_account_size=initial_account_size,
-        leverage=leverage,
-        risk_reward_ratio=risk_reward_ratio,
-        risk_per_trade=risk_per_trade
-    )
 
     context = TradingContext(
-        strategy_factory,
-        executor_factory,
         datasource,
-        ws_handler,
-        broker,
-        portfolio,
+        SignalActorFactory(),
+        ExecutorActorFactory(slippage),
+        PositionActorFactory(
+            initial_account_size,
+            PositionFactory(leverage, risk_per_trade, risk_reward_ratio)
+        ),
+        RiskActorFactory(risk_buffer),
         timeframes,
-        strategies,
+        trend_follow_path,
+        trend_follow_strategies,
+        symbols,
         lookback,
+        batch_size,
         leverage,
         IS_LIVE_MODE
     )
@@ -79,7 +83,7 @@ async def main():
     ws_handler_task = asyncio.create_task(ws_handler.run())
 
     try:
-        await asyncio.gather(system_task, ws_handler_task)
+        await asyncio.gather(system_task)
     finally:
         system_task.cancel()
         ws_handler_task.cancel()

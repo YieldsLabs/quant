@@ -11,3 +11,12 @@ class Timeframe(Enum):
 
     def __str__(self):
         return self.value
+    
+    def __repr__(self) -> str:
+        return f"Timeframe({self.value})"
+
+    def __lt__(self, other):
+        if not isinstance(other, Timeframe):
+            return NotImplemented
+        
+        return self._member_names_.index(self.name) < self._member_names_.index(other.name)

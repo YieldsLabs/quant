@@ -3,9 +3,13 @@ from enum import Enum, auto
 from itertools import product
 from random import shuffle
 
+from core.commands.account import UpdateAccountSize
+from core.commands.backtest import BacktestRun
+from core.commands.broker import Subscribe, UpdateSettings
 from core.models.broker import MarginMode, PositionMode
-from core.events.backtest import BacktestStarted
 from core.interfaces.abstract_system import AbstractSystem
+from core.queries.broker import GetAccountBalance, GetSymbols
+from core.queries.portfolio import GetTopStrategy
 
 from .trading_context import TradingContext
 
@@ -18,83 +22,93 @@ class SystemState(Enum):
 
 
 class TrendSystem(AbstractSystem):
-    def __init__(self, context: TradingContext, state: SystemState = SystemState.BACKTESTING):
+    def __init__(self, context: TradingContext):
         super().__init__()
         self.context = context
-        self.state = state
-        self.strategy_actors = []
+        self.state = SystemState.BACKTESTING
 
     async def start(self):
         while True:
             match self.state:
                 case SystemState.BACKTESTING:
                     await self._run_backtest()
-                    self.state = SystemState.OPTIMIZATION
                 case SystemState.OPTIMIZATION:
                     await self._run_optimization()
-                    self.state = SystemState.TRADING
                 case SystemState.TRADING:
                     await self._run_trading()
-                    self.state = SystemState.STOPPED
                 case SystemState.STOPPED:
                     return
 
     async def _run_backtest(self):
-        await self.context.portfolio.initialize_account()
+        async for actors in self._generate_backtest_actors():
+            account_size = await self.dispatcher.query(GetAccountBalance())
+            await self.dispatcher.execute(UpdateAccountSize(account_size))
+        
+            await asyncio.gather(*[actor.start() for actor in actors])
 
-        symbols = await self.context.datasource.symbols()
+            signal = actors[0]
 
-        symbols_and_timeframes = list(product(symbols, self.context.timeframes))
+            await self.dispatcher.execute(
+                BacktestRun(self.context.datasource, signal.symbol, signal.timeframe, self.context.lookback, self.context.batch_size))
 
-        shuffle(symbols_and_timeframes)
+            await asyncio.gather(*[actor.stop() for actor in actors])
 
-        self.strategy_actors = [
-            self.context.strategy_factory.create_actor(symbol, timeframe, f'./strategy/{strategy[0]}.wasm', strategy[1], strategy[2])
-            for symbol, timeframe in symbols_and_timeframes
-            for strategy in self.context.strategies
-        ]
-
-        async with self.context.executor_factory.create_executor(live=False):
-            for actor in self.strategy_actors:
-                await self._ensure_actor_state(actor)
-
-                await self.dispatcher.dispatch(
-                    BacktestStarted(self.context.datasource, actor.strategy, self.context.lookback))
-                
-                await self.dispatcher.wait()
-                await actor.stop()
-
+        self.state = SystemState.OPTIMIZATION
+            
     async def _run_optimization(self):
-        await asyncio.sleep(0.1)
+       strategies = await self.dispatcher.query(GetTopStrategy(num=20))
+       print(strategies)
+       
+       self.state = SystemState.TRADING
 
     async def _run_trading(self):
-        top_strategies = await self.context.portfolio.get_top_strategies(3)
+        async for actors in self._generate_trading_actors():
+            signal = actors[0]
 
-        if len(top_strategies) == 0:
-            return
+            await self.dispatcher.execute(
+                UpdateSettings(signal.symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
+   
+            await asyncio.gather(*[actor.start() for actor in actors])
 
-        uniq_symbols = list(set([strategy.symbol for strategy in top_strategies]))
+    def _initialize_actors(self, symbol, timeframe, is_live):
+        executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=is_live)
+        position_actor = self.context.position_factory.create_actor(symbol, timeframe)
+        risk_actor = self.context.risk_factory.create_actor(symbol, timeframe)
+        
+        return executor_actor, position_actor, risk_actor
+         
+    async def _generate_backtest_actors(self):
+        symbols = await self.dispatcher.query(GetSymbols())
 
-        for symbol in uniq_symbols:
-            self.context.broker.set_settings(symbol, self.context.leverage, position_mode=PositionMode.ONE_WAY, margin_mode=MarginMode.ISOLATED)
+        if len(self.context.symbols) > 0:
+            symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
+        
+        shuffle(symbols)
+        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
 
-        async with self.context.executor_factory.create_executor(self.context.live_mode):
-            actors = list({
-                actor
-                for strategy in top_strategies
-                for actor in self.strategy_actors
-                if actor.strategy == strategy
-            })
+        for symbol, timeframe in symbols_and_timeframes:
+            executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, False)
 
-            for actor in actors:
-                await self._ensure_actor_state(actor)
+            for strategy_name, strategy_parameters in self.context.strategies:
+                signal_actor = self.context.signal_factory.create_actor(
+                    symbol, timeframe, self.context.strategy_path, strategy_name, strategy_parameters)
 
-            symbols_and_timeframes = [(actor.strategy.symbol, actor.strategy.timeframe) for actor in actors]
+                yield signal_actor, position_actor, risk_actor, executor_actor
+
+    async def _generate_trading_actors(self):
+        strategies = await self.dispatcher.query(GetTopStrategy(num=1))
+        symbols = [strategy[1] for strategy in strategies]
+
+        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
+        
+        await self.dispatcher.execute(Subscribe(symbols_and_timeframes))
+
+        for symbol, timeframe in symbols_and_timeframes:
+            executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, self.context.live_mode)
             
-            await self.context.ws_handler.subscribe(symbols_and_timeframes)
-
-    async def _ensure_actor_state(self, actor):
-        if actor.running:
-            actor.stop()
-
-        await actor.start()
+            for strategy, strategy_symbol in strategies:
+                if symbol == strategy_symbol:
+                    signal_actor = self.context.signal_factory.create_actor(
+                        symbol, timeframe, self.context.strategy_path, strategy.name, strategy.hyperparameters)
+                    
+                    yield signal_actor, position_actor, risk_actor, executor_actor

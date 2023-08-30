@@ -1,39 +1,34 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
-from .base_event import Event, EventMeta
+from .base import Event, EventMeta
 
-from ..models.position import Order
-from ..models.strategy import Strategy
-
-@dataclass(frozen=True)
-class OrderFilled(Event):
-    strategy: Strategy
-    order: Order
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
+from ..models.position import Position
 
 
 @dataclass(frozen=True)
 class PositionEvent(Event):
-    strategy: Strategy
-    size: float
-    entry: float
-    stop_loss: Optional[float]
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=7))
+    position: Position
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2))
 
 
 @dataclass(frozen=True)
-class LongPositionOpened(PositionEvent):
+class PositionInitialized(PositionEvent):
     pass
 
 
 @dataclass(frozen=True)
-class ShortPositionOpened(PositionEvent):
-    pass
+class PositionOpened(Event):
+    position: Position
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
+
+
+@dataclass(frozen=True)
+class PositionCloseRequested(Event):
+    position: Position
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
 
 
 @dataclass(frozen=True)
 class PositionClosed(Event):
-    strategy: Strategy
-    exit_price: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
+    position: Position
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))
