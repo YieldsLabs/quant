@@ -39,11 +39,11 @@ async def main():
     timeframes = [
         Timeframe.ONE_MINUTE,
         Timeframe.FIVE_MINUTES,
-        Timeframe.FIFTEEN_MINUTES
+        Timeframe.FIFTEEN_MINUTES,
     ]
-    symbols = ['ETHUSDT', 'SOLUSDT']
+    symbols = ['ETHUSDT', 'SOLUSDT', 'APEUSDT', 'MATICUSDT']
     strategies = [
-        ['trend_follow', 'crossma', [50, 200, 14, 1.5]]
+        ['trend_follow', 'crossma', [50, 100, 14, 1.5]]
     ]
 
     LogSync()

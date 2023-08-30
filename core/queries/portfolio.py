@@ -3,11 +3,12 @@ from typing import List
 
 from .base import Query
 
+from ..models.strategy import Strategy
 from ..models.signal import Signal
 
 
 @dataclass(frozen=True)
-class GetTopSignals(Query[List[Signal]]):
+class GetTopStrategy(Query[List[Strategy]]):
     num: int = 5
 
 

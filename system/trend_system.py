@@ -8,7 +8,7 @@ from core.commands.backtest import BacktestRun
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
 from core.queries.broker import GetAccountBalance, GetSymbols
-from core.queries.portfolio import GetTopSignals
+from core.queries.portfolio import GetTopStrategy
 
 from .trading_context import TradingContext
 
@@ -56,21 +56,22 @@ class TrendSystem(AbstractSystem):
             self.signals.append(signal)
             
     async def _run_optimization(self):
-        await asyncio.sleep(0.1)
+       strategies = await self.dispatcher.query(GetTopStrategy(num=20))
+       print(strategies)
 
     async def _run_trading(self):
-       top_signals = await self.dispatcher.query(GetTopSignals(num=5))
-       print(top_signals)
+       strategies = await self.dispatcher.query(GetTopStrategy(num=5))
+       print(strategies)
 
     async def _generate_actors(self):
         account_size = await self.dispatcher.query(GetAccountBalance())
         await self.dispatcher.execute(UpdateAccountSize(account_size))
         
         symbols = await self.dispatcher.query(GetSymbols())
-        symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
-        symbols_and_timeframes = list(product(symbols, self.context.timeframes))
-        shuffle(symbols_and_timeframes)
-    
+        symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols if len(self.context.symbols) > 0]
+        shuffle(symbols)
+        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
+   
         for symbol, timeframe in symbols_and_timeframes:
             executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=False)
             position_actor = self.context.position_factory.create_actor(symbol, timeframe)
