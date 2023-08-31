@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import uuid
 
@@ -13,7 +13,8 @@ class EventMeta:
 
 @dataclass(frozen=True)
 class Event:
-    pass
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass(frozen=True)

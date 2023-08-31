@@ -1,14 +1,17 @@
 import asyncio
 from functools import partial, wraps
 import inspect
+import os
 from typing import Callable, Type
 
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
+from infrastructure.event_store.event_store import EventStore
 
 from .events.base import Event
 from .commands.base import Command
 from .queries.base import Query
 
+DIR = './.log/'
 
 def eda(cls: Type):
     class Wrapped(cls):
@@ -16,6 +19,7 @@ def eda(cls: Type):
             super().__init__(*args, **kwargs)
 
             self._dispatcher = EventDispatcher()
+            self._store = EventStore(DIR)
 
             self._registered_handlers = []
 
@@ -29,6 +33,7 @@ def eda(cls: Type):
         
         async def dispatch(self, event, *args, **kwargs):
             await self._dispatcher.dispatch(event, *args, **kwargs)
+            await self._store.append(event)
 
         async def query(self, query, *args, **kwargs):
             return await self._dispatcher.query(query, *args, **kwargs)
@@ -43,6 +48,7 @@ def eda(cls: Type):
 
         def __del__(self):
             self._unregister()
+            self._store.close()
 
         async def __aenter__(self):
             return self
@@ -50,6 +56,7 @@ def eda(cls: Type):
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             await self._dispatcher.wait()
             self._unregister()
+            self._store.close()
 
     Wrapped.__name__ = cls.__name__
     Wrapped.__qualname__ = cls.__qualname__
