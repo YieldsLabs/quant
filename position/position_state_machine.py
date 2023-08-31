@@ -1,5 +1,6 @@
 import asyncio
 from enum import Enum, auto
+import logging
 from typing import Callable, Dict, Type, Union
 
 from core.events.position import PositionClosed, PositionOpened
@@ -7,6 +8,9 @@ from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
 from core.interfaces.abstract_position_manager import AbstractPositionManager
 from core.models.signal import Signal
+
+
+logger = logging.getLogger(__name__)
 
 
 class PositionState(Enum):
@@ -67,6 +71,8 @@ class PositionStateMachine:
             return
 
         await self._set_state(symbol, next_state)
+
+        logger.debug(f"Position: symbol={symbol}, state={next_state}")
 
     def _is_valid_state(self, state: PositionState, event: PortfolioEvent) -> bool:
         return (state, type(event)) in self.TRANSITIONS

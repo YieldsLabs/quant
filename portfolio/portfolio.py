@@ -1,3 +1,5 @@
+import logging
+
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler, event_handler, query_handler
 from core.events.account import PortfolioAccountUpdated
@@ -8,6 +10,9 @@ from core.queries.portfolio import GetTopStrategy, GetTotalPnL
 
 from .portfolio_storage import PortfolioStorage
 from .strategy_storage import StrategyStorage
+
+
+logger = logging.getLogger(__name__)
 
 
 class Portfolio(AbstractEventManager):
@@ -34,6 +39,8 @@ class Portfolio(AbstractEventManager):
         strategy = signal.strategy
 
         performance = await self.state.get(event.position)
+
+        logger.info(f"Performance: symbol={symbol}, timeframe={timeframe}, trades={performance.total_trades}, pnl={performance.total_pnl}")
         
         await self.dispatch(
             PortfolioPerformanceUpdated(strategy, timeframe, symbol, performance))

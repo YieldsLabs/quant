@@ -1,3 +1,4 @@
+import logging
 from typing import Any, List
 
 from core.commands.backtest import BacktestRun
@@ -8,6 +9,9 @@ from core.models.timeframe import Timeframe
 from core.models.ohlcv import OHLCV
 from core.models.lookback import TIMEFRAMES_TO_LOOKBACK
 from core.interfaces.abstract_backtest import AbstractBacktest
+
+
+logger = logging.getLogger(__name__)
 
 
 class Backtest(AbstractBacktest):
@@ -21,6 +25,8 @@ class Backtest(AbstractBacktest):
         timeframe = command.timeframe
         lookback = command.lookback
         batch_size = command.batch_size
+
+        logger.info(f"Backtest: symbol={symbol}, timeframe={timeframe}")
 
         iterator = datasource.fetch(symbol, timeframe, TIMEFRAMES_TO_LOOKBACK[(lookback, timeframe)], batch_size)
 
