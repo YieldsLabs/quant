@@ -37,10 +37,6 @@ class Performance:
         return 100 * (successful_trades / self.total_trades)
     
     @property
-    def equity(self):
-        return self._pnl.cumsum()
-    
-    @property
     def sharpe_ratio(self) -> float:
         avg_return = np.mean(self._pnl)
         std_return = np.std(self._pnl)
@@ -51,34 +47,32 @@ class Performance:
         return avg_return / std_return
     
     @property
+    def equity(self):
+        return self._account_size + self._pnl.cumsum()
+    
+    @property
+    def drawdown(self):
+        equity_curve = self.equity
+        peak = np.maximum.accumulate(equity_curve)
+        drawdowns = (peak - equity_curve) / peak
+        
+        return drawdowns
+    
+    @property
+    def runup(self) -> float:
+        equity_curve = self.equity
+        trough = np.minimum.accumulate(equity_curve)
+        runups = (equity_curve - trough) / trough
+        
+        return runups
+    
+    @property
     def max_runup(self) -> float:
-        account_size = self._account_size
-
-        trough = account_size
-        max_run_up = 0
-
-        for pnl_value in self._pnl:
-            account_size += pnl_value
-            trough = min(trough, account_size)
-            run_up = (account_size - trough) / trough
-            max_run_up = max(max_run_up, run_up)
-
-        return max_run_up
+        return self.runup.max()
 
     @property
     def max_drawdown(self) -> float:
-        account_size = self._account_size
-
-        peak = account_size
-        max_drawdown = 0
-
-        for pnl_value in self._pnl:
-            account_size += pnl_value
-            peak = max(peak, account_size)
-            drawdown = (peak - account_size) / peak
-            max_drawdown = max(max_drawdown, drawdown)
-
-        return max_drawdown
+        return self.drawdown.max()
     
     @property
     def calmar_ratio(self) -> float:
@@ -385,16 +379,18 @@ class Performance:
     
     def to_dict(self):
         return {
-            'equity': self.equity,
             'total_trades': self.total_trades,
             'total_pnl': self.total_pnl,
             'average_pnl': self.average_pnl,
             'max_consecutive_wins': self.max_consecutive_wins,
             'max_consecutive_losses': self.max_consecutive_losses,
             'hit_ratio': self.hit_ratio,
-            'sharpe_ratio': self.sharpe_ratio,
+            'equity': self.equity,
+            'runup': self.runup,
             'max_runup': self.max_runup,
+            'drawdown': self.drawdown,
             'max_drawdown': self.max_drawdown,
+            'sharpe_ratio': self.sharpe_ratio,
             'calmar_ratio': self.calmar_ratio,
             'sortino_ratio': self.sortino_ratio,
             'annualized_return': self.annualized_return,
