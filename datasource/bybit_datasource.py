@@ -48,6 +48,7 @@ class AsyncHistoricalData:
 
 class BybitDataSource(AbstractDatasource):
     def __init__(self, broker: AbstractBroker):
+        super().__init__()
         self.broker = broker
 
     def fetch(self, symbol: Symbol, timeframe: Timeframe, lookback: int, batch_size: int):

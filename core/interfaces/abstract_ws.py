@@ -10,7 +10,3 @@ class AbstractWS(AbstractEventManager):
     @abstractmethod
     def run(self):
         pass
-
-    @abstractmethod
-    def subscribe(self, timeframes_symbols: List[Tuple[Symbol, Timeframe]]):
-        pass
