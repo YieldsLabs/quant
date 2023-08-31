@@ -11,6 +11,7 @@ from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
+from infrastructure.estimator import Estimator
 
 from .trading_context import TradingContext
 
@@ -34,19 +35,31 @@ class TrendSystem(AbstractSystem):
         while True:
             match self.state:
                 case SystemState.BACKTESTING:
-                    logger.info('Run backtest')
                     await self._run_backtest()
+                    self.state = SystemState.OPTIMIZATION
                 case SystemState.OPTIMIZATION:
-                    logger.info('Run optimization')
                     await self._run_optimization()
+                    self.state = SystemState.TRADING
                 case SystemState.TRADING:
-                    logger.info('Run trading')
                     await self._run_trading()
                 case SystemState.STOPPED:
                     return
 
     async def _run_backtest(self):
-        async for actors in self._generate_backtest_actors():
+        logger.info('Run backtest')
+        
+        symbols = await self.query(GetSymbols())
+
+        if len(self.context.symbols) > 0:
+            symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
+        
+        shuffle(symbols)
+        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
+
+        total_steps = len(symbols_and_timeframes) * len(self.context.strategies)
+        estimator = Estimator(total_steps)
+
+        async for actors in self._generate_backtest_actors(symbols_and_timeframes, self.context.strategies):
             account_size = await self.query(GetAccountBalance())
             await self.execute(UpdateAccountSize(account_size))
         
@@ -57,26 +70,36 @@ class TrendSystem(AbstractSystem):
             await self.execute(
                 BacktestRun(self.context.datasource, signal.symbol, signal.timeframe, self.context.lookback, self.context.batch_size))
 
-            await asyncio.gather(*[actor.stop() for actor in actors])
+            logger.info(f"Estimated remaining time: {estimator.remaining_time():.2f} seconds")
 
-        self.state = SystemState.OPTIMIZATION
+            await asyncio.gather(*[actor.stop() for actor in actors])
             
     async def _run_optimization(self):
-       strategies = await self.query(GetTopStrategy(num=20))
+        logger.info('Run optimization')
+        strategies = await self.query(GetTopStrategy(num=20))
        
-       logger.info(strategies)
-       
-       self.state = SystemState.TRADING
+        logger.info(strategies)
 
     async def _run_trading(self):
-        async for actors in self._generate_trading_actors():
+        logger.info('Run trading')
+        
+        strategies = await self.query(GetTopStrategy(num=1))
+        
+        logger.info(strategies)
+
+        symbols = [strategy[1] for strategy in strategies]
+        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
+        
+        await self.execute(Subscribe(symbols_and_timeframes))
+    
+        async for actors in self._generate_trading_actors(symbols_and_timeframes, strategies):
+            account_size = await self.query(GetAccountBalance())
+            await self.execute(UpdateAccountSize(account_size))
+            
             signal = actors[0]
 
             await self.execute(
                 UpdateSettings(signal.symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
-            
-            account_size = await self.query(GetAccountBalance())
-            await self.execute(UpdateAccountSize(account_size))
             
             await asyncio.gather(*[actor.start() for actor in actors])
 
@@ -87,32 +110,17 @@ class TrendSystem(AbstractSystem):
         
         return executor_actor, position_actor, risk_actor
          
-    async def _generate_backtest_actors(self):
-        symbols = await self.query(GetSymbols())
-
-        if len(self.context.symbols) > 0:
-            symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
-        
-        shuffle(symbols)
-        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
-
+    async def _generate_backtest_actors(self, symbols_and_timeframes, strategies):
         for symbol, timeframe in symbols_and_timeframes:
             executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, False)
 
-            for strategy_name, strategy_parameters in self.context.strategies:
+            for strategy_name, strategy_parameters in strategies:
                 signal_actor = self.context.signal_factory.create_actor(
                     symbol, timeframe, self.context.strategy_path, strategy_name, strategy_parameters)
 
                 yield signal_actor, position_actor, risk_actor, executor_actor
 
-    async def _generate_trading_actors(self):
-        strategies = await self.query(GetTopStrategy(num=1))
-        symbols = [strategy[1] for strategy in strategies]
-
-        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
-        
-        await self.execute(Subscribe(symbols_and_timeframes))
-
+    async def _generate_trading_actors(self, symbols_and_timeframes, strategies):
         for symbol, timeframe in symbols_and_timeframes:
             executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, self.context.live_mode)
             
