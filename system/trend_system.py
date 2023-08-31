@@ -25,25 +25,39 @@ class SystemState(Enum):
     STOPPED = auto()
 
 
+class Event(Enum):
+    BACKTEST_COMPLETE = auto()
+    OPTIMIZE_COMPLETE = auto()
+    TRADING_STOPPED = auto()
+    SYSTEM_STOP = auto()
+
 class TrendSystem(AbstractSystem):
     def __init__(self, context: TradingContext):
         super().__init__()
         self.context = context
         self.state = SystemState.BACKTESTING
+        self.event_queue = asyncio.Queue()
 
     async def start(self):
-        while True:
+       await self._run_backtest()
+       
+       while True:
+            event = await self.event_queue.get()
+            
             match self.state:
                 case SystemState.BACKTESTING:
-                    await self._run_backtest()
-                    self.state = SystemState.OPTIMIZATION
+                    if event == Event.BACKTEST_COMPLETE:
+                        self.state = SystemState.OPTIMIZATION
+                        await self._run_optimization()
                 case SystemState.OPTIMIZATION:
-                    await self._run_optimization()
-                    self.state = SystemState.TRADING
-                case SystemState.TRADING:
-                    await self._run_trading()
-                case SystemState.STOPPED:
-                    return
+                    if event == Event.OPTIMIZE_COMPLETE:
+                        self.state = SystemState.TRADING
+                        await self._run_trading()
+                    if event == Event.SYSTEM_STOP:
+                        return
+
+    def stop(self):
+        self.event_queue.put_nowait(Event.SYSTEM_STOP)
 
     async def _run_backtest(self):
         logger.info('Run backtest')
@@ -73,12 +87,16 @@ class TrendSystem(AbstractSystem):
             logger.info(f"Estimated remaining time: {estimator.remaining_time():.2f} seconds")
 
             await asyncio.gather(*[actor.stop() for actor in actors])
+
+        await self.event_queue.put(Event.BACKTEST_COMPLETE)
             
     async def _run_optimization(self):
         logger.info('Run optimization')
         strategies = await self.query(GetTopStrategy(num=20))
        
         logger.info(strategies)
+
+        await self.event_queue.put(Event.OPTIMIZE_COMPLETE)
 
     async def _run_trading(self):
         logger.info('Run trading')

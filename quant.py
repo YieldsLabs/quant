@@ -3,9 +3,9 @@ import signal
 from dotenv import load_dotenv
 import os
 import logging
-from infrastructure.logger import configure_logging
 import uvloop
 
+from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.event_store.event_store import EventStore
@@ -55,7 +55,7 @@ async def main():
     multi_piority_group = 2
 
     lookback = Lookback.ONE_MONTH
-    batch_size = 144
+    batch_size = 610
     risk_per_trade = 0.0015
     risk_reward_ratio = 2
     risk_buffer = 0.01
@@ -68,7 +68,7 @@ async def main():
         Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES,
     ]
-    symbols = ['SOLUSDT', 'APEUSDT', 'MATICUSDT']
+    symbols = ['HIGHUSDT', 'YFIIUSDT', 'SOLUSDT']
     
     trend_follow_path = './wasm/trend_follow.wasm'
     trend_follow_strategies = [
@@ -115,10 +115,13 @@ async def main():
         await asyncio.gather(system_task, ws_handler_task, shutdown_task)
     finally:
         logging.info('Closing...')
+        
         shutdown_task.cancel()
         system_task.cancel()
         ws_handler_task.cancel()
 
+        trading_system.stop()
+        
         await event_bus.stop()
         await event_bus.wait()
 
