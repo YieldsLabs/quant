@@ -3,7 +3,8 @@ from typing import Union
 
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler
-from core.events.position import PositionAccountUpdated, PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
+from core.events.account import PositionAccountUpdated
+from core.events.position import PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.interfaces.abstract_actor import AbstractActor
