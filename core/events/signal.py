@@ -2,26 +2,28 @@ from dataclasses import dataclass, field
 
 from core.models.ohlcv import OHLCV
 
-from .base import Event, EventMeta
+from .base import Event, EventGroup, EventMeta
 
 from ..models.signal import Signal
 
 
 @dataclass(frozen=True)
-class SignalEntryEvent(Event):
+class SignalEvent(Event):
     signal: Signal
-    entry_price: float
-    stop_loss: float
-    ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=6))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=5, group=EventGroup.signal), init=False)
 
 
 @dataclass(frozen=True)
-class SignalExitEvent(Event):
-    signal: Signal
+class SignalEntryEvent(SignalEvent):
+    entry_price: float
+    stop_loss: float
+    ohlcv: OHLCV
+
+
+@dataclass(frozen=True)
+class SignalExitEvent(SignalEvent):
     exit_price: float
     ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1))
 
 
 @dataclass(frozen=True)

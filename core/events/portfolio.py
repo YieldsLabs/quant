@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from .base import Event, EventMeta
+from .base import Event, EventGroup, EventMeta
 
 from ..models.symbol import Symbol
 from ..models.strategy import Strategy
@@ -9,15 +9,13 @@ from ..models.timeframe import Timeframe
 
 
 @dataclass(frozen=True)
-class PortfolioPerformanceUpdated(Event):
+class PortfolioEvent(Event):
     strategy: Strategy
     timeframe: Timeframe
     symbol: Symbol
-    performance: Performance
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=7))
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=8, group=EventGroup.portfolio), init=False)
 
 
 @dataclass(frozen=True)
-class PortfolioAccountUpdated(Event):
-    amount: float
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=7))
+class PortfolioPerformanceUpdated(PortfolioEvent):
+    performance: Performance

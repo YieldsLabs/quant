@@ -1,6 +1,7 @@
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler, event_handler, query_handler
-from core.events.portfolio import PortfolioAccountUpdated, PortfolioPerformanceUpdated
+from core.events.account import PortfolioAccountUpdated
+from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.queries.portfolio import GetTopStrategy, GetTotalPnL

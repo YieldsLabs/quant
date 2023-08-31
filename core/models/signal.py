@@ -5,6 +5,7 @@ from .strategy import Strategy
 from .symbol import Symbol
 from .timeframe import Timeframe
 
+
 class SignalSide(Enum):
     BUY = "buy"
     SELL = "sell"
