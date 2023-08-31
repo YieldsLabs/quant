@@ -15,3 +15,9 @@ class PortfolioPerformanceUpdated(Event):
     symbol: Symbol
     performance: Performance
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=7))
+
+
+@dataclass(frozen=True)
+class PortfolioAccountUpdated(Event):
+    amount: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=7))

@@ -1,11 +1,12 @@
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler, event_handler, query_handler
-from core.events.portfolio import PortfolioPerformanceUpdated
+from core.events.portfolio import PortfolioAccountUpdated, PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.queries.portfolio import GetTopStrategy, GetTotalPnL
-from portfolio.portfolio_storage import PortfolioStorage
-from portfolio.strategy_storage import StrategyStorage
+
+from .portfolio_storage import PortfolioStorage
+from .strategy_storage import StrategyStorage
 
 
 class Portfolio(AbstractEventManager):
@@ -19,6 +20,8 @@ class Portfolio(AbstractEventManager):
     @command_handler(UpdateAccountSize)
     async def update_account_size(self, command: UpdateAccountSize):
         self.account_size = command.amount
+
+        await self.dispatch(PortfolioAccountUpdated(self.account_size))
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):

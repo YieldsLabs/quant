@@ -3,7 +3,7 @@ from typing import Union
 
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler
-from core.events.position import PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
+from core.events.position import PositionAccountUpdated, PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.interfaces.abstract_actor import AbstractActor
@@ -98,6 +98,8 @@ class PositionActor(AbstractActor):
     @command_handler(UpdateAccountSize)
     async def update_account_size(self, command: UpdateAccountSize):
         self.account_size = command.amount
+
+        await self.dispatch(PositionAccountUpdated(self.account_size))
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         account_size = self.account_size + await self.query(GetTotalPnL(event.signal))

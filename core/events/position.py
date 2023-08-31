@@ -32,3 +32,9 @@ class PositionCloseRequested(Event):
 class PositionClosed(Event):
     position: Position
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4))
+
+
+@dataclass(frozen=True)
+class PositionAccountUpdated(Event):
+    amount: float
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=5))
