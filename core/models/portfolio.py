@@ -37,6 +37,10 @@ class Performance:
         return 100 * (successful_trades / self.total_trades)
     
     @property
+    def equity(self):
+        return self._pnl.cumsum()
+    
+    @property
     def sharpe_ratio(self) -> float:
         avg_return = np.mean(self._pnl)
         std_return = np.std(self._pnl)
@@ -46,6 +50,21 @@ class Performance:
 
         return avg_return / std_return
     
+    @property
+    def max_runup(self) -> float:
+        account_size = self._account_size
+
+        trough = account_size
+        max_run_up = 0
+
+        for pnl_value in self._pnl:
+            account_size += pnl_value
+            trough = min(trough, account_size)
+            run_up = (account_size - trough) / trough
+            max_run_up = max(max_run_up, run_up)
+
+        return max_run_up
+
     @property
     def max_drawdown(self) -> float:
         account_size = self._account_size
@@ -354,7 +373,7 @@ class Performance:
     
     def __repr__(self):
         return (f"Performance(total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, " +
-                 f"max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, calmar_ratio={self.calmar_ratio}, " +
+                 f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, calmar_ratio={self.calmar_ratio}, " +
                  f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, " +
                  f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, sharpe_ratio={self.sharpe_ratio}, " +
                  f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, " +
@@ -366,7 +385,7 @@ class Performance:
     
     def to_dict(self):
         return {
-            'pln': self._pnl,
+            'equity': self.equity,
             'total_trades': self.total_trades,
             'total_pnl': self.total_pnl,
             'average_pnl': self.average_pnl,
@@ -374,6 +393,7 @@ class Performance:
             'max_consecutive_losses': self.max_consecutive_losses,
             'hit_ratio': self.hit_ratio,
             'sharpe_ratio': self.sharpe_ratio,
+            'max_runup': self.max_runup,
             'max_drawdown': self.max_drawdown,
             'calmar_ratio': self.calmar_ratio,
             'sortino_ratio': self.sortino_ratio,
