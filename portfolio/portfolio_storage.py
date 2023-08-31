@@ -34,13 +34,7 @@ class PortfolioStorage:
             performance = self.data.get(key)
             
             return performance.total_pnl if performance else 0
-   
-    async def get_top_signals(self, num: int):
-        async with self._lock:
-            sorted_signals = sorted(self.data.keys(), key=lambda key: self.data[key].calmar_ratio, reverse=True)
-            
-            return sorted_signals[:num]
-        
+
     def _get_key(self, signal: Signal):
         return (signal.symbol, signal.timeframe, signal.strategy)
 

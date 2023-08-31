@@ -56,7 +56,7 @@ class PositionActor(AbstractActor):
             self._running = True
 
         for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
-            self.dispatcher.register(event, self._event_filter)
+            self._dispatcher.register(event, self._event_filter)
 
 
     async def stop(self):
@@ -67,7 +67,7 @@ class PositionActor(AbstractActor):
             self._running = False
 
         for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
-            self.dispatcher.unregister(event, self._event_filter)
+            self._dispatcher.unregister(event, self._event_filter)
 
     async def handle(self, event):
         if isinstance(event, self.SIGNAL_EVENTS + self.EXIT_EVENTS):
@@ -100,7 +100,7 @@ class PositionActor(AbstractActor):
         self.account_size = command.amount
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        account_size = self.account_size + await self.dispatcher.query(GetTotalPnL(event.signal))
+        account_size = self.account_size + await self.query(GetTotalPnL(event.signal))
 
         position = self.position_factory.create_position(
             event.signal,
@@ -111,7 +111,7 @@ class PositionActor(AbstractActor):
 
         await self.state.store_position(position)
 
-        await self.dispatcher.dispatch(PositionInitialized(position))
+        await self.dispatch(PositionInitialized(position))
 
         return True
 
@@ -138,7 +138,7 @@ class PositionActor(AbstractActor):
             
             await self.state.update_stored_position(closed_position)
 
-            await self.dispatcher.dispatch(PositionCloseRequested(closed_position))
+            await self.dispatch(PositionCloseRequested(closed_position))
             
             return True
         

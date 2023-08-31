@@ -7,6 +7,13 @@ from ..models.timeframe import Timeframe
 
 
 @dataclass(frozen=True)
+class BacktestStarted(Event):
+    symbol: Symbol
+    timeframe: Timeframe
+    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=3))
+
+
+@dataclass(frozen=True)
 class BacktestEnded(Event):
     symbol: Symbol
     timeframe: Timeframe

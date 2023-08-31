@@ -49,7 +49,7 @@ class BybitWSHandler(AbstractWS):
 
             ohlcv_event = self.parse_candle_message(symbol, interval, ohlcv)
 
-            await self.dispatcher.dispatch(ohlcv_event)
+            await self.dispatch(ohlcv_event)
 
     async def send_ping(self, interval):
         while True:

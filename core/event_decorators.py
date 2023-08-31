@@ -15,7 +15,7 @@ def eda(cls: Type):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
-            self.dispatcher = EventDispatcher()
+            self._dispatcher = EventDispatcher()
 
             self._registered_handlers = []
 
@@ -23,13 +23,22 @@ def eda(cls: Type):
                 if hasattr(handler, "event"):
                     event_type = handler.event
                     wrapped_handler = partial(handler, self)
-                    self.dispatcher.register(event_type, wrapped_handler)
+                    self._dispatcher.register(event_type, wrapped_handler)
 
                     self._registered_handlers.append((event_type, wrapped_handler))
+        
+        async def dispatch(self, event, *args, **kwargs):
+            await self._dispatcher.dispatch(event, *args, **kwargs)
+
+        async def query(self, query, *args, **kwargs):
+            return await self._dispatcher.query(query, *args, **kwargs)
+        
+        async def execute(self, command, *args, **kwargs):
+            return await self._dispatcher.execute(command, *args, **kwargs)
 
         def _unregister(self):
             for event_type, handler in self._registered_handlers:
-                self.dispatcher.unregister(event_type, handler)
+                self._dispatcher.unregister(event_type, handler)
             self._registered_handlers = []
 
         def __del__(self):
@@ -39,7 +48,7 @@ def eda(cls: Type):
             return self
 
         async def __aexit__(self, exc_type, exc_val, exc_tb):
-            await self.dispatcher.wait()
+            await self._dispatcher.wait()
             self._unregister()
 
     Wrapped.__name__ = cls.__name__

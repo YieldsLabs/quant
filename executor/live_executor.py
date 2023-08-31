@@ -32,8 +32,8 @@ class LiveExecutor(AbstractActor):
         if self.running:
             raise RuntimeError("Start: executor is running")
         
-        self.dispatcher.register(PositionInitialized, self._filter_event)
-        self.dispatcher.register(PositionCloseRequested, self._filter_event)
+        self._dispatcher.register(PositionInitialized, self._filter_event)
+        self._dispatcher.register(PositionCloseRequested, self._filter_event)
         
         async with self._lock:
             self._running = True
@@ -42,8 +42,8 @@ class LiveExecutor(AbstractActor):
         if not self.running:
             raise RuntimeError("Stop: executor is not started")
         
-        self.dispatcher.unregister(PositionInitialized, self._filter_event)
-        self.dispatcher.unregister(PositionCloseRequested, self._filter_event)
+        self._dispatcher.unregister(PositionInitialized, self._filter_event)
+        self._dispatcher.unregister(PositionCloseRequested, self._filter_event)
         
         async with self._lock:
             self._running = False
@@ -61,15 +61,15 @@ class LiveExecutor(AbstractActor):
             await self.handle(event)
 
     async def _execute_order(self, position: Position):
-        await self.dispatcher.execute(OpenPosition(position))
+        await self.execute(OpenPosition(position))
         
-        broker_position = await self.dispatcher.query(GetOpenPosition(position.signal.symbol))
+        broker_position = await self.query(GetOpenPosition(position.signal.symbol))
         order = Order(status=OrderStatus.EXECUTED, size=broker_position['position_size'], price=broker_position['entry_price'])
         
         next_position = position.add_order(order).update_prices(order.price)
         
-        await self.dispatcher.dispatch(PositionOpened(next_position))
+        await self.dispatch(PositionOpened(next_position))
 
     async def _close_position(self, position: Position):
-        await self.dispatcher.execute(ClosePosition(position))
-        await self.dispatcher.dispatch(PositionClosed(position))
+        await self.execute(ClosePosition(position))
+        await self.dispatch(PositionClosed(position))

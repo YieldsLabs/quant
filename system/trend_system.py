@@ -41,14 +41,14 @@ class TrendSystem(AbstractSystem):
 
     async def _run_backtest(self):
         async for actors in self._generate_backtest_actors():
-            account_size = await self.dispatcher.query(GetAccountBalance())
-            await self.dispatcher.execute(UpdateAccountSize(account_size))
+            account_size = await self.query(GetAccountBalance())
+            await self.execute(UpdateAccountSize(account_size))
         
             await asyncio.gather(*[actor.start() for actor in actors])
 
             signal = actors[0]
 
-            await self.dispatcher.execute(
+            await self.execute(
                 BacktestRun(self.context.datasource, signal.symbol, signal.timeframe, self.context.lookback, self.context.batch_size))
 
             await asyncio.gather(*[actor.stop() for actor in actors])
@@ -56,7 +56,7 @@ class TrendSystem(AbstractSystem):
         self.state = SystemState.OPTIMIZATION
             
     async def _run_optimization(self):
-       strategies = await self.dispatcher.query(GetTopStrategy(num=20))
+       strategies = await self.query(GetTopStrategy(num=20))
        print(strategies)
        
        self.state = SystemState.TRADING
@@ -65,9 +65,12 @@ class TrendSystem(AbstractSystem):
         async for actors in self._generate_trading_actors():
             signal = actors[0]
 
-            await self.dispatcher.execute(
+            await self.execute(
                 UpdateSettings(signal.symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
-   
+            
+            account_size = await self.query(GetAccountBalance())
+            await self.execute(UpdateAccountSize(account_size))
+            
             await asyncio.gather(*[actor.start() for actor in actors])
 
     def _initialize_actors(self, symbol, timeframe, is_live):
@@ -78,7 +81,7 @@ class TrendSystem(AbstractSystem):
         return executor_actor, position_actor, risk_actor
          
     async def _generate_backtest_actors(self):
-        symbols = await self.dispatcher.query(GetSymbols())
+        symbols = await self.query(GetSymbols())
 
         if len(self.context.symbols) > 0:
             symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
@@ -96,12 +99,12 @@ class TrendSystem(AbstractSystem):
                 yield signal_actor, position_actor, risk_actor, executor_actor
 
     async def _generate_trading_actors(self):
-        strategies = await self.dispatcher.query(GetTopStrategy(num=1))
+        strategies = await self.query(GetTopStrategy(num=1))
         symbols = [strategy[1] for strategy in strategies]
 
         symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
         
-        await self.dispatcher.execute(Subscribe(symbols_and_timeframes))
+        await self.execute(Subscribe(symbols_and_timeframes))
 
         for symbol, timeframe in symbols_and_timeframes:
             executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, self.context.live_mode)

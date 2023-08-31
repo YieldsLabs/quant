@@ -42,9 +42,9 @@ class RiskActor(AbstractActor):
         async with self._lock:
             self._running = True
 
-        self.dispatcher.register(NewMarketDataReceived, self._market_event_filter)
-        self.dispatcher.register(PositionOpened, self._position_event_filter)
-        self.dispatcher.register(PositionClosed, self._position_event_filter)
+        self._dispatcher.register(NewMarketDataReceived, self._market_event_filter)
+        self._dispatcher.register(PositionOpened, self._position_event_filter)
+        self._dispatcher.register(PositionClosed, self._position_event_filter)
 
     async def stop(self):
         if not await self.running:
@@ -53,9 +53,9 @@ class RiskActor(AbstractActor):
         async with self._lock:
             self._running = False
 
-        self.dispatcher.unregister(NewMarketDataReceived, self._market_event_filter)
-        self.dispatcher.unregister(PositionOpened, self._position_event_filter)
-        self.dispatcher.unregister(PositionClosed, self._position_event_filter)
+        self._dispatcher.unregister(NewMarketDataReceived, self._market_event_filter)
+        self._dispatcher.unregister(PositionOpened, self._position_event_filter)
+        self._dispatcher.unregister(PositionClosed, self._position_event_filter)
     
     async def handle(self, event: RiskEvent):
         if isinstance(event, NewMarketDataReceived):
@@ -86,7 +86,7 @@ class RiskActor(AbstractActor):
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)
 
-        await self.dispatcher.dispatch(RiskThresholdBreached(position, exit_price))
+        await self.dispatch(RiskThresholdBreached(position, exit_price))
 
     def _should_exit(self, next_position: Position, ohlcv: OHLCV):
         if next_position.side == PositionSide.LONG:

@@ -31,7 +31,7 @@ class Portfolio(AbstractEventManager):
 
         performance = await self.state.get(event.position)
         
-        await self.dispatcher.dispatch(
+        await self.dispatch(
             PortfolioPerformanceUpdated(strategy, timeframe, symbol, performance))
         
         await self.strategy.next(strategy, symbol, [

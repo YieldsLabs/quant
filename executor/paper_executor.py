@@ -31,8 +31,8 @@ class PaperExecutor(AbstractActor):
         if self.running:
             raise RuntimeError("Start: executor is running")
         
-        self.dispatcher.register(PositionInitialized, self._filter_event)
-        self.dispatcher.register(PositionCloseRequested, self._filter_event)
+        self._dispatcher.register(PositionInitialized, self._filter_event)
+        self._dispatcher.register(PositionCloseRequested, self._filter_event)
         
         async with self._lock:
             self._running = True
@@ -41,8 +41,8 @@ class PaperExecutor(AbstractActor):
         if not self.running:
             raise RuntimeError("Stop: executor is not started")
         
-        self.dispatcher.unregister(PositionInitialized, self._filter_event)
-        self.dispatcher.unregister(PositionCloseRequested, self._filter_event)
+        self._dispatcher.unregister(PositionInitialized, self._filter_event)
+        self._dispatcher.unregister(PositionCloseRequested, self._filter_event)
         
         async with self._lock:
             self._running = False
@@ -66,10 +66,10 @@ class PaperExecutor(AbstractActor):
 
         next_position = position.add_order(order).update_prices(order.price)
     
-        await self.dispatcher.dispatch(PositionOpened(next_position))
+        await self.dispatch(PositionOpened(next_position))
 
     async def _close_position(self, position: Position):
-        await self.dispatcher.dispatch(PositionClosed(position))
+        await self.dispatch(PositionClosed(position))
 
     @staticmethod
     def _apply_slippage(position: Position, factor: float) -> float:

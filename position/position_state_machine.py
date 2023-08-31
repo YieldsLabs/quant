@@ -2,7 +2,6 @@ import asyncio
 from enum import Enum, auto
 from typing import Callable, Dict, Type, Union
 
-from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import PositionClosed, PositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived

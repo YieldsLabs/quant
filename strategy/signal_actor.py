@@ -53,7 +53,7 @@ class SignalActor(AbstractActor):
             self._register_strategy()
             self._set_strategy()
 
-        self.dispatcher.register(NewMarketDataReceived, self._signal_event_filter)
+        self._dispatcher.register(NewMarketDataReceived, self._signal_event_filter)
 
     async def stop(self):
         if not self.running:
@@ -62,7 +62,7 @@ class SignalActor(AbstractActor):
         async with self._lock:
             self._unregister_strategy()
     
-        self.dispatcher.unregister(NewMarketDataReceived, self._signal_event_filter)
+        self._dispatcher.unregister(NewMarketDataReceived, self._signal_event_filter)
 
     async def handle(self, event: NewMarketDataReceived):
         if not self.running:
@@ -104,19 +104,19 @@ class SignalActor(AbstractActor):
         self._strategy = Strategy.from_label(strategy_parameters)
 
     async def _dispatch_go_long_signal(self, data, price, stop_loss):
-        await self.dispatcher.dispatch(
+        await self.dispatch(
             GoLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_go_short_signal(self, data, price, stop_loss):
-        await self.dispatcher.dispatch(
+        await self.dispatch(
             GoShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_exit_long_signal(self, data, exit_price):
-        await self.dispatcher.dispatch(
+        await self.dispatch(
             ExitLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
 
     async def _dispatch_exit_short_signal(self, data, exit_price):
-        await self.dispatcher.dispatch(
+        await self.dispatch(
             ExitShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))
 
     @staticmethod
