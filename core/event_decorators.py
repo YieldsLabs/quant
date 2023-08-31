@@ -1,7 +1,6 @@
 import asyncio
 from functools import partial, wraps
 import inspect
-import os
 from typing import Callable, Type
 
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
@@ -11,7 +10,6 @@ from .events.base import Event
 from .commands.base import Command
 from .queries.base import Query
 
-DIR = './.log/'
 
 def eda(cls: Type):
     class Wrapped(cls):
@@ -19,7 +17,7 @@ def eda(cls: Type):
             super().__init__(*args, **kwargs)
 
             self._dispatcher = EventDispatcher()
-            self._store = EventStore(DIR)
+            self._store = EventStore()
 
             self._registered_handlers = []
 

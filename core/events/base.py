@@ -14,6 +14,9 @@ class EventGroup(Enum):
     service = 'service'
     signal = 'signal'
 
+    def __str__(self):
+        return self.value
+
 
 @dataclass
 class EventMeta:
@@ -27,7 +30,9 @@ class EventMeta:
 @dataclass(frozen=True)
 class Event:
     def to_dict(self):
-        return asdict(self)
+        res = asdict(self)
+        res['meta']['name'] = self.__class__.__name__
+        return res
 
 
 @dataclass(frozen=True)
