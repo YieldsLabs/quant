@@ -2,6 +2,8 @@ import asyncio
 import signal
 from dotenv import load_dotenv
 import os
+import logging
+from infrastructure.logger import configure_logging
 import uvloop
 
 from infrastructure.shutdown import GracefulShutdown
@@ -22,6 +24,9 @@ from risk.risk_actor_factory import RiskActorFactory
 from portfolio.portfolio import Portfolio
 
 
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+
 load_dotenv()
 
 
@@ -30,15 +35,21 @@ API_SECRET = os.getenv('API_SECRET')
 WSS = os.getenv('WSS')
 IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
 LOG_DIR = os.getenv('LOG_DIR')
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
 
 
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+configure_logging(LOG_LEVEL)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 graceful_shutdown = GracefulShutdown()
 signal.signal(signal.SIGTERM, graceful_shutdown.exit)
 
-
 async def main():
+    logging.info('Initializing...')
+
     store_buf_size = 233
     num_workers = os.cpu_count()
     multi_piority_group = 2
@@ -100,8 +111,10 @@ async def main():
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
+        logging.info('Started')
         await asyncio.gather(system_task, ws_handler_task, shutdown_task)
     finally:
+        logging.info('Closing...')
         shutdown_task.cancel()
         system_task.cancel()
         ws_handler_task.cancel()
@@ -110,6 +123,8 @@ async def main():
         await event_bus.wait()
 
         event_store.close()
+
+        logging.info('Finished.')
 
 with asyncio.Runner() as runner:
     runner.run(main())

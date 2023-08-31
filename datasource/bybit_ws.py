@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import websockets
 
 from core.commands.broker import Subscribe
@@ -9,6 +10,9 @@ from core.models.timeframe import Timeframe
 from core.models.ohlcv import OHLCV
 from core.interfaces.abstract_ws import AbstractWS
 from broker.retry import retry
+
+
+logger = logging.getLogger(__name__)
 
 
 class BybitWSHandler(AbstractWS):
@@ -60,13 +64,13 @@ class BybitWSHandler(AbstractWS):
                 else:
                     raise websockets.exceptions.ConnectionClosedOK(None, websockets.frames.Close(code=1000, reason='Connection closed'))
             except websockets.exceptions.ConnectionClosedOK:
-                print("Connection closed.")
+                logger.info("Connection closed.")
                 await self.connect_to_websocket()
             except websockets.exceptions.ConnectionClosedError:
-                print("Connection closed with error")
+                logger.info("Connection closed with error")
                 await self.connect_to_websocket()
             except Exception as e:
-                print(f"Error while keep alive ping: {e}")
+                logger.error(f"Error while keep alive ping: {e}")
                 await self.connect_to_websocket()
 
     async def process_messages(self):
@@ -75,13 +79,13 @@ class BybitWSHandler(AbstractWS):
                 async for message in self.ws:
                     await self.process_message(message)
             except websockets.exceptions.ConnectionClosedOK:
-                print("Connection closed.")
+                logger.info("Connection closed.")
                 await self.connect_to_websocket()
             except websockets.exceptions.ConnectionClosedError:
-                print("Connection closed with error")
+                logger.info("Connection closed with error")
                 await self.connect_to_websocket()
             except Exception as e:
-                print(f"Error while process message: {e}")
+                logger.error(f"Error while process message: {e}")
                 await self.connect_to_websocket()
 
     async def run(self, ping_interval=10):
@@ -93,7 +97,7 @@ class BybitWSHandler(AbstractWS):
 
             await asyncio.gather(ping_task, message_processing_task)
         except ConnectionError as e:
-            print(f"Could not establish WebSocket connection: {e}")
+            logger.error(f"Could not establish WebSocket connection: {e}")
         finally:
             if self.ws:
                 await self.ws.close()

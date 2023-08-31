@@ -9,5 +9,4 @@ class GracefulShutdown:
         await self.exit_event.wait()
 
     def exit(self, _signal, _frame):
-        print("Exiting...")
         self.exit_event.set()

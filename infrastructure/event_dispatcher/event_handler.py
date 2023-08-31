@@ -1,11 +1,15 @@
 import asyncio
 from collections import deque
 from functools import partial
+import logging
 from typing import Any, Callable, Deque, Dict, List, Tuple, Type, Union
 
 from core.events.base import Event
 
 HandlerType = Union[partial, Callable[..., Any]]
+
+
+logger = logging.getLogger(__name__)
 
 
 class EventHandler:
@@ -35,14 +39,16 @@ class EventHandler:
 
         if event_type in self._event_handlers:
             for handler in self._event_handlers[event_type]:
+                logger.debug(handler)
                 asyncio.create_task(self._call_handler(handler, event, *args, **kwargs))
 
     async def _call_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         try:
             await self._create_handler(handler, event, *args, **kwargs)
+            logger.debug(event)
         except Exception as e:
-            print(e)
             self._dead_letter_queue.append((event, e))
+            logger.error(f"Exception encountered: {e}. Event added to dead letter queue.")
 
     async def _create_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         if asyncio.iscoroutinefunction(handler):

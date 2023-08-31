@@ -1,6 +1,7 @@
 import asyncio
 from enum import Enum, auto
 from itertools import product
+import logging
 from random import shuffle
 
 from core.commands.account import UpdateAccountSize
@@ -12,6 +13,8 @@ from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
 
 from .trading_context import TradingContext
+
+logger = logging.getLogger(__name__)
 
 
 class SystemState(Enum):
@@ -31,10 +34,13 @@ class TrendSystem(AbstractSystem):
         while True:
             match self.state:
                 case SystemState.BACKTESTING:
+                    logger.info('Run backtest')
                     await self._run_backtest()
                 case SystemState.OPTIMIZATION:
+                    logger.info('Run optimization')
                     await self._run_optimization()
                 case SystemState.TRADING:
+                    logger.info('Run trading')
                     await self._run_trading()
                 case SystemState.STOPPED:
                     return
@@ -57,7 +63,8 @@ class TrendSystem(AbstractSystem):
             
     async def _run_optimization(self):
        strategies = await self.query(GetTopStrategy(num=20))
-       print(strategies)
+       
+       logger.info(strategies)
        
        self.state = SystemState.TRADING
 

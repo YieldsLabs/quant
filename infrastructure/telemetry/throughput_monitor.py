@@ -2,6 +2,9 @@ import time
 import logging
 
 
+logger = logging.getLogger(__name__)
+
+
 class ThroughputMonitor:
     def __init__(self, events_to_log: int = 100):
         self.events_to_log = events_to_log
@@ -17,7 +20,7 @@ class ThroughputMonitor:
         elapsed_time = time.monotonic() - self.start_time
         throughput = self.num_events / elapsed_time
 
-        print(f"Throughput = {throughput:.2f} events/sec")
+        logger.debug(f"Throughput = {throughput:.2f} events/sec")
 
         self.num_events = 0
         self.start_time = time.monotonic()

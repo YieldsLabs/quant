@@ -1,7 +1,11 @@
 import asyncio
+import logging
 import random
 import time
 from requests.exceptions import RequestException, ReadTimeout
+
+
+logger = logging.getLogger(__name__)
 
 
 def retry(max_retries=3, initial_retry_delay=1, handled_exceptions=(RequestException, ReadTimeout)):
@@ -14,10 +18,10 @@ def retry(max_retries=3, initial_retry_delay=1, handled_exceptions=(RequestExcep
             try:
                 return await func(*args, **kwargs)
             except handled_exceptions as e:
-                print(f"Error: {e}. Retrying...")
+                logger.error(f"Error: {e}. Retrying...")
                 retries += 1
                 retry_delay = initial_retry_delay * (2 ** retries) * random.uniform(0.5, 1.5)
-                print(f"Waiting {retry_delay} seconds before retrying.")
+                logger.info(f"Waiting {retry_delay} seconds before retrying.")
                 await asyncio.sleep(retry_delay)
 
         raise max_retries_exception
@@ -29,10 +33,10 @@ def retry(max_retries=3, initial_retry_delay=1, handled_exceptions=(RequestExcep
             try:
                 return func(*args, **kwargs)
             except handled_exceptions as e:
-                print(f"Error: {e}. Retrying...")
+                logger.error(f"Error: {e}. Retrying...")
                 retries += 1
                 retry_delay = initial_retry_delay * (2 ** retries) * random.uniform(0.5, 1.5)
-                print(f"Waiting {retry_delay} seconds before retrying.")
+                logger.info(f"Waiting {retry_delay} seconds before retrying.")
                 time.sleep(retry_delay)
 
         raise max_retries_exception
