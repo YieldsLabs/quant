@@ -365,5 +365,34 @@ class Performance:
                  f"skewness={self.skewness}, kurtosis={self.kurtosis})")
     
     def to_dict(self):
-        return asdict(self)
+        return {
+            'pln': self._pnl,
+            'total_trades': self.total_trades,
+            'total_pnl': self.total_pnl,
+            'average_pnl': self.average_pnl,
+            'max_consecutive_wins': self.max_consecutive_wins,
+            'max_consecutive_losses': self.max_consecutive_losses,
+            'hit_ratio': self.hit_ratio,
+            'sharpe_ratio': self.sharpe_ratio,
+            'max_drawdown': self.max_drawdown,
+            'calmar_ratio': self.calmar_ratio,
+            'sortino_ratio': self.sortino_ratio,
+            'annualized_return': self.annualized_return,
+            'annualized_volatility': self.annualized_volatility,
+            'recovery_factor': self.recovery_factor,
+            'profit_factor': self.profit_factor,
+            'risk_of_ruin': self.risk_of_ruin,
+            'skewness': self.skewness,
+            'kurtosis': self.kurtosis,
+            'var': self.var,
+            'cvar': self.cvar,
+            'ulcer_index': self.ulcer_index,
+            'lake_ratio': self.lake_ratio,
+            'burke_ratio': self.burke_ratio,
+            'rachev_ratio': self.rachev_ratio,
+            'sterling_ratio': self.sterling_ratio,
+            'tail_ratio': self.tail_ratio,
+            'omega_ratio': self.omega_ratio,
+            'kappa_three_ratio': self.kappa_three_ratio
+        }
 

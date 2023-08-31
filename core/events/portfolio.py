@@ -19,3 +19,9 @@ class PortfolioEvent(Event):
 @dataclass(frozen=True)
 class PortfolioPerformanceUpdated(PortfolioEvent):
     performance: Performance
+
+    def to_dict(self):
+        return {
+            'strategy': f"{self.symbol}_{self.timeframe}{self.strategy}",
+            'performance': self.performance.to_dict()
+        }
