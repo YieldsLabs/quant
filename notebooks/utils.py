@@ -28,12 +28,14 @@ def plot_candlestick(data: pd.DataFrame) -> go.Figure:
     n = len(data)
     rows = (n + 1) // 2
     cols = 2
+
+    subplot_titles_list = [f"{key[0]} - {key[1]}" for key in data.keys()]
     
     fig = make_subplots(
         rows=rows,
         cols=cols,
         shared_xaxes=False,
-        subplot_titles=list(data.keys()),
+        subplot_titles=subplot_titles_list,
         vertical_spacing=0.1,
     )
 
