@@ -72,3 +72,111 @@ def plot_candlestick(data: pd.DataFrame) -> go.Figure:
 
     fig.update_xaxes(rangeslider_visible=False)
     return fig
+
+def plot_equity_curve(df, symbol, timeframe, strategy):
+    equity_curve = df['performance.equity'].iloc[-1]
+    account_size = df['performance.account_size'].iloc[-1]
+    sterling_ratio = df['performance.sterling_ratio'].iloc[-1]
+    hit_ratio = df['performance.hit_ratio'].iloc[-1]
+    total_pnl = df['performance.total_pnl'].iloc[-1]
+    max_drawdown = df['performance.max_drawdown'].iloc[-1]
+    max_runup = df['performance.max_runup'].iloc[-1]
+    total_trades = df['performance.total_trades'].iloc[-1]
+    profit_factor = df['performance.profit_factor'].iloc[-1]
+    max_consecutive_wins = df['performance.max_consecutive_wins'].iloc[-1]
+    max_consecutive_losses = df['performance.max_consecutive_losses'].iloc[-1]
+
+    trades = list(range(1, total_trades + 1))
+
+    color_above_account = 'teal'
+    color_below_account = 'coral'
+
+    def add_equity_curve_segment(fig, x, y, color):
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=y,
+                mode='lines',
+                line=dict(color=color, width=2),
+                hoverinfo='y',
+                showlegend=False
+            )
+        )
+
+    fig = go.Figure()
+
+    start_idx = 0
+    current_color = color_above_account if equity_curve[0] >= account_size else color_below_account
+
+    for idx, equity in enumerate(equity_curve[1:], 1):
+        color = color_above_account if equity >= account_size else color_below_account
+        if color != current_color:
+            add_equity_curve_segment(fig, trades[start_idx:idx+1], equity_curve[start_idx:idx+1], current_color)
+            start_idx = idx
+            current_color = color
+
+    add_equity_curve_segment(fig, trades[start_idx:], equity_curve[start_idx:], current_color)
+
+
+    annotations0 = [
+        f"Net Profit: ${total_pnl:.2f}",
+        f"Hit Ratio: {hit_ratio:.2%}",
+        f"Profit Factor: {profit_factor:.2f}",
+        f"Max Drawdown: ${(account_size * max_drawdown):.2f}",
+    ]
+
+
+    y0_pos = 1.06
+    spacing = 0.3
+
+    for idx, annotation in enumerate(annotations0):
+        fig.add_annotation(
+            go.layout.Annotation(
+                text=annotation,
+                xref="paper", yref="paper",
+                x=idx * spacing, y=y0_pos,
+                showarrow=False,
+                font=dict(size=12)
+            )
+        )
+
+    annotations1 = [
+        f"Max Consecutive Wins: {max_consecutive_wins}",
+        f"Max Consecutive Losses: {max_consecutive_losses}",
+        f"Sterling Ratio: {(sterling_ratio):.2f}",
+        f"Max Runup: ${(account_size * max_runup):.2f}",
+    ]
+
+
+    y1_pos = 1.01
+    spacing = 0.3
+
+    for idx, annotation in enumerate(annotations1):
+        fig.add_annotation(
+            go.layout.Annotation(
+                text=annotation,
+                xref="paper", yref="paper",
+                x=idx * spacing, y=y1_pos,
+                showarrow=False,
+                font=dict(size=12)
+            )
+        )
+
+    fig.update_layout(
+        title=f'{symbol} {timeframe} {strategy}',
+        xaxis_title='Total Trades',
+        yaxis_title='Equity',
+        xaxis=dict(dtick=1),
+        xaxis_rangeslider_visible=False,
+        template='plotly_dark',
+        showlegend=False,
+        margin=dict(
+            autoexpand=False,
+            l=60,
+            r=15,
+            t=70,
+            b=40
+        )
+    )
+
+    return fig

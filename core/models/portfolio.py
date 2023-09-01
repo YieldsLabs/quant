@@ -34,7 +34,7 @@ class Performance:
         pnl_positive = self._pnl > 0
         successful_trades = pnl_positive.sum()
 
-        return 100 * (successful_trades / self.total_trades)
+        return successful_trades / self.total_trades
     
     @property
     def sharpe_ratio(self) -> float:
@@ -139,7 +139,7 @@ class Performance:
     
     @property
     def risk_of_ruin(self) -> float:
-        win_rate = self.hit_ratio / 100
+        win_rate = self.hit_ratio
 
         if win_rate == 1 or win_rate == 0:
             return 0
@@ -379,6 +379,7 @@ class Performance:
     
     def to_dict(self):
         return {
+            'account_size': self._account_size,
             'total_trades': self.total_trades,
             'total_pnl': self.total_pnl,
             'average_pnl': self.average_pnl,

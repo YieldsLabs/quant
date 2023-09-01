@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 from .base import Event, EventGroup, EventMeta
 
@@ -22,6 +22,8 @@ class PortfolioPerformanceUpdated(PortfolioEvent):
 
     def to_dict(self):
         return {
-            'strategy': f"{self.symbol}_{self.timeframe}{self.strategy}",
+            'symbol': str(self.symbol),
+            'timeframe': str(self.timeframe),
+            'strategy': str(self.strategy),
             'performance': self.performance.to_dict()
         }
