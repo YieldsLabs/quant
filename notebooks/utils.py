@@ -26,8 +26,8 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
 
 def plot_candlestick(data: pd.DataFrame) -> go.Figure:
     n = len(data)
-    rows = (n + 1) // 3
-    cols = 3
+    rows = (n + 1) // 2
+    cols = 2
     
     fig = make_subplots(
         rows=rows,
@@ -45,7 +45,7 @@ def plot_candlestick(data: pd.DataFrame) -> go.Figure:
         
         fig.add_trace(candlestick, row=row, col=col)
         
-        if col == 3:
+        if col == 2:
             col = 1
             row += 1
         else:
