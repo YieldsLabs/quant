@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 from core.models.ohlcv import OHLCV
 
@@ -19,11 +19,29 @@ class SignalEntryEvent(SignalEvent):
     stop_loss: float
     ohlcv: OHLCV
 
+    def to_dict(self):
+        return {
+            'signal': self.signal.to_dict(),
+            'entry_price': self.entry_price,
+            'stop_loss': self.stop_loss,
+            'ohlcv': asdict(self.ohlcv),
+            'meta': asdict(self.meta)
+        }
+
+
 
 @dataclass(frozen=True)
 class SignalExitEvent(SignalEvent):
     exit_price: float
     ohlcv: OHLCV
+
+    def to_dict(self):
+        return {
+            'signal': self.signal.to_dict(),
+            'exit_price': self.exit_price,
+            'ohlcv': asdict(self.ohlcv),
+            'meta': asdict(self.meta)
+        }
 
 
 @dataclass(frozen=True)

@@ -34,3 +34,14 @@ class Signal:
             return NotImplemented
 
         return self.symbol == other.symbol and self.side == other.side and self.timeframe == other.timeframe and self.strategy == other.strategy
+    
+    def to_dict(self):
+        return {
+            'symbol': str(self.symbol),
+            'timeframe': str(self.timeframe),
+            'strategy': str(self.strategy),
+            'side': str(self.side)
+        }
+    
+
+    

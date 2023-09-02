@@ -103,4 +103,18 @@ class Position:
     def __post_init__(self):
         if self.stop_loss_price:
             object.__setattr__(self, 'take_profit_price', self.take_profit_strategy.next(self.entry_price, self.stop_loss_price))
+
+    def to_dict(self):
+        return {
+            'signal': self.signal.to_dict(),
+            'side': str(self.side),
+            'size': self.size,
+            'entry_price': self.entry_price,
+            'exit_price': self.exit_price,
+            'closed': self.closed,
+            'stop_loss_price': self.stop_loss_price,
+            'take_profit_price': self.take_profit_price,
+            'pnl': self.pnl,
+            'trade_time': self.trade_time
+        }
     

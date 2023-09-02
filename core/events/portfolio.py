@@ -25,5 +25,6 @@ class PortfolioPerformanceUpdated(PortfolioEvent):
             'symbol': str(self.symbol),
             'timeframe': str(self.timeframe),
             'strategy': str(self.strategy),
-            'performance': self.performance.to_dict()
+            'performance': self.performance.to_dict(),
+            'meta': asdict(self.meta)
         }
