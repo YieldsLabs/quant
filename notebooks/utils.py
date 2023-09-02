@@ -76,6 +76,7 @@ def plot_candlestick(data: pd.DataFrame) -> go.Figure:
 def plot_equity_curve(df, symbol, timeframe, strategy):
     equity_curve = df['performance.equity'].iloc[-1]
     account_size = df['performance.account_size'].iloc[-1]
+    drawdowns = df['performance.drawdown'].iloc[-1]
     sterling_ratio = df['performance.sterling_ratio'].iloc[-1]
     hit_ratio = df['performance.hit_ratio'].iloc[-1]
     total_pnl = df['performance.total_pnl'].iloc[-1]
@@ -117,6 +118,16 @@ def plot_equity_curve(df, symbol, timeframe, strategy):
 
     add_equity_curve_segment(fig, trades[start_idx:], equity_curve[start_idx:], current_color)
 
+    fig.add_trace(
+        go.Bar(
+            x=trades,
+            y=[-drawdown * account_size for drawdown in drawdowns],
+            orientation='v',
+            marker_color='pink',
+            yaxis='y2',
+            opacity=0.4
+        )
+    )
 
     annotations0 = [
         f"Net Profit: ${total_pnl:.2f}",
@@ -164,9 +175,6 @@ def plot_equity_curve(df, symbol, timeframe, strategy):
 
     fig.update_layout(
         title=f'{symbol} {timeframe} {strategy}',
-        xaxis_title='Total Trades',
-        yaxis_title='Equity',
-        xaxis=dict(dtick=1),
         xaxis_rangeslider_visible=False,
         template='plotly_dark',
         showlegend=False,
@@ -176,6 +184,21 @@ def plot_equity_curve(df, symbol, timeframe, strategy):
             r=15,
             t=70,
             b=40
+        ),
+        xaxis=dict(
+            title='',
+            showgrid=False
+        ),
+        yaxis=dict(
+            title="",
+            showgrid=False
+        ),
+        yaxis2=dict(
+            title="",
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            showticklabels=False 
         )
     )
 
