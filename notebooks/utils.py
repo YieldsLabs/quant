@@ -36,7 +36,6 @@ def plot_candlestick(data: pd.DataFrame) -> go.Figure:
         cols=cols,
         shared_xaxes=False,
         subplot_titles=subplot_titles_list,
-        vertical_spacing=0.1,
     )
 
     row = 1
