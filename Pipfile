@@ -16,6 +16,8 @@ wasmtime = "*"
 uvloop = "*"
 plotly = "*"
 nbformat = "*"
+matplotlib = "*"
+seaborn = "*"
 
 [dev-packages]
 flake8 = "*"
