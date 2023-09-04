@@ -81,7 +81,7 @@ def plot_candlestick(data: pd.DataFrame, charts_per_row: int = 2) -> go.Figure:
     fig.update_layout(
         showlegend=False,
         template='plotly_dark',
-        height=320 * rows,
+        height=640 * rows,
         width=1100,
         legend_orientation="h",
         plot_bgcolor='black',
