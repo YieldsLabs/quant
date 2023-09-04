@@ -4,36 +4,61 @@ from plotly.subplots import make_subplots
 
 
 def create_candlestick(data: pd.DataFrame) -> go.Figure:
-    return go.Candlestick(
-        x=data['timestamp'],
-        open=data['open'],
-        high=data['high'],
-        low=data['low'],
-        close=data['close']
+    buy_color = 'cyan'  
+    sell_color = 'magenta'
+
+    increasing_color = 'lime'
+    decreasing_color = 'orange'
+
+    traces = []
+    
+    traces.append(
+        go.Candlestick(
+            x=data['timestamp'],
+            open=data['open'],
+            high=data['high'],
+            low=data['low'],
+            close=data['close'],
+            increasing_line_color=increasing_color,
+            decreasing_line_color=decreasing_color,
+            increasing_fillcolor=increasing_color,
+            decreasing_fillcolor=decreasing_color,
+            name="OHLC"
+        )
     )
 
-def create_candlestick(data: pd.DataFrame) -> go.Figure:
-    return go.Candlestick(
-        x=data['timestamp'],
-        open=data['open'],
-        high=data['high'],
-        low=data['low'],
-        close=data['close'],
-        increasing_line_color='green',
-        decreasing_line_color='red' ,
-        name="OHLC"
+    traces.append(
+        go.Scatter(
+            x=data.loc[data['signal.side'] == 'BUY', 'timestamp'],
+            y=data.loc[data['signal.side'] == 'BUY', 'close'],
+            mode='markers',
+            marker=dict(symbol='triangle-up', size=10, color=buy_color),
+            name='Buy'
+        )
     )
 
-def plot_candlestick(data: pd.DataFrame) -> go.Figure:
+    traces.append(
+        go.Scatter(
+            x=data.loc[data['signal.side'] == 'SELL', 'timestamp'],
+            y=data.loc[data['signal.side'] == 'SELL', 'close'],
+            mode='markers',
+            marker=dict(symbol='triangle-down', size=10, color=sell_color),
+            name='Sell'
+        )
+    )
+
+    return traces
+
+
+def plot_candlestick(data: pd.DataFrame, charts_per_row: int = 2) -> go.Figure:
     n = len(data)
-    rows = (n + 1) // 2
-    cols = 2
+    rows = -(-n // charts_per_row)
 
     subplot_titles_list = [f"{key[0]} - {key[1]}" for key in data.keys()]
     
     fig = make_subplots(
         rows=rows,
-        cols=cols,
+        cols=charts_per_row,
         shared_xaxes=False,
         subplot_titles=subplot_titles_list,
     )
@@ -42,11 +67,12 @@ def plot_candlestick(data: pd.DataFrame) -> go.Figure:
     col = 1
     
     for title, df in data.items():
-        candlestick = create_candlestick(df)
+        traces = create_candlestick(df)
         
-        fig.add_trace(candlestick, row=row, col=col)
+        for trace in traces:
+            fig.add_trace(trace, row=row, col=col)
         
-        if col == 2:
+        if col == charts_per_row:
             col = 1
             row += 1
         else:
