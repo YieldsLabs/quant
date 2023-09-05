@@ -40,7 +40,7 @@ class EventHandler:
         if event_type in self._event_handlers:
             for handler in self._event_handlers[event_type]:
                 logger.debug(handler)
-                asyncio.create_task(self._call_handler(handler, event, *args, **kwargs))
+                await self._call_handler(handler, event, *args, **kwargs)
 
     async def _call_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
         try:

@@ -20,7 +20,7 @@ class TradingContext:
     timeframes: List[Timeframe]
     strategy_path: str
     strategies: List[List[Any]]
-    symbols: List[str]
+    blacklist: List[str]
     lookback: Lookback
     batch_size: int
     leverage: int
