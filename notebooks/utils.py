@@ -39,7 +39,7 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
             x=data.loc[data['signal.side'] == 'BUY', 'timestamp'],
             y=data.loc[data['signal.side'] == 'BUY', 'close'],
             mode='markers',
-            marker=dict(symbol='cross', size=8, color=buy_color),
+            marker=dict(symbol='triangle-up', size=10, color=buy_color),
             name='Buy'
         )
     )
@@ -49,34 +49,81 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
             x=data.loc[data['signal.side'] == 'SELL', 'timestamp'],
             y=data.loc[data['signal.side'] == 'SELL', 'close'],
             mode='markers',
-            marker=dict(symbol='cross', size=8, color=sell_color),
+            marker=dict(symbol='triangle-down', size=10, color=sell_color),
             name='Sell'
         )
     )
-
+    
+    long_win = (data['position.side'] == 'long') & (data['position.exit_price'] > data['position.entry_price'])
+    long_loss = (data['position.side'] == 'long') & (data['position.exit_price'] <= data['position.entry_price'])
 
     traces.append(
         go.Scatter(
-            x=data.loc[data['position.side'] == 'long', 'timestamp'],
-            y=data.loc[data['position.side'] == 'long', 'position.entry_price'],
+            x=data.loc[long_win, 'timestamp'],
+            y=data.loc[long_win, 'position.entry_price'],
             mode='markers',
-            marker=dict(symbol='triangle-up', size=12, color=entry_color_long),
-            name='Long Entry'
+            marker=dict(symbol='star', size=8, color=entry_color_long),
+            name='Long Win'
         )
     )
 
     traces.append(
         go.Scatter(
-            x=data.loc[data['position.side'] == 'short', 'timestamp'],
-            y=data.loc[data['position.side'] == 'short', 'position.entry_price'],
+            x=data.loc[long_loss, 'timestamp'],
+            y=data.loc[long_loss, 'position.entry_price'],
             mode='markers',
-            marker=dict(symbol='triangle-down', size=12, color=entry_color_short),
-            name='Short Entry'
+            marker=dict(symbol='x', size=8, color=entry_color_long),
+            name='Long Loss'
         )
     )
 
+    short_win = (data['position.side'] == 'short') & (data['position.exit_price'] < data['position.entry_price'])
+    short_loss = (data['position.side'] == 'short') & (data['position.exit_price'] >= data['position.entry_price'])
 
-    return traces
+    traces.append(
+        go.Scatter(
+            x=data.loc[short_win, 'timestamp'],
+            y=data.loc[short_win, 'position.entry_price'],
+            mode='markers',
+            marker=dict(symbol='star', size=8, color=entry_color_short),
+            name='Short Win'
+        )
+    )
+
+    traces.append(
+        go.Scatter(
+            x=data.loc[short_loss, 'timestamp'],
+            y=data.loc[short_loss, 'position.entry_price'],
+            mode='markers',
+            marker=dict(symbol='x', size=8, color=entry_color_short),
+            name='Short Loss'
+        )
+    )
+
+    shapes = []
+
+    for _, row in data.iterrows():
+        if not pd.isna(row['position.entry_price']):
+            entry_timestamp = row['timestamp']
+            exit_timestamp = entry_timestamp + pd.Timedelta(row['position.trade_time'], unit='ms')
+            
+            shapes.append({
+                'type': 'rect',
+                'xref': 'x',
+                'yref': 'y',
+                'x0': entry_timestamp,
+                'x1': exit_timestamp,
+                'y0': row['position.entry_price'],
+                'y1': row['position.exit_price'],
+                'fillcolor': 'lightgreen' if row['position.side'] == 'long' else 'lightcoral',
+                'opacity': 0.8,
+                'line_width': 1,
+                'line': {
+                    'color': 'green' if row['position.side'] == 'long' else 'red',
+                }
+            })
+
+    return traces, shapes
 
 
 def plot_candlestick(data: pd.DataFrame, charts_per_row: int = 2) -> go.Figure:
@@ -96,11 +143,14 @@ def plot_candlestick(data: pd.DataFrame, charts_per_row: int = 2) -> go.Figure:
     col = 1
     
     for title, df in data.items():
-        traces = create_candlestick(df)
+        traces, shapes = create_candlestick(df)
         
         for trace in traces:
             fig.add_trace(trace, row=row, col=col)
-        
+
+        for shape in shapes:
+            fig.add_shape(shape, row=row, col=col)
+
         if col == charts_per_row:
             col = 1
             row += 1
@@ -119,8 +169,8 @@ def plot_candlestick(data: pd.DataFrame, charts_per_row: int = 2) -> go.Figure:
             autoexpand=False,
             l=40,
             r=15,
-            t=60,
-            b=40
+            t=30,
+            b=30
         )
     )
 

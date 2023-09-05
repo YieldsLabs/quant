@@ -31,8 +31,8 @@ class Position:
     closed: bool = False
     stop_loss_price: Optional[float] = None
     take_profit_price: Optional[float] = field(init=False)
-    open_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
-    closed_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
+    open_timestamp: float = field(default_factory=lambda: 0)
+    closed_timestamp: float = field(default_factory=lambda: 0)
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     exit_price: float = field(default_factory=lambda: 0.0001)
 
@@ -42,7 +42,7 @@ class Position:
     
     @property
     def trade_time(self) -> int:
-        return int(self.closed_timestamp - self.open_timestamp)
+        return abs(int(self.closed_timestamp - self.open_timestamp))
 
     @property
     def pnl(self) -> float:
