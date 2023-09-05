@@ -4,16 +4,16 @@ from plotly.subplots import make_subplots
 
 
 def create_candlestick(data: pd.DataFrame) -> go.Figure:
-    buy_color = 'cyan'  
-    sell_color = 'magenta'
+    buy_color = '#334bc8'  
+    sell_color = '#ffbd18'
 
     stop_loss_color = 'pink'
     take_profit_color = 'yellow'
-    entry_color_long = 'limegreen'
-    entry_color_short = 'darkred'
+    entry_color_long = 'darkred'
+    entry_color_short = 'limegreen'
 
-    increasing_color = 'lime'
-    decreasing_color = 'orange'
+    increasing_color = '#86cb5d'
+    decreasing_color = '#d19689'
 
     traces = []
     
