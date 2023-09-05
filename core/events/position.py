@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from .base import Event, EventGroup, EventMeta
 
@@ -11,11 +11,13 @@ class PositionEvent(Event):
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2, group=EventGroup.position), init=False)
 
     def to_dict(self):
-        return {
+        parent_dict = super().to_dict()
+
+        current_dict = {
             'position': self.position.to_dict(),
-            'meta': asdict(self.meta)
         }
 
+        return {**parent_dict, **current_dict}
 
 @dataclass(frozen=True)
 class PositionInitialized(PositionEvent):
@@ -34,4 +36,14 @@ class PositionCloseRequested(PositionEvent):
 
 @dataclass(frozen=True)
 class PositionClosed(PositionEvent):
+    pass
+
+
+@dataclass(frozen=True)
+class BrokerPositionOpened(PositionEvent):
+    pass
+
+
+@dataclass(frozen=True)
+class BrokerPositionClosed(PositionEvent):
     pass

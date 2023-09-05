@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from .base import Event, EventGroup, EventMeta
 
@@ -21,10 +21,14 @@ class PortfolioPerformanceUpdated(PortfolioEvent):
     performance: Performance
 
     def to_dict(self):
-        return {
+        parent_dict = super().to_dict()
+
+        current_dict = {
             'symbol': str(self.symbol),
             'timeframe': str(self.timeframe),
             'strategy': str(self.strategy),
-            'performance': self.performance.to_dict(),
-            'meta': asdict(self.meta)
+            'performance': self.performance.to_dict()
         }
+
+        return {**parent_dict, **current_dict}
+

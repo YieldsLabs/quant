@@ -1,4 +1,5 @@
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
+from core.models.ohlcv import OHLCV
 from core.models.position import Position, PositionSide
 from core.models.signal import Signal, SignalSide
 
@@ -14,7 +15,7 @@ class PositionFactory(AbstractPositionFactory):
         self.risk_per_trade = risk_per_trade
         self.risk_reward_ratio = risk_reward_ratio
 
-    def create_position(self, signal: Signal, account_size: float, entry_price: float, stop_loss_price: float | None) -> Position:
+    def create_position(self, signal: Signal, ohlcv: OHLCV, account_size: float, entry_price: float, stop_loss_price: float | None) -> Position:
         symbol = signal.symbol
         
         stop_loss_price = round(stop_loss_price, symbol.price_precision) if stop_loss_price else None
@@ -42,6 +43,7 @@ class PositionFactory(AbstractPositionFactory):
             entry_price,
             risk_strategy,
             take_profit_strategy,
+            open_timestamp=ohlcv.timestamp,
             stop_loss_price=stop_loss_price
         )
 

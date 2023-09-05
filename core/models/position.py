@@ -65,15 +65,15 @@ class Position:
             last_modified=datetime.now().timestamp()
         )
 
-    def close(self) -> 'Position':
+    def close(self, closed_timestamp: float) -> 'Position':
         if self.closed:
             return self
 
         return replace(
             self, 
             closed=True,
+            closed_timestamp=closed_timestamp,
             last_modified=datetime.now().timestamp(),
-            closed_timestamp=datetime.now().timestamp(),
         )
 
     def update_prices(self, execution_price: float) -> 'Position':
@@ -115,6 +115,7 @@ class Position:
             'stop_loss_price': self.stop_loss_price,
             'take_profit_price': self.take_profit_price,
             'pnl': self.pnl,
+            'open_timestamp': self.open_timestamp,
             'trade_time': self.trade_time
         }
     

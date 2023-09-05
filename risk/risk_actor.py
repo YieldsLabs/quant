@@ -86,7 +86,7 @@ class RiskActor(AbstractActor):
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)
 
-        await self.dispatch(RiskThresholdBreached(position, exit_price))
+        await self.dispatch(RiskThresholdBreached(position, ohlcv, exit_price))
 
     def _should_exit(self, next_position: Position, ohlcv: OHLCV):
         if next_position.side == PositionSide.LONG:

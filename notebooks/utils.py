@@ -7,6 +7,13 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
     buy_color = 'cyan'  
     sell_color = 'magenta'
 
+    stop_loss_color = 'red'
+    take_profit_color = 'green'
+    entry_color_long = 'limegreen'
+    entry_color_short = 'darkred'
+    exit_color_profit = 'green'
+    exit_color_loss = 'red'
+
     increasing_color = 'lime'
     decreasing_color = 'orange'
 
@@ -32,7 +39,7 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
             x=data.loc[data['signal.side'] == 'BUY', 'timestamp'],
             y=data.loc[data['signal.side'] == 'BUY', 'close'],
             mode='markers',
-            marker=dict(symbol='triangle-up', size=10, color=buy_color),
+            marker=dict(symbol='cross', size=8, color=buy_color),
             name='Buy'
         )
     )
@@ -42,10 +49,32 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
             x=data.loc[data['signal.side'] == 'SELL', 'timestamp'],
             y=data.loc[data['signal.side'] == 'SELL', 'close'],
             mode='markers',
-            marker=dict(symbol='triangle-down', size=10, color=sell_color),
+            marker=dict(symbol='cross', size=8, color=sell_color),
             name='Sell'
         )
     )
+
+
+    traces.append(
+        go.Scatter(
+            x=data.loc[data['position.side'] == 'long', 'timestamp'],
+            y=data.loc[data['position.side'] == 'long', 'position.entry_price'],
+            mode='markers',
+            marker=dict(symbol='triangle-up', size=12, color=entry_color_long),
+            name='Long Entry'
+        )
+    )
+
+    traces.append(
+        go.Scatter(
+            x=data.loc[data['position.side'] == 'short', 'timestamp'],
+            y=data.loc[data['position.side'] == 'short', 'position.entry_price'],
+            mode='markers',
+            marker=dict(symbol='triangle-down', size=12, color=entry_color_short),
+            name='Short Entry'
+        )
+    )
+
 
     return traces
 
