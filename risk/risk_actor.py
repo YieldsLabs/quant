@@ -99,15 +99,19 @@ class RiskActor(AbstractActor):
     @staticmethod
     def _calculate_exit_price(position: Position, ohlcv: OHLCV):
         if position.side == PositionSide.LONG:
-            current_close = ohlcv.high
-            exit_price = max(min(current_close, position.take_profit_price or current_close),
-                             position.stop_loss_price or current_close)
-        elif position.side == PositionSide.SHORT:
-            current_close = ohlcv.low
-            exit_price = min(max(current_close, position.take_profit_price or current_close),
-                             position.stop_loss_price or current_close)
-        return exit_price
+            if position.stop_loss_price is not None and ohlcv.low <= position.stop_loss_price:
+                return position.stop_loss_price
+            if position.take_profit_price is not None and ohlcv.high >= position.take_profit_price:
+                return position.take_profit_price
+            return ohlcv.close
 
+        elif position.side == PositionSide.SHORT:
+            if position.stop_loss_price is not None and ohlcv.high >= position.stop_loss_price:
+                return position.stop_loss_price
+            if position.take_profit_price is not None and ohlcv.low <= position.take_profit_price:
+                return position.take_profit_price
+            return ohlcv.close
+    
     @staticmethod
     def _long_exit_conditions(stop_loss_price: float | None, take_profit_price: float | None, low: float, high: float, risk_buffer: float):
         return (stop_loss_price is not None and low <= stop_loss_price * (1 - risk_buffer)) or \

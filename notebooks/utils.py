@@ -7,12 +7,10 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
     buy_color = 'cyan'  
     sell_color = 'magenta'
 
-    stop_loss_color = 'red'
-    take_profit_color = 'green'
+    stop_loss_color = 'pink'
+    take_profit_color = 'yellow'
     entry_color_long = 'limegreen'
     entry_color_short = 'darkred'
-    exit_color_profit = 'green'
-    exit_color_loss = 'red'
 
     increasing_color = 'lime'
     decreasing_color = 'orange'
@@ -116,12 +114,44 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
                 'y0': row['position.entry_price'],
                 'y1': row['position.exit_price'],
                 'fillcolor': 'lightgreen' if row['position.side'] == 'long' else 'lightcoral',
-                'opacity': 0.8,
+                'opacity': 0.6,
                 'line_width': 1,
                 'line': {
                     'color': 'green' if row['position.side'] == 'long' else 'red',
                 }
             })
+
+            if 'position.take_profit_price' in row and not pd.isna(row['position.take_profit_price']):
+                shapes.append({
+                    'type': 'line',
+                    'xref': 'x',
+                    'yref': 'y',
+                    'x0': entry_timestamp,
+                    'x1': exit_timestamp,
+                    'y0': row['position.take_profit_price'],
+                    'y1': row['position.take_profit_price'],
+                    'line': {
+                        'color': take_profit_color,
+                        'width': 1,
+                        'dash': 'dot',
+                    }
+                })
+
+            if 'position.stop_loss_price' in row and not pd.isna(row['position.stop_loss_price']):
+                shapes.append({
+                    'type': 'line',
+                    'xref': 'x',
+                    'yref': 'y',
+                    'x0': entry_timestamp,
+                    'x1': exit_timestamp,
+                    'y0': row['position.stop_loss_price'],
+                    'y1': row['position.stop_loss_price'],
+                    'line': {
+                        'color': stop_loss_color,
+                        'width': 1,
+                        'dash': 'dot',
+                    }
+                })
 
     return traces, shapes
 
