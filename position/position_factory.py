@@ -33,7 +33,7 @@ class PositionFactory(AbstractPositionFactory):
         )
 
         position_side = PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
-        risk_strategy = BreakEvenStrategy(self.risk_per_trade)
+        risk_strategy = BreakEvenStrategy()
         take_profit_strategy = PositionRRTakeProfit(self.risk_reward_ratio)
 
         return Position(

@@ -88,7 +88,7 @@ class BybitWSHandler(AbstractWS):
                 logger.error(f"Error while process message: {e}")
                 await self.connect_to_websocket()
 
-    async def run(self, ping_interval=10):
+    async def run(self, ping_interval=20):
         try:
             await self.connect_to_websocket()
 

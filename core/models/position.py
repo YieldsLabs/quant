@@ -30,7 +30,7 @@ class Position:
     orders: Tuple[Order] = ()
     closed: bool = False
     stop_loss_price: Optional[float] = None
-    take_profit_price: Optional[float] = field(init=False)
+    take_profit_price: Optional[float] = None
     open_timestamp: float = field(default_factory=lambda: 0)
     closed_timestamp: float = field(default_factory=lambda: 0)
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
@@ -93,8 +93,8 @@ class Position:
             )
     
     def next(self, ohlcv: OHLCV) -> 'Position':
-        next_stop_loss = self.risk_strategy.next(self.side, self.entry_price, self.stop_loss_price, ohlcv)
-        
+        next_stop_loss = self.risk_strategy.next(self.side, self.entry_price, self.take_profit_price, self.stop_loss_price, ohlcv)
+
         return replace(
             self,
             stop_loss_price = next_stop_loss
