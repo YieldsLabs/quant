@@ -4,14 +4,25 @@ from core.models.position import PositionSide
 
 
 class BreakEvenStrategy(AbstractPositionRiskStrategy):
-    def __init__(self, risk_per_trade: float):
+    def __init__(self, break_even_percentage: float = 0.25):
         super().__init__()
-        self.risk_per_trade = risk_per_trade
+        self.break_even_percentage = break_even_percentage
 
-    def next(self, side: PositionSide, entry_price: float, stop_loss_price: float, ohlcv: OHLCV) -> float:
-        new_stop_loss_price = ohlcv.high - (ohlcv.high - stop_loss_price) * self.risk_per_trade if side == PositionSide.LONG else ohlcv.low + (stop_loss_price - ohlcv.low) * self.risk_per_trade
+    def next(self, side: PositionSide, entry_price: float, take_profit_price: float, stop_loss_price: float, ohlcv: OHLCV) -> float:
+        distance_to_target = abs(take_profit_price - entry_price) * self.break_even_percentage
+        current_price = self._weighted_typical_price(ohlcv)
+        
+        if side == PositionSide.LONG:
+            if current_price >= entry_price + distance_to_target:
+                return entry_price
 
-        if (side == PositionSide.LONG and new_stop_loss_price >= entry_price) or (side == PositionSide.SHORT and new_stop_loss_price <= entry_price):
-            return entry_price
-
+        elif side == PositionSide.SHORT:
+            if current_price <= entry_price - distance_to_target:
+                return entry_price
+            
         return stop_loss_price
+    
+    def _weighted_typical_price(self, ohlcv: OHLCV) -> float:
+        return (ohlcv.high + ohlcv.low + (ohlcv.close * 2.0)) / 4.0
+
+

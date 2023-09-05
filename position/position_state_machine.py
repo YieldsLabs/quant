@@ -3,7 +3,7 @@ from enum import Enum, auto
 import logging
 from typing import Callable, Dict, Type, Union
 
-from core.events.position import PositionClosed, PositionOpened
+from core.events.position import BrokerPositionClosed, BrokerPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
 from core.interfaces.abstract_position_manager import AbstractPositionManager
@@ -21,8 +21,8 @@ class PositionState(Enum):
 
 
 PortfolioEvent = Union[
-    PositionOpened,
-    PositionClosed,
+    BrokerPositionOpened,
+    BrokerPositionClosed,
     GoLongSignalReceived,
     GoShortSignalReceived,
     ExitLongSignalReceived,
@@ -36,11 +36,11 @@ class PositionStateMachine:
     TRANSITIONS = {
         (PositionState.IDLE, GoLongSignalReceived): (PositionState.WAITING_BROKER_CONFIRMATION, "handle_signal_received"),
         (PositionState.IDLE, GoShortSignalReceived): (PositionState.WAITING_BROKER_CONFIRMATION, "handle_signal_received"),
-        (PositionState.WAITING_BROKER_CONFIRMATION, PositionOpened): (PositionState.OPENED, "handle_position_opened"),
+        (PositionState.WAITING_BROKER_CONFIRMATION, BrokerPositionOpened): (PositionState.OPENED, "handle_position_opened"),
         (PositionState.OPENED, ExitLongSignalReceived): (PositionState.CLOSE, "handle_exit_received"),
         (PositionState.OPENED, ExitShortSignalReceived): (PositionState.CLOSE, "handle_exit_received"),
         (PositionState.OPENED, RiskThresholdBreached): (PositionState.CLOSE, "handle_exit_received"),
-        (PositionState.CLOSE, PositionClosed): (PositionState.IDLE, "handle_position_closed"),
+        (PositionState.CLOSE, BrokerPositionClosed): (PositionState.IDLE, "handle_position_closed"),
     }
 
     def __init__(self, position_manager: Type[AbstractPositionManager]):

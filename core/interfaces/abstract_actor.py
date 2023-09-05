@@ -6,14 +6,14 @@ from core.events.risk import RiskThresholdBreached
 from .abstract_event_manager import AbstractEventManager
 
 from ..events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
-from ..events.position import PositionInitialized, PositionClosed
+from ..events.position import PositionCloseRequested, PositionInitialized
 from ..events.ohlcv import NewMarketDataReceived
 
 
 ActorEvent = Union[
     NewMarketDataReceived,
     PositionInitialized,
-    PositionClosed,
+    PositionCloseRequested,
     GoLongSignalReceived,
     GoShortSignalReceived,
     ExitLongSignalReceived,

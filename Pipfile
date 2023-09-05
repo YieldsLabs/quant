@@ -14,11 +14,16 @@ uuid = "*"
 scikit-learn = "*"
 wasmtime = "*"
 uvloop = "*"
+plotly = "*"
+nbformat = "*"
+matplotlib = "*"
+seaborn = "*"
 
 [dev-packages]
 flake8 = "*"
 autopep8 = "*"
 mypy = "*"
+ipykernel = "*"
 
 [requires]
 python_version = "3.11"

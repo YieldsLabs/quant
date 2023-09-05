@@ -64,11 +64,13 @@ class TrendSystem(AbstractSystem):
         
         symbols = await self.query(GetSymbols())
 
-        if len(self.context.symbols) > 0:
-            symbols = [symbol for symbol in symbols if symbol.name in self.context.symbols]
+        if len(self.context.blacklist) > 0:
+            symbols = [symbol for symbol in symbols if symbol.name not in set(self.context.blacklist)]
         
         shuffle(symbols)
         symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
+
+        logger.info(f"Total symbols: {len(symbols)}")
 
         total_steps = len(symbols_and_timeframes) * len(self.context.strategies)
         estimator = Estimator(total_steps)

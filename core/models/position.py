@@ -30,9 +30,9 @@ class Position:
     orders: Tuple[Order] = ()
     closed: bool = False
     stop_loss_price: Optional[float] = None
-    take_profit_price: Optional[float] = field(init=False)
-    open_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
-    closed_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
+    take_profit_price: Optional[float] = None
+    open_timestamp: float = field(default_factory=lambda: 0)
+    closed_timestamp: float = field(default_factory=lambda: 0)
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     exit_price: float = field(default_factory=lambda: 0.0001)
 
@@ -42,7 +42,7 @@ class Position:
     
     @property
     def trade_time(self) -> int:
-        return int(self.closed_timestamp - self.open_timestamp)
+        return abs(int(self.closed_timestamp - self.open_timestamp))
 
     @property
     def pnl(self) -> float:
@@ -65,15 +65,15 @@ class Position:
             last_modified=datetime.now().timestamp()
         )
 
-    def close(self) -> 'Position':
+    def close(self, closed_timestamp: float) -> 'Position':
         if self.closed:
             return self
 
         return replace(
             self, 
             closed=True,
+            closed_timestamp=closed_timestamp,
             last_modified=datetime.now().timestamp(),
-            closed_timestamp=datetime.now().timestamp(),
         )
 
     def update_prices(self, execution_price: float) -> 'Position':
@@ -93,8 +93,8 @@ class Position:
             )
     
     def next(self, ohlcv: OHLCV) -> 'Position':
-        next_stop_loss = self.risk_strategy.next(self.side, self.entry_price, self.stop_loss_price, ohlcv)
-        
+        next_stop_loss = self.risk_strategy.next(self.side, self.entry_price, self.take_profit_price, self.stop_loss_price, ohlcv)
+
         return replace(
             self,
             stop_loss_price = next_stop_loss
@@ -103,4 +103,19 @@ class Position:
     def __post_init__(self):
         if self.stop_loss_price:
             object.__setattr__(self, 'take_profit_price', self.take_profit_strategy.next(self.entry_price, self.stop_loss_price))
+
+    def to_dict(self):
+        return {
+            'signal': self.signal.to_dict(),
+            'side': str(self.side),
+            'size': self.size,
+            'entry_price': self.entry_price,
+            'exit_price': self.exit_price,
+            'closed': self.closed,
+            'stop_loss_price': self.stop_loss_price,
+            'take_profit_price': self.take_profit_price,
+            'pnl': self.pnl,
+            'open_timestamp': self.open_timestamp,
+            'trade_time': self.trade_time
+        }
     

@@ -34,7 +34,7 @@ class Performance:
         pnl_positive = self._pnl > 0
         successful_trades = pnl_positive.sum()
 
-        return 100 * (successful_trades / self.total_trades)
+        return successful_trades / self.total_trades
     
     @property
     def sharpe_ratio(self) -> float:
@@ -47,19 +47,32 @@ class Performance:
         return avg_return / std_return
     
     @property
+    def equity(self):
+        return self._account_size + self._pnl.cumsum()
+    
+    @property
+    def drawdown(self):
+        equity_curve = self.equity
+        peak = np.maximum.accumulate(equity_curve)
+        drawdowns = (peak - equity_curve) / peak
+        
+        return drawdowns
+    
+    @property
+    def runup(self) -> float:
+        equity_curve = self.equity
+        trough = np.minimum.accumulate(equity_curve)
+        runups = (equity_curve - trough) / trough
+        
+        return runups
+    
+    @property
+    def max_runup(self) -> float:
+        return self.runup.max()
+
+    @property
     def max_drawdown(self) -> float:
-        account_size = self._account_size
-
-        peak = account_size
-        max_drawdown = 0
-
-        for pnl_value in self._pnl:
-            account_size += pnl_value
-            peak = max(peak, account_size)
-            drawdown = (peak - account_size) / peak
-            max_drawdown = max(max_drawdown, drawdown)
-
-        return max_drawdown
+        return self.drawdown.max()
     
     @property
     def calmar_ratio(self) -> float:
@@ -126,7 +139,7 @@ class Performance:
     
     @property
     def risk_of_ruin(self) -> float:
-        win_rate = self.hit_ratio / 100
+        win_rate = self.hit_ratio
 
         if win_rate == 1 or win_rate == 0:
             return 0
@@ -354,7 +367,7 @@ class Performance:
     
     def __repr__(self):
         return (f"Performance(total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, " +
-                 f"max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, calmar_ratio={self.calmar_ratio}, " +
+                 f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, calmar_ratio={self.calmar_ratio}, " +
                  f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, " +
                  f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, sharpe_ratio={self.sharpe_ratio}, " +
                  f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, " +
@@ -365,5 +378,38 @@ class Performance:
                  f"skewness={self.skewness}, kurtosis={self.kurtosis})")
     
     def to_dict(self):
-        return asdict(self)
+        return {
+            'account_size': self._account_size,
+            'total_trades': self.total_trades,
+            'total_pnl': self.total_pnl,
+            'average_pnl': self.average_pnl,
+            'max_consecutive_wins': self.max_consecutive_wins,
+            'max_consecutive_losses': self.max_consecutive_losses,
+            'hit_ratio': self.hit_ratio,
+            'equity': self.equity,
+            'runup': self.runup,
+            'max_runup': self.max_runup,
+            'drawdown': self.drawdown,
+            'max_drawdown': self.max_drawdown,
+            'sharpe_ratio': self.sharpe_ratio,
+            'calmar_ratio': self.calmar_ratio,
+            'sortino_ratio': self.sortino_ratio,
+            'annualized_return': self.annualized_return,
+            'annualized_volatility': self.annualized_volatility,
+            'recovery_factor': self.recovery_factor,
+            'profit_factor': self.profit_factor,
+            'risk_of_ruin': self.risk_of_ruin,
+            'skewness': self.skewness,
+            'kurtosis': self.kurtosis,
+            'var': self.var,
+            'cvar': self.cvar,
+            'ulcer_index': self.ulcer_index,
+            'lake_ratio': self.lake_ratio,
+            'burke_ratio': self.burke_ratio,
+            'rachev_ratio': self.rachev_ratio,
+            'sterling_ratio': self.sterling_ratio,
+            'tail_ratio': self.tail_ratio,
+            'omega_ratio': self.omega_ratio,
+            'kappa_three_ratio': self.kappa_three_ratio
+        }
 

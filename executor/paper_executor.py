@@ -1,14 +1,14 @@
 import asyncio
 from typing import Union
 
-from core.events.position import PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
+from core.events.position import BrokerPositionClosed, BrokerPositionOpened, PositionCloseRequested, PositionInitialized
 from core.interfaces.abstract_actor import AbstractActor
 from core.models.order import Order, OrderStatus
 from core.models.position import Position, PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
-PositionEvent = Union[PositionInitialized, PositionOpened, PositionCloseRequested, PositionClosed]
+PositionEvent = Union[PositionInitialized, PositionCloseRequested]
 
 class PaperExecutor(AbstractActor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe, slippage: float):
@@ -66,10 +66,10 @@ class PaperExecutor(AbstractActor):
 
         next_position = position.add_order(order).update_prices(order.price)
     
-        await self.dispatch(PositionOpened(next_position))
+        await self.dispatch(BrokerPositionOpened(next_position))
 
     async def _close_position(self, position: Position):
-        await self.dispatch(PositionClosed(position))
+        await self.dispatch(BrokerPositionClosed(position))
 
     @staticmethod
     def _apply_slippage(position: Position, factor: float) -> float:

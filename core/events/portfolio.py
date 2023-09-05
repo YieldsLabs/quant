@@ -19,3 +19,16 @@ class PortfolioEvent(Event):
 @dataclass(frozen=True)
 class PortfolioPerformanceUpdated(PortfolioEvent):
     performance: Performance
+
+    def to_dict(self):
+        parent_dict = super().to_dict()
+
+        current_dict = {
+            'symbol': str(self.symbol),
+            'timeframe': str(self.timeframe),
+            'strategy': str(self.strategy),
+            'performance': self.performance.to_dict()
+        }
+
+        return {**parent_dict, **current_dict}
+

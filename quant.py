@@ -57,9 +57,10 @@ async def main():
     lookback = Lookback.ONE_MONTH
     batch_size = 610
     risk_per_trade = 0.0015
-    risk_reward_ratio = 2
-    risk_buffer = 0.01
-    slippage = 0.008
+    risk_reward_ratio = 3.0
+    atr_stop_loss = 1.2
+    risk_buffer = 0.0001
+    slippage = 0.0005
     leverage = 1
     initial_account_size = 1000
 
@@ -68,11 +69,11 @@ async def main():
         Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES,
     ]
-    symbols = ['HIGHUSDT', 'YFIIUSDT', 'SOLUSDT']
+    blacklist = []
     
     trend_follow_path = './wasm/trend_follow.wasm'
     trend_follow_strategies = [
-        ['crossma', [50, 100, 14, 1.5]]
+        ['crossma', [50, 100, 14, atr_stop_loss]]
     ]
 
 
@@ -97,7 +98,7 @@ async def main():
         timeframes,
         trend_follow_path,
         trend_follow_strategies,
-        symbols,
+        blacklist,
         lookback,
         batch_size,
         leverage,

@@ -4,7 +4,7 @@ from typing import Union
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler
 from core.events.account import PositionAccountUpdated
-from core.events.position import PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
+from core.events.position import BrokerPositionClosed, BrokerPositionOpened, PositionCloseRequested, PositionClosed, PositionInitialized, PositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
 from core.interfaces.abstract_actor import AbstractActor
@@ -18,13 +18,13 @@ from .position_storage import PositionStorage
 from .position_state_machine import PositionStateMachine
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
-PositionEvent = Union[PositionOpened, PositionClosed]
+PositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
 ExitSignal = Union[ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached]
 
 class PositionActor(AbstractActor):
     SIGNAL_EVENTS = (GoLongSignalReceived, GoShortSignalReceived)
     EXIT_EVENTS = (ExitLongSignalReceived, ExitShortSignalReceived)
-    POSITION_EVENTS = (PositionOpened, PositionClosed, RiskThresholdBreached)
+    POSITION_EVENTS = (BrokerPositionOpened, BrokerPositionClosed, RiskThresholdBreached)
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe, position_factory: AbstractPositionFactory, initial_account_size: int):
         super().__init__()
@@ -107,6 +107,7 @@ class PositionActor(AbstractActor):
 
         position = self.position_factory.create_position(
             event.signal,
+            event.ohlcv,
             account_size,
             event.entry_price,
             event.stop_loss
@@ -118,13 +119,17 @@ class PositionActor(AbstractActor):
 
         return True
 
-    async def handle_position_opened(self, event: PositionOpened) -> bool:
+    async def handle_position_opened(self, event: BrokerPositionOpened) -> bool:
         await self.state.update_stored_position(event.position)
+        
+        await self.dispatch(PositionOpened(event.position))
         
         return True
     
-    async def handle_position_closed(self, event: PositionClosed) -> bool:
+    async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
         await self.state.close_stored_position(event.position)
+
+        await self.dispatch(PositionClosed(event.position))
         
         return True
 
@@ -137,11 +142,9 @@ class PositionActor(AbstractActor):
         position = await self.state.retrieve_position(signal)
 
         if position and self.can_close_position(event, position):
-            closed_position = position.close().update_prices(event.exit_price)
+            position = position.close(event.ohlcv.timestamp).update_prices(event.exit_price)
             
-            await self.state.update_stored_position(closed_position)
-
-            await self.dispatch(PositionCloseRequested(closed_position))
+            await self.dispatch(PositionCloseRequested(position))
             
             return True
         

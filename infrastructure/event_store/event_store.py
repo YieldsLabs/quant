@@ -29,7 +29,7 @@ class EventStore(metaclass=SingletonMeta):
         if group not in self.buffer:
             self.buffer[group] = []
 
-        self.buffer[group].append(event.to_dict())
+        self.buffer[group].append(event)
 
         if len(self.buffer[group]) >= self.buffer_size:
             self._flush_buffer(group)
