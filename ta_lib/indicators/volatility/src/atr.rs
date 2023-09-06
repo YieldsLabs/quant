@@ -1,5 +1,5 @@
 use core::series::Series;
-use trend::{ema::ema, sma::sma, smma::smma, wma::wma};
+use trend::{ema, sma, smma, wma};
 use utils::tr::true_range;
 
 pub fn atr(
@@ -15,6 +15,7 @@ pub fn atr(
         Some("WMA") => wma(&tr, period),
         Some("SMA") => sma(&tr, period),
         Some("EMA") => ema(&tr, period),
+        Some("SMMA") => smma(&tr, period),
         _ => smma(&tr, period),
     }
 }

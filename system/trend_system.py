@@ -134,9 +134,9 @@ class TrendSystem(AbstractSystem):
         for symbol, timeframe in symbols_and_timeframes:
             executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, False)
 
-            for strategy_name, strategy_parameters in strategies:
+            for strategy in strategies:
                 signal_actor = self.context.signal_factory.create_actor(
-                    symbol, timeframe, self.context.strategy_path, strategy_name, strategy_parameters)
+                    symbol, timeframe, self.context.strategy_path, strategy)
 
                 yield signal_actor, position_actor, risk_actor, executor_actor
 
@@ -147,6 +147,6 @@ class TrendSystem(AbstractSystem):
             for strategy, strategy_symbol in strategies:
                 if symbol == strategy_symbol:
                     signal_actor = self.context.signal_factory.create_actor(
-                        symbol, timeframe, self.context.strategy_path, strategy.name, strategy.hyperparameters)
+                        symbol, timeframe, self.context.strategy_path, strategy)
                     
                     yield signal_actor, position_actor, risk_actor, executor_actor

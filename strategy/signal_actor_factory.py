@@ -9,7 +9,7 @@ class SignalActorFactory(AbstractSignalActorFactory):
     def __init__(self):
         super().__init__()
     
-    def create_actor(self, symbol, timeframe, wasm_path, strategy, parameters):
+    def create_actor(self, symbol, timeframe, wasm_path, strategy):
         store = Store()
         wasi_config = WasiConfig()
         wasi_config.wasm_multi_value = True
@@ -21,4 +21,4 @@ class SignalActorFactory(AbstractSignalActorFactory):
         instance = linker.instantiate(store, module)
         exports = instance.exports(store)
 
-        return SignalActor(symbol, timeframe, strategy, parameters, store, exports)
+        return SignalActor(symbol, timeframe, strategy, store, exports)

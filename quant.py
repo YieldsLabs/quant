@@ -22,7 +22,9 @@ from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
 from risk.risk_actor_factory import RiskActorFactory
 from portfolio.portfolio import Portfolio
-
+from core.models.indicator import CrossMovingAverageIndicator, MovingAverageType
+from core.models.stop_loss import StopLoss, StopLossType
+from core.models.strategy import Strategy
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -56,8 +58,8 @@ async def main():
 
     lookback = Lookback.ONE_MONTH
     batch_size = 610
-    risk_per_trade = 0.0015
-    risk_reward_ratio = 3.0
+    risk_per_trade = 0.005
+    risk_reward_ratio = 1.5
     atr_stop_loss = 1.2
     risk_buffer = 0.0001
     slippage = 0.0005
@@ -69,13 +71,14 @@ async def main():
         Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES,
     ]
+
     blacklist = []
     
     trend_follow_path = './wasm/trend_follow.wasm'
     trend_follow_strategies = [
-        ['crossma', [50, 100, 14, atr_stop_loss]]
+        Strategy('crossma', (CrossMovingAverageIndicator(MovingAverageType.SMA, 50, 100),),
+            StopLoss(StopLossType.ATR, (14, atr_stop_loss)))
     ]
-
 
     event_store = EventStore(LOG_DIR, store_buf_size)
     event_bus = EventDispatcher(num_workers, multi_piority_group)

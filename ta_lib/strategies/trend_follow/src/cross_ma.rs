@@ -1,15 +1,17 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
 use stop_loss::ATRStopLoss;
-use trend::sma::sma;
+use trend::{dema, ema, hma, sma, tema, vwma, wma, zlema};
 
-pub struct CrossMAStrategy {
+pub struct CrossMAStrategy<'a> {
     short_period: usize,
     long_period: usize,
+    smothing: &'a str,
 }
 
-impl CrossMAStrategy {
+impl CrossMAStrategy<'_> {
     pub fn new(
+        smothing: &str,
         short_period: usize,
         long_period: usize,
         atr_period: usize,
@@ -19,6 +21,7 @@ impl CrossMAStrategy {
         let signal = CrossMAStrategy {
             short_period,
             long_period,
+            smothing,
         };
 
         let stop_loss = ATRStopLoss {
@@ -28,16 +31,33 @@ impl CrossMAStrategy {
 
         BaseStrategy::new(signal, stop_loss, lookback_period)
     }
+
+    fn ma(&self, data: &OHLCVSeries, period: usize) -> Series<f32> {
+        match self.smothing {
+            "SMA" => sma(&data.close, period),
+            "EMA" => ema(&data.close, period),
+            "DEMA" => dema(&data.close, period),
+            "TEMA" => tema(&data.close, period),
+            "WMA" => wma(&data.close, period),
+            "ZLEMA" => zlema(&data.close, period),
+            "HMA" => hma(&data.close, period),
+            "VWMA" => vwma(&data.close, &data.volume, period),
+            _ => sma(&data.close, period),
+        }
+    }
 }
 
-impl Signals for CrossMAStrategy {
+impl Signals for CrossMAStrategy<'_> {
     fn id(&self) -> String {
-        format!("CROSSMA_{}:{}", self.short_period, self.long_period)
+        format!(
+            "CROSS_{}:{}:{}",
+            self.smothing, self.short_period, self.long_period
+        )
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let short_ma = sma(&data.close, self.short_period);
-        let long_ma = sma(&data.close, self.long_period);
+        let short_ma = self.ma(data, self.short_period);
+        let long_ma = self.ma(data, self.long_period);
 
         let long_signal = short_ma.cross_over(&long_ma);
         let short_signal = short_ma.cross_under(&long_ma);
@@ -57,13 +77,13 @@ mod tests {
 
     #[test]
     fn test_crossmatrategy_new() {
-        let strategy = CrossMAStrategy::new(50, 100, 14, 2.0);
-        assert_eq!(strategy.id(), "_STRTGCROSSMA_50:100_STPLSSATR_14:2.0");
+        let strategy = CrossMAStrategy::new("SMA", 50, 100, 14, 2.0);
+        assert_eq!(strategy.id(), "_STRTGCROSS_SMA:50:100_STPLSSATR_14:2.0");
     }
 
     #[test]
     fn test_crossmastrategy_next_do_nothing() {
-        let mut strat = CrossMAStrategy::new(50, 100, 14, 2.0);
+        let mut strat = CrossMAStrategy::new("SMA", 50, 100, 14, 2.0);
 
         for _i in 0..100 {
             strat.next(OHLCV {
