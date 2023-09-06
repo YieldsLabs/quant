@@ -3,6 +3,7 @@ from enum import Enum, auto
 from itertools import product
 import logging
 from random import shuffle
+import numpy as np
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
@@ -10,6 +11,7 @@ from core.commands.broker import Subscribe, UpdateSettings
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.moving_average import MovingAverageType
+from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
@@ -63,12 +65,46 @@ class TrendSystem(AbstractSystem):
     def stop(self):
         self.event_queue.put_nowait(Event.SYSTEM_STOP)
 
+    def _diversified_strategies(self):
+        atr_multi = StaticParameter(.89)
+
+        return [
+            Strategy('crossma', (CrossMovingAverageIndicator(
+                MovingAverageType.SMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi)),
+            Strategy('crossma', (CrossMovingAverageIndicator(
+                MovingAverageType.EMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi)),
+            Strategy('crossma', (CrossMovingAverageIndicator(
+                MovingAverageType.WMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi)),
+            Strategy('crossma', (CrossMovingAverageIndicator(
+                MovingAverageType.DEMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi))
+        ]
+    
+    def _random_strategies(self, num=20):
+        random_strategies = []
+        uniq = set()
+        
+        for _ in range(num):
+            moving_avg_type = np.random.choice(list(MovingAverageType))
+            short_period = RandomParameter(5.0, 50.0, 5.0)
+            long_period = RandomParameter(50.0, 200.0, 10.0)
+            atr_multi = RandomParameter(0.85, 2, 0.05)
+
+            strategy = Strategy('crossma', (
+                CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),), ATRStopLoss(multi=atr_multi))
+            
+            if not str(strategy) in uniq:
+                random_strategies.append(strategy)
+                uniq.add(str(strategy))
+
+        return random_strategies
+
     async def _run_backtest(self):
         logger.info('Run backtest')
         
-        strategies = [
-            Strategy('crossma', (CrossMovingAverageIndicator(),), ATRStopLoss())
-        ]
+        strategies = self._random_strategies() + self._diversified_strategies()
+        shuffle(strategies)
+
+        logger.info(f"Total strategies: {len(strategies)}")
 
         symbols = await self.query(GetSymbols())
 
@@ -81,6 +117,7 @@ class TrendSystem(AbstractSystem):
         logger.info(f"Total symbols: {len(symbols)}")
 
         total_steps = len(symbols_and_timeframes) * len(strategies)
+       
         estimator = Estimator(total_steps)
 
         async for actors in self._generate_backtest_actors(symbols_and_timeframes, strategies):

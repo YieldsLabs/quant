@@ -23,3 +23,6 @@ class Strategy:
         sl_parameters = ':'.join(map(str, self.stop_loss.parameters))
 
         return f"_STRTG{strategy_name}_{strategy_parameters}_STPLSS{stop_loss_name}_{sl_parameters}"
+    
+    def __hash__(self) -> int:
+        return hash(str(self))
