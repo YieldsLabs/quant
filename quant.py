@@ -22,9 +22,10 @@ from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
 from risk.risk_actor_factory import RiskActorFactory
 from portfolio.portfolio import Portfolio
-from core.models.indicator import CrossMovingAverageIndicator, MovingAverageType
-from core.models.stop_loss import StopLoss, StopLossType
 from core.models.strategy import Strategy
+from strategy.indicator.cross_ma import CrossMovingAverageIndicator
+from strategy.stop_loss.atr import ATRStopLoss
+from core.models.moving_average import MovingAverageType
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -76,8 +77,7 @@ async def main():
     
     trend_follow_path = './wasm/trend_follow.wasm'
     trend_follow_strategies = [
-        Strategy('crossma', (CrossMovingAverageIndicator(MovingAverageType.SMA),),
-            StopLoss(StopLossType.ATR, (14, atr_stop_loss)))
+        Strategy('crossma', (CrossMovingAverageIndicator(MovingAverageType.SMA),), ATRStopLoss())
     ]
 
     event_store = EventStore(LOG_DIR, store_buf_size)

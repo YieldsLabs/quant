@@ -1,16 +1,14 @@
 from dataclasses import dataclass
-import re
 from typing import Tuple
 
 from .indicator import Indicator
-from .stop_loss import StopLoss
 
 
 @dataclass(frozen=True)
 class Strategy:
     name: str
     indicators: Tuple[Indicator, ...]
-    stop_loss: StopLoss
+    stop_loss: Indicator
 
     @property
     def parameters(self):
