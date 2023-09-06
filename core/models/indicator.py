@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Tuple
+from typing import Any
+import numpy as np
 
 
 class MovingAverageType(Enum):
@@ -18,6 +19,17 @@ class MovingAverageType(Enum):
 
 
 @dataclass(frozen=True)
+class Parameter:
+    min: int
+    max: int
+    step: int = 5
+
+    @property
+    def value(self) -> int:
+        return int(np.random.choice([x for x in np.arange(self.min, self.max + self.step, self.step)]))
+
+
+@dataclass(frozen=True)
 class Indicator:
     type: Any
 
@@ -25,9 +37,9 @@ class Indicator:
 @dataclass(frozen=True)
 class CrossMovingAverageIndicator(Indicator):
     type: MovingAverageType
-    short_period: int
-    long_period: int
+    short_period: Parameter = Parameter(5, 50, 5)
+    long_period: Parameter = Parameter(50, 200, 10)
 
     @property
     def parameters(self):
-        return [self.short_period, self.long_period]
+        return (self.short_period.value, self.long_period.value,)

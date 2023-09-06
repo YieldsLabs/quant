@@ -76,7 +76,7 @@ async def main():
     
     trend_follow_path = './wasm/trend_follow.wasm'
     trend_follow_strategies = [
-        Strategy('crossma', (CrossMovingAverageIndicator(MovingAverageType.SMA, 50, 100),),
+        Strategy('crossma', (CrossMovingAverageIndicator(MovingAverageType.SMA),),
             StopLoss(StopLossType.ATR, (14, atr_stop_loss)))
     ]
 
