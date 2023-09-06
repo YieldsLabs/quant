@@ -2,13 +2,10 @@ use core::series::Series;
 
 pub fn zlema(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
+    let lag = (period as f32 / 2.0).round() as usize;
 
-    let ema_first = source.ema(period);
-    let ema_second = ema_first.ema(period);
-
-    let macd_line = &ema_first - &ema_second;
-
-    let zlema = ema_first + macd_line;
+    let d = (2.0 * &source) - source.shift(lag);
+    let zlema = d.ema(period);
 
     zlema
 }
@@ -19,9 +16,9 @@ mod tests {
 
     #[test]
     fn test_zlema() {
-        let source = vec![100.0, 105.0, 110.0, 115.0, 120.0];
+        let source = vec![0.0, 0.0, 116.25, 123.125, 129.0625];
         let period = 3;
-        let expected = vec![100.0, 103.75, 108.75, 114.0625, 119.375];
+        let expected = vec![0.0, 0.0, 232.5, 239.375, 190.625];
 
         let result: Vec<f32> = zlema(&source, period).into();
 
