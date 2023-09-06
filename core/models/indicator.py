@@ -24,10 +24,15 @@ class Parameter:
     max: int
     step: int = 5
 
+    def __post_init__(self):
+        object.__setattr__(self, "_value", self._generate_value())
+
     @property
     def value(self) -> int:
-        return int(np.random.choice([x for x in np.arange(self.min, self.max + self.step, self.step)]))
+        return self._value
 
+    def _generate_value(self) -> int:
+        return int(np.random.choice([x for x in np.arange(self.min, self.max + self.step, self.step)]))
 
 @dataclass(frozen=True)
 class Indicator:
