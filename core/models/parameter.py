@@ -16,5 +16,6 @@ class Parameter:
         return self._value
 
     def _generate_value(self) -> float:
-        return float(np.random.choice([x for x in np.arange(self.min, self.max + self.step, self.step)]))
+        value = float(np.random.choice([x for x in np.arange(self.min, self.max + self.step, self.step)]))
+        return round(value, 2)
 
