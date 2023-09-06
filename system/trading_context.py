@@ -19,7 +19,6 @@ class TradingContext:
     risk_factory: AbstractRiskActorFactory
     timeframes: List[Timeframe]
     strategy_path: str
-    strategies: List[List[Any]]
     blacklist: List[str]
     lookback: Lookback
     batch_size: int

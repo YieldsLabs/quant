@@ -9,9 +9,13 @@ from core.commands.backtest import BacktestRun
 from core.commands.broker import Subscribe, UpdateSettings
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
+from core.models.moving_average import MovingAverageType
+from core.models.strategy import Strategy
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
+from strategy.indicator.cross_ma import CrossMovingAverageIndicator
+from strategy.stop_loss.atr import ATRStopLoss
 
 from .trading_context import TradingContext
 
@@ -62,6 +66,10 @@ class TrendSystem(AbstractSystem):
     async def _run_backtest(self):
         logger.info('Run backtest')
         
+        strategies = [
+            Strategy('crossma', (CrossMovingAverageIndicator(),), ATRStopLoss())
+        ]
+
         symbols = await self.query(GetSymbols())
 
         if len(self.context.blacklist) > 0:
@@ -72,11 +80,12 @@ class TrendSystem(AbstractSystem):
 
         logger.info(f"Total symbols: {len(symbols)}")
 
-        total_steps = len(symbols_and_timeframes) * len(self.context.strategies)
+        total_steps = len(symbols_and_timeframes) * len(strategies)
         estimator = Estimator(total_steps)
 
-        async for actors in self._generate_backtest_actors(symbols_and_timeframes, self.context.strategies):
+        async for actors in self._generate_backtest_actors(symbols_and_timeframes, strategies):
             account_size = await self.query(GetAccountBalance())
+            
             await self.execute(UpdateAccountSize(account_size))
         
             await asyncio.gather(*[actor.start() for actor in actors])
