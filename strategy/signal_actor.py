@@ -21,8 +21,8 @@ class Action(Enum):
 class SignalActor(AbstractActor):
     def __init__(self, symbol: str, timeframe: Timeframe, strategy: Strategy, store: Store, exports: Any):
         super().__init__()
-        self.symbol = symbol
-        self.timeframe = timeframe
+        self._symbol = symbol
+        self._timeframe = timeframe
         self._strategy = strategy
 
         self.store = store
@@ -35,7 +35,15 @@ class SignalActor(AbstractActor):
         if not self._strategy:
             raise RuntimeError("Id: Strategy is not started")
         
-        return f"{self.symbol}_{self.timeframe}{self._strategy}"
+        return f"{self._symbol}_{self._timeframe}{self._strategy}"
+    
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @property
+    def timeframe(self):
+        return self._timeframe
 
     @property
     def running(self):
@@ -88,21 +96,21 @@ class SignalActor(AbstractActor):
         self.register_id = None
     
     async def _signal_event_filter(self, event: NewMarketDataReceived):
-        if event.symbol == self.symbol and event.timeframe == self.timeframe:
+        if event.symbol == self._symbol and event.timeframe == self._timeframe:
             await self.handle(event)
 
     async def _dispatch_go_long_signal(self, data, price, stop_loss):
         await self.dispatch(
-            GoLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+            GoLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_go_short_signal(self, data, price, stop_loss):
         await self.dispatch(
-            GoShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+            GoShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_exit_long_signal(self, data, exit_price):
         await self.dispatch(
-            ExitLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
+            ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
 
     async def _dispatch_exit_short_signal(self, data, exit_price):
         await self.dispatch(
-            ExitShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))
+            ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))

@@ -13,8 +13,8 @@ PositionEvent = Union[PositionInitialized, PositionCloseRequested]
 class PaperExecutor(AbstractActor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe, slippage: float):
         super().__init__()
-        self.symbol = symbol
-        self.timeframe = timeframe
+        self._symbol = symbol
+        self._timeframe = timeframe
         self.slippage = slippage
         self._running = None
         self._lock = asyncio.Lock()
@@ -22,6 +22,14 @@ class PaperExecutor(AbstractActor):
     @property
     def id(self):
         return f"{self.symbol}_{self.timeframe}_PAPER"
+    
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @property
+    def timeframe(self):
+        return self._timeframe
     
     @property
     def running(self) -> bool:
@@ -56,7 +64,7 @@ class PaperExecutor(AbstractActor):
     async def _filter_event(self, event: PositionEvent):
         signal = event.position.signal
         
-        if signal.symbol == self.symbol and signal.timeframe == self.timeframe:
+        if signal.symbol == self._symbol and signal.timeframe == self._timeframe:
             await self.handle(event)
 
     async def _execute_order(self, position: Position):

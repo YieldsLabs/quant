@@ -104,7 +104,6 @@ class TrendSystem(AbstractSystem):
 
         return list(strategies_set)
 
-
     async def _run_backtest(self):
         logger.info('Run backtest')
         
@@ -127,20 +126,18 @@ class TrendSystem(AbstractSystem):
        
         estimator = Estimator(total_steps)
 
-        async for actors in self._generate_backtest_actors(symbols_and_timeframes, strategies):
-            await asyncio.gather(*[actor.start() for actor in actors])
+        async for squad in self._generate_backtest_actors(symbols_and_timeframes, strategies):
+            await squad.start()
             
             account_size = await self.query(GetAccountBalance())
             await self.execute(UpdateAccountSize(account_size))
-        
-            signal = actors[0]
 
             await self.execute(
-                BacktestRun(self.context.datasource, signal.symbol, signal.timeframe, self.context.lookback, self.context.batch_size))
+                BacktestRun(self.context.datasource, squad.symbol, squad.timeframe, self.context.lookback, self.context.batch_size))
 
             logger.info(f"Estimated remaining time: {estimator.remaining_time():.2f} seconds")
 
-            await asyncio.gather(*[actor.stop() for actor in actors])
+            await squad.stop()
 
         await self.event_queue.put(Event.BACKTEST_COMPLETE)
             
@@ -164,42 +161,23 @@ class TrendSystem(AbstractSystem):
         
         await self.execute(Subscribe(symbols_and_timeframes))
     
-        async for actors in self._generate_trading_actors(symbols_and_timeframes, strategies):
-            signal = actors[0]
-
+        async for squad in self._generate_trading_actors(symbols_and_timeframes, strategies):
             await self.execute(
-                UpdateSettings(signal.symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
+                UpdateSettings(squad.symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
             
-            await asyncio.gather(*[actor.start() for actor in actors])
+            await squad.start()
             
             account_size = await self.query(GetAccountBalance())
             await self.execute(UpdateAccountSize(account_size))
 
-
-    def _initialize_actors(self, symbol, timeframe, is_live):
-        executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=is_live)
-        position_actor = self.context.position_factory.create_actor(symbol, timeframe)
-        risk_actor = self.context.risk_factory.create_actor(symbol, timeframe)
-        
-        return executor_actor, position_actor, risk_actor
          
     async def _generate_backtest_actors(self, symbols_and_timeframes, strategies):
         for symbol, timeframe in symbols_and_timeframes:
-            executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, False)
-
             for strategy in strategies:
-                signal_actor = self.context.signal_factory.create_actor(
-                    symbol, timeframe, self.context.strategy_path, strategy)
-
-                yield signal_actor, position_actor, risk_actor, executor_actor
+                yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, False)
 
     async def _generate_trading_actors(self, symbols_and_timeframes, strategies):
         for symbol, timeframe in symbols_and_timeframes:
-            executor_actor, position_actor, risk_actor = self._initialize_actors(symbol, timeframe, self.context.live_mode)
-            
             for strategy, strategy_symbol in strategies:
                 if symbol == strategy_symbol:
-                    signal_actor = self.context.signal_factory.create_actor(
-                        symbol, timeframe, self.context.strategy_path, strategy)
-                    
-                    yield signal_actor, position_actor, risk_actor, executor_actor
+                    yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, True)

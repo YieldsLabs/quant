@@ -22,7 +22,7 @@ from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
 from risk.risk_actor_factory import RiskActorFactory
 from portfolio.portfolio import Portfolio
-
+from system.squad_factory import SquadFactory
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -69,11 +69,9 @@ async def main():
         Timeframe.FIFTEEN_MINUTES,
     ]
 
-    blacklist = [
-        'SCUSDT'
-    ]
+    blacklist = []
     
-    trend_follow_path = './wasm/trend_follow.wasm'
+    trend_follow_wasm_path = './wasm/trend_follow.wasm'
 
     event_store = EventStore(LOG_DIR, store_buf_size)
     event_bus = EventDispatcher(num_workers, multi_piority_group)
@@ -84,17 +82,17 @@ async def main():
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
 
+    trend_follow_factory = SquadFactory(
+        SignalActorFactory(trend_follow_wasm_path),
+        ExecutorActorFactory(slippage),
+        PositionActorFactory(initial_account_size, PositionFactory(leverage, risk_per_trade, risk_reward_ratio)),
+        RiskActorFactory(risk_buffer),
+    )
+
     context = TradingContext(
         datasource,
-        SignalActorFactory(),
-        ExecutorActorFactory(slippage),
-        PositionActorFactory(
-            initial_account_size,
-            PositionFactory(leverage, risk_per_trade, risk_reward_ratio)
-        ),
-        RiskActorFactory(risk_buffer),
+        trend_follow_factory,
         timeframes,
-        trend_follow_path,
         blacklist,
         lookback,
         batch_size,

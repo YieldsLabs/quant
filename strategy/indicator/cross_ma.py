@@ -13,5 +13,5 @@ class CrossMovingAverageIndicator(Indicator):
 
     @property
     def parameters(self):
-        return (int(self.short_period.value), int(self.long_period.value),)
+        return sorted([int(self.short_period.value), int(self.long_period.value)])
 

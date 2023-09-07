@@ -29,6 +29,14 @@ class RiskActor(AbstractActor):
     @property
     def id(self):
         return f"{self._symbol}_{self._timeframe}"
+    
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @property
+    def timeframe(self):
+        return self._timeframe
 
     @property
     async def running(self):

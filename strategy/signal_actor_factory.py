@@ -6,10 +6,11 @@ from .signal_actor import SignalActor
 
 
 class SignalActorFactory(AbstractSignalActorFactory):
-    def __init__(self):
+    def __init__(self, wasm_path: str):
         super().__init__()
+        self.wasm_path = wasm_path
     
-    def create_actor(self, symbol, timeframe, wasm_path, strategy):
+    def create_actor(self, symbol, timeframe, strategy):
         store = Store()
         wasi_config = WasiConfig()
         wasi_config.wasm_multi_value = True
@@ -17,7 +18,7 @@ class SignalActorFactory(AbstractSignalActorFactory):
         store.set_wasi(wasi_config)
         linker.define_wasi()
 
-        module = Module.from_file(store.engine, wasm_path)
+        module = Module.from_file(store.engine, self.wasm_path)
         instance = linker.instantiate(store, module)
         exports = instance.exports(store)
 

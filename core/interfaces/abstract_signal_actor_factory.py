@@ -9,5 +9,5 @@ from ..models.timeframe import Timeframe
 
 class AbstractSignalActorFactory(ABC):
     @abstractmethod
-    def create_actor(self, symbol: Symbol, timeframe: Timeframe, wasm_path: str, strategy: Strategy) -> AbstractActor:
+    def create_actor(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy) -> AbstractActor:
         pass

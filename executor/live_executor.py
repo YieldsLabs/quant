@@ -15,14 +15,22 @@ PositionEvent = Union[PositionInitialized, PositionCloseRequested]
 class LiveExecutor(AbstractActor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__()
-        self.symbol = symbol
-        self.timeframe = timeframe
+        self._symbol = symbol
+        self._timeframe = timeframe
         self._running = None
         self._lock = asyncio.Lock()
 
     @property
     def id(self):
-        return f"{self.symbol}_{self.timeframe}_LIVE"
+        return f"{self._symbol}_{self._timeframe}_LIVE"
+    
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @property
+    def timeframe(self):
+        return self._timeframe
     
     @property
     def running(self) -> bool:
@@ -57,7 +65,7 @@ class LiveExecutor(AbstractActor):
     async def _filter_event(self, event: PositionEvent):
         signal = event.position.signal
         
-        if signal.symbol == self.symbol and signal.timeframe == self.timeframe:
+        if signal.symbol == self._symbol and signal.timeframe == self._timeframe:
             await self.handle(event)
 
     async def _execute_order(self, position: Position):
