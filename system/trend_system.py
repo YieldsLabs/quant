@@ -66,37 +66,44 @@ class TrendSystem(AbstractSystem):
         self.event_queue.put_nowait(Event.SYSTEM_STOP)
 
     def _diversified_strategies(self):
-        atr_multi = StaticParameter(.89)
+        atr_multi_values = [0.87, 0.94, 1.05]
+        moving_average_periods = [(50, 100), (30, 70), (20, 60)]
+        ma_types = [MovingAverageType.SMA, MovingAverageType.EMA, MovingAverageType.WMA, MovingAverageType.DEMA]
 
         return [
-            Strategy('crossma', (CrossMovingAverageIndicator(
-                MovingAverageType.SMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi)),
-            Strategy('crossma', (CrossMovingAverageIndicator(
-                MovingAverageType.EMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi)),
-            Strategy('crossma', (CrossMovingAverageIndicator(
-                MovingAverageType.WMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi)),
-            Strategy('crossma', (CrossMovingAverageIndicator(
-                MovingAverageType.DEMA, StaticParameter(50), StaticParameter(100)),), ATRStopLoss(multi=atr_multi))
+            Strategy(
+                'crossma', 
+                (CrossMovingAverageIndicator(ma_type, StaticParameter(short_period), StaticParameter(long_period)),),
+                ATRStopLoss(multi=StaticParameter(atr_multi_value))
+            )
+            for ma_type in ma_types
+            for short_period, long_period in moving_average_periods
+            for atr_multi_value in atr_multi_values
         ]
     
-    def _random_strategies(self, num=20):
-        random_strategies = []
-        uniq = set()
-        
-        for _ in range(num):
+    def _random_strategies(self, num=21):
+        strategies_set = set()
+
+        while len(strategies_set) < num:
             moving_avg_type = np.random.choice(list(MovingAverageType))
+            
             short_period = RandomParameter(5.0, 50.0, 5.0)
             long_period = RandomParameter(50.0, 200.0, 10.0)
+
+            short_period, long_period = sorted([short_period, long_period])
+
             atr_multi = RandomParameter(0.85, 2, 0.05)
 
-            strategy = Strategy('crossma', (
-                CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),), ATRStopLoss(multi=atr_multi))
+            strategy = Strategy(
+                'crossma',
+                (CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),),
+                ATRStopLoss(multi=atr_multi)
+            )
             
-            if not str(strategy) in uniq:
-                random_strategies.append(strategy)
-                uniq.add(str(strategy))
+            strategies_set.add(strategy)
 
-        return random_strategies
+        return list(strategies_set)
+
 
     async def _run_backtest(self):
         logger.info('Run backtest')
@@ -121,12 +128,11 @@ class TrendSystem(AbstractSystem):
         estimator = Estimator(total_steps)
 
         async for actors in self._generate_backtest_actors(symbols_and_timeframes, strategies):
-            account_size = await self.query(GetAccountBalance())
+            await asyncio.gather(*[actor.start() for actor in actors])
             
+            account_size = await self.query(GetAccountBalance())
             await self.execute(UpdateAccountSize(account_size))
         
-            await asyncio.gather(*[actor.start() for actor in actors])
-
             signal = actors[0]
 
             await self.execute(
@@ -159,15 +165,16 @@ class TrendSystem(AbstractSystem):
         await self.execute(Subscribe(symbols_and_timeframes))
     
         async for actors in self._generate_trading_actors(symbols_and_timeframes, strategies):
-            account_size = await self.query(GetAccountBalance())
-            await self.execute(UpdateAccountSize(account_size))
-            
             signal = actors[0]
 
             await self.execute(
                 UpdateSettings(signal.symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
             
             await asyncio.gather(*[actor.start() for actor in actors])
+            
+            account_size = await self.query(GetAccountBalance())
+            await self.execute(UpdateAccountSize(account_size))
+
 
     def _initialize_actors(self, symbol, timeframe, is_live):
         executor_actor = self.context.executor_factory.create_actor(symbol, timeframe, live=is_live)

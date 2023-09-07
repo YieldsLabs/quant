@@ -11,9 +11,14 @@ class Parameter(ABC):
     def value(self) -> float:
         pass
 
+    def __lt__(self, other: "Parameter") -> bool:
+        if not isinstance(other, Parameter):
+            return NotImplemented
+        return self.value < other.value
+
 
 @dataclass(frozen=True)
-class RandomParameter:
+class RandomParameter(Parameter):
     min: float 
     max: float
     step: float = 5.0
@@ -31,7 +36,7 @@ class RandomParameter:
 
 
 @dataclass(frozen=True)
-class StaticParameter:
+class StaticParameter(Parameter):
     _value: float 
 
     @property
