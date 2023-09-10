@@ -88,24 +88,20 @@ impl Series<f32> {
     pub fn wma(&self, period: usize) -> Self {
         let len = self.len();
         let mut wma = Series::empty(len);
+    
+        for i in (period - 1)..len {
+            let mut sum = 0.0;
+            let mut norm = 0.0;
+    
+            for j in 0..period {
+                let weight = (period - j) as f32;
+                norm += weight;
+                sum += self[i - j].unwrap_or(0.0) * weight;
+            }
 
-        let weight_sum = (period * (period + 1)) as f32 / 2.0;
-
-        let mut sum = 0.0;
-
-        for i in 0..period {
-            let weight = (i + 1) as f32;
-            sum += self[i].unwrap_or(0.0) * weight;
+            wma[i] = Some(sum / norm);
         }
-
-        wma[period - 1] = Some(sum / weight_sum);
-
-        for i in period..len {
-            sum += (self[i].unwrap_or(0.0) - self[i - period].unwrap_or(0.0)) * period as f32
-                - (weight_sum - period as f32);
-            wma[i] = Some(sum / weight_sum);
-        }
-
+    
         wma
     }
 
