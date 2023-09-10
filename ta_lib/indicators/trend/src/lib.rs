@@ -1,3 +1,4 @@
+mod alma;
 mod dema;
 mod ema;
 mod hma;
@@ -9,6 +10,7 @@ mod vwma;
 mod wma;
 mod zlema;
 
+pub use alma::alma;
 pub use dema::dema;
 pub use ema::ema;
 pub use hma::hma;
