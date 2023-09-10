@@ -101,6 +101,25 @@ impl Series<f32> {
         sum / norm
     }
 
+    pub fn alma(&self, period: usize, offset: f32, sigma: f32) -> Self {
+        let len = self.len();
+
+        let m = offset * (period as f32 - 1.0);
+        let s = period as f32 / sigma;
+
+        let mut sum = Series::empty(len).nz(Some(0.0));
+        let mut norm = 0.0;
+
+        for j in 0..period {
+            let weight = ((-1.0 * (j as f32 - m).powi(2)) / (2.0 * s.powi(2))).exp();
+
+            norm += weight;
+            sum = sum + self.shift(period - j - 1) * weight;
+        }
+
+        sum / norm
+    }
+
     pub fn var(&self, period: usize) -> Self {
         let ma: Vec<f32> = self.ma(period).into();
 
@@ -297,6 +316,40 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.smma(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_wma() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            None,
+            None,
+            Some(2.3333333),
+            Some(3.3333333),
+            Some(4.3333335),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.wma(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_alma() {
+        let source = vec![0.2489, 0.2489, 0.2484, 0.2484, 0.2489];
+        let expected = vec![
+            None,
+            None,
+            Some(0.24855588),
+            Some(0.24840128),
+            Some(0.2487441),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.alma(3, 0.85, 6.0);
 
         assert_eq!(result, expected);
     }
