@@ -111,6 +111,13 @@ impl Series<f32> {
         })
     }
 
+    pub fn na(&self) -> Series<bool> {
+        self.fmap(|val| match val {
+            Some(_) => Some(false),
+            None => Some(true),
+        })
+    }
+
     pub fn change(&self, length: usize) -> Self {
         self - self.shift(length)
     }
