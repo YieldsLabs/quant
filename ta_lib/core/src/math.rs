@@ -91,11 +91,11 @@ impl Series<f32> {
         let mut sum = Series::empty(len).nz(Some(0.0));
         let mut norm = 0.0;
 
-        for j in 0..period {
-            let weight = (period - j) as f32;
+        for i in 0..period {
+            let weight = (period - i) as f32;
 
             norm += weight;
-            sum = sum + self.shift(j) * weight;
+            sum = sum + self.shift(i) * weight;
         }
 
         sum / norm
@@ -110,11 +110,11 @@ impl Series<f32> {
         let mut sum = Series::empty(len).nz(Some(0.0));
         let mut norm = 0.0;
 
-        for j in 0..period {
-            let weight = ((-1.0 * (j as f32 - m).powi(2)) / (2.0 * s.powi(2))).exp();
+        for i in 0..period {
+            let weight = ((-1.0 * (i as f32 - m).powi(2)) / (2.0 * s.powi(2))).exp();
 
             norm += weight;
-            sum = sum + self.shift(period - j - 1) * weight;
+            sum = sum + self.shift(period - i - 1) * weight;
         }
 
         sum / norm
