@@ -1,6 +1,6 @@
 use core::series::Series;
 use trend::{ema, sma, smma, wma};
-use utils::tr::true_range;
+use utils::true_range;
 
 pub fn atr(
     high: &[f32],

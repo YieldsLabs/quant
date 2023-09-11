@@ -1,5 +1,5 @@
 use core::series::Series;
-use utils::stoch::stoch;
+use utils::stoch;
 
 pub fn stochosc(
     high: &[f32],
