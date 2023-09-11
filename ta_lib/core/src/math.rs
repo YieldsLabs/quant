@@ -49,6 +49,14 @@ impl Series<f32> {
         self.fmap(|val| val.map(|v| v.abs()))
     }
 
+    pub fn log(&self) -> Self {
+        self.fmap(|val| val.filter(|&v| *v > 0.0).map(|v| v.ln()))
+    }
+
+    pub fn exp(&self) -> Self {
+        self.fmap(|val| val.map(|v| v.exp()))
+    }
+
     pub fn round(&self, places: usize) -> Self {
         let multiplier = 10f32.powi(places as i32);
         self.fmap(|val| val.map(|v| (v * multiplier).round() / multiplier))
@@ -245,6 +253,40 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.abs();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_log() {
+        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            None,
+            Some(0.6931472),
+            Some(1.0986123),
+            Some(1.3862944),
+            Some(1.609438),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.log();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_exp() {
+        let source = vec![-1.0, 2.0, -3.0, 4.0, 5.0];
+        let expected = vec![
+            Some(0.36787945),
+            Some(7.389056),
+            Some(0.049787067),
+            Some(54.59815),
+            Some(148.41316),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.exp();
 
         assert_eq!(result, expected);
     }
