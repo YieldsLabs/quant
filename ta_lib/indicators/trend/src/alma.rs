@@ -3,9 +3,21 @@ use core::series::Series;
 pub fn alma(source: &[f32], period: usize, offset: f32, sigma: f32) -> Series<f32> {
     let source = Series::from(source);
 
-    let alma = source.alma(period, offset, sigma);
+    let m = offset * (period as f32 - 1.0);
+    let s = period as f32 / sigma;
 
-    alma
+    let len = source.len();
+    let mut sum = Series::empty(len).nz(Some(0.0));
+    let mut norm = 0.0;
+
+    for i in 0..period {
+        let weight = ((-1.0 * (i as f32 - m).powi(2)) / (2.0 * s.powi(2))).exp();
+
+        norm += weight;
+        sum = sum + source.shift(period - i - 1) * weight;
+    }
+
+    sum / norm
 }
 
 #[cfg(test)]
