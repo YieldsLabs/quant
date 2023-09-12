@@ -57,6 +57,10 @@ impl Series<f32> {
         self.fmap(|val| val.map(|v| v.exp()))
     }
 
+    pub fn sqrt(&self) -> Self {
+        self.fmap(|val| val.filter(|&v| *v >= 0.0).map(|v| v.sqrt()))
+    }
+
     pub fn round(&self, places: usize) -> Self {
         let multiplier = 10f32.powi(places as i32);
         self.fmap(|val| val.map(|v| (v * multiplier).round() / multiplier))
@@ -144,7 +148,7 @@ impl Series<f32> {
     }
 
     pub fn std(&self, period: usize) -> Self {
-        self.var(period).fmap(|val| val.map(|v| v.sqrt()))
+        self.var(period).sqrt()
     }
 }
 
@@ -253,6 +257,23 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.abs();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_sqrt() {
+        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            None,
+            Some(1.4142135),
+            Some(1.7320508),
+            Some(2.0),
+            Some(2.236068),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.sqrt();
 
         assert_eq!(result, expected);
     }
