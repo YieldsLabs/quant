@@ -1,7 +1,23 @@
 use crate::series::Series;
 
+macro_rules! iff {
+    ($cond:expr, $if_true:expr, $if_false:expr) => {{
+        let data = $cond
+            .into_iter()
+            .zip($if_true.clone().into_iter())
+            .zip($if_false.clone().into_iter())
+            .map(|((cond_val, true_val), false_val)| match cond_val {
+                Some(true_condition) if true_condition => true_val.unwrap_or(f32::NAN),
+                _ => false_val.unwrap_or(f32::NAN),
+            })
+            .collect::<Vec<_>>();
+
+        Series::from(data)
+    }};
+}
+
 impl Series<f32> {
-    fn ew<F>(&self, period: usize, alpha_fn: F) -> Self
+    fn ew<F>(&self, period: usize, alpha_fn: F, seed: &Series<f32>) -> Self
     where
         F: Fn(usize) -> f32,
     {
@@ -9,18 +25,17 @@ impl Series<f32> {
 
         let beta = 1.0 - alpha;
 
-        let mut prev = None;
+        let mut sum = Series::empty(self.len());
 
-        self.fmap(|current| {
-            let result = if let (Some(curr_val), Some(prev_val)) = (current, prev) {
-                Some(alpha * curr_val + beta * prev_val)
-            } else {
-                current.cloned()
-            };
+        for _ in 0..self.len() {
+            sum = iff!(
+                sum.shift(1).na(),
+                seed,
+                alpha * self + beta * &sum.shift(1).nz(Some(0.0))
+            )
+        }
 
-            prev = result;
-            result
-        })
+        sum
     }
 
     pub fn ma(&self, period: usize) -> Self {
@@ -30,11 +45,11 @@ impl Series<f32> {
     }
 
     pub fn ema(&self, period: usize) -> Self {
-        self.ew(period, |period| 2.0 / (period as f32 + 1.0))
+        self.ew(period, |period| 2.0 / (period as f32 + 1.0), self)
     }
 
     pub fn smma(&self, period: usize) -> Self {
-        self.ew(period, |period| 1.0 / (period as f32))
+        self.ew(period, |period| 1.0 / (period as f32), &self.ma(period))
     }
 
     pub fn wma(&self, period: usize) -> Self {
