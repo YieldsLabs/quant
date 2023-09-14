@@ -66,9 +66,14 @@ class TrendSystem(AbstractSystem):
         self.event_queue.put_nowait(Event.SYSTEM_STOP)
 
     def _diversified_strategies(self):
-        atr_multi_values = [0.87, 0.94, 1.05]
-        moving_average_periods = [(50, 100), (30, 70), (20, 60)]
-        ma_types = [MovingAverageType.SMA, MovingAverageType.EMA, MovingAverageType.WMA, MovingAverageType.DEMA]
+        atr_multi_values = [0.87, 1.05, 2.6]
+        moving_average_periods = [(50, 100), (30, 70), (21, 34)]
+        ma_types = [
+            MovingAverageType.SMA,
+            MovingAverageType.EMA,
+            MovingAverageType.WMA,
+            MovingAverageType.DEMA
+        ]
 
         return [
             Strategy(
@@ -169,7 +174,6 @@ class TrendSystem(AbstractSystem):
             
             account_size = await self.query(GetAccountBalance())
             await self.execute(UpdateAccountSize(account_size))
-
          
     async def _generate_backtest_actors(self, symbols_and_timeframes, strategies):
         for symbol, timeframe in symbols_and_timeframes:
