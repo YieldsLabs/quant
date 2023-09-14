@@ -155,7 +155,7 @@ impl<T> IntoIterator for Series<T> {
 
 impl Into<Vec<f32>> for Series<f32> {
     fn into(self) -> Vec<f32> {
-        self.data.into_iter().map(|x| x.unwrap_or(0.0)).collect()
+        self.into_iter().map(|x| x.unwrap_or(0.0)).collect()
     }
 }
 
