@@ -17,12 +17,7 @@ macro_rules! iff {
 }
 
 impl Series<f32> {
-    fn ew<F>(&self, period: usize, alpha_fn: F, seed: &Series<f32>) -> Self
-    where
-        F: Fn(usize) -> f32,
-    {
-        let alpha = alpha_fn(period);
-
+    fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
         let beta = 1.0 - alpha;
 
         let mut sum = Series::empty(self.len());
@@ -31,7 +26,7 @@ impl Series<f32> {
             sum = iff!(
                 sum.shift(1).na(),
                 seed,
-                alpha * self + beta * &sum.shift(1).nz(Some(0.0))
+                alpha * self + &beta * &sum.shift(1).nz(Some(0.0))
             )
         }
 
@@ -45,11 +40,15 @@ impl Series<f32> {
     }
 
     pub fn ema(&self, period: usize) -> Self {
-        self.ew(period, |period| 2.0 / (period as f32 + 1.0), self)
+        let alpha = Series::empty(self.len()).nz(Some(2.0 / (period as f32 + 1.0)));
+        
+        self.ew(&alpha, self)
     }
 
     pub fn smma(&self, period: usize) -> Self {
-        self.ew(period, |period| 1.0 / (period as f32), &self.ma(period))
+        let alpha = Series::empty(self.len()).nz(Some(1.0 / (period as f32)));
+        
+        self.ew(&alpha, &self.ma(period))
     }
 
     pub fn wma(&self, period: usize) -> Self {
