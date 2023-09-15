@@ -17,6 +17,7 @@ from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
 from strategy.indicator.cross_ma import CrossMovingAverageIndicator
+from strategy.indicator.simple import SimpleIndicator
 from strategy.indicator.testing_ground import TestingGroundIndicator
 from strategy.stop_loss.atr import ATRStopLoss
 
@@ -40,7 +41,7 @@ class Event(Enum):
 
 
 class StrategyGenerator:
-    STRATEGY_TYPES = ['crossma', 'ground']
+    STRATEGY_TYPES = ['crossma', 'ground', 'simple']
 
     def generate(self, n_samples):
         strategies = self._diversified_strategies() + self._random_strategies(n_samples)
@@ -104,10 +105,16 @@ class StrategyGenerator:
                 (CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
-        else:
+        elif strategy_type == 'ground':
             return Strategy(
                 'ground',
                 (TestingGroundIndicator(moving_avg_type, long_period),),
+                ATRStopLoss(multi=atr_multi)
+            )
+        else:
+            return Strategy(
+                'simple',
+                (SimpleIndicator(moving_avg_type, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
 
