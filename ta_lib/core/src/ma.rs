@@ -24,7 +24,7 @@ impl Series<f32> {
             sum = iff!(
                 sum.shift(1).na(),
                 seed,
-                alpha * self + (1.0 - alpha) * &sum.shift(1)
+                alpha * self + (1.0 - alpha) * &sum.shift(1).nz(Some(0.0))
             )
         }
 
@@ -39,13 +39,13 @@ impl Series<f32> {
 
     pub fn ema(&self, period: usize) -> Self {
         let alpha = Series::empty(self.len()).nz(Some(2.0 / (period as f32 + 1.0)));
-        
+
         self.ew(&alpha, self)
     }
 
     pub fn smma(&self, period: usize) -> Self {
         let alpha = Series::empty(self.len()).nz(Some(1.0 / (period as f32)));
-        
+
         self.ew(&alpha, &self.ma(period))
     }
 

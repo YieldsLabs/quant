@@ -28,7 +28,10 @@ impl Series<f32> {
     }
 
     pub fn log(&self) -> Self {
-        self.fmap(|val| val.filter(|&v| *v > 0.0).map(|v| v.ln()))
+        self.fmap(|val| match val {
+            Some(v) if *v > 0.0 => Some(v.ln()),
+            _ => None,
+        })
     }
 
     pub fn exp(&self) -> Self {
