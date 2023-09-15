@@ -8,16 +8,17 @@ class MovingAverageType(Enum):
     FRAMA = 4
     GMA = 5
     HMA = 6
-    RMSMA = 7
-    SINWMA = 8
-    SMA = 9
-    SMMA = 10
-    T3 = 11
-    TEMA = 12
-    TMA = 13
-    VWMA = 14
-    WMA = 15
-    ZLEMA = 16
+    KAMA = 7
+    RMSMA = 8
+    SINWMA = 9
+    SMA = 10
+    SMMA = 11
+    T3 = 12
+    TEMA = 13
+    TMA = 14
+    VWMA = 15
+    WMA = 16
+    ZLEMA = 17
 
     def __str__(self):
         return self.name.upper()

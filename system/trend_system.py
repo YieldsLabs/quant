@@ -69,10 +69,11 @@ class TrendSystem(AbstractSystem):
         atr_multi_values = [0.87, 1.05, 2.6]
         moving_average_periods = [(50, 100), (30, 70), (21, 34)]
         ma_types = [
-            MovingAverageType.SMA,
-            MovingAverageType.EMA,
-            MovingAverageType.WMA,
-            MovingAverageType.DEMA
+            MovingAverageType.ALMA,
+            MovingAverageType.DEMA,
+            MovingAverageType.FRAMA,
+            MovingAverageType.SINWMA,
+            MovingAverageType.TMA
         ]
 
         return [
