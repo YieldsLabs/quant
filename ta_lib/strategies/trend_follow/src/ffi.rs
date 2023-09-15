@@ -10,23 +10,24 @@ pub fn register_crossma(
     stop_loss_multi: f32,
 ) -> i32 {
     let ma = match smothing {
-        1 => "SMA",
-        2 => "EMA",
-        3 => "WMA",
-        4 => "ZLEMA",
-        5 => "HMA",
-        6 => "VWMA",
-        7 => "DEMA",
-        8 => "TEMA",
+        1 => "ALMA",
+        2 => "DEMA",
+        3 => "EMA",
+        4 => "FRAMA",
+        5 => "GMA",
+        6 => "HMA",
+        7 => "RMSMA",
+        8 => "SMA",
+        9 => "SMMA",
+        10 => "T3",
+        11 => "TEMA",
+        12 => "TMA",
+        13 => "VWMA",
+        14 => "WMA",
+        15 => "ZLEMA",
         _ => "SMA",
     };
 
-    let strategy = CrossMAStrategy::new(
-        ma,
-        short_period,
-        long_period,
-        atr_period,
-        stop_loss_multi,
-    );
+    let strategy = CrossMAStrategy::new(ma, short_period, long_period, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
 }

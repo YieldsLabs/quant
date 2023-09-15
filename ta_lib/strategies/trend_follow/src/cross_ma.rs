@@ -1,7 +1,7 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
 use stop_loss::ATRStopLoss;
-use trend::{dema, ema, hma, sma, tema, vwma, wma, zlema};
+use trend::{alma, dema, ema, frama, gma, hma, rmsma, sma, smma, t3, tema, tma, vwma, wma, zlema};
 
 pub struct CrossMAStrategy<'a> {
     short_period: usize,
@@ -34,14 +34,21 @@ impl CrossMAStrategy<'_> {
 
     fn ma(&self, data: &OHLCVSeries, period: usize) -> Series<f32> {
         match self.smothing {
-            "SMA" => sma(&data.close, period),
-            "EMA" => ema(&data.close, period),
+            "ALMA" => alma(&data.close, period, 0.85, 6.0),
             "DEMA" => dema(&data.close, period),
+            "EMA" => ema(&data.close, period),
+            "FRAMA" => frama(&data.high, &data.low, &data.close, period),
+            "GMA" => gma(&data.close, period),
+            "HMA" => hma(&data.close, period),
+            "RMSMA" => rmsma(&data.close, period),
+            "SMA" => sma(&data.close, period),
+            "SMMA" => smma(&data.close, period),
+            "T3" => t3(&data.close, period),
             "TEMA" => tema(&data.close, period),
+            "TMA" => tma(&data.close, period),
+            "VWMA" => vwma(&data.close, &data.volume, period),
             "WMA" => wma(&data.close, period),
             "ZLEMA" => zlema(&data.close, period),
-            "HMA" => hma(&data.close, period),
-            "VWMA" => vwma(&data.close, &data.volume, period),
             _ => sma(&data.close, period),
         }
     }

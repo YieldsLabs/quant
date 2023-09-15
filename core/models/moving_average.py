@@ -2,14 +2,21 @@ from enum import Enum
 
 
 class MovingAverageType(Enum):
-    SMA = 1
-    EMA = 2
-    WMA = 3
-    ZLEMA = 4
-    HMA = 5
-    VWMA = 6
-    DEMA = 7
-    TEMA = 8
+    ALMA = 1
+    DEMA = 2
+    EMA = 3
+    FRAMA = 4
+    GMA = 5
+    HMA = 6
+    RMSMA = 7
+    SMA = 8
+    SMMA = 9
+    T3 = 10
+    TEMA = 11
+    TMA = 12
+    VWMA = 13
+    WMA = 14
+    ZLEMA = 15
 
     def __str__(self):
         return self.name.upper()
