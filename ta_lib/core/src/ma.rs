@@ -22,11 +22,9 @@ impl Series<f32> {
         let mut sum = Series::empty(self.len());
 
         for _ in 0..self.len() {
-            sum = iff!(
-                sum.shift(1).na(),
-                seed,
-                alpha * self + (1.0 - alpha) * &sum.shift(1)
-            )
+            let shifted = sum.shift(1);
+
+            sum = iff!(shifted.na(), seed, alpha * self + (1.0 - alpha) * &shifted)
         }
 
         sum
