@@ -64,10 +64,10 @@ impl Series<f32> {
 
     pub fn div_scalar(&self, scalar: f32) -> Series<f32> {
         self.unary_op_scalar(scalar, |v, s| {
-            if *v == 0.0 {
-                if s > 0.0 {
+            if s == 0.0 {
+                if *v > 0.0 {
                     std::f32::INFINITY
-                } else if s < 0.0 {
+                } else if *v < 0.0 {
                     std::f32::NEG_INFINITY
                 } else {
                     0.0

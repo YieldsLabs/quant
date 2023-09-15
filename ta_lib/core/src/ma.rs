@@ -17,16 +17,14 @@ macro_rules! iff {
 }
 
 impl Series<f32> {
-    fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
-        let beta = 1.0 - alpha;
-
+    pub fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
         let mut sum = Series::empty(self.len());
 
         for _ in 0..self.len() {
             sum = iff!(
                 sum.shift(1).na(),
                 seed,
-                alpha * self + &beta * &sum.shift(1).nz(Some(0.0))
+                alpha * self + (1.0 - alpha) * &sum.shift(1)
             )
         }
 
