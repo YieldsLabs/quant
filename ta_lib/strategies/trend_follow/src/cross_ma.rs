@@ -1,7 +1,9 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
 use stop_loss::ATRStopLoss;
-use trend::{alma, dema, ema, frama, gma, hma, rmsma, sma, smma, t3, tema, tma, vwma, wma, zlema};
+use trend::{
+    alma, dema, ema, frama, gma, hma, rmsma, sinwma, sma, smma, t3, tema, tma, vwma, wma, zlema,
+};
 
 pub struct CrossMAStrategy<'a> {
     short_period: usize,
@@ -41,6 +43,7 @@ impl CrossMAStrategy<'_> {
             "GMA" => gma(&data.close, period),
             "HMA" => hma(&data.close, period),
             "RMSMA" => rmsma(&data.close, period),
+            "SINWMA" => sinwma(&data.close, period),
             "SMA" => sma(&data.close, period),
             "SMMA" => smma(&data.close, period),
             "T3" => t3(&data.close, period),
