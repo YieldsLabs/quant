@@ -45,6 +45,7 @@ class BybitWSHandler(AbstractWS):
 
     async def process_message(self, message):
         message_data = json.loads(message)
+        print(message_data)
 
         if "topic" in message_data:
             ohlcv = message_data["data"][0]
@@ -104,7 +105,7 @@ class BybitWSHandler(AbstractWS):
 
     def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV.from_dict(data)
-        return NewMarketDataReceived(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
+        return NewMarketDataReceived(symbol, self.TIMEFRAMES[interval], ohlcv, True)
 
 
     @command_handler(Subscribe)

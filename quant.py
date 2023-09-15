@@ -64,8 +64,8 @@ async def main():
     initial_account_size = 1000
 
     timeframes = [
-        # Timeframe.ONE_MINUTE,
-        # Timeframe.FIVE_MINUTES,
+        Timeframe.ONE_MINUTE,
+        Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES,
     ]
 

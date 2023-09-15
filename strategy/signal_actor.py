@@ -96,7 +96,7 @@ class SignalActor(AbstractActor):
         self.register_id = None
     
     async def _signal_event_filter(self, event: NewMarketDataReceived):
-        if event.symbol == self._symbol and event.timeframe == self._timeframe:
+        if event.symbol == self._symbol and event.timeframe == self._timeframe and event.closed == True:
             await self.handle(event)
 
     async def _dispatch_go_long_signal(self, data, price, stop_loss):

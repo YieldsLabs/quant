@@ -37,33 +37,13 @@ class Event(Enum):
     TRADING_STOPPED = auto()
     SYSTEM_STOP = auto()
 
-class TrendSystem(AbstractSystem):
-    def __init__(self, context: TradingContext):
-        super().__init__()
-        self.context = context
-        self.state = SystemState.BACKTESTING
-        self.event_queue = asyncio.Queue()
 
-    async def start(self):
-       await self._run_backtest()
-       
-       while True:
-            event = await self.event_queue.get()
-            
-            match self.state:
-                case SystemState.BACKTESTING:
-                    if event == Event.BACKTEST_COMPLETE:
-                        self.state = SystemState.OPTIMIZATION
-                        await self._run_optimization()
-                case SystemState.OPTIMIZATION:
-                    if event == Event.OPTIMIZE_COMPLETE:
-                        self.state = SystemState.TRADING
-                        await self._run_trading()
-                    if event == Event.SYSTEM_STOP:
-                        return
-
-    def stop(self):
-        self.event_queue.put_nowait(Event.SYSTEM_STOP)
+class StrategyGenerator:
+    def generate(self, n_samples):
+        strategies = self._diversified_strategies() + self._random_strategies(n_samples)
+        shuffle(strategies)
+        
+        return strategies
 
     def _diversified_strategies(self):
         atr_multi_values = [0.87, 1.05, 2.6]
@@ -87,7 +67,7 @@ class TrendSystem(AbstractSystem):
             for atr_multi_value in atr_multi_values
         ]
     
-    def _random_strategies(self, num=21):
+    def _random_strategies(self, num):
         strategies_set = set()
 
         while len(strategies_set) < num:
@@ -110,11 +90,41 @@ class TrendSystem(AbstractSystem):
 
         return list(strategies_set)
 
+
+class TrendSystem(AbstractSystem):
+    def __init__(self, context: TradingContext, n_samples: int = 50):
+        super().__init__()
+        self.context = context
+        self.state = SystemState.BACKTESTING
+        self.event_queue = asyncio.Queue()
+        self.strategy_generator = StrategyGenerator()
+        self.n_samples = n_samples
+
+    async def start(self):
+       await self._run_backtest()
+       
+       while True:
+            event = await self.event_queue.get()
+            
+            match self.state:
+                case SystemState.BACKTESTING:
+                    if event == Event.BACKTEST_COMPLETE:
+                        self.state = SystemState.OPTIMIZATION
+                        await self._run_optimization()
+                case SystemState.OPTIMIZATION:
+                    if event == Event.OPTIMIZE_COMPLETE:
+                        self.state = SystemState.TRADING
+                        await self._run_trading()
+                    if event == Event.SYSTEM_STOP:
+                        return
+
+    def stop(self):
+        self.event_queue.put_nowait(Event.SYSTEM_STOP)
+
     async def _run_backtest(self):
         logger.info('Run backtest')
         
-        strategies = self._random_strategies() + self._diversified_strategies()
-        shuffle(strategies)
+        strategies = self.strategy_generator.generate(self.n_samples)
 
         logger.info(f"Total strategies: {len(strategies)}")
 
@@ -123,16 +133,21 @@ class TrendSystem(AbstractSystem):
         if len(self.context.blacklist) > 0:
             symbols = [symbol for symbol in symbols if symbol.name not in set(self.context.blacklist)]
         
-        shuffle(symbols)
-        symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
+        sampled_symbols = np.random.choice(symbols, size=min(self.n_samples, len(symbols)), replace=False)
 
-        logger.info(f"Total symbols: {len(symbols)}")
+        logger.info(f"Total symbols: {len(sampled_symbols)}")
 
-        total_steps = len(symbols_and_timeframes) * len(strategies)
+        sampled_timeframes = np.random.choice(self.context.timeframes, size=min(self.n_samples, len(self.context.timeframes)), replace=False)
+        symbols_and_timeframes = list(product(sampled_symbols, sampled_timeframes))
+
+        backtest_data = list(product(symbols_and_timeframes, strategies))
+        shuffle(backtest_data)
+
+        total_steps = len(backtest_data)
        
         estimator = Estimator(total_steps)
 
-        async for squad in self._generate_backtest_actors(symbols_and_timeframes, strategies):
+        async for squad in self._generate_actors(backtest_data):
             await squad.start()
             
             account_size = await self.query(GetAccountBalance())
@@ -149,6 +164,7 @@ class TrendSystem(AbstractSystem):
             
     async def _run_optimization(self):
         logger.info('Run optimization')
+        
         strategies = await self.query(GetTopStrategy(num=20))
        
         logger.info(strategies)
@@ -158,7 +174,7 @@ class TrendSystem(AbstractSystem):
     async def _run_trading(self):
         logger.info('Run trading')
         
-        strategies = await self.query(GetTopStrategy(num=1))
+        strategies = await self.query(GetTopStrategy(num=3))
         
         logger.info(strategies)
 
@@ -166,8 +182,10 @@ class TrendSystem(AbstractSystem):
         symbols_and_timeframes = sorted(list(product(symbols, self.context.timeframes)), key=lambda x: x[1])
         
         await self.execute(Subscribe(symbols_and_timeframes))
+
+        trading_data = list(product(symbols_and_timeframes, [strategy[0] for strategy in strategies]))
     
-        async for squad in self._generate_trading_actors(symbols_and_timeframes, strategies):
+        async for squad in self._generate_actors(trading_data, True):
             await self.execute(
                 UpdateSettings(squad.symbol, self.context.leverage, PositionMode.ONE_WAY, MarginMode.ISOLATED))
             
@@ -176,13 +194,6 @@ class TrendSystem(AbstractSystem):
             account_size = await self.query(GetAccountBalance())
             await self.execute(UpdateAccountSize(account_size))
          
-    async def _generate_backtest_actors(self, symbols_and_timeframes, strategies):
-        for symbol, timeframe in symbols_and_timeframes:
-            for strategy in strategies:
-                yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, False)
-
-    async def _generate_trading_actors(self, symbols_and_timeframes, strategies):
-        for symbol, timeframe in symbols_and_timeframes:
-            for strategy, strategy_symbol in strategies:
-                if symbol == strategy_symbol:
-                    yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, True)
+    async def _generate_actors(self, data, is_live=False):
+        for (symbol, timeframe), strategy in data:
+            yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, is_live)

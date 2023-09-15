@@ -44,4 +44,4 @@ class Backtest(AbstractBacktest):
     async def _process_historical_data(self, symbol: str, timeframe: Timeframe, data: List[Any]):
         ohlcv = OHLCV.from_list(data)
 
-        await self.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv))
+        await self.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv, True))
