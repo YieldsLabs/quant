@@ -1,5 +1,6 @@
 use crate::series::Series;
 
+#[macro_export]
 macro_rules! iff {
     ($cond:expr, $if_true:expr, $if_false:expr) => {{
         let data = $cond
@@ -24,7 +25,7 @@ impl Series<f32> {
             sum = iff!(
                 sum.shift(1).na(),
                 seed,
-                alpha * self + (1.0 - alpha) * &sum.shift(1).nz(Some(0.0))
+                alpha * self + (1.0 - alpha) * &sum.shift(1)
             )
         }
 

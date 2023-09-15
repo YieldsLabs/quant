@@ -1,3 +1,4 @@
+use core::iff;
 use core::series::Series;
 
 pub fn frama(high: &[f32], low: &[f32], close: &[f32], period: usize) -> Series<f32> {
@@ -19,9 +20,13 @@ pub fn frama(high: &[f32], low: &[f32], close: &[f32], period: usize) -> Series<
 
     let d = ((n1 + n2).log() - n3.log()) / 2.0_f32.ln();
 
-    let alpha = (-4.6 * (d - 1.0)).exp();
+    let alpha = iff!(
+        d.na(),
+        Series::empty(close.len()).nz(Some(2.0 / (period + 1) as f32)),
+        (-4.6 * (d - 1.0)).exp()
+    );
 
-    let frama = close.ew(&alpha.nz(Some(2.0 / (period + 1) as f32)), &close);
+    let frama = close.ew(&alpha, &close);
 
     frama
 }
