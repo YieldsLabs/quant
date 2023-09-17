@@ -65,10 +65,6 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn shift(&self, n: usize) -> Self {
-        if n >= self.len() {
-            return Series::empty(self.len());
-        }
-
         let data = repeat(None)
             .take(n)
             .chain(self.data.iter().cloned().take(self.len() - n))

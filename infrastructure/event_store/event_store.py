@@ -1,8 +1,8 @@
 import json
 import os
 
-from core.event_encoder import Encoder
 from core.events.base import Event
+from .event_encoder import Encoder
 
 
 class SingletonMeta(type):
@@ -23,7 +23,7 @@ class EventStore(metaclass=SingletonMeta):
         self.buffer_size = buffer_size
         self.buffer = {}
 
-    async def append(self, event: Event):
+    def append(self, event: Event):
         group = str(event.meta.group)
 
         if group not in self.buffer:

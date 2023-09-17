@@ -1,4 +1,4 @@
-use crate::{CrossMAStrategy, SimpleStrategy, TestingGroundStrategy};
+use crate::{CrossMAStrategy, TestingGroundStrategy};
 use base::register_strategy;
 
 fn map_to_ma(smothing: usize) -> &'static str {
@@ -46,17 +46,5 @@ pub fn register_ground(
 ) -> i32 {
     let ma = map_to_ma(smothing);
     let strategy = TestingGroundStrategy::new(ma, long_period, atr_period, stop_loss_multi);
-    register_strategy(Box::new(strategy))
-}
-
-#[no_mangle]
-pub fn register_simple(
-    smothing: usize,
-    long_period: usize,
-    atr_period: usize,
-    stop_loss_multi: f32,
-) -> i32 {
-    let ma = map_to_ma(smothing);
-    let strategy = SimpleStrategy::new(ma, long_period, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
 }
