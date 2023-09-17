@@ -47,23 +47,24 @@ class RiskActor(AbstractActor):
         if await self.running:
             raise RuntimeError("Start: risk is running")
 
+        self._dispatcher.register(NewMarketDataReceived, self.handle, self._market_event_filter)
+        
+        for event in [PositionOpened, PositionClosed]:
+            self._dispatcher.register(event, self.handle, self._position_event_filter)
+
         async with self._lock:
             self._running = True
-
-        self._dispatcher.register(NewMarketDataReceived, self._market_event_filter)
-        self._dispatcher.register(PositionOpened, self._position_event_filter)
-        self._dispatcher.register(PositionClosed, self._position_event_filter)
 
     async def stop(self):
         if not await self.running:
             raise RuntimeError("Stop: risk is not started")
         
+        for event in [NewMarketDataReceived, PositionOpened, PositionClosed]:
+            self._dispatcher.unregister(event, self.handle)
+
         async with self._lock:
             self._running = False
 
-        self._dispatcher.unregister(NewMarketDataReceived, self._market_event_filter)
-        self._dispatcher.unregister(PositionOpened, self._position_event_filter)
-        self._dispatcher.unregister(PositionClosed, self._position_event_filter)
     
     async def handle(self, event: RiskEvent):
         if isinstance(event, NewMarketDataReceived):
@@ -81,15 +82,12 @@ class RiskActor(AbstractActor):
         if self._should_exit(next_position, event.ohlcv):
             await self._process_exit(current_position, event.ohlcv)
 
-    async def _position_event_filter(self, event: PositionOpened):
+    def _position_event_filter(self, event: PositionOpened):
         signal = event.position.signal
-    
-        if self._symbol == signal.symbol and self._timeframe == signal.timeframe:
-            await self.handle(event)
+        return self._symbol == signal.symbol and self._timeframe == signal.timeframe
 
-    async def _market_event_filter(self, event: NewMarketDataReceived):
-        if event.symbol == self._symbol and event.timeframe == self._timeframe and self._position:
-            await self.handle(event)
+    def _market_event_filter(self, event: NewMarketDataReceived):
+        return event.symbol == self._symbol and event.timeframe == self._timeframe and self._position
 
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)

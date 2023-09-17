@@ -56,7 +56,7 @@ class SignalActor(AbstractActor):
         async with self._lock:
             self._register_strategy()
 
-        self._dispatcher.register(NewMarketDataReceived, self._signal_event_filter)
+        self._dispatcher.register(NewMarketDataReceived, self.handle, self._filter_events)
 
     async def stop(self):
         if not self.running:
@@ -65,7 +65,7 @@ class SignalActor(AbstractActor):
         async with self._lock:
             self._unregister_strategy()
     
-        self._dispatcher.unregister(NewMarketDataReceived, self._signal_event_filter)
+        self._dispatcher.unregister(NewMarketDataReceived, self.handle)
 
     async def handle(self, event: NewMarketDataReceived):
         if not self.running:
@@ -95,9 +95,8 @@ class SignalActor(AbstractActor):
         self.exports["unregister_strategy"](self.store, self.register_id)
         self.register_id = None
     
-    async def _signal_event_filter(self, event: NewMarketDataReceived):
-        if event.symbol == self._symbol and event.timeframe == self._timeframe and event.closed == True:
-            await self.handle(event)
+    def _filter_events(self, event: NewMarketDataReceived):
+        return event.symbol == self._symbol and event.timeframe == self._timeframe and event.closed == True
 
     async def _dispatch_go_long_signal(self, data, price, stop_loss):
         await self.dispatch(

@@ -61,44 +61,33 @@ class PositionActor(AbstractActor):
         if await self.running:
             raise RuntimeError("Start: position is running")
 
+        for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
+            self._dispatcher.register(event, self.handle, self._event_filter)
+
         async with self._lock:
             self._running = True
-
-        for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
-            self._dispatcher.register(event, self._event_filter)
-
 
     async def stop(self):
         if not await self.running:
             raise RuntimeError("Stop: position is not started")
         
+        for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
+            self._dispatcher.unregister(event, self.handle)
+        
         async with self._lock:
             self._running = False
 
-        for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
-            self._dispatcher.unregister(event, self._event_filter)
-
     async def handle(self, event):
-        if isinstance(event, self.SIGNAL_EVENTS + self.EXIT_EVENTS):
-            signal = event.signal
-        else:
-            signal = event.position.signal
+        signal = event.signal if isinstance(event, self.SIGNAL_EVENTS + self.EXIT_EVENTS) else event.position.signal
 
-        await self.sm.process_event(signal, event)
+        if (isinstance(event, self.SIGNAL_EVENTS) and not await self.state.position_exists(signal)) or not await self._is_event_stale(signal, event):
+            await self.sm.process_event(signal, event)
 
-    async def _event_filter(self, event: Union[SignalEvent, ExitSignal, PositionEvent]):
-        if isinstance(event, self.SIGNAL_EVENTS + self.EXIT_EVENTS):
-            signal = event.signal
-        else:
-            signal = event.position.signal
+    def _event_filter(self, event: Union[SignalEvent, ExitSignal, PositionEvent]) -> bool:
+        signal = event.signal if hasattr(event, "signal") else event.position.signal
 
-        if self._symbol == signal.symbol and self._timeframe == signal.timeframe:
-            if isinstance(event, (self.SIGNAL_EVENTS)):
-                if not await self.state.position_exists(signal):
-                    await self.handle(event)
-            elif not await self._is_event_stale(signal, event):
-                await self.handle(event)
-
+        return self._symbol == signal.symbol and self._timeframe == signal.timeframe
+    
     async def _is_event_stale(self, signal, event) -> bool:
         position = await self.state.retrieve_position(signal)
         

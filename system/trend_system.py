@@ -114,7 +114,7 @@ class StrategyGenerator:
 BATCH_SIZE = 2
 
 class TrendSystem(AbstractSystem):
-    def __init__(self, context: TradingContext, n_samples: int = 20):
+    def __init__(self, context: TradingContext, n_samples: int = 50):
         super().__init__()
         self.context = context
         self.state = SystemState.BACKTESTING

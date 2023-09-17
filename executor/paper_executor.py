@@ -39,9 +39,9 @@ class PaperExecutor(AbstractActor):
         if self.running:
             raise RuntimeError("Start: executor is running")
         
-        self._dispatcher.register(PositionInitialized, self._filter_event)
-        self._dispatcher.register(PositionCloseRequested, self._filter_event)
-        
+        for event in [PositionInitialized, PositionCloseRequested]:
+            self._dispatcher.register(event, self.handle, self._filter_event)
+
         async with self._lock:
             self._running = True
     
@@ -49,9 +49,9 @@ class PaperExecutor(AbstractActor):
         if not self.running:
             raise RuntimeError("Stop: executor is not started")
         
-        self._dispatcher.unregister(PositionInitialized, self._filter_event)
-        self._dispatcher.unregister(PositionCloseRequested, self._filter_event)
-        
+        for event in [PositionInitialized, PositionCloseRequested]:
+            self._dispatcher.unregister(event, self.handle)
+
         async with self._lock:
             self._running = False
 
@@ -61,11 +61,9 @@ class PaperExecutor(AbstractActor):
         elif isinstance(event, PositionCloseRequested):
             return await self._close_position(event.position)
     
-    async def _filter_event(self, event: PositionEvent):
+    def _filter_event(self, event: PositionEvent):
         signal = event.position.signal
-        
-        if signal.symbol == self._symbol and signal.timeframe == self._timeframe:
-            await self.handle(event)
+        return signal.symbol == self._symbol and signal.timeframe == self._timeframe
 
     async def _execute_order(self, position: Position):
         entry_price = self._apply_slippage(position, 1 + self.slippage)
