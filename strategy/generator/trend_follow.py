@@ -1,3 +1,4 @@
+from core.models.trend_candle import TrendCandleType
 import numpy as np
 from random import shuffle
 
@@ -6,13 +7,15 @@ from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
 
+from ..indicator.ma import MovingAverageIndicator
+from ..indicator.trend_candle import TrendCandleIndicator
 from ..indicator.cross_ma import CrossMovingAverageIndicator
 from ..indicator.testing_ground import TestingGroundIndicator
 from ..stop_loss.atr import ATRStopLoss
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    STRATEGY_TYPES = ['crossma', 'ground']
+    STRATEGY_TYPES = ['crossma', 'candlema', 'ground']
 
     def __init__(self):
         super().__init__()
@@ -67,6 +70,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
     
     def _generate_strategy(self, strategy_type):
         moving_avg_type = np.random.choice(list(MovingAverageType))
+        trend_candle_type = np.random.choice(list(TrendCandleType))
         short_period = RandomParameter(20.0, 50.0, 5.0)
         long_period = RandomParameter(60.0, 200.0, 10.0)
         short_period, long_period = sorted([short_period, long_period])
@@ -76,6 +80,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return Strategy(
                 'crossma',
                 (CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),),
+                ATRStopLoss(multi=atr_multi)
+            )
+        elif strategy_type == 'candlema':
+            return Strategy(
+                'candlema',
+                (TrendCandleIndicator(trend_candle_type), MovingAverageIndicator(moving_avg_type, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
         else:

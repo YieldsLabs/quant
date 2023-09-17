@@ -4,7 +4,7 @@ use core::series::Series;
 
 pub fn trend_candle(candle: &str, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
     match candle {
-        "3CANDLES" => (
+        "THREE_CANDLES" => (
             three_candles::bullish(&data.open, &data.close),
             three_candles::bearish(&data.open, &data.close),
         ),
