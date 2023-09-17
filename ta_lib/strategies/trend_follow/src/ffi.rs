@@ -1,4 +1,4 @@
-use crate::{CrossMAStrategy, TestingGroundStrategy};
+use crate::{CandleMAStrategy, CrossMAStrategy, TestingGroundStrategy};
 use base::register_strategy;
 
 fn map_to_ma(smothing: usize) -> &'static str {
@@ -24,6 +24,13 @@ fn map_to_ma(smothing: usize) -> &'static str {
     }
 }
 
+fn map_to_candle(candle: usize) -> &'static str {
+    match candle {
+        1 => "3CANDLES",
+        _ => "3CANDLES",
+    }
+}
+
 #[no_mangle]
 pub fn register_crossma(
     smothing: usize,
@@ -33,6 +40,7 @@ pub fn register_crossma(
     stop_loss_multi: f32,
 ) -> i32 {
     let ma = map_to_ma(smothing);
+
     let strategy = CrossMAStrategy::new(ma, short_period, long_period, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
 }
@@ -45,6 +53,22 @@ pub fn register_ground(
     stop_loss_multi: f32,
 ) -> i32 {
     let ma = map_to_ma(smothing);
+
     let strategy = TestingGroundStrategy::new(ma, long_period, atr_period, stop_loss_multi);
+    register_strategy(Box::new(strategy))
+}
+
+#[no_mangle]
+pub fn register_candlema(
+    candle: usize,
+    smothing: usize,
+    long_period: usize,
+    atr_period: usize,
+    stop_loss_multi: f32,
+) -> i32 {
+    let candle = map_to_candle(candle);
+    let ma = map_to_ma(smothing);
+
+    let strategy = CandleMAStrategy::new(candle, ma, long_period, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
 }

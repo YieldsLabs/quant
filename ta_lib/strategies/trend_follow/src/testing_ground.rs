@@ -1,10 +1,7 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
+use shared::ma;
 use stop_loss::ATRStopLoss;
-use trend::{
-    alma, dema, ema, frama, gma, hma, kama, rmsma, sinwma, sma, smma, t3, tema, tma, vwma, wma,
-    zlema,
-};
 
 pub struct TestingGroundStrategy<'a> {
     long_period: usize,
@@ -31,29 +28,6 @@ impl TestingGroundStrategy<'_> {
 
         BaseStrategy::new(signal, stop_loss, lookback_period)
     }
-
-    fn ma(&self, data: &OHLCVSeries, period: usize) -> Series<f32> {
-        match self.smothing {
-            "ALMA" => alma(&data.close, period, 0.85, 6.0),
-            "DEMA" => dema(&data.close, period),
-            "EMA" => ema(&data.close, period),
-            "FRAMA" => frama(&data.high, &data.low, &data.close, period),
-            "GMA" => gma(&data.close, period),
-            "HMA" => hma(&data.close, period),
-            "KAMA" => kama(&data.close, period),
-            "RMSMA" => rmsma(&data.close, period),
-            "SINWMA" => sinwma(&data.close, period),
-            "SMA" => sma(&data.close, period),
-            "SMMA" => smma(&data.close, period),
-            "T3" => t3(&data.close, period),
-            "TEMA" => tema(&data.close, period),
-            "TMA" => tma(&data.close, period),
-            "VWMA" => vwma(&data.close, &data.volume, period),
-            "WMA" => wma(&data.close, period),
-            "ZLEMA" => zlema(&data.close, period),
-            _ => sma(&data.close, period),
-        }
-    }
 }
 
 impl Signals for TestingGroundStrategy<'_> {
@@ -62,7 +36,7 @@ impl Signals for TestingGroundStrategy<'_> {
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = self.ma(data, self.long_period);
+        let ma = ma(self.smothing, data, self.long_period);
 
         let open = Series::from(&data.open);
         let high = Series::from(&data.high);
