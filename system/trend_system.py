@@ -41,7 +41,7 @@ class Event(Enum):
 
 
 class StrategyGenerator:
-    STRATEGY_TYPES = ['crossma', 'ground', 'simple']
+    STRATEGY_TYPES = ['crossma', 'ground']
 
     def generate(self, n_samples):
         strategies = self._diversified_strategies() + self._random_strategies(n_samples)
@@ -53,10 +53,9 @@ class StrategyGenerator:
         atr_multi_values = [1.5]
         moving_average_periods = [(50, 100), (21, 34)]
         ma_types = [
-            MovingAverageType.ALMA,
-            MovingAverageType.DEMA,
+            MovingAverageType.KAMA,
             MovingAverageType.HMA,
-            MovingAverageType.VWMA
+            MovingAverageType.ZLEMA,
         ]
 
         return [
@@ -94,8 +93,8 @@ class StrategyGenerator:
     
     def _generate_strategy(self, strategy_type):
         moving_avg_type = np.random.choice(list(MovingAverageType))
-        short_period = RandomParameter(5.0, 50.0, 5.0)
-        long_period = RandomParameter(50.0, 200.0, 10.0)
+        short_period = RandomParameter(20.0, 50.0, 5.0)
+        long_period = RandomParameter(60.0, 200.0, 10.0)
         short_period, long_period = sorted([short_period, long_period])
         atr_multi = RandomParameter(0.85, 2, 0.05)
 
@@ -105,23 +104,17 @@ class StrategyGenerator:
                 (CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
-        elif strategy_type == 'ground':
+        else:
             return Strategy(
                 'ground',
                 (TestingGroundIndicator(moving_avg_type, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
-        else:
-            return Strategy(
-                'simple',
-                (SimpleIndicator(moving_avg_type, long_period),),
-                ATRStopLoss(multi=atr_multi)
-            )
 
-BATCH_SIZE = 3
+BATCH_SIZE = 2
 
 class TrendSystem(AbstractSystem):
-    def __init__(self, context: TradingContext, n_samples: int = 15):
+    def __init__(self, context: TradingContext, n_samples: int = 20):
         super().__init__()
         self.context = context
         self.state = SystemState.BACKTESTING

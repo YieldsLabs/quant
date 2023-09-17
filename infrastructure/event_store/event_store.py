@@ -69,14 +69,17 @@ class EventStore(metaclass=SingletonMeta):
         
         if not os.path.exists(file_path):
             with open(file_path, 'w') as f:
-                json.dump([], f)
+                f.write('[')
+                json.dump({}, f, cls=Encoder)
+                f.write(']')
 
-        with open(file_path, 'r+') as f:
-            existing_events = json.load(f)
-            existing_events.extend(events)
-            
-            f.seek(0)
-            
-            json.dump(existing_events, f, cls=Encoder)
-            
+        with open(file_path, 'rb+') as f:
+            f.seek(-1, os.SEEK_END)
             f.truncate()
+
+            for event in events:
+                f.write(','.encode('utf-8'))
+                event_data = json.dumps(event, cls=Encoder).encode('utf-8')
+                f.write(event_data)
+
+            f.write(']'.encode('utf-8'))

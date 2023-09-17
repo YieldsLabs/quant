@@ -50,7 +50,7 @@ signal.signal(signal.SIGTERM, graceful_shutdown.exit)
 async def main():
     logging.info('Initializing...')
 
-    store_buf_size = 75000
+    store_buf_size = 5000
     num_workers = os.cpu_count()
     multi_piority_group = 2
 
@@ -68,7 +68,9 @@ async def main():
         Timeframe.FIFTEEN_MINUTES,
     ]
 
-    blacklist = []
+    blacklist = [
+        'USDCUSDT',
+    ]
     
     trend_follow_wasm_path = './wasm/trend_follow.wasm'
 
