@@ -79,7 +79,7 @@ class EventStore(metaclass=SingletonMeta):
                 if f.tell() > 1:
                     f.write(','.encode('utf-8'))
                 
-                event_data = json.dumps(event, cls=Encoder).encode('utf-8')
-                f.write(event_data)
+                event_data = json.dumps(event, cls=Encoder)
+                f.write(event_data.encode('utf-8'))
 
             f.write(']'.encode('utf-8'))

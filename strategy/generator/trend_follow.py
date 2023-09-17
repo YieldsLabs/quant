@@ -32,7 +32,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         ma_types = [
             MovingAverageType.KAMA,
             MovingAverageType.HMA,
-            MovingAverageType.ZLEMA,
         ]
 
         return [
