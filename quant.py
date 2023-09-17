@@ -23,6 +23,8 @@ from position.position_factory import PositionFactory
 from risk.risk_actor_factory import RiskActorFactory
 from portfolio.portfolio import Portfolio
 from system.squad_factory import SquadFactory
+from strategy.generator.trend_follow import TrendFollowStrategyGenerator
+
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -56,6 +58,8 @@ async def main():
 
     lookback = Lookback.ONE_MONTH
     batch_size = 1597
+    backtest_parallel = 2
+    backtest_sample_size = 10
     risk_per_trade = 0.005
     risk_reward_ratio = 1.5
     risk_buffer = 0.0001
@@ -83,7 +87,9 @@ async def main():
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
 
-    trend_follow_factory = SquadFactory(
+    trend_follow_strategy = TrendFollowStrategyGenerator()
+
+    trend_follow_squad_factory = SquadFactory(
         SignalActorFactory(trend_follow_wasm_path),
         ExecutorActorFactory(slippage),
         PositionActorFactory(initial_account_size, PositionFactory(leverage, risk_per_trade, risk_reward_ratio)),
@@ -92,11 +98,14 @@ async def main():
 
     context = TradingContext(
         datasource,
-        trend_follow_factory,
+        trend_follow_squad_factory,
+        trend_follow_strategy,
         timeframes,
         blacklist,
         lookback,
         batch_size,
+        backtest_parallel,
+        backtest_sample_size,
         leverage,
         IS_LIVE_MODE
     )

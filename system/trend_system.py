@@ -2,7 +2,6 @@ import asyncio
 from enum import Enum, auto
 from itertools import product
 import logging
-from random import shuffle
 import numpy as np
 
 from core.commands.account import UpdateAccountSize
@@ -10,16 +9,9 @@ from core.commands.backtest import BacktestRun
 from core.commands.broker import Subscribe, UpdateSettings
 from core.models.broker import MarginMode, PositionMode
 from core.interfaces.abstract_system import AbstractSystem
-from core.models.moving_average import MovingAverageType
-from core.models.parameter import RandomParameter, StaticParameter
-from core.models.strategy import Strategy
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
-from strategy.indicator.cross_ma import CrossMovingAverageIndicator
-from strategy.indicator.simple import SimpleIndicator
-from strategy.indicator.testing_ground import TestingGroundIndicator
-from strategy.stop_loss.atr import ATRStopLoss
 
 from .trading_context import TradingContext
 
@@ -40,87 +32,12 @@ class Event(Enum):
     SYSTEM_STOP = auto()
 
 
-class StrategyGenerator:
-    STRATEGY_TYPES = ['crossma', 'ground']
-
-    def generate(self, n_samples):
-        strategies = self._diversified_strategies() + self._random_strategies(n_samples)
-        shuffle(strategies)
-        
-        return strategies
-
-    def _diversified_strategies(self):
-        atr_multi_values = [1.5]
-        moving_average_periods = [(50, 100), (21, 34)]
-        ma_types = [
-            MovingAverageType.KAMA,
-            MovingAverageType.HMA,
-            MovingAverageType.ZLEMA,
-        ]
-
-        return [
-            Strategy(
-                'crossma', 
-                (CrossMovingAverageIndicator(ma_type, StaticParameter(short_period), StaticParameter(long_period)),),
-                ATRStopLoss(multi=StaticParameter(atr_multi_value))
-            )
-            for ma_type in ma_types
-            for short_period, long_period in moving_average_periods
-            for atr_multi_value in atr_multi_values
-        ]
-    
-    def _random_strategies(self, num):
-        strategies_set = set()
-    
-        num_per_type = num // len(self.STRATEGY_TYPES)
-        
-        for strategy_type in self.STRATEGY_TYPES:
-            count = 0
-            while count < num_per_type:
-                strategy = self._generate_strategy(strategy_type)
-                if strategy not in strategies_set:
-                    strategies_set.add(strategy)
-                    count += 1
-
-        remainders = num - len(strategies_set)
-        
-        for _ in range(remainders):
-            strategy_type = np.random.choice(self.STRATEGY_TYPES)
-            strategy = self._generate_strategy(strategy_type)
-            strategies_set.add(strategy)
-
-        return list(strategies_set)
-    
-    def _generate_strategy(self, strategy_type):
-        moving_avg_type = np.random.choice(list(MovingAverageType))
-        short_period = RandomParameter(20.0, 50.0, 5.0)
-        long_period = RandomParameter(60.0, 200.0, 10.0)
-        short_period, long_period = sorted([short_period, long_period])
-        atr_multi = RandomParameter(0.85, 2, 0.05)
-
-        if strategy_type == 'crossma':
-            return Strategy(
-                'crossma',
-                (CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),),
-                ATRStopLoss(multi=atr_multi)
-            )
-        else:
-            return Strategy(
-                'ground',
-                (TestingGroundIndicator(moving_avg_type, long_period),),
-                ATRStopLoss(multi=atr_multi)
-            )
-
-BATCH_SIZE = 2
-
 class TrendSystem(AbstractSystem):
-    def __init__(self, context: TradingContext, n_samples: int = 50):
+    def __init__(self, context: TradingContext):
         super().__init__()
         self.context = context
         self.state = SystemState.BACKTESTING
         self.event_queue = asyncio.Queue()
-        self.strategy_generator = StrategyGenerator()
-        self.n_samples = n_samples
 
     async def start(self):
        await self._run_backtest()
@@ -156,7 +73,7 @@ class TrendSystem(AbstractSystem):
         async for squad in self._generate_actors(backtest_data):
             batch.append(squad)
             
-            if len(batch) == BATCH_SIZE:
+            if len(batch) == self.context.backtest_parallel:
                 await self._process_batch(batch)
                 
                 logger.info(f"Estimated remaining time: {estimator.remaining_time():.2f} seconds")
@@ -220,15 +137,15 @@ class TrendSystem(AbstractSystem):
             yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, is_live)
 
     async def _get_backtest_data(self):
-        strategies = self.strategy_generator.generate(self.n_samples)
+        strategies = self.context.strategy_generator.generate(self.context.backtest_sample_size)
        
         logger.info(f"Total strategies: {len(strategies)}")
 
         all_symbols = await self.query(GetSymbols())
         filtered_symbols = [symbol for symbol in all_symbols if symbol.name not in self.context.blacklist]
 
-        num_symbols_to_sample = min(self.n_samples, len(filtered_symbols))
-        num_timeframes_to_sample = min(self.n_samples, len(self.context.timeframes))
+        num_symbols_to_sample = min(self.context.backtest_sample_size, len(filtered_symbols))
+        num_timeframes_to_sample = min(self.context.backtest_sample_size, len(self.context.timeframes))
 
         sampled_symbols = np.random.choice(filtered_symbols, size=num_symbols_to_sample, replace=False)
         sampled_timeframes = np.random.choice(self.context.timeframes, size=num_timeframes_to_sample, replace=False)
@@ -238,6 +155,5 @@ class TrendSystem(AbstractSystem):
 
         symbols_and_timeframes = list(product(sampled_symbols, sampled_timeframes))
         backtest_data = list(product(symbols_and_timeframes, strategies))
-        shuffle(backtest_data)
 
         return backtest_data
