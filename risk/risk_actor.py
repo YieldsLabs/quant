@@ -65,7 +65,6 @@ class RiskActor(AbstractActor):
         async with self._lock:
             self._running = False
 
-    
     async def handle(self, event: RiskEvent):
         if isinstance(event, NewMarketDataReceived):
             await self.handle_risk(event)
