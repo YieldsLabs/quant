@@ -1,6 +1,6 @@
 use base::OHLCVSeries;
 use candlestick::{
-    bottle, double_trouble, golden, h, hikkake, marubozu, master_candle, slingshot, tasuki,
+    bottle, double_trouble, golden, h, hikkake, marubozu, master_candle, quintuplets, slingshot, tasuki,
     three_candles, three_methods,
 };
 use core::series::Series;
@@ -34,6 +34,10 @@ pub fn trend_candle(candle: &str, data: &OHLCVSeries) -> (Series<bool>, Series<b
         "MASTER_CANDLE" => (
             master_candle::bullish(&data.open, &data.high, &data.low, &data.close),
             master_candle::bearish(&data.open, &data.high, &data.low, &data.close),
+        ),
+        "QUINTUPLETS" => (
+            quintuplets::bullish(&data.open, &data.close),
+            quintuplets::bearish(&data.open, &data.close),
         ),
         "SLINGSHOT" => (
             slingshot::bullish(&data.open, &data.high, &data.low, &data.close),
