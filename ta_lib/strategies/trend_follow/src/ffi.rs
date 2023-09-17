@@ -26,7 +26,15 @@ fn map_to_ma(smothing: usize) -> &'static str {
 
 fn map_to_candle(candle: usize) -> &'static str {
     match candle {
-        1 => "THREE_CANDLES",
+        1 => "BOTTLE",
+        2 => "DOUBLE_TROUBLE",
+        3 => "GOLDEN",
+        4 => "H",
+        5 => "MARUBOZU",
+        6 => "MASTER_CANDLE",
+        7 => "SLINGSHOT",
+        8 => "THREE_CANDLES",
+        9 => "TASUKI",
         _ => "THREE_CANDLES",
     }
 }

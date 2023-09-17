@@ -59,7 +59,7 @@ async def main():
     lookback = Lookback.ONE_MONTH
     batch_size = 1597
     backtest_parallel = 2
-    backtest_sample_size = 10
+    backtest_sample_size = 20
     risk_per_trade = 0.005
     risk_reward_ratio = 1.5
     risk_buffer = 0.0001
