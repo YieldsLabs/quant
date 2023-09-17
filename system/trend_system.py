@@ -2,6 +2,7 @@ import asyncio
 from enum import Enum, auto
 from itertools import product
 import logging
+from random import shuffle
 import numpy as np
 
 from core.commands.account import UpdateAccountSize
@@ -64,7 +65,7 @@ class TrendSystem(AbstractSystem):
         logger.info('Run backtest')
 
         backtest_data = await self._get_backtest_data()
-        total_steps = len(backtest_data)
+        total_steps = len(backtest_data) // self.context.backtest_parallel
        
         estimator = Estimator(total_steps)
 
@@ -155,5 +156,7 @@ class TrendSystem(AbstractSystem):
 
         symbols_and_timeframes = list(product(sampled_symbols, sampled_timeframes))
         backtest_data = list(product(symbols_and_timeframes, strategies))
+
+        shuffle(backtest_data)
 
         return backtest_data

@@ -1,5 +1,8 @@
 use base::OHLCVSeries;
-use candlestick::{bottle, double_trouble, golden, h, marubozu, master_candle, slingshot, tasuki, three_candles};
+use candlestick::{
+    bottle, double_trouble, golden, h, hikkake, marubozu, master_candle, slingshot, tasuki,
+    three_candles, three_methods,
+};
 use core::series::Series;
 
 pub fn trend_candle(candle: &str, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -20,6 +23,10 @@ pub fn trend_candle(candle: &str, data: &OHLCVSeries) -> (Series<bool>, Series<b
             h::bullish(&data.open, &data.high, &data.low, &data.close),
             h::bearish(&data.open, &data.high, &data.low, &data.close),
         ),
+        "HIKKAKE" => (
+            hikkake::bullish(&data.open, &data.high, &data.low, &data.close),
+            hikkake::bearish(&data.open, &data.high, &data.low, &data.close),
+        ),
         "MARUBOZU" => (
             marubozu::bullish(&data.open, &data.high, &data.low, &data.close),
             marubozu::bearish(&data.open, &data.high, &data.low, &data.close),
@@ -35,6 +42,10 @@ pub fn trend_candle(candle: &str, data: &OHLCVSeries) -> (Series<bool>, Series<b
         "THREE_CANDLES" => (
             three_candles::bullish(&data.open, &data.close),
             three_candles::bearish(&data.open, &data.close),
+        ),
+        "THREE_METHODS" => (
+            three_methods::bullish(&data.open, &data.high, &data.low, &data.close),
+            three_methods::bearish(&data.open, &data.high, &data.low, &data.close),
         ),
         "TASUKI" => (
             tasuki::bullish(&data.open, &data.close),
