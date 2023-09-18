@@ -10,6 +10,7 @@ base = { path = "../base" }
 stop_loss = { path = "../stop_loss" }
 shared = { path = "../shared" }
 volatility = { path = "../../indicators/volatility"}
+momentum = { path = "../../indicators/momentum"}
 
 [lib]
 crate-type = ["cdylib"]

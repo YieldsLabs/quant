@@ -1,4 +1,6 @@
-use crate::{CandleMAStrategy, CrossMAStrategy, SNATRStrategy, TestingGroundStrategy};
+use crate::{
+    CandleMAStrategy, CandleRSIStrategy, CrossMAStrategy, SNATRStrategy, TestingGroundStrategy,
+};
 use base::register_strategy;
 
 fn map_to_ma(smoothing: usize) -> &'static str {
@@ -80,6 +82,19 @@ pub fn register_candlema(
     let ma = map_to_ma(smoothing);
 
     let strategy = CandleMAStrategy::new(candle, ma, long_period, atr_period, stop_loss_multi);
+    register_strategy(Box::new(strategy))
+}
+
+#[no_mangle]
+pub fn register_candlersi(
+    candle: usize,
+    rsi_period: usize,
+    atr_period: usize,
+    stop_loss_multi: f32,
+) -> i32 {
+    let candle = map_to_candle(candle);
+
+    let strategy = CandleRSIStrategy::new(candle, rsi_period, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
 }
 
