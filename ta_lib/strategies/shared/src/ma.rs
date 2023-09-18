@@ -23,7 +23,6 @@ pub fn ma(smothing: &str, data: &OHLCVSeries, period: usize) -> Series<f32> {
         "TMA" => tma(&data.close, period),
         "VWMA" => vwma(&data.close, &data.volume, period),
         "WMA" => wma(&data.close, period),
-        "ZLEMA" => zlema(&data.close, period),
-        _ => sma(&data.close, period),
+        "ZLEMA" | _ => zlema(&data.close, period),
     }
 }

@@ -19,8 +19,7 @@ fn map_to_ma(smothing: usize) -> &'static str {
         14 => "TMA",
         15 => "VWMA",
         16 => "WMA",
-        17 => "ZLEMA",
-        _ => "SMA",
+        17 | _ => "ZLEMA",
     }
 }
 
@@ -37,8 +36,7 @@ fn map_to_candle(candle: usize) -> &'static str {
         9 => "SLINGSHOT",
         10 => "THREE_CANDLES",
         11 => "THREE_METHODS",
-        12 => "TASUKI",
-        _ => "THREE_CANDLES",
+        12 | _ => "TASUKI",
     }
 }
 

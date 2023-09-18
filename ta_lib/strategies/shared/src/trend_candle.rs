@@ -1,7 +1,7 @@
 use base::OHLCVSeries;
 use candlestick::{
-    bottle, double_trouble, golden, h, hikkake, marubozu, master_candle, quintuplets, slingshot, tasuki,
-    three_candles, three_methods,
+    bottle, double_trouble, golden, h, hikkake, marubozu, master_candle, quintuplets, slingshot,
+    tasuki, three_candles, three_methods,
 };
 use core::series::Series;
 

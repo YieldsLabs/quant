@@ -7,16 +7,15 @@ pub fn atr(
     low: &[f32],
     close: &[f32],
     period: usize,
-    smothing: Option<&str>,
+    smoothing: Option<&str>,
 ) -> Series<f32> {
     let tr = true_range(high, low, close);
 
-    match smothing {
+    match smoothing {
         Some("WMA") => wma(&tr, period),
         Some("SMA") => sma(&tr, period),
         Some("EMA") => ema(&tr, period),
-        Some("SMMA") => smma(&tr, period),
-        _ => smma(&tr, period),
+        Some("SMMA") | _ => smma(&tr, period),
     }
 }
 

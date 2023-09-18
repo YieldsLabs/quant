@@ -9,10 +9,11 @@ class TrendCandleType(Enum):
     HIKKAKE = 5
     MARUBOZU = 6
     MASTER_CANDLE = 7
-    SLINGSHOT = 8
-    THREE_CANDLES = 9
-    THREE_METHODS = 10
-    TASUKI = 11
+    QUINTUPLETS = 8
+    SLINGSHOT = 9
+    THREE_CANDLES = 10
+    THREE_METHODS = 11
+    TASUKI = 12
 
     def __str__(self):
         return self.name.upper()
