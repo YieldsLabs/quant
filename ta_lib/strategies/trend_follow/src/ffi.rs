@@ -1,8 +1,8 @@
-use crate::{CandleMAStrategy, CrossMAStrategy, TestingGroundStrategy};
+use crate::{CandleMAStrategy, CrossMAStrategy, SNATRStrategy, TestingGroundStrategy};
 use base::register_strategy;
 
-fn map_to_ma(smothing: usize) -> &'static str {
-    match smothing {
+fn map_to_ma(smoothing: usize) -> &'static str {
+    match smoothing {
         1 => "ALMA",
         2 => "DEMA",
         3 => "EMA",
@@ -43,13 +43,13 @@ fn map_to_candle(candle: usize) -> &'static str {
 
 #[no_mangle]
 pub fn register_crossma(
-    smothing: usize,
+    smoothing: usize,
     short_period: usize,
     long_period: usize,
     atr_period: usize,
     stop_loss_multi: f32,
 ) -> i32 {
-    let ma = map_to_ma(smothing);
+    let ma = map_to_ma(smoothing);
 
     let strategy = CrossMAStrategy::new(ma, short_period, long_period, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
@@ -57,12 +57,12 @@ pub fn register_crossma(
 
 #[no_mangle]
 pub fn register_ground(
-    smothing: usize,
+    smoothing: usize,
     long_period: usize,
     atr_period: usize,
     stop_loss_multi: f32,
 ) -> i32 {
-    let ma = map_to_ma(smothing);
+    let ma = map_to_ma(smoothing);
 
     let strategy = TestingGroundStrategy::new(ma, long_period, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
@@ -71,14 +71,36 @@ pub fn register_ground(
 #[no_mangle]
 pub fn register_candlema(
     candle: usize,
-    smothing: usize,
+    smoothing: usize,
     long_period: usize,
     atr_period: usize,
     stop_loss_multi: f32,
 ) -> i32 {
     let candle = map_to_candle(candle);
-    let ma = map_to_ma(smothing);
+    let ma = map_to_ma(smoothing);
 
     let strategy = CandleMAStrategy::new(candle, ma, long_period, atr_period, stop_loss_multi);
+    register_strategy(Box::new(strategy))
+}
+
+#[no_mangle]
+pub fn register_snatr(
+    atr_period: usize,
+    atr_smoothing_period: usize,
+    smoothing: usize,
+    long_period: usize,
+    stop_loss_atr_period: usize,
+    stop_loss_multi: f32,
+) -> i32 {
+    let ma = map_to_ma(smoothing);
+
+    let strategy = SNATRStrategy::new(
+        atr_period,
+        atr_smoothing_period,
+        ma,
+        long_period,
+        stop_loss_atr_period,
+        stop_loss_multi,
+    );
     register_strategy(Box::new(strategy))
 }

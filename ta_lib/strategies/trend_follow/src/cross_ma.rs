@@ -6,12 +6,12 @@ use stop_loss::ATRStopLoss;
 pub struct CrossMAStrategy<'a> {
     short_period: usize,
     long_period: usize,
-    smothing: &'a str,
+    smoothing: &'a str,
 }
 
 impl CrossMAStrategy<'_> {
     pub fn new(
-        smothing: &str,
+        smoothing: &str,
         short_period: usize,
         long_period: usize,
         atr_period: usize,
@@ -21,7 +21,7 @@ impl CrossMAStrategy<'_> {
         let signal = CrossMAStrategy {
             short_period,
             long_period,
-            smothing,
+            smoothing,
         };
 
         let stop_loss = ATRStopLoss {
@@ -37,13 +37,13 @@ impl Signals for CrossMAStrategy<'_> {
     fn id(&self) -> String {
         format!(
             "CROSSMA_{}:{}:{}",
-            self.smothing, self.short_period, self.long_period
+            self.smoothing, self.short_period, self.long_period
         )
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let short_ma = ma(self.smothing, data, self.short_period);
-        let long_ma = ma(self.smothing, data, self.long_period);
+        let short_ma = ma(self.smoothing, data, self.short_period);
+        let long_ma = ma(self.smoothing, data, self.long_period);
 
         let long_signal = short_ma.cross_over(&long_ma);
         let short_signal = short_ma.cross_under(&long_ma);

@@ -80,6 +80,7 @@ dependencies = [
  "once_cell",
  "shared",
  "stop_loss",
+ "volatility",
 ]
 
 [[package]]

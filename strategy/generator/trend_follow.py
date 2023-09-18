@@ -6,6 +6,7 @@ from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerato
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
+from strategy.indicator.snatr import SNATRIndicator
 
 from ..indicator.ma import MovingAverageIndicator
 from ..indicator.trend_candle import TrendCandleIndicator
@@ -15,7 +16,7 @@ from ..stop_loss.atr import ATRStopLoss
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    STRATEGY_TYPES = ['crossma', 'candlema', 'ground']
+    STRATEGY_TYPES = ['crossma', 'candlema', 'ground', 'snatr']
 
     def __init__(self):
         super().__init__()
@@ -85,6 +86,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return Strategy(
                 'candlema',
                 (TrendCandleIndicator(trend_candle_type), MovingAverageIndicator(moving_avg_type, long_period),),
+                ATRStopLoss(multi=atr_multi)
+            )
+        
+        elif strategy_type == 'snatr':
+            return Strategy(
+                'snatr',
+                (SNATRIndicator(), MovingAverageIndicator(moving_avg_type, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
         else:

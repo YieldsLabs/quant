@@ -9,6 +9,7 @@ core = { path = "../../core" }
 base = { path = "../base" }
 stop_loss = { path = "../stop_loss" }
 shared = { path = "../shared" }
+volatility = { path = "../../indicators/volatility"}
 
 [lib]
 crate-type = ["cdylib"]

@@ -5,12 +5,12 @@ use stop_loss::ATRStopLoss;
 
 pub struct TestingGroundStrategy<'a> {
     long_period: usize,
-    smothing: &'a str,
+    smoothing: &'a str,
 }
 
 impl TestingGroundStrategy<'_> {
     pub fn new(
-        smothing: &str,
+        smoothing: &str,
         long_period: usize,
         atr_period: usize,
         stop_loss_multi: f32,
@@ -18,7 +18,7 @@ impl TestingGroundStrategy<'_> {
         let lookback_period = long_period;
         let signal = TestingGroundStrategy {
             long_period,
-            smothing,
+            smoothing,
         };
 
         let stop_loss = ATRStopLoss {
@@ -32,11 +32,11 @@ impl TestingGroundStrategy<'_> {
 
 impl Signals for TestingGroundStrategy<'_> {
     fn id(&self) -> String {
-        format!("GROUND_{}:{}", self.smothing, self.long_period)
+        format!("GROUND_{}:{}", self.smoothing, self.long_period)
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma(self.smothing, data, self.long_period);
+        let ma = ma(self.smoothing, data, self.long_period);
 
         let open = Series::from(&data.open);
         let high = Series::from(&data.high);

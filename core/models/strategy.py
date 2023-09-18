@@ -12,12 +12,12 @@ class Strategy:
 
     @property
     def parameters(self):
-        indicator_params = [item for indicator in self.indicators for item in [indicator.type.value, *indicator.parameters]]
+        indicator_params = [item for indicator in self.indicators for item in ([indicator.type.value] if hasattr(indicator.type, 'value') and indicator.type.value else []) + indicator.parameters]
         return indicator_params + list(self.stop_loss.parameters)
 
     def __str__(self) -> str:
         strategy_name = self.name.upper()
-        indicator_params = [item for indicator in self.indicators for item in [str(indicator.type), *indicator.parameters]]
+        indicator_params = [item for indicator in self.indicators for item in ([str(indicator.type)] if hasattr(indicator.type, 'value') else []) + indicator.parameters]
         strategy_parameters = ':'.join(map(str, indicator_params))
         stop_loss_name = str(self.stop_loss.type)
         sl_parameters = ':'.join(map(str, self.stop_loss.parameters))
