@@ -82,6 +82,21 @@ impl Series<f32> {
     pub fn std(&self, period: usize) -> Self {
         self.var(period).sqrt()
     }
+
+    pub fn md(&self, period: usize) -> Self {
+        let ma: Vec<f32> = self.ma(period).into();
+        self.sliding_map(period, |window, size, i| {
+            let mean = ma[i];
+            Some(
+                window
+                    .iter()
+                    .filter_map(|v| *v)
+                    .map(|v| (v - mean).abs())
+                    .sum::<f32>()
+                    / size as f32,
+            )
+        })
+    }
 }
 
 #[cfg(test)]
@@ -307,5 +322,22 @@ mod tests {
                 _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
             }
         }
+    }
+
+    #[test]
+    fn test_md() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            Some(0.0),
+            Some(0.5),
+            Some(0.6666667),
+            Some(0.6666667),
+            Some(0.6666667),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.md(3);
+
+        assert_eq!(result, expected);
     }
 }
