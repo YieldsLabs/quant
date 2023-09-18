@@ -1,5 +1,4 @@
 mod alma;
-mod cci;
 mod dema;
 mod ema;
 mod frama;
@@ -19,7 +18,6 @@ mod wma;
 mod zlema;
 
 pub use alma::alma;
-pub use cci::cci;
 pub use dema::dema;
 pub use ema::ema;
 pub use frama::frama;
