@@ -15,6 +15,7 @@ pub fn sso(
     let smooth_series = |series: &Series<f32>| -> Series<f32> {
         match smoothing {
             Some("WMA") => series.wma(period),
+            Some("HMA") => series.hma(period),
             Some("SMA") | _ => series.ma(period),
         }
     };

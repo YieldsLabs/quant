@@ -2,10 +2,8 @@ use core::series::Series;
 
 pub fn hma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
-    let lag = (period as f32 / 2.0).round() as usize;
-    let sqrt_period = (period as f32).sqrt() as usize;
 
-    let hma = (2.0 * source.wma(lag) - source.wma(period)).wma(sqrt_period);
+    let hma = source.hma(period);
 
     hma
 }

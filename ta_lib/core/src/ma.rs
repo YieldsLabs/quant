@@ -63,6 +63,13 @@ impl Series<f32> {
 
         sum / norm
     }
+
+    pub fn hma(&self, period: usize) -> Self {
+        let lag = (period as f32 / 2.0).round() as usize;
+        let sqrt_period = (period as f32).sqrt() as usize;
+
+        (2.0 * self.wma(lag) - self.wma(period)).wma(sqrt_period)
+    }
 }
 
 #[cfg(test)]
