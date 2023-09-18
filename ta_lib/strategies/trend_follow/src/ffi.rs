@@ -29,14 +29,15 @@ fn map_to_candle(candle: usize) -> &'static str {
         2 => "DOUBLE_TROUBLE",
         3 => "GOLDEN",
         4 => "H",
-        5 => "HIKKAKE",
-        6 => "MARUBOZU",
-        7 => "MASTER_CANDLE",
-        8 => "QUINTUPLETS",
-        9 => "SLINGSHOT",
-        10 => "THREE_CANDLES",
-        11 => "THREE_METHODS",
-        12 | _ => "TASUKI",
+        5 => "HEXAD",
+        6 => "HIKKAKE",
+        7 => "MARUBOZU",
+        8 => "MASTER_CANDLE",
+        9 => "QUINTUPLETS",
+        10 => "SLINGSHOT",
+        11 => "THREE_CANDLES",
+        12 => "THREE_METHODS",
+        13 | _ => "TASUKI",
     }
 }
 

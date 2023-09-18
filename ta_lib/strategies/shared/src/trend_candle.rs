@@ -1,7 +1,7 @@
 use base::OHLCVSeries;
 use candlestick::{
-    bottle, double_trouble, golden, h, hikkake, marubozu, master_candle, quintuplets, slingshot,
-    tasuki, three_candles, three_methods,
+    bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets,
+    slingshot, tasuki, three_candles, three_methods,
 };
 use core::series::Series;
 
@@ -22,6 +22,10 @@ pub fn trend_candle(candle: &str, data: &OHLCVSeries) -> (Series<bool>, Series<b
         "H" => (
             h::bullish(&data.open, &data.high, &data.low, &data.close),
             h::bearish(&data.open, &data.high, &data.low, &data.close),
+        ),
+        "HEXAD" => (
+            hexad::bullish(&data.open, &data.high, &data.close),
+            hexad::bearish(&data.open, &data.low, &data.close),
         ),
         "HIKKAKE" => (
             hikkake::bullish(&data.open, &data.high, &data.low, &data.close),
