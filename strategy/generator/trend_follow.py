@@ -28,10 +28,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _diversified_strategies(self):
         atr_multi_values = [1.5]
-        moving_average_periods = [(50, 100), (21, 34)]
+        moving_average_periods = [(89, 144), (21, 34)]
         ma_types = [
             MovingAverageType.KAMA,
-            MovingAverageType.HMA,
+            MovingAverageType.T3,
         ]
 
         return [

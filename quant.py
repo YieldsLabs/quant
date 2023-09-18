@@ -61,7 +61,7 @@ async def main():
     backtest_parallel = 2
     backtest_sample_size = 20
     risk_per_trade = 0.005
-    risk_reward_ratio = 1.5
+    risk_reward_ratio = 2
     risk_buffer = 0.0001
     slippage = 0.0005
     leverage = 1
