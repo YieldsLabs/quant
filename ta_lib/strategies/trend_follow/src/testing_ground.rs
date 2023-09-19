@@ -17,13 +17,13 @@ impl TestingGroundStrategy {
         atr_period: usize,
         stop_loss_multi: f32,
     ) -> BaseStrategy<TestingGroundStrategy, ATRStopLoss> {
-        let lookback_period = long_period;
         let signal = TestingGroundStrategy {
             long_period,
             smoothing,
         };
-
         let filter = map_to_filter(filter_config);
+
+        let lookback_period = std::cmp::max(long_period, filter.lookback());
 
         let stop_loss = ATRStopLoss {
             atr_period,

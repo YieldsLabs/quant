@@ -19,7 +19,7 @@ impl CrossMAStrategy {
         atr_period: usize,
         stop_loss_multi: f32,
     ) -> BaseStrategy<CrossMAStrategy, ATRStopLoss> {
-        let lookback_period = std::cmp::max(short_period, long_period);
+        let mut lookback_period = std::cmp::max(short_period, long_period);
         let signal = CrossMAStrategy {
             short_period,
             long_period,
@@ -27,6 +27,8 @@ impl CrossMAStrategy {
         };
 
         let filter = map_to_filter(filter_config);
+
+        lookback_period = std::cmp::max(lookback_period, filter.lookback());
 
         let stop_loss = ATRStopLoss {
             atr_period,

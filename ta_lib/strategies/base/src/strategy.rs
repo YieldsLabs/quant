@@ -202,7 +202,7 @@ mod tests {
         }
 
         fn entry(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (Series::empty(1), Series::empty(1))
+            (Series::empty(1).nz(Some(0.0)).into(), Series::empty(1).nz(Some(0.0)).into())
         }
 
         fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {

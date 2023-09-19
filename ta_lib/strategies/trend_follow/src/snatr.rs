@@ -17,14 +17,14 @@ impl SNATRStrategy {
         stop_loss_atr_period: usize,
         stop_loss_multi: f32,
     ) -> BaseStrategy<SNATRStrategy, ATRStopLoss> {
-        let lookback_period = atr_period;
-
         let signal = SNATRStrategy {
             atr_period,
             atr_smoothing_period,
         };
 
         let filter = map_to_filter(filter_config);
+
+        let lookback_period = std::cmp::max(atr_period, filter.lookback());
 
         let stop_loss = ATRStopLoss {
             atr_period: stop_loss_atr_period,

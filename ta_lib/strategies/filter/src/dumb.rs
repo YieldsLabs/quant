@@ -22,15 +22,15 @@ impl Filter for DumbFilter {
 
     fn entry(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
-            Series::empty(1).nz(Some(1.0)).into(),
-            Series::empty(1).nz(Some(1.0)).into(),
+            Series::empty(self.period).nz(Some(1.0)).into(),
+            Series::empty(self.period).nz(Some(1.0)).into(),
         )
     }
 
     fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
-            Series::empty(1).nz(Some(1.0)).into(),
-            Series::empty(1).nz(Some(1.0)).into(),
+            Series::empty(self.period).nz(Some(1.0)).into(),
+            Series::empty(self.period).nz(Some(1.0)).into(),
         )
     }
 }

@@ -16,7 +16,7 @@ from ..stop_loss.atr import ATRStopLoss
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    STRATEGY_TYPES = ['crossma', 'candle', 'ground', 'snatr']
+    STRATEGY_TYPES = ['crossma', 'ground', 'snatr', 'candle']
 
     def __init__(self):
         super().__init__()

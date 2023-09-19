@@ -53,7 +53,7 @@ pub fn register_crossma(
 ) -> i32 {
     let smoothing = map_to_ma(smoothing);
 
-    let filter_config = FilterConfig::DUMB {};
+    let filter_config = FilterConfig::DUMB { period: long_period };
     let strategy = CrossMAStrategy::new(
         smoothing,
         short_period,
@@ -74,7 +74,7 @@ pub fn register_ground(
 ) -> i32 {
     let ma = map_to_ma(smoothing);
 
-    let filter_config = FilterConfig::DUMB {};
+    let filter_config = FilterConfig::DUMB { period: long_period };
     let strategy =
         TestingGroundStrategy::new(ma, long_period, filter_config, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
