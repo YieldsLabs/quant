@@ -53,8 +53,8 @@ impl Signals for SNATRStrategy<'_> {
         let ma = ma(self.smoothing, data, self.long_period);
         let close = Series::from(&data.close);
 
-        let long_signal = snatr.slt(0.8) & snatr.shift(1).sgt(0.8) & close.gt(&ma);
-        let short_signal = snatr.sgt(0.2) & snatr.shift(1).slt(0.2) & close.lt(&ma);
+        let long_signal = snatr.cross_under_line(0.8) & close.gt(&ma);
+        let short_signal = snatr.cross_over_line(0.2) & close.lt(&ma);
 
         (long_signal, short_signal)
     }
