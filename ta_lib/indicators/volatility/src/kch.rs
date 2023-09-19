@@ -27,16 +27,31 @@ mod tests {
 
     #[test]
     fn test_kch() {
-        let high = vec![2.0, 4.0, 6.0];
-        let low = vec![1.0, 2.0, 3.0];
-        let close = vec![1.5, 3.0, 4.5];
+        let high = vec![
+            19.129, 19.116, 19.154, 19.195, 19.217, 19.285, 19.341, 19.394, 19.450,
+        ];
+        let low = vec![
+            19.090, 19.086, 19.074, 19.145, 19.141, 19.155, 19.219, 19.306, 19.355,
+        ];
+        let close = vec![
+            19.102, 19.100, 19.146, 19.181, 19.155, 19.248, 19.309, 19.355, 19.439,
+        ];
         let period = 3;
         let atr_period = 3;
         let factor = 2.0;
         let epsilon = 0.001;
-        let expected_upper_band = vec![1.5, 3.9166667, 6.486111];
-        let expected_middle_band = vec![1.5, 2.25, 3.375];
-        let expected_lower_band = vec![1.5, 0.58333325, 0.26388884];
+        let expected_upper_band = vec![
+            19.107, 19.123833, 19.180916, 19.221735, 19.259995, 19.348415, 19.426208, 19.478382,
+            19.540155,
+        ];
+        let expected_middle_band = vec![
+            19.107, 19.103834, 19.11425, 19.143959, 19.157478, 19.193405, 19.241535, 19.2966,
+            19.355633,
+        ];
+        let expected_lower_band = vec![
+            19.107, 19.083836, 19.047585, 19.066183, 19.054962, 19.038395, 19.056862, 19.114819,
+            19.17111,
+        ];
 
         let (upper_band, middle_band, lower_band) =
             kch(&high, &low, &close, period, atr_period, factor);
