@@ -2,7 +2,7 @@ use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
 use shared::ma;
 use stop_loss::ATRStopLoss;
-use volatility::atr;
+use volatility::snatr;
 
 pub struct SNATRStrategy<'a> {
     atr_period: usize,
@@ -46,10 +46,14 @@ impl Signals for SNATRStrategy<'_> {
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let atr = atr(&data.high, &data.low, &data.close, self.atr_period, None);
-        let snatr = (&atr - &atr.lowest(self.atr_period))
-            / (&atr.highest(self.atr_period) - &atr.lowest(self.atr_period))
-                .wma(self.atr_smoothing_period);
+        let snatr = snatr(
+            &data.high,
+            &data.low,
+            &data.close,
+            self.atr_period,
+            self.atr_smoothing_period,
+        );
+
         let ma = ma(self.smoothing, data, self.long_period);
         let close = Series::from(&data.close);
 
