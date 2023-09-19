@@ -3,7 +3,7 @@ use core::series::Series;
 pub fn roc(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
-    let roc = 100.0 * (&source - &source.shift(period)) / source.shift(period);
+    let roc = 100.0 * source.change(period) / source.shift(period);
 
     roc
 }
