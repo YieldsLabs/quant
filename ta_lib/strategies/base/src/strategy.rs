@@ -19,16 +19,16 @@ pub struct StopLossLevels {
     pub short: f32,
 }
 
-pub struct BaseStrategy<S: Signals, L: StopLoss> {
+pub struct BaseStrategy<S: Signals> {
     data: VecDeque<OHLCV>,
     signal: S,
     filter: Box<dyn Filter>,
-    stop_loss: L,
+    stop_loss: Box<dyn StopLoss>,
     lookback_period: usize,
 }
 
-impl<S: Signals, L: StopLoss> BaseStrategy<S, L> {
-    pub fn new(signal: S, filter: Box<dyn Filter>, stop_loss: L, lookback_period: usize) -> Self {
+impl<S: Signals> BaseStrategy<S> {
+    pub fn new(signal: S, filter: Box<dyn Filter>, stop_loss: Box<dyn StopLoss>, lookback_period: usize) -> Self {
         let adjusted_lookback = std::cmp::max(lookback_period, DEFAULT_LOOKBACK);
 
         Self {
@@ -53,7 +53,7 @@ impl<S: Signals, L: StopLoss> BaseStrategy<S, L> {
     }
 }
 
-impl<S: Signals, L: StopLoss> Strategy for BaseStrategy<S, L> {
+impl<S: Signals> Strategy for BaseStrategy<S> {
     fn id(&self) -> String {
         format!(
             "_STRTG{}_FLTR{}_STPLSS{}",
@@ -215,7 +215,7 @@ mod tests {
         let strategy = BaseStrategy::new(
             MockSignal { short_period: 10 },
             Box::new(MockFilter { period: 1 }),
-            MockStopLoss { multi: 2.0 },
+            Box::new(MockStopLoss { multi: 2.0 }),
             2,
         );
         assert_eq!(strategy.lookback_period, 55);
@@ -226,7 +226,7 @@ mod tests {
         let strategy = BaseStrategy::new(
             MockSignal { short_period: 10 },
             Box::new(MockFilter { period: 1 }),
-            MockStopLoss { multi: 2.0 },
+            Box::new(MockStopLoss { multi: 2.0 }),
             2,
         );
         assert_eq!(strategy.id(), "_STRTGMOCK_10_FLTRFL_1_STPLSSSL_2.0");
@@ -237,7 +237,7 @@ mod tests {
         let mut strategy = BaseStrategy::new(
             MockSignal { short_period: 10 },
             Box::new(MockFilter { period: 1 }),
-            MockStopLoss { multi: 2.0 },
+            Box::new(MockStopLoss { multi: 2.0 }),
             3,
         );
         let ohlcvs = vec![
