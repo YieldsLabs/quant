@@ -47,18 +47,14 @@ impl Signals for SNATRStrategy<'_> {
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let atr = atr(&data.high, &data.low, &data.close, self.atr_period, None);
-        let smoothed_normalized_atr = (&atr - &atr.lowest(self.atr_period))
+        let snatr = (&atr - &atr.lowest(self.atr_period))
             / (&atr.highest(self.atr_period) - &atr.lowest(self.atr_period))
                 .wma(self.atr_smoothing_period);
         let ma = ma(self.smoothing, data, self.long_period);
         let close = Series::from(&data.close);
 
-        let long_signal = smoothed_normalized_atr.slt(0.8)
-            & smoothed_normalized_atr.shift(1).sgt(0.8)
-            & close.gt(&ma);
-        let short_signal = smoothed_normalized_atr.sgt(0.2)
-            & smoothed_normalized_atr.shift(1).slt(0.2)
-            & close.lt(&ma);
+        let long_signal = snatr.slt(0.8) & snatr.shift(1).sgt(0.8) & close.gt(&ma);
+        let short_signal = snatr.sgt(0.2) & snatr.shift(1).slt(0.2) & close.lt(&ma);
 
         (long_signal, short_signal)
     }
