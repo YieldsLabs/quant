@@ -2,6 +2,7 @@ use crate::{CandleStrategy, CrossMAStrategy, SNATRStrategy, TestingGroundStrateg
 use base::register_strategy;
 use filter::FilterConfig;
 use shared::{MovingAverageType, TrendCandleType};
+use stop_loss::StopLossConfig;
 
 fn map_to_ma(smoothing: usize) -> MovingAverageType {
     match smoothing {
@@ -53,14 +54,20 @@ pub fn register_crossma(
 ) -> i32 {
     let smoothing = map_to_ma(smoothing);
 
-    let filter_config = FilterConfig::DUMB { period: long_period };
+    let filter_config = FilterConfig::DUMB {
+        period: long_period,
+    };
+    let stoploss_config = StopLossConfig::ATR {
+        period: atr_period,
+        multi: stop_loss_multi,
+    };
+
     let strategy = CrossMAStrategy::new(
         smoothing,
         short_period,
         long_period,
         filter_config,
-        atr_period,
-        stop_loss_multi,
+        stoploss_config,
     );
     register_strategy(Box::new(strategy))
 }
@@ -74,9 +81,15 @@ pub fn register_ground(
 ) -> i32 {
     let ma = map_to_ma(smoothing);
 
-    let filter_config = FilterConfig::DUMB { period: long_period };
-    let strategy =
-        TestingGroundStrategy::new(ma, long_period, filter_config, atr_period, stop_loss_multi);
+    let filter_config = FilterConfig::DUMB {
+        period: long_period,
+    };
+    let stoploss_config = StopLossConfig::ATR {
+        period: atr_period,
+        multi: stop_loss_multi,
+    };
+
+    let strategy = TestingGroundStrategy::new(ma, long_period, filter_config, stoploss_config);
     register_strategy(Box::new(strategy))
 }
 
@@ -92,8 +105,12 @@ pub fn register_candle(
     let smoothing = map_to_ma(smoothing);
 
     let filter_config = FilterConfig::MA { smoothing, period };
+    let stoploss_config = StopLossConfig::ATR {
+        period: atr_period,
+        multi: stop_loss_multi,
+    };
 
-    let strategy = CandleStrategy::new(candle, filter_config, atr_period, stop_loss_multi);
+    let strategy = CandleStrategy::new(candle, filter_config, stoploss_config);
     register_strategy(Box::new(strategy))
 }
 
@@ -109,13 +126,16 @@ pub fn register_snatr(
     let smoothing = map_to_ma(smoothing);
 
     let filter_config = FilterConfig::MA { smoothing, period };
+    let stoploss_config = StopLossConfig::ATR {
+        period: stop_loss_atr_period,
+        multi: stop_loss_multi,
+    };
 
     let strategy = SNATRStrategy::new(
         atr_period,
         atr_smoothing_period,
         filter_config,
-        stop_loss_atr_period,
-        stop_loss_multi,
+        stoploss_config,
     );
 
     register_strategy(Box::new(strategy))

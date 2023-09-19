@@ -1,7 +1,7 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
 use filter::{map_to_filter, FilterConfig};
-use stop_loss::ATRStopLoss;
+use stop_loss::{map_to_stoploss, StopLossConfig};
 use volatility::snatr;
 
 pub struct SNATRStrategy {
@@ -14,22 +14,17 @@ impl SNATRStrategy {
         atr_period: usize,
         atr_smoothing_period: usize,
         filter_config: FilterConfig,
-        stop_loss_atr_period: usize,
-        stop_loss_multi: f32,
-    ) -> BaseStrategy<SNATRStrategy, ATRStopLoss> {
+        stoploss_config: StopLossConfig,
+    ) -> BaseStrategy<SNATRStrategy> {
         let signal = SNATRStrategy {
             atr_period,
             atr_smoothing_period,
         };
 
         let filter = map_to_filter(filter_config);
+        let stop_loss = map_to_stoploss(stoploss_config);
 
         let lookback_period = std::cmp::max(atr_period, filter.lookback());
-
-        let stop_loss = ATRStopLoss {
-            atr_period: stop_loss_atr_period,
-            multi: stop_loss_multi,
-        };
 
         BaseStrategy::new(signal, filter, stop_loss, lookback_period)
     }

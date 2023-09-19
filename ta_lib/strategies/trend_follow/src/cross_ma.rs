@@ -2,7 +2,7 @@ use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
 use filter::{map_to_filter, FilterConfig};
 use shared::{ma, MovingAverageType};
-use stop_loss::ATRStopLoss;
+use stop_loss::{map_to_stoploss, StopLossConfig};
 
 pub struct CrossMAStrategy {
     short_period: usize,
@@ -16,10 +16,8 @@ impl CrossMAStrategy {
         short_period: usize,
         long_period: usize,
         filter_config: FilterConfig,
-        atr_period: usize,
-        stop_loss_multi: f32,
-    ) -> BaseStrategy<CrossMAStrategy, ATRStopLoss> {
-        let mut lookback_period = std::cmp::max(short_period, long_period);
+        stoploss_config: StopLossConfig,
+    ) -> BaseStrategy<CrossMAStrategy> {
         let signal = CrossMAStrategy {
             short_period,
             long_period,
@@ -27,13 +25,10 @@ impl CrossMAStrategy {
         };
 
         let filter = map_to_filter(filter_config);
+        let stop_loss = map_to_stoploss(stoploss_config);
 
+        let mut lookback_period = std::cmp::max(short_period, long_period);
         lookback_period = std::cmp::max(lookback_period, filter.lookback());
-
-        let stop_loss = ATRStopLoss {
-            atr_period,
-            multi: stop_loss_multi,
-        };
 
         BaseStrategy::new(signal, filter, stop_loss, lookback_period)
     }
@@ -67,6 +62,7 @@ mod tests {
     use super::*;
     use base::{Strategy, TradeAction, OHLCV};
     use filter::FilterConfig;
+    use stop_loss::StopLossConfig;
     use shared::MovingAverageType;
 
     #[test]
@@ -75,9 +71,8 @@ mod tests {
             MovingAverageType::SMA,
             50,
             100,
-            FilterConfig::DUMB {},
-            14,
-            2.0,
+            FilterConfig::DUMB {period: 100 },
+            StopLossConfig::ATR { period: 14, multi: 2.0 },
         );
         assert_eq!(
             strategy.id(),
@@ -91,9 +86,8 @@ mod tests {
             MovingAverageType::SMA,
             50,
             100,
-            FilterConfig::DUMB {},
-            14,
-            2.0,
+            FilterConfig::DUMB { period: 100 },
+            StopLossConfig::ATR { period: 14, multi: 2.0 },
         );
 
         for _i in 0..100 {

@@ -2,7 +2,7 @@ use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
 use filter::{map_to_filter, FilterConfig};
 use shared::{trend_candle, TrendCandleType};
-use stop_loss::ATRStopLoss;
+use stop_loss::{map_to_stoploss, StopLossConfig};
 
 pub struct CandleStrategy {
     candle: TrendCandleType,
@@ -12,19 +12,14 @@ impl CandleStrategy {
     pub fn new(
         candle: TrendCandleType,
         filter_config: FilterConfig,
-        atr_period: usize,
-        stop_loss_multi: f32,
-    ) -> BaseStrategy<CandleStrategy, ATRStopLoss> {
+        stoploss_config: StopLossConfig,
+    ) -> BaseStrategy<CandleStrategy> {
         let signal = CandleStrategy { candle };
 
         let filter = map_to_filter(filter_config);
+        let stop_loss = map_to_stoploss(stoploss_config);
 
         let lookback_period = filter.lookback();
-
-        let stop_loss = ATRStopLoss {
-            atr_period,
-            multi: stop_loss_multi,
-        };
 
         BaseStrategy::new(signal, filter, stop_loss, lookback_period)
     }
