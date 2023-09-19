@@ -4,20 +4,19 @@ from random import shuffle
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import RandomParameter, StaticParameter
+from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
 from strategy.indicator.snatr import SNATRIndicator
 
 from ..indicator.ma import MovingAverageIndicator
-from ..indicator.candle_ma import CandleMAIndicator
-from ..indicator.candle_rsi import CandleRSIIndicator
+from ..indicator.candle import CandleMAIndicator
 from ..indicator.cross_ma import CrossMovingAverageIndicator
 from ..indicator.testing_ground import TestingGroundIndicator
 from ..stop_loss.atr import ATRStopLoss
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    STRATEGY_TYPES = ['crossma', 'candlema', 'candlersi', 'ground', 'snatr']
+    STRATEGY_TYPES = ['crossma', 'candle', 'ground', 'snatr']
 
     def __init__(self):
         super().__init__()
@@ -67,9 +66,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 (CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
-        elif strategy_type == 'candlema':
+        elif strategy_type == 'candle':
             return Strategy(
-                'candlema',
+                'candle',
                 (CandleMAIndicator(trend_candle_type), MovingAverageIndicator(moving_avg_type, long_period),),
                 ATRStopLoss(multi=atr_multi)
             )
@@ -78,13 +77,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return Strategy(
                 'snatr',
                 (SNATRIndicator(), MovingAverageIndicator(moving_avg_type, long_period),),
-                ATRStopLoss(multi=atr_multi)
-            )
-        
-        elif strategy_type == 'candlersi':
-            return Strategy(
-                'candlersi',
-                (CandleRSIIndicator(trend_candle_type),),
                 ATRStopLoss(multi=atr_multi)
             )
         else:
