@@ -89,7 +89,10 @@ class SignalActor(AbstractActor):
             await dispatch_func()
 
     def _register_strategy(self):
-        self.register_id = self.exports[f"register_{self._strategy.name}"](self.store, *self._strategy.parameters)
+        (signal_parameters, filter_parameters, stoploss_parameters) = self._strategy.parameters
+        strategy_parameters = signal_parameters + filter_parameters + stoploss_parameters
+
+        self.register_id = self.exports[f"register_{self._strategy.name}"](self.store, *strategy_parameters)
 
     def _unregister_strategy(self):
         self.exports["unregister_strategy"](self.store, self.register_id)

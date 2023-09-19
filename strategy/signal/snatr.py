@@ -6,8 +6,7 @@ from core.models.parameter import Parameter, StaticParameter
 
 
 @dataclass(frozen=True)
-class SNATRIndicator(Indicator):
-    type: Any = Any
+class SNATRSignal(Indicator):
     atr_period: Parameter = StaticParameter(60.0)
     atr_smoothing_period: Parameter = StaticParameter(13.0)
 

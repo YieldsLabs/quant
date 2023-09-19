@@ -6,11 +6,12 @@ from core.models.parameter import Parameter, RandomParameter
 
 
 @dataclass(frozen=True)
-class MovingAverageIndicator(Indicator):
+class CrossMovingAverageSignal(Indicator):
     type: MovingAverageType = MovingAverageType.SMA
-    long_period: Parameter = RandomParameter(100.0, 200.0, 10.0)
+    short_period: Parameter = RandomParameter(5.0, 50.0, 5.0)
+    long_period: Parameter = RandomParameter(50.0, 200.0, 10.0)
 
     @property
     def parameters(self):
-        return [int(self.long_period.value)]
+        return sorted([int(self.short_period.value), int(self.long_period.value)])
 

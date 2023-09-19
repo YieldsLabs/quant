@@ -5,7 +5,7 @@ from core.models.parameter import Parameter, RandomParameter
 
 
 @dataclass(frozen=True)
-class TestingGroundIndicator(Indicator):
+class TestingGroundSignal(Indicator):
     period: Parameter = RandomParameter(60.0, 180.0, 10.0)
 
     @property

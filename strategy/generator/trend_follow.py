@@ -1,3 +1,4 @@
+from typing import Any
 from core.models.candle import TrendCandleType
 import numpy as np
 from random import shuffle
@@ -6,12 +7,13 @@ from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerato
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
-from strategy.indicator.snatr import SNATRIndicator
 
-from ..indicator.ma import MovingAverageIndicator
-from ..indicator.candle import CandleMAIndicator
-from ..indicator.cross_ma import CrossMovingAverageIndicator
-from ..indicator.testing_ground import TestingGroundIndicator
+from ..filter.dumb import DumbFilter
+from ..filter.ma import MovingAverageFilter
+from ..signal.candle import TrendCandleSignal
+from ..signal.cross_ma import CrossMovingAverageSignal
+from ..signal.snatr import SNATRSignal
+from ..signal.testing_ground import TestingGroundSignal
 from ..stop_loss.atr import ATRStopLoss
 
 
@@ -60,28 +62,34 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         short_period, long_period = sorted([short_period, long_period])
         atr_multi = RandomParameter(0.85, 2, 0.05)
 
+        filter = np.random.choice([MovingAverageFilter(moving_avg_type, long_period)])
+
         if strategy_type == 'crossma':
             return Strategy(
                 'crossma',
-                (CrossMovingAverageIndicator(moving_avg_type, short_period, long_period),),
+                CrossMovingAverageSignal(moving_avg_type, short_period, long_period),
+                DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )
         elif strategy_type == 'candle':
             return Strategy(
                 'candle',
-                (CandleMAIndicator(trend_candle_type), MovingAverageIndicator(moving_avg_type, long_period),),
+                TrendCandleSignal(trend_candle_type),
+                filter,
                 ATRStopLoss(multi=atr_multi)
             )
         
         elif strategy_type == 'snatr':
             return Strategy(
                 'snatr',
-                (SNATRIndicator(), MovingAverageIndicator(moving_avg_type, long_period),),
+                SNATRSignal(Any),
+                MovingAverageFilter(moving_avg_type, long_period),
                 ATRStopLoss(multi=atr_multi)
             )
         else:
             return Strategy(
                 'ground',
-                (TestingGroundIndicator(moving_avg_type, long_period),),
+                TestingGroundSignal(moving_avg_type, long_period),
+                DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )
