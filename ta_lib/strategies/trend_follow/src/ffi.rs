@@ -1,45 +1,45 @@
-use crate::{
-    CandleMAStrategy, CandleRSIStrategy, CrossMAStrategy, SNATRStrategy, TestingGroundStrategy,
-};
+use crate::{CandleStrategy, CrossMAStrategy, SNATRStrategy, TestingGroundStrategy};
 use base::register_strategy;
+use filter::FilterConfig;
+use shared::{MovingAverageType, TrendCandleType};
 
-fn map_to_ma(smoothing: usize) -> &'static str {
+fn map_to_ma(smoothing: usize) -> MovingAverageType {
     match smoothing {
-        1 => "ALMA",
-        2 => "DEMA",
-        3 => "EMA",
-        4 => "FRAMA",
-        5 => "GMA",
-        6 => "HMA",
-        7 => "KAMA",
-        8 => "RMSMA",
-        9 => "SINWMA",
-        10 => "SMA",
-        11 => "SMMA",
-        12 => "T3",
-        13 => "TEMA",
-        14 => "TMA",
-        15 => "VWMA",
-        16 => "WMA",
-        17 | _ => "ZLEMA",
+        1 => MovingAverageType::ALMA,
+        2 => MovingAverageType::DEMA,
+        3 => MovingAverageType::EMA,
+        4 => MovingAverageType::FRAMA,
+        5 => MovingAverageType::GMA,
+        6 => MovingAverageType::HMA,
+        7 => MovingAverageType::KAMA,
+        8 => MovingAverageType::RMSMA,
+        9 => MovingAverageType::SINWMA,
+        10 => MovingAverageType::SMA,
+        11 => MovingAverageType::SMMA,
+        12 => MovingAverageType::TTHREE,
+        13 => MovingAverageType::TEMA,
+        14 => MovingAverageType::TMA,
+        15 => MovingAverageType::VWMA,
+        16 => MovingAverageType::WMA,
+        17 | _ => MovingAverageType::ZLEMA,
     }
 }
 
-fn map_to_candle(candle: usize) -> &'static str {
+fn map_to_candle(candle: usize) -> TrendCandleType {
     match candle {
-        1 => "BOTTLE",
-        2 => "DOUBLE_TROUBLE",
-        3 => "GOLDEN",
-        4 => "H",
-        5 => "HEXAD",
-        6 => "HIKKAKE",
-        7 => "MARUBOZU",
-        8 => "MASTER_CANDLE",
-        9 => "QUINTUPLETS",
-        10 => "SLINGSHOT",
-        11 => "THREE_CANDLES",
-        12 => "THREE_METHODS",
-        13 | _ => "TASUKI",
+        1 => TrendCandleType::BOTTLE,
+        2 => TrendCandleType::DOUBLE_TROUBLE,
+        3 => TrendCandleType::GOLDEN,
+        4 => TrendCandleType::H,
+        5 => TrendCandleType::HEXAD,
+        6 => TrendCandleType::HIKKAKE,
+        7 => TrendCandleType::MARUBOZU,
+        8 => TrendCandleType::MASTER_CANDLE,
+        9 => TrendCandleType::QUINTUPLETS,
+        10 => TrendCandleType::SLINGSHOT,
+        11 => TrendCandleType::THREE_CANDLES,
+        12 => TrendCandleType::THREE_METHODS,
+        13 | _ => TrendCandleType::TASUKI,
     }
 }
 
@@ -51,9 +51,17 @@ pub fn register_crossma(
     atr_period: usize,
     stop_loss_multi: f32,
 ) -> i32 {
-    let ma = map_to_ma(smoothing);
+    let smoothing = map_to_ma(smoothing);
 
-    let strategy = CrossMAStrategy::new(ma, short_period, long_period, atr_period, stop_loss_multi);
+    let filter_config = FilterConfig::DUMB {};
+    let strategy = CrossMAStrategy::new(
+        smoothing,
+        short_period,
+        long_period,
+        filter_config,
+        atr_period,
+        stop_loss_multi,
+    );
     register_strategy(Box::new(strategy))
 }
 
@@ -66,35 +74,26 @@ pub fn register_ground(
 ) -> i32 {
     let ma = map_to_ma(smoothing);
 
-    let strategy = TestingGroundStrategy::new(ma, long_period, atr_period, stop_loss_multi);
+    let filter_config = FilterConfig::DUMB {};
+    let strategy =
+        TestingGroundStrategy::new(ma, long_period, filter_config, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
 }
 
 #[no_mangle]
-pub fn register_candlema(
+pub fn register_candle(
     candle: usize,
     smoothing: usize,
-    long_period: usize,
+    period: usize,
     atr_period: usize,
     stop_loss_multi: f32,
 ) -> i32 {
     let candle = map_to_candle(candle);
-    let ma = map_to_ma(smoothing);
+    let smoothing = map_to_ma(smoothing);
 
-    let strategy = CandleMAStrategy::new(candle, ma, long_period, atr_period, stop_loss_multi);
-    register_strategy(Box::new(strategy))
-}
+    let filter_config = FilterConfig::MA { smoothing, period };
 
-#[no_mangle]
-pub fn register_candlersi(
-    candle: usize,
-    rsi_period: usize,
-    atr_period: usize,
-    stop_loss_multi: f32,
-) -> i32 {
-    let candle = map_to_candle(candle);
-
-    let strategy = CandleRSIStrategy::new(candle, rsi_period, atr_period, stop_loss_multi);
+    let strategy = CandleStrategy::new(candle, filter_config, atr_period, stop_loss_multi);
     register_strategy(Box::new(strategy))
 }
 
@@ -103,19 +102,21 @@ pub fn register_snatr(
     atr_period: usize,
     atr_smoothing_period: usize,
     smoothing: usize,
-    long_period: usize,
+    period: usize,
     stop_loss_atr_period: usize,
     stop_loss_multi: f32,
 ) -> i32 {
-    let ma = map_to_ma(smoothing);
+    let smoothing = map_to_ma(smoothing);
+
+    let filter_config = FilterConfig::MA { smoothing, period };
 
     let strategy = SNATRStrategy::new(
         atr_period,
         atr_smoothing_period,
-        ma,
-        long_period,
+        filter_config,
         stop_loss_atr_period,
         stop_loss_multi,
     );
+
     register_strategy(Box::new(strategy))
 }

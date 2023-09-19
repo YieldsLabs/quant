@@ -1,4 +1,4 @@
-from core.models.trend_candle import TrendCandleType
+from core.models.candle import TrendCandleType
 import numpy as np
 from random import shuffle
 
@@ -29,23 +29,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return strategies
 
     def _diversified_strategies(self):
-        atr_multi_values = [1.5]
-        moving_average_periods = [(89, 144), (21, 34)]
-        ma_types = [
-            MovingAverageType.KAMA,
-            MovingAverageType.T3,
-        ]
-
-        return [
-            Strategy(
-                'crossma', 
-                (CrossMovingAverageIndicator(ma_type, StaticParameter(short_period), StaticParameter(long_period)),),
-                ATRStopLoss(multi=StaticParameter(atr_multi_value))
-            )
-            for ma_type in ma_types
-            for short_period, long_period in moving_average_periods
-            for atr_multi_value in atr_multi_values
-        ]
+        return []
     
     def _random_strategies(self, n_samples):
         strategies_set = set()

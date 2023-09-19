@@ -24,6 +24,16 @@ name = "core"
 version = "0.1.0"
 
 [[package]]
+name = "filter"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "momentum",
+ "shared",
+]
+
+[[package]]
 name = "momentum"
 version = "0.1.0"
 dependencies = [
@@ -78,7 +88,7 @@ version = "0.1.0"
 dependencies = [
  "base",
  "core",
- "momentum",
+ "filter",
  "once_cell",
  "shared",
  "stop_loss",

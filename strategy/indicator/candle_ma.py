@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from core.models.indicator import Indicator
-from core.models.trend_candle import TrendCandleType
+from core.models.candle import TrendCandleType
 
 
 @dataclass(frozen=True)

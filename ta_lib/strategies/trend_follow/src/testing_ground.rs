@@ -1,17 +1,19 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
-use shared::ma;
+use filter::{map_to_filter, FilterConfig};
+use shared::{ma, MovingAverageType};
 use stop_loss::ATRStopLoss;
 
-pub struct TestingGroundStrategy<'a> {
+pub struct TestingGroundStrategy {
     long_period: usize,
-    smoothing: &'a str,
+    smoothing: MovingAverageType,
 }
 
-impl TestingGroundStrategy<'_> {
+impl TestingGroundStrategy {
     pub fn new(
-        smoothing: &str,
+        smoothing: MovingAverageType,
         long_period: usize,
+        filter_config: FilterConfig,
         atr_period: usize,
         stop_loss_multi: f32,
     ) -> BaseStrategy<TestingGroundStrategy, ATRStopLoss> {
@@ -21,22 +23,24 @@ impl TestingGroundStrategy<'_> {
             smoothing,
         };
 
+        let filter = map_to_filter(filter_config);
+
         let stop_loss = ATRStopLoss {
             atr_period,
             multi: stop_loss_multi,
         };
 
-        BaseStrategy::new(signal, stop_loss, lookback_period)
+        BaseStrategy::new(signal, filter, stop_loss, lookback_period)
     }
 }
 
-impl Signals for TestingGroundStrategy<'_> {
+impl Signals for TestingGroundStrategy {
     fn id(&self) -> String {
         format!("GROUND_{}:{}", self.smoothing, self.long_period)
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma(self.smoothing, data, self.long_period);
+        let ma = ma(&self.smoothing, data, self.long_period);
 
         let open = Series::from(&data.open);
         let high = Series::from(&data.high);

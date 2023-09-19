@@ -1,19 +1,21 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
 use core::series::Series;
-use shared::ma;
+use filter::{map_to_filter, FilterConfig};
+use shared::{ma, MovingAverageType};
 use stop_loss::ATRStopLoss;
 
-pub struct CrossMAStrategy<'a> {
+pub struct CrossMAStrategy {
     short_period: usize,
     long_period: usize,
-    smoothing: &'a str,
+    smoothing: MovingAverageType,
 }
 
-impl CrossMAStrategy<'_> {
+impl CrossMAStrategy {
     pub fn new(
-        smoothing: &str,
+        smoothing: MovingAverageType,
         short_period: usize,
         long_period: usize,
+        filter_config: FilterConfig,
         atr_period: usize,
         stop_loss_multi: f32,
     ) -> BaseStrategy<CrossMAStrategy, ATRStopLoss> {
@@ -24,16 +26,18 @@ impl CrossMAStrategy<'_> {
             smoothing,
         };
 
+        let filter = map_to_filter(filter_config);
+
         let stop_loss = ATRStopLoss {
             atr_period,
             multi: stop_loss_multi,
         };
 
-        BaseStrategy::new(signal, stop_loss, lookback_period)
+        BaseStrategy::new(signal, filter, stop_loss, lookback_period)
     }
 }
 
-impl Signals for CrossMAStrategy<'_> {
+impl Signals for CrossMAStrategy {
     fn id(&self) -> String {
         format!(
             "CROSSMA_{}:{}:{}",
@@ -42,8 +46,8 @@ impl Signals for CrossMAStrategy<'_> {
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let short_ma = ma(self.smoothing, data, self.short_period);
-        let long_ma = ma(self.smoothing, data, self.long_period);
+        let short_ma = ma(&self.smoothing, data, self.short_period);
+        let long_ma = ma(&self.smoothing, data, self.long_period);
 
         let long_signal = short_ma.cross_over(&long_ma);
         let short_signal = short_ma.cross_under(&long_ma);
@@ -60,16 +64,35 @@ impl Signals for CrossMAStrategy<'_> {
 mod tests {
     use super::*;
     use base::{Strategy, TradeAction, OHLCV};
+    use filter::FilterConfig;
+    use shared::MovingAverageType;
 
     #[test]
     fn test_crossmatrategy_new() {
-        let strategy = CrossMAStrategy::new("SMA", 50, 100, 14, 2.0);
-        assert_eq!(strategy.id(), "_STRTGCROSSMA_SMA:50:100_STPLSSATR_14:2.0");
+        let strategy = CrossMAStrategy::new(
+            MovingAverageType::SMA,
+            50,
+            100,
+            FilterConfig::DUMB {},
+            14,
+            2.0,
+        );
+        assert_eq!(
+            strategy.id(),
+            "_STRTGCROSSMA_SMA:50:100_FLTRFDUMB_STPLSSATR_14:2.0"
+        );
     }
 
     #[test]
     fn test_crossmastrategy_next_do_nothing() {
-        let mut strat = CrossMAStrategy::new("SMA", 50, 100, 14, 2.0);
+        let mut strat = CrossMAStrategy::new(
+            MovingAverageType::SMA,
+            50,
+            100,
+            FilterConfig::DUMB {},
+            14,
+            2.0,
+        );
 
         for _i in 0..100 {
             strat.next(OHLCV {

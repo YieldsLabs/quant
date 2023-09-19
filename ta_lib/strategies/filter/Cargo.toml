@@ -1,0 +1,10 @@
+[package]
+name = "filter"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base = { path = "../base" }
+core = { path = "../../core" }
+shared = { path = "../shared" }
+momentum = { path = "../../indicators/momentum" }
