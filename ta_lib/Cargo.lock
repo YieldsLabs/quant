@@ -97,6 +97,7 @@ name = "volatility"
 version = "0.1.0"
 dependencies = [
  "core",
+ "price",
  "trend",
  "utils",
 ]
