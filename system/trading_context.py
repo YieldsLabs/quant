@@ -18,6 +18,7 @@ class TradingContext:
     lookback: Lookback
     batch_size: int
     backtest_parallel: int
-    population_size: int
+    sample_size: int
+    max_generations: int
     leverage: int
     live_mode: bool

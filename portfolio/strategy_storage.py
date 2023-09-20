@@ -17,7 +17,7 @@ class StrategyStorage:
 
     async def next(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy,  metrics: np.array):
         async with self.lock:
-            key = (symbol, timeframe, strategy)
+            key = f"{symbol}_{timeframe}{strategy}"
            
             self.data[key] = (metrics, -1)
 
@@ -39,13 +39,3 @@ class StrategyStorage:
             sorted_strategies = sorted(self.data.keys(), key=lambda key: (self.data[key][1], self.data[key][0][0]), reverse=True)
             
             return sorted_strategies[:num]
-        
-    async def get_fitness(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
-        async with self.lock:
-            key = (symbol, timeframe, strategy)
-            metrics, _ = self.data.get(key, (None, None))
-
-            if metrics is None:
-                return -1
-
-            return metrics[3]

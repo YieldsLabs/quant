@@ -64,4 +64,4 @@ class Portfolio(AbstractEventManager):
     
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):
-        return await self.strategy.get_fitness(query.symbol, query.timeframe, query.strategy)
+        return await self.state.get_fitness(query.symbol, query.timeframe, query.strategy)

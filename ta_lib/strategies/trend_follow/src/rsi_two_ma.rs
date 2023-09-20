@@ -7,8 +7,8 @@ use stop_loss::{map_to_stoploss, StopLossConfig};
 
 pub struct RSI2xMAStrategy {
     rsi_period: usize,
-    rsi_lower_barrier: usize,
-    rsi_upper_barrier: usize,
+    rsi_lower_barrier: f32,
+    rsi_upper_barrier: f32,
     smoothing: MovingAverageType,
     short_period: usize,
     long_period: usize,
@@ -17,8 +17,8 @@ pub struct RSI2xMAStrategy {
 impl RSI2xMAStrategy {
     pub fn new(
         rsi_period: usize,
-        rsi_lower_barrier: usize,
-        rsi_upper_barrier: usize,
+        rsi_lower_barrier: f32,
+        rsi_upper_barrier: f32,
         smoothing: MovingAverageType,
         short_period: usize,
         long_period: usize,
@@ -66,14 +66,14 @@ impl Signals for RSI2xMAStrategy {
         let long_signal = close.gt(&ma_short)
             & close.gt(&ma_long)
             & ma_short.gt(&ma_long)
-            & rsi.slte(self.rsi_lower_barrier as f32)
-            & rsi.shift(1).sgt(self.rsi_lower_barrier as f32);
+            & rsi.slte(self.rsi_lower_barrier)
+            & rsi.shift(1).sgt(self.rsi_lower_barrier);
 
         let short_signal = close.lt(&ma_short)
             & close.lt(&ma_long)
             & ma_short.lt(&ma_long)
-            & rsi.sgte(self.rsi_upper_barrier as f32)
-            & rsi.shift(1).slt(self.rsi_upper_barrier as f32);
+            & rsi.sgte(self.rsi_upper_barrier)
+            & rsi.shift(1).slt(self.rsi_upper_barrier);
 
         (long_signal, short_signal)
     }

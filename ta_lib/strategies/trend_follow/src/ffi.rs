@@ -89,8 +89,6 @@ pub fn register_rsima(
     stop_loss_multi: f32,
 ) -> i32 {
     let rsi_period = rsi_period as usize;
-    let lower_barrier = lower_barrier as usize;
-    let upper_barrier = upper_barrier as usize;
     let smoothing = map_to_ma(smoothing as usize);
     let period = period as usize;
     let atr_period = atr_period as usize;
@@ -125,8 +123,6 @@ pub fn register_rsi2xma(
     stop_loss_multi: f32,
 ) -> i32 {
     let rsi_period = rsi_period as usize;
-    let lower_barrier = lower_barrier as usize;
-    let upper_barrier = upper_barrier as usize;
     let smoothing = map_to_ma(smoothing as usize);
     let short_period = short_period as usize;
     let long_period = long_period as usize;

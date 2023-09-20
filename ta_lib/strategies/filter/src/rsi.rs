@@ -25,7 +25,7 @@ impl Filter for RSIFilter {
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.close, self.period);
 
-        (rsi.sgt(self.threshold), rsi.slt(self.threshold))
+        (rsi.slte(self.threshold), rsi.sgte(self.threshold))
     }
 
     fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {

@@ -5,6 +5,8 @@ from core.models.portfolio import Performance
 from core.models.position import Position
 from core.models.signal import Signal
 from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
 
 class PortfolioStorage:
@@ -14,7 +16,7 @@ class PortfolioStorage:
 
     async def next(self, position: Position, account_size: int, risk_per_trade: float):
         async with self._lock:
-            key = self._get_key(position.signal)
+            key = self._get_key(position.signal.symbol, position.signal.timeframe, position.signal.strategy)
             performance = self.data.get(key)
 
             if performance:
@@ -24,19 +26,26 @@ class PortfolioStorage:
 
     async def get(self, position: Position):
         async with self._lock:
-            key = self._get_key(position.signal)
+            key = self._get_key(position.signal.symbol, position.signal.timeframe, position.signal.strategy)
             
             return self.data.get(key)
 
     async def get_total_pnl(self, signal: Signal):
         async with self._lock:
-            key = self._get_key(signal)
+            key = self._get_key(signal.symbol, signal.timeframe, signal.strategy)
             performance = self.data.get(key)
             
             return performance.total_pnl if performance else 0
-
-    def _get_key(self, signal: Signal):
-        return (signal.symbol, signal.timeframe, signal.strategy)
+        
+    async def get_fitness(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
+        async with self._lock:
+            key = self._get_key(symbol, timeframe, strategy)
+            performance = self.data.get(key)
+            
+            return performance.sharpe_ratio if performance else 0
+        
+    def _get_key(self, symbol, timeframe, strategy):
+        return f"{symbol}_{timeframe}{strategy}"
 
     
 

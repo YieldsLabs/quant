@@ -7,8 +7,8 @@ use stop_loss::{map_to_stoploss, StopLossConfig};
 
 pub struct RSIMAStrategy {
     rsi_period: usize,
-    lower_barrier: usize,
-    upper_barrier: usize,
+    lower_barrier: f32,
+    upper_barrier: f32,
     smoothing: MovingAverageType,
     period: usize,
 }
@@ -16,8 +16,8 @@ pub struct RSIMAStrategy {
 impl RSIMAStrategy {
     pub fn new(
         rsi_period: usize,
-        lower_barrier: usize,
-        upper_barrier: usize,
+        lower_barrier: f32,
+        upper_barrier: f32,
         smoothing: MovingAverageType,
         period: usize,
         filter_config: FilterConfig,
@@ -54,8 +54,8 @@ impl Signals for RSIMAStrategy {
         let rsi = rsi(&data.close, self.rsi_period);
         let close = Series::from(&data.close);
 
-        let long_signal = ma.gt(&close) & rsi.slt(self.lower_barrier as f32);
-        let short_signal = ma.lt(&close) & rsi.sgt(self.upper_barrier as f32);
+        let long_signal = ma.gt(&close) & rsi.slt(self.lower_barrier);
+        let short_signal = ma.lt(&close) & rsi.sgt(self.upper_barrier);
 
         (long_signal, short_signal)
     }

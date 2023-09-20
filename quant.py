@@ -59,7 +59,8 @@ async def main():
     lookback = Lookback.ONE_MONTH
     batch_size = 1597
     backtest_parallel = 2
-    backtest_sample_size = 50
+    sample_size = 5
+    max_generations = 10
     risk_per_trade = 0.005
     risk_reward_ratio = 2
     risk_buffer = 0.0001
@@ -105,7 +106,8 @@ async def main():
         lookback,
         batch_size,
         backtest_parallel,
-        backtest_sample_size,
+        sample_size,
+        max_generations,
         leverage,
         IS_LIVE_MODE
     )
