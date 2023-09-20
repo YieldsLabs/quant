@@ -11,6 +11,7 @@ stop_loss = { path = "../stop_loss" }
 filter = { path = "../filter" }
 shared = { path = "../shared" }
 volatility = { path = "../../indicators/volatility" }
+momentum = { path = "../../indicators/momentum" }
 
 [lib]
 crate-type = ["cdylib"]

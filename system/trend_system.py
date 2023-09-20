@@ -39,8 +39,10 @@ class TrendSystem(AbstractSystem):
         self.context = context
         self.state = SystemState.BACKTESTING
         self.event_queue = asyncio.Queue()
+        self.population = []
 
     async def start(self):
+       self.population = await self._generate_population()
        await self._run_backtest()
        
        while True:
@@ -64,14 +66,13 @@ class TrendSystem(AbstractSystem):
     async def _run_backtest(self):
         logger.info('Run backtest')
 
-        backtest_data = await self._get_backtest_data()
-        total_steps = len(backtest_data) // self.context.backtest_parallel
+        total_steps = len(self.population) // self.context.backtest_parallel
        
         estimator = Estimator(total_steps)
 
         batch = []
         
-        async for squad in self._generate_actors(backtest_data):
+        async for squad in self._generate_actors(self.population):
             batch.append(squad)
             
             if len(batch) == self.context.backtest_parallel:
@@ -137,7 +138,7 @@ class TrendSystem(AbstractSystem):
         for (symbol, timeframe), strategy in data:
             yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, is_live)
 
-    async def _get_backtest_data(self):
+    async def _generate_population(self):
         strategies = self.context.strategy_generator.generate(self.context.backtest_sample_size)
        
         logger.info(f"Total strategies: {len(strategies)}")

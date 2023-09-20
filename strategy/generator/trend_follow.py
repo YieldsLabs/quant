@@ -7,6 +7,7 @@ from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerato
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
+from strategy.signal.rsi_ma import RSIMovingAverageSignal
 
 from ..filter.dumb import DumbFilter
 from ..filter.ma import MovingAverageFilter
@@ -18,7 +19,7 @@ from ..stop_loss.atr import ATRStopLoss
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    STRATEGY_TYPES = ['crossma', 'ground', 'snatr', 'candle']
+    STRATEGY_TYPES = ['crossma', 'ground', 'snatr', 'candle', 'rsima']
 
     def __init__(self):
         super().__init__()
@@ -58,7 +59,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         moving_avg_type = np.random.choice(list(MovingAverageType))
         trend_candle_type = np.random.choice(list(TrendCandleType))
         short_period = RandomParameter(20.0, 50.0, 5.0)
-        long_period = RandomParameter(60.0, 200.0, 10.0)
+        long_period = RandomParameter(50.0, 200.0, 10.0)
         short_period, long_period = sorted([short_period, long_period])
         atr_multi = RandomParameter(0.85, 2, 0.05)
 
@@ -82,8 +83,16 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         elif strategy_type == 'snatr':
             return Strategy(
                 'snatr',
-                SNATRSignal(Any),
+                SNATRSignal(),
                 MovingAverageFilter(moving_avg_type, long_period),
+                ATRStopLoss(multi=atr_multi)
+            )
+        
+        elif strategy_type == 'rsima':
+            return Strategy(
+                'rsima',
+                RSIMovingAverageSignal(ma=moving_avg_type, period=short_period),
+                DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )
         else:

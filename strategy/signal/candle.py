@@ -6,8 +6,10 @@ from core.models.candle import TrendCandleType
 
 @dataclass(frozen=True)
 class TrendCandleSignal(Indicator):
-    type: TrendCandleType = TrendCandleType.THREE_CANDLES
+    candle: TrendCandleType = TrendCandleType.THREE_CANDLES
 
     @property
     def parameters(self):
-        return []
+        return [
+            self.candle
+        ]

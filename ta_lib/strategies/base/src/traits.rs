@@ -7,7 +7,7 @@ pub trait Signals {
     fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
-pub trait StopLoss: Send + Syncc {
+pub trait StopLoss: Send + Sync {
     fn id(&self) -> String;
     fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>);
 }

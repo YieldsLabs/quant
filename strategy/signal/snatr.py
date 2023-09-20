@@ -12,4 +12,7 @@ class SNATRSignal(Indicator):
 
     @property
     def parameters(self):
-        return [int(self.atr_period.value), int(self.atr_smoothing_period.value)]
+        return [
+            self.atr_period,
+            self.atr_smoothing_period
+        ]

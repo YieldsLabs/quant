@@ -1,4 +1,4 @@
-use crate::{CandleStrategy, CrossMAStrategy, SNATRStrategy, TestingGroundStrategy};
+use crate::{CandleStrategy, CrossMAStrategy, RSIMAStrategy, SNATRStrategy, TestingGroundStrategy};
 use base::register_strategy;
 use filter::FilterConfig;
 use shared::{MovingAverageType, TrendCandleType};
@@ -46,13 +46,16 @@ fn map_to_candle(candle: usize) -> TrendCandleType {
 
 #[no_mangle]
 pub fn register_crossma(
-    smoothing: usize,
-    short_period: usize,
-    long_period: usize,
-    atr_period: usize,
+    smoothing: f32,
+    short_period: f32,
+    long_period: f32,
+    atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let smoothing = map_to_ma(smoothing);
+    let smoothing = map_to_ma(smoothing as usize);
+    let short_period = short_period as usize;
+    let long_period = long_period as usize;
+    let atr_period = atr_period as usize;
 
     let filter_config = FilterConfig::DUMB {
         period: long_period,
@@ -73,13 +76,50 @@ pub fn register_crossma(
 }
 
 #[no_mangle]
-pub fn register_ground(
-    smoothing: usize,
-    long_period: usize,
-    atr_period: usize,
+pub fn register_rsima(
+    rsi_period: f32,
+    lower_barrier: f32,
+    upper_barrier: f32,
+    smoothing: f32,
+    period: f32,
+    atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let ma = map_to_ma(smoothing);
+    let rsi_period = rsi_period as usize;
+    let lower_barrier = lower_barrier as usize;
+    let upper_barrier = upper_barrier as usize;
+    let smoothing = map_to_ma(smoothing as usize);
+    let period = period as usize;
+    let atr_period = atr_period as usize;
+
+    let filter_config = FilterConfig::DUMB { period };
+    let stoploss_config = StopLossConfig::ATR {
+        period: atr_period,
+        multi: stop_loss_multi,
+    };
+
+    let strategy = RSIMAStrategy::new(
+        rsi_period,
+        lower_barrier,
+        upper_barrier,
+        smoothing,
+        period,
+        filter_config,
+        stoploss_config,
+    );
+    register_strategy(Box::new(strategy))
+}
+
+#[no_mangle]
+pub fn register_ground(
+    smoothing: f32,
+    long_period: f32,
+    atr_period: f32,
+    stop_loss_multi: f32,
+) -> i32 {
+    let ma = map_to_ma(smoothing as usize);
+    let long_period = long_period as usize;
+    let atr_period = atr_period as usize;
 
     let filter_config = FilterConfig::DUMB {
         period: long_period,
@@ -95,14 +135,16 @@ pub fn register_ground(
 
 #[no_mangle]
 pub fn register_candle(
-    candle: usize,
-    smoothing: usize,
-    period: usize,
-    atr_period: usize,
+    candle: f32,
+    smoothing: f32,
+    period: f32,
+    atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let candle = map_to_candle(candle);
-    let smoothing = map_to_ma(smoothing);
+    let candle = map_to_candle(candle as usize);
+    let smoothing = map_to_ma(smoothing as usize);
+    let period = period as usize;
+    let atr_period = atr_period as usize;
 
     let filter_config = FilterConfig::MA { smoothing, period };
     let stoploss_config = StopLossConfig::ATR {
@@ -116,14 +158,18 @@ pub fn register_candle(
 
 #[no_mangle]
 pub fn register_snatr(
-    atr_period: usize,
-    atr_smoothing_period: usize,
-    smoothing: usize,
-    period: usize,
-    stop_loss_atr_period: usize,
+    atr_period: f32,
+    atr_smoothing_period: f32,
+    smoothing: f32,
+    period: f32,
+    stop_loss_atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let smoothing = map_to_ma(smoothing);
+    let atr_period = atr_period as usize;
+    let atr_smoothing_period = atr_smoothing_period as usize;
+    let smoothing = map_to_ma(smoothing as usize);
+    let period = period as usize;
+    let stop_loss_atr_period = stop_loss_atr_period as usize;
 
     let filter_config = FilterConfig::MA { smoothing, period };
     let stoploss_config = StopLossConfig::ATR {

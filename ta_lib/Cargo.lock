@@ -89,6 +89,7 @@ dependencies = [
  "base",
  "core",
  "filter",
+ "momentum",
  "once_cell",
  "shared",
  "stop_loss",

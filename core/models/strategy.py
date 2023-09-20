@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Tuple
+from enum import Enum
 
+from .parameter import Parameter
 from .indicator import Indicator
 
 
@@ -13,26 +14,51 @@ class Strategy:
 
     @property
     def parameters(self):
-        signal_parameters = ([self.signal.type.value] if hasattr(self.signal.type, 'value') and self.signal.type.value else []) + list(self.signal.parameters)
-        filter_parameters = ([self.filter.type.value] if hasattr(self.filter.type, 'value') and self.filter.type.value else []) + list(self.filter.parameters)
-        stop_loss_parameters = ([self.stop_loss.type.value] if hasattr(self.stop_loss.type, 'value') and self.stop_loss.type.value else []) + list(self.stop_loss.parameters)
-    
-        return (signal_parameters, filter_parameters, list(self.stop_loss.parameters))
+        def process_parameters(param):
+            if isinstance(param, Enum):
+                return float(param.value)
+            if isinstance(param, Parameter):
+                return float(param.value)
+            return param
+
+        def serialize_parameters(obj):
+            return [process_parameters(p) for p in obj.parameters]
+        
+        signal_parameters = serialize_parameters(self.signal)
+        filter_parameters = serialize_parameters(self.filter)
+        stop_loss_parameters = serialize_parameters(self.stop_loss)
+
+        return (signal_parameters, filter_parameters, stop_loss_parameters[1:])
 
     def __str__(self) -> str:
+        def process_parameters(param):
+            if isinstance(param, Enum):
+                return str(param)
+            if isinstance(param, Parameter):
+                if param.value.is_integer():
+                    return int(param.value)
+                return float(param.value)
+            return param
+
+        def serialize_parameters(obj):
+            return [process_parameters(p) for p in obj.parameters]
+        
         strategy_name = self.name.upper()
         
-        indicator_params = [str(self.signal.type)] if hasattr(self.signal.type, 'value') else [] + self.signal.parameters
-        strategy_parameters = ':'.join(map(str, indicator_params))
+        signal = serialize_parameters(self.signal)
+        signal_parameters = ':'.join(map(str, signal))
 
-        filter_name = "NONE" if isinstance(self.filter.type, type(Any)) else str(self.filter.type)
-        filter_parameters = ':'.join(map(str, self.filter.parameters))
+        filter = serialize_parameters(self.filter)
+
+        filter_name = filter[0] if len(filter) > 0 else 'NONE'
+        filter_parameters = ':'.join(map(str, filter[1:]))
         filter_parameters = '_' + filter_parameters if len(filter_parameters) > 0 else ''
         
-        stop_loss_name = str(self.stop_loss.type)
-        stop_loss_parameters = ':'.join(map(str, self.stop_loss.parameters))
+        stop_loss = serialize_parameters(self.stop_loss)
+        stop_loss_name = stop_loss[0]
+        stop_loss_parameters = ':'.join(map(str, stop_loss[1:]))
 
-        return f"_STRTG{strategy_name}_{strategy_parameters}_FLTR{filter_name}{filter_parameters}_STPLSS{stop_loss_name}_{stop_loss_parameters}"
+        return f"_STRTG{strategy_name}_{signal_parameters}_FLTR{filter_name}{filter_parameters}_STPLSS{stop_loss_name}_{stop_loss_parameters}"
     
     def __hash__(self) -> int:
         return hash(str(self))
