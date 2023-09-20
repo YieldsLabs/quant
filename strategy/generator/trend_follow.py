@@ -1,5 +1,3 @@
-from typing import Any
-from core.models.candle import TrendCandleType
 import numpy as np
 from random import shuffle
 
@@ -7,7 +5,7 @@ from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerato
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
-from strategy.signal.rsi_ma import RSIMovingAverageSignal
+from core.models.candle import TrendCandleType
 
 from ..filter.dumb import DumbFilter
 from ..filter.ma import MovingAverageFilter
@@ -15,11 +13,13 @@ from ..signal.candle import TrendCandleSignal
 from ..signal.cross_ma import CrossMovingAverageSignal
 from ..signal.snatr import SNATRSignal
 from ..signal.testing_ground import TestingGroundSignal
+from ..signal.rsi_ma import RSIMovingAverageSignal
+from ..signal.rsi_two_ma import RSI2xMovingAverageSignal
 from ..stop_loss.atr import ATRStopLoss
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    STRATEGY_TYPES = ['crossma', 'ground', 'snatr', 'candle', 'rsima']
+    STRATEGY_TYPES = ['crossma', 'ground', 'snatr', 'candle', 'rsima', 'rsi2xma']
 
     def __init__(self):
         super().__init__()
@@ -60,6 +60,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         trend_candle_type = np.random.choice(list(TrendCandleType))
         short_period = RandomParameter(20.0, 50.0, 5.0)
         long_period = RandomParameter(50.0, 200.0, 10.0)
+        rsi_lower_barrier = RandomParameter(5.0, 15.0, 1.0)
+        rsi_upper_barrier = RandomParameter(75.0, 95, 1.0)
         short_period, long_period = sorted([short_period, long_period])
         atr_multi = RandomParameter(0.85, 2, 0.05)
 
@@ -92,6 +94,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return Strategy(
                 'rsima',
                 RSIMovingAverageSignal(ma=moving_avg_type, period=short_period),
+                DumbFilter(),
+                ATRStopLoss(multi=atr_multi)
+            )
+        
+        elif strategy_type == 'rsi2xma':
+            return Strategy(
+                'rsi2xma',
+                RSI2xMovingAverageSignal(ma=moving_avg_type, lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier),
                 DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )

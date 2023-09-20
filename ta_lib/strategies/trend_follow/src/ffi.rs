@@ -1,4 +1,7 @@
-use crate::{CandleStrategy, CrossMAStrategy, RSIMAStrategy, SNATRStrategy, TestingGroundStrategy};
+use crate::{
+    CandleStrategy, CrossMAStrategy, RSIMAStrategy, RSI2xMAStrategy, SNATRStrategy,
+    TestingGroundStrategy,
+};
 use base::register_strategy;
 use filter::FilterConfig;
 use shared::{MovingAverageType, TrendCandleType};
@@ -104,6 +107,46 @@ pub fn register_rsima(
         upper_barrier,
         smoothing,
         period,
+        filter_config,
+        stoploss_config,
+    );
+    register_strategy(Box::new(strategy))
+}
+
+#[no_mangle]
+pub fn register_rsi2xma(
+    rsi_period: f32,
+    lower_barrier: f32,
+    upper_barrier: f32,
+    smoothing: f32,
+    short_period: f32,
+    long_period: f32,
+    atr_period: f32,
+    stop_loss_multi: f32,
+) -> i32 {
+    let rsi_period = rsi_period as usize;
+    let lower_barrier = lower_barrier as usize;
+    let upper_barrier = upper_barrier as usize;
+    let smoothing = map_to_ma(smoothing as usize);
+    let short_period = short_period as usize;
+    let long_period = long_period as usize;
+    let atr_period = atr_period as usize;
+
+    let filter_config = FilterConfig::DUMB {
+        period: long_period,
+    };
+    let stoploss_config = StopLossConfig::ATR {
+        period: atr_period,
+        multi: stop_loss_multi,
+    };
+
+    let strategy = RSI2xMAStrategy::new(
+        rsi_period,
+        lower_barrier,
+        upper_barrier,
+        smoothing,
+        short_period,
+        long_period,
         filter_config,
         stoploss_config,
     );

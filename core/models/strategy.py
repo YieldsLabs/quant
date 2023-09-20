@@ -19,7 +19,6 @@ class Strategy:
                 return float(param.value)
             if isinstance(param, Parameter):
                 return float(param.value)
-            return param
 
         def serialize_parameters(obj):
             return [process_parameters(p) for p in obj.parameters]
@@ -38,7 +37,6 @@ class Strategy:
                 if param.value.is_integer():
                     return int(param.value)
                 return float(param.value)
-            return param
 
         def serialize_parameters(obj):
             return [process_parameters(p) for p in obj.parameters]
