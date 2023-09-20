@@ -44,6 +44,10 @@ class SignalActor(AbstractActor):
     @property
     def timeframe(self):
         return self._timeframe
+    
+    @property
+    def strategy(self):
+        return self._strategy
 
     @property
     def running(self):

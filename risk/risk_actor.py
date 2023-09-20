@@ -7,6 +7,7 @@ from core.interfaces.abstract_actor import AbstractActor
 from core.models.ohlcv import OHLCV
 from core.events.risk import RiskThresholdBreached
 from core.models.position import Position, PositionSide
+from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -16,11 +17,13 @@ class RiskActor(AbstractActor):
     def __init__(self, 
                 symbol: Symbol,
                 timeframe: Timeframe,
+                strategy: Strategy,
                 risk_buffer: float,
         ):
         super().__init__()
         self._symbol = symbol
         self._timeframe = timeframe
+        self._strategy = strategy
         self._position = None
         self._lock = asyncio.Lock()
         self._running = False
@@ -37,6 +40,10 @@ class RiskActor(AbstractActor):
     @property
     def timeframe(self):
         return self._timeframe
+    
+    @property
+    def strategy(self):
+        return self._strategy
 
     @property
     async def running(self):

@@ -57,6 +57,3 @@ class Strategy:
         stop_loss_parameters = ':'.join(map(str, stop_loss[1:]))
 
         return f"_STRTG{strategy_name}_{signal_parameters}_FLTR{filter_name}{filter_parameters}_STPLSS{stop_loss_name}_{stop_loss_parameters}"
-    
-    def __hash__(self) -> int:
-        return hash(str(self))

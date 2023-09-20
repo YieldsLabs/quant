@@ -9,11 +9,13 @@ from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
 from core.commands.broker import Subscribe, UpdateSettings
 from core.models.broker import MarginMode, PositionMode
+from core.models.individual import Individual
 from core.interfaces.abstract_system import AbstractSystem
 from core.queries.broker import GetAccountBalance, GetSymbols
-from core.queries.portfolio import GetTopStrategy
+from core.queries.portfolio import GetFitness, GetTopStrategy
 from infrastructure.estimator import Estimator
 
+from .squad import Squad
 from .trading_context import TradingContext
 
 logger = logging.getLogger(__name__)
@@ -33,16 +35,16 @@ class Event(Enum):
     SYSTEM_STOP = auto()
 
 
-class TrendSystem(AbstractSystem):
+class GeneticSystem(AbstractSystem):
     def __init__(self, context: TradingContext):
         super().__init__()
         self.context = context
         self.state = SystemState.BACKTESTING
         self.event_queue = asyncio.Queue()
-        self.population = []
+        self.population: list[Individual] = []
 
     async def start(self):
-       self.population = await self._generate_population()
+       await self._generate_population()
        await self._run_backtest()
        
        while True:
@@ -91,7 +93,7 @@ class TrendSystem(AbstractSystem):
         tasks = [self._process_squad(squad) for squad in batch]
         await asyncio.gather(*tasks)
 
-    async def _process_squad(self, squad):
+    async def _process_squad(self, squad: Squad):
         await squad.start()
         
         account_size = await self.query(GetAccountBalance())
@@ -100,8 +102,18 @@ class TrendSystem(AbstractSystem):
         await self.execute(
             BacktestRun(self.context.datasource, squad.symbol, squad.timeframe, self.context.lookback, self.context.batch_size))
 
+        await self._evaluate(squad)
+        
         await squad.stop()
-            
+
+    async def _evaluate(self, squad: Squad):
+        logger.info('Evaluate')
+
+        individual = [ind for ind in self.population if ind.symbol == squad.symbol and ind.timeframe == squad.timeframe and ind.strategy == squad.strategy][0]
+        
+        fitness_value = await self.query(GetFitness(individual.symbol, individual.timeframe, individual.strategy))
+        individual.update_fitness(fitness_value)
+   
     async def _run_optimization(self):
         logger.info('Run optimization')
         
@@ -134,20 +146,20 @@ class TrendSystem(AbstractSystem):
             account_size = await self.query(GetAccountBalance())
             await self.execute(UpdateAccountSize(account_size))
          
-    async def _generate_actors(self, data, is_live=False):
-        for (symbol, timeframe), strategy in data:
-            yield self.context.squad_factory.create_squad(symbol, timeframe, strategy, is_live)
+    async def _generate_actors(self, population, is_live=False):
+        for individual in population:
+            yield self.context.squad_factory.create_squad(individual.symbol, individual.timeframe, individual.strategy, is_live)
 
     async def _generate_population(self):
-        strategies = self.context.strategy_generator.generate(self.context.backtest_sample_size)
+        strategies = self.context.strategy_generator.generate(self.context.population_size)
        
         logger.info(f"Total strategies: {len(strategies)}")
 
         all_symbols = await self.query(GetSymbols())
         filtered_symbols = [symbol for symbol in all_symbols if symbol.name not in self.context.blacklist]
 
-        num_symbols_to_sample = min(self.context.backtest_sample_size, len(filtered_symbols))
-        num_timeframes_to_sample = min(self.context.backtest_sample_size, len(self.context.timeframes))
+        num_symbols_to_sample = min(self.context.population_size, len(filtered_symbols))
+        num_timeframes_to_sample = min(self.context.population_size, len(self.context.timeframes))
 
         sampled_symbols = np.random.choice(filtered_symbols, size=num_symbols_to_sample, replace=False)
         sampled_timeframes = np.random.choice(self.context.timeframes, size=num_timeframes_to_sample, replace=False)
@@ -160,4 +172,5 @@ class TrendSystem(AbstractSystem):
 
         shuffle(backtest_data)
 
-        return backtest_data
+        for (symbol, timeframe), strategy in backtest_data:
+            self.population.append(Individual(symbol, timeframe, strategy))

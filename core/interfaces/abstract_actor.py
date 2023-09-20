@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from typing import Union
 
-
 from .abstract_event_manager import AbstractEventManager
 
 from ..events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
@@ -10,6 +9,7 @@ from ..events.ohlcv import NewMarketDataReceived
 from ..events.risk import RiskThresholdBreached
 from ..models.symbol import Symbol
 from ..models.timeframe import Timeframe
+from ..models.strategy import Strategy
 
 
 ActorEvent = Union[
@@ -37,6 +37,11 @@ class AbstractActor(AbstractEventManager):
     @property
     @abstractmethod
     def timeframe(self) -> Timeframe:
+        pass
+
+    @property
+    @abstractmethod
+    def strategy(self) -> Strategy:
         pass
 
     @property

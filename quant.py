@@ -17,7 +17,7 @@ from datasource.bybit_ws import BybitWSHandler
 from backtest.backtest import Backtest
 from executor.executor_actor_factory import ExecutorActorFactory
 from strategy.signal_actor_factory import SignalActorFactory
-from system.trend_system import TradingContext, TrendSystem
+from system.genetic_system import GeneticSystem, TradingContext
 from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
 from risk.risk_actor_factory import RiskActorFactory
@@ -110,7 +110,7 @@ async def main():
         IS_LIVE_MODE
     )
 
-    trading_system = TrendSystem(context)
+    trading_system = GeneticSystem(context)
 
     system_task = asyncio.create_task(trading_system.start())
     ws_handler_task = asyncio.create_task(ws_handler.run())

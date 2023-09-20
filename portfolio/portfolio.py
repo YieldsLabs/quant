@@ -6,7 +6,7 @@ from core.events.account import PortfolioAccountUpdated
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.queries.portfolio import GetTopStrategy, GetTotalPnL
+from core.queries.portfolio import GetFitness, GetTopStrategy, GetTotalPnL
 
 from .portfolio_storage import PortfolioStorage
 from .strategy_storage import StrategyStorage
@@ -34,8 +34,8 @@ class Portfolio(AbstractEventManager):
         await self.state.next(event.position, self.account_size, self.risk_per_trade)
         
         signal = event.position.signal
-        timeframe = signal.timeframe
         symbol = signal.symbol
+        timeframe = signal.timeframe
         strategy = signal.strategy
 
         performance = await self.state.get(event.position)
@@ -43,9 +43,9 @@ class Portfolio(AbstractEventManager):
         logger.info(f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, pnl={performance.total_pnl}")
         
         await self.dispatch(
-            PortfolioPerformanceUpdated(strategy, timeframe, symbol, performance))
+            PortfolioPerformanceUpdated(symbol, timeframe, strategy, performance))
         
-        await self.strategy.next(strategy, symbol, [
+        await self.strategy.next(symbol, timeframe, strategy, [
             performance.calmar_ratio,
             performance.ulcer_index,
             performance.var,
@@ -61,3 +61,7 @@ class Portfolio(AbstractEventManager):
     @query_handler(GetTotalPnL)
     async def total_pnl(self, query: GetTotalPnL):
         return await self.state.get_total_pnl(query.signal)
+    
+    @query_handler(GetFitness)
+    async def fitness(self, query: GetFitness):
+        return await self.strategy.get_fitness(query.symbol, query.timeframe, query.strategy)

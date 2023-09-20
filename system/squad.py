@@ -21,6 +21,10 @@ class Squad(AbstractSquad):
     @property
     def timeframe(self):
         return self.signal_actor.timeframe
+    
+    @property
+    def strategy(self):
+        return self.signal_actor.strategy
 
     async def start(self):
         await asyncio.gather(*[

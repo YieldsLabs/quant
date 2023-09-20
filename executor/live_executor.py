@@ -6,6 +6,7 @@ from core.interfaces.abstract_actor import AbstractActor
 from core.events.position import BrokerPositionClosed, BrokerPositionOpened, PositionCloseRequested, PositionInitialized
 from core.models.order import Order, OrderStatus
 from core.models.position import Position
+from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.broker import GetOpenPosition
@@ -13,10 +14,11 @@ from core.queries.broker import GetOpenPosition
 PositionEvent = Union[PositionInitialized, PositionCloseRequested]
 
 class LiveExecutor(AbstractActor):
-    def __init__(self, symbol: Symbol, timeframe: Timeframe):
+    def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__()
         self._symbol = symbol
         self._timeframe = timeframe
+        self._strategy = strategy
         self._running = None
         self._lock = asyncio.Lock()
 
@@ -31,6 +33,10 @@ class LiveExecutor(AbstractActor):
     @property
     def timeframe(self):
         return self._timeframe
+    
+    @property
+    def strategy(self):
+        return self._strategy
     
     @property
     def running(self) -> bool:
