@@ -209,7 +209,7 @@ mod tests {
         let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
         let expected = vec![
             None,
-            Some(1.4142135),
+            Some(std::f32::consts::SQRT_2),
             Some(1.7320508),
             Some(2.0),
             Some(2.236068),
@@ -226,7 +226,7 @@ mod tests {
         let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
         let expected = vec![
             None,
-            Some(0.6931472),
+            Some(std::f32::consts::LN_2),
             Some(1.0986123),
             Some(1.3862944),
             Some(1.609438),
