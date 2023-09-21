@@ -3,9 +3,9 @@ use core::series::Series;
 pub fn cci(hlc3: &[f32], period: usize, factor: f32) -> Series<f32> {
     let hlc3 = Series::from(hlc3);
 
-    let cci = (&hlc3 - &hlc3.ma(period)) / (factor * hlc3.md(period));
+    
 
-    cci
+    (&hlc3 - &hlc3.ma(period)) / (factor * hlc3.md(period))
 }
 
 #[cfg(test)]

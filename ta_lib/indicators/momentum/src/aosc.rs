@@ -6,9 +6,9 @@ pub fn aosc(hl2: &[f32], short_period: usize, long_period: usize) -> Series<f32>
     let ao_short = hl2.ma(short_period);
     let ao_long = hl2.ma(long_period);
 
-    let aosc = ao_short - ao_long;
+    
 
-    aosc
+    ao_short - ao_long
 }
 
 #[cfg(test)]
