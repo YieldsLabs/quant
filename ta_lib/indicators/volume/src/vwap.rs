@@ -6,9 +6,9 @@ pub fn vwap(hlc3: &[f32], volume: &[f32]) -> Series<f32> {
 
     let product = hlc3 * &volume;
 
-    let vwap = product.cumsum() / volume.cumsum();
+    
 
-    vwap
+    product.cumsum() / volume.cumsum()
 }
 
 #[cfg(test)]
@@ -23,7 +23,7 @@ mod tests {
         let close = vec![1.5, 3.0, 4.5];
         let volume = vec![100.0, 200.0, 300.0];
         let hlc3 = typical_price(&high, &low, &close);
-        let expected = vec![1.5, 2.5, 3.5];
+        let expected = [1.5, 2.5, 3.5];
         let epsilon = 0.001;
 
         let result: Vec<f32> = vwap(&hlc3, &volume).into();

@@ -32,7 +32,7 @@ mod tests {
         let period = 3;
         let epsilon = 0.001;
 
-        let expected = vec![50.0, 100.0, 51.9992, 36.1106, 34.2859];
+        let expected = [50.0, 100.0, 51.9992, 36.1106, 34.2859];
 
         let result: Vec<f32> = mfi(&hlc3, &volume, period).into();
 
