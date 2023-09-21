@@ -235,8 +235,7 @@ mod tests {
         ];
         let length = 1;
         let epsilon = 0.001;
-        let expected = vec![
-            None,
+        let expected = [None,
             Some(-0.25),
             Some(0.0599),
             Some(-0.540),
@@ -244,8 +243,7 @@ mod tests {
             Some(0.5),
             Some(0.2700),
             Some(0.3200),
-            Some(0.4200),
-        ];
+            Some(0.4200)];
         let series = Series::from(&source);
 
         let result = series.change(length);
