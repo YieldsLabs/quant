@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Type
+from typing import Any, Callable, Optional, Type
 
 from core.events.base import Event, EventEnded
 from core.commands.base import Command
@@ -27,8 +27,8 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.query_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
         self.event_worker_pool = WorkerPool(num_workers, num_workers * multi, self.event_handler, self.cancel_event)
 
-    def register(self, event_class: Type[Event], handler: Callable) -> None:
-        self.event_handler.register(event_class, handler)
+    def register(self, event_class: Type[Event], handler: Callable, filter_func: Optional[Callable[[Event], bool]] = None) -> None:
+        self.event_handler.register(event_class, handler, filter_func)
 
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
         self.event_handler.unregister(event_class, handler)

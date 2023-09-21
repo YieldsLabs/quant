@@ -16,9 +16,9 @@ mod tests {
 
     #[test]
     fn test_zlema() {
-        let source = vec![100.0, 105.0, 116.25, 123.125, 129.0625];
+        let source = vec![18.898, 18.838, 18.881, 18.925, 18.846];
         let period = 3;
-        let expected = vec![0.0, 0.0, 132.5, 136.875, 139.375];
+        let expected = vec![0.0, 0.0, 18.864, 18.938, 18.8745];
 
         let result: Vec<f32> = zlema(&source, period).into();
 

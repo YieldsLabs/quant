@@ -1,19 +1,28 @@
 use base::{OHLCVSeries, StopLoss};
 use core::series::Series;
-use volatility::atr::atr;
+use volatility::atr;
 
 pub struct ATRStopLoss {
-    pub atr_period: usize,
+    pub period: usize,
     pub multi: f32,
+}
+
+impl ATRStopLoss {
+    pub fn new(period: usize, multi: f32) -> Self {
+        Self {
+            period,
+            multi
+        }
+    }
 }
 
 impl StopLoss for ATRStopLoss {
     fn id(&self) -> String {
-        format!("ATR_{}:{:.1}", self.atr_period, self.multi)
+        format!("ATR_{}:{:.1}", self.period, self.multi)
     }
 
     fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-        let atr = atr(&data.high, &data.low, &data.close, self.atr_period, None);
+        let atr = atr(&data.high, &data.low, &data.close, self.period, None);
 
         let high = Series::from(&data.high);
         let low = Series::from(&data.low);
@@ -34,7 +43,7 @@ mod tests {
     #[test]
     fn test_atr_stop_loss_id() {
         let atr_stop_loss = ATRStopLoss {
-            atr_period: 14,
+            period: 14,
             multi: 2.0,
         };
 

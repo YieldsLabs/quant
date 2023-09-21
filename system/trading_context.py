@@ -1,11 +1,9 @@
 from dataclasses import dataclass
-from typing import Any, List
+from typing import List
 
 from core.interfaces.abstract_datasource import AbstractDatasource
-from core.interfaces.abstract_executor_actor_factory import AbstractExecutorActorFactory
-from core.interfaces.abstract_position_actor_factory import AbstractPositionActorFactory
-from core.interfaces.abstract_risk_actor_factory import AbstractRiskActorFactory
-from core.interfaces.abstract_signal_actor_factory import AbstractSignalActorFactory
+from core.interfaces.abstract_squad_factory import AbstractSquadFactory
+from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.lookback import Lookback
 from core.models.timeframe import Timeframe
 
@@ -13,15 +11,14 @@ from core.models.timeframe import Timeframe
 @dataclass
 class TradingContext:
     datasource: AbstractDatasource
-    signal_factory: AbstractSignalActorFactory
-    executor_factory: AbstractExecutorActorFactory
-    position_factory: AbstractPositionActorFactory
-    risk_factory: AbstractRiskActorFactory
+    squad_factory: AbstractSquadFactory
+    strategy_generator: AbstractStrategyGenerator
     timeframes: List[Timeframe]
-    strategy_path: str
-    strategies: List[List[Any]]
     blacklist: List[str]
     lookback: Lookback
     batch_size: int
+    backtest_parallel: int
+    sample_size: int
+    max_generations: int
     leverage: int
     live_mode: bool

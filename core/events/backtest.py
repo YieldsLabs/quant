@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from .base import Event, EventGroup, EventMeta
 
+from ..models.strategy import Strategy
 from ..models.symbol import Symbol
 from ..models.timeframe import Timeframe
 
@@ -15,7 +16,7 @@ class BacktestEvent(Event):
 
 @dataclass(frozen=True)
 class BacktestStarted(BacktestEvent):
-    pass
+    strategy: Strategy
     
 
 @dataclass(frozen=True)

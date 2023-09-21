@@ -3,7 +3,7 @@ from typing import Any, List
 
 from core.commands.backtest import BacktestRun
 from core.event_decorators import command_handler
-from core.events.backtest import BacktestEnded, BacktestStarted
+from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
 from core.models.timeframe import Timeframe
 from core.models.ohlcv import OHLCV
@@ -30,8 +30,6 @@ class Backtest(AbstractBacktest):
 
         iterator = datasource.fetch(symbol, timeframe, TIMEFRAMES_TO_LOOKBACK[(lookback, timeframe)], batch_size)
 
-        await self.dispatch(BacktestStarted(symbol, timeframe))
-
         async for data in iterator:
             await self._process_historical_data(symbol, timeframe, data)
 
@@ -44,4 +42,4 @@ class Backtest(AbstractBacktest):
     async def _process_historical_data(self, symbol: str, timeframe: Timeframe, data: List[Any]):
         ohlcv = OHLCV.from_list(data)
 
-        await self.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv))
+        await self.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv, True))

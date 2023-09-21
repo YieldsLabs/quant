@@ -91,16 +91,17 @@ impl<T> IndexMut<usize> for Series<T> {
 impl Series<f32> {
     fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
     where
-        F: Fn(Option<&f32>, Option<&f32>) -> bool,
+        F: Fn(&f32, &f32) -> bool,
     {
         self.sliding_map(period, |window, _, _| {
-            window.iter().fold(None, |acc, x| {
-                if acc.is_none() || comparison(x.as_ref(), acc.as_ref()) {
-                    *x
-                } else {
-                    acc
-                }
-            })
+            window
+                .iter()
+                .filter_map(|&val| val)
+                .fold(None, |acc, x| match acc {
+                    Some(acc_val) if comparison(&x, &acc_val) => Some(x),
+                    Some(_) => acc,
+                    None => Some(x),
+                })
         })
     }
 
@@ -108,6 +109,13 @@ impl Series<f32> {
         self.fmap(|opt| match opt {
             Some(v) => Some(*v),
             None => Some(replacement.unwrap_or(0.0)),
+        })
+    }
+
+    pub fn na(&self) -> Series<bool> {
+        self.fmap(|val| match val {
+            Some(_) => Some(false),
+            None => Some(true),
         })
     }
 
@@ -147,7 +155,7 @@ impl<T> IntoIterator for Series<T> {
 
 impl Into<Vec<f32>> for Series<f32> {
     fn into(self) -> Vec<f32> {
-        self.data.into_iter().map(|x| x.unwrap_or(0.0)).collect()
+        self.into_iter().map(|x| x.unwrap_or(0.0)).collect()
     }
 }
 

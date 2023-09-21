@@ -17,3 +17,4 @@ class NewMarketDataReceived(MarketEvent):
     symbol: Symbol
     timeframe: Timeframe
     ohlcv: OHLCV
+    closed: bool

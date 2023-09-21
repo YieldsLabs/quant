@@ -12,6 +12,18 @@ impl Series<f32> {
     pub fn cross(&self, rhs: &Series<f32>) -> Series<bool> {
         self.cross_over(rhs) | self.cross_under(rhs)
     }
+
+    pub fn cross_over_line(&self, line: f32) -> Series<bool> {
+        self.sgt(line) & self.shift(1).slt(line)
+    }
+
+    pub fn cross_under_line(&self, line: f32) -> Series<bool> {
+        self.slt(line) & self.shift(1).sgt(line)
+    }
+
+    pub fn cross_line(&self, line: f32) -> Series<bool> {
+        self.cross_over_line(line) | self.cross_under_line(line)
+    }
 }
 
 #[cfg(test)]

@@ -1,5 +1,5 @@
 use core::series::Series;
-use volatility::atr::atr;
+use volatility::atr;
 
 pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
     let atr = atr(high, low, close, 10, None);

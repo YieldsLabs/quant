@@ -3,8 +3,10 @@ from typing import List
 
 from .base import Query
 
-from ..models.strategy import Strategy
 from ..models.signal import Signal
+from ..models.symbol import Symbol
+from ..models.timeframe import Timeframe
+from ..models.strategy import Strategy
 
 
 @dataclass(frozen=True)
@@ -15,3 +17,9 @@ class GetTopStrategy(Query[List[Strategy]]):
 @dataclass(frozen=True)
 class GetTotalPnL(Query[float]):
     signal: Signal
+
+@dataclass(frozen=True)
+class GetFitness(Query[float]):
+    symbol: Symbol
+    timeframe: Timeframe
+    strategy: Strategy

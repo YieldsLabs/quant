@@ -1,8 +1,8 @@
 import json
 import os
 
-from core.event_encoder import Encoder
 from core.events.base import Event
+from .event_encoder import Encoder
 
 
 class SingletonMeta(type):
@@ -23,7 +23,7 @@ class EventStore(metaclass=SingletonMeta):
         self.buffer_size = buffer_size
         self.buffer = {}
 
-    async def append(self, event: Event):
+    def append(self, event: Event):
         group = str(event.meta.group)
 
         if group not in self.buffer:
@@ -69,14 +69,17 @@ class EventStore(metaclass=SingletonMeta):
         
         if not os.path.exists(file_path):
             with open(file_path, 'w') as f:
-                json.dump([], f)
+                f.write('[]')
 
-        with open(file_path, 'r+') as f:
-            existing_events = json.load(f)
-            existing_events.extend(events)
-            
-            f.seek(0)
-            
-            json.dump(existing_events, f, cls=Encoder)
-            
+        with open(file_path, 'rb+') as f:
+            f.seek(-1, os.SEEK_END)
             f.truncate()
+
+            for event in events:
+                if f.tell() > 1:
+                    f.write(','.encode('utf-8'))
+                
+                event_data = json.dumps(event, cls=Encoder)
+                f.write(event_data.encode('utf-8'))
+
+            f.write(']'.encode('utf-8'))

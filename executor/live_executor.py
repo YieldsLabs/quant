@@ -6,6 +6,7 @@ from core.interfaces.abstract_actor import AbstractActor
 from core.events.position import BrokerPositionClosed, BrokerPositionOpened, PositionCloseRequested, PositionInitialized
 from core.models.order import Order, OrderStatus
 from core.models.position import Position
+from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.broker import GetOpenPosition
@@ -13,16 +14,29 @@ from core.queries.broker import GetOpenPosition
 PositionEvent = Union[PositionInitialized, PositionCloseRequested]
 
 class LiveExecutor(AbstractActor):
-    def __init__(self, symbol: Symbol, timeframe: Timeframe):
+    def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__()
-        self.symbol = symbol
-        self.timeframe = timeframe
+        self._symbol = symbol
+        self._timeframe = timeframe
+        self._strategy = strategy
         self._running = None
         self._lock = asyncio.Lock()
 
     @property
     def id(self):
-        return f"{self.symbol}_{self.timeframe}_LIVE"
+        return f"{self._symbol}_{self._timeframe}_LIVE"
+    
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @property
+    def timeframe(self):
+        return self._timeframe
+    
+    @property
+    def strategy(self):
+        return self._strategy
     
     @property
     def running(self) -> bool:
@@ -32,19 +46,19 @@ class LiveExecutor(AbstractActor):
         if self.running:
             raise RuntimeError("Start: executor is running")
         
-        self._dispatcher.register(PositionInitialized, self._filter_event)
-        self._dispatcher.register(PositionCloseRequested, self._filter_event)
-        
+        for event in [PositionInitialized, PositionCloseRequested]:
+            self._dispatcher.register(event, self.handle, self._filter_event)
+
         async with self._lock:
             self._running = True
-    
+        
     async def stop(self):
         if not self.running:
             raise RuntimeError("Stop: executor is not started")
         
-        self._dispatcher.unregister(PositionInitialized, self._filter_event)
-        self._dispatcher.unregister(PositionCloseRequested, self._filter_event)
-        
+        for event in [PositionInitialized, PositionCloseRequested]:
+            self._dispatcher.unregister(event, self.handle)
+
         async with self._lock:
             self._running = False
 
@@ -56,9 +70,7 @@ class LiveExecutor(AbstractActor):
 
     async def _filter_event(self, event: PositionEvent):
         signal = event.position.signal
-        
-        if signal.symbol == self.symbol and signal.timeframe == self.timeframe:
-            await self.handle(event)
+        return signal.symbol == self._symbol and signal.timeframe == self._timeframe
 
     async def _execute_order(self, position: Position):
         await self.execute(OpenPosition(position))

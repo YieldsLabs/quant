@@ -1,30 +1,12 @@
 use crate::series::Series;
 
 impl Series<f32> {
-    fn ew<F>(&self, period: usize, alpha_fn: F) -> Self
-    where
-        F: Fn(usize) -> f32,
-    {
-        let alpha = alpha_fn(period);
-
-        let beta = 1.0 - alpha;
-
-        let mut prev = None;
-
-        self.fmap(|current| {
-            let result = if let (Some(curr_val), Some(prev_val)) = (current, prev) {
-                Some(alpha * curr_val + beta * prev_val)
-            } else {
-                current.cloned()
-            };
-
-            prev = result;
-            result
-        })
-    }
-
     pub fn smax(&self, scalar: f32) -> Self {
         self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
+    }
+
+    pub fn smin(&self, scalar: f32) -> Self {
+        self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
     }
 
     pub fn max(&self, rhs: &Series<f32>) -> Self {
@@ -32,10 +14,6 @@ impl Series<f32> {
             (Some(a_val), Some(b_val)) => Some(a_val.max(*b_val)),
             _ => None,
         })
-    }
-
-    pub fn smin(&self, scalar: f32) -> Self {
-        self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
     }
 
     pub fn min(&self, rhs: &Series<f32>) -> Self {
@@ -47,6 +25,21 @@ impl Series<f32> {
 
     pub fn abs(&self) -> Self {
         self.fmap(|val| val.map(|v| v.abs()))
+    }
+
+    pub fn log(&self) -> Self {
+        self.fmap(|val| match val {
+            Some(v) if *v > 0.0 => Some(v.ln()),
+            _ => None,
+        })
+    }
+
+    pub fn exp(&self) -> Self {
+        self.fmap(|val| val.map(|v| v.exp()))
+    }
+
+    pub fn sqrt(&self) -> Self {
+        self.fmap(|val| val.filter(|&v| *v >= 0.0).map(|v| v.sqrt()))
     }
 
     pub fn round(&self, places: usize) -> Self {
@@ -71,44 +64,6 @@ impl Series<f32> {
         })
     }
 
-    pub fn ma(&self, period: usize) -> Self {
-        self.sliding_map(period, |window, size, _| {
-            Some(window.iter().filter_map(|v| *v).sum::<f32>() / size as f32)
-        })
-    }
-
-    pub fn ema(&self, period: usize) -> Self {
-        self.ew(period, |period| 2.0 / (period as f32 + 1.0))
-    }
-
-    pub fn smma(&self, period: usize) -> Self {
-        self.ew(period, |period| 1.0 / (period as f32))
-    }
-
-    pub fn wma(&self, period: usize) -> Self {
-        let len = self.len();
-        let mut wma = Series::empty(len);
-
-        let weight_sum = (period * (period + 1)) as f32 / 2.0;
-
-        let mut sum = 0.0;
-
-        for i in 0..period {
-            let weight = (i + 1) as f32;
-            sum += self[i].unwrap_or(0.0) * weight;
-        }
-
-        wma[period - 1] = Some(sum / weight_sum);
-
-        for i in period..len {
-            sum += (self[i].unwrap_or(0.0) - self[i - period].unwrap_or(0.0)) * period as f32
-                - (weight_sum - period as f32);
-            wma[i] = Some(sum / weight_sum);
-        }
-
-        wma
-    }
-
     pub fn var(&self, period: usize) -> Self {
         let ma: Vec<f32> = self.ma(period).into();
 
@@ -125,7 +80,22 @@ impl Series<f32> {
     }
 
     pub fn std(&self, period: usize) -> Self {
-        self.var(period).fmap(|val| val.map(|v| v.sqrt()))
+        self.var(period).sqrt()
+    }
+
+    pub fn md(&self, period: usize) -> Self {
+        let ma: Vec<f32> = self.ma(period).into();
+        self.sliding_map(period, |window, size, i| {
+            let mean = ma[i];
+            Some(
+                window
+                    .iter()
+                    .filter_map(|v| *v)
+                    .map(|v| (v - mean).abs())
+                    .sum::<f32>()
+                    / size as f32,
+            )
+        })
     }
 }
 
@@ -239,6 +209,57 @@ mod tests {
     }
 
     #[test]
+    fn test_sqrt() {
+        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            None,
+            Some(1.4142135),
+            Some(1.7320508),
+            Some(2.0),
+            Some(2.236068),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.sqrt();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_log() {
+        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            None,
+            Some(0.6931472),
+            Some(1.0986123),
+            Some(1.3862944),
+            Some(1.609438),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.log();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_exp() {
+        let source = vec![-1.0, 2.0, -3.0, 4.0, 5.0];
+        let expected = vec![
+            Some(0.36787945),
+            Some(7.389056),
+            Some(0.049787067),
+            Some(54.59815),
+            Some(148.41316),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.exp();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_round() {
         let source = Series::from([-1.2211, 2.2456, -3.5677, 4.0, 5.3334]);
         let expected = Series::from([-1.0, 2.0, -4.0, 4.0, 5.0]);
@@ -266,45 +287,6 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.sum(3);
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_ma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(1.5), Some(2.0), Some(3.0), Some(4.0)];
-        let series = Series::from(&source);
-
-        let result = series.ma(3);
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_ema() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(1.5), Some(2.25), Some(3.125), Some(4.0625)];
-        let series = Series::from(&source);
-
-        let result = series.ema(3);
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_smma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![
-            Some(1.0),
-            Some(1.3333333),
-            Some(1.8888888),
-            Some(2.5925925),
-            Some(3.3950615),
-        ];
-        let series = Series::from(&source);
-
-        let result = series.smma(3);
 
         assert_eq!(result, expected);
     }
@@ -340,5 +322,22 @@ mod tests {
                 _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
             }
         }
+    }
+
+    #[test]
+    fn test_md() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            Some(0.0),
+            Some(0.5),
+            Some(0.6666667),
+            Some(0.6666667),
+            Some(0.6666667),
+        ];
+        let series = Series::from(&source);
+
+        let result = series.md(3);
+
+        assert_eq!(result, expected);
     }
 }

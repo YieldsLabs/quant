@@ -1,9 +1,7 @@
 import asyncio
-import ctypes
 from enum import Enum
-from functools import lru_cache
 from typing import Any
-from wasmtime import Memory, Store
+from wasmtime import Store
 
 from core.models.signal import Signal, SignalSide
 from core.models.strategy import Strategy
@@ -21,14 +19,12 @@ class Action(Enum):
 
 
 class SignalActor(AbstractActor):
-    def __init__(self, symbol: str, timeframe: Timeframe, strategy_name: str, parameters: tuple[int], store: Store, exports: Any):
+    def __init__(self, symbol: str, timeframe: Timeframe, strategy: Strategy, store: Store, exports: Any):
         super().__init__()
-        self.symbol = symbol
-        self.timeframe = timeframe
-        self._strategy_name = strategy_name
-        self._strategy = None
+        self._symbol = symbol
+        self._timeframe = timeframe
+        self._strategy = strategy
 
-        self.parameters = parameters
         self.store = store
         self.exports = exports
         self.register_id = None
@@ -39,7 +35,19 @@ class SignalActor(AbstractActor):
         if not self._strategy:
             raise RuntimeError("Id: Strategy is not started")
         
-        return f"{self.symbol}_{self.timeframe}{self._strategy}"
+        return f"{self._symbol}_{self._timeframe}{self._strategy}"
+    
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @property
+    def timeframe(self):
+        return self._timeframe
+    
+    @property
+    def strategy(self):
+        return self._strategy
 
     @property
     def running(self):
@@ -51,9 +59,8 @@ class SignalActor(AbstractActor):
 
         async with self._lock:
             self._register_strategy()
-            self._set_strategy()
 
-        self._dispatcher.register(NewMarketDataReceived, self._signal_event_filter)
+        self._dispatcher.register(NewMarketDataReceived, self.handle, self._filter_events)
 
     async def stop(self):
         if not self.running:
@@ -62,7 +69,7 @@ class SignalActor(AbstractActor):
         async with self._lock:
             self._unregister_strategy()
     
-        self._dispatcher.unregister(NewMarketDataReceived, self._signal_event_filter)
+        self._dispatcher.unregister(NewMarketDataReceived, self.handle)
 
     async def handle(self, event: NewMarketDataReceived):
         if not self.running:
@@ -86,49 +93,30 @@ class SignalActor(AbstractActor):
             await dispatch_func()
 
     def _register_strategy(self):
-        self.register_id = self.exports[f"register_{self._strategy_name}"](self.store, *self.parameters)
+        (signal_parameters, filter_parameters, stoploss_parameters) = self._strategy.parameters
+        strategy_parameters = signal_parameters + filter_parameters + stoploss_parameters
+
+        self.register_id = self.exports[f"register_{self._strategy.name}"](self.store, *strategy_parameters)
 
     def _unregister_strategy(self):
         self.exports["unregister_strategy"](self.store, self.register_id)
         self.register_id = None
     
-    async def _signal_event_filter(self, event: NewMarketDataReceived):
-        if event.symbol == self.symbol and event.timeframe == self.timeframe:
-            await self.handle(event)
-
-    def _set_strategy(self):
-        params = self.exports["strategy_parameters"](self.store, self.register_id)
-        memory = self.exports["memory"]
-
-        strategy_parameters = self._get_string_from_memory(self.store, memory, params[0], params[1])
-        self._strategy = Strategy.from_label(strategy_parameters)
+    def _filter_events(self, event: NewMarketDataReceived):
+        return event.symbol == self._symbol and event.timeframe == self._timeframe and event.closed == True
 
     async def _dispatch_go_long_signal(self, data, price, stop_loss):
         await self.dispatch(
-            GoLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+            GoLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_go_short_signal(self, data, price, stop_loss):
         await self.dispatch(
-            GoShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
+            GoShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, entry_price=price, stop_loss=stop_loss))
 
     async def _dispatch_exit_long_signal(self, data, exit_price):
         await self.dispatch(
-            ExitLongSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
+            ExitLongSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.BUY), ohlcv=data, exit_price=exit_price))
 
     async def _dispatch_exit_short_signal(self, data, exit_price):
         await self.dispatch(
-            ExitShortSignalReceived(signal=Signal(self.symbol, self.timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))
-
-    @staticmethod
-    @lru_cache(maxsize=None)
-    def _get_string_from_memory(store: Store, memory: Memory, pointer, length):
-        data_ptr = memory.data_ptr(store)
-        data_address = ctypes.addressof(data_ptr.contents)
-        final_address = data_address + pointer
-
-        if pointer + length > memory.data_len(store):
-            raise ValueError("Memory: pointer and length exceed memory bounds")
-
-        byte_array = (ctypes.c_char * length).from_address(final_address)
-
-        return byte_array.value.decode('utf-8')
+            ExitShortSignalReceived(signal=Signal(self._symbol, self._timeframe, self._strategy, SignalSide.SELL), ohlcv=data, exit_price=exit_price))

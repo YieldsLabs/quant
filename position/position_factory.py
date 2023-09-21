@@ -5,7 +5,7 @@ from core.models.signal import Signal, SignalSide
 
 from .position_risk_break_even import BreakEvenStrategy
 from .position_take_profit_rr import PositionRRTakeProfit
-from .position_sizer import PositionSizer
+from .size.fixed_sizer import PositionFixedSizer
 
 
 class PositionFactory(AbstractPositionFactory):
@@ -21,7 +21,7 @@ class PositionFactory(AbstractPositionFactory):
         stop_loss_price = round(stop_loss_price, symbol.price_precision) if stop_loss_price else None
         entry_price = round(entry_price, symbol.price_precision)
 
-        position_size = PositionSizer.calculate(
+        position_size = PositionFixedSizer.calculate(
             account_size,
             entry_price,
             symbol.fee,

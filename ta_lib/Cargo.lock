@@ -24,6 +24,16 @@ name = "core"
 version = "0.1.0"
 
 [[package]]
+name = "filter"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "momentum",
+ "shared",
+]
+
+[[package]]
 name = "momentum"
 version = "0.1.0"
 dependencies = [
@@ -46,6 +56,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "candlestick",
+ "core",
+ "trend",
+]
+
+[[package]]
 name = "stop_loss"
 version = "0.1.0"
 dependencies = [
@@ -59,6 +79,7 @@ name = "trend"
 version = "0.1.0"
 dependencies = [
  "core",
+ "price",
 ]
 
 [[package]]
@@ -67,9 +88,12 @@ version = "0.1.0"
 dependencies = [
  "base",
  "core",
+ "filter",
+ "momentum",
  "once_cell",
+ "shared",
  "stop_loss",
- "trend",
+ "volatility",
 ]
 
 [[package]]
@@ -84,6 +108,7 @@ name = "volatility"
 version = "0.1.0"
 dependencies = [
  "core",
+ "price",
  "trend",
  "utils",
 ]

@@ -17,11 +17,13 @@ from datasource.bybit_ws import BybitWSHandler
 from backtest.backtest import Backtest
 from executor.executor_actor_factory import ExecutorActorFactory
 from strategy.signal_actor_factory import SignalActorFactory
-from system.trend_system import TradingContext, TrendSystem
+from system.genetic_system import GeneticSystem, TradingContext
 from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
 from risk.risk_actor_factory import RiskActorFactory
 from portfolio.portfolio import Portfolio
+from system.squad_factory import SquadFactory
+from strategy.generator.trend_follow import TrendFollowStrategyGenerator
 
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -50,32 +52,34 @@ signal.signal(signal.SIGTERM, graceful_shutdown.exit)
 async def main():
     logging.info('Initializing...')
 
-    store_buf_size = 233
+    store_buf_size = 5000
     num_workers = os.cpu_count()
     multi_piority_group = 2
 
     lookback = Lookback.ONE_MONTH
-    batch_size = 610
-    risk_per_trade = 0.0015
-    risk_reward_ratio = 3.0
-    atr_stop_loss = 1.2
+    batch_size = 1597
+    backtest_parallel = 2
+    sample_size = 13
+    max_generations = 8
+    risk_per_trade = 0.005
+    risk_reward_ratio = 2
     risk_buffer = 0.0001
     slippage = 0.0005
     leverage = 1
     initial_account_size = 1000
+    elite_count = 5
+    mutation_rate = 0.05
 
     timeframes = [
-        Timeframe.ONE_MINUTE,
         Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES,
     ]
-    blacklist = []
-    
-    trend_follow_path = './wasm/trend_follow.wasm'
-    trend_follow_strategies = [
-        ['crossma', [50, 100, 14, atr_stop_loss]]
-    ]
 
+    blacklist = [
+        'USDCUSDT',
+    ]
+    
+    trend_follow_wasm_path = './wasm/trend_follow.wasm'
 
     event_store = EventStore(LOG_DIR, store_buf_size)
     event_bus = EventDispatcher(num_workers, multi_piority_group)
@@ -86,26 +90,31 @@ async def main():
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
 
+    trend_follow_strategy = TrendFollowStrategyGenerator()
+
+    trend_follow_squad_factory = SquadFactory(
+        SignalActorFactory(trend_follow_wasm_path),
+        ExecutorActorFactory(slippage),
+        PositionActorFactory(initial_account_size, PositionFactory(leverage, risk_per_trade, risk_reward_ratio)),
+        RiskActorFactory(risk_buffer),
+    )
+
     context = TradingContext(
         datasource,
-        SignalActorFactory(),
-        ExecutorActorFactory(slippage),
-        PositionActorFactory(
-            initial_account_size,
-            PositionFactory(leverage, risk_per_trade, risk_reward_ratio)
-        ),
-        RiskActorFactory(risk_buffer),
+        trend_follow_squad_factory,
+        trend_follow_strategy,
         timeframes,
-        trend_follow_path,
-        trend_follow_strategies,
         blacklist,
         lookback,
         batch_size,
+        backtest_parallel,
+        sample_size,
+        max_generations,
         leverage,
         IS_LIVE_MODE
     )
 
-    trading_system = TrendSystem(context)
+    trading_system = GeneticSystem(context, elite_count, mutation_rate)
 
     system_task = asyncio.create_task(trading_system.start())
     ws_handler_task = asyncio.create_task(ws_handler.run())

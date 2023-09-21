@@ -1,5 +1,6 @@
 from enum import Enum
 import json
+from typing import Any
 import numpy as np
 
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
@@ -19,5 +20,7 @@ class Encoder(json.JSONEncoder):
             return obj.tolist()
         if isinstance(obj, Event):
             return obj.to_dict()
+        if isinstance(obj, type(Any)):
+            return 'Any'
         
         return super().default(obj)

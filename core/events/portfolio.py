@@ -10,9 +10,9 @@ from ..models.timeframe import Timeframe
 
 @dataclass(frozen=True)
 class PortfolioEvent(Event):
-    strategy: Strategy
-    timeframe: Timeframe
     symbol: Symbol
+    timeframe: Timeframe
+    strategy: Strategy
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=8, group=EventGroup.portfolio), init=False)
 
 

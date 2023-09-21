@@ -2,10 +2,10 @@ use core::series::Series;
 
 pub fn rsi(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
-    let changes = source.change(1);
+    let mom = source.change(1);
 
-    let up = changes.smax(0.0).smma(period);
-    let down = changes.smin(0.0).neg().smma(period);
+    let up = mom.smax(0.0).smma(period);
+    let down = mom.smin(0.0).neg().smma(period);
 
     let rs = up / down;
 

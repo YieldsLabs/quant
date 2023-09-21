@@ -1,7 +1,7 @@
 from typing import Optional
 
 
-class PositionSizer:
+class PositionFixedSizer:
     @staticmethod
     def calculate(
         account_size: float,

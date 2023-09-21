@@ -1,0 +1,10 @@
+[package]
+name = "shared"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trend = { path = "../../indicators/trend" }
+candlestick = { path = "../../patterns/candlestick" }
+core = { path = "../../core" }
+base = { path = "../base" }

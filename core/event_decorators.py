@@ -31,7 +31,7 @@ def eda(cls: Type):
         
         async def dispatch(self, event, *args, **kwargs):
             await self._dispatcher.dispatch(event, *args, **kwargs)
-            await self._store.append(event)
+            self._store.append(event)
 
         async def query(self, query, *args, **kwargs):
             return await self._dispatcher.query(query, *args, **kwargs)

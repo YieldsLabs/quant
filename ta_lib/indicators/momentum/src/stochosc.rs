@@ -1,5 +1,5 @@
 use core::series::Series;
-use utils::stoch::stoch;
+use utils::stoch;
 
 pub fn stochosc(
     high: &[f32],
@@ -9,7 +9,11 @@ pub fn stochosc(
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let stoch = stoch(high, low, close, period);
+    let high = Series::from(high);
+    let low = Series::from(low);
+    let close = Series::from(close);
+
+    let stoch = stoch(&high, &low, &close, period);
 
     let k = stoch.ma(k_period);
 

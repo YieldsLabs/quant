@@ -104,7 +104,7 @@ class BybitWSHandler(AbstractWS):
 
     def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV.from_dict(data)
-        return NewMarketDataReceived(symbol=symbol, timeframe=self.TIMEFRAMES[interval], ohlcv=ohlcv)
+        return NewMarketDataReceived(symbol, self.TIMEFRAMES[interval], ohlcv, data['confirm'])
 
 
     @command_handler(Subscribe)

@@ -13,6 +13,7 @@ class SignalSide(Enum):
     def __str__(self):
         return self.value.upper()
 
+
 @dataclass(frozen=True)
 class Signal:
     symbol: Symbol

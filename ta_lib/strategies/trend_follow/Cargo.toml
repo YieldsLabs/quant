@@ -7,8 +7,11 @@ edition = "2021"
 once_cell = "*"
 core = { path = "../../core" }
 base = { path = "../base" }
-trend = { path = "../../indicators/trend" }
-stop_loss = { path = "../shared/stop_loss" }
+stop_loss = { path = "../stop_loss" }
+filter = { path = "../filter" }
+shared = { path = "../shared" }
+volatility = { path = "../../indicators/volatility" }
+momentum = { path = "../../indicators/momentum" }
 
 [lib]
 crate-type = ["cdylib"]
