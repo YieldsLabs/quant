@@ -3,9 +3,9 @@ use core::series::Series;
 pub fn gma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
-    let gma = source.log().ma(period).exp();
+    
 
-    gma
+    source.log().ma(period).exp()
 }
 
 #[cfg(test)]

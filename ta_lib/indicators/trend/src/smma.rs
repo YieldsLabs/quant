@@ -3,9 +3,9 @@ use core::series::Series;
 pub fn smma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
-    let smma = source.smma(period);
+    
 
-    smma
+    source.smma(period)
 }
 
 #[cfg(test)]

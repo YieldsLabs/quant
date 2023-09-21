@@ -26,9 +26,9 @@ pub fn frama(high: &[f32], low: &[f32], close: &[f32], period: usize) -> Series<
         (-4.6 * (d - 1.0)).exp()
     );
 
-    let frama = close.ew(&alpha, &close);
+    
 
-    frama
+    close.ew(&alpha, &close)
 }
 
 #[cfg(test)]

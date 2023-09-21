@@ -3,9 +3,9 @@ use core::series::Series;
 pub fn rmsma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
-    let rmsma = (&source * &source).ma(period).sqrt();
+    
 
-    rmsma
+    (&source * &source).ma(period).sqrt()
 }
 
 #[cfg(test)]

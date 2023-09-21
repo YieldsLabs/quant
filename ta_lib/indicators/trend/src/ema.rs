@@ -3,9 +3,9 @@ use core::series::Series;
 pub fn ema(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
-    let ema = source.ema(period);
+    
 
-    ema
+    source.ema(period)
 }
 
 #[cfg(test)]

@@ -3,9 +3,9 @@ use core::series::Series;
 pub fn wma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(&source);
 
-    let wma = source.wma(period);
+    
 
-    wma
+    source.wma(period)
 }
 
 #[cfg(test)]

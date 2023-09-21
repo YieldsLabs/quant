@@ -7,9 +7,9 @@ pub fn swma(source: &[f32]) -> Series<f32> {
     let x2 = source.shift(2);
     let x3 = source.shift(3);
 
-    let swma = x3 * 1.0 / 6.0 + x2 * 2.0 / 6.0 + x1 * 2.0 / 6.0 + source * 1.0 / 6.0;
+    
 
-    swma
+    x3 * 1.0 / 6.0 + x2 * 2.0 / 6.0 + x1 * 2.0 / 6.0 + source * 1.0 / 6.0
 }
 
 #[cfg(test)]

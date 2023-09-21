@@ -3,9 +3,9 @@ use core::series::Series;
 pub fn hma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
-    let hma = source.hma(period);
+    
 
-    hma
+    source.hma(period)
 }
 
 #[cfg(test)]

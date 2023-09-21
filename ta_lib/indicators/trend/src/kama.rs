@@ -11,7 +11,7 @@ pub fn kama(source: &[f32], period: usize) -> Series<f32> {
     let alpha = iff!(
         er.na(),
         Series::empty(source.len()).nz(Some(2.0 / (period as f32 + 1.0))),
-        (er * 0.6666666666666666667).sqrt()
+        (er * 0.666_666_7).sqrt()
     );
 
     let mut kama = Series::empty(source.len());
