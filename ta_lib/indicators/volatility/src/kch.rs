@@ -10,8 +10,8 @@ pub fn kch(
     atr_period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let hlc3 = Series::from(typical_price(&high, &low, &close));
-    let atr = atr(&high, &low, &close, atr_period, None) * factor;
+    let hlc3 = Series::from(typical_price(high, low, close));
+    let atr = atr(high, low, close, atr_period, None) * factor;
 
     let middle_band = hlc3.ema(period);
 

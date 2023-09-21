@@ -8,12 +8,12 @@ pub fn snatr(
     atr_period: usize,
     period: usize,
 ) -> Series<f32> {
-    let atr = atr(&high, &low, &close, atr_period, None);
+    let atr = atr(high, low, close, atr_period, None);
 
-    let snatr = (&atr - &atr.lowest(atr_period))
-        / (&atr.highest(atr_period) - &atr.lowest(atr_period)).wma(period);
+    
 
-    snatr
+    (&atr - &atr.lowest(atr_period))
+        / (&atr.highest(atr_period) - &atr.lowest(atr_period)).wma(period)
 }
 
 #[test]
