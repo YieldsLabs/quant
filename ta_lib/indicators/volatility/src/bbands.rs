@@ -26,15 +26,11 @@ mod tests {
         let period = 3;
         let factor = 2.0;
         let epsilon = 0.001;
-        let expected_upper_band = vec![
-            2.0, 5.0, 7.265986, 9.265986, 11.265986, 10.632993, 10.632993, 9.632993, 8.632993,
-            7.632993,
-        ];
-        let expected_middle_band = vec![2.0, 3.0, 4.0, 6.0, 8.0, 9.0, 9.0, 8.0, 7.0, 6.0];
-        let expected_lower_band = vec![
-            2.0, 1.0, 0.734014, 2.734014, 4.734014, 7.367007, 7.367007, 6.367007, 5.367007,
-            4.367007,
-        ];
+        let expected_upper_band = [2.0, 5.0, 7.265986, 9.265986, 11.265986, 10.632993, 10.632993, 9.632993, 8.632993,
+            7.632993];
+        let expected_middle_band = [2.0, 3.0, 4.0, 6.0, 8.0, 9.0, 9.0, 8.0, 7.0, 6.0];
+        let expected_lower_band = [2.0, 1.0, 0.734014, 2.734014, 4.734014, 7.367007, 7.367007, 6.367007, 5.367007,
+            4.367007];
 
         let (upper_band, middle_band, lower_band) = bbands(&source, period, factor);
 

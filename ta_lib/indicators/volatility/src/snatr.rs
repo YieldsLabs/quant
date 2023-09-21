@@ -30,8 +30,7 @@ fn test_snatr() {
     let atr_period = 3;
     let period = 3;
     let epsilon = 0.001;
-    let expected = vec![
-        0.0,
+    let expected = [0.0,
         0.0,
         1.6666753,
         1.0612303,
@@ -39,8 +38,7 @@ fn test_snatr() {
         1.2830225,
         1.1285568,
         0.48596168,
-        0.109491356,
-    ];
+        0.109491356];
 
     let result: Vec<f32> = snatr(&high, &low, &close, atr_period, period).into();
 
