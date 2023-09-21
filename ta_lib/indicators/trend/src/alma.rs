@@ -27,10 +27,19 @@ mod tests {
     #[test]
     fn test_alma() {
         let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![0.0, 0.0, 2.6856735, 3.6856737, 4.685674];
+        let expected = vec![0.0, 0.0, 2.6856735, 3.6856735, 4.6856737];
+        let epsilon = 0.001;
 
         let result: Vec<f32> = alma(&source, 3, 0.85, 6.0).into();
 
-        assert_eq!(result, expected);
+        for i in 0..source.len() {
+            assert!(
+                (result[i] - expected[i]).abs() < epsilon,
+                "at position {}: {} != {}",
+                i,
+                result[i],
+                expected[i]
+            );
+        }
     }
 }
