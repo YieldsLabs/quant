@@ -197,7 +197,7 @@ impl Div<&Series<f32>> for f32 {
 
     fn div(self, rhs: &Series<f32>) -> Series<f32> {
         let scalars = vec![self; rhs.len()];
-        Series::from(&scalars).div_series(&rhs)
+        Series::from(&scalars).div_series(rhs)
     }
 }
 

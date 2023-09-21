@@ -67,7 +67,7 @@ impl<T: Clone> Series<T> {
     pub fn shift(&self, n: usize) -> Self {
         let data = repeat(None)
             .take(n)
-            .chain(self.data.iter().cloned().take(self.len() - n))
+            .chain(self.data.iter().take(self.len() - n).cloned())
             .collect();
 
         Self { data }
@@ -153,21 +153,21 @@ impl<T> IntoIterator for Series<T> {
     }
 }
 
-impl Into<Vec<f32>> for Series<f32> {
-    fn into(self) -> Vec<f32> {
-        self.into_iter().map(|x| x.unwrap_or(0.0)).collect()
+impl From<Series<f32>> for Vec<f32> {
+    fn from(val: Series<f32>) -> Self {
+        val.into_iter().map(|x| x.unwrap_or(0.0)).collect()
     }
 }
 
-impl Into<Vec<bool>> for Series<bool> {
-    fn into(self) -> Vec<bool> {
-        self.data.into_iter().map(|x| x.unwrap_or(false)).collect()
+impl From<Series<bool>> for Vec<bool> {
+    fn from(val: Series<bool>) -> Self {
+        val.data.into_iter().map(|x| x.unwrap_or(false)).collect()
     }
 }
 
-impl Into<Series<bool>> for Series<f32> {
-    fn into(self) -> Series<bool> {
-        self.fmap(|opt| opt.and_then(|&f| if f.is_nan() { None } else { Some(f != 0.0) }))
+impl From<Series<f32>> for Series<bool> {
+    fn from(val: Series<f32>) -> Self {
+        val.fmap(|opt| opt.and_then(|&f| if f.is_nan() { None } else { Some(f != 0.0) }))
     }
 }
 
