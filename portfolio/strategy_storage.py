@@ -17,7 +17,7 @@ class StrategyStorage:
 
     async def next(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy,  metrics: np.array):
         async with self.lock:
-            key = f"{symbol}_{timeframe}{strategy}"
+            key = (symbol, timeframe, strategy)
            
             self.data[key] = (metrics, -1)
 

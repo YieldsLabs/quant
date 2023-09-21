@@ -59,14 +59,16 @@ async def main():
     lookback = Lookback.ONE_MONTH
     batch_size = 1597
     backtest_parallel = 2
-    sample_size = 5
-    max_generations = 10
+    sample_size = 13
+    max_generations = 8
     risk_per_trade = 0.005
     risk_reward_ratio = 2
     risk_buffer = 0.0001
     slippage = 0.0005
     leverage = 1
     initial_account_size = 1000
+    elite_count = 5
+    mutation_rate = 0.05
 
     timeframes = [
         Timeframe.FIVE_MINUTES,
@@ -112,7 +114,7 @@ async def main():
         IS_LIVE_MODE
     )
 
-    trading_system = GeneticSystem(context)
+    trading_system = GeneticSystem(context, elite_count, mutation_rate)
 
     system_task = asyncio.create_task(trading_system.start())
     ws_handler_task = asyncio.create_task(ws_handler.run())
