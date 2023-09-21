@@ -6,8 +6,6 @@ pub fn vwap(hlc3: &[f32], volume: &[f32]) -> Series<f32> {
 
     let product = hlc3 * &volume;
 
-    
-
     product.cumsum() / volume.cumsum()
 }
 

@@ -6,8 +6,6 @@ pub fn vo(source: &[f32], short_period: usize, long_period: usize) -> Series<f32
     let vo_short = source.ema(short_period);
     let vo_long = source.ema(long_period);
 
-    
-
     100.0 * (vo_short - &vo_long) / vo_long
 }
 

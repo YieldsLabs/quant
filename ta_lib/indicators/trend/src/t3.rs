@@ -16,8 +16,6 @@ pub fn t3(source: &[f32], period: usize) -> Series<f32> {
     let form3 = -6.0 * alpha * alpha - 3.0 * alpha - 3.0 * alpha * alpha * alpha;
     let form4 = 1.0 + 3.0 * alpha + alpha * alpha * alpha + 3.0 * alpha * alpha;
 
-    
-
     form1 * ema6 + form2 * ema5 + form3 * ema4 + form4 * ema3
 }
 

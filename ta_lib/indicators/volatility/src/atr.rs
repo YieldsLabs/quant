@@ -37,7 +37,8 @@ mod tests {
         let period = 3;
         let epsilon = 0.001;
         let smothing = None;
-        let expected = [0.0,
+        let expected = [
+            0.0,
             0.009999594,
             0.033333037,
             0.038888436,
@@ -45,7 +46,8 @@ mod tests {
             0.07750531,
             0.09233679,
             0.09001309,
-            0.091675796];
+            0.091675796,
+        ];
 
         let result: Vec<f32> = atr(&high, &low, &close, period, smothing).into();
 

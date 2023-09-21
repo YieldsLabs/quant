@@ -4,7 +4,6 @@ pub fn tma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
     let sma = source.ma(period);
-    
 
     sma.ma(period)
 }

@@ -6,8 +6,6 @@ pub fn dema(source: &[f32], period: usize) -> Series<f32> {
     let ema1 = source.ema(period);
     let ema2 = ema1.ema(period);
 
-    
-
     2.0 * ema1 - ema2
 }
 

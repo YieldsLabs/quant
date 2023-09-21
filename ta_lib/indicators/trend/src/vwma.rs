@@ -4,8 +4,6 @@ pub fn vwma(source: &[f32], volume: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
     let volume = Series::from(volume);
 
-    
-
     (source * &volume).ma(period) / volume.ma(period)
 }
 

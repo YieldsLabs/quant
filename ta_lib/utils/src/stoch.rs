@@ -9,8 +9,6 @@ pub fn stoch(
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
-    
-
     100.0 * (close - &ll) / (hh - ll)
 }
 

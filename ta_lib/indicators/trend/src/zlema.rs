@@ -5,7 +5,6 @@ pub fn zlema(source: &[f32], period: usize) -> Series<f32> {
     let lag = (period as f32 / 2.0).round() as usize;
 
     let d = (2.0 * &source) - source.shift(lag);
-    
 
     d.ema(period)
 }

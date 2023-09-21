@@ -110,7 +110,8 @@ mod tests {
         ];
         let length = 1;
         let epsilon = 0.001;
-        let expected = [Some(0.0),
+        let expected = [
+            Some(0.0),
             Some(0.0),
             Some(0.0599),
             Some(0.0),
@@ -118,7 +119,8 @@ mod tests {
             Some(0.5),
             Some(0.2700),
             Some(0.3200),
-            Some(0.4200)];
+            Some(0.4200),
+        ];
         let series = Series::from(&source);
 
         let result = series.change(length).smax(0.0);
@@ -156,7 +158,8 @@ mod tests {
         ];
         let length = 1;
         let epsilon = 0.001;
-        let expected = [Some(0.0),
+        let expected = [
+            Some(0.0),
             Some(-0.25),
             Some(0.0),
             Some(-0.5399),
@@ -164,7 +167,8 @@ mod tests {
             Some(0.0),
             Some(0.0),
             Some(0.0),
-            Some(0.0)];
+            Some(0.0),
+        ];
         let series = Series::from(&source);
 
         let result = series.change(length).smin(0.0);
@@ -293,7 +297,8 @@ mod tests {
         let series = Series::from(&source);
         let period = 3;
         let epsilon = 0.001;
-        let expected = [Some(0.0),
+        let expected = [
+            Some(0.0),
             Some(1.0),
             Some(1.6329),
             Some(1.6329),
@@ -303,7 +308,8 @@ mod tests {
             Some(0.8164),
             Some(0.8164),
             Some(0.8164),
-            Some(0.8164)];
+            Some(0.8164),
+        ];
 
         let result = series.std(period);
 
