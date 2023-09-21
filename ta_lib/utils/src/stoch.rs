@@ -1,6 +1,11 @@
 use core::series::Series;
 
-pub fn stoch(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>, period: usize) -> Series<f32> {
+pub fn stoch(
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
+    period: usize,
+) -> Series<f32> {
     let hh = high.highest(period);
     let ll = low.lowest(period);
 

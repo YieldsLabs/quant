@@ -28,7 +28,12 @@ pub struct BaseStrategy<S: Signals> {
 }
 
 impl<S: Signals> BaseStrategy<S> {
-    pub fn new(signal: S, filter: Box<dyn Filter>, stop_loss: Box<dyn StopLoss>, lookback_period: usize) -> Self {
+    pub fn new(
+        signal: S,
+        filter: Box<dyn Filter>,
+        stop_loss: Box<dyn StopLoss>,
+        lookback_period: usize,
+    ) -> Self {
         let adjusted_lookback = std::cmp::max(lookback_period, DEFAULT_LOOKBACK);
 
         Self {
@@ -202,7 +207,10 @@ mod tests {
         }
 
         fn entry(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (Series::empty(1).nz(Some(0.0)).into(), Series::empty(1).nz(Some(0.0)).into())
+            (
+                Series::empty(1).nz(Some(0.0)).into(),
+                Series::empty(1).nz(Some(0.0)).into(),
+            )
         }
 
         fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {

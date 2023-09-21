@@ -1,5 +1,5 @@
 use crate::{
-    CandleStrategy, CrossMAStrategy, RSIMAStrategy, RSI2xMAStrategy, SNATRStrategy,
+    CandleStrategy, CrossMAStrategy, RSI2xMAStrategy, RSIMAStrategy, SNATRStrategy,
     TestingGroundStrategy,
 };
 use base::register_strategy;

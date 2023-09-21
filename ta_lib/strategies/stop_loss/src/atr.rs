@@ -9,10 +9,7 @@ pub struct ATRStopLoss {
 
 impl ATRStopLoss {
     pub fn new(period: usize, multi: f32) -> Self {
-        Self {
-            period,
-            multi
-        }
+        Self { period, multi }
     }
 }
 

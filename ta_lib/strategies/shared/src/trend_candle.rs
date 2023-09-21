@@ -1,10 +1,10 @@
-use std::fmt;
 use base::OHLCVSeries;
 use candlestick::{
     bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets,
     slingshot, tasuki, three_candles, three_methods,
 };
 use core::series::Series;
+use std::fmt;
 
 pub enum TrendCandleType {
     BOTTLE,
@@ -19,7 +19,7 @@ pub enum TrendCandleType {
     SLINGSHOT,
     THREE_CANDLES,
     THREE_METHODS,
-    TASUKI
+    TASUKI,
 }
 
 impl fmt::Display for TrendCandleType {
@@ -37,7 +37,7 @@ impl fmt::Display for TrendCandleType {
             Self::SLINGSHOT => write!(f, "SLINGSHOT"),
             Self::THREE_CANDLES => write!(f, "THREE_CANDLES"),
             Self::THREE_METHODS => write!(f, "THREE_METHODS"),
-            Self::TASUKI => write!(f, "TASUKI")
+            Self::TASUKI => write!(f, "TASUKI"),
         }
     }
 }

@@ -62,8 +62,8 @@ mod tests {
     use super::*;
     use base::{Strategy, TradeAction, OHLCV};
     use filter::FilterConfig;
-    use stop_loss::StopLossConfig;
     use shared::MovingAverageType;
+    use stop_loss::StopLossConfig;
 
     #[test]
     fn test_crossmatrategy_new() {
@@ -71,8 +71,11 @@ mod tests {
             MovingAverageType::SMA,
             50,
             100,
-            FilterConfig::DUMB {period: 100 },
-            StopLossConfig::ATR { period: 14, multi: 2.0 },
+            FilterConfig::DUMB { period: 100 },
+            StopLossConfig::ATR {
+                period: 14,
+                multi: 2.0,
+            },
         );
         assert_eq!(
             strategy.id(),
@@ -87,7 +90,10 @@ mod tests {
             50,
             100,
             FilterConfig::DUMB { period: 100 },
-            StopLossConfig::ATR { period: 14, multi: 2.0 },
+            StopLossConfig::ATR {
+                period: 14,
+                multi: 2.0,
+            },
         );
 
         for _i in 0..100 {
