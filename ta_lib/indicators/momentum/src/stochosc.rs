@@ -36,8 +36,8 @@ mod tests {
         let d_period = 3;
         let epsilon = 0.0001;
 
-        let expected_k = vec![50.0, 62.5, 58.3333, 50.0, 41.6666];
-        let expected_d = vec![50.0, 56.25, 56.9444, 56.9444, 50.0];
+        let expected_k = [50.0, 62.5, 58.3333, 50.0, 41.6666];
+        let expected_d = [50.0, 56.25, 56.9444, 56.9444, 50.0];
 
         let (k, d) = stochosc(&high, &low, &close, period, k_period, d_period);
 
