@@ -110,7 +110,7 @@ impl<S: Signals> Strategy for BaseStrategy<S> {
             .last()
             .unwrap_or_default();
 
-        let suggested_entry = series.hlc3().last().unwrap_or(&std::f32::NAN).clone();
+        let suggested_entry = *series.hlc3().last().unwrap_or(&std::f32::NAN);
 
         match (go_long, go_short, exit_long, exit_short) {
             (true, _, _, _) => TradeAction::GoLong(suggested_entry),
