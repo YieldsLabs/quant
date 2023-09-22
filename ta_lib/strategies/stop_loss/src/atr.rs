@@ -8,14 +8,21 @@ pub struct ATRStopLoss {
 }
 
 impl ATRStopLoss {
-    pub fn new(period: usize, multi: f32) -> Self {
-        Self { period, multi }
+    pub fn new(period: f32, multi: f32) -> Self {
+        Self {
+            period: period as usize,
+            multi,
+        }
     }
 }
 
 impl StopLoss for ATRStopLoss {
     fn id(&self) -> String {
         format!("ATR_{}:{:.1}", self.period, self.multi)
+    }
+
+    fn lookback(&self) -> usize {
+        self.period
     }
 
     fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {

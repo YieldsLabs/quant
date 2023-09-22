@@ -1,41 +1,32 @@
-use base::{BaseStrategy, OHLCVSeries, Signals};
+use base::{OHLCVSeries, Signal};
 use core::Series;
-use filter::{map_to_filter, FilterConfig};
-use shared::{ma, MovingAverageType};
-use stop_loss::{map_to_stoploss, StopLossConfig};
+use shared::{ma_indicator, MovingAverageType};
 
-pub struct TestingGroundStrategy {
-    long_period: usize,
+pub struct TestingGroundSignal {
     smoothing: MovingAverageType,
+    smoothing_period: usize,
 }
 
-impl TestingGroundStrategy {
-    pub fn new(
-        smoothing: MovingAverageType,
-        long_period: usize,
-        filter_config: FilterConfig,
-        stoploss_config: StopLossConfig,
-    ) -> BaseStrategy<TestingGroundStrategy> {
-        let signal = TestingGroundStrategy {
-            long_period,
+impl TestingGroundSignal {
+    pub fn new(smoothing: MovingAverageType, smoothing_period: f32) -> Self {
+        Self {
             smoothing,
-        };
-        let filter = map_to_filter(filter_config);
-        let stop_loss = map_to_stoploss(stoploss_config);
-
-        let lookback_period = std::cmp::max(long_period, filter.lookback());
-
-        BaseStrategy::new(signal, filter, stop_loss, lookback_period)
+            smoothing_period: smoothing_period as usize,
+        }
     }
 }
 
-impl Signals for TestingGroundStrategy {
+impl Signal for TestingGroundSignal {
     fn id(&self) -> String {
-        format!("GROUND_{}:{}", self.smoothing, self.long_period)
+        format!("GROUND_{}:{}", self.smoothing, self.smoothing_period)
+    }
+
+    fn lookback(&self) -> usize {
+        self.smoothing_period
     }
 
     fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma(&self.smoothing, data, self.long_period);
+        let ma = ma_indicator(&self.smoothing, data, self.smoothing_period);
 
         let open = Series::from(&data.open);
         let high = Series::from(&data.high);

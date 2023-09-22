@@ -10,6 +10,8 @@ members = [
 "strategies/base",
 "strategies/trend_follow",
 "strategies/stop_loss",
+"strategies/signal",
+"strategies/filter",
 "strategies/shared",
 "utils"
 ]

@@ -62,7 +62,18 @@ dependencies = [
  "base",
  "candlestick",
  "core",
+ "momentum",
  "trend",
+]
+
+[[package]]
+name = "signal"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "shared",
+ "volatility",
 ]
 
 [[package]]
@@ -89,11 +100,10 @@ dependencies = [
  "base",
  "core",
  "filter",
- "momentum",
  "once_cell",
  "shared",
+ "signal",
  "stop_loss",
- "volatility",
 ]
 
 [[package]]

@@ -1,37 +1,38 @@
 use base::{Filter, OHLCVSeries};
 use core::Series;
-use momentum::rsi;
+use shared::{rsi_indicator, RSIType};
 
 pub struct RSIFilter {
+    rsi_type: RSIType,
     period: usize,
     threshold: f32,
 }
 
 impl RSIFilter {
-    pub fn new(period: usize, threshold: f32) -> Self {
-        Self { period, threshold }
+    pub fn new(rsi_type: RSIType, period: f32, threshold: f32) -> Self {
+        Self {
+            rsi_type,
+            period: period as usize,
+            threshold,
+        }
     }
 }
 
 impl Filter for RSIFilter {
     fn id(&self) -> String {
-        format!("FRSI_{}_{:.1}", self.period, self.threshold)
+        format!(
+            "FRSI_{}:{}:{:.1}",
+            self.rsi_type, self.period, self.threshold
+        )
     }
 
     fn lookback(&self) -> usize {
         self.period
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close, self.period);
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let rsi = rsi_indicator(&self.rsi_type, data, self.period);
 
         (rsi.slte(self.threshold), rsi.sgte(self.threshold))
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (
-            Series::empty(1).nz(Some(1.0)).into(),
-            Series::empty(1).nz(Some(1.0)).into(),
-        )
     }
 }

@@ -10,8 +10,7 @@ base = { path = "../base" }
 stop_loss = { path = "../stop_loss" }
 filter = { path = "../filter" }
 shared = { path = "../shared" }
-volatility = { path = "../../indicators/volatility" }
-momentum = { path = "../../indicators/momentum" }
+signal = { path = "../signal" }
 
 [lib]
 crate-type = ["cdylib"]

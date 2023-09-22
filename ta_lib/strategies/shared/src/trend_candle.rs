@@ -42,7 +42,10 @@ impl fmt::Display for TrendCandleType {
     }
 }
 
-pub fn trend_candle(candle: &TrendCandleType, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+pub fn trend_candle_indicator(
+    candle: &TrendCandleType,
+    data: &OHLCVSeries,
+) -> (Series<bool>, Series<bool>) {
     match candle {
         TrendCandleType::BOTTLE => (
             bottle::bullish(&data.open, &data.low, &data.close),
@@ -96,6 +99,5 @@ pub fn trend_candle(candle: &TrendCandleType, data: &OHLCVSeries) -> (Series<boo
             tasuki::bullish(&data.open, &data.close),
             tasuki::bearish(&data.open, &data.close),
         ),
-        _ => (Series::empty(1), Series::empty(1)),
     }
 }

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 trend = { path = "../../indicators/trend" }
+momentum = { path = "../../indicators/momentum" }
 candlestick = { path = "../../patterns/candlestick" }
 core = { path = "../../core" }
 base = { path = "../base" }

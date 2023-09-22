@@ -50,7 +50,11 @@ impl fmt::Display for MovingAverageType {
     }
 }
 
-pub fn ma(smoothing: &MovingAverageType, data: &OHLCVSeries, period: usize) -> Series<f32> {
+pub fn ma_indicator(
+    smoothing: &MovingAverageType,
+    data: &OHLCVSeries,
+    period: usize,
+) -> Series<f32> {
     match smoothing {
         MovingAverageType::ALMA => alma(&data.close, period, 0.85, 6.0),
         MovingAverageType::DEMA => dema(&data.close, period),
@@ -68,6 +72,6 @@ pub fn ma(smoothing: &MovingAverageType, data: &OHLCVSeries, period: usize) -> S
         MovingAverageType::TMA => tma(&data.close, period),
         MovingAverageType::VWMA => vwma(&data.close, &data.volume, period),
         MovingAverageType::WMA => wma(&data.close, period),
-        MovingAverageType::ZLEMA | _ => zlema(&data.close, period),
+        MovingAverageType::ZLEMA => zlema(&data.close, period),
     }
 }

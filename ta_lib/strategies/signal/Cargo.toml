@@ -1,0 +1,11 @@
+[package]
+name = "signal"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+core = { path = "../../core" }
+base = { path = "../base" }
+shared = { path = "../shared" }
+volatility = { path = "../../indicators/volatility" }

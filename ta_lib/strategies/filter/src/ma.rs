@@ -1,6 +1,6 @@
 use base::{Filter, OHLCVSeries};
 use core::Series;
-use shared::{ma, MovingAverageType};
+use shared::{ma_indicator, MovingAverageType};
 
 pub struct MAFilter {
     smoothing: MovingAverageType,
@@ -8,8 +8,11 @@ pub struct MAFilter {
 }
 
 impl MAFilter {
-    pub fn new(smoothing: MovingAverageType, period: usize) -> Self {
-        Self { smoothing, period }
+    pub fn new(smoothing: MovingAverageType, period: f32) -> Self {
+        Self {
+            smoothing,
+            period: period as usize,
+        }
     }
 }
 
@@ -22,17 +25,10 @@ impl Filter for MAFilter {
         self.period
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma(&self.smoothing, data, self.period);
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let ma = ma_indicator(&self.smoothing, data, self.period);
         let close = Series::from(&data.close);
 
         (close.gt(&ma), close.lt(&ma))
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (
-            Series::empty(1).nz(Some(1.0)).into(),
-            Series::empty(1).nz(Some(1.0)).into(),
-        )
     }
 }

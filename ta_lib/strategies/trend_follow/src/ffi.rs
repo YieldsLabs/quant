@@ -1,11 +1,8 @@
-use crate::{
-    CandleStrategy, CrossMAStrategy, RSI2xMAStrategy, RSIMAStrategy, SNATRStrategy,
-    TestingGroundStrategy,
-};
-use base::register_strategy;
-use filter::FilterConfig;
-use shared::{MovingAverageType, TrendCandleType};
-use stop_loss::StopLossConfig;
+use crate::filter_mapper::{map_to_filter, FilterConfig};
+use crate::signal_mapper::{map_to_signal, SignalConfig};
+use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
+use base::{register_strategy, BaseStrategy};
+use shared::{MovingAverageType, RSIType, TrendCandleType};
 
 fn map_to_ma(smoothing: usize) -> MovingAverageType {
     match smoothing {
@@ -25,7 +22,8 @@ fn map_to_ma(smoothing: usize) -> MovingAverageType {
         14 => MovingAverageType::TMA,
         15 => MovingAverageType::VWMA,
         16 => MovingAverageType::WMA,
-        17 | _ => MovingAverageType::ZLEMA,
+        17 => MovingAverageType::ZLEMA,
+        _ => MovingAverageType::SMA,
     }
 }
 
@@ -43,7 +41,8 @@ fn map_to_candle(candle: usize) -> TrendCandleType {
         10 => TrendCandleType::SLINGSHOT,
         11 => TrendCandleType::THREE_CANDLES,
         12 => TrendCandleType::THREE_METHODS,
-        13 | _ => TrendCandleType::TASUKI,
+        13 => TrendCandleType::TASUKI,
+        _ => TrendCandleType::THREE_CANDLES,
     }
 }
 
@@ -56,26 +55,22 @@ pub fn register_crossma(
     stop_loss_multi: f32,
 ) -> i32 {
     let smoothing = map_to_ma(smoothing as usize);
-    let short_period = short_period as usize;
-    let long_period = long_period as usize;
-    let atr_period = atr_period as usize;
-
-    let filter_config = FilterConfig::DUMB {
-        period: long_period,
-    };
-    let stoploss_config = StopLossConfig::ATR {
-        period: atr_period,
-        multi: stop_loss_multi,
-    };
-
-    let strategy = CrossMAStrategy::new(
+    let signal = map_to_signal(SignalConfig::Cross2xMa {
         smoothing,
         short_period,
         long_period,
-        filter_config,
-        stoploss_config,
-    );
-    register_strategy(Box::new(strategy))
+    });
+    let filter = map_to_filter(FilterConfig::Dumb {
+        period: long_period,
+    });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
+        period: atr_period,
+        multi: stop_loss_multi,
+    });
+
+    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
+
+    register_strategy(strategy)
 }
 
 #[no_mangle]
@@ -84,31 +79,32 @@ pub fn register_rsima(
     lower_barrier: f32,
     upper_barrier: f32,
     smoothing: f32,
-    period: f32,
+    smoothing_period: f32,
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_period = rsi_period as usize;
+    let rsi_type = RSIType::RSI;
     let smoothing = map_to_ma(smoothing as usize);
-    let period = period as usize;
-    let atr_period = atr_period as usize;
 
-    let filter_config = FilterConfig::DUMB { period };
-    let stoploss_config = StopLossConfig::ATR {
-        period: atr_period,
-        multi: stop_loss_multi,
-    };
-
-    let strategy = RSIMAStrategy::new(
+    let signal = map_to_signal(SignalConfig::RsiMa {
+        rsi_type,
         rsi_period,
         lower_barrier,
         upper_barrier,
         smoothing,
-        period,
-        filter_config,
-        stoploss_config,
-    );
-    register_strategy(Box::new(strategy))
+        smoothing_period,
+    });
+    let filter = map_to_filter(FilterConfig::Dumb {
+        period: smoothing_period,
+    });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
+        period: atr_period,
+        multi: stop_loss_multi,
+    });
+
+    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
+
+    register_strategy(strategy)
 }
 
 #[no_mangle]
@@ -122,54 +118,55 @@ pub fn register_rsi2xma(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_period = rsi_period as usize;
+    let rsi_type = RSIType::RSI;
     let smoothing = map_to_ma(smoothing as usize);
-    let short_period = short_period as usize;
-    let long_period = long_period as usize;
-    let atr_period = atr_period as usize;
 
-    let filter_config = FilterConfig::DUMB {
-        period: long_period,
-    };
-    let stoploss_config = StopLossConfig::ATR {
-        period: atr_period,
-        multi: stop_loss_multi,
-    };
-
-    let strategy = RSI2xMAStrategy::new(
+    let signal = map_to_signal(SignalConfig::Rsi2xMa {
+        rsi_type,
         rsi_period,
         lower_barrier,
         upper_barrier,
         smoothing,
         short_period,
         long_period,
-        filter_config,
-        stoploss_config,
-    );
-    register_strategy(Box::new(strategy))
+    });
+    let filter = map_to_filter(FilterConfig::Dumb {
+        period: long_period,
+    });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
+        period: atr_period,
+        multi: stop_loss_multi,
+    });
+
+    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
+
+    register_strategy(strategy)
 }
 
 #[no_mangle]
 pub fn register_ground(
     smoothing: f32,
-    long_period: f32,
+    smoothing_period: f32,
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let ma = map_to_ma(smoothing as usize);
-    let long_period = long_period as usize;
-    let atr_period = atr_period as usize;
+    let smoothing = map_to_ma(smoothing as usize);
 
-    let filter_config = FilterConfig::DUMB {
-        period: long_period,
-    };
-    let stoploss_config = StopLossConfig::ATR {
+    let signal = map_to_signal(SignalConfig::Testground {
+        smoothing,
+        smoothing_period,
+    });
+    let filter = map_to_filter(FilterConfig::Dumb {
+        period: smoothing_period,
+    });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
         period: atr_period,
         multi: stop_loss_multi,
-    };
+    });
 
-    let strategy = TestingGroundStrategy::new(ma, long_period, filter_config, stoploss_config);
-    register_strategy(Box::new(strategy))
+    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
+
+    register_strategy(strategy)
 }
 
 #[no_mangle]
@@ -182,46 +179,45 @@ pub fn register_candle(
 ) -> i32 {
     let candle = map_to_candle(candle as usize);
     let smoothing = map_to_ma(smoothing as usize);
-    let period = period as usize;
-    let atr_period = atr_period as usize;
 
-    let filter_config = FilterConfig::MA { smoothing, period };
-    let stoploss_config = StopLossConfig::ATR {
+    let signal = map_to_signal(SignalConfig::Trendcandle { candle });
+    let filter = map_to_filter(FilterConfig::Ma { smoothing, period });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
         period: atr_period,
         multi: stop_loss_multi,
-    };
+    });
 
-    let strategy = CandleStrategy::new(candle, filter_config, stoploss_config);
-    register_strategy(Box::new(strategy))
+    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
+
+    register_strategy(strategy)
 }
 
 #[no_mangle]
 pub fn register_snatr(
     atr_period: f32,
     atr_smoothing_period: f32,
+    lower_barrier: f32,
+    upper_barrier: f32,
     smoothing: f32,
     period: f32,
     stop_loss_atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let atr_period = atr_period as usize;
-    let atr_smoothing_period = atr_smoothing_period as usize;
     let smoothing = map_to_ma(smoothing as usize);
-    let period = period as usize;
-    let stop_loss_atr_period = stop_loss_atr_period as usize;
 
-    let filter_config = FilterConfig::MA { smoothing, period };
-    let stoploss_config = StopLossConfig::ATR {
-        period: stop_loss_atr_period,
-        multi: stop_loss_multi,
-    };
-
-    let strategy = SNATRStrategy::new(
+    let signal = map_to_signal(SignalConfig::SnAtr {
         atr_period,
         atr_smoothing_period,
-        filter_config,
-        stoploss_config,
-    );
+        lower_barrier,
+        upper_barrier,
+    });
+    let filter = map_to_filter(FilterConfig::Ma { smoothing, period });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
+        period: stop_loss_atr_period,
+        multi: stop_loss_multi,
+    });
 
-    register_strategy(Box::new(strategy))
+    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
+
+    register_strategy(strategy)
 }

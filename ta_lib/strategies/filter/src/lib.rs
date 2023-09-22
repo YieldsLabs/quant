@@ -1,9 +1,7 @@
-mod config;
 mod dumb;
 mod ma;
 mod rsi;
 
-pub use config::*;
-use dumb::DumbFilter;
-use ma::MAFilter;
-use rsi::RSIFilter;
+pub use dumb::DumbFilter;
+pub use ma::MAFilter;
+pub use rsi::RSIFilter;
