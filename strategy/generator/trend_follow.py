@@ -1,3 +1,4 @@
+from enum import Enum, auto
 import numpy as np
 from random import shuffle
 
@@ -7,19 +8,29 @@ from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
 from core.models.candle import TrendCandleType
 
+from ..signal.cross_three_ma import Cross3xMovingAverageSignal
 from ..filter.dumb import DumbFilter
 from ..filter.ma import MovingAverageFilter
 from ..signal.candle import TrendCandleSignal
-from ..signal.cross_ma import CrossMovingAverageSignal
+from ..signal.cross_two_ma import Cross2xMovingAverageSignal
 from ..signal.snatr import SNATRSignal
 from ..signal.testing_ground import TestingGroundSignal
 from ..signal.rsi_ma import RSIMovingAverageSignal
 from ..signal.rsi_two_ma import RSI2xMovingAverageSignal
 from ..stop_loss.atr import ATRStopLoss
 
+class StrategyTypes(Enum):
+    Cross2xMa = auto()
+    Cross3xMa = auto()
+    Ground = auto()
+    SnAtr = auto()
+    Candle = auto()
+    RsiMa = auto()
+    Rsi2xMa = auto()
+
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    STRATEGY_TYPES = ['crossma', 'ground', 'snatr', 'candle', 'rsima', 'rsi2xma']
+    STRATEGY_TYPES = list(StrategyTypes)
 
     def __init__(self):
         super().__init__()
@@ -59,6 +70,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         moving_avg_type = np.random.choice(list(MovingAverageType))
         trend_candle_type = np.random.choice(list(TrendCandleType))
         short_period = RandomParameter(20.0, 50.0, 5.0)
+        medium_period = RandomParameter(50.0, 100.0, 5.0)
         long_period = RandomParameter(50.0, 200.0, 10.0)
         rsi_lower_barrier = RandomParameter(5.0, 15.0, 1.0)
         rsi_upper_barrier = RandomParameter(75.0, 95, 1.0)
@@ -67,14 +79,22 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
         filter = np.random.choice([MovingAverageFilter(moving_avg_type, long_period)])
 
-        if strategy_type == 'crossma':
+        if strategy_type == StrategyTypes.Cross2xMa:
             return Strategy(
-                'crossma',
-                CrossMovingAverageSignal(moving_avg_type, short_period, long_period),
+                'cross2xma',
+                Cross2xMovingAverageSignal(moving_avg_type, short_period, long_period),
                 DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )
-        elif strategy_type == 'candle':
+        
+        if strategy_type == StrategyTypes.Cross3xMa:
+            return Strategy(
+                'cross3xma',
+                Cross3xMovingAverageSignal(moving_avg_type, short_period, medium_period, long_period),
+                DumbFilter(),
+                ATRStopLoss(multi=atr_multi)
+            )
+        elif strategy_type == StrategyTypes.Candle:
             return Strategy(
                 'candle',
                 TrendCandleSignal(trend_candle_type),
@@ -82,7 +102,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ATRStopLoss(multi=atr_multi)
             )
         
-        elif strategy_type == 'snatr':
+        elif strategy_type == StrategyTypes.SnAtr:
             return Strategy(
                 'snatr',
                 SNATRSignal(),
@@ -90,7 +110,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ATRStopLoss(multi=atr_multi)
             )
         
-        elif strategy_type == 'rsima':
+        elif strategy_type == StrategyTypes.RsiMa:
             return Strategy(
                 'rsima',
                 RSIMovingAverageSignal(ma=moving_avg_type, period=short_period),
@@ -98,7 +118,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ATRStopLoss(multi=atr_multi)
             )
         
-        elif strategy_type == 'rsi2xma':
+        elif strategy_type == StrategyTypes.Rsi2xMa:
             return Strategy(
                 'rsi2xma',
                 RSI2xMovingAverageSignal(ma=moving_avg_type, lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier),

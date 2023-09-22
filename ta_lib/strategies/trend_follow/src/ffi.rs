@@ -47,7 +47,7 @@ fn map_to_candle(candle: usize) -> TrendCandleType {
 }
 
 #[no_mangle]
-pub fn register_crossma(
+pub fn register_cross2xma(
     smoothing: f32,
     short_period: f32,
     long_period: f32,
@@ -66,6 +66,33 @@ pub fn register_crossma(
     let stoploss = map_to_stoploss(StopLossConfig::Atr {
         period: atr_period,
         multi: stop_loss_multi,
+    });
+
+    register_strategy(signal, filter, stoploss)
+}
+
+#[no_mangle]
+pub fn register_cross3xma(
+    smoothing: f32,
+    short_period: f32,
+    medium_period: f32,
+    long_period: f32,
+    atr_period: f32,
+    atr_factor: f32,
+) -> i32 {
+    let smoothing = map_to_ma(smoothing as usize);
+    let signal = map_to_signal(SignalConfig::Cross3xMa {
+        smoothing,
+        short_period,
+        medium_period,
+        long_period,
+    });
+    let filter = map_to_filter(FilterConfig::Dumb {
+        period: long_period,
+    });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
+        period: atr_period,
+        multi: atr_factor,
     });
 
     register_strategy(signal, filter, stoploss)

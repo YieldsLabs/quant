@@ -1,7 +1,7 @@
 use base::Signal;
 use shared::{MovingAverageType, RSIType, TrendCandleType};
 use signal::{
-    Cross2xMASignal, RSI2xMASignal, RSIMASignal, SNATRSignal, TestingGroundSignal,
+    Cross2xMASignal, Cross3xMASignal, RSI2xMASignal, RSIMASignal, SNATRSignal, TestingGroundSignal,
     TrendCandleSignal,
 };
 
@@ -9,6 +9,12 @@ pub enum SignalConfig {
     Cross2xMa {
         smoothing: MovingAverageType,
         short_period: f32,
+        long_period: f32,
+    },
+    Cross3xMa {
+        smoothing: MovingAverageType,
+        short_period: f32,
+        medium_period: f32,
         long_period: f32,
     },
     RsiMa {
@@ -50,6 +56,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         } => Box::new(Cross2xMASignal::new(smoothing, short_period, long_period)),
+        SignalConfig::Cross3xMa {
+            smoothing,
+            short_period,
+            medium_period,
+            long_period,
+        } => Box::new(Cross3xMASignal::new(
+            smoothing,
+            short_period,
+            medium_period,
+            long_period,
+        )),
         SignalConfig::RsiMa {
             rsi_type,
             rsi_period,
