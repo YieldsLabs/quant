@@ -1,7 +1,7 @@
 use crate::filter_mapper::{map_to_filter, FilterConfig};
 use crate::signal_mapper::{map_to_signal, SignalConfig};
 use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
-use base::{register_strategy, BaseStrategy};
+use base::register_strategy;
 use shared::{MovingAverageType, RSIType, TrendCandleType};
 
 fn map_to_ma(smoothing: usize) -> MovingAverageType {
@@ -68,9 +68,7 @@ pub fn register_crossma(
         multi: stop_loss_multi,
     });
 
-    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
-
-    register_strategy(strategy)
+    register_strategy(signal, filter, stoploss)
 }
 
 #[no_mangle]
@@ -102,9 +100,7 @@ pub fn register_rsima(
         multi: stop_loss_multi,
     });
 
-    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
-
-    register_strategy(strategy)
+    register_strategy(signal, filter, stoploss)
 }
 
 #[no_mangle]
@@ -138,9 +134,7 @@ pub fn register_rsi2xma(
         multi: stop_loss_multi,
     });
 
-    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
-
-    register_strategy(strategy)
+    register_strategy(signal, filter, stoploss)
 }
 
 #[no_mangle]
@@ -164,9 +158,7 @@ pub fn register_ground(
         multi: stop_loss_multi,
     });
 
-    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
-
-    register_strategy(strategy)
+    register_strategy(signal, filter, stoploss)
 }
 
 #[no_mangle]
@@ -187,9 +179,7 @@ pub fn register_candle(
         multi: stop_loss_multi,
     });
 
-    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
-
-    register_strategy(strategy)
+    register_strategy(signal, filter, stoploss)
 }
 
 #[no_mangle]
@@ -217,7 +207,5 @@ pub fn register_snatr(
         multi: stop_loss_multi,
     });
 
-    let strategy = Box::new(BaseStrategy::new(signal, filter, stoploss));
-
-    register_strategy(strategy)
+    register_strategy(signal, filter, stoploss)
 }
