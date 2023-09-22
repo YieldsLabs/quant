@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn vwma(source: &[f32], volume: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);

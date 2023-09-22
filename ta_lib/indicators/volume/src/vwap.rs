@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn vwap(hlc3: &[f32], volume: &[f32]) -> Series<f32> {
     let hlc3 = Series::from(hlc3);

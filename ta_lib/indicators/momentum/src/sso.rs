@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 use utils::stoch;
 
 pub fn sso(

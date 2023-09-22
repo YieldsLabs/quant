@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn macd(
     source: &[f32],

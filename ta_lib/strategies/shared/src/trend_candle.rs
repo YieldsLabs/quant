@@ -3,7 +3,7 @@ use candlestick::{
     bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets,
     slingshot, tasuki, three_candles, three_methods,
 };
-use core::series::Series;
+use core::Series;
 use std::fmt;
 
 pub enum TrendCandleType {

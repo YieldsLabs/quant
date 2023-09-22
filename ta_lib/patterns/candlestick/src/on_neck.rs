@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn bullish(open: &[f32], high: &[f32], close: &[f32]) -> Series<bool> {
     let open = Series::from(open);

@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn alma(source: &[f32], period: usize, offset: f32, sigma: f32) -> Series<f32> {
     let source = Series::from(source);

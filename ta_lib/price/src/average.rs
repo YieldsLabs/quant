@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn average_price(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Vec<f32> {
     let open = Series::from(open);

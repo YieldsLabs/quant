@@ -156,7 +156,7 @@ impl<S: Signals> Strategy for BaseStrategy<S> {
 mod tests {
     use crate::price::Price;
     use crate::{BaseStrategy, Filter, OHLCVSeries, Signals, StopLoss, Strategy, OHLCV};
-    use core::series::Series;
+    use core::Series;
 
     struct MockSignal {
         short_period: usize,

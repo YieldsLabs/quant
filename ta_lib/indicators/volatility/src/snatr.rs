@@ -1,5 +1,5 @@
 use crate::atr;
-use core::series::Series;
+use core::Series;
 
 pub fn snatr(
     high: &[f32],

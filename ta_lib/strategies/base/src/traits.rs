@@ -1,5 +1,5 @@
 use crate::{OHLCVSeries, StopLossLevels, TradeAction, OHLCV};
-use core::series::Series;
+use core::Series;
 
 pub trait Signals {
     fn id(&self) -> String;

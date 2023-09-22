@@ -1,5 +1,5 @@
 use base::OHLCVSeries;
-use core::series::Series;
+use core::Series;
 use std::fmt;
 use trend::{
     alma, dema, ema, frama, gma, hma, kama, rmsma, sinwma, sma, smma, t3, tema, tma, vwma, wma,

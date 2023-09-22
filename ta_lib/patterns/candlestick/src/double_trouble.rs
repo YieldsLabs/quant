@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 use volatility::atr;
 
 pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {

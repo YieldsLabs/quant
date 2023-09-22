@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::series::Series;
+use core::Series;
 use momentum::rsi;
 
 pub struct RSIFilter {

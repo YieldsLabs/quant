@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn median_price(high: &[f32], low: &[f32]) -> Vec<f32> {
     let high = Series::from(high);

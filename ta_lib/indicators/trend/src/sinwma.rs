@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 use std::f32::consts::PI;
 
 pub fn sinwma(source: &[f32], period: usize) -> Series<f32> {

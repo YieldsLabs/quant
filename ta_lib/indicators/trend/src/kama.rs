@@ -1,5 +1,5 @@
 use core::iff;
-use core::series::Series;
+use core::Series;
 
 pub fn kama(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);

@@ -1,5 +1,5 @@
 use crate::atr;
-use core::series::Series;
+use core::Series;
 use price::typical_price;
 
 pub fn kch(

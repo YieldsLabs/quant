@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 use trend::{ema, sma, smma, wma};
 use utils::true_range;
 

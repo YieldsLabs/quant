@@ -1,4 +1,4 @@
-use core::series::Series;
+use core::Series;
 
 pub fn vo(source: &[f32], short_period: usize, long_period: usize) -> Series<f32> {
     let source = Series::from(source);

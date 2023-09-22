@@ -1,5 +1,5 @@
 use base::{BaseStrategy, OHLCVSeries, Signals};
-use core::series::Series;
+use core::Series;
 use filter::{map_to_filter, FilterConfig};
 use shared::{ma, MovingAverageType};
 use stop_loss::{map_to_stoploss, StopLossConfig};
