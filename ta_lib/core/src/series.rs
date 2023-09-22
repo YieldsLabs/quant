@@ -72,6 +72,10 @@ impl<T: Clone> Series<T> {
 
         Self { data }
     }
+
+    pub fn last(&self) -> Option<T> {
+        self.data.iter().rev().find_map(|x| x.as_ref().cloned())
+    }
 }
 
 impl<T> Index<usize> for Series<T> {
@@ -224,6 +228,16 @@ mod tests {
         let expected = vec![None, None, Some(1.0), Some(2.0), Some(3.0)];
 
         let result = Series::from(&source).shift(n);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_last() {
+        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = Some(5.0);
+
+        let result = Series::from(&source).last();
 
         assert_eq!(result, expected);
     }

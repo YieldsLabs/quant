@@ -86,26 +86,11 @@ impl Strategy for BaseStrategy {
         let go_long_series = go_long_signal & go_long_filter;
         let go_short_series = go_short_signal & go_short_filter;
 
-        let go_long = go_long_series
-            .into_iter()
-            .flatten()
-            .last()
-            .unwrap_or_default();
-        let go_short = go_short_series
-            .into_iter()
-            .flatten()
-            .last()
-            .unwrap_or_default();
-        let exit_long = exit_long_series
-            .into_iter()
-            .flatten()
-            .last()
-            .unwrap_or_default();
-        let exit_short = exit_short_series
-            .into_iter()
-            .flatten()
-            .last()
-            .unwrap_or_default();
+        let go_long = go_long_series.last().unwrap_or_default();
+        let go_short = go_short_series.last().unwrap_or_default();
+
+        let exit_long = exit_long_series.last().unwrap_or_default();
+        let exit_short = exit_short_series.last().unwrap_or_default();
 
         let suggested_entry = *series.hlc3().last().unwrap_or(&std::f32::NAN);
 
@@ -130,17 +115,8 @@ impl Strategy for BaseStrategy {
 
         let (stop_loss_long_series, stop_loss_short_series) = self.stop_loss.next(&series);
 
-        let stop_loss_long = stop_loss_long_series
-            .into_iter()
-            .flatten()
-            .last()
-            .unwrap_or_default();
-
-        let stop_loss_short = stop_loss_short_series
-            .into_iter()
-            .flatten()
-            .last()
-            .unwrap_or_default();
+        let stop_loss_long = stop_loss_long_series.last().unwrap_or_default();
+        let stop_loss_short = stop_loss_short_series.last().unwrap_or_default();
 
         StopLossLevels {
             long: stop_loss_long,
