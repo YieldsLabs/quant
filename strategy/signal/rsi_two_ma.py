@@ -7,7 +7,7 @@ from core.models.parameter import RandomParameter, StaticParameter
 
 
 @dataclass(frozen=True)
-class RSI2xMovingAverageSignal(Indicator):
+class RSI2MovingAverageSignal(Indicator):
     rsi_period: Parameter = StaticParameter(2.0)
     lower_barrier: Parameter = RandomParameter(5.0, 15.0, 5.0)
     upper_barrier: Parameter = RandomParameter(80.0, 95.0, 5.0)

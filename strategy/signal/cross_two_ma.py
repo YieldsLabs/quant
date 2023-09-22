@@ -6,7 +6,7 @@ from core.models.parameter import Parameter, RandomParameter
 
 
 @dataclass(frozen=True)
-class Cross2xMovingAverageSignal(Indicator):
+class Cross2MovingAverageSignal(Indicator):
     ma: MovingAverageType = MovingAverageType.SMA
     short_period: Parameter = RandomParameter(5.0, 50.0, 5.0)
     long_period: Parameter = RandomParameter(50.0, 200.0, 10.0)

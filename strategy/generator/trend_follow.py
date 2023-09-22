@@ -8,15 +8,15 @@ from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
 from core.models.candle import TrendCandleType
 
-from ..signal.cross_three_ma import Cross3xMovingAverageSignal
+from ..signal.cross_three_ma import Cross3MovingAverageSignal
 from ..filter.dumb import DumbFilter
 from ..filter.ma import MovingAverageFilter
 from ..signal.candle import TrendCandleSignal
-from ..signal.cross_two_ma import Cross2xMovingAverageSignal
+from ..signal.cross_two_ma import Cross2MovingAverageSignal
 from ..signal.snatr import SNATRSignal
 from ..signal.testing_ground import TestingGroundSignal
 from ..signal.rsi_ma import RSIMovingAverageSignal
-from ..signal.rsi_two_ma import RSI2xMovingAverageSignal
+from ..signal.rsi_two_ma import RSI2MovingAverageSignal
 from ..stop_loss.atr import ATRStopLoss
 
 class StrategyTypes(Enum):
@@ -81,16 +81,16 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
         if strategy_type == StrategyTypes.Cross2xMa:
             return Strategy(
-                'cross2xma',
-                Cross2xMovingAverageSignal(moving_avg_type, short_period, long_period),
+                'cross2ma',
+                Cross2MovingAverageSignal(moving_avg_type, short_period, long_period),
                 DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )
         
         if strategy_type == StrategyTypes.Cross3xMa:
             return Strategy(
-                'cross3xma',
-                Cross3xMovingAverageSignal(moving_avg_type, short_period, medium_period, long_period),
+                'cross3ma',
+                Cross3MovingAverageSignal(moving_avg_type, short_period, medium_period, long_period),
                 DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )
@@ -120,8 +120,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         
         elif strategy_type == StrategyTypes.Rsi2xMa:
             return Strategy(
-                'rsi2xma',
-                RSI2xMovingAverageSignal(ma=moving_avg_type, lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier),
+                'rsi2ma',
+                RSI2MovingAverageSignal(ma=moving_avg_type, lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier),
                 DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )

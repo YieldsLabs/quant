@@ -47,7 +47,7 @@ fn map_to_candle(candle: usize) -> TrendCandleType {
 }
 
 #[no_mangle]
-pub fn register_cross2xma(
+pub fn register_cross2ma(
     smoothing: f32,
     short_period: f32,
     long_period: f32,
@@ -55,7 +55,7 @@ pub fn register_cross2xma(
     stop_loss_multi: f32,
 ) -> i32 {
     let smoothing = map_to_ma(smoothing as usize);
-    let signal = map_to_signal(SignalConfig::Cross2xMa {
+    let signal = map_to_signal(SignalConfig::Cross2Ma {
         smoothing,
         short_period,
         long_period,
@@ -72,7 +72,7 @@ pub fn register_cross2xma(
 }
 
 #[no_mangle]
-pub fn register_cross3xma(
+pub fn register_cross3ma(
     smoothing: f32,
     short_period: f32,
     medium_period: f32,
@@ -81,7 +81,7 @@ pub fn register_cross3xma(
     atr_factor: f32,
 ) -> i32 {
     let smoothing = map_to_ma(smoothing as usize);
-    let signal = map_to_signal(SignalConfig::Cross3xMa {
+    let signal = map_to_signal(SignalConfig::Cross3Ma {
         smoothing,
         short_period,
         medium_period,
@@ -131,7 +131,7 @@ pub fn register_rsima(
 }
 
 #[no_mangle]
-pub fn register_rsi2xma(
+pub fn register_rsi2ma(
     rsi_period: f32,
     lower_barrier: f32,
     upper_barrier: f32,
@@ -144,7 +144,7 @@ pub fn register_rsi2xma(
     let rsi_type = RSIType::RSI;
     let smoothing = map_to_ma(smoothing as usize);
 
-    let signal = map_to_signal(SignalConfig::Rsi2xMa {
+    let signal = map_to_signal(SignalConfig::Rsi2Ma {
         rsi_type,
         rsi_period,
         lower_barrier,

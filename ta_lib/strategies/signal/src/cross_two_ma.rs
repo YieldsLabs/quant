@@ -2,13 +2,13 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{ma_indicator, MovingAverageType};
 
-pub struct Cross2xMASignal {
+pub struct Cross2MASignal {
     smoothing: MovingAverageType,
     short_period: usize,
     long_period: usize,
 }
 
-impl Cross2xMASignal {
+impl Cross2MASignal {
     pub fn new(smoothing: MovingAverageType, short_period: f32, long_period: f32) -> Self {
         Self {
             smoothing,
@@ -18,10 +18,10 @@ impl Cross2xMASignal {
     }
 }
 
-impl Signal for Cross2xMASignal {
+impl Signal for Cross2MASignal {
     fn id(&self) -> String {
         format!(
-            "CROSS2xMA_{}:{}:{}",
+            "CROSS2MA_{}:{}:{}",
             self.smoothing, self.short_period, self.long_period
         )
     }

@@ -2,7 +2,7 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{ma_indicator, rsi_indicator, MovingAverageType, RSIType};
 
-pub struct RSI2xMASignal {
+pub struct RSI2MASignal {
     rsi_type: RSIType,
     rsi_period: usize,
     lower_barrier: f32,
@@ -12,7 +12,7 @@ pub struct RSI2xMASignal {
     long_period: usize,
 }
 
-impl RSI2xMASignal {
+impl RSI2MASignal {
     pub fn new(
         rsi_type: RSIType,
         rsi_period: f32,
@@ -34,10 +34,10 @@ impl RSI2xMASignal {
     }
 }
 
-impl Signal for RSI2xMASignal {
+impl Signal for RSI2MASignal {
     fn id(&self) -> String {
         format!(
-            "RSI2xMA_{}:{}:{}:{}:{}:{}:{}",
+            "RSI2MA_{}:{}:{}:{}:{}:{}:{}",
             self.rsi_type,
             self.rsi_period,
             self.lower_barrier,

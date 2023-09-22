@@ -1,17 +1,17 @@
 use base::Signal;
 use shared::{MovingAverageType, RSIType, TrendCandleType};
 use signal::{
-    Cross2xMASignal, Cross3xMASignal, RSI2xMASignal, RSIMASignal, SNATRSignal, TestingGroundSignal,
+    Cross2MASignal, Cross3MASignal, RSI2MASignal, RSIMASignal, SNATRSignal, TestingGroundSignal,
     TrendCandleSignal,
 };
 
 pub enum SignalConfig {
-    Cross2xMa {
+    Cross2Ma {
         smoothing: MovingAverageType,
         short_period: f32,
         long_period: f32,
     },
-    Cross3xMa {
+    Cross3Ma {
         smoothing: MovingAverageType,
         short_period: f32,
         medium_period: f32,
@@ -25,7 +25,7 @@ pub enum SignalConfig {
         smoothing: MovingAverageType,
         smoothing_period: f32,
     },
-    Rsi2xMa {
+    Rsi2Ma {
         rsi_type: RSIType,
         rsi_period: f32,
         lower_barrier: f32,
@@ -51,17 +51,17 @@ pub enum SignalConfig {
 
 pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
     match config {
-        SignalConfig::Cross2xMa {
+        SignalConfig::Cross2Ma {
             smoothing,
             short_period,
             long_period,
-        } => Box::new(Cross2xMASignal::new(smoothing, short_period, long_period)),
-        SignalConfig::Cross3xMa {
+        } => Box::new(Cross2MASignal::new(smoothing, short_period, long_period)),
+        SignalConfig::Cross3Ma {
             smoothing,
             short_period,
             medium_period,
             long_period,
-        } => Box::new(Cross3xMASignal::new(
+        } => Box::new(Cross3MASignal::new(
             smoothing,
             short_period,
             medium_period,
@@ -82,7 +82,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             smoothing,
             smoothing_period,
         )),
-        SignalConfig::Rsi2xMa {
+        SignalConfig::Rsi2Ma {
             rsi_type,
             rsi_period,
             lower_barrier,
@@ -90,7 +90,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             smoothing,
             short_period,
             long_period,
-        } => Box::new(RSI2xMASignal::new(
+        } => Box::new(RSI2MASignal::new(
             rsi_type,
             rsi_period,
             lower_barrier,
