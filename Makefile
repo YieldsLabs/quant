@@ -11,3 +11,6 @@ check:
 
 build:
 	RUSTFLAGS="-C target-feature=+multivalue" cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
+
+run:
+	pipenv run python3 quant.py

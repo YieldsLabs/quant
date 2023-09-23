@@ -33,9 +33,13 @@ impl BaseStrategy {
         filter: Box<dyn Filter>,
         stop_loss: Box<dyn StopLoss>,
     ) -> Self {
-        let mut adjusted_lookback = std::cmp::max(signal.lookback(), DEFAULT_LOOKBACK);
-        adjusted_lookback = std::cmp::max(filter.lookback(), adjusted_lookback);
-        adjusted_lookback = std::cmp::max(stop_loss.lookback(), adjusted_lookback);
+        let lookbacks = [
+            signal.lookback(),
+            filter.lookback(),
+            stop_loss.lookback(),
+            DEFAULT_LOOKBACK,
+        ];
+        let adjusted_lookback = lookbacks.iter().cloned().max().unwrap_or(DEFAULT_LOOKBACK);
 
         Self {
             data: VecDeque::with_capacity(adjusted_lookback),
