@@ -64,15 +64,6 @@ impl BaseStrategy {
 }
 
 impl Strategy for BaseStrategy {
-    fn id(&self) -> String {
-        format!(
-            "_STRTG{}_FLTR{}_STPLSS{}",
-            self.signal.id(),
-            self.filter.id(),
-            self.stop_loss.id()
-        )
-    }
-
     fn next(&mut self, data: OHLCV) -> TradeAction {
         self.store(data);
 
@@ -140,10 +131,6 @@ mod tests {
     }
 
     impl Signal for MockSignal {
-        fn id(&self) -> String {
-            format!("MOCK_{}", self.short_period)
-        }
-
         fn lookback(&self) -> usize {
             self.short_period
         }
@@ -163,10 +150,6 @@ mod tests {
     }
 
     impl StopLoss for MockStopLoss {
-        fn id(&self) -> String {
-            format!("SL_{:.1}", self.multi)
-        }
-
         fn lookback(&self) -> usize {
             self.period
         }
@@ -184,10 +167,6 @@ mod tests {
     }
 
     impl Filter for MockFilter {
-        fn id(&self) -> String {
-            format!("FL_{:.1}", self.period)
-        }
-
         fn lookback(&self) -> usize {
             self.period
         }
@@ -211,19 +190,6 @@ mod tests {
             }),
         );
         assert_eq!(strategy.lookback_period, 55);
-    }
-
-    #[test]
-    fn test_base_strategy_id() {
-        let strategy = BaseStrategy::new(
-            Box::new(MockSignal { short_period: 10 }),
-            Box::new(MockFilter { period: 1 }),
-            Box::new(MockStopLoss {
-                period: 2,
-                multi: 2.0,
-            }),
-        );
-        assert_eq!(strategy.id(), "_STRTGMOCK_10_FLTRFL_1_STPLSSSL_2.0");
     }
 
     #[test]

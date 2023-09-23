@@ -17,10 +17,6 @@ impl TestingGroundSignal {
 }
 
 impl Signal for TestingGroundSignal {
-    fn id(&self) -> String {
-        format!("GROUND_{}:{}", self.smoothing, self.smoothing_period)
-    }
-
     fn lookback(&self) -> usize {
         self.smoothing_period
     }

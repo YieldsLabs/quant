@@ -17,10 +17,6 @@ impl ATRStopLoss {
 }
 
 impl StopLoss for ATRStopLoss {
-    fn id(&self) -> String {
-        format!("ATR_{}:{:.1}", self.period, self.multi)
-    }
-
     fn lookback(&self) -> usize {
         self.period
     }
@@ -37,20 +33,5 @@ impl StopLoss for ATRStopLoss {
         let short_stop_loss = high + &atr_multi;
 
         (long_stop_loss, short_stop_loss)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_atr_stop_loss_id() {
-        let atr_stop_loss = ATRStopLoss {
-            period: 14,
-            multi: 2.0,
-        };
-
-        assert_eq!(atr_stop_loss.id(), "ATR_14:2.0");
     }
 }

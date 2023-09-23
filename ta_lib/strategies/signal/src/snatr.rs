@@ -26,13 +26,6 @@ impl SNATRSignal {
 }
 
 impl Signal for SNATRSignal {
-    fn id(&self) -> String {
-        format!(
-            "SNATR_{}:{}:{}:{}",
-            self.atr_period, self.atr_smoothing_period, self.lower_barrier, self.upper_barrier
-        )
-    }
-
     fn lookback(&self) -> usize {
         std::cmp::max(self.atr_period, self.atr_smoothing_period)
     }

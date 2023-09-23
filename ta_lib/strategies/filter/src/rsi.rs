@@ -19,13 +19,6 @@ impl RSIFilter {
 }
 
 impl Filter for RSIFilter {
-    fn id(&self) -> String {
-        format!(
-            "FRSI_{}:{}:{:.1}",
-            self.rsi_type, self.period, self.threshold
-        )
-    }
-
     fn lookback(&self) -> usize {
         self.period
     }

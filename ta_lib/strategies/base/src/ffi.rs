@@ -34,26 +34,6 @@ pub fn unregister_strategy(strategy_id: i32) -> i32 {
 }
 
 #[no_mangle]
-pub fn strategy_parameters(strategy_id: i32) -> (i32, i32) {
-    let strategies = STRATEGY_ID_TO_INSTANCE.read().unwrap();
-    if let Some(strategy) = strategies.get(&strategy_id) {
-        let id = strategy.id();
-
-        let bytes = id.as_bytes();
-
-        let result_ptr = unsafe {
-            let ptr = alloc::alloc::alloc(Layout::from_size_align(bytes.len(), 1).unwrap());
-            ptr.copy_from_nonoverlapping(bytes.as_ptr(), bytes.len());
-            ptr as i32
-        };
-
-        (result_ptr, bytes.len() as i32)
-    } else {
-        (-1, -1)
-    }
-}
-
-#[no_mangle]
 pub fn strategy_next(
     strategy_id: i32,
     open: f32,

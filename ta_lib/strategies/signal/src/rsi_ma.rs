@@ -32,18 +32,6 @@ impl RSIMASignal {
 }
 
 impl Signal for RSIMASignal {
-    fn id(&self) -> String {
-        format!(
-            "RSIMA_{}:{}:{}:{}:{}:{}",
-            self.rsi_type,
-            self.rsi_period,
-            self.lower_barrier,
-            self.upper_barrier,
-            self.smoothing,
-            self.smoothing_period
-        )
-    }
-
     fn lookback(&self) -> usize {
         std::cmp::max(self.rsi_period, self.smoothing_period)
     }

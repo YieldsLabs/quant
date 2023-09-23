@@ -8,6 +8,7 @@ from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
 from core.models.candle import TrendCandleType
 
+from ..signal.rsi import RSINautralitySignal
 from ..signal.cross_three_ma import Cross3MovingAverageSignal
 from ..filter.dumb import DumbFilter
 from ..filter.ma import MovingAverageFilter
@@ -22,6 +23,7 @@ from ..stop_loss.atr import ATRStopLoss
 class StrategyTypes(Enum):
     Cross2xMa = auto()
     Cross3xMa = auto()
+    CrossRsiNeutrality = auto()
     Ground = auto()
     SnAtr = auto()
     Candle = auto()
@@ -87,10 +89,17 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ATRStopLoss(multi=atr_multi)
             )
         
-        if strategy_type == StrategyTypes.Cross3xMa:
+        elif strategy_type == StrategyTypes.Cross3xMa:
             return Strategy(
                 'cross3ma',
                 Cross3MovingAverageSignal(moving_avg_type, short_period, medium_period, long_period),
+                DumbFilter(),
+                ATRStopLoss(multi=atr_multi)
+            )
+        elif strategy_type == StrategyTypes.CrossRsiNeutrality:
+            return Strategy(
+                'rsicrossn',
+                RSINautralitySignal(),
                 DumbFilter(),
                 ATRStopLoss(multi=atr_multi)
             )

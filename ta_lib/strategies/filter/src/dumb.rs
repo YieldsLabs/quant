@@ -14,10 +14,6 @@ impl DumbFilter {
 }
 
 impl Filter for DumbFilter {
-    fn id(&self) -> String {
-        "FDUMB".to_string()
-    }
-
     fn lookback(&self) -> usize {
         self.period
     }

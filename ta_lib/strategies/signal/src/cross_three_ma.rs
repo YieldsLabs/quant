@@ -26,13 +26,6 @@ impl Cross3MASignal {
 }
 
 impl Signal for Cross3MASignal {
-    fn id(&self) -> String {
-        format!(
-            "CROSS3MA_{}:{}:{}:{}",
-            self.smoothing, self.short_period, self.medium_period, self.long_period
-        )
-    }
-
     fn lookback(&self) -> usize {
         let adjusted_lookback = std::cmp::max(self.short_period, self.long_period);
         std::cmp::max(adjusted_lookback, self.medium_period)

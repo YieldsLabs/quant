@@ -99,6 +99,30 @@ pub fn register_cross3ma(
 }
 
 #[no_mangle]
+pub fn register_rsicrossn(
+    rsi_period: f32,
+    threshold: f32,
+    atr_period: f32,
+    stop_loss_multi: f32,
+) -> i32 {
+    let rsi_type = RSIType::RSI;
+    let signal = map_to_signal(SignalConfig::CrossRsiNeutrality {
+        rsi_type,
+        rsi_period,
+        threshold
+    });
+    let filter = map_to_filter(FilterConfig::Dumb {
+        period: rsi_period,
+    });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
+        period: atr_period,
+        multi: stop_loss_multi,
+    });
+
+    register_strategy(signal, filter, stoploss)
+}
+
+#[no_mangle]
 pub fn register_rsima(
     rsi_period: f32,
     lower_barrier: f32,

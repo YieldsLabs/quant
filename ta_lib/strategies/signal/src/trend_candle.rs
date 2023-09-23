@@ -15,10 +15,6 @@ impl TrendCandleSignal {
 }
 
 impl Signal for TrendCandleSignal {
-    fn id(&self) -> String {
-        format!("TRENDCANDLE_{}", self.candle)
-    }
-
     fn lookback(&self) -> usize {
         DEFAULT_LOOKBACK
     }

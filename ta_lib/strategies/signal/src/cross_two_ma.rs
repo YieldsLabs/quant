@@ -19,13 +19,6 @@ impl Cross2MASignal {
 }
 
 impl Signal for Cross2MASignal {
-    fn id(&self) -> String {
-        format!(
-            "CROSS2MA_{}:{}:{}",
-            self.smoothing, self.short_period, self.long_period
-        )
-    }
-
     fn lookback(&self) -> usize {
         std::cmp::max(self.short_period, self.long_period)
     }

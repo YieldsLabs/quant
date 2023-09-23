@@ -35,19 +35,6 @@ impl RSI2MASignal {
 }
 
 impl Signal for RSI2MASignal {
-    fn id(&self) -> String {
-        format!(
-            "RSI2MA_{}:{}:{}:{}:{}:{}:{}",
-            self.rsi_type,
-            self.rsi_period,
-            self.lower_barrier,
-            self.upper_barrier,
-            self.smoothing,
-            self.short_period,
-            self.long_period
-        )
-    }
-
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.short_period, self.long_period);
         std::cmp::max(adj_lookback, self.rsi_period)

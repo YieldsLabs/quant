@@ -17,10 +17,6 @@ impl MAFilter {
 }
 
 impl Filter for MAFilter {
-    fn id(&self) -> String {
-        format!("FMA_{}:{}", self.smoothing, self.period)
-    }
-
     fn lookback(&self) -> usize {
         self.period
     }
