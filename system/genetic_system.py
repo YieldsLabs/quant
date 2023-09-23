@@ -149,7 +149,7 @@ class GeneticSystem(AbstractSystem):
         parents = []
 
         while len(parents) < (len(self.population) - self.elite_count):
-            contenders = np.random.choice(candidates, size=5, replace=False)
+            contenders = np.random.choice(candidates, size=5, replace=True)
             winner = max(contenders, key=lambda individual: individual.fitness)
             parents.append(winner)
             candidates.remove(winner)

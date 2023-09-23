@@ -109,11 +109,9 @@ pub fn register_rsicrossn(
     let signal = map_to_signal(SignalConfig::CrossRsiNeutrality {
         rsi_type,
         rsi_period,
-        threshold
+        threshold,
     });
-    let filter = map_to_filter(FilterConfig::Dumb {
-        period: rsi_period,
-    });
+    let filter = map_to_filter(FilterConfig::Dumb { period: rsi_period });
     let stoploss = map_to_stoploss(StopLossConfig::Atr {
         period: atr_period,
         multi: stop_loss_multi,
