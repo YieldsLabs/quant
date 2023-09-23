@@ -1,4 +1,6 @@
-TA_LIB_PATH := ta_lib/Cargo.toml
+TA_LIB_DIR := ta_lib
+WASM_DIR := wasm
+TA_LIB_PATH := $(TA_LIB_DIR)/Cargo.toml
 
 .PHONY: test check build
 
@@ -11,6 +13,7 @@ check:
 
 build:
 	RUSTFLAGS="-C target-feature=+multivalue" cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
+	mv $(TA_LIB_DIR)/target/wasm32-wasi/release/trend_follow.wasm $(WASM_DIR)/trend_follow.wasm
 
 run:
 	pipenv run python3 quant.py
