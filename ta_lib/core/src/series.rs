@@ -123,6 +123,10 @@ impl Series<f32> {
         })
     }
 
+    pub fn zero(len: usize) -> Series<f32> {
+        Series::empty(len).nz(Some(0.0))
+    }
+
     pub fn change(&self, length: usize) -> Self {
         self - self.shift(length)
     }
