@@ -36,8 +36,12 @@ impl Signal for Cross3MASignal {
         let medium_ma = ma_indicator(&self.smoothing, data, self.medium_period);
         let long_ma = ma_indicator(&self.smoothing, data, self.long_period);
 
-        let long_signal = short_ma.cross_over(&medium_ma) & medium_ma.cross_over(&long_ma);
-        let short_signal = short_ma.cross_under(&medium_ma) & medium_ma.cross_under(&long_ma);
+        let long_signal = short_ma.cross_over(&medium_ma)
+            & medium_ma.gt(&long_ma)
+            & short_ma.shift(1).lt(&medium_ma.shift(1));
+        let short_signal = short_ma.cross_under(&medium_ma)
+            & medium_ma.lt(&long_ma)
+            & short_ma.shift(1).gt(&medium_ma.shift(1));
 
         (long_signal, short_signal)
     }
