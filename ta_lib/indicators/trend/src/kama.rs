@@ -3,6 +3,8 @@ use core::Series;
 
 pub fn kama(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
+    let len = source.len();
+
     let change = source.change(period).abs();
     let volatility = source.change(1).abs().sum(period);
 
@@ -10,13 +12,13 @@ pub fn kama(source: &[f32], period: usize) -> Series<f32> {
 
     let alpha = iff!(
         er.na(),
-        Series::fill(source.len(), 2.0 / (period as f32 + 1.0)),
+        Series::fill(len, 2.0 / (period as f32 + 1.0)),
         (er * 0.666_666_7).sqrt()
     );
 
-    let mut kama = Series::empty(source.len());
+    let mut kama = Series::zero(len);
 
-    for _ in 0..source.len() {
+    for _ in 0..len {
         let shifted = kama.shift(1);
 
         kama = iff!(
