@@ -1,17 +1,22 @@
-use core::Series;
+use core::{iff, Series};
 
 pub fn rsi(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
+    let len = source.len();
+
     let mom = source.change(1);
 
     let up = mom.smax(0.0).smma(period);
     let down = mom.smin(0.0).neg().smma(period);
 
-    let rs = up / down;
+    let oneh = Series::fill(len, 100.0);
+    let zero = Series::fill(len, 0.0);
 
-    let rsi = 100.0 - 100.0 / (1.0 + rs);
-
-    rsi.nz(Some(100.0))
+    iff!(
+        down.seq(0.0),
+        oneh,
+        iff!(up.seq(0.0), zero, 100.0 - 100.0 / (1.0 + up / down))
+    )
 }
 
 #[cfg(test)]
