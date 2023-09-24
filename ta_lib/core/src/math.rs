@@ -38,6 +38,10 @@ impl Series<f32> {
         self.fmap(|val| val.map(|v| v.exp()))
     }
 
+    pub fn pow(&self, period: i32) -> Self {
+        self.fmap(|val| val.map(|v| v.powi(period)))
+    }
+
     pub fn sqrt(&self) -> Self {
         self.fmap(|val| val.filter(|&v| *v >= 0.0).map(|v| v.sqrt()))
     }
@@ -255,6 +259,17 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.exp();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_pow() {
+        let source = vec![-1.0, 2.0, -3.0, 4.0, 5.0];
+        let expected = vec![Some(1.0), Some(4.0), Some(9.0), Some(16.0), Some(25.0)];
+        let series = Series::from(&source);
+
+        let result = series.pow(2);
 
         assert_eq!(result, expected);
     }
