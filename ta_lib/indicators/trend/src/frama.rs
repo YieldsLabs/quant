@@ -7,14 +7,14 @@ pub fn frama(high: &[f32], low: &[f32], close: &[f32], period: usize) -> Series<
 
     let hh1 = high.highest(2 * period).shift(period);
     let ll1 = low.lowest(2 * period).shift(period);
-    let n1 = (hh1 - ll1) / period as f32;
+    let n1 = (&hh1 - &ll1) / period as f32;
 
     let hh2 = high.highest(period);
     let ll2 = low.lowest(period);
-    let n2 = (hh2 - ll2) / period as f32;
+    let n2 = (&hh2 - &ll2) / period as f32;
 
-    let hh3 = high.highest(2 * period);
-    let ll3 = low.lowest(2 * period);
+    let hh3 = hh1.max(&hh2);
+    let ll3 = ll1.min(&ll2);
     let n3 = (hh3 - ll3) / (2 * period) as f32;
 
     let d = ((n1 + n2).log() - n3.log()) / 2.0_f32.ln();
