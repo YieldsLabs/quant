@@ -4,8 +4,7 @@ use std::f32::consts::PI;
 pub fn sinwma(source: &[f32], period: usize) -> Series<f32> {
     let source = Series::from(source);
 
-    let len = source.len();
-    let mut sum = Series::empty(len).nz(Some(0.0));
+    let mut sum = Series::zero(source.len());
     let mut norm = 0.0;
 
     for i in 0..period {

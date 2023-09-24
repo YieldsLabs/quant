@@ -6,8 +6,7 @@ pub fn alma(source: &[f32], period: usize, offset: f32, sigma: f32) -> Series<f3
     let m = offset * (period as f32 - 1.0);
     let s = period as f32 / sigma;
 
-    let len = source.len();
-    let mut sum = Series::empty(len).nz(Some(0.0));
+    let mut sum = Series::zero(source.len());
     let mut norm = 0.0;
 
     for i in 0..period {

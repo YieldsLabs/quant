@@ -21,13 +21,13 @@ impl Series<f32> {
     }
 
     pub fn ema(&self, period: usize) -> Self {
-        let alpha = Series::empty(self.len()).nz(Some(2.0 / (period as f32 + 1.0)));
+        let alpha = Series::fill(self.len(), 2.0 / (period as f32 + 1.0));
 
         self.ew(&alpha, self)
     }
 
     pub fn smma(&self, period: usize) -> Self {
-        let alpha = Series::empty(self.len()).nz(Some(1.0 / (period as f32)));
+        let alpha = Series::fill(self.len(), 1.0 / (period as f32));
 
         self.ew(&alpha, &self.ma(period))
     }
@@ -35,7 +35,7 @@ impl Series<f32> {
     pub fn wma(&self, period: usize) -> Self {
         let len = self.len();
 
-        let mut sum = Series::empty(len).nz(Some(0.0));
+        let mut sum = Series::zero(self.len());
         let mut norm = 0.0;
 
         for i in 0..period {

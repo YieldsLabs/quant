@@ -21,7 +21,7 @@ pub fn frama(high: &[f32], low: &[f32], close: &[f32], period: usize) -> Series<
 
     let alpha = iff!(
         d.na(),
-        Series::empty(close.len()).nz(Some(2.0 / (period + 1) as f32)),
+        Series::fill(close.len(), 2.0 / (period + 1) as f32),
         (-4.6 * (d - 1.0)).exp()
     );
 
