@@ -21,7 +21,7 @@ impl Signal for TestingGroundSignal {
         self.smoothing_period
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.smoothing, data, self.smoothing_period);
 
         let open = Series::from(&data.open);
@@ -44,9 +44,5 @@ impl Signal for TestingGroundSignal {
             & close.shift(2).max(&open.shift(2)).lt(&ma.shift(2));
 
         (long_signal, short_signal)
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
     }
 }

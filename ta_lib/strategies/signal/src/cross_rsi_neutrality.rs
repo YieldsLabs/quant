@@ -23,25 +23,21 @@ impl Signal for CrossRSINeutralitySignal {
         self.rsi_period
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
 
-        let long_signal = rsi.sgt(50.0 + self.threshold)
+        let long = rsi.sgt(50.0 + self.threshold)
             & rsi.shift(1).sgt(50.0)
             & rsi.shift(2).slt(50.0)
             & rsi.shift(3).slt(50.0)
             & rsi.shift(4).slt(50.0);
 
-        let short_signal = rsi.slt(50.0 - self.threshold)
+        let short = rsi.slt(50.0 - self.threshold)
             & rsi.shift(1).slt(50.0)
             & rsi.shift(2).sgt(50.0)
             & rsi.shift(3).sgt(50.0)
             & rsi.shift(4).sgt(50.0);
 
-        (long_signal, short_signal)
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
+        (long, short)
     }
 }

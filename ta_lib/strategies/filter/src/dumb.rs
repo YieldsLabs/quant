@@ -18,7 +18,7 @@ impl Filter for DumbFilter {
         self.period
     }
 
-    fn filter(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn apply(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
             Series::empty(self.period).nz(Some(1.0)).into(),
             Series::empty(self.period).nz(Some(1.0)).into(),

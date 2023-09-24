@@ -1,5 +1,5 @@
 use crate::price::Price;
-use crate::{Filter, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
+use crate::{Exit, Filter, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
@@ -24,6 +24,7 @@ pub struct BaseStrategy {
     signal: Box<dyn Signal>,
     filter: Box<dyn Filter>,
     stop_loss: Box<dyn StopLoss>,
+    exit: Box<dyn Exit>,
     lookback_period: usize,
 }
 
@@ -32,11 +33,13 @@ impl BaseStrategy {
         signal: Box<dyn Signal>,
         filter: Box<dyn Filter>,
         stop_loss: Box<dyn StopLoss>,
+        exit: Box<dyn Exit>,
     ) -> Self {
         let lookbacks = [
             signal.lookback(),
             filter.lookback(),
             stop_loss.lookback(),
+            exit.lookback(),
             DEFAULT_LOOKBACK,
         ];
         let adjusted_lookback = lookbacks.iter().cloned().max().unwrap_or(DEFAULT_LOOKBACK);
@@ -47,6 +50,7 @@ impl BaseStrategy {
             signal,
             filter,
             stop_loss,
+            exit,
         }
     }
 
@@ -73,16 +77,16 @@ impl Strategy for BaseStrategy {
 
         let series = OHLCVSeries::from_data(&self.data);
 
-        let (go_long_signal, go_short_signal) = self.signal.entry(&series);
-        let (exit_long_series, exit_short_series) = self.signal.exit(&series);
-
-        let (go_long_filter, go_short_filter) = self.filter.filter(&series);
+        let (go_long_signal, go_short_signal) = self.signal.generate(&series);
+        let (go_long_filter, go_short_filter) = self.filter.apply(&series);
 
         let go_long_series = go_long_signal & go_long_filter;
         let go_short_series = go_short_signal & go_short_filter;
 
         let go_long = go_long_series.last().unwrap_or_default();
         let go_short = go_short_series.last().unwrap_or_default();
+
+        let (exit_long_series, exit_short_series) = self.exit.generate(&series);
 
         let exit_long = exit_long_series.last().unwrap_or_default();
         let exit_short = exit_short_series.last().unwrap_or_default();
@@ -123,7 +127,7 @@ impl Strategy for BaseStrategy {
 #[cfg(test)]
 mod tests {
     use crate::price::Price;
-    use crate::{BaseStrategy, Filter, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
+    use crate::{BaseStrategy, Exit, Filter, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
     use core::Series;
 
     struct MockSignal {
@@ -135,11 +139,19 @@ mod tests {
             self.short_period
         }
 
-        fn entry(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn generate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             (Series::empty(1), Series::empty(1))
         }
+    }
 
-        fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    struct MockExit {}
+
+    impl Exit for MockExit {
+        fn lookback(&self) -> usize {
+            0
+        }
+
+        fn generate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             (Series::empty(1), Series::empty(1))
         }
     }
@@ -171,7 +183,7 @@ mod tests {
             self.period
         }
 
-        fn filter(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn apply(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             (
                 Series::empty(1).nz(Some(0.0)).into(),
                 Series::empty(1).nz(Some(0.0)).into(),
@@ -188,6 +200,7 @@ mod tests {
                 period: 2,
                 multi: 2.0,
             }),
+            Box::new(MockExit {}),
         );
         assert_eq!(strategy.lookback_period, 55);
     }
@@ -201,6 +214,7 @@ mod tests {
                 period: 2,
                 multi: 2.0,
             }),
+            Box::new(MockExit {}),
         );
         let ohlcvs = vec![
             OHLCV {

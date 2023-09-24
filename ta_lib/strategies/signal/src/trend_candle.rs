@@ -19,11 +19,7 @@ impl Signal for TrendCandleSignal {
         DEFAULT_LOOKBACK
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         trend_candle_indicator(&self.candle, data)
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
     }
 }

@@ -31,7 +31,7 @@ impl Signal for Cross3MASignal {
         std::cmp::max(adjusted_lookback, self.medium_period)
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let short_ma = ma_indicator(&self.smoothing, data, self.short_period);
         let medium_ma = ma_indicator(&self.smoothing, data, self.medium_period);
         let long_ma = ma_indicator(&self.smoothing, data, self.long_period);
@@ -44,9 +44,5 @@ impl Signal for Cross3MASignal {
             & short_ma.shift(1).gt(&medium_ma.shift(1));
 
         (long_signal, short_signal)
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
     }
 }

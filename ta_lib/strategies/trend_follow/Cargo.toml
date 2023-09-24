@@ -11,6 +11,7 @@ stop_loss = { path = "../stop_loss" }
 filter = { path = "../filter" }
 shared = { path = "../shared" }
 signal = { path = "../signal" }
+exit = { path = "../exit" }
 
 [lib]
 crate-type = ["cdylib"]

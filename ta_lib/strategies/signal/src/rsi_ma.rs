@@ -36,7 +36,7 @@ impl Signal for RSIMASignal {
         std::cmp::max(self.rsi_period, self.smoothing_period)
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.smoothing, data, self.smoothing_period);
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
         let close = Series::from(&data.close);
@@ -45,9 +45,5 @@ impl Signal for RSIMASignal {
         let short_signal = ma.lt(&close) & rsi.sgt(self.upper_barrier);
 
         (long_signal, short_signal)
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
     }
 }

@@ -1,3 +1,4 @@
+mod exit_mapper;
 mod ffi;
 mod filter_mapper;
 mod signal_mapper;

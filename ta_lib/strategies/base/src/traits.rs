@@ -3,8 +3,12 @@ use core::Series;
 
 pub trait Signal: Send + Sync {
     fn lookback(&self) -> usize;
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
-    fn exit(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+}
+
+pub trait Exit: Send + Sync {
+    fn lookback(&self) -> usize;
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait StopLoss: Send + Sync {
@@ -14,7 +18,7 @@ pub trait StopLoss: Send + Sync {
 
 pub trait Filter: Send + Sync {
     fn lookback(&self) -> usize;
-    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait Strategy {

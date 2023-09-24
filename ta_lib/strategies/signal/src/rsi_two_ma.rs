@@ -40,7 +40,7 @@ impl Signal for RSI2MASignal {
         std::cmp::max(adj_lookback, self.rsi_period)
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma_short = ma_indicator(&self.smoothing, data, self.short_period);
         let ma_long = ma_indicator(&self.smoothing, data, self.long_period);
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
@@ -59,9 +59,5 @@ impl Signal for RSI2MASignal {
             & rsi.shift(1).slt(self.upper_barrier);
 
         (long_signal, short_signal)
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
     }
 }

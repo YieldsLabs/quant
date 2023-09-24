@@ -23,7 +23,7 @@ impl Filter for RSIFilter {
         self.period
     }
 
-    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.period);
 
         (rsi.slte(self.threshold), rsi.sgte(self.threshold))

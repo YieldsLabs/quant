@@ -24,6 +24,14 @@ name = "core"
 version = "0.1.0"
 
 [[package]]
+name = "exit"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+]
+
+[[package]]
 name = "filter"
 version = "0.1.0"
 dependencies = [
@@ -99,6 +107,7 @@ version = "0.1.0"
 dependencies = [
  "base",
  "core",
+ "exit",
  "filter",
  "once_cell",
  "shared",

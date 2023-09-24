@@ -30,7 +30,7 @@ impl Signal for SNATRSignal {
         std::cmp::max(self.atr_period, self.atr_smoothing_period)
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let snatr = snatr(
             &data.high,
             &data.low,
@@ -43,9 +43,5 @@ impl Signal for SNATRSignal {
             snatr.cross_under_line(self.upper_barrier),
             snatr.cross_over_line(self.lower_barrier),
         )
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
     }
 }

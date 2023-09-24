@@ -1,3 +1,4 @@
+use crate::exit_mapper::{map_to_exit, ExitConfig};
 use crate::filter_mapper::{map_to_filter, FilterConfig};
 use crate::signal_mapper::{map_to_signal, SignalConfig};
 use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
@@ -67,8 +68,9 @@ pub fn register_cross2ma(
         period: atr_period,
         multi: stop_loss_multi,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }
 
 #[no_mangle]
@@ -94,8 +96,9 @@ pub fn register_cross3ma(
         period: atr_period,
         multi: atr_factor,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }
 
 #[no_mangle]
@@ -116,8 +119,9 @@ pub fn register_rsicrossn(
         period: atr_period,
         multi: stop_loss_multi,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }
 
 #[no_mangle]
@@ -148,8 +152,9 @@ pub fn register_rsima(
         period: atr_period,
         multi: stop_loss_multi,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }
 
 #[no_mangle]
@@ -182,8 +187,9 @@ pub fn register_rsi2ma(
         period: atr_period,
         multi: stop_loss_multi,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }
 
 #[no_mangle]
@@ -206,8 +212,9 @@ pub fn register_ground(
         period: atr_period,
         multi: stop_loss_multi,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }
 
 #[no_mangle]
@@ -227,8 +234,9 @@ pub fn register_candle(
         period: atr_period,
         multi: stop_loss_multi,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }
 
 #[no_mangle]
@@ -255,6 +263,7 @@ pub fn register_snatr(
         period: stop_loss_atr_period,
         multi: stop_loss_multi,
     });
+    let exit = map_to_exit(ExitConfig::Dumb {});
 
-    register_strategy(signal, filter, stoploss)
+    register_strategy(signal, filter, stoploss, exit)
 }

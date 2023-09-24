@@ -1,6 +1,5 @@
-use crate::{BaseStrategy, Filter, Signal, StopLoss, Strategy, TradeAction, OHLCV};
+use crate::{BaseStrategy, Exit, Filter, Signal, StopLoss, Strategy, TradeAction, OHLCV};
 use once_cell::sync::Lazy;
-use std::alloc::Layout;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
@@ -14,6 +13,7 @@ pub fn register_strategy(
     signal: Box<dyn Signal>,
     filter: Box<dyn Filter>,
     stop_loss: Box<dyn StopLoss>,
+    exit: Box<dyn Exit>,
 ) -> i32 {
     let mut id_counter = STRATEGY_ID_COUNTER.write().unwrap();
     *id_counter += 1;
@@ -21,7 +21,7 @@ pub fn register_strategy(
     let current_id = *id_counter;
     STRATEGY_ID_TO_INSTANCE.write().unwrap().insert(
         current_id,
-        Box::new(BaseStrategy::new(signal, filter, stop_loss)),
+        Box::new(BaseStrategy::new(signal, filter, stop_loss, exit)),
     );
 
     current_id

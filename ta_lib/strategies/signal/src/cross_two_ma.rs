@@ -23,7 +23,7 @@ impl Signal for Cross2MASignal {
         std::cmp::max(self.short_period, self.long_period)
     }
 
-    fn entry(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let short_ma = ma_indicator(&self.smoothing, data, self.short_period);
         let long_ma = ma_indicator(&self.smoothing, data, self.long_period);
 
@@ -31,9 +31,5 @@ impl Signal for Cross2MASignal {
         let short_signal = short_ma.cross_under(&long_ma);
 
         (long_signal, short_signal)
-    }
-
-    fn exit(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
     }
 }
