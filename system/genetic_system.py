@@ -134,7 +134,7 @@ class GeneticSystem(AbstractSystem):
     async def _run_evolution(self):
         logger.info(f"Run Evolution: {self.generation}")
 
-        if self.generation >= self.context.max_generations:
+        if self.generation >= self.context.max_generations - 1:
             await self.event_queue.put(Event.EVOLUTION_COMPLETE)
             return
 
