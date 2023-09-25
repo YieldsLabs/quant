@@ -6,12 +6,12 @@ pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
     let mut mg = Series::zero(len);
 
     for _ in 0..len {
-        let shifted = mg.shift(1);
+        let prev_mg = mg.shift(1);
 
         mg = iff!(
-            shifted.na(),
+            prev_mg.na(),
             source.ema(period),
-            &shifted + (source - &shifted) / ((source / &shifted).pow(4) * period as f32)
+            &prev_mg + (source - &prev_mg) / ((source / &prev_mg).pow(4) * period as f32)
         );
     }
 

@@ -6,9 +6,9 @@ impl Series<f32> {
         let mut sum = Series::empty(self.len());
 
         for _ in 0..self.len() {
-            let shifted = sum.shift(1);
+            let prev = sum.shift(1);
 
-            sum = iff!(shifted.na(), seed, alpha * self + (1.0 - alpha) * &shifted)
+            sum = iff!(prev.na(), seed, alpha * self + (1.0 - alpha) * &prev)
         }
 
         sum

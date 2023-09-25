@@ -17,12 +17,12 @@ pub fn kama(source: &Series<f32>, period: usize) -> Series<f32> {
     let mut kama = Series::zero(len);
 
     for _ in 0..len {
-        let shifted = kama.shift(1);
+        let prev_kama = kama.shift(1);
 
         kama = iff!(
-            shifted.na(),
+            prev_kama.na(),
             source,
-            &shifted + &alpha * (source - &shifted)
+            &prev_kama + &alpha * (source - &prev_kama)
         )
     }
 
