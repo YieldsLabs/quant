@@ -1,5 +1,4 @@
 use core::Series;
-use trend::{ema, sma, smma, wma};
 use utils::tr;
 
 pub fn atr(
@@ -12,10 +11,10 @@ pub fn atr(
     let tr = tr(high, low, close);
 
     match smoothing {
-        Some("WMA") => wma(&tr, period),
-        Some("SMA") => sma(&tr, period),
-        Some("EMA") => ema(&tr, period),
-        Some("SMMA") | _ => smma(&tr, period),
+        Some("WMA") => tr.wma(period),
+        Some("SMA") => tr.ma(period),
+        Some("EMA") => tr.ema(period),
+        Some("SMMA") | _ => tr.smma(period),
     }
 }
 
