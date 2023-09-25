@@ -42,6 +42,10 @@ impl Series<f32> {
         self.fmap(|val| val.map(|v| v.powi(period)))
     }
 
+    pub fn sign(&self) -> Self {
+        self.fmap(|val| val.map(|v| v.signum()))
+    }
+
     pub fn sqrt(&self) -> Self {
         self.fmap(|val| val.filter(|&v| *v >= 0.0).map(|v| v.sqrt()))
     }
@@ -270,6 +274,16 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.pow(2);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_sign() {
+        let source = Series::from([-1.0, 2.0, -3.0, 4.0, 5.0]);
+        let expected = Series::from([-1.0, 1.0, -1.0, 1.0, 1.0]);
+
+        let result = source.sign();
 
         assert_eq!(result, expected);
     }
