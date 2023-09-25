@@ -1,9 +1,7 @@
 use core::Series;
 use std::f32::consts::PI;
 
-pub fn sinwma(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(source);
-
+pub fn sinwma(source: &Series<f32>, period: usize) -> Series<f32> {
     let mut sum = Series::zero(source.len());
     let mut norm = 0.0;
 
@@ -23,7 +21,7 @@ mod tests {
 
     #[test]
     fn test_sinwma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = vec![0.0, 0.0, 2.211325, 3.211325, 4.2113247];
 
         let result: Vec<f32> = sinwma(&source, 3).into();

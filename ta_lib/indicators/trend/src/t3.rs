@@ -1,7 +1,6 @@
 use core::Series;
 
-pub fn t3(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(source);
+pub fn t3(source: &Series<f32>, period: usize) -> Series<f32> {
     let alpha = 0.618;
 
     let ema1 = source.ema(period);
@@ -25,7 +24,7 @@ mod tests {
 
     #[test]
     fn test_t3() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = vec![1.0, 1.2803686, 1.8820143, 2.717381, 3.6838531];
 
         let result: Vec<f32> = t3(&source, 3).into();

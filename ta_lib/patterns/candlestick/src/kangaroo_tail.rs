@@ -1,13 +1,13 @@
 use core::Series;
 
-pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
-    let open = Series::from(open);
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
-    let range = &high - &low;
-    let two_third_low_range = &low + &range * 0.66;
+pub fn bullish(
+    open: &Series<f32>,
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
+) -> Series<bool> {
+    let range = high - low;
+    let two_third_low_range = low + &range * 0.66;
 
     close.gt(&two_third_low_range)
         & open.gt(&two_third_low_range)
@@ -23,14 +23,14 @@ pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series
         & low.lte(&low.lowest(13))
 }
 
-pub fn bearish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
-    let open = Series::from(open);
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
-    let range = &high - &low;
-    let two_third_high_range = &high - &range * 0.66;
+pub fn bearish(
+    open: &Series<f32>,
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
+) -> Series<bool> {
+    let range = high - low;
+    let two_third_high_range = high - &range * 0.66;
 
     close.lt(&two_third_high_range)
         & open.lt(&two_third_high_range)
@@ -52,10 +52,10 @@ mod tests {
 
     #[test]
     fn test_kangaroo_tail_bullish() {
-        let open = vec![4.0; 201];
-        let high = vec![4.5; 201];
-        let low = vec![4.0; 201];
-        let close = vec![4.5; 201];
+        let open = Series::from([4.0; 201]);
+        let high = Series::from([4.5; 201]);
+        let low = Series::from([4.0; 201]);
+        let close = Series::from([4.5; 201]);
         let expected = vec![false; 201];
 
         let result: Vec<bool> = bullish(&open, &high, &low, &close).into();
@@ -65,10 +65,10 @@ mod tests {
 
     #[test]
     fn test_kangaroo_tail_bearish() {
-        let open = vec![4.0; 201];
-        let high = vec![4.5; 201];
-        let low = vec![4.0; 201];
-        let close = vec![4.5; 201];
+        let open = Series::from([4.0; 201]);
+        let high = Series::from([4.5; 201]);
+        let low = Series::from([4.0; 201]);
+        let close = Series::from([4.5; 201]);
         let expected = vec![false; 201];
 
         let result: Vec<bool> = bearish(&open, &high, &low, &close).into();

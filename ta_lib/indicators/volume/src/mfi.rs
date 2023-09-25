@@ -1,9 +1,6 @@
 use core::Series;
 
-pub fn mfi(hlc3: &[f32], volume: &[f32], period: usize) -> Series<f32> {
-    let hlc3 = Series::from(hlc3);
-    let volume = Series::from(volume);
-
+pub fn mfi(hlc3: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f32> {
     let changes = hlc3.change(1);
 
     let volume_hlc3 = volume * hlc3;
@@ -27,8 +24,8 @@ mod tests {
 
     #[test]
     fn test_mfi() {
-        let hlc3 = vec![2.0, 2.1666, 2.0, 1.8333, 2.0];
-        let volume = vec![1.0, 1.0, 1.0, 1.0, 1.0];
+        let hlc3 = Series::from([2.0, 2.1666, 2.0, 1.8333, 2.0]);
+        let volume = Series::from([1.0, 1.0, 1.0, 1.0, 1.0]);
         let period = 3;
         let epsilon = 0.001;
 

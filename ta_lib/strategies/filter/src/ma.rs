@@ -23,8 +23,7 @@ impl Filter for MAFilter {
 
     fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.smoothing, data, self.period);
-        let close = Series::from(&data.close);
 
-        (close.gt(&ma), close.lt(&ma))
+        (data.close.gt(&ma), data.close.lt(&ma))
     }
 }

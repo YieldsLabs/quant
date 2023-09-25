@@ -91,7 +91,7 @@ impl Strategy for BaseStrategy {
         let exit_long = exit_long_series.last().unwrap_or_default();
         let exit_short = exit_short_series.last().unwrap_or_default();
 
-        let suggested_entry = *series.hlc3().last().unwrap_or(&std::f32::NAN);
+        let suggested_entry = series.hlc3().last().unwrap_or(std::f32::NAN);
 
         match (go_long, go_short, exit_long, exit_short) {
             (true, _, _, _) => TradeAction::GoLong(suggested_entry),
@@ -252,19 +252,29 @@ mod tests {
         }
 
         let series = OHLCVSeries::from_data(&strategy.data);
+        let open: Vec<f32> = series.open.clone().into();
+        let high: Vec<f32> = series.high.clone().into();
+        let low: Vec<f32> = series.low.clone().into();
+        let close: Vec<f32> = series.close.clone().into();
+        let volume: Vec<f32> = series.volume.clone().into();
 
-        assert_eq!(series.open, vec![1.0, 2.0, 3.0, 4.0]);
-        assert_eq!(series.high, vec![2.0, 3.0, 4.0, 5.0]);
-        assert_eq!(series.low, vec![0.5, 1.5, 2.5, 3.5]);
-        assert_eq!(series.close, vec![1.5, 2.5, 3.5, 4.5]);
-        assert_eq!(series.volume, vec![100.0, 200.0, 300.0, 400.0]);
+        let hl2: Vec<f32> = series.hl2().into();
+        let hlc3: Vec<f32> = series.hlc3().into();
+        let hlcc4: Vec<f32> = series.hlcc4().into();
+        let ohlc4: Vec<f32> = series.ohlc4().into();
 
-        assert_eq!(series.hl2(), vec![1.25, 2.25, 3.25, 4.25]);
+        assert_eq!(open, vec![1.0, 2.0, 3.0, 4.0]);
+        assert_eq!(high, vec![2.0, 3.0, 4.0, 5.0]);
+        assert_eq!(low, vec![0.5, 1.5, 2.5, 3.5]);
+        assert_eq!(close, vec![1.5, 2.5, 3.5, 4.5]);
+        assert_eq!(volume, vec![100.0, 200.0, 300.0, 400.0]);
+
+        assert_eq!(hl2, vec![1.25, 2.25, 3.25, 4.25]);
         assert_eq!(
-            series.hlc3(),
+            hlc3,
             vec![1.333_333_4, 2.333_333_3, 3.333_333_3, 4.333_333_5]
         );
-        assert_eq!(series.hlcc4(), vec![1.375, 2.375, 3.375, 4.375]);
-        assert_eq!(series.ohlc4(), vec![1.25, 2.25, 3.25, 4.25]);
+        assert_eq!(hlcc4, vec![1.375, 2.375, 3.375, 4.375]);
+        assert_eq!(ohlc4, vec![1.25, 2.25, 3.25, 4.25]);
     }
 }

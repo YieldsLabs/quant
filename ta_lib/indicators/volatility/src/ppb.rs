@@ -1,16 +1,12 @@
 use core::Series;
 
 pub fn ppb(
-    high: &[f32],
-    low: &[f32],
-    close: &[f32],
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
     let hstd = high.std(period);
     let lstd = low.std(period);
 
@@ -27,15 +23,15 @@ pub fn ppb(
 
 #[test]
 fn test_ppb() {
-    let high = vec![
+    let high = Series::from([
         19.129, 19.116, 19.154, 19.195, 19.217, 19.285, 19.341, 19.394, 19.450,
-    ];
-    let low = vec![
+    ]);
+    let low = Series::from([
         19.090, 19.086, 19.074, 19.145, 19.141, 19.155, 19.219, 19.306, 19.355,
-    ];
-    let close = vec![
+    ]);
+    let close = Series::from([
         19.102, 19.100, 19.146, 19.181, 19.155, 19.248, 19.309, 19.355, 19.439,
-    ];
+    ]);
     let factor = 2.0;
     let period = 3;
     let epsilon = 0.0001;

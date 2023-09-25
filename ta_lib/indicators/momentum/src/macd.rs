@@ -1,13 +1,11 @@
 use core::Series;
 
 pub fn macd(
-    source: &[f32],
+    source: &Series<f32>,
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let source = Series::from(source);
-
     let ema_fast = source.ema(fast_period);
     let ema_slow = source.ema(slow_period);
 
@@ -26,7 +24,7 @@ mod tests {
 
     #[test]
     fn test_macd() {
-        let source = vec![2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0];
+        let source = Series::from([2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0]);
         let fast_period = 3;
         let slow_period = 5;
         let signal_period = 4;

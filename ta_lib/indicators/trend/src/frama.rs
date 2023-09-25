@@ -1,10 +1,11 @@
 use core::{iff, Series};
 
-pub fn frama(high: &[f32], low: &[f32], close: &[f32], period: usize) -> Series<f32> {
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
+pub fn frama(
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
+    period: usize,
+) -> Series<f32> {
     let hh1 = high.highest(2 * period).shift(period);
     let ll1 = low.lowest(2 * period).shift(period);
     let n1 = (&hh1 - &ll1) / period as f32;
@@ -34,9 +35,9 @@ mod tests {
 
     #[test]
     fn test_frama() {
-        let high = vec![18.904, 18.988, 18.992, 18.979, 18.941];
-        let low = vec![18.825, 18.866, 18.950, 18.912, 18.877];
-        let close = vec![18.889, 18.966, 18.963, 18.922, 18.940];
+        let high = Series::from([18.904, 18.988, 18.992, 18.979, 18.941]);
+        let low = Series::from([18.825, 18.866, 18.950, 18.912, 18.877]);
+        let close = Series::from([18.889, 18.966, 18.963, 18.922, 18.940]);
         let expected = vec![18.889, 18.9275, 18.94525, 18.939285, 18.939308];
 
         let result: Vec<f32> = frama(&high, &low, &close, 3).into();

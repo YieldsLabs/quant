@@ -1,8 +1,6 @@
 use core::Series;
 
-pub fn alma(source: &[f32], period: usize, offset: f32, sigma: f32) -> Series<f32> {
-    let source = Series::from(source);
-
+pub fn alma(source: &Series<f32>, period: usize, offset: f32, sigma: f32) -> Series<f32> {
     let m = offset * (period as f32 - 1.0);
     let s = period as f32 / sigma;
 
@@ -25,7 +23,7 @@ mod tests {
 
     #[test]
     fn test_alma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = [0.0, 0.0, 2.6856735, 3.6856735, 4.6856737];
         let epsilon = 0.001;
 

@@ -1,9 +1,7 @@
 use core::Series;
 
-pub fn cci(hlc3: &[f32], period: usize, factor: f32) -> Series<f32> {
-    let hlc3 = Series::from(hlc3);
-
-    (&hlc3 - &hlc3.ma(period)) / (factor * hlc3.md(period))
+pub fn cci(hlc3: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
+    (hlc3 - hlc3.ma(period)) / (factor * hlc3.md(period))
 }
 
 #[cfg(test)]
@@ -13,9 +11,9 @@ mod tests {
 
     #[test]
     fn test_cci() {
-        let high = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let low = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let close = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let high = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let low = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let close = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let hlc3 = typical_price(&high, &low, &close);
         let expected = vec![0.0, 66.66667, 100.0, 100.0, 100.0];
 

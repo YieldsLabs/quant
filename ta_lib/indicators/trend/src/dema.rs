@@ -1,8 +1,6 @@
 use core::Series;
 
-pub fn dema(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(source);
-
+pub fn dema(source: &Series<f32>, period: usize) -> Series<f32> {
     let ema1 = source.ema(period);
     let ema2 = ema1.ema(period);
 
@@ -15,7 +13,7 @@ mod tests {
 
     #[test]
     fn test_dema() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = vec![1.0, 1.75, 2.75, 3.8125, 4.875];
 
         let result: Vec<f32> = dema(&source, 3).into();

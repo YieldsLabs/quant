@@ -1,8 +1,6 @@
 use core::{iff, Series};
 
-pub fn cmo(close: &[f32], period: usize) -> Series<f32> {
-    let close = Series::from(close);
-
+pub fn cmo(close: &Series<f32>, period: usize) -> Series<f32> {
     let mom = close.change(1);
     let zero = Series::zero(close.len());
 
@@ -21,7 +19,7 @@ mod tests {
 
     #[test]
     fn test_cmo() {
-        let close = vec![19.571, 19.606, 19.594, 19.575, 19.612, 19.631, 19.634];
+        let close = Series::from([19.571, 19.606, 19.594, 19.575, 19.612, 19.631, 19.634]);
         let expected = vec![0.0, 100.0, 48.934788, 6.062883, 8.821632, 49.33496, 100.0];
 
         let result: Vec<f32> = cmo(&close, 3).into();

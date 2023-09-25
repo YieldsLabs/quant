@@ -1,3 +1,4 @@
+use core::Series;
 use std::collections::VecDeque;
 
 #[derive(Debug, Copy, Clone)]
@@ -11,11 +12,11 @@ pub struct OHLCV {
 
 #[derive(Debug, Clone)]
 pub struct OHLCVSeries {
-    pub open: Vec<f32>,
-    pub high: Vec<f32>,
-    pub low: Vec<f32>,
-    pub close: Vec<f32>,
-    pub volume: Vec<f32>,
+    pub open: Series<f32>,
+    pub high: Series<f32>,
+    pub low: Series<f32>,
+    pub close: Series<f32>,
+    pub volume: Series<f32>,
 }
 
 impl OHLCVSeries {
@@ -37,11 +38,11 @@ impl OHLCVSeries {
         }
 
         Self {
-            open,
-            high,
-            low,
-            close,
-            volume,
+            open: Series::from(open),
+            high: Series::from(high),
+            low: Series::from(low),
+            close: Series::from(close),
+            volume: Series::from(volume),
         }
     }
 }

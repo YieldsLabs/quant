@@ -2,16 +2,12 @@ use core::Series;
 use utils::stoch;
 
 pub fn sso(
-    high: &[f32],
-    low: &[f32],
-    close: &[f32],
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
     period: usize,
     smoothing: Option<&str>,
 ) -> Series<f32> {
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
     let smooth_series = |series: &Series<f32>| -> Series<f32> {
         match smoothing {
             Some("WMA") => series.wma(period),
@@ -35,9 +31,9 @@ mod tests {
 
     #[test]
     fn test_sso() {
-        let high = vec![3.0, 3.0, 3.0, 3.0, 3.0];
-        let low = vec![1.0, 1.0, 1.0, 1.0, 1.0];
-        let close = vec![2.0, 2.5, 2.0, 1.5, 2.0];
+        let high = Series::from([3.0, 3.0, 3.0, 3.0, 3.0]);
+        let low = Series::from([1.0, 1.0, 1.0, 1.0, 1.0]);
+        let close = Series::from([2.0, 2.5, 2.0, 1.5, 2.0]);
         let period = 3;
 
         let expected_k = vec![50.0, 50.0, 58.333336, 41.666668, 41.666668];

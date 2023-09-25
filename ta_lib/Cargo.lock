@@ -9,6 +9,7 @@ dependencies = [
  "core",
  "once_cell",
  "price",
+ "volatility",
 ]
 
 [[package]]
@@ -109,7 +110,6 @@ dependencies = [
  "core",
  "exit",
  "filter",
- "once_cell",
  "shared",
  "signal",
  "stop_loss",

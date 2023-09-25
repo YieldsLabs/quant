@@ -33,8 +33,6 @@ impl Series<f32> {
     }
 
     pub fn wma(&self, period: usize) -> Self {
-        let len = self.len();
-
         let mut sum = Series::zero(self.len());
         let mut norm = 0.0;
 

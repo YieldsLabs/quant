@@ -1,8 +1,6 @@
 use core::Series;
 
-pub fn wma(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(&source);
-
+pub fn wma(source: &Series<f32>, period: usize) -> Series<f32> {
     source.wma(period)
 }
 
@@ -12,7 +10,7 @@ mod tests {
 
     #[test]
     fn test_wma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let period = 3;
         let epsilon = 0.001;
         let expected = [0.0, 0.0, 2.333333, 3.333333, 4.333333];

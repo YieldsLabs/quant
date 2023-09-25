@@ -1,11 +1,9 @@
 use core::{iff, Series};
 
-pub fn rsi(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(source);
+pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
 
     let mom = source.change(1);
-
     let up = mom.smax(0.0).smma(period);
     let down = mom.smin(0.0).neg().smma(period);
 
@@ -25,9 +23,9 @@ mod test {
 
     #[test]
     fn test_rsi_with_valid_data() {
-        let source = vec![
+        let source = Series::from([
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
-        ];
+        ]);
         let epsilon = 0.001;
         let period = 6;
         let expected = [

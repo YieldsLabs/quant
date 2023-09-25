@@ -1,10 +1,8 @@
 use core::iff;
 use core::Series;
 
-pub fn kama(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(source);
+pub fn kama(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
-
     let change = source.change(period).abs();
     let volatility = source.change(1).abs().sum(period);
 
@@ -24,7 +22,7 @@ pub fn kama(source: &[f32], period: usize) -> Series<f32> {
         kama = iff!(
             shifted.na(),
             source,
-            &shifted + &alpha * (&source - &shifted)
+            &shifted + &alpha * (source - &shifted)
         )
     }
 
@@ -37,7 +35,7 @@ mod tests {
 
     #[test]
     fn test_kama() {
-        let source = vec![19.099, 19.079, 19.074, 19.139, 19.191];
+        let source = Series::from([19.099, 19.079, 19.074, 19.139, 19.191]);
         let expected = vec![19.099, 19.089, 19.081501, 19.112799, 19.173977];
 
         let result: Vec<f32> = kama(&source, 3).into();

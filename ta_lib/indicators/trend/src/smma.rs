@@ -1,8 +1,6 @@
 use core::Series;
 
-pub fn smma(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(source);
-
+pub fn smma(source: &Series<f32>, period: usize) -> Series<f32> {
     source.smma(period)
 }
 
@@ -12,7 +10,7 @@ mod tests {
 
     #[test]
     fn test_smma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = [1.0, 1.333, 1.888, 2.592, 3.395];
         let epsilon = 0.001;
 

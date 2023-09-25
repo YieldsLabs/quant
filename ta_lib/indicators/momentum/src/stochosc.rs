@@ -2,17 +2,13 @@ use core::Series;
 use utils::stoch;
 
 pub fn stochosc(
-    high: &[f32],
-    low: &[f32],
-    close: &[f32],
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
     period: usize,
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
     let stoch = stoch(&high, &low, &close, period);
 
     let k = stoch.ma(k_period);
@@ -28,9 +24,9 @@ mod tests {
 
     #[test]
     fn test_stochosc() {
-        let high = vec![3.0, 3.0, 3.0, 3.0, 3.0];
-        let low = vec![1.0, 1.0, 1.0, 1.0, 1.0];
-        let close = vec![2.0, 2.5, 2.0, 1.5, 2.0];
+        let high = Series::from([3.0, 3.0, 3.0, 3.0, 3.0]);
+        let low = Series::from([1.0, 1.0, 1.0, 1.0, 1.0]);
+        let close = Series::from([2.0, 2.5, 2.0, 1.5, 2.0]);
         let period = 3;
         let k_period = 3;
         let d_period = 3;

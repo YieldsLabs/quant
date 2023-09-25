@@ -1,12 +1,12 @@
 use core::Series;
 
-pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
-    let open = Series::from(open);
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
-    close.gt(&open)
+pub fn bullish(
+    open: &Series<f32>,
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
+) -> Series<bool> {
+    close.gt(open)
         & close.gt(&high.shift(1))
         & close.gt(&high.shift(2))
         & close.gt(&high.shift(3))
@@ -17,13 +17,13 @@ pub fn bullish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series
         & close.shift(4).lt(&open.shift(4))
 }
 
-pub fn bearish(open: &[f32], high: &[f32], low: &[f32], close: &[f32]) -> Series<bool> {
-    let open = Series::from(open);
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
-    close.lt(&open)
+pub fn bearish(
+    open: &Series<f32>,
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
+) -> Series<bool> {
+    close.lt(open)
         & close.lt(&low.shift(1))
         & close.lt(&low.shift(2))
         & close.lt(&low.shift(3))
@@ -40,10 +40,10 @@ mod tests {
 
     #[test]
     fn test_shrinking_bullish() {
-        let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let high = vec![4.5, 3.5, 4.5, 3.5, 4.5];
-        let low = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let close = vec![4.5, 3.5, 4.5, 3.5, 4.5];
+        let open = Series::from([4.0, 3.0, 4.0, 3.0, 4.0]);
+        let high = Series::from([4.5, 3.5, 4.5, 3.5, 4.5]);
+        let low = Series::from([4.0, 3.0, 4.0, 3.0, 4.0]);
+        let close = Series::from([4.5, 3.5, 4.5, 3.5, 4.5]);
         let expected = vec![false, false, false, false, false];
 
         let result: Vec<bool> = bullish(&open, &high, &low, &close).into();
@@ -53,10 +53,10 @@ mod tests {
 
     #[test]
     fn test_shrinking_bearish() {
-        let open = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let high = vec![4.0, 3.0, 4.0, 3.0, 4.0];
-        let low = vec![3.5, 2.5, 3.5, 2.5, 3.5];
-        let close = vec![3.5, 2.5, 3.5, 2.5, 3.5];
+        let open = Series::from([4.0, 3.0, 4.0, 3.0, 4.0]);
+        let high = Series::from([4.0, 3.0, 4.0, 3.0, 4.0]);
+        let low = Series::from([3.5, 2.5, 3.5, 2.5, 3.5]);
+        let close = Series::from([3.5, 2.5, 3.5, 2.5, 3.5]);
         let expected = vec![false, false, false, false, false];
 
         let result: Vec<bool> = bearish(&open, &high, &low, &close).into();

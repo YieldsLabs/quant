@@ -1,8 +1,6 @@
 use core::Series;
 
-pub fn gma(source: &[f32], period: usize) -> Series<f32> {
-    let source = Series::from(source);
-
+pub fn gma(source: &Series<f32>, period: usize) -> Series<f32> {
     source.log().ma(period).exp()
 }
 
@@ -12,7 +10,7 @@ mod tests {
 
     #[test]
     fn test_gma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = vec![
             1.0,
             std::f32::consts::SQRT_2,

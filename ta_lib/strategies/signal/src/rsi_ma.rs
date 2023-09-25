@@ -39,10 +39,9 @@ impl Signal for RSIMASignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.smoothing, data, self.smoothing_period);
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
-        let close = Series::from(&data.close);
 
-        let long_signal = ma.gt(&close) & rsi.slt(self.lower_barrier);
-        let short_signal = ma.lt(&close) & rsi.sgt(self.upper_barrier);
+        let long_signal = ma.gt(&data.close) & rsi.slt(self.lower_barrier);
+        let short_signal = ma.lt(&data.close) & rsi.sgt(self.upper_barrier);
 
         (long_signal, short_signal)
     }

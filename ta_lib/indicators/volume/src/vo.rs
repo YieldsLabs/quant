@@ -1,8 +1,6 @@
 use core::Series;
 
-pub fn vo(source: &[f32], short_period: usize, long_period: usize) -> Series<f32> {
-    let source = Series::from(source);
-
+pub fn vo(source: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
     let vo_short = source.ema(short_period);
     let vo_long = source.ema(long_period);
 
@@ -15,7 +13,7 @@ mod tests {
 
     #[test]
     fn test_vo() {
-        let source = vec![1.0, 2.0, 3.0, 2.0, 1.0];
+        let source = Series::from([1.0, 2.0, 3.0, 2.0, 1.0]);
         let expected = [0.0, 11.1111, 13.5802, 2.83224, -10.71604];
         let epsilon = 0.001;
 

@@ -1,10 +1,7 @@
 use core::Series;
 
-pub fn bullish(open: &[f32], close: &[f32]) -> Series<bool> {
-    let open = Series::from(open);
-    let close = Series::from(close);
-
-    let body = (&close - &open).abs();
+pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
+    let body = (close - open).abs();
 
     close.shift(5).lt(&open.shift(5))
         & close.shift(4).lt(&open.shift(4))
@@ -16,11 +13,8 @@ pub fn bullish(open: &[f32], close: &[f32]) -> Series<bool> {
         & body.shift(3).gt(&body.shift(4))
 }
 
-pub fn bearish(open: &[f32], close: &[f32]) -> Series<bool> {
-    let open = Series::from(open);
-    let close = Series::from(close);
-
-    let body = (&close - &open).abs();
+pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
+    let body = (close - open).abs();
 
     close.shift(5).gt(&open.shift(5))
         & close.shift(4).gt(&open.shift(4))
@@ -38,8 +32,8 @@ mod tests {
 
     #[test]
     fn test_euphoria_extreme_bullish() {
-        let open = vec![4.0, 4.0, 4.0, 4.0, 5.0];
-        let close = vec![5.0, 3.0, 4.0, 4.0, 6.0];
+        let open = Series::from([4.0, 4.0, 4.0, 4.0, 5.0]);
+        let close = Series::from([5.0, 3.0, 4.0, 4.0, 6.0]);
         let expected = vec![false, false, false, false, false];
 
         let result: Vec<bool> = bullish(&open, &close).into();
@@ -49,8 +43,8 @@ mod tests {
 
     #[test]
     fn test_euphoria_extreme_bearish() {
-        let open = vec![4.0, 4.0, 4.0, 6.0, 5.0];
-        let close = vec![5.0, 5.0, 4.0, 6.0, 4.0];
+        let open = Series::from([4.0, 4.0, 4.0, 6.0, 5.0]);
+        let close = Series::from([5.0, 5.0, 4.0, 6.0, 4.0]);
         let expected = vec![false, false, false, false, false];
 
         let result: Vec<bool> = bearish(&open, &close).into();

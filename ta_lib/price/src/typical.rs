@@ -1,13 +1,7 @@
 use core::Series;
 
-pub fn typical_price(high: &[f32], low: &[f32], close: &[f32]) -> Vec<f32> {
-    let high = Series::from(high);
-    let low = Series::from(low);
-    let close = Series::from(close);
-
-    let typical_price = (high + low + close) / 3.0;
-
-    typical_price.into()
+pub fn typical_price(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
+    (high + low + close) / 3.0
 }
 
 #[cfg(test)]
@@ -16,12 +10,13 @@ mod tests {
 
     #[test]
     fn test_typical_price() {
-        let high = vec![1.0, 2.0, 3.0];
-        let low = vec![0.5, 1.0, 1.5];
-        let close = vec![0.75, 1.5, 2.25];
+        let high = Series::from([1.0, 2.0, 3.0]);
+        let low = Series::from([0.5, 1.0, 1.5]);
+        let close = Series::from([0.75, 1.5, 2.25]);
+
         let expected = vec![0.75, 1.5, 2.25];
 
-        let result = typical_price(&high, &low, &close);
+        let result: Vec<f32> = typical_price(&high, &low, &close).into();
 
         assert_eq!(result, expected);
     }
