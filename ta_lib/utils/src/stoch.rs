@@ -23,9 +23,9 @@ mod tests {
         let close = Series::from([2.0, 2.5, 2.0, 1.5, 2.0]);
         let period = 3;
 
-        let expected = vec![Some(50.0), Some(75.0), Some(50.0), Some(25.0), Some(50.0)];
+        let expected = vec![50.0, 75.0, 50.0, 25.0, 50.0];
 
-        let result = stoch(&high, &low, &close, period);
+        let result: Vec<f32> = stoch(&high, &low, &close, period).into();
 
         assert_eq!(result, expected);
     }

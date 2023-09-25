@@ -1,4 +1,4 @@
-use base::{OHLCVSeries, Signal};
+use base::{OHLCVSeries, Price, Signal};
 use core::Series;
 use volatility::snatr;
 
@@ -32,9 +32,7 @@ impl Signal for SNATRSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let snatr = snatr(
-            &data.high,
-            &data.low,
-            &data.close,
+            &data.atr(self.atr_period),
             self.atr_period,
             self.atr_smoothing_period,
         );

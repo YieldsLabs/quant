@@ -44,16 +44,15 @@ impl Signal for RSI2MASignal {
         let ma_short = ma_indicator(&self.smoothing, data, self.short_period);
         let ma_long = ma_indicator(&self.smoothing, data, self.long_period);
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
-        let close = Series::from(&data.close);
 
-        let long_signal = close.gt(&ma_short)
-            & close.gt(&ma_long)
+        let long_signal = data.close.gt(&ma_short)
+            & data.close.gt(&ma_long)
             & ma_short.gt(&ma_long)
             & rsi.slte(self.lower_barrier)
             & rsi.shift(1).sgt(self.lower_barrier);
 
-        let short_signal = close.lt(&ma_short)
-            & close.lt(&ma_long)
+        let short_signal = data.close.lt(&ma_short)
+            & data.close.lt(&ma_long)
             & ma_short.lt(&ma_long)
             & rsi.sgte(self.upper_barrier)
             & rsi.shift(1).slt(self.upper_barrier);

@@ -1,4 +1,4 @@
-use base::{OHLCVSeries, StopLoss};
+use base::{OHLCVSeries, Price, StopLoss};
 use core::Series;
 use volatility::atr;
 
@@ -22,15 +22,12 @@ impl StopLoss for ATRStopLoss {
     }
 
     fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-        let atr = atr(&data.high, &data.low, &data.close, self.period, None);
-
-        let high = Series::from(&data.high);
-        let low = Series::from(&data.low);
+        let atr = &data.atr(self.period);
 
         let atr_multi = atr * self.multi;
 
-        let long_stop_loss = low - &atr_multi;
-        let short_stop_loss = high + &atr_multi;
+        let long_stop_loss = &data.low - &atr_multi;
+        let short_stop_loss = &data.high + &atr_multi;
 
         (long_stop_loss, short_stop_loss)
     }
