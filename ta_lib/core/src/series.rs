@@ -123,7 +123,7 @@ impl Series<f32> {
         })
     }
 
-    pub fn fill(len: usize, scalar: f32) -> Series<f32> {
+    pub fn fill(scalar: f32, len: usize) -> Series<f32> {
         Series::empty(len).nz(Some(scalar))
     }
 
