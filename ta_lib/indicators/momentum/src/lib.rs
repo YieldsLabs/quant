@@ -1,4 +1,5 @@
 mod aosc;
+mod cc;
 mod cci;
 mod cmo;
 mod macd;
@@ -8,6 +9,7 @@ mod sso;
 mod stochosc;
 
 pub use aosc::aosc;
+pub use cc::cc;
 pub use cci::cci;
 pub use cmo::cmo;
 pub use macd::macd;
