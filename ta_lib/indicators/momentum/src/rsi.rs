@@ -7,8 +7,8 @@ pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let up = mom.smax(0.0).smma(period);
     let down = mom.smin(0.0).neg().smma(period);
 
-    let oneh = Series::fill(len, 100.0);
-    let zero = Series::fill(len, 0.0);
+    let oneh = Series::fill(100.0, len);
+    let zero = Series::zero(len);
 
     iff!(
         down.seq(0.0),

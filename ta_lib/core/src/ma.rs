@@ -21,13 +21,13 @@ impl Series<f32> {
     }
 
     pub fn ema(&self, period: usize) -> Self {
-        let alpha = Series::fill(self.len(), 2.0 / (period as f32 + 1.0));
+        let alpha = Series::fill(2.0 / (period as f32 + 1.0), self.len());
 
         self.ew(&alpha, self)
     }
 
     pub fn smma(&self, period: usize) -> Self {
-        let alpha = Series::fill(self.len(), 1.0 / (period as f32));
+        let alpha = Series::fill(1.0 / (period as f32), self.len());
 
         self.ew(&alpha, &self.ma(period))
     }
