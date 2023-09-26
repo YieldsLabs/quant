@@ -8,36 +8,35 @@ pub fn supertrend(
 ) -> Series<f32> {
     let len = close.len();
 
-    let mut upper_band = hl2 + (atr * factor);
-    let mut lower_band = hl2 - (atr * factor);
+    let basic_upper_band = hl2 + (atr * factor);
+    let basic_lower_band = hl2 - (atr * factor);
 
-    let prev_up = upper_band.shift(1);
-    let prev_low = lower_band.shift(1);
-
-    let prev_upper_band = iff!(prev_up.na(), prev_up, upper_band);
-    let prev_lower_band = iff!(prev_low.na(), prev_low, lower_band);
+    let prev_final_upper_band = basic_upper_band.shift(1);
+    let prev_final_lower_band = basic_lower_band.shift(1);
     let prev_close = close.shift(1);
 
     let final_upper_band = iff!(
-        prev_close.lt(&prev_upper_band),
-        upper_band.min(&prev_upper_band),
-        prev_upper_band
+        basic_upper_band.lt(&prev_final_upper_band) | prev_close.gt(&prev_final_upper_band),
+        basic_upper_band,
+        prev_final_upper_band
     );
 
     let final_lower_band = iff!(
-        prev_close.gt(&prev_lower_band),
-        lower_band.max(&prev_lower_band),
-        prev_lower_band
+        basic_lower_band.gt(&prev_final_lower_band) | prev_close.lt(&prev_final_lower_band),
+        basic_lower_band,
+        prev_final_lower_band
+    );
+
+    let super_trend = iff!(
+        prev_close.gte(&final_lower_band),
+        final_lower_band,
+        Series::empty(len)
     );
 
     iff!(
         prev_close.lte(&final_upper_band),
         final_upper_band,
-        iff!(
-            prev_close.gte(&final_lower_band),
-            final_lower_band,
-            Series::empty(len)
-        )
+        super_trend
     )
 }
 
@@ -66,9 +65,9 @@ mod tests {
         let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
         let factor = 3.0;
         let expected = vec![
-            0.0, 19.609928, 19.62944, 19.684448, 19.672525, 19.696024, 19.691162, 19.698423,
-            19.654936, 19.619303, 19.598116, 19.569742, 19.53621, 19.569963, 19.569326, 19.562849,
-            19.574085, 19.560572, 19.574278, 19.560736, 19.532988,
+            0.0, 19.609928, 19.609928, 19.62944, 19.672525, 19.672525, 19.691162, 19.691162,
+            19.654936, 19.619303, 19.598116, 19.569742, 19.53621, 19.53621, 19.569326, 19.562849,
+            19.562849, 19.560572, 19.560572, 19.560736, 19.532988,
         ];
 
         let result: Vec<f32> = supertrend(&hl2, &close, &atr, factor).into();
