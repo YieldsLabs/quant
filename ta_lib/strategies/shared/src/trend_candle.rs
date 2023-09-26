@@ -4,7 +4,6 @@ use candlestick::{
     slingshot, tasuki, three_candles, three_methods,
 };
 use core::Series;
-use std::fmt;
 
 pub enum TrendCandleType {
     BOTTLE,
@@ -20,26 +19,6 @@ pub enum TrendCandleType {
     THREE_CANDLES,
     THREE_METHODS,
     TASUKI,
-}
-
-impl fmt::Display for TrendCandleType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::BOTTLE => write!(f, "BOTTLE"),
-            Self::DOUBLE_TROUBLE => write!(f, "DOUBLE_TROUBLE"),
-            Self::GOLDEN => write!(f, "GOLDEN"),
-            Self::H => write!(f, "H"),
-            Self::HEXAD => write!(f, "HEXAD"),
-            Self::HIKKAKE => write!(f, "HIKKAKE"),
-            Self::MARUBOZU => write!(f, "MARUBOZU"),
-            Self::MASTER_CANDLE => write!(f, "MASTER_CANDLE"),
-            Self::QUINTUPLETS => write!(f, "QUINTUPLETS"),
-            Self::SLINGSHOT => write!(f, "SLINGSHOT"),
-            Self::THREE_CANDLES => write!(f, "THREE_CANDLES"),
-            Self::THREE_METHODS => write!(f, "THREE_METHODS"),
-            Self::TASUKI => write!(f, "TASUKI"),
-        }
-    }
 }
 
 pub fn trend_candle_indicator(

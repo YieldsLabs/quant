@@ -1,6 +1,5 @@
 use base::OHLCVSeries;
 use core::Series;
-use std::fmt;
 use trend::{
     alma, dema, ema, frama, gma, hma, kama, rmsma, sinwma, sma, smma, t3, tema, tma, vwma, wma,
     zlema,
@@ -24,30 +23,6 @@ pub enum MovingAverageType {
     VWMA,
     WMA,
     ZLEMA,
-}
-
-impl fmt::Display for MovingAverageType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::ALMA => write!(f, "ALMA"),
-            Self::DEMA => write!(f, "DEMA"),
-            Self::EMA => write!(f, "EMA"),
-            Self::FRAMA => write!(f, "FRAMA"),
-            Self::GMA => write!(f, "GMA"),
-            Self::HMA => write!(f, "HMA"),
-            Self::KAMA => write!(f, "KAMA"),
-            Self::RMSMA => write!(f, "RMSMA"),
-            Self::SINWMA => write!(f, "SINWMA"),
-            Self::SMA => write!(f, "SMA"),
-            Self::SMMA => write!(f, "SMMA"),
-            Self::TTHREE => write!(f, "T3"),
-            Self::TEMA => write!(f, "TEMA"),
-            Self::TMA => write!(f, "TMA"),
-            Self::VWMA => write!(f, "VWMA"),
-            Self::WMA => write!(f, "WMA"),
-            Self::ZLEMA => write!(f, "ZLEMA"),
-        }
-    }
 }
 
 pub fn ma_indicator(
