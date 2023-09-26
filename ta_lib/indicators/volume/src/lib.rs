@@ -1,8 +1,10 @@
+mod cmf;
 mod mfi;
 mod obv;
 mod vo;
 mod vwap;
 
+pub use cmf::cmf;
 pub use mfi::mfi;
 pub use obv::obv;
 pub use vo::vo;
