@@ -1,9 +1,11 @@
 use core::Series;
 
 pub fn tr(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
+    let prev_close = close.shift(1);
+
     (high - low)
-        .max(&(high - close.shift(1)).abs())
-        .max(&((low - close.shift(1)).abs()))
+        .max(&(high - &prev_close).abs())
+        .max(&(low - &prev_close).abs())
 }
 
 #[cfg(test)]
