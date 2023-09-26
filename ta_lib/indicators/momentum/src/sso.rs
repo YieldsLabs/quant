@@ -16,9 +16,9 @@ pub fn sso(
         }
     };
 
-    let high_smooth = smooth_series(&high);
-    let low_smooth = smooth_series(&low);
-    let close_smooth = smooth_series(&close);
+    let high_smooth = smooth_series(high);
+    let low_smooth = smooth_series(low);
+    let close_smooth = smooth_series(close);
 
     let k = stoch(&high_smooth, &low_smooth, &close_smooth, period);
 

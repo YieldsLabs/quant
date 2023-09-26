@@ -46,6 +46,14 @@ impl Series<f32> {
         sum / norm
     }
 
+    pub fn swma(&self) -> Self {
+        let x1 = self.shift(1);
+        let x2 = self.shift(2);
+        let x3 = self.shift(3);
+
+        x3 * 1.0 / 6.0 + x2 * 2.0 / 6.0 + x1 * 2.0 / 6.0 + self * 1.0 / 6.0
+    }
+
     pub fn hma(&self, period: usize) -> Self {
         let lag = (period as f32 / 2.0).round() as usize;
         let sqrt_period = (period as f32).sqrt() as usize;
@@ -82,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_smma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = vec![
             Some(1.0),
             Some(1.3333333),
@@ -90,16 +98,15 @@ mod tests {
             Some(2.5925925),
             Some(3.3950615),
         ];
-        let series = Series::from(&source);
 
-        let result = series.smma(3);
+        let result = source.smma(3);
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_wma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = vec![
             None,
             None,
@@ -107,9 +114,18 @@ mod tests {
             Some(3.3333333),
             Some(4.3333335),
         ];
-        let series = Series::from(&source);
 
-        let result = series.wma(3);
+        let result = source.wma(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_swma() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = vec![None, None, None, Some(2.5), Some(3.5)];
+
+        let result = source.swma();
 
         assert_eq!(result, expected);
     }

@@ -1,6 +1,5 @@
 use base::{OHLCVSeries, Price, StopLoss};
 use core::Series;
-use volatility::atr;
 
 pub struct ATRStopLoss {
     pub period: usize,

@@ -26,7 +26,7 @@ pub fn frama(
         (-4.6 * (d - 1.0)).exp()
     );
 
-    close.ew(&alpha, &close)
+    close.ew(&alpha, close)
 }
 
 #[cfg(test)]

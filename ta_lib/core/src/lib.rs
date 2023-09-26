@@ -1,9 +1,9 @@
 mod bool;
 mod cross;
-mod ma;
 mod macros;
 mod math;
 mod ops;
 mod series;
+mod smoothing;
 
 pub use series::Series;

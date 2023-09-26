@@ -9,7 +9,7 @@ pub fn stochosc(
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let stoch = stoch(&high, &low, &close, period);
+    let stoch = stoch(high, low, close, period);
 
     let k = stoch.ma(k_period);
 
