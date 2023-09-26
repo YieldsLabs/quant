@@ -7,13 +7,13 @@ pub fn cmf(
     volume: &Series<f32>,
     period: usize,
 ) -> Series<f32> {
-    let ad = iff!(
+    let mfv = iff!(
         (close.eq(high) & close.eq(low)) | high.eq(low),
         Series::zero(close.len()),
         ((2.0 * close - low - high) / (high - low)) * volume
     );
 
-    ad.sum(period) / volume.sum(period)
+    mfv.sum(period) / volume.sum(period)
 }
 
 #[cfg(test)]
