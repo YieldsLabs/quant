@@ -1,5 +1,5 @@
+use crate::stoch;
 use core::Series;
-use utils::stoch;
 
 pub fn stochosc(
     high: &Series<f32>,

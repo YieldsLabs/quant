@@ -1,5 +1,5 @@
+use crate::tr;
 use core::Series;
-use utils::tr;
 
 pub fn atr(
     high: &Series<f32>,

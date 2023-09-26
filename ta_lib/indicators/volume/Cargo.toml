@@ -6,4 +6,3 @@ edition = "2021"
 [dependencies]
 core = { path = "../../core" }
 price = { path = "../../price" }
-utils = { path = "../../utils" }

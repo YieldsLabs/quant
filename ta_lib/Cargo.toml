@@ -12,8 +12,7 @@ members = [
 "strategies/stop_loss",
 "strategies/signal",
 "strategies/filter",
-"strategies/shared",
-"utils"
+"strategies/shared"
 ]
 
 [profile.release]

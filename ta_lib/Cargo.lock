@@ -48,7 +48,6 @@ version = "0.1.0"
 dependencies = [
  "core",
  "price",
- "utils",
 ]
 
 [[package]]
@@ -117,19 +116,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "core",
-]
-
-[[package]]
 name = "volatility"
 version = "0.1.0"
 dependencies = [
  "core",
  "price",
- "utils",
 ]
 
 [[package]]
@@ -138,5 +129,4 @@ version = "0.1.0"
 dependencies = [
  "core",
  "price",
- "utils",
 ]

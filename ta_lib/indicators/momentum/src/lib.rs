@@ -6,6 +6,7 @@ mod macd;
 mod roc;
 mod rsi;
 mod sso;
+mod stoch;
 mod stochosc;
 
 pub use aosc::aosc;
@@ -16,4 +17,5 @@ pub use macd::macd;
 pub use roc::roc;
 pub use rsi::rsi;
 pub use sso::sso;
+use stoch::stoch;
 pub use stochosc::stochosc;

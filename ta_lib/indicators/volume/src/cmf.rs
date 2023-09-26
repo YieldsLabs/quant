@@ -8,7 +8,7 @@ pub fn cmf(
     period: usize,
 ) -> Series<f32> {
     let ad = iff!(
-        (close.eq(&high) & close.eq(&low)) | high.eq(&low),
+        (close.eq(high) & close.eq(low)) | high.eq(low),
         Series::zero(close.len()),
         ((2.0 * close - low - high) / (high - low)) * volume
     );
