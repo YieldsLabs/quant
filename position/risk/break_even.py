@@ -3,7 +3,7 @@ from core.models.ohlcv import OHLCV
 from core.models.position import PositionSide
 
 
-class BreakEvenStrategy(AbstractPositionRiskStrategy):
+class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
     def __init__(self, break_even_percentage: float = 0.25):
         super().__init__()
         self.break_even_percentage = break_even_percentage
