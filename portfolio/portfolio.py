@@ -33,6 +33,7 @@ class Portfolio(AbstractEventManager):
     @event_handler(BacktestStarted)
     async def handle_backtest_started(self, event: BacktestStarted):
         await self.state.reset(event.symbol, event.timeframe, event.strategy)
+        await self.strategy.reset(event.symbol, event.timeframe, event.strategy)
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):

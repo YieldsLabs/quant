@@ -33,6 +33,11 @@ class StrategyStorage:
                 current_metrics = self.data[key][0]
                 self.data[key] = (current_metrics, cluster_indices[idx])
 
+    async def reset(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
+        async with self.lock:
+            key = (symbol, timeframe, strategy)
+            if key in self.data:
+                del self.data[key]
 
     async def get_top(self, num: int = 10):
         async with self.lock:

@@ -9,7 +9,7 @@ from core.events.ohlcv import NewMarketDataReceived
 from core.models.timeframe import Timeframe
 from core.models.ohlcv import OHLCV
 from core.interfaces.abstract_ws import AbstractWS
-from broker.retry import retry
+from infrastructure.retry import retry
 
 
 logger = logging.getLogger(__name__)
