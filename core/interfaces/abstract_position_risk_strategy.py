@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 
-from ..models.signal import SignalSide
-from ..models.ohlcv import OHLCV
+from core.models.ohlcv import OHLCV
+from core.models.signal import SignalSide
 
 
 class AbstractPositionRiskStrategy(ABC):
     @abstractmethod
-    def next(self, side: SignalSide, entry_price: float, stop_loss_price: float, ohlcv: OHLCV) -> float:
+    def next(
+        self, side: SignalSide, entry_price: float, stop_loss_price: float, ohlcv: OHLCV
+    ) -> float:
         pass

@@ -1,6 +1,6 @@
 import asyncio
-from typing import Optional
 from contextlib import asynccontextmanager
+from typing import Optional
 
 from core.models.position import Position
 from core.models.signal import Signal
@@ -26,7 +26,7 @@ class PositionStorage:
     async def delete_position(self, position: Position):
         async with self._locked_data() as data:
             data.pop(self._get_key(position.signal), None)
-    
+
     async def position_exists(self, signal: Signal) -> bool:
         async with self._locked_data() as data:
             return self._get_key(signal) in data
@@ -41,7 +41,7 @@ class PositionStorage:
 
     async def update_stored_position(self, position: Position):
         existing_position = await self._extract_position(position.signal)
-        
+
         if existing_position:
             await self.store_position(position)
 
@@ -50,8 +50,8 @@ class PositionStorage:
 
     async def _extract_position(self, signal: Signal) -> Optional[Position]:
         position = await self.retrieve_position(signal)
-        
+
         if position:
             await self.delete_position(position)
-        
+
         return position

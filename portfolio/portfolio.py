@@ -12,7 +12,6 @@ from core.queries.portfolio import GetFitness, GetTopStrategy, GetTotalPnL
 from .portfolio_storage import PortfolioStorage
 from .strategy_storage import StrategyStorage
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +37,7 @@ class Portfolio(AbstractEventManager):
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
         await self.state.next(event.position, self.account_size, self.risk_per_trade)
-        
+
         signal = event.position.signal
         symbol = signal.symbol
         timeframe = signal.timeframe
@@ -46,28 +45,38 @@ class Portfolio(AbstractEventManager):
 
         performance = await self.state.get(event.position)
 
-        logger.info(f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, pnl={performance.total_pnl}")
-        
+        logger.info(
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, pnl={performance.total_pnl}"
+        )
+
         await self.dispatch(
-            PortfolioPerformanceUpdated(symbol, timeframe, strategy, performance))
-        
-        await self.strategy.next(symbol, timeframe, strategy, [
-            performance.calmar_ratio,
-            performance.ulcer_index,
-            performance.var,
-            performance.sharpe_ratio,
-            performance.profit_factor,
-            performance.max_drawdown
-        ])
+            PortfolioPerformanceUpdated(symbol, timeframe, strategy, performance)
+        )
+
+        await self.strategy.next(
+            symbol,
+            timeframe,
+            strategy,
+            [
+                performance.calmar_ratio,
+                performance.ulcer_index,
+                performance.var,
+                performance.sharpe_ratio,
+                performance.profit_factor,
+                performance.max_drawdown,
+            ],
+        )
 
     @query_handler(GetTopStrategy)
     async def top_strategies(self, query: GetTopStrategy):
-         return await self.strategy.get_top(query.num)
+        return await self.strategy.get_top(query.num)
 
     @query_handler(GetTotalPnL)
     async def total_pnl(self, query: GetTotalPnL):
         return await self.state.get_total_pnl(query.signal)
-    
+
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):
-        return await self.state.get_fitness(query.symbol, query.timeframe, query.strategy)
+        return await self.state.get_fitness(
+            query.symbol, query.timeframe, query.strategy
+        )

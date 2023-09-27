@@ -2,10 +2,10 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Generic, TypeVar
 
-from ..events.base import Event, EventMeta
+from core.events.base import Event, EventMeta
 
+T = TypeVar("T")
 
-T = TypeVar('T')
 
 @dataclass(frozen=True)
 class Query(Generic[T], Event):
@@ -14,7 +14,7 @@ class Query(Generic[T], Event):
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1), init=False)
 
     def set_response(self, response: T):
-        object.__setattr__(self, '_response', response)
+        object.__setattr__(self, "_response", response)
         self._response_event.set()
 
     async def wait_for_response(self) -> T:

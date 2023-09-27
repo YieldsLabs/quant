@@ -1,11 +1,14 @@
-from enum import Enum
 import json
+from enum import Enum
 from typing import Any
+
 import numpy as np
 
-from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
-from core.interfaces.abstract_position_take_profit_strategy import AbstractPositionTakeProfitStrategy
 from core.events.base import Event
+from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
+from core.interfaces.abstract_position_take_profit_strategy import (
+    AbstractPositionTakeProfitStrategy,
+)
 
 
 class Encoder(json.JSONEncoder):
@@ -21,6 +24,6 @@ class Encoder(json.JSONEncoder):
         if isinstance(obj, Event):
             return obj.to_dict()
         if isinstance(obj, type(Any)):
-            return 'Any'
-        
+            return "Any"
+
         return super().default(obj)

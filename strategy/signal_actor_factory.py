@@ -1,4 +1,4 @@
-from wasmtime import Store, Linker, WasiConfig, Module
+from wasmtime import Linker, Module, Store, WasiConfig
 
 from core.interfaces.abstract_signal_actor_factory import AbstractSignalActorFactory
 
@@ -9,7 +9,7 @@ class SignalActorFactory(AbstractSignalActorFactory):
     def __init__(self, wasm_path: str):
         super().__init__()
         self.wasm_path = wasm_path
-    
+
     def create_actor(self, symbol, timeframe, strategy):
         store = Store()
         wasi_config = WasiConfig()

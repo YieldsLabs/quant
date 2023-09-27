@@ -9,7 +9,7 @@ from .risk_actor import RiskActor
 class RiskActorFactory(AbstractRiskActorFactory):
     def __init__(self, risk_buffer: float):
         self.risk_buffer = risk_buffer
-    
+
     def create_actor(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         return RiskActor(
             symbol,
@@ -17,4 +17,3 @@ class RiskActorFactory(AbstractRiskActorFactory):
             strategy,
             self.risk_buffer,
         )
-        

@@ -17,3 +17,7 @@ build:
 
 run:
 	pipenv run python3 quant.py
+
+format:
+	pipenv run black .
+	pipenv run ruff . --fix

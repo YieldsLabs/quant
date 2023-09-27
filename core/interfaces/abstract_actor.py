@@ -1,16 +1,20 @@
 from abc import abstractmethod
 from typing import Union
 
+from core.events.ohlcv import NewMarketDataReceived
+from core.events.position import PositionCloseRequested, PositionInitialized
+from core.events.risk import RiskThresholdBreached
+from core.events.signal import (
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+    GoLongSignalReceived,
+    GoShortSignalReceived,
+)
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
+
 from .abstract_event_manager import AbstractEventManager
-
-from ..events.signal import ExitLongSignalReceived, ExitShortSignalReceived, GoLongSignalReceived, GoShortSignalReceived
-from ..events.position import PositionCloseRequested, PositionInitialized
-from ..events.ohlcv import NewMarketDataReceived
-from ..events.risk import RiskThresholdBreached
-from ..models.symbol import Symbol
-from ..models.timeframe import Timeframe
-from ..models.strategy import Strategy
-
 
 ActorEvent = Union[
     NewMarketDataReceived,
@@ -20,8 +24,9 @@ ActorEvent = Union[
     GoShortSignalReceived,
     ExitLongSignalReceived,
     ExitShortSignalReceived,
-    RiskThresholdBreached
+    RiskThresholdBreached,
 ]
+
 
 class AbstractActor(AbstractEventManager):
     @property

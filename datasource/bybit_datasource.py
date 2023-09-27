@@ -1,13 +1,20 @@
 import asyncio
-from typing import Type
 
 from core.interfaces.abstract_broker import AbstractBroker
+from core.interfaces.abstract_datasource import AbstractDatasource
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.interfaces.abstract_datasource import AbstractDatasource
+
 
 class AsyncHistoricalData:
-    def __init__(self, broker: AbstractBroker, symbol: Symbol, timeframe: Timeframe, lookback: int, batch_size: int):
+    def __init__(
+        self,
+        broker: AbstractBroker,
+        symbol: Symbol,
+        timeframe: Timeframe,
+        lookback: int,
+        batch_size: int,
+    ):
         self.broker = broker
         self.symbol = symbol
         self.timeframe = timeframe
@@ -32,7 +39,9 @@ class AsyncHistoricalData:
 
     def _init_iterator(self) -> None:
         if self.iterator is None:
-            self.iterator = self.broker.get_historical_data(self.symbol, self.timeframe, self.lookback, self.batch_size)
+            self.iterator = self.broker.get_historical_data(
+                self.symbol, self.timeframe, self.lookback, self.batch_size
+            )
 
     async def _fetch_next_item(self):
         return await asyncio.to_thread(self._next_item_or_end)
@@ -46,10 +55,15 @@ class AsyncHistoricalData:
     def get_last_row(self):
         return self.last_row
 
+
 class BybitDataSource(AbstractDatasource):
     def __init__(self, broker: AbstractBroker):
         super().__init__()
         self.broker = broker
 
-    def fetch(self, symbol: Symbol, timeframe: Timeframe, lookback: int, batch_size: int):
-        return AsyncHistoricalData(self.broker, symbol.name, timeframe.value, lookback, batch_size)
+    def fetch(
+        self, symbol: Symbol, timeframe: Timeframe, lookback: int, batch_size: int
+    ):
+        return AsyncHistoricalData(
+            self.broker, symbol.name, timeframe.value, lookback, batch_size
+        )

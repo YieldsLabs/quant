@@ -1,8 +1,10 @@
 import numpy as np
 
+
 def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
+
 
 class LoadBalancer:
     def __init__(self, priority_groups: int):
@@ -21,7 +23,7 @@ class LoadBalancer:
     def register_event(self, priority_group: int):
         if 0 <= priority_group < len(self._group_event_counts):
             self._group_event_counts[priority_group] += 1
-            
+
             if self._group_event_counts.max() > self._group_event_counts_threshold:
                 self._group_event_counts *= 0.5
         else:
@@ -43,9 +45,11 @@ class LoadBalancer:
 
         self._previous_errors = errors.copy()
 
-        control_outputs = (self._kp * errors
-                           + self._ki * self._integral_errors
-                           + self._kd * derivative_errors)
+        control_outputs = (
+            self._kp * errors
+            + self._ki * self._integral_errors
+            + self._kd * derivative_errors
+        )
 
         weights = softmax(control_outputs)
 

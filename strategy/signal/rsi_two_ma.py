@@ -19,9 +19,9 @@ class RSI2MovingAverageSignal(Indicator):
     def parameters(self):
         return [
             self.rsi_period,
-            self.lower_barrier, 
-            self.upper_barrier, 
+            self.lower_barrier,
+            self.upper_barrier,
             self.ma,
             self.short_period,
-            self.long_period
+            self.long_period,
         ]

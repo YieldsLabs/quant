@@ -13,5 +13,5 @@ class RSINautralitySignal(Indicator):
     def parameters(self):
         return [
             self.rsi_period,
-            self.threshold, 
+            self.threshold,
         ]

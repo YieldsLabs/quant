@@ -1,16 +1,16 @@
 import asyncio
 import json
 import logging
+
 import websockets
 
 from core.commands.broker import Subscribe
 from core.event_decorators import command_handler
 from core.events.ohlcv import NewMarketDataReceived
-from core.models.timeframe import Timeframe
-from core.models.ohlcv import OHLCV
 from core.interfaces.abstract_ws import AbstractWS
+from core.models.ohlcv import OHLCV
+from core.models.timeframe import Timeframe
 from infrastructure.retry import retry
-
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +26,12 @@ class BybitWSHandler(AbstractWS):
     }
 
     TIMEFRAMES = {
-        '1': Timeframe.ONE_MINUTE,
-        '3': Timeframe.THREE_MINUTES,
-        '5': Timeframe.FIVE_MINUTES,
-        '15': Timeframe.FIFTEEN_MINUTES,
-        '60': Timeframe.ONE_HOUR,
-        '240': Timeframe.FOUR_HOURS,
+        "1": Timeframe.ONE_MINUTE,
+        "3": Timeframe.THREE_MINUTES,
+        "5": Timeframe.FIVE_MINUTES,
+        "15": Timeframe.FIFTEEN_MINUTES,
+        "60": Timeframe.ONE_HOUR,
+        "240": Timeframe.FOUR_HOURS,
     }
 
     def __init__(self, url):
@@ -62,7 +62,10 @@ class BybitWSHandler(AbstractWS):
                 if self.ws.open:
                     await self.ws.ping()
                 else:
-                    raise websockets.exceptions.ConnectionClosedOK(None, websockets.frames.Close(code=1000, reason='Connection closed'))
+                    raise websockets.exceptions.ConnectionClosedOK(
+                        None,
+                        websockets.frames.Close(code=1000, reason="Connection closed"),
+                    )
             except websockets.exceptions.ConnectionClosedOK:
                 logger.info("Connection closed.")
                 await self.connect_to_websocket()
@@ -104,15 +107,19 @@ class BybitWSHandler(AbstractWS):
 
     def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV.from_dict(data)
-        return NewMarketDataReceived(symbol, self.TIMEFRAMES[interval], ohlcv, data['confirm'])
-
+        return NewMarketDataReceived(
+            symbol, self.TIMEFRAMES[interval], ohlcv, data["confirm"]
+        )
 
     @command_handler(Subscribe)
     async def subscribe(self, command: Subscribe):
         if self.ws is None:
-            raise ValueError('Initialize ws')
+            raise ValueError("Initialize ws")
 
-        channels = [f"kline.{self.INTERVALS[timeframe]}.{symbol}" for (symbol, timeframe) in command.symbols_and_timeframes]
+        channels = [
+            f"kline.{self.INTERVALS[timeframe]}.{symbol}"
+            for (symbol, timeframe) in command.symbols_and_timeframes
+        ]
 
         for channel in channels:
             await self.ws.send(json.dumps({"op": "subscribe", "args": [channel]}))

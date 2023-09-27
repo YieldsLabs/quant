@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from .base import Command
+from core.interfaces.abstract_datasource import AbstractDatasource
+from core.models.lookback import TIMEFRAMES_TO_LOOKBACK, Lookback
+from core.models.symbol import Symbol
 
-from ..interfaces.abstract_datasource import AbstractDatasource
-from ..models.symbol import Symbol
-from ..models.lookback import TIMEFRAMES_TO_LOOKBACK, Lookback
+from .base import Command
 
 
 @dataclass(frozen=True)

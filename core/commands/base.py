@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import dataclass, field
 
-from ..events.base import Event, EventMeta
+from core.events.base import Event, EventMeta
 
 
 @dataclass(frozen=True)

@@ -1,14 +1,18 @@
 import asyncio
-from enum import Enum, auto
 import logging
+from enum import Enum, auto
 from typing import Callable, Dict, Type, Union
 
 from core.events.position import BrokerPositionClosed, BrokerPositionOpened
 from core.events.risk import RiskThresholdBreached
-from core.events.signal import ExitLongSignalReceived, GoLongSignalReceived, ExitShortSignalReceived, GoShortSignalReceived
+from core.events.signal import (
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+    GoLongSignalReceived,
+    GoShortSignalReceived,
+)
 from core.interfaces.abstract_position_manager import AbstractPositionManager
 from core.models.signal import Signal
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +36,37 @@ PortfolioEvent = Union[
 
 HandlerFunction = Callable[[PortfolioEvent], bool]
 
+
 class PositionStateMachine:
     TRANSITIONS = {
-        (PositionState.IDLE, GoLongSignalReceived): (PositionState.WAITING_BROKER_CONFIRMATION, "handle_signal_received"),
-        (PositionState.IDLE, GoShortSignalReceived): (PositionState.WAITING_BROKER_CONFIRMATION, "handle_signal_received"),
-        (PositionState.WAITING_BROKER_CONFIRMATION, BrokerPositionOpened): (PositionState.OPENED, "handle_position_opened"),
-        (PositionState.OPENED, ExitLongSignalReceived): (PositionState.CLOSE, "handle_exit_received"),
-        (PositionState.OPENED, ExitShortSignalReceived): (PositionState.CLOSE, "handle_exit_received"),
-        (PositionState.OPENED, RiskThresholdBreached): (PositionState.CLOSE, "handle_exit_received"),
-        (PositionState.CLOSE, BrokerPositionClosed): (PositionState.IDLE, "handle_position_closed"),
+        (PositionState.IDLE, GoLongSignalReceived): (
+            PositionState.WAITING_BROKER_CONFIRMATION,
+            "handle_signal_received",
+        ),
+        (PositionState.IDLE, GoShortSignalReceived): (
+            PositionState.WAITING_BROKER_CONFIRMATION,
+            "handle_signal_received",
+        ),
+        (PositionState.WAITING_BROKER_CONFIRMATION, BrokerPositionOpened): (
+            PositionState.OPENED,
+            "handle_position_opened",
+        ),
+        (PositionState.OPENED, ExitLongSignalReceived): (
+            PositionState.CLOSE,
+            "handle_exit_received",
+        ),
+        (PositionState.OPENED, ExitShortSignalReceived): (
+            PositionState.CLOSE,
+            "handle_exit_received",
+        ),
+        (PositionState.OPENED, RiskThresholdBreached): (
+            PositionState.CLOSE,
+            "handle_exit_received",
+        ),
+        (PositionState.CLOSE, BrokerPositionClosed): (
+            PositionState.IDLE,
+            "handle_position_closed",
+        ),
     }
 
     def __init__(self, position_manager: Type[AbstractPositionManager]):
@@ -59,12 +85,12 @@ class PositionStateMachine:
     async def process_event(self, signal: Signal, event: PortfolioEvent):
         symbol = signal.symbol
         current_state = await self._get_state(symbol)
-        
+
         if not self._is_valid_state(current_state, event):
             return
 
         next_state, handler_name = self.TRANSITIONS[(current_state, type(event))]
-        
+
         handler = getattr(self._position_manager, handler_name)
 
         if not await handler(event):

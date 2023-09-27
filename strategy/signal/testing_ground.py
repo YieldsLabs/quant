@@ -12,7 +12,4 @@ class TestingGroundSignal(Indicator):
 
     @property
     def parameters(self):
-        return [
-            self.ma,
-            self.period
-        ]
+        return [self.ma, self.period]

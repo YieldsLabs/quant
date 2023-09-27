@@ -23,10 +23,15 @@ class OHLCV:
             float(close),
             float(volume),
         )
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "OHLCV":
-        return cls.from_list([data[key] for key in ['timestamp', 'open', 'high', 'low', 'close', 'volume']])
+        return cls.from_list(
+            [
+                data[key]
+                for key in ["timestamp", "open", "high", "low", "close", "volume"]
+            ]
+        )
 
     def to_dict(self):
         return asdict(self)

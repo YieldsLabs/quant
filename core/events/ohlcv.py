@@ -1,15 +1,18 @@
 from dataclasses import dataclass, field
 
-from .base import Event, EventGroup, EventMeta
+from core.models.ohlcv import OHLCV
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
-from ..models.symbol import Symbol
-from ..models.timeframe import Timeframe
-from ..models.ohlcv import OHLCV
+from .base import Event, EventGroup, EventMeta
 
 
 @dataclass(frozen=True)
 class MarketEvent(Event):
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=4, group=EventGroup.market), init=False)
+    meta: EventMeta = field(
+        default_factory=lambda: EventMeta(priority=4, group=EventGroup.market),
+        init=False,
+    )
 
 
 @dataclass(frozen=True)

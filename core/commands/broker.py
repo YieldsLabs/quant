@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from .base import Command
+from core.models.broker import MarginMode, PositionMode
+from core.models.position import Position
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
-from ..models.timeframe import Timeframe
-from ..models.position import Position
-from ..models.broker import MarginMode, PositionMode
-from ..models.symbol import Symbol
+from .base import Command
 
 
 @dataclass(frozen=True)

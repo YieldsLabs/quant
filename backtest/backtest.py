@@ -5,11 +5,10 @@ from core.commands.backtest import BacktestRun
 from core.event_decorators import command_handler
 from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
-from core.models.timeframe import Timeframe
-from core.models.ohlcv import OHLCV
-from core.models.lookback import TIMEFRAMES_TO_LOOKBACK
 from core.interfaces.abstract_backtest import AbstractBacktest
-
+from core.models.lookback import TIMEFRAMES_TO_LOOKBACK
+from core.models.ohlcv import OHLCV
+from core.models.timeframe import Timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,9 @@ class Backtest(AbstractBacktest):
 
         logger.info(f"Backtest: symbol={symbol}, timeframe={timeframe}")
 
-        iterator = datasource.fetch(symbol, timeframe, TIMEFRAMES_TO_LOOKBACK[(lookback, timeframe)], batch_size)
+        iterator = datasource.fetch(
+            symbol, timeframe, TIMEFRAMES_TO_LOOKBACK[(lookback, timeframe)], batch_size
+        )
 
         async for data in iterator:
             await self._process_historical_data(symbol, timeframe, data)
@@ -39,7 +40,9 @@ class Backtest(AbstractBacktest):
             last_close = last_row[-2]
             await self.dispatch(BacktestEnded(symbol, timeframe, last_close))
 
-    async def _process_historical_data(self, symbol: str, timeframe: Timeframe, data: List[Any]):
+    async def _process_historical_data(
+        self, symbol: str, timeframe: Timeframe, data: List[Any]
+    ):
         ohlcv = OHLCV.from_list(data)
 
         await self.dispatch(NewMarketDataReceived(symbol, timeframe, ohlcv, True))

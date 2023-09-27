@@ -1,7 +1,7 @@
 import asyncio
+import logging
 from collections import defaultdict, deque
 from functools import partial
-import logging
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple, Type, Union
 
 from core.events.base import Event
@@ -21,7 +21,12 @@ class EventHandler:
     def dlq(self):
         return self._dead_letter_queue
 
-    def register(self, event_class: Type[Event], handler: HandlerType, filter_func: Optional[Callable[[Event], bool]] = None) -> None:
+    def register(
+        self,
+        event_class: Type[Event],
+        handler: HandlerType,
+        filter_func: Optional[Callable[[Event], bool]] = None,
+    ) -> None:
         self._event_handlers[event_class].append((handler, filter_func))
 
     def unregister(self, event_class: Type[Event], handler: HandlerType) -> None:
@@ -42,15 +47,21 @@ class EventHandler:
             if not filter_fn or filter_fn(event):
                 await self._call_handler(handler, event, *args, **kwargs)
 
-    async def _call_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
+    async def _call_handler(
+        self, handler: HandlerType, event: Event, *args, **kwargs
+    ) -> None:
         try:
             await self._create_handler(handler, event, *args, **kwargs)
             logger.debug(event, handler)
         except Exception as e:
             self._dead_letter_queue.append((event, e))
-            logger.error(f"Exception encountered: {e}. Event added to dead letter queue.")
+            logger.error(
+                f"Exception encountered: {e}. Event added to dead letter queue."
+            )
 
-    async def _create_handler(self, handler: HandlerType, event: Event, *args, **kwargs) -> None:
+    async def _create_handler(
+        self, handler: HandlerType, event: Event, *args, **kwargs
+    ) -> None:
         if asyncio.iscoroutinefunction(handler):
             await handler(event, *args, **kwargs)
         else:

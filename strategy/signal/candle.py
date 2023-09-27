@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from core.models.indicator import Indicator
 from core.models.candle import TrendCandleType
+from core.models.indicator import Indicator
 
 
 @dataclass(frozen=True)
@@ -10,6 +10,4 @@ class TrendCandleSignal(Indicator):
 
     @property
     def parameters(self):
-        return [
-            self.candle
-        ]
+        return [self.candle]

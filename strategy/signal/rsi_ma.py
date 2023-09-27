@@ -18,8 +18,8 @@ class RSIMovingAverageSignal(Indicator):
     def parameters(self):
         return [
             self.rsi_period,
-            self.lower_barrier, 
-            self.upper_barrier, 
+            self.lower_barrier,
+            self.upper_barrier,
             self.ma,
-            self.period
+            self.period,
         ]

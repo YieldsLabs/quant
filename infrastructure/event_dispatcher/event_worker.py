@@ -1,13 +1,13 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, AsyncIterable, Dict, Tuple
 
 from core.events.base import Event
 
 from .event_handler import EventHandler
 
-from concurrent.futures import ThreadPoolExecutor
-
 executor = ThreadPoolExecutor()
+
 
 class EventWorker:
     def __init__(self, event_handler: EventHandler, cancel_event: asyncio.Event):
@@ -24,8 +24,10 @@ class EventWorker:
     async def _process_events(self):
         async for event, args, kwargs in self._get_event_stream():
             await self.event_handler.handle_event(event, *args, **kwargs)
-            
-    async def _get_event_stream(self) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
+
+    async def _get_event_stream(
+        self,
+    ) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
         while not self.cancel_event.is_set():
             event, args, kwargs = await self.queue.get()
 
@@ -39,7 +41,7 @@ class EventWorker:
 
         if event_key in self.events_in_queue:
             return
-        
+
         await self.queue.put((event, args, kwargs))
         self.events_in_queue.add(event_key)
 

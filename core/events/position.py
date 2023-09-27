@@ -1,23 +1,27 @@
 from dataclasses import dataclass, field
 
-from .base import Event, EventGroup, EventMeta
+from core.models.position import Position
 
-from ..models.position import Position
+from .base import Event, EventGroup, EventMeta
 
 
 @dataclass(frozen=True)
 class PositionEvent(Event):
     position: Position
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=2, group=EventGroup.position), init=False)
+    meta: EventMeta = field(
+        default_factory=lambda: EventMeta(priority=2, group=EventGroup.position),
+        init=False,
+    )
 
     def to_dict(self):
         parent_dict = super().to_dict()
 
         current_dict = {
-            'position': self.position.to_dict(),
+            "position": self.position.to_dict(),
         }
 
         return {**parent_dict, **current_dict}
+
 
 @dataclass(frozen=True)
 class PositionInitialized(PositionEvent):

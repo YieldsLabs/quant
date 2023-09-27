@@ -20,4 +20,3 @@ class Cross3MovingAverageSignal(Indicator):
             self.medium_period,
             self.long_period,
         ]
-

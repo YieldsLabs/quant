@@ -28,5 +28,5 @@ class PositionFixedSizeStrategy(AbstractPositionSizeStrategy):
             raise ValueError("Price difference cannot be zero.")
 
         position_size = risk_amount / price_difference
-   
+
         return position_size

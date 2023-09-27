@@ -1,9 +1,6 @@
 from abc import abstractmethod
-from typing import List, Tuple
 
-from ..models.symbol import Symbol
-from ..interfaces.abstract_event_manager import AbstractEventManager
-from ..models.timeframe import Timeframe
+from core.interfaces.abstract_event_manager import AbstractEventManager
 
 
 class AbstractWS(AbstractEventManager):

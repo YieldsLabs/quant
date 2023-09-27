@@ -18,16 +18,13 @@ plotly = "*"
 nbformat = "*"
 matplotlib = "*"
 seaborn = "*"
+black = "*"
 
 [dev-packages]
-flake8 = "*"
-autopep8 = "*"
 mypy = "*"
 ipykernel = "*"
+ruff = "*"
 
 [requires]
 python_version = "3.11"
 python_full_version = "3.11.4"
-
-[scripts]
-lint = "flake8"

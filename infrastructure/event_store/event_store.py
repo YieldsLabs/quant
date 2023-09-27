@@ -1,7 +1,9 @@
 import json
 import os
+from typing import Optional
 
 from core.events.base import Event
+
 from .event_encoder import Encoder
 
 
@@ -15,7 +17,7 @@ class SingletonMeta(type):
 
 
 class EventStore(metaclass=SingletonMeta):
-    def __init__(self, base_dir: str = './.log/', buffer_size: int = 20):
+    def __init__(self, base_dir: str = "./.log/", buffer_size: int = 20):
         self.base_dir = base_dir
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)
@@ -38,7 +40,7 @@ class EventStore(metaclass=SingletonMeta):
         file_path = self._get_file_path(group)
 
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 events_from_file = json.load(f)
         else:
             events_from_file = []
@@ -51,12 +53,12 @@ class EventStore(metaclass=SingletonMeta):
         for group in self.buffer:
             self._flush_buffer(group)
 
-    def _get_file_path(self, group: str, date: str = None) -> str:
+    def _get_file_path(self, group: str, date: Optional[str] = None) -> str:
         if date:
             filename = f"{group}_{date}_snapshot.json"
         else:
             filename = f"{group}.json"
-        
+
         return os.path.join(self.base_dir, filename)
 
     def _flush_buffer(self, group: str) -> None:
@@ -66,20 +68,20 @@ class EventStore(metaclass=SingletonMeta):
 
     def _append_to_file(self, group: str, events: list) -> None:
         file_path = self._get_file_path(group)
-        
-        if not os.path.exists(file_path):
-            with open(file_path, 'w') as f:
-                f.write('[]')
 
-        with open(file_path, 'rb+') as f:
+        if not os.path.exists(file_path):
+            with open(file_path, "w") as f:
+                f.write("[]")
+
+        with open(file_path, "rb+") as f:
             f.seek(-1, os.SEEK_END)
             f.truncate()
 
             for event in events:
                 if f.tell() > 1:
-                    f.write(','.encode('utf-8'))
-                
-                event_data = json.dumps(event, cls=Encoder)
-                f.write(event_data.encode('utf-8'))
+                    f.write(",".encode("utf-8"))
 
-            f.write(']'.encode('utf-8'))
+                event_data = json.dumps(event, cls=Encoder)
+                f.write(event_data.encode("utf-8"))
+
+            f.write("]".encode("utf-8"))

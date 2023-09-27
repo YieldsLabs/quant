@@ -1,4 +1,6 @@
-from core.interfaces.abstract_position_take_profit_strategy import AbstractPositionTakeProfitStrategy
+from core.interfaces.abstract_position_take_profit_strategy import (
+    AbstractPositionTakeProfitStrategy,
+)
 
 
 class PositionRiskRewardTakeProfitStrategy(AbstractPositionTakeProfitStrategy):

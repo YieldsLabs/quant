@@ -13,4 +13,3 @@ class MovingAverageFilter(Indicator):
     @property
     def parameters(self):
         return [self.ma, self.period]
-

@@ -1,6 +1,6 @@
 from abc import ABC
 
-from ..event_decorators import eda
+from core.event_decorators import eda
 
 
 @eda

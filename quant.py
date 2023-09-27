@@ -1,33 +1,33 @@
 import asyncio
-import signal
-from dotenv import load_dotenv
-import os
 import logging
-import uvloop
+import os
+import signal
 
-from infrastructure.logger import configure_logging
-from infrastructure.shutdown import GracefulShutdown
-from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
-from infrastructure.event_store.event_store import EventStore
-from core.models.timeframe import Timeframe
-from core.models.lookback import Lookback
+import uvloop
+from dotenv import load_dotenv
+
+from backtest.backtest import Backtest
 from broker.futures_bybit_broker import FuturesBybitBroker
+from core.models.lookback import Lookback
+from core.models.timeframe import Timeframe
 from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
-from backtest.backtest import Backtest
 from executor.executor_actor_factory import ExecutorActorFactory
-from strategy.signal_actor_factory import SignalActorFactory
-from system.genetic_system import GeneticSystem, TradingContext
+from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
+from infrastructure.event_store.event_store import EventStore
+from infrastructure.logger import configure_logging
+from infrastructure.shutdown import GracefulShutdown
+from portfolio.portfolio import Portfolio
 from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
-from risk.risk_actor_factory import RiskActorFactory
-from portfolio.portfolio import Portfolio
-from system.squad_factory import SquadFactory
-from strategy.generator.trend_follow import TrendFollowStrategyGenerator
 from position.risk.break_even import PositionRiskBreakEvenStrategy
 from position.size.fixed import PositionFixedSizeStrategy
 from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
-
+from risk.risk_actor_factory import RiskActorFactory
+from strategy.generator.trend_follow import TrendFollowStrategyGenerator
+from strategy.signal_actor_factory import SignalActorFactory
+from system.genetic_system import GeneticSystem, TradingContext
+from system.squad_factory import SquadFactory
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -35,12 +35,12 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 load_dotenv()
 
 
-API_KEY = os.getenv('API_KEY')
-API_SECRET = os.getenv('API_SECRET')
-WSS = os.getenv('WSS')
-IS_LIVE_MODE = os.getenv('LIVE_MODE') == "1"
-LOG_DIR = os.getenv('LOG_DIR')
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+API_KEY = os.getenv("API_KEY")
+API_SECRET = os.getenv("API_SECRET")
+WSS = os.getenv("WSS")
+IS_LIVE_MODE = os.getenv("LIVE_MODE") == "1"
+LOG_DIR = os.getenv("LOG_DIR")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 
 
 configure_logging(LOG_LEVEL)
@@ -52,8 +52,9 @@ logger.setLevel(logging.INFO)
 graceful_shutdown = GracefulShutdown()
 signal.signal(signal.SIGTERM, graceful_shutdown.exit)
 
+
 async def main():
-    logging.info('Initializing...')
+    logging.info("Initializing...")
 
     store_buf_size = 5000
     num_workers = os.cpu_count()
@@ -81,10 +82,10 @@ async def main():
     ]
 
     blacklist = [
-        'USDCUSDT',
+        "USDCUSDT",
     ]
-    
-    trend_follow_wasm_path = './wasm/trend_follow.wasm'
+
+    trend_follow_wasm_path = "./wasm/trend_follow.wasm"
 
     event_store = EventStore(LOG_DIR, store_buf_size)
     event_bus = EventDispatcher(num_workers, multi_piority_group)
@@ -96,11 +97,13 @@ async def main():
     ws_handler = BybitWSHandler(WSS)
 
     strategy_generator = TrendFollowStrategyGenerator()
-    
+
     fixed_size_strategy = PositionFixedSizeStrategy(leverage, risk_per_trade)
     break_even_risk = PositionRiskBreakEvenStrategy(break_even_percentage)
     take_profit_strategy = PositionRiskRewardTakeProfitStrategy(risk_reward_ratio)
-    position_factory = PositionFactory(fixed_size_strategy, break_even_risk, take_profit_strategy)
+    position_factory = PositionFactory(
+        fixed_size_strategy, break_even_risk, take_profit_strategy
+    )
 
     trend_follow_squad_factory = SquadFactory(
         SignalActorFactory(trend_follow_wasm_path),
@@ -121,7 +124,7 @@ async def main():
         sample_size,
         max_generations,
         leverage,
-        IS_LIVE_MODE
+        IS_LIVE_MODE,
     )
 
     trading_system = GeneticSystem(context, elite_count, mutation_rate)
@@ -131,23 +134,24 @@ async def main():
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
-        logging.info('Started')
+        logging.info("Started")
         await asyncio.gather(system_task, ws_handler_task, shutdown_task)
     finally:
-        logging.info('Closing...')
-        
+        logging.info("Closing...")
+
         shutdown_task.cancel()
         system_task.cancel()
         ws_handler_task.cancel()
 
         trading_system.stop()
-        
+
         await event_bus.stop()
         await event_bus.wait()
 
         event_store.close()
 
-        logging.info('Finished.')
+        logging.info("Finished.")
+
 
 with asyncio.Runner() as runner:
     runner.run(main())

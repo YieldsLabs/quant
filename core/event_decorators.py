@@ -1,13 +1,13 @@
 import asyncio
-from functools import partial, wraps
 import inspect
+from functools import partial, wraps
 from typing import Callable, Type
 
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.event_store.event_store import EventStore
 
-from .events.base import Event
 from .commands.base import Command
+from .events.base import Event
 from .queries.base import Query
 
 
@@ -21,21 +21,23 @@ def eda(cls: Type):
 
             self._registered_handlers = []
 
-            for _, handler in inspect.getmembers(self.__class__, predicate=inspect.isfunction):
+            for _, handler in inspect.getmembers(
+                self.__class__, predicate=inspect.isfunction
+            ):
                 if hasattr(handler, "event"):
                     event_type = handler.event
                     wrapped_handler = partial(handler, self)
                     self._dispatcher.register(event_type, wrapped_handler)
 
                     self._registered_handlers.append((event_type, wrapped_handler))
-        
+
         async def dispatch(self, event, *args, **kwargs):
             await self._dispatcher.dispatch(event, *args, **kwargs)
             self._store.append(event)
 
         async def query(self, query, *args, **kwargs):
             return await self._dispatcher.query(query, *args, **kwargs)
-        
+
         async def execute(self, command, *args, **kwargs):
             return await self._dispatcher.execute(command, *args, **kwargs)
 
@@ -68,9 +70,12 @@ def eda(cls: Type):
 def event_handler(event_type: Type[Event]) -> Callable[[Callable], Callable]:
     def decorator(handler: Callable) -> Callable:
         if asyncio.iscoroutinefunction(handler):
+
             async def async_wrapped_handler(self, event: Event):
                 return await handler(self, event)
+
         else:
+
             def async_wrapped_handler(self, event: Event):
                 return handler(self, event)
 
@@ -81,14 +86,18 @@ def event_handler(event_type: Type[Event]) -> Callable[[Callable], Callable]:
 
     return decorator
 
+
 def command_handler(command_type: Type[Command]) -> Callable[[Callable], Callable]:
     def decorator(handler: Callable) -> Callable:
         if asyncio.iscoroutinefunction(handler):
+
             async def async_wrapped_handler(self, command: Command):
                 await handler(self, command)
                 command.executed()
                 return
+
         else:
+
             def async_wrapped_handler(self, command: Command):
                 handler(self, command)
                 command.executed()
@@ -100,14 +109,18 @@ def command_handler(command_type: Type[Command]) -> Callable[[Callable], Callabl
 
     return decorator
 
+
 def query_handler(query_type: Type[Query]) -> Callable[[Callable], Callable]:
     def decorator(handler: Callable) -> Callable:
         if asyncio.iscoroutinefunction(handler):
+
             async def async_wrapped_handler(self, query: Query):
                 response = await handler(self, query)
                 query.set_response(response)
                 return
+
         else:
+
             def async_wrapped_handler(self, query: Query):
                 response = handler(self, query)
                 query.set_response(response)

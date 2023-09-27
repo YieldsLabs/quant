@@ -13,8 +13,4 @@ class ATRStopLoss(Indicator):
 
     @property
     def parameters(self):
-        return [
-            self.type,
-            self.period,
-            self.multi
-        ]
+        return [self.type, self.period, self.multi]

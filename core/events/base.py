@@ -1,18 +1,18 @@
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-import uuid
 
 
 class EventGroup(Enum):
-    account = 'account'
-    backtest = 'backtest'
-    market = 'market'
-    portfolio = 'portfolio'
-    position = 'position'
-    risk = 'risk'
-    service = 'service'
-    signal = 'signal'
+    account = "account"
+    backtest = "backtest"
+    market = "market"
+    portfolio = "portfolio"
+    position = "position"
+    risk = "risk"
+    service = "service"
+    signal = "signal"
 
     def __str__(self):
         return self.value
@@ -31,7 +31,7 @@ class EventMeta:
 class Event:
     def to_dict(self):
         res = asdict(self)
-        res['meta']['name'] = self.__class__.__name__
+        res["meta"]["name"] = self.__class__.__name__
         return res
 
 

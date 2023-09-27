@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from ..models.symbol import Symbol
-from ..models.timeframe import Timeframe
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
 
 class AbstractDatasource(ABC):

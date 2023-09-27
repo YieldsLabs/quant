@@ -14,9 +14,9 @@ class Symbol:
     @property
     def fee(self):
         return self.maker_fee + self.taker_fee
-    
+
     def __str__(self):
         return self.name
-    
+
     def __repr__(self) -> str:
         return f"Symbol({self.name})"

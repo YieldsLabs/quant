@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 from core.models.indicator import Indicator
 from core.models.parameter import Parameter, StaticParameter
@@ -18,5 +17,5 @@ class SNATRSignal(Indicator):
             self.atr_period,
             self.atr_smoothing_period,
             self.lower_barrier,
-            self.upper_barrier
+            self.upper_barrier,
         ]

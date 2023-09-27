@@ -13,9 +13,4 @@ class Cross2MovingAverageSignal(Indicator):
 
     @property
     def parameters(self):
-        return [
-            self.ma,
-            self.short_period,
-            self.long_period
-        ]
-
+        return [self.ma, self.short_period, self.long_period]

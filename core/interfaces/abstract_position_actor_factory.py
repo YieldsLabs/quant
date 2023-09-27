@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
 
-from .abstract_actor import AbstractActor
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
-from ..models.strategy import Strategy
-from ..models.symbol import Symbol
-from ..models.timeframe import Timeframe
+from .abstract_actor import AbstractActor
 
 
 class AbstractPositionActorFactory(ABC):
     @abstractmethod
-    def create_actor(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy) -> AbstractActor:
+    def create_actor(
+        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
+    ) -> AbstractActor:
         pass

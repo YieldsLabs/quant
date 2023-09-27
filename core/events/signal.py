@@ -1,17 +1,19 @@
 from dataclasses import asdict, dataclass, field
 
 from core.models.ohlcv import OHLCV
+from core.models.signal import Signal
 
 from .base import Event, EventGroup, EventMeta
-
-from ..models.signal import Signal
 
 
 @dataclass(frozen=True)
 class SignalEvent(Event):
     signal: Signal
     ohlcv: OHLCV
-    meta: EventMeta = field(default_factory=lambda: EventMeta(priority=5, group=EventGroup.signal), init=False)
+    meta: EventMeta = field(
+        default_factory=lambda: EventMeta(priority=5, group=EventGroup.signal),
+        init=False,
+    )
 
 
 @dataclass(frozen=True)
@@ -23,10 +25,10 @@ class SignalEntryEvent(SignalEvent):
         parent_dict = super().to_dict()
 
         current_dict = {
-            'signal': self.signal.to_dict(),
-            'entry_price': self.entry_price,
-            'stop_loss': self.stop_loss,
-            'ohlcv': asdict(self.ohlcv),
+            "signal": self.signal.to_dict(),
+            "entry_price": self.entry_price,
+            "stop_loss": self.stop_loss,
+            "ohlcv": asdict(self.ohlcv),
         }
 
         return {**parent_dict, **current_dict}
@@ -38,10 +40,10 @@ class SignalExitEvent(SignalEvent):
 
     def to_dict(self):
         return {
-            'signal': self.signal.to_dict(),
-            'exit_price': self.exit_price,
-            'ohlcv': asdict(self.ohlcv),
-            'meta': asdict(self.meta)
+            "signal": self.signal.to_dict(),
+            "exit_price": self.exit_price,
+            "ohlcv": asdict(self.ohlcv),
+            "meta": asdict(self.meta),
         }
 
 
