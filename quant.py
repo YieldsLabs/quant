@@ -24,6 +24,9 @@ from risk.risk_actor_factory import RiskActorFactory
 from portfolio.portfolio import Portfolio
 from system.squad_factory import SquadFactory
 from strategy.generator.trend_follow import TrendFollowStrategyGenerator
+from position.risk.break_even import PositionRiskBreakEvenStrategy
+from position.size.fixed import PositionFixedSizeStrategy
+from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
 
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -60,17 +63,19 @@ async def main():
     batch_size = 1597
     backtest_parallel = 2
     sample_size = 13
-    max_generations = 8
+    max_generations = 3
     risk_per_trade = 0.005
     risk_reward_ratio = 2
     risk_buffer = 0.0001
     slippage = 0.0005
+    break_even_percentage = 0.25
     leverage = 1
     initial_account_size = 1000
-    elite_count = 5
+    elite_count = 3
     mutation_rate = 0.05
 
     timeframes = [
+        Timeframe.ONE_MINUTE,
         Timeframe.FIVE_MINUTES,
         Timeframe.FIFTEEN_MINUTES,
     ]
@@ -90,19 +95,24 @@ async def main():
     datasource = BybitDataSource(broker)
     ws_handler = BybitWSHandler(WSS)
 
-    trend_follow_strategy = TrendFollowStrategyGenerator()
+    strategy_generator = TrendFollowStrategyGenerator()
+    
+    fixed_size_strategy = PositionFixedSizeStrategy(leverage, risk_per_trade)
+    break_even_risk = PositionRiskBreakEvenStrategy(break_even_percentage)
+    take_profit_strategy = PositionRiskRewardTakeProfitStrategy(risk_reward_ratio)
+    position_factory = PositionFactory(fixed_size_strategy, break_even_risk, take_profit_strategy)
 
     trend_follow_squad_factory = SquadFactory(
         SignalActorFactory(trend_follow_wasm_path),
         ExecutorActorFactory(slippage),
-        PositionActorFactory(initial_account_size, PositionFactory(leverage, risk_per_trade, risk_reward_ratio)),
+        PositionActorFactory(initial_account_size, position_factory),
         RiskActorFactory(risk_buffer),
     )
 
     context = TradingContext(
         datasource,
         trend_follow_squad_factory,
-        trend_follow_strategy,
+        strategy_generator,
         timeframes,
         blacklist,
         lookback,
