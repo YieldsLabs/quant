@@ -12,6 +12,8 @@ impl Series<f32> {
     pub fn max(&self, rhs: &Series<f32>) -> Self {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(a_val.max(*b_val)),
+            (Some(a_val), None) => Some(*a_val),
+            (None, Some(b_val)) => Some(*b_val),
             _ => None,
         })
     }
@@ -19,6 +21,8 @@ impl Series<f32> {
     pub fn min(&self, rhs: &Series<f32>) -> Self {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(a_val.min(*b_val)),
+            (Some(a_val), None) => Some(*a_val),
+            (None, Some(b_val)) => Some(*b_val),
             _ => None,
         })
     }
@@ -160,6 +164,29 @@ mod tests {
     }
 
     #[test]
+    fn test_max_nan() {
+        let a = Series::from([
+            f32::NAN,
+            44.09,
+            44.15,
+            43.61,
+            44.33,
+            44.83,
+            45.10,
+            45.42,
+            45.84,
+        ]);
+        let b = Series::from([34.34, 44.0, 45.15, 43.60, 14.33, 56.83, 45.10, 45.42, 46.84]);
+        let expected = Series::from([
+            34.34, 44.09, 45.15, 43.61, 44.33, 56.83, 45.10, 45.42, 46.84,
+        ]);
+
+        let result = a.max(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_smin() {
         let source = vec![
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
@@ -199,6 +226,29 @@ mod tests {
         ]);
         let b = Series::from([34.34, 44.0, 45.15, 43.60, 14.33, 56.83, 45.10, 45.42, 46.84]);
         let expected = Series::from([34.34, 44.0, 44.15, 43.60, 14.33, 44.83, 45.10, 45.42, 45.84]);
+
+        let result = a.min(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_min_nan() {
+        let a = Series::from([
+            44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
+        ]);
+        let b = Series::from([
+            f32::NAN,
+            44.0,
+            45.15,
+            43.60,
+            14.33,
+            56.83,
+            45.10,
+            45.42,
+            46.84,
+        ]);
+        let expected = Series::from([44.34, 44.0, 44.15, 43.60, 14.33, 44.83, 45.10, 45.42, 45.84]);
 
         let result = a.min(&b);
 

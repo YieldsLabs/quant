@@ -40,7 +40,7 @@ mod tests {
         let low = Series::from([4.0, 3.0, 4.0, 3.0, 4.0, 4.0, 3.0, 4.0, 3.0, 4.0]);
         let close = Series::from([4.5, 3.5, 4.5, 3.5, 4.5, 4.5, 3.5, 4.5, 3.5, 4.5]);
         let expected = vec![
-            false, false, true, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false,
         ];
 
         let result: Vec<bool> = bullish(&open, &high, &low, &close).into();
@@ -55,7 +55,7 @@ mod tests {
         let low = Series::from([3.5, 2.5, 3.5, 2.5, 3.5, 3.5, 2.5, 3.5, 2.5, 3.5]);
         let close = Series::from([3.5, 2.5, 3.5, 2.5, 3.5, 3.5, 2.5, 3.5, 2.5, 3.5]);
         let expected = vec![
-            false, true, false, true, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false,
         ];
 
         let result: Vec<bool> = bearish(&open, &high, &low, &close).into();
