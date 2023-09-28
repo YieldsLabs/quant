@@ -14,3 +14,23 @@ macro_rules! iff {
         Series::from(data)
     }};
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::Series;
+
+    #[test]
+    fn test_iff() {
+        let a = Series::from([2.0, 5.0, 4.0, 3.0, 5.0]);
+        let b = Series::from([1.0, 0.5, 5.0, 2.0, 8.0]);
+        let one = Series::fill(1.0, a.len());
+        let minus_one = Series::fill(-1.0, a.len());
+        let cond = a.gt(&b);
+
+        let expected = Series::from([1.0, 1.0, -1.0, 1.0, -1.0]);
+
+        let result = iff!(cond, one, minus_one);
+
+        assert_eq!(result, expected);
+    }
+}
