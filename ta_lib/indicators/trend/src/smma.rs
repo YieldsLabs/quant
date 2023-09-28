@@ -10,20 +10,18 @@ mod tests {
 
     #[test]
     fn test_smma() {
-        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = [1.0, 1.333, 1.888, 2.592, 3.395];
-        let epsilon = 0.001;
+        let source = Series::from([
+            6.8575, 6.855, 6.858, 6.86, 6.8480, 6.8575, 6.864, 6.8565, 6.8455, 6.8450, 6.8365,
+            6.8310, 6.8355, 6.8360, 6.8345, 6.8285, 6.8395,
+        ]);
+        let expected = [
+            6.8575, 6.8566666, 6.857111, 6.8580737, 6.8547153, 6.8556433, 6.8584285, 6.857785,
+            6.85369, 6.8507934, 6.846029, 6.8410187, 6.839179, 6.8381195, 6.8369126, 6.8341084,
+            6.835905,
+        ];
 
         let result: Vec<f32> = smma(&source, 3).into();
 
-        for i in 0..source.len() {
-            assert!(
-                (result[i] - expected[i]).abs() < epsilon,
-                "at position {}: {} != {}",
-                i,
-                result[i],
-                expected[i]
-            )
-        }
+        assert_eq!(result, expected)
     }
 }

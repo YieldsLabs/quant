@@ -8,7 +8,11 @@ impl Series<f32> {
         for _ in 0..self.len() {
             let prev = sum.shift(1);
 
-            sum = iff!(prev.na(), seed, alpha * self + (1.0 - alpha) * &prev)
+            sum = iff!(
+                prev.na(),
+                seed,
+                alpha * self + (1.0 - alpha) * prev.nz(Some(0.0))
+            )
         }
 
         sum
