@@ -36,7 +36,10 @@ impl Series<f32> {
     where
         F: Fn(f32, f32) -> bool,
     {
-        self.fmap(|x| x.map(|v| comparator(*v, scalar)))
+        self.fmap(|x| match x {
+            Some(val) => Some(comparator(*val, scalar)),
+            None => Some(comparator(f32::NAN, scalar)),
+        })
     }
 
     fn compare<F>(&self, rhs: &Series<f32>, comparator: F) -> Series<bool>
@@ -45,6 +48,8 @@ impl Series<f32> {
     {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(comparator(*a_val, *b_val)),
+            (None, Some(b_val)) => Some(comparator(f32::NAN, *b_val)),
+            (Some(a_val), None) => Some(comparator(*a_val, f32::NAN)),
             _ => None,
         })
     }
@@ -104,6 +109,138 @@ impl BitOr for Series<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_seq() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let b = 1.0;
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 1.0, 0.0]).into();
+
+        let result = a.seq(b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_sne() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let b = 1.0;
+        let expected: Series<bool> = Series::from([1.0, 1.0, 1.0, 0.0, 1.0]).into();
+
+        let result = a.sne(b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_sgt() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
+        let b = 1.0;
+        let expected: Series<bool> = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
+
+        let result = a.sgt(b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_sgte() {
+        let a = Series::from([f32::NAN, 2.0, 1.0, 1.0, 5.0]);
+        let b = 1.0;
+        let expected: Series<bool> = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
+
+        let result = a.sgte(b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_slt() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
+        let b = 1.0;
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 0.0, 0.0]).into();
+
+        let result = a.slt(b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_slte() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let b = 1.0;
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 1.0, 0.0]).into();
+
+        let result = a.slte(b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_eq() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 1.0, 0.0]).into();
+
+        let result = a.eq(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_ne() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([1.0, 1.0, 1.0, 0.0, 1.0]).into();
+
+        let result = a.ne(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_gt() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([0.0, 1.0, 0.0, 1.0, 1.0]).into();
+
+        let result = a.gt(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_gte() {
+        let a = Series::from([f32::NAN, 2.0, 1.0, 1.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([0.0, 1.0, 0.0, 1.0, 1.0]).into();
+
+        let result = a.gte(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_lt() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([0.0, 0.0, 1.0, 0.0, 0.0]).into();
+
+        let result = a.lt(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_lte() {
+        let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
+        let expected: Series<bool> = Series::from([0.0, 0.0, 1.0, 1.0, 0.0]).into();
+
+        let result = a.lte(&b);
+
+        assert_eq!(result, expected);
+    }
 
     #[test]
     fn test_bitand() {
