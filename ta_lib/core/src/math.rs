@@ -81,7 +81,7 @@ impl Series<f32> {
     }
 
     pub fn std(&self, period: usize) -> Self {
-       self.var(period).sqrt()
+        self.var(period).sqrt()
     }
 
     pub fn md(&self, period: usize) -> Self {
