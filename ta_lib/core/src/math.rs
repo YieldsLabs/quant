@@ -77,22 +77,11 @@ impl Series<f32> {
     }
 
     pub fn var(&self, period: usize) -> Self {
-        let ma: Vec<f32> = self.ma(period).into();
-
-        self.sliding_map(period, |window, size, i| {
-            let ma_val = ma[i];
-            let variance = window
-                .iter()
-                .filter_map(|v| *v)
-                .map(|v| (v - ma_val).powi(2))
-                .sum::<f32>()
-                / size as f32;
-            Some(variance)
-        })
+        self.pow(2).ma(period) - self.ma(period).pow(2)
     }
 
     pub fn std(&self, period: usize) -> Self {
-        self.var(period).sqrt()
+       self.var(period).sqrt()
     }
 
     pub fn md(&self, period: usize) -> Self {
