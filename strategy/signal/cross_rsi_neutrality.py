@@ -5,7 +5,7 @@ from core.models.parameter import Parameter, RandomParameter, StaticParameter
 
 
 @dataclass(frozen=True)
-class RSINautralitySignal(Indicator):
+class RSICrossNautralitySignal(Indicator):
     rsi_period: Parameter = StaticParameter(21.0)
     threshold: Parameter = RandomParameter(3.0, 7.0, 1.0)
 

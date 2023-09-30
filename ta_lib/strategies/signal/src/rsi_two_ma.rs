@@ -41,21 +41,19 @@ impl Signal for RSI2MASignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
         let ma_short = ma_indicator(&self.smoothing, data, self.short_period);
         let ma_long = ma_indicator(&self.smoothing, data, self.long_period);
-        let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
 
         let long_signal = data.close.gt(&ma_short)
             & data.close.gt(&ma_long)
             & ma_short.gt(&ma_long)
-            & rsi.slte(self.lower_barrier)
-            & rsi.shift(1).sgt(self.lower_barrier);
+            & rsi.cross_under_line(self.lower_barrier);
 
         let short_signal = data.close.lt(&ma_short)
             & data.close.lt(&ma_long)
             & ma_short.lt(&ma_long)
-            & rsi.sgte(self.upper_barrier)
-            & rsi.shift(1).slt(self.upper_barrier);
+            & rsi.cross_over_line(self.lower_barrier);
 
         (long_signal, short_signal)
     }

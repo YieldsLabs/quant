@@ -48,32 +48,6 @@ fn map_to_candle(candle: usize) -> TrendCandleType {
 }
 
 #[no_mangle]
-pub fn register_cross2ma(
-    smoothing: f32,
-    short_period: f32,
-    long_period: f32,
-    atr_period: f32,
-    stop_loss_multi: f32,
-) -> i32 {
-    let smoothing = map_to_ma(smoothing as usize);
-    let signal = map_to_signal(SignalConfig::Cross2Ma {
-        smoothing,
-        short_period,
-        long_period,
-    });
-    let filter = map_to_filter(FilterConfig::Dumb {
-        period: long_period,
-    });
-    let stoploss = map_to_stoploss(StopLossConfig::Atr {
-        period: atr_period,
-        multi: stop_loss_multi,
-    });
-    let exit = map_to_exit(ExitConfig::Dumb {});
-
-    register_strategy(signal, filter, stoploss, exit)
-}
-
-#[no_mangle]
 pub fn register_cross3ma(
     smoothing: f32,
     short_period: f32,
@@ -115,39 +89,6 @@ pub fn register_rsicrossn(
         threshold,
     });
     let filter = map_to_filter(FilterConfig::Dumb { period: rsi_period });
-    let stoploss = map_to_stoploss(StopLossConfig::Atr {
-        period: atr_period,
-        multi: stop_loss_multi,
-    });
-    let exit = map_to_exit(ExitConfig::Dumb {});
-
-    register_strategy(signal, filter, stoploss, exit)
-}
-
-#[no_mangle]
-pub fn register_rsima(
-    rsi_period: f32,
-    lower_barrier: f32,
-    upper_barrier: f32,
-    smoothing: f32,
-    smoothing_period: f32,
-    atr_period: f32,
-    stop_loss_multi: f32,
-) -> i32 {
-    let rsi_type = RSIType::RSI;
-    let smoothing = map_to_ma(smoothing as usize);
-
-    let signal = map_to_signal(SignalConfig::RsiMa {
-        rsi_type,
-        rsi_period,
-        lower_barrier,
-        upper_barrier,
-        smoothing,
-        smoothing_period,
-    });
-    let filter = map_to_filter(FilterConfig::Dumb {
-        period: smoothing_period,
-    });
     let stoploss = map_to_stoploss(StopLossConfig::Atr {
         period: atr_period,
         multi: stop_loss_multi,

@@ -64,7 +64,7 @@ async def main():
     batch_size = 1597
     backtest_parallel = 2
     sample_size = 13
-    max_generations = 3
+    max_generations = 5
     risk_per_trade = 0.005
     risk_reward_ratio = 2
     risk_buffer = 0.0001
