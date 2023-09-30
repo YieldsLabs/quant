@@ -1,8 +1,8 @@
 use base::Signal;
 use shared::{MovingAverageType, RSIType, TrendCandleType};
 use signal::{
-    Cross3MASignal, CrossRSINeutralitySignal, RSI2MASignal, SNATRSignal, TestingGroundSignal,
-    TrendCandleSignal,
+    Cross3MASignal, CrossRSINeutralitySignal, CrossTIISignal, RSI2MASignal, SNATRSignal,
+    TestingGroundSignal, TrendCandleSignal,
 };
 
 pub enum SignalConfig {
@@ -36,6 +36,12 @@ pub enum SignalConfig {
     SnAtr {
         atr_period: f32,
         atr_smoothing_period: f32,
+        lower_barrier: f32,
+        upper_barrier: f32,
+    },
+    CrossTIISignal {
+        major_period: f32,
+        minor_period: f32,
         lower_barrier: f32,
         upper_barrier: f32,
     },
@@ -91,6 +97,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         } => Box::new(SNATRSignal::new(
             atr_period,
             atr_smoothing_period,
+            lower_barrier,
+            upper_barrier,
+        )),
+        SignalConfig::CrossTIISignal {
+            major_period,
+            minor_period,
+            lower_barrier,
+            upper_barrier,
+        } => Box::new(CrossTIISignal::new(
+            major_period,
+            minor_period,
             lower_barrier,
             upper_barrier,
         )),

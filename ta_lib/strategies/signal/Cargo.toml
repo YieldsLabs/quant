@@ -8,4 +8,5 @@ edition = "2021"
 core = { path = "../../core" }
 base = { path = "../base" }
 shared = { path = "../shared" }
+trend = { path = "../../indicators/trend" }
 volatility = { path = "../../indicators/volatility" }

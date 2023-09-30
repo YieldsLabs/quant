@@ -76,7 +76,7 @@ pub fn register_cross3ma(
 }
 
 #[no_mangle]
-pub fn register_rsicrossn(
+pub fn register_crossrsin(
     rsi_period: f32,
     threshold: f32,
     atr_period: f32,
@@ -89,6 +89,35 @@ pub fn register_rsicrossn(
         threshold,
     });
     let filter = map_to_filter(FilterConfig::Dumb { period: rsi_period });
+    let stoploss = map_to_stoploss(StopLossConfig::Atr {
+        period: atr_period,
+        multi: stop_loss_multi,
+    });
+    let exit = map_to_exit(ExitConfig::Dumb {});
+
+    register_strategy(signal, filter, stoploss, exit)
+}
+
+#[no_mangle]
+pub fn register_crosstii(
+    major_period: f32,
+    minor_period: f32,
+    lower_barrier: f32,
+    upper_barrier: f32,
+    smoothing: f32,
+    period: f32,
+    atr_period: f32,
+    stop_loss_multi: f32,
+) -> i32 {
+    let smoothing = map_to_ma(smoothing as usize);
+
+    let signal = map_to_signal(SignalConfig::CrossTIISignal {
+        major_period,
+        minor_period,
+        lower_barrier,
+        upper_barrier,
+    });
+    let filter = map_to_filter(FilterConfig::Ma { smoothing, period });
     let stoploss = map_to_stoploss(StopLossConfig::Atr {
         period: atr_period,
         multi: stop_loss_multi,
