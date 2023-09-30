@@ -1,6 +1,6 @@
 use core::{iff, Series};
 
-pub fn di(
+pub fn dmi(
     high: &Series<f32>,
     low: &Series<f32>,
     atr: &Series<f32>,
@@ -32,7 +32,7 @@ mod tests {
     use volatility::atr;
 
     #[test]
-    fn test_di() {
+    fn test_dmi() {
         let high = Series::from([
             6.8430, 6.8660, 6.8685, 6.8690, 6.865, 6.8595, 6.8565, 6.862, 6.859, 6.86, 6.8580,
             6.8605, 6.8620, 6.86, 6.859, 6.8670, 6.8640, 6.8575, 6.8485, 6.8450, 6.8365, 6.84,
@@ -71,7 +71,7 @@ mod tests {
         ];
 
         let (result_adx, result_di_plus, result_di_minus) =
-            di(&high, &low, &atr, smoothing_period, di_period);
+            dmi(&high, &low, &atr, smoothing_period, di_period);
 
         let adx: Vec<f32> = result_adx.into();
         let di_plus: Vec<f32> = result_di_plus.into();
