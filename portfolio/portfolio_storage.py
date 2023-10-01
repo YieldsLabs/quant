@@ -3,7 +3,6 @@ from typing import Dict
 
 from core.models.portfolio import Performance
 from core.models.position import Position
-from core.models.signal import Signal
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -43,12 +42,13 @@ class PortfolioStorage:
     async def reset(self, symbol, timeframe, strategy):
         async with self._lock:
             key = self._get_key(symbol, timeframe, strategy)
-
             self.data[key] = {}
 
-    async def get_total_pnl(self, signal: Signal):
+    async def get_total_pnl(
+        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
+    ):
         async with self._lock:
-            key = self._get_key(signal.symbol, signal.timeframe, signal.strategy)
+            key = self._get_key(symbol, timeframe, strategy)
             performance = self.data.get(key)
 
             return performance.total_pnl if performance else 0

@@ -15,6 +15,7 @@ from strategy.signal.cross_rsi_neutrality import CrossRSINautralitySignal
 from strategy.signal.cross_three_ma import Cross3MovingAverageSignal
 from strategy.signal.cross_tii import CrossTIISignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
+from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
 from strategy.signal.testing_ground import TestingGroundSignal
 from strategy.stop_loss.atr import ATRStopLoss
@@ -23,11 +24,12 @@ from strategy.stop_loss.atr import ATRStopLoss
 class StrategyTypes(Enum):
     Cross3Ma = auto()
     CrossTii = auto()
+    CrossRsiN = auto()
     Ground = auto()
     SnAtr = auto()
-    Candle = auto()
+    TrendCandle = auto()
     Rsi2Ma = auto()
-    CrossRsiN = auto()
+    RsiVma = auto()
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
@@ -73,7 +75,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         _long_period = RandomParameter(50.0, 200.0, 10.0)
         ma_medium_period = RandomParameter(50.0, 100.0, 5.0)
         ma_short_period, ma_long_period = sorted([_short_period, _long_period])
-        ma_filter_period = RandomParameter(50.0, 200.0, 50.0)
+        ma_filter_period = RandomParameter(100.0, 300.0, 25.0)
         rsi_lower_barrier = RandomParameter(5.0, 15.0, 1.0)
         rsi_upper_barrier = RandomParameter(75.0, 95, 1.0)
         atr_multi = RandomParameter(0.85, 2, 0.05)
@@ -99,8 +101,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ma_filter,
                 stop_loss,
             ),
-            StrategyTypes.Candle: (
-                "candle",
+            StrategyTypes.TrendCandle: (
+                "candlet",
                 TrendCandleSignal(trend_candle_type),
                 ma_filter,
                 stop_loss,
@@ -125,6 +127,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 "crossrsin",
                 CrossRSINautralitySignal(),
                 DumbFilter(),
+                stop_loss,
+            ),
+            StrategyTypes.RsiVma: (
+                "rsivma",
+                RSIVSignal(
+                    lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier
+                ),
+                ma_filter,
                 stop_loss,
             ),
         }

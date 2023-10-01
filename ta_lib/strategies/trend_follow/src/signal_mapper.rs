@@ -1,8 +1,8 @@
 use base::Signal;
 use shared::{MovingAverageType, RSIType, TrendCandleType};
 use signal::{
-    Cross3MASignal, CrossRSINeutralitySignal, CrossTIISignal, RSI2MASignal, SNATRSignal,
-    TestingGroundSignal, TrendCandleSignal,
+    Cross3MASignal, CrossRSINeutralitySignal, CrossTIISignal, RSI2MASignal, RSIVSignal,
+    SNATRSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 pub enum SignalConfig {
@@ -26,6 +26,12 @@ pub enum SignalConfig {
         short_period: f32,
         long_period: f32,
     },
+    RsiV {
+        rsi_type: RSIType,
+        rsi_period: f32,
+        lower_barrier: f32,
+        upper_barrier: f32,
+    },
     Testground {
         smoothing: MovingAverageType,
         smoothing_period: f32,
@@ -39,7 +45,7 @@ pub enum SignalConfig {
         lower_barrier: f32,
         upper_barrier: f32,
     },
-    CrossTIISignal {
+    CrossTII {
         major_period: f32,
         minor_period: f32,
         lower_barrier: f32,
@@ -100,7 +106,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             lower_barrier,
             upper_barrier,
         )),
-        SignalConfig::CrossTIISignal {
+        SignalConfig::CrossTII {
             major_period,
             minor_period,
             lower_barrier,
@@ -108,6 +114,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         } => Box::new(CrossTIISignal::new(
             major_period,
             minor_period,
+            lower_barrier,
+            upper_barrier,
+        )),
+        SignalConfig::RsiV {
+            rsi_type,
+            rsi_period,
+            lower_barrier,
+            upper_barrier,
+        } => Box::new(RSIVSignal::new(
+            rsi_type,
+            rsi_period,
             lower_barrier,
             upper_barrier,
         )),

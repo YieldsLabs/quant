@@ -209,9 +209,14 @@ class GeneticSystem(AbstractSystem):
     async def _run_trading(self):
         logger.info("Run trading")
 
-        strategies = await self.query(GetTopStrategy(num=1))
+        strategies = await self.query(GetTopStrategy(num=3))
 
-        logger.info(strategies)
+        logger.info(
+            [
+                f"{str(strategy[0])}_{str(strategy[1])}{str(strategy[2])}"
+                for strategy in strategies
+            ]
+        )
 
         symbols_and_timeframes = [(strategy[0], strategy[1]) for strategy in strategies]
 

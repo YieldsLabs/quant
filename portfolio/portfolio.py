@@ -68,11 +68,22 @@ class Portfolio(AbstractEventManager):
 
     @query_handler(GetTopStrategy)
     async def top_strategies(self, query: GetTopStrategy):
-        return await self.strategy.get_top(query.num)
+        strategies = await self.strategy.get_top(query.num)
+
+        results = [
+            (symbol, timeframe, strategy)
+            for symbol, timeframe, strategy in strategies
+            if await self.state.get_total_pnl(symbol, timeframe, strategy) > 0
+        ]
+
+        return results
 
     @query_handler(GetTotalPnL)
     async def total_pnl(self, query: GetTotalPnL):
-        return await self.state.get_total_pnl(query.signal)
+        signal = query.signal
+        return await self.state.get_total_pnl(
+            signal.symbol, signal.timeframe, signal.strategy
+        )
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):

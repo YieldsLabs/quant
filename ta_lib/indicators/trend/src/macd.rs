@@ -4,14 +4,14 @@ pub fn macd(
     source: &Series<f32>,
     fast_period: usize,
     slow_period: usize,
-    signal_period: usize,
+    signal_smoothing: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let ema_fast = source.ema(fast_period);
     let ema_slow = source.ema(slow_period);
 
     let macd_line = ema_fast - ema_slow;
 
-    let signal_line = macd_line.ema(signal_period);
+    let signal_line = macd_line.ema(signal_smoothing);
 
     let histogram = &macd_line - &signal_line;
 
@@ -27,7 +27,7 @@ mod tests {
         let source = Series::from([2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0]);
         let fast_period = 3;
         let slow_period = 5;
-        let signal_period = 4;
+        let signal_smoothing = 4;
         let epsilon = 0.001;
         let expected_macd_line = [
             0.0, 0.33333, 0.72222, 1.0648, 1.334877, 1.035751, 0.596751, 0.184292, -0.150576,
@@ -41,7 +41,7 @@ mod tests {
         ];
 
         let (macd_line, signal_line, histogram) =
-            macd(&source, fast_period, slow_period, signal_period);
+            macd(&source, fast_period, slow_period, signal_smoothing);
 
         let result_macd_line: Vec<f32> = macd_line.into();
         let result_signal_line: Vec<f32> = signal_line.into();
