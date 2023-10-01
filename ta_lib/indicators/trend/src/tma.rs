@@ -1,9 +1,7 @@
 use core::Series;
 
 pub fn tma(source: &Series<f32>, period: usize) -> Series<f32> {
-    let sma = source.ma(period);
-
-    sma.ma(period)
+    source.ma(period).ma(period)
 }
 
 #[cfg(test)]

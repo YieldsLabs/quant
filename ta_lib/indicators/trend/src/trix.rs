@@ -1,9 +1,7 @@
 use core::Series;
 
 pub fn trix(source: &Series<f32>, period: usize) -> Series<f32> {
-    let ema1 = source.ema(period);
-    let ema2 = ema1.ema(period);
-    let ema3 = ema2.ema(period);
+    let ema3 = source.ema(period).ema(period).ema(period);
 
     10000.0 * (&ema3 / ema3.shift(1) - 1.0)
 }

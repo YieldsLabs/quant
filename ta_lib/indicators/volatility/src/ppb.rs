@@ -7,11 +7,8 @@ pub fn ppb(
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let hstd = high.std(period);
-    let lstd = low.std(period);
-
-    let ppvih = hstd.highest(period) * factor;
-    let ppvil = lstd.lowest(period) * factor;
+    let ppvih = high.std(period).highest(period) * factor;
+    let ppvil = low.std(period).lowest(period) * factor;
 
     let middle_band = close.ma(period);
 
