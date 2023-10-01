@@ -33,25 +33,25 @@ impl<T: Clone> Series<T> {
 
     pub fn sliding_map<U, F>(&self, period: usize, mut f: F) -> Series<U>
     where
-        F: FnMut(&[Option<T>], usize, usize) -> Option<U>,
+        F: FnMut(&[Option<T>], f32, usize) -> Option<U>,
         U: Clone,
     {
         let len = self.len();
-        let mut result = Series::<U>::empty(len);
+        let mut data = vec![None; len];
         let mut window = vec![None; period];
         let mut pos = 0;
 
         for i in 0..len {
-            window[pos] = self[i].clone();
+            window[pos] = self.data[i].clone();
 
             let size = (i + 1).min(period);
 
-            result[i] = f(&window[0..size], size, i);
+            data[i] = f(&window[0..size], size as f32, i);
 
             pos = (pos + 1) % period;
         }
 
-        result
+        Series { data }
     }
 
     pub fn empty(length: usize) -> Self {
@@ -98,14 +98,11 @@ impl Series<f32> {
         F: Fn(&f32, &f32) -> bool,
     {
         self.sliding_map(period, |window, _, _| {
-            window
-                .iter()
-                .filter_map(|&val| val)
-                .fold(None, |acc, x| match acc {
-                    Some(acc_val) if comparison(&x, &acc_val) => Some(x),
-                    Some(_) => acc,
-                    None => Some(x),
-                })
+            window.iter().flatten().fold(None, |acc, x| match acc {
+                Some(acc_val) if comparison(&x, &acc_val) => Some(*x),
+                Some(_) => acc,
+                None => Some(*x),
+            })
         })
     }
 

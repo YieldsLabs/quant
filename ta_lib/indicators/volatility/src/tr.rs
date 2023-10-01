@@ -2,12 +2,12 @@ use core::{iff, Series};
 
 pub fn tr(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
     let prev_close = close.shift(1);
+    let diff = high - low;
 
     iff!(
         high.shift(1).na(),
-        high - low,
-        (high - low)
-            .max(&(high - &prev_close).abs())
+        diff,
+        diff.max(&(high - &prev_close).abs())
             .max(&(low - &prev_close).abs())
     )
 }

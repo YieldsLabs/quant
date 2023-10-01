@@ -71,9 +71,7 @@ impl Series<f32> {
     }
 
     pub fn sum(&self, period: usize) -> Self {
-        self.sliding_map(period, |window, _, _| {
-            Some(window.iter().filter_map(|v| *v).sum())
-        })
+        self.sliding_map(period, |window, _, _| Some(window.iter().flatten().sum()))
     }
 
     pub fn var(&self, period: usize) -> Self {
@@ -87,14 +85,13 @@ impl Series<f32> {
     pub fn md(&self, period: usize) -> Self {
         let ma: Vec<f32> = self.ma(period).into();
         self.sliding_map(period, |window, size, i| {
-            let mean = ma[i];
             Some(
                 window
                     .iter()
-                    .filter_map(|v| *v)
-                    .map(|v| (v - mean).abs())
+                    .flatten()
+                    .map(|v| (v - ma[i]).abs())
                     .sum::<f32>()
-                    / size as f32,
+                    / size,
             )
         })
     }

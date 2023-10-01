@@ -20,7 +20,7 @@ impl Series<f32> {
 
     pub fn ma(&self, period: usize) -> Self {
         self.sliding_map(period, |window, size, _| {
-            Some(window.iter().filter_map(|v| *v).sum::<f32>() / size as f32)
+            Some(window.iter().flatten().sum::<f32>() / size)
         })
     }
 
@@ -72,11 +72,10 @@ mod tests {
 
     #[test]
     fn test_ma() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(1.5), Some(2.0), Some(3.0), Some(4.0)];
-        let series = Series::from(&source);
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 1.5, 2.0, 3.0, 4.0]);
 
-        let result = series.ma(3);
+        let result = source.ma(3);
 
         assert_eq!(result, expected);
     }
