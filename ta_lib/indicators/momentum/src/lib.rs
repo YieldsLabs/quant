@@ -7,6 +7,7 @@ mod rsi;
 mod sso;
 mod stoch;
 mod stochosc;
+mod tsi;
 
 pub use aosc::aosc;
 pub use cc::cc;
@@ -17,3 +18,4 @@ pub use rsi::rsi;
 pub use sso::sso;
 use stoch::stoch;
 pub use stochosc::stochosc;
+pub use tsi::tsi;
