@@ -25,4 +25,13 @@ class Command(Event):
         concatenated = f"{self.__class__.__name__}{attribute_values}"
         idempotency_key = hashlib.sha256(concatenated.encode("utf-8")).hexdigest()
 
-        object.__setattr__(self, "meta", EventMeta(priority=1, key=idempotency_key))
+        object.__setattr__(
+            self,
+            "meta",
+            EventMeta(
+                priority=self.meta.priority,
+                group=self.meta.group,
+                version=self.meta.version,
+                key=idempotency_key,
+            ),
+        )
