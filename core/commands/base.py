@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 from dataclasses import dataclass, field, fields
+from datetime import datetime, timedelta
 
 from core.events.base import Event, EventMeta
 
@@ -22,7 +23,8 @@ class Command(Event):
             for field in fields(self)
             if field.name not in ["meta", "_execution_event"]
         ]
-        concatenated = f"{self.__class__.__name__}{attribute_values}"
+        expiration = datetime.now() + timedelta(seconds=5)
+        concatenated = f"{self.__class__.__name__}{attribute_values}{expiration}"
         idempotency_key = hashlib.sha256(concatenated.encode("utf-8")).hexdigest()
 
         object.__setattr__(
