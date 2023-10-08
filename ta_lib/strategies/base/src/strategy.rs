@@ -3,6 +3,7 @@ use crate::{Exit, Filter, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
+const DEFAULT_STOP_LEVEL: f32 = -1.0;
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {
@@ -65,6 +66,10 @@ impl BaseStrategy {
     fn can_process(&self) -> bool {
         self.data.len() >= self.lookback_period
     }
+
+    fn ohlcv_series(&self) -> OHLCVSeries {
+        OHLCVSeries::from_data(&self.data)
+    }
 }
 
 impl Strategy for BaseStrategy {
@@ -75,27 +80,11 @@ impl Strategy for BaseStrategy {
             return TradeAction::DoNothing;
         }
 
-        let series = OHLCVSeries::from_data(&self.data);
+        let series = self.ohlcv_series();
 
-        let (go_long_signal, go_short_signal) = self.signal.generate(&series);
-        let (go_long_filter, go_short_filter) = self.filter.apply(&series);
-
-        let go_long_series = go_long_signal & go_long_filter;
-        let go_short_series = go_short_signal & go_short_filter;
-
-        let go_long = go_long_series.last().unwrap_or_default();
-        let go_short = go_short_series.last().unwrap_or_default();
-
-        let (exit_long_series, exit_short_series) = self.exit.generate(&series);
-
-        let exit_long = exit_long_series.last().unwrap_or_default();
-        let exit_short = exit_short_series.last().unwrap_or_default();
-
-        let suggested_entry = series.hlc3().last().unwrap_or(std::f32::NAN);
-
-        match (go_long, go_short, exit_long, exit_short) {
-            (true, _, _, _) => TradeAction::GoLong(suggested_entry),
-            (_, true, _, _) => TradeAction::GoShort(suggested_entry),
+        match self.trade_signals(&series) {
+            (true, _, _, _) => TradeAction::GoLong(self.suggested_entry(&series)),
+            (_, true, _, _) => TradeAction::GoShort(self.suggested_entry(&series)),
             (_, _, true, _) => TradeAction::ExitLong,
             (_, _, _, true) => TradeAction::ExitShort,
             _ => TradeAction::DoNothing,
@@ -105,22 +94,50 @@ impl Strategy for BaseStrategy {
     fn stop_loss(&self) -> StopLossLevels {
         if !self.can_process() {
             return StopLossLevels {
-                long: -1.0,
-                short: -1.0,
+                long: DEFAULT_STOP_LEVEL,
+                short: DEFAULT_STOP_LEVEL,
             };
         }
 
-        let series = OHLCVSeries::from_data(&self.data);
-
-        let (stop_loss_long_series, stop_loss_short_series) = self.stop_loss.next(&series);
-
-        let stop_loss_long = stop_loss_long_series.last().unwrap_or_default();
-        let stop_loss_short = stop_loss_short_series.last().unwrap_or_default();
+        let series = self.ohlcv_series();
+        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&series);
 
         StopLossLevels {
             long: stop_loss_long,
             short: stop_loss_short,
         }
+    }
+}
+
+impl BaseStrategy {
+    fn trade_signals(&self, series: &OHLCVSeries) -> (bool, bool, bool, bool) {
+        let (go_long_signal, go_short_signal) = self.signal.generate(&series);
+        let (go_long_filter, go_short_filter) = self.filter.apply(&series);
+
+        let go_long_series = go_long_signal & go_long_filter;
+        let go_short_series = go_short_signal & go_short_filter;
+
+        let (exit_long_series, exit_short_series) = self.exit.generate(&series);
+
+        let go_long = go_long_series.last().unwrap_or_default();
+        let go_short = go_short_series.last().unwrap_or_default();
+        let exit_long = exit_long_series.last().unwrap_or_default();
+        let exit_short = exit_short_series.last().unwrap_or_default();
+
+        (go_long, go_short, exit_long, exit_short)
+    }
+
+    fn suggested_entry(&self, series: &OHLCVSeries) -> f32 {
+        series.hlc3().last().unwrap_or(std::f32::NAN)
+    }
+
+    fn stop_loss_levels(&self, series: &OHLCVSeries) -> (f32, f32) {
+        let (stop_loss_long_series, stop_loss_short_series) = self.stop_loss.next(&series);
+
+        let stop_loss_long = stop_loss_long_series.last().unwrap_or_default();
+        let stop_loss_short = stop_loss_short_series.last().unwrap_or_default();
+
+        (stop_loss_long, stop_loss_short)
     }
 }
 
