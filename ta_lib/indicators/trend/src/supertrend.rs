@@ -6,8 +6,9 @@ pub fn supertrend(
     atr: &Series<f32>,
     factor: f32,
 ) -> Series<f32> {
-    let basic_upper_band = hl2 + (atr * factor);
-    let basic_lower_band = hl2 - (atr * factor);
+    let atr_mul = atr * factor;
+    let basic_upper_band = hl2 + &atr_mul;
+    let basic_lower_band = hl2 - &atr_mul;
 
     let prev_upper_band = basic_upper_band.shift(1);
     let prev_lower_band = basic_lower_band.shift(1);
@@ -16,40 +17,31 @@ pub fn supertrend(
     let prev_final_lower_band = iff!(prev_lower_band.na(), basic_lower_band, prev_lower_band);
     let prev_close = close.shift(1);
 
-    let final_upper_band = iff!(
-        basic_upper_band.lt(&prev_final_upper_band) | prev_close.gt(&prev_final_upper_band),
-        basic_upper_band,
-        prev_final_upper_band
-    );
+    let cond_upper =
+        basic_upper_band.lt(&prev_final_upper_band) | prev_close.gt(&prev_final_upper_band);
+    let cond_lower =
+        basic_lower_band.gt(&prev_final_lower_band) | prev_close.lt(&prev_final_lower_band);
 
-    let final_lower_band = iff!(
-        basic_lower_band.gt(&prev_final_lower_band) | prev_close.lt(&prev_final_lower_band),
-        basic_lower_band,
-        prev_final_lower_band
-    );
+    let final_upper_band = iff!(cond_upper, &basic_upper_band, &prev_final_upper_band);
+    let final_lower_band = iff!(cond_lower, &basic_lower_band, &prev_final_lower_band);
 
-    let mut super_trend = iff!(
-        final_lower_band.eq(&prev_final_lower_band) & close.lt(&final_lower_band),
-        final_upper_band,
-        final_upper_band
-    );
-
-    super_trend = iff!(
-        final_lower_band.eq(&prev_final_lower_band) & close.gte(&final_lower_band),
-        final_lower_band,
-        super_trend
-    );
-
-    super_trend = iff!(
-        final_lower_band.eq(&prev_final_upper_band) & close.gt(&final_upper_band),
-        final_lower_band,
-        super_trend
-    );
+    let cond1 = final_lower_band.eq(&prev_final_lower_band) & close.lt(&final_lower_band);
+    let cond2 = final_lower_band.eq(&prev_final_lower_band) & close.gte(&final_lower_band);
+    let cond3 = final_lower_band.eq(&prev_final_upper_band) & close.gt(&final_upper_band);
+    let cond4 = final_lower_band.eq(&prev_final_upper_band) & close.lte(&final_upper_band);
 
     iff!(
-        final_lower_band.eq(&prev_final_upper_band) & close.lte(&final_upper_band),
+        cond4,
         final_upper_band,
-        super_trend
+        iff!(
+            cond3,
+            final_lower_band,
+            iff!(
+                cond2,
+                final_lower_band,
+                iff!(cond1, final_upper_band, final_upper_band)
+            )
+        )
     )
 }
 
@@ -62,28 +54,41 @@ mod tests {
     #[test]
     fn test_supertrend() {
         let high = Series::from([
-            6.86, 6.8580, 6.8605, 6.8620, 6.86, 6.8590, 6.8670, 6.8640, 6.8575, 6.8485, 6.8450,
-            6.8365, 6.84, 6.8385, 6.8365,
+            7.1135, 7.1135, 7.116, 7.1225, 7.121, 7.136, 7.142, 7.1405, 7.1125, 7.1360, 7.1350,
+            7.1550, 7.1590, 7.1505, 7.1460, 7.1505, 7.1555, 7.1575, 7.1550, 7.1445, 7.1540, 7.1525,
+            7.1495, 7.1390, 7.1375, 7.1395, 7.1290, 7.1280, 7.1280, 7.1355, 7.1280, 7.1310, 7.1275,
+            7.1250, 7.1270, 7.1230, 7.1210, 7.1325, 7.1355, 7.142, 7.14, 7.1260, 7.1870,
         ]);
         let low = Series::from([
-            6.8530, 6.8550, 6.8550, 6.8565, 6.8475, 6.8480, 6.8535, 6.8565, 6.8455, 6.8445, 6.8365,
-            6.8310, 6.8310, 6.8345, 6.8325,
+            7.0935, 7.088, 7.088, 7.1075, 7.1135, 7.1185, 7.119, 7.112, 7.1, 7.1055, 7.1160,
+            7.1285, 7.1480, 7.1375, 7.1370, 7.1405, 7.1440, 7.1460, 7.1375, 7.1355, 7.1440, 7.1420,
+            7.1365, 7.1280, 7.1305, 7.1250, 7.1145, 7.1035, 7.1135, 7.1175, 7.1220, 7.1225, 7.1180,
+            7.1180, 7.1125, 7.1055, 7.1115, 7.12, 7.126, 7.1295, 7.114, 7.1160, 7.1235,
         ]);
         let close = Series::from([
-            6.8575, 6.8550, 6.6580, 6.86, 6.8480, 6.8575, 6.8640, 6.8565, 6.8455, 6.8450, 6.8365,
-            6.8310, 6.8355, 6.8360, 6.8345,
+            7.1135, 7.088, 7.112, 7.1205, 7.1195, 7.136, 7.1405, 7.112, 7.1095, 7.1220, 7.1310,
+            7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495, 7.1515, 7.1415, 7.1445, 7.1525, 7.1440,
+            7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135, 7.1280, 7.1220, 7.1230, 7.1225, 7.1180,
+            7.1250, 7.1230, 7.1130, 7.1210, 7.13, 7.134, 7.132, 7.116, 7.1235, 7.1645,
         ]);
         let hl2 = median_price(&high, &low);
-        let atr_period = 3;
+        let atr_period = 2;
         let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+
         let factor = 3.0;
         let expected = vec![
-            6.8355002, 6.8734994, 6.8734994, 6.874583, 7.009732, 6.968488, 6.950409, 6.9278555,
-            6.9085703, 6.8885465, 6.8044534, 6.804219, 6.863604, 6.859769, 6.854013,
+            7.0435004, 7.0435004, 7.0324993, 7.1755624, 7.158781, 7.158781, 7.080235, 7.0724916,
+            7.0544963, 7.0516224, 7.190532, 7.190532, 7.206133, 7.1008663, 7.177908, 7.177908,
+            7.178704, 7.1836014, 7.1175737, 7.175169, 7.175169, 7.116416, 7.115208, 7.1074786,
+            7.16163, 7.1063695, 7.0966845, 7.082217, 7.170758, 7.170758, 7.1600013, 7.157001,
+            7.096499, 7.1466875, 7.0963125, 7.085407, 7.1522107, 7.1522107, 7.162981, 7.1633654,
+            7.100692, 7.1642647, 7.077736,
         ];
 
         let result: Vec<f32> = supertrend(&hl2, &close, &atr, factor).into();
 
+        assert_eq!(high.len(), low.len());
+        assert_eq!(high.len(), close.len());
         assert_eq!(result, expected);
     }
 }
