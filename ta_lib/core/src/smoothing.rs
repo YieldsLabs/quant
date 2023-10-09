@@ -81,7 +81,7 @@ impl Series<f32> {
 
         let intercept = &y_mean - &slope * &x_mean;
 
-        &intercept + &slope * &x * (period - 1) as f32
+        &intercept + &slope * &x
     }
 }
 
