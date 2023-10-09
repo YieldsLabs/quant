@@ -64,6 +64,25 @@ impl Series<f32> {
 
         (2.0 * self.wma(lag) - self.wma(period)).wma(sqrt_period)
     }
+
+    pub fn linreg(&self, period: usize) -> Self {
+        let x = Series::from((0..self.len()).map(|i| i as f32).collect::<Vec<f32>>());
+
+        let x_mean = x.ma(period);
+        let y_mean = self.ma(period);
+
+        let xy = &x * self;
+        let xx = &x.pow(2);
+
+        let xy_ma = xy.ma(period);
+        let xx_ma = xx.ma(period);
+
+        let slope = (&xy_ma - &x_mean * &y_mean) / (&xx_ma - &x_mean * &x_mean);
+
+        let intercept = &y_mean - &slope * &x_mean;
+
+        &intercept + &slope * &x * (period - 1) as f32
+    }
 }
 
 #[cfg(test)]
@@ -129,6 +148,69 @@ mod tests {
         let expected = vec![None, None, None, Some(2.5), Some(3.5)];
 
         let result = source.swma();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_linreg() {
+        let source = Series::from([
+            7.1135, 7.088, 7.112, 7.1205, 7.1195, 7.136, 7.1405, 7.112, 7.1095, 7.1220, 7.1310,
+            7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495, 7.1515, 7.1415, 7.1445, 7.1525, 7.1440,
+            7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135, 7.1280, 7.1220, 7.1230, 7.1225, 7.1180,
+            7.1250, 7.1230, 7.1130, 7.1210, 7.13, 7.134, 7.132, 7.116, 7.1235, 7.1645, 7.1565,
+            7.1560,
+        ]);
+
+        let expected = vec![
+            None,
+            Some(7.0624995),
+            Some(7.102251),
+            Some(7.1718354),
+            Some(7.136087),
+            Some(7.1718364),
+            Some(7.2054996),
+            Some(7.0335073),
+            Some(6.981158),
+            Some(7.164454),
+            Some(7.2391653),
+            Some(7.3338923),
+            Some(7.2552056),
+            Some(7.068245),
+            Some(7.0880384),
+            Some(7.1465125),
+            Some(7.2213187),
+            Some(7.2159),
+            Some(7.0711784),
+            Some(7.0757947),
+            Some(7.2615247),
+            Some(7.141461),
+            Some(6.9665647),
+            Some(6.975116),
+            Some(7.1412935),
+            Some(7.0595913),
+            Some(6.876892),
+            Some(6.9576726),
+            Some(7.2502594),
+            Some(7.248879),
+            Some(7.0477057),
+            Some(7.130556),
+            Some(7.0388403),
+            Some(7.1638584),
+            Some(7.209324),
+            Some(6.905263),
+            Some(7.082582),
+            Some(7.4466395),
+            Some(7.3818574),
+            Some(7.1722856),
+            Some(6.757575),
+            Some(6.946943),
+            Some(8.177974),
+            Some(7.875323),
+            Some(6.9674144),
+        ];
+
+        let result = source.linreg(3);
 
         assert_eq!(result, expected);
     }
