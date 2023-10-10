@@ -1,53 +1,11 @@
+use crate::candle_mapper::map_to_candle;
 use crate::exit_mapper::{map_to_exit, ExitConfig};
 use crate::filter_mapper::{map_to_filter, FilterConfig};
+use crate::ma_mapper::map_to_ma;
+use crate::rsi_mapper::map_to_rsi;
 use crate::signal_mapper::{map_to_signal, SignalConfig};
 use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
 use base::register_strategy;
-use shared::{MovingAverageType, RSIType, TrendCandleType};
-
-fn map_to_ma(smoothing: usize) -> MovingAverageType {
-    match smoothing {
-        1 => MovingAverageType::ALMA,
-        2 => MovingAverageType::DEMA,
-        3 => MovingAverageType::EMA,
-        4 => MovingAverageType::FRAMA,
-        5 => MovingAverageType::GMA,
-        6 => MovingAverageType::HMA,
-        7 => MovingAverageType::KAMA,
-        8 => MovingAverageType::LSMA,
-        9 => MovingAverageType::RMSMA,
-        10 => MovingAverageType::SINWMA,
-        11 => MovingAverageType::SMA,
-        12 => MovingAverageType::SMMA,
-        13 => MovingAverageType::TTHREE,
-        14 => MovingAverageType::TEMA,
-        15 => MovingAverageType::TMA,
-        16 => MovingAverageType::VWMA,
-        17 => MovingAverageType::WMA,
-        18 => MovingAverageType::ZLEMA,
-        19 => MovingAverageType::ZLSMA,
-        _ => MovingAverageType::SMA,
-    }
-}
-
-fn map_to_candle(candle: usize) -> TrendCandleType {
-    match candle {
-        1 => TrendCandleType::BOTTLE,
-        2 => TrendCandleType::DOUBLE_TROUBLE,
-        3 => TrendCandleType::GOLDEN,
-        4 => TrendCandleType::H,
-        5 => TrendCandleType::HEXAD,
-        6 => TrendCandleType::HIKKAKE,
-        7 => TrendCandleType::MARUBOZU,
-        8 => TrendCandleType::MASTER_CANDLE,
-        9 => TrendCandleType::QUINTUPLETS,
-        10 => TrendCandleType::SLINGSHOT,
-        11 => TrendCandleType::THREE_CANDLES,
-        12 => TrendCandleType::THREE_METHODS,
-        13 => TrendCandleType::TASUKI,
-        _ => TrendCandleType::THREE_CANDLES,
-    }
-}
 
 #[no_mangle]
 pub fn register_cross3ma(
@@ -108,12 +66,13 @@ pub fn register_crosstii(
 
 #[no_mangle]
 pub fn register_crossrsin(
+    rsi_type: f32,
     rsi_period: f32,
     threshold: f32,
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_type = RSIType::RSI;
+    let rsi_type = map_to_rsi(rsi_type as usize);
     let signal = map_to_signal(SignalConfig::RsiNeutralityCross {
         rsi_type,
         rsi_period,
@@ -131,6 +90,7 @@ pub fn register_crossrsin(
 
 #[no_mangle]
 pub fn register_rsivma(
+    rsi_type: f32,
     rsi_period: f32,
     lower_barrier: f32,
     upper_barrier: f32,
@@ -139,7 +99,7 @@ pub fn register_rsivma(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_type = RSIType::RSI;
+    let rsi_type = map_to_rsi(rsi_type as usize);
     let smoothing = map_to_ma(smoothing as usize);
 
     let signal = map_to_signal(SignalConfig::RsiV {
@@ -160,6 +120,7 @@ pub fn register_rsivma(
 
 #[no_mangle]
 pub fn register_rsi2ma(
+    rsi_type: f32,
     rsi_period: f32,
     lower_barrier: f32,
     upper_barrier: f32,
@@ -169,7 +130,7 @@ pub fn register_rsi2ma(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_type = RSIType::RSI;
+    let rsi_type = map_to_rsi(rsi_type as usize);
     let smoothing = map_to_ma(smoothing as usize);
 
     let signal = map_to_signal(SignalConfig::Rsi2Ma {
