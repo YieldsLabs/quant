@@ -3,6 +3,8 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Filter;
 use filter::{DumbFilter, MAFilter, RSIFilter};
 
+const DEFAULT_LOOKBACK: f32 = 13.0;
+
 pub enum FilterConfig {
     Ma {
         smoothing: f32,
@@ -33,5 +35,6 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             threshold,
         )),
         FilterConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
+        _ => Box::new(DumbFilter::new(DEFAULT_LOOKBACK)),
     }
 }

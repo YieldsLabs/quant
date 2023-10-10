@@ -8,5 +8,6 @@ pub enum ExitConfig {
 pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
     match config {
         ExitConfig::Dumb {} => Box::new(DumbExit {}),
+        _ => Box::new(DumbExit {}),
     }
 }
