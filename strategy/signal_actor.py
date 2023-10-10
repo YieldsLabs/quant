@@ -4,6 +4,7 @@ from typing import Any
 
 from wasmtime import Store
 
+from core.actors.base import BaseActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.signal import (
     ExitLongSignalReceived,
@@ -11,7 +12,6 @@ from core.events.signal import (
     GoLongSignalReceived,
     GoShortSignalReceived,
 )
-from core.interfaces.abstract_actor import AbstractActor
 from core.models.signal import Signal, SignalSide
 from core.models.strategy import Strategy
 from core.models.timeframe import Timeframe
@@ -24,7 +24,7 @@ class Action(Enum):
     EXIT_SHORT = 4.0
 
 
-class SignalActor(AbstractActor):
+class SignalActor(BaseActor):
     def __init__(
         self,
         symbol: str,
@@ -33,42 +33,14 @@ class SignalActor(AbstractActor):
         store: Store,
         exports: Any,
     ):
-        super().__init__()
-        self._symbol = symbol
-        self._timeframe = timeframe
-        self._strategy = strategy
-
+        super().__init__(symbol, timeframe, strategy)
         self.store = store
         self.exports = exports
         self.register_id = None
         self._lock = asyncio.Lock()
 
-    @property
-    def id(self):
-        if not self._strategy:
-            raise RuntimeError("Id: Strategy is not started")
-
-        return f"{self._symbol}_{self._timeframe}{self._strategy}"
-
-    @property
-    def symbol(self):
-        return self._symbol
-
-    @property
-    def timeframe(self):
-        return self._timeframe
-
-    @property
-    def strategy(self):
-        return self._strategy
-
-    @property
-    def running(self):
-        return bool(self.register_id)
-
     async def start(self):
-        if self.running:
-            raise RuntimeError("Start: strategy is running")
+        await super().start()
 
         async with self._lock:
             self._register_strategy()
@@ -78,8 +50,7 @@ class SignalActor(AbstractActor):
         )
 
     async def stop(self):
-        if not self.running:
-            raise RuntimeError("Stop: strategy is not started")
+        await super().stop()
 
         async with self._lock:
             self._unregister_strategy()
@@ -87,7 +58,7 @@ class SignalActor(AbstractActor):
         self._dispatcher.unregister(NewMarketDataReceived, self.handle)
 
     async def handle(self, event: NewMarketDataReceived):
-        if not self.running:
+        if not await self.running:
             return
 
         data = event.ohlcv

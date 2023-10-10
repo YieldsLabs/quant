@@ -1,10 +1,9 @@
-import asyncio
 from typing import Union
 
+from core.actors.base import BaseActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import PositionClosed, PositionOpened
 from core.events.risk import RiskThresholdBreached
-from core.interfaces.abstract_actor import AbstractActor
 from core.models.ohlcv import OHLCV
 from core.models.position import Position, PositionSide
 from core.models.strategy import Strategy
@@ -14,7 +13,7 @@ from core.models.timeframe import Timeframe
 RiskEvent = Union[NewMarketDataReceived, PositionOpened, PositionClosed]
 
 
-class RiskActor(AbstractActor):
+class RiskActor(BaseActor):
     def __init__(
         self,
         symbol: Symbol,
@@ -22,39 +21,12 @@ class RiskActor(AbstractActor):
         strategy: Strategy,
         risk_buffer: float,
     ):
-        super().__init__()
-        self._symbol = symbol
-        self._timeframe = timeframe
-        self._strategy = strategy
+        super().__init__(symbol, timeframe, strategy)
         self._position = None
-        self._lock = asyncio.Lock()
-        self._running = False
         self.risk_buffer = risk_buffer
 
-    @property
-    def id(self):
-        return f"{self._symbol}_{self._timeframe}"
-
-    @property
-    def symbol(self):
-        return self._symbol
-
-    @property
-    def timeframe(self):
-        return self._timeframe
-
-    @property
-    def strategy(self):
-        return self._strategy
-
-    @property
-    async def running(self):
-        async with self._lock:
-            return self._running
-
     async def start(self):
-        if await self.running:
-            raise RuntimeError("Start: risk is running")
+        await super().start()
 
         self._dispatcher.register(
             NewMarketDataReceived, self.handle, self._market_event_filter
@@ -63,18 +35,11 @@ class RiskActor(AbstractActor):
         for event in [PositionOpened, PositionClosed]:
             self._dispatcher.register(event, self.handle, self._position_event_filter)
 
-        async with self._lock:
-            self._running = True
-
     async def stop(self):
-        if not await self.running:
-            raise RuntimeError("Stop: risk is not started")
+        await super().stop()
 
         for event in [NewMarketDataReceived, PositionOpened, PositionClosed]:
             self._dispatcher.unregister(event, self.handle)
-
-        async with self._lock:
-            self._running = False
 
     async def handle(self, event: RiskEvent):
         if isinstance(event, NewMarketDataReceived):

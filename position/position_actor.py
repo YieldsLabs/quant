@@ -1,6 +1,6 @@
-import asyncio
 from typing import Union
 
+from core.actors.base import BaseActor
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler
 from core.events.account import PositionAccountUpdated
@@ -19,7 +19,6 @@ from core.events.signal import (
     GoLongSignalReceived,
     GoShortSignalReceived,
 )
-from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.position import Position, PositionSide
 from core.models.strategy import Strategy
@@ -37,7 +36,7 @@ ExitSignal = Union[
 ]
 
 
-class PositionActor(AbstractActor):
+class PositionActor(BaseActor):
     SIGNAL_EVENTS = (GoLongSignalReceived, GoShortSignalReceived)
     EXIT_EVENTS = (ExitLongSignalReceived, ExitShortSignalReceived)
     POSITION_EVENTS = (
@@ -54,60 +53,25 @@ class PositionActor(AbstractActor):
         position_factory: AbstractPositionFactory,
         initial_account_size: int,
     ):
-        super().__init__()
-        self._symbol = symbol
-        self._timeframe = timeframe
-        self._strategy = strategy
+        super().__init__(symbol, timeframe, strategy)
 
         self.account_size = initial_account_size
         self.position_factory = position_factory
 
-        self._lock = asyncio.Lock()
-        self._running = False
-
         self.sm = PositionStateMachine(self)
         self.state = PositionStorage()
 
-    @property
-    def id(self):
-        return f"{self._symbol}_{self._timeframe}"
-
-    @property
-    def symbol(self):
-        return self._symbol
-
-    @property
-    def timeframe(self):
-        return self._timeframe
-
-    @property
-    def strategy(self):
-        return self._strategy
-
-    @property
-    async def running(self):
-        async with self._lock:
-            return self._running
-
     async def start(self):
-        if await self.running:
-            raise RuntimeError("Start: position is running")
+        await super().start()
 
         for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
             self._dispatcher.register(event, self.handle, self._event_filter)
 
-        async with self._lock:
-            self._running = True
-
     async def stop(self):
-        if not await self.running:
-            raise RuntimeError("Stop: position is not started")
+        await super().stop()
 
         for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
             self._dispatcher.unregister(event, self.handle)
-
-        async with self._lock:
-            self._running = False
 
     async def handle(self, event):
         signal = (
