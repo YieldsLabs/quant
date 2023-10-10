@@ -2,14 +2,14 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{ma_indicator, MovingAverageType};
 
-pub struct Cross3MASignal {
+pub struct MA3CrossSignal {
     smoothing: MovingAverageType,
     short_period: usize,
     medium_period: usize,
     long_period: usize,
 }
 
-impl Cross3MASignal {
+impl MA3CrossSignal {
     pub fn new(
         smoothing: MovingAverageType,
         short_period: f32,
@@ -25,7 +25,7 @@ impl Cross3MASignal {
     }
 }
 
-impl Signal for Cross3MASignal {
+impl Signal for MA3CrossSignal {
     fn lookback(&self) -> usize {
         let adjusted_lookback = std::cmp::max(self.short_period, self.long_period);
         std::cmp::max(adjusted_lookback, self.medium_period)

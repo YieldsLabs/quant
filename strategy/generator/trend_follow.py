@@ -11,13 +11,13 @@ from core.models.strategy import Strategy
 from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.signal.candle import TrendCandleSignal
-from strategy.signal.cross_rsi_neutrality import CrossRSINautralitySignal
-from strategy.signal.cross_three_ma import Cross3MovingAverageSignal
-from strategy.signal.cross_tii import CrossTIISignal
+from strategy.signal.ma_three_cross import MA3CrossSignal
+from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
 from strategy.signal.testing_ground import TestingGroundSignal
+from strategy.signal.tii_cross import TIICrossSignal
 from strategy.stop_loss.atr import ATRStopLoss
 
 
@@ -89,7 +89,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         strategy_map = {
             StrategyTypes.Cross3Ma: (
                 "cross3ma",
-                Cross3MovingAverageSignal(
+                MA3CrossSignal(
                     moving_avg_type, ma_short_period, ma_medium_period, ma_long_period
                 ),
                 DumbFilter(),
@@ -97,7 +97,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.CrossTii: (
                 "crosstii",
-                CrossTIISignal(),
+                TIICrossSignal(),
                 ma_filter,
                 stop_loss,
             ),
@@ -125,7 +125,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.CrossRsiN: (
                 "crossrsin",
-                CrossRSINautralitySignal(),
+                RSINautralityCrossSignal(),
                 DumbFilter(),
                 stop_loss,
             ),

@@ -59,7 +59,7 @@ pub fn register_cross3ma(
     atr_factor: f32,
 ) -> i32 {
     let smoothing = map_to_ma(smoothing as usize);
-    let signal = map_to_signal(SignalConfig::Cross3Ma {
+    let signal = map_to_signal(SignalConfig::Ma3Cross {
         smoothing,
         short_period,
         medium_period,
@@ -90,7 +90,7 @@ pub fn register_crosstii(
 ) -> i32 {
     let smoothing = map_to_ma(smoothing as usize);
 
-    let signal = map_to_signal(SignalConfig::CrossTII {
+    let signal = map_to_signal(SignalConfig::TIICross {
         major_period,
         minor_period,
         lower_barrier,
@@ -114,7 +114,7 @@ pub fn register_crossrsin(
     stop_loss_multi: f32,
 ) -> i32 {
     let rsi_type = RSIType::RSI;
-    let signal = map_to_signal(SignalConfig::CrossRsiNeutrality {
+    let signal = map_to_signal(SignalConfig::RsiNeutralityCross {
         rsi_type,
         rsi_period,
         threshold,

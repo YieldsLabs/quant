@@ -1,18 +1,18 @@
 use base::Signal;
 use shared::{MovingAverageType, RSIType, TrendCandleType};
 use signal::{
-    Cross3MASignal, CrossRSINeutralitySignal, CrossTIISignal, RSI2MASignal, RSIVSignal,
+    MA3CrossSignal, RSINeutralityCrossSignal, TIICrossSignal, RSI2MASignal, RSIVSignal,
     SNATRSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 pub enum SignalConfig {
-    Cross3Ma {
+    Ma3Cross {
         smoothing: MovingAverageType,
         short_period: f32,
         medium_period: f32,
         long_period: f32,
     },
-    CrossRsiNeutrality {
+    RsiNeutralityCross {
         rsi_type: RSIType,
         rsi_period: f32,
         threshold: f32,
@@ -45,7 +45,7 @@ pub enum SignalConfig {
         lower_barrier: f32,
         upper_barrier: f32,
     },
-    CrossTII {
+    TIICross {
         major_period: f32,
         minor_period: f32,
         lower_barrier: f32,
@@ -55,22 +55,22 @@ pub enum SignalConfig {
 
 pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
     match config {
-        SignalConfig::Cross3Ma {
+        SignalConfig::Ma3Cross {
             smoothing,
             short_period,
             medium_period,
             long_period,
-        } => Box::new(Cross3MASignal::new(
+        } => Box::new(MA3CrossSignal::new(
             smoothing,
             short_period,
             medium_period,
             long_period,
         )),
-        SignalConfig::CrossRsiNeutrality {
+        SignalConfig::RsiNeutralityCross {
             rsi_type,
             rsi_period,
             threshold,
-        } => Box::new(CrossRSINeutralitySignal::new(
+        } => Box::new(RSINeutralityCrossSignal::new(
             rsi_type, rsi_period, threshold,
         )),
         SignalConfig::Rsi2Ma {
@@ -106,12 +106,12 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             lower_barrier,
             upper_barrier,
         )),
-        SignalConfig::CrossTII {
+        SignalConfig::TIICross {
             major_period,
             minor_period,
             lower_barrier,
             upper_barrier,
-        } => Box::new(CrossTIISignal::new(
+        } => Box::new(TIICrossSignal::new(
             major_period,
             minor_period,
             lower_barrier,

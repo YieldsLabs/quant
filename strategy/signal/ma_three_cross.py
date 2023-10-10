@@ -6,7 +6,7 @@ from core.models.parameter import Parameter, RandomParameter
 
 
 @dataclass(frozen=True)
-class Cross3MovingAverageSignal(Indicator):
+class MA3CrossSignal(Indicator):
     ma: MovingAverageType = MovingAverageType.SMA
     short_period: Parameter = RandomParameter(5.0, 50.0, 5.0)
     medium_period: Parameter = RandomParameter(50.0, 100.0, 5.0)

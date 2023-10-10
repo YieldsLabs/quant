@@ -2,13 +2,13 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{rsi_indicator, RSIType};
 
-pub struct CrossRSINeutralitySignal {
+pub struct RSINeutralityCrossSignal {
     rsi_type: RSIType,
     rsi_period: usize,
     threshold: f32,
 }
 
-impl CrossRSINeutralitySignal {
+impl RSINeutralityCrossSignal {
     pub fn new(rsi_type: RSIType, rsi_period: f32, threshold: f32) -> Self {
         Self {
             rsi_type,
@@ -18,7 +18,7 @@ impl CrossRSINeutralitySignal {
     }
 }
 
-impl Signal for CrossRSINeutralitySignal {
+impl Signal for RSINeutralityCrossSignal {
     fn lookback(&self) -> usize {
         self.rsi_period
     }

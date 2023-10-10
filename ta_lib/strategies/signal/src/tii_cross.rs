@@ -2,14 +2,14 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use trend::tii;
 
-pub struct CrossTIISignal {
+pub struct TIICrossSignal {
     major_period: usize,
     minor_period: usize,
     lower_barrier: f32,
     upper_barrier: f32,
 }
 
-impl CrossTIISignal {
+impl TIICrossSignal {
     pub fn new(
         major_period: f32,
         minor_period: f32,
@@ -25,7 +25,7 @@ impl CrossTIISignal {
     }
 }
 
-impl Signal for CrossTIISignal {
+impl Signal for TIICrossSignal {
     fn lookback(&self) -> usize {
         std::cmp::max(self.minor_period, self.major_period)
     }
