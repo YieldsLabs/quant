@@ -10,7 +10,6 @@ from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
 from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
-from strategy.signal.candle import TrendCandleSignal
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
@@ -18,6 +17,7 @@ from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
 from strategy.signal.testing_ground import TestingGroundSignal
 from strategy.signal.tii_cross import TIICrossSignal
+from strategy.signal.trend_candle import TrendCandleSignal
 from strategy.stop_loss.atr import ATRStopLoss
 
 
