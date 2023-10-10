@@ -1,8 +1,8 @@
 use base::Signal;
 use shared::{MovingAverageType, RSIType, TrendCandleType};
 use signal::{
-    MA3CrossSignal, RSINeutralityCrossSignal, TIICrossSignal, RSI2MASignal, RSIVSignal,
-    SNATRSignal, TestingGroundSignal, TrendCandleSignal,
+    MA3CrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal, SNATRSignal,
+    TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 pub enum SignalConfig {
