@@ -25,6 +25,7 @@ fn map_to_ma(smoothing: usize) -> MovingAverageType {
         16 => MovingAverageType::VWMA,
         17 => MovingAverageType::WMA,
         18 => MovingAverageType::ZLEMA,
+        19 => MovingAverageType::ZLSMA,
         _ => MovingAverageType::SMA,
     }
 }

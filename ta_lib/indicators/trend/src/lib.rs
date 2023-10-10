@@ -22,6 +22,7 @@ mod trix;
 mod vwma;
 mod wma;
 mod zlema;
+mod zlsma;
 
 pub use alma::alma;
 pub use dema::dema;
@@ -47,3 +48,4 @@ pub use trix::trix;
 pub use vwma::vwma;
 pub use wma::wma;
 pub use zlema::zlema;
+pub use zlsma::zlsma;
