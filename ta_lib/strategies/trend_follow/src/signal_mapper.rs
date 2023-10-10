@@ -1,5 +1,7 @@
+use crate::candle_mapper::map_to_candle;
+use crate::ma_mapper::map_to_ma;
+use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
-use shared::{MovingAverageType, RSIType, TrendCandleType};
 use signal::{
     MA3CrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal, SNATRSignal,
     TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
@@ -7,37 +9,37 @@ use signal::{
 
 pub enum SignalConfig {
     Ma3Cross {
-        smoothing: MovingAverageType,
+        smoothing: f32,
         short_period: f32,
         medium_period: f32,
         long_period: f32,
     },
     RsiNeutralityCross {
-        rsi_type: RSIType,
+        rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
     },
     Rsi2Ma {
-        rsi_type: RSIType,
+        rsi_type: f32,
         rsi_period: f32,
         lower_barrier: f32,
         upper_barrier: f32,
-        smoothing: MovingAverageType,
+        smoothing: f32,
         short_period: f32,
         long_period: f32,
     },
     RsiV {
-        rsi_type: RSIType,
+        rsi_type: f32,
         rsi_period: f32,
         lower_barrier: f32,
         upper_barrier: f32,
     },
     Testground {
-        smoothing: MovingAverageType,
+        smoothing: f32,
         smoothing_period: f32,
     },
     Trendcandle {
-        candle: TrendCandleType,
+        candle: f32,
     },
     SnAtr {
         atr_period: f32,
@@ -61,7 +63,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             medium_period,
             long_period,
         } => Box::new(MA3CrossSignal::new(
-            smoothing,
+            map_to_ma(smoothing as usize),
             short_period,
             medium_period,
             long_period,
@@ -71,7 +73,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             rsi_period,
             threshold,
         } => Box::new(RSINeutralityCrossSignal::new(
-            rsi_type, rsi_period, threshold,
+            map_to_rsi(rsi_type as usize),
+            rsi_period,
+            threshold,
         )),
         SignalConfig::Rsi2Ma {
             rsi_type,
@@ -82,19 +86,24 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         } => Box::new(RSI2MASignal::new(
-            rsi_type,
+            map_to_rsi(rsi_type as usize),
             rsi_period,
             lower_barrier,
             upper_barrier,
-            smoothing,
+            map_to_ma(smoothing as usize),
             short_period,
             long_period,
         )),
         SignalConfig::Testground {
             smoothing,
             smoothing_period,
-        } => Box::new(TestingGroundSignal::new(smoothing, smoothing_period)),
-        SignalConfig::Trendcandle { candle } => Box::new(TrendCandleSignal::new(candle)),
+        } => Box::new(TestingGroundSignal::new(
+            map_to_ma(smoothing as usize),
+            smoothing_period,
+        )),
+        SignalConfig::Trendcandle { candle } => {
+            Box::new(TrendCandleSignal::new(map_to_candle(candle as usize)))
+        }
         SignalConfig::SnAtr {
             atr_period,
             atr_smoothing_period,
@@ -123,7 +132,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             lower_barrier,
             upper_barrier,
         } => Box::new(RSIVSignal::new(
-            rsi_type,
+            map_to_rsi(rsi_type as usize),
             rsi_period,
             lower_barrier,
             upper_barrier,

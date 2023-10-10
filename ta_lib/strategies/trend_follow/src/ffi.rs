@@ -1,8 +1,5 @@
-use crate::candle_mapper::map_to_candle;
 use crate::exit_mapper::{map_to_exit, ExitConfig};
 use crate::filter_mapper::{map_to_filter, FilterConfig};
-use crate::ma_mapper::map_to_ma;
-use crate::rsi_mapper::map_to_rsi;
 use crate::signal_mapper::{map_to_signal, SignalConfig};
 use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
 use base::register_strategy;
@@ -16,7 +13,6 @@ pub fn register_cross3ma(
     atr_period: f32,
     atr_factor: f32,
 ) -> i32 {
-    let smoothing = map_to_ma(smoothing as usize);
     let signal = map_to_signal(SignalConfig::Ma3Cross {
         smoothing,
         short_period,
@@ -46,8 +42,6 @@ pub fn register_crosstii(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let smoothing = map_to_ma(smoothing as usize);
-
     let signal = map_to_signal(SignalConfig::TIICross {
         major_period,
         minor_period,
@@ -72,7 +66,6 @@ pub fn register_crossrsin(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_type = map_to_rsi(rsi_type as usize);
     let signal = map_to_signal(SignalConfig::RsiNeutralityCross {
         rsi_type,
         rsi_period,
@@ -99,9 +92,6 @@ pub fn register_rsivma(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_type = map_to_rsi(rsi_type as usize);
-    let smoothing = map_to_ma(smoothing as usize);
-
     let signal = map_to_signal(SignalConfig::RsiV {
         rsi_type,
         rsi_period,
@@ -130,9 +120,6 @@ pub fn register_rsi2ma(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let rsi_type = map_to_rsi(rsi_type as usize);
-    let smoothing = map_to_ma(smoothing as usize);
-
     let signal = map_to_signal(SignalConfig::Rsi2Ma {
         rsi_type,
         rsi_period,
@@ -161,8 +148,6 @@ pub fn register_ground(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let smoothing = map_to_ma(smoothing as usize);
-
     let signal = map_to_signal(SignalConfig::Testground {
         smoothing,
         smoothing_period,
@@ -187,9 +172,6 @@ pub fn register_candlet(
     atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let candle = map_to_candle(candle as usize);
-    let smoothing = map_to_ma(smoothing as usize);
-
     let signal = map_to_signal(SignalConfig::Trendcandle { candle });
     let filter = map_to_filter(FilterConfig::Ma { smoothing, period });
     let stoploss = map_to_stoploss(StopLossConfig::Atr {
@@ -212,8 +194,6 @@ pub fn register_snatr(
     stop_loss_atr_period: f32,
     stop_loss_multi: f32,
 ) -> i32 {
-    let smoothing = map_to_ma(smoothing as usize);
-
     let signal = map_to_signal(SignalConfig::SnAtr {
         atr_period,
         atr_smoothing_period,
