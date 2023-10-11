@@ -5,7 +5,7 @@ pub fn supertrend(
     close: &Series<f32>,
     atr: &Series<f32>,
     factor: f32,
-) -> Series<f32> {
+) -> (Series<f32>, Series<f32>) {
     let atr_mul = atr * factor;
 
     let mut up = hl2 - &atr_mul;
@@ -40,7 +40,9 @@ pub fn supertrend(
         direction = iff!(close.gt(&prev_dn), trend_up, direction);
     }
 
-    iff!(direction.seq(1.0), up, dn)
+    let supertrend = iff!(direction.seq(1.0), up, dn);
+
+    (direction, supertrend)
 }
 
 #[cfg(test)]
@@ -77,7 +79,7 @@ mod tests {
         let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
 
         let factor = 3.0;
-        let expected = vec![
+        let expected_supertrend = vec![
             7.0435004, 7.0435004, 7.0435004, 7.054437, 7.075719, 7.080235, 7.080235, 7.080235,
             7.080235, 7.080235, 7.080235, 7.080235, 7.1008663, 7.1008663, 7.105092, 7.1122966,
             7.115898, 7.1175737, 7.1175737, 7.1175737, 7.1175737, 7.1175737, 7.1175737, 7.1175737,
@@ -85,11 +87,19 @@ mod tests {
             7.152126, 7.1466875, 7.1466875, 7.1466875, 7.1466875, 7.1466875, 7.1466875, 7.1466875,
             7.1466875, 7.1466875, 7.1074786, 7.1074786, 7.1074786,
         ];
+        let expected_direction = vec![
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+            -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
+        ];
 
-        let result: Vec<f32> = supertrend(&hl2, &close, &atr, factor).into();
+        let (direction, supertrend) = supertrend(&hl2, &close, &atr, factor).into();
+        let result_direction: Vec<f32> = direction.into();
+        let result_supertrend: Vec<f32> = supertrend.into();
 
         assert_eq!(high.len(), low.len());
         assert_eq!(high.len(), close.len());
-        assert_eq!(result, expected);
+        assert_eq!(result_supertrend, expected_supertrend);
+        assert_eq!(result_direction, expected_direction);
     }
 }
