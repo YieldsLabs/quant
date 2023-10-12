@@ -1,4 +1,4 @@
-use base::{OHLCVSeries, Signal, Price};
+use base::{OHLCVSeries, Price, Signal};
 use core::Series;
 use trend::supertrend;
 
@@ -22,7 +22,12 @@ impl Signal for SupertrendFlipSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (_, trendline) = supertrend(&data.hl2(), &data.close, &data.atr(self.atr_period), self.factor);
+        let (_, trendline) = supertrend(
+            &data.hl2(),
+            &data.close,
+            &data.atr(self.atr_period),
+            self.factor,
+        );
 
         (
             trendline.cross_over(&data.close),
