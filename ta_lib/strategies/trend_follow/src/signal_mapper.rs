@@ -4,7 +4,7 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use signal::{
     MA3CrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal, SNATRSignal,
-    TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
+    SupertrendFlipSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 pub enum SignalConfig {
@@ -46,6 +46,10 @@ pub enum SignalConfig {
         atr_smoothing_period: f32,
         lower_barrier: f32,
         upper_barrier: f32,
+    },
+    SupFlip {
+        atr_period: f32,
+        factor: f32,
     },
     TIICross {
         major_period: f32,
@@ -115,6 +119,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             lower_barrier,
             upper_barrier,
         )),
+        SignalConfig::SupFlip { atr_period, factor } => {
+            Box::new(SupertrendFlipSignal::new(atr_period, factor))
+        }
         SignalConfig::TIICross {
             major_period,
             minor_period,

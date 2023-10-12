@@ -10,11 +10,13 @@ from core.models.parameter import RandomParameter
 from core.models.strategy import Strategy
 from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
+from strategy.filter.rsi import RSIFilter
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
+from strategy.signal.supertrend_flip import SupertrendFlipSignal
 from strategy.signal.testing_ground import TestingGroundSignal
 from strategy.signal.tii_cross import TIICrossSignal
 from strategy.signal.trend_candle import TrendCandleSignal
@@ -27,6 +29,7 @@ class StrategyTypes(Enum):
     CrossRsiN = auto()
     Ground = auto()
     SnAtr = auto()
+    SupFlip = auto()
     TrendCandle = auto()
     Rsi2Ma = auto()
     RsiVma = auto()
@@ -83,6 +86,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         ma_filter = np.random.choice(
             [MovingAverageFilter(moving_avg_type, ma_filter_period)]
         )
+        rsi_filter = RSIFilter()
 
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
 
@@ -111,6 +115,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 "snatr",
                 SNATRSignal(),
                 ma_filter,
+                stop_loss,
+            ),
+            StrategyTypes.SupFlip: (
+                "supflip",
+                SupertrendFlipSignal(),
+                rsi_filter,
                 stop_loss,
             ),
             StrategyTypes.Rsi2Ma: (

@@ -223,3 +223,28 @@ pub fn register_snatr(
         ExitConfig::Dumb {},
     )
 }
+
+#[no_mangle]
+pub fn register_supflip(
+    atr_period: f32,
+    factor: f32,
+    rsi_type: f32,
+    rsi_period: f32,
+    rsi_threshold: f32,
+    stop_loss_atr_period: f32,
+    stop_loss_multi: f32,
+) -> i32 {
+    create_and_register(
+        SignalConfig::SupFlip { atr_period, factor },
+        FilterConfig::Rsi {
+            rsi_type,
+            period: rsi_period,
+            threshold: rsi_threshold,
+        },
+        StopLossConfig::Atr {
+            period: stop_loss_atr_period,
+            multi: stop_loss_multi,
+        },
+        ExitConfig::Dumb {},
+    )
+}
