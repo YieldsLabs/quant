@@ -7,8 +7,8 @@ from core.models.parameter import Parameter, RandomParameter
 
 @dataclass(frozen=True)
 class MovingAverageFilter(Indicator):
-    ma: MovingAverageType = MovingAverageType.SMA
-    period: Parameter = RandomParameter(100.0, 200.0, 10.0)
+    ma: MovingAverageType = MovingAverageType.EMA
+    period: Parameter = RandomParameter(100.0, 300.0, 10.0)
 
     @property
     def parameters(self):
