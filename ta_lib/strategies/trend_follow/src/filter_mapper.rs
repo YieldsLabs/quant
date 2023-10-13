@@ -1,11 +1,17 @@
 use crate::ma_mapper::map_to_ma;
 use crate::rsi_mapper::map_to_rsi;
 use base::Filter;
-use filter::{DumbFilter, MAFilter, RSIFilter};
+use filter::{ADXFilter, DumbFilter, MAFilter, RSIFilter};
 
 const DEFAULT_LOOKBACK: f32 = 13.0;
 
 pub enum FilterConfig {
+    Adx {
+        smoothing_period: f32,
+        di_period: f32,
+        atr_period: f32,
+        threshold: f32,
+    },
     Ma {
         smoothing: f32,
         period: f32,
@@ -32,6 +38,17 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
         } => Box::new(RSIFilter::new(
             map_to_rsi(rsi_type as usize),
             period,
+            threshold,
+        )),
+        FilterConfig::Adx {
+            smoothing_period,
+            di_period,
+            atr_period,
+            threshold,
+        } => Box::new(ADXFilter::new(
+            smoothing_period,
+            di_period,
+            atr_period,
             threshold,
         )),
         FilterConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
