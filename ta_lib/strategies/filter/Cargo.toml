@@ -8,3 +8,4 @@ base = { path = "../base" }
 core = { path = "../../core" }
 shared = { path = "../shared" }
 momentum = { path = "../../indicators/momentum" }
+trend = { path = "../../indicators/trend" }
