@@ -2,9 +2,12 @@ use crate::ma_mapper::map_to_ma;
 use crate::rsi_mapper::map_to_rsi;
 use base::Filter;
 use filter::{ADXFilter, DumbFilter, MAFilter, RSIFilter};
+use serde::Deserialize;
 
 const DEFAULT_LOOKBACK: f32 = 13.0;
 
+#[derive(Deserialize)]
+#[serde(tag = "type", rename_all = "PascalCase")]
 pub enum FilterConfig {
     Adx {
         smoothing_period: f32,

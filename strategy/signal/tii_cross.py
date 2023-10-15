@@ -5,7 +5,7 @@ from core.models.parameter import Parameter, RandomParameter, StaticParameter
 
 
 @dataclass(frozen=True)
-class TIICrossSignal(Indicator):
+class TIICrossSignal(BaseSignal):
     major_period: Parameter = StaticParameter(14.0)
     minor_period: Parameter = StaticParameter(3.0)
     lower_barrier: Parameter = RandomParameter(30.0, 50.0, 5.0)

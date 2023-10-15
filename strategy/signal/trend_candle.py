@@ -5,7 +5,7 @@ from core.models.indicator import Indicator
 
 
 @dataclass(frozen=True)
-class TrendCandleSignal(Indicator):
+class TrendCandleSignal(BaseSignal):
     candle: TrendCandleType = TrendCandleType.THREE_CANDLES
 
     @property

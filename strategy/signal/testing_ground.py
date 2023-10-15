@@ -6,10 +6,10 @@ from core.models.parameter import Parameter, RandomParameter
 
 
 @dataclass(frozen=True)
-class TestingGroundSignal(Indicator):
-    ma: MovingAverageType = MovingAverageType.EMA
+class TestingGroundSignal(BaseSignal):
+    smoothing: MovingAverageType = MovingAverageType.EMA
     period: Parameter = RandomParameter(60.0, 180.0, 10.0)
 
     @property
     def parameters(self):
-        return [self.ma, self.period]
+        return [self.smoothing, self.period]

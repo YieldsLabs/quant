@@ -7,10 +7,10 @@ from core.models.rsi import RSIType
 
 @dataclass(frozen=True)
 class RSIFilter(Indicator):
-    rsi: RSIType = RSIType.RSI
+    rsi_type: RSIType = RSIType.RSI
     period: Parameter = RandomParameter(14.0, 16.0, 1.0)
     threshold: Parameter = RandomParameter(49.0, 55.0, 1.0)
 
     @property
     def parameters(self):
-        return [self.rsi, self.period, self.threshold]
+        return [self.rsi_type, self.period, self.threshold]

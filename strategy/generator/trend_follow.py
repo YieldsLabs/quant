@@ -6,7 +6,7 @@ import numpy as np
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import RandomParameter
+from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
 from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
@@ -46,7 +46,22 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return strategies
 
     def _diversified_strategies(self):
-        return []
+        strategies = [
+            (
+                "candlet",
+                TrendCandleSignal(TrendCandleType.THREE_METHODS),
+                MovingAverageFilter(MovingAverageType.WMA, StaticParameter(250.0)),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(0.85)),
+            ),
+            (
+                "candlet",
+                TrendCandleSignal(TrendCandleType.DOUBLE_TROUBLE),
+                MovingAverageFilter(MovingAverageType.WMA, StaticParameter(275.0)),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.9)),
+            )
+        ]
+
+        return [Strategy(*strategy) for strategy in strategies]
 
     def _random_strategies(self, n_samples):
         strategy_types = list(StrategyTypes)
@@ -126,7 +141,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             StrategyTypes.Rsi2Ma: (
                 "rsi2ma",
                 RSI2MovingAverageSignal(
-                    ma=moving_avg_type,
+                    smoothing=moving_avg_type,
                     lower_barrier=rsi_lower_barrier,
                     upper_barrier=rsi_upper_barrier,
                 ),

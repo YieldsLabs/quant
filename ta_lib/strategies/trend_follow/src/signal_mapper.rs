@@ -2,11 +2,14 @@ use crate::candle_mapper::map_to_candle;
 use crate::ma_mapper::map_to_ma;
 use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
+use serde::Deserialize;
 use signal::{
     MA3CrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal, SNATRSignal,
     SupertrendFlipSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
+#[derive(Deserialize)]
+#[serde(tag = "type", rename_all = "PascalCase")]
 pub enum SignalConfig {
     Ma3Cross {
         smoothing: f32,
@@ -36,7 +39,7 @@ pub enum SignalConfig {
     },
     Testground {
         smoothing: f32,
-        smoothing_period: f32,
+        period: f32,
     },
     Trendcandle {
         candle: f32,
@@ -98,12 +101,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         )),
-        SignalConfig::Testground {
-            smoothing,
-            smoothing_period,
-        } => Box::new(TestingGroundSignal::new(
+        SignalConfig::Testground { smoothing, period } => Box::new(TestingGroundSignal::new(
             map_to_ma(smoothing as usize),
-            smoothing_period,
+            period,
         )),
         SignalConfig::Trendcandle { candle } => {
             Box::new(TrendCandleSignal::new(map_to_candle(candle as usize)))

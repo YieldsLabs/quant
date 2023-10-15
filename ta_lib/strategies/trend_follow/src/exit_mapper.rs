@@ -1,6 +1,9 @@
 use base::Exit;
 use exit::DumbExit;
+use serde::Deserialize;
 
+#[derive(Deserialize)]
+#[serde(tag = "type", rename_all = "PascalCase")]
 pub enum ExitConfig {
     Dumb {},
 }
