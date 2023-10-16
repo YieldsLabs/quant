@@ -17,15 +17,3 @@ class RSI2MovingAverageSignal(BaseSignal):
     smoothing: MovingAverageType = MovingAverageType.EMA
     short_period: Parameter = RandomParameter(20.0, 50.0, 1.0)
     long_period: Parameter = RandomParameter(30.0, 50.0, 1.0)
-
-    @property
-    def parameters(self):
-        return [
-            self.rsi_type,
-            self.rsi_period,
-            self.lower_barrier,
-            self.upper_barrier,
-            self.smoothing,
-            self.short_period,
-            self.long_period,
-        ]

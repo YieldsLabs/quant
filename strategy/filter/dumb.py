@@ -6,7 +6,3 @@ from strategy.filter.base import BaseFilter, FilterType
 @dataclass(frozen=True)
 class DumbFilter(BaseFilter):
     type: FilterType
-
-    @property
-    def parameters(self):
-        return []

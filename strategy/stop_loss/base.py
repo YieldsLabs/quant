@@ -1,13 +1,13 @@
 from dataclasses import dataclass
-from typing import Any, Tuple
+from enum import Enum
 
 from core.models.indicator import Indicator
-from core.models.stop_loss import StopLossType
+
+
+class StopLossType(Enum):
+    Atr = "Atr"
 
 
 @dataclass(frozen=True)
 class BaseStopLoss(Indicator):
     type: StopLossType
-
-    def parameters(self) -> Tuple[Any, ...]:
-        return []

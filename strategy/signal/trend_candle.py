@@ -6,9 +6,5 @@ from strategy.signal.base import BaseSignal, SignalType
 
 @dataclass(frozen=True)
 class TrendCandleSignal(BaseSignal):
-    type: SignalType = SignalType.Trendcandle
+    type: SignalType = SignalType.TrendCandle
     candle: TrendCandleType = TrendCandleType.THREE_CANDLES
-
-    @property
-    def parameters(self):
-        return [self.candle]

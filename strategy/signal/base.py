@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Tuple
 
 from core.models.indicator import Indicator
 
@@ -12,14 +11,11 @@ class SignalType(Enum):
     RsiV = "RsiV"
     SnAtr = "SnAtr"
     SupFlip = "SupFlip"
-    Testground = "Testground"
-    Trendcandle = "Trendcandle"
+    TestGround = "TestGround"
+    TrendCandle = "TrendCandle"
     TIICross = "TIICross"
 
 
 @dataclass(frozen=True)
 class BaseSignal(Indicator):
     type: SignalType
-
-    def parameters(self) -> Tuple[Any, ...]:
-        return []

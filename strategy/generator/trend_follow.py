@@ -98,68 +98,62 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         rsi_upper_barrier = RandomParameter(75.0, 95, 1.0)
         atr_multi = RandomParameter(0.85, 2, 0.05)
 
-        ma_filter = np.random.choice(
-            [MovingAverageFilter(moving_avg_type, ma_filter_period)]
+        filter = np.random.choice(
+            [
+                MovingAverageFilter(moving_avg_type, ma_filter_period),
+                RSIFilter(),
+                DumbFilter(),
+            ]
         )
-        rsi_filter = RSIFilter()
-
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
 
         strategy_map = {
             StrategyTypes.Cross3Ma: (
-                "cross3ma",
                 MA3CrossSignal(
                     moving_avg_type, ma_short_period, ma_medium_period, ma_long_period
                 ),
-                DumbFilter(),
+                filter,
                 stop_loss,
             ),
             StrategyTypes.CrossTii: (
-                "crosstii",
                 TIICrossSignal(),
-                ma_filter,
+                filter,
                 stop_loss,
             ),
             StrategyTypes.TrendCandle: (
-                "candlet",
                 TrendCandleSignal(trend_candle_type),
-                ma_filter,
+                filter,
                 stop_loss,
             ),
             StrategyTypes.SnAtr: (
-                "snatr",
                 SNATRSignal(),
-                ma_filter,
+                filter,
                 stop_loss,
             ),
             StrategyTypes.SupFlip: (
-                "supflip",
                 SupertrendFlipSignal(),
-                rsi_filter,
+                filter,
                 stop_loss,
             ),
             StrategyTypes.Rsi2Ma: (
-                "rsi2ma",
                 RSI2MovingAverageSignal(
                     smoothing=moving_avg_type,
                     lower_barrier=rsi_lower_barrier,
                     upper_barrier=rsi_upper_barrier,
                 ),
-                DumbFilter(),
+                filter,
                 stop_loss,
             ),
             StrategyTypes.CrossRsiN: (
-                "crossrsin",
                 RSINautralityCrossSignal(),
-                DumbFilter(),
+                filter,
                 stop_loss,
             ),
             StrategyTypes.RsiVma: (
-                "rsivma",
                 RSIVSignal(
                     lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier
                 ),
-                ma_filter,
+                filter,
                 stop_loss,
             ),
         }
@@ -167,9 +161,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         strategy_tuple = strategy_map.get(
             strategy_type,
             (
-                "ground",
                 TestingGroundSignal(moving_avg_type, ma_long_period),
-                DumbFilter(),
+                filter,
                 stop_loss,
             ),
         )

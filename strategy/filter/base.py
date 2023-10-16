@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Tuple
 
 from core.models.indicator import Indicator
 
 
 class FilterType(Enum):
+    Adx = "Adx"
     Dumb = "Dumb"
     Ma = "Ma"
     Rsi = "Rsi"
@@ -14,6 +14,3 @@ class FilterType(Enum):
 @dataclass(frozen=True)
 class BaseFilter(Indicator):
     type: FilterType
-
-    def parameters(self) -> Tuple[Any, ...]:
-        return []

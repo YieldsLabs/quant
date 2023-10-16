@@ -11,12 +11,3 @@ class TIICrossSignal(BaseSignal):
     minor_period: Parameter = StaticParameter(3.0)
     lower_barrier: Parameter = RandomParameter(30.0, 50.0, 5.0)
     upper_barrier: Parameter = RandomParameter(50.0, 70.0, 5.0)
-
-    @property
-    def parameters(self):
-        return [
-            self.major_period,
-            self.minor_period,
-            self.lower_barrier,
-            self.upper_barrier,
-        ]

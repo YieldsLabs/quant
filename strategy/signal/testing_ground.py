@@ -7,10 +7,6 @@ from strategy.signal.base import BaseSignal, SignalType
 
 @dataclass(frozen=True)
 class TestingGroundSignal(BaseSignal):
-    type: SignalType = SignalType.Testground
+    type: SignalType = SignalType.TestGround
     smoothing: MovingAverageType = MovingAverageType.EMA
     period: Parameter = RandomParameter(60.0, 180.0, 10.0)
-
-    @property
-    def parameters(self):
-        return [self.smoothing, self.period]
