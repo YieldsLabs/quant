@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+import json
 
 from .indicator import Indicator
 from .parameter import Parameter
@@ -7,27 +8,17 @@ from .parameter import Parameter
 
 @dataclass(frozen=True)
 class Strategy:
-    name: str
     signal: Indicator
     filter: Indicator
     stop_loss: Indicator
 
     @property
     def parameters(self):
-        def process_parameters(param):
-            if isinstance(param, Enum):
-                return float(param.value)
-            if isinstance(param, Parameter):
-                return float(param.value)
+        signal_parameters = json.dumb(self.signal).encode('utf-8')
+        filter_parameters = json.dumb(self.filter).encode('utf-8')
+        stop_loss_parameters = json.dumb(self.stop_loss).encode('utf-8')
 
-        def serialize_parameters(obj):
-            return [process_parameters(p) for p in obj.parameters]
-
-        signal_parameters = serialize_parameters(self.signal)
-        filter_parameters = serialize_parameters(self.filter)
-        stop_loss_parameters = serialize_parameters(self.stop_loss)
-
-        return (signal_parameters, filter_parameters, stop_loss_parameters[1:])
+        return (signal_parameters, filter_parameters, stop_loss_parameters)
 
     def __str__(self) -> str:
         def process_parameters(param):
@@ -40,8 +31,6 @@ class Strategy:
 
         def serialize_parameters(obj):
             return [process_parameters(p) for p in obj.parameters]
-
-        strategy_name = self.name.upper()
 
         signal = serialize_parameters(self.signal)
         signal_parameters = ":".join(map(str, signal))
@@ -58,4 +47,4 @@ class Strategy:
         stop_loss_name = stop_loss[0]
         stop_loss_parameters = ":".join(map(str, stop_loss[1:]))
 
-        return f"_STRTG{strategy_name}_{signal_parameters}_FLTR{filter_name}{filter_parameters}_STPLSS{stop_loss_name}_{stop_loss_parameters}"
+        return f"_STRTG_{signal_parameters}_FLTR{filter_name}{filter_parameters}_STPLSS{stop_loss_name}_{stop_loss_parameters}"

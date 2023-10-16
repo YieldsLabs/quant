@@ -106,7 +106,7 @@ class SignalActor(BaseActor):
             signal_parameters + filter_parameters + stoploss_parameters
         )
 
-        self.register_id = self.exports[f"register_{self._strategy.name}"](
+        self.register_id = self.exports[f"register"](
             self.store, *strategy_parameters
         )
 
