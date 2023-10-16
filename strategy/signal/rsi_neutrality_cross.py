@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from core.models.indicator import Indicator
 from core.models.parameter import Parameter, RandomParameter, StaticParameter
 from core.models.rsi import RSIType
+from strategy.signal.base import BaseSignal
 
 
 @dataclass(frozen=True)

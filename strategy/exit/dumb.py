@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from core.models.indicator import Indicator
+from strategy.exit.base import BaseExit
 
 
 @dataclass(frozen=True)
-class DumbExit(Indicator):
+class DumbExit(BaseExit):
     pass

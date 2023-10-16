@@ -58,7 +58,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 TrendCandleSignal(TrendCandleType.DOUBLE_TROUBLE),
                 MovingAverageFilter(MovingAverageType.WMA, StaticParameter(275.0)),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.9)),
-            )
+            ),
         ]
 
         return [Strategy(*strategy) for strategy in strategies]

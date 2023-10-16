@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 
-from core.models.indicator import Indicator
+from strategy.filter.base import BaseFilter, FilterType
 
 
 @dataclass(frozen=True)
-class DumbFilter(Indicator):
+class DumbFilter(BaseFilter):
+    type: FilterType
+
     @property
     def parameters(self):
         return []

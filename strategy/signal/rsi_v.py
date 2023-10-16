@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from inspect import Parameter
 
-from core.models.indicator import Indicator
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.rsi import RSIType
+from strategy.signal.base import BaseSignal
 
 
 @dataclass(frozen=True)

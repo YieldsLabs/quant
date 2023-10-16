@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from core.models.indicator import Indicator
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import Parameter, RandomParameter
+from strategy.signal.base import BaseSignal
 
 
 @dataclass(frozen=True)
