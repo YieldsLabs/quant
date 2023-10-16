@@ -2,11 +2,12 @@ from dataclasses import dataclass
 
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import Parameter, RandomParameter
-from strategy.signal.base import BaseSignal
+from strategy.signal.base import BaseSignal, SignalType
 
 
 @dataclass(frozen=True)
 class MA3CrossSignal(BaseSignal):
+    type: SignalType = SignalType.Ma3Cross
     smoothing: MovingAverageType = MovingAverageType.SMA
     short_period: Parameter = RandomParameter(5.0, 50.0, 5.0)
     medium_period: Parameter = RandomParameter(50.0, 100.0, 5.0)
