@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-import json
 
 from .indicator import Indicator
 from .parameter import Parameter
@@ -8,17 +7,14 @@ from .parameter import Parameter
 
 @dataclass(frozen=True)
 class Strategy:
-    signal: Indicator
-    filter: Indicator
+    entry_signal: Indicator
+    regime_filter: Indicator
     stop_loss: Indicator
+    exit_signal: Indicator
 
     @property
     def parameters(self):
-        signal_parameters = json.dumb(self.signal).encode('utf-8')
-        filter_parameters = json.dumb(self.filter).encode('utf-8')
-        stop_loss_parameters = json.dumb(self.stop_loss).encode('utf-8')
-
-        return (signal_parameters, filter_parameters, stop_loss_parameters)
+        return (self.entry_signal, self.regime_filter, self.stop_loss, self.exit_signal)
 
     def __str__(self) -> str:
         def process_parameters(param):

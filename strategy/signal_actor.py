@@ -1,4 +1,5 @@
 import asyncio
+import json
 from enum import Enum
 from typing import Any
 
@@ -101,13 +102,29 @@ class SignalActor(BaseActor):
             signal_parameters,
             filter_parameters,
             stoploss_parameters,
+            exit_parameters,
         ) = self._strategy.parameters
-        strategy_parameters = (
-            signal_parameters + filter_parameters + stoploss_parameters
-        )
 
-        self.register_id = self.exports[f"register"](
-            self.store, *strategy_parameters
+        signal_data = json.dumps(signal_parameters).encode()
+        filter_data = json.dumps(filter_parameters).encode()
+        stoploss_data = json.dumps(stoploss_parameters).encode()
+        exit_data = json.dumps(exit_parameters).encode()
+
+        signal_ptr, signal_len = self.allocate_and_write(signal_data)
+        filter_ptr, filter_len = self.allocate_and_write(filter_data)
+        stoploss_ptr, stoploss_len = self.allocate_and_write(stoploss_data)
+        exit_ptr, exit_len = self.allocate_and_write(exit_data)
+
+        self.register_id = self.exports["register"](
+            self.store,
+            signal_ptr,
+            signal_len,
+            filter_ptr,
+            filter_len,
+            stoploss_ptr,
+            stoploss_len,
+            exit_ptr,
+            exit_len,
         )
 
     def _unregister_strategy(self):
@@ -166,3 +183,9 @@ class SignalActor(BaseActor):
                 exit_price=exit_price,
             )
         )
+
+    def allocate_and_write(self, data: bytes) -> (int, int):
+        ptr = self.exports["allocate"](len(data))
+        self.exports["memory"].data[ptr : ptr + len(data)] = data
+
+        return ptr, len(data)

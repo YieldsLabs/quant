@@ -8,6 +8,7 @@ from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
+from strategy.exit.dumb import DumbExit
 from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.rsi import RSIFilter
@@ -48,16 +49,16 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
     def _diversified_strategies(self):
         strategies = [
             (
-                "candlet",
                 TrendCandleSignal(TrendCandleType.THREE_METHODS),
                 MovingAverageFilter(MovingAverageType.WMA, StaticParameter(250.0)),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(0.85)),
+                DumbExit(),
             ),
             (
-                "candlet",
                 TrendCandleSignal(TrendCandleType.DOUBLE_TROUBLE),
                 MovingAverageFilter(MovingAverageType.WMA, StaticParameter(275.0)),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.9)),
+                DumbExit(),
             ),
         ]
 
@@ -106,34 +107,33 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
+        exit_signal = np.random.choice([DumbExit()])
 
         strategy_map = {
             StrategyTypes.Cross3Ma: (
                 MA3CrossSignal(
-                    moving_avg_type, ma_short_period, ma_medium_period, ma_long_period
+                    smoothing=moving_avg_type,
+                    short_period=ma_short_period,
+                    medium_period=ma_medium_period,
+                    long_period=ma_long_period,
                 ),
                 filter,
                 stop_loss,
+                exit_signal,
             ),
-            StrategyTypes.CrossTii: (
-                TIICrossSignal(),
-                filter,
-                stop_loss,
-            ),
+            StrategyTypes.CrossTii: (TIICrossSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.TrendCandle: (
                 TrendCandleSignal(trend_candle_type),
                 filter,
                 stop_loss,
+                exit_signal,
             ),
-            StrategyTypes.SnAtr: (
-                SNATRSignal(),
-                filter,
-                stop_loss,
-            ),
+            StrategyTypes.SnAtr: (SNATRSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.SupFlip: (
                 SupertrendFlipSignal(),
                 filter,
                 stop_loss,
+                exit_signal,
             ),
             StrategyTypes.Rsi2Ma: (
                 RSI2MovingAverageSignal(
@@ -143,11 +143,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 filter,
                 stop_loss,
+                exit_signal,
             ),
             StrategyTypes.CrossRsiN: (
                 RSINautralityCrossSignal(),
                 filter,
                 stop_loss,
+                exit_signal,
             ),
             StrategyTypes.RsiVma: (
                 RSIVSignal(
@@ -155,6 +157,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 filter,
                 stop_loss,
+                exit_signal,
             ),
         }
 
@@ -164,6 +167,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 TestingGroundSignal(moving_avg_type, ma_long_period),
                 filter,
                 stop_loss,
+                exit_signal,
             ),
         )
 
