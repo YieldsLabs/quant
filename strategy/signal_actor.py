@@ -99,16 +99,11 @@ class SignalActor(BaseActor):
 
     def _register_strategy(self):
         (
-            signal_parameters,
-            filter_parameters,
-            stoploss_parameters,
-            exit_parameters,
+            signal_data,
+            filter_data,
+            stoploss_data,
+            exit_data,
         ) = self._strategy.parameters
-
-        signal_data = json.dumps(signal_parameters).encode()
-        filter_data = json.dumps(filter_parameters).encode()
-        stoploss_data = json.dumps(stoploss_parameters).encode()
-        exit_data = json.dumps(exit_parameters).encode()
 
         signal_ptr, signal_len = self.allocate_and_write(signal_data)
         filter_ptr, filter_len = self.allocate_and_write(filter_data)
