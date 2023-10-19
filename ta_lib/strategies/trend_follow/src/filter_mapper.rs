@@ -1,7 +1,7 @@
 use crate::ma_mapper::map_to_ma;
 use crate::rsi_mapper::map_to_rsi;
 use base::Filter;
-use filter::{ADXFilter, DumbFilter, MAFilter, RSIFilter};
+use filter::{ADXFilter, DumbFilter, MAFilter, RSIFilter, TIIFilter};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -19,6 +19,11 @@ pub enum FilterConfig {
     Rsi {
         rsi_type: f32,
         period: f32,
+        threshold: f32,
+    },
+    Tii {
+        major_period: f32,
+        minor_period: f32,
         threshold: f32,
     },
     Dumb {
@@ -45,6 +50,11 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             di_period,
             threshold,
         } => Box::new(ADXFilter::new(adx_period, di_period, threshold)),
+        FilterConfig::Tii {
+            major_period,
+            minor_period,
+            threshold,
+        } => Box::new(TIIFilter::new(major_period, minor_period, threshold)),
         FilterConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
     }
 }

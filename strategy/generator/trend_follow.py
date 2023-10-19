@@ -10,9 +10,9 @@ from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
 from strategy.exit.dumb import DumbExit
 from strategy.filter.adx import ADXFilter
-from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.rsi import RSIFilter
+from strategy.filter.tii import TIIFilter
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
@@ -59,10 +59,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             (
                 TrendCandleSignal(candle=TrendCandleType.DOUBLE_TROUBLE),
-                MovingAverageFilter(
-                    smoothing=MovingAverageType.WMA, period=StaticParameter(275.0)
-                ),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.9)),
+                RSIFilter(),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                DumbExit(),
+            ),
+            (
+                TrendCandleSignal(candle=TrendCandleType.H),
+                TIIFilter(),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
         ]
@@ -108,8 +112,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 MovingAverageFilter(smoothing=moving_avg_type, period=ma_filter_period),
                 RSIFilter(),
-                DumbFilter(period=ma_short_period),
                 ADXFilter(),
+                TIIFilter(),
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
