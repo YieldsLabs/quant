@@ -290,19 +290,19 @@ class GeneticSystem(AbstractSystem):
     def _crossover(self, parent1, parent2):
         chosen_attr = np.random.choice(list(GeneticAttributes))
 
-        if parent1.strategy.name == parent2.strategy.name:
+        if parent1.strategy.entry_signal == parent2.strategy.entry_signal:
             if chosen_attr == GeneticAttributes.STRATEGY:
                 child1_strategy = Strategy(
-                    parent1.strategy.name,
-                    parent2.strategy.signal,
-                    parent1.strategy.filter,
+                    parent2.strategy.entry_signal,
+                    parent1.strategy.regime_filter,
                     parent1.strategy.stop_loss,
+                    parent1.strategy.exit_signal,
                 )
                 child2_strategy = Strategy(
-                    parent2.strategy.name,
-                    parent1.strategy.signal,
-                    parent2.strategy.filter,
+                    parent1.strategy.entry_signal,
+                    parent2.strategy.regime_filter,
                     parent2.strategy.stop_loss,
+                    parent2.strategy.exit_signal,
                 )
                 return Individual(
                     parent1.symbol, parent1.timeframe, child1_strategy
@@ -324,7 +324,7 @@ class GeneticSystem(AbstractSystem):
         mutation_choice = np.random.choice(list(GeneticAttributes))
 
         if mutation_choice == GeneticAttributes.STRATEGY:
-            strategies = self.context.strategy_generator.generate(5)
+            strategies = self.context.strategy_generator.generate(1)
             individual.strategy = strategies[0]
 
         elif mutation_choice == GeneticAttributes.SYMBOL:

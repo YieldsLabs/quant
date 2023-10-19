@@ -5,7 +5,10 @@ use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
 use base::register_strategy;
 
 fn read_from_memory(ptr: *const u8, len: usize) -> Vec<u8> {
-    unsafe { Vec::from_raw_parts(ptr as *mut u8, len, len) }
+    unsafe {
+        let slice = std::slice::from_raw_parts(ptr, len);
+        slice.to_vec()
+    }
 }
 
 #[no_mangle]
