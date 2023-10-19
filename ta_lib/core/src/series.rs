@@ -99,7 +99,7 @@ impl Series<f32> {
     {
         self.sliding_map(period, |window, _, _| {
             window.iter().flatten().fold(None, |acc, x| match acc {
-                Some(acc_val) if comparison(&x, &acc_val) => Some(*x),
+                Some(acc_val) if comparison(x, &acc_val) => Some(*x),
                 Some(_) => acc,
                 None => Some(*x),
             })

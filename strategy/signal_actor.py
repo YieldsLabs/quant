@@ -1,4 +1,5 @@
 import asyncio
+from ctypes import addressof, c_ubyte
 from enum import Enum
 from typing import Any
 
@@ -98,16 +99,27 @@ class SignalActor(BaseActor):
 
     def _register_strategy(self):
         (
-            signal_parameters,
-            filter_parameters,
-            stoploss_parameters,
+            signal_data,
+            filter_data,
+            stoploss_data,
+            exit_data,
         ) = self._strategy.parameters
-        strategy_parameters = (
-            signal_parameters + filter_parameters + stoploss_parameters
-        )
 
-        self.register_id = self.exports[f"register_{self._strategy.name}"](
-            self.store, *strategy_parameters
+        signal_ptr, signal_len = self.allocate_and_write(signal_data)
+        filter_ptr, filter_len = self.allocate_and_write(filter_data)
+        stoploss_ptr, stoploss_len = self.allocate_and_write(stoploss_data)
+        exit_ptr, exit_len = self.allocate_and_write(exit_data)
+
+        self.register_id = self.exports["register"](
+            self.store,
+            signal_ptr,
+            signal_len,
+            filter_ptr,
+            filter_len,
+            stoploss_ptr,
+            stoploss_len,
+            exit_ptr,
+            exit_len,
         )
 
     def _unregister_strategy(self):
@@ -166,3 +178,16 @@ class SignalActor(BaseActor):
                 exit_price=exit_price,
             )
         )
+
+    def allocate_and_write(self, data: bytes) -> (int, int):
+        ptr = self.exports["allocate"](self.store, len(data))
+        memory = self.exports["memory"]
+
+        total_memory_size = memory.data_len(self.store)
+        data_ptr = memory.data_ptr(self.store)
+        data_array = (c_ubyte * total_memory_size).from_address(
+            addressof(data_ptr.contents)
+        )
+        data_array[ptr : ptr + len(data)] = data
+
+        return ptr, len(data)

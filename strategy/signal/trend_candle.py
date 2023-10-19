@@ -1,13 +1,10 @@
 from dataclasses import dataclass
 
 from core.models.candle import TrendCandleType
-from core.models.indicator import Indicator
+from strategy.signal.base import BaseSignal, SignalType
 
 
 @dataclass(frozen=True)
-class TrendCandleSignal(Indicator):
+class TrendCandleSignal(BaseSignal):
+    type: SignalType = SignalType.TrendCandle
     candle: TrendCandleType = TrendCandleType.THREE_CANDLES
-
-    @property
-    def parameters(self):
-        return [self.candle]

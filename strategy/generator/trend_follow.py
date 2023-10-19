@@ -6,8 +6,9 @@ import numpy as np
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import RandomParameter
+from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
+from strategy.exit.dumb import DumbExit
 from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.rsi import RSIFilter
@@ -46,7 +47,26 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return strategies
 
     def _diversified_strategies(self):
-        return []
+        strategies = [
+            (
+                TrendCandleSignal(candle=TrendCandleType.THREE_METHODS),
+                MovingAverageFilter(
+                    smoothing=MovingAverageType.WMA, period=StaticParameter(250.0)
+                ),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(0.85)),
+                DumbExit(),
+            ),
+            (
+                TrendCandleSignal(candle=TrendCandleType.DOUBLE_TROUBLE),
+                MovingAverageFilter(
+                    smoothing=MovingAverageType.WMA, period=StaticParameter(275.0)
+                ),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.9)),
+                DumbExit(),
+            ),
+        ]
+
+        return [Strategy(*strategy) for strategy in strategies]
 
     def _random_strategies(self, n_samples):
         strategy_types = list(StrategyTypes)
@@ -83,79 +103,75 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         rsi_upper_barrier = RandomParameter(75.0, 95, 1.0)
         atr_multi = RandomParameter(0.85, 2, 0.05)
 
-        ma_filter = np.random.choice(
-            [MovingAverageFilter(moving_avg_type, ma_filter_period)]
+        filter = np.random.choice(
+            [
+                MovingAverageFilter(smoothing=moving_avg_type, period=ma_filter_period),
+                RSIFilter(),
+                DumbFilter(period=ma_short_period),
+            ]
         )
-        rsi_filter = RSIFilter()
-
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
+        exit_signal = np.random.choice([DumbExit()])
 
         strategy_map = {
             StrategyTypes.Cross3Ma: (
-                "cross3ma",
                 MA3CrossSignal(
-                    moving_avg_type, ma_short_period, ma_medium_period, ma_long_period
+                    smoothing=moving_avg_type,
+                    short_period=ma_short_period,
+                    medium_period=ma_medium_period,
+                    long_period=ma_long_period,
                 ),
-                DumbFilter(),
+                filter,
                 stop_loss,
+                exit_signal,
             ),
-            StrategyTypes.CrossTii: (
-                "crosstii",
-                TIICrossSignal(),
-                ma_filter,
-                stop_loss,
-            ),
+            StrategyTypes.CrossTii: (TIICrossSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.TrendCandle: (
-                "candlet",
-                TrendCandleSignal(trend_candle_type),
-                ma_filter,
+                TrendCandleSignal(candle=trend_candle_type),
+                filter,
                 stop_loss,
+                exit_signal,
             ),
-            StrategyTypes.SnAtr: (
-                "snatr",
-                SNATRSignal(),
-                ma_filter,
-                stop_loss,
-            ),
+            StrategyTypes.SnAtr: (SNATRSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.SupFlip: (
-                "supflip",
                 SupertrendFlipSignal(),
-                rsi_filter,
+                filter,
                 stop_loss,
+                exit_signal,
             ),
             StrategyTypes.Rsi2Ma: (
-                "rsi2ma",
                 RSI2MovingAverageSignal(
-                    ma=moving_avg_type,
+                    smoothing=moving_avg_type,
                     lower_barrier=rsi_lower_barrier,
                     upper_barrier=rsi_upper_barrier,
                 ),
-                DumbFilter(),
+                filter,
                 stop_loss,
+                exit_signal,
             ),
             StrategyTypes.CrossRsiN: (
-                "crossrsin",
                 RSINautralityCrossSignal(),
-                DumbFilter(),
+                filter,
                 stop_loss,
+                exit_signal,
             ),
             StrategyTypes.RsiVma: (
-                "rsivma",
                 RSIVSignal(
                     lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier
                 ),
-                ma_filter,
+                filter,
                 stop_loss,
+                exit_signal,
             ),
         }
 
         strategy_tuple = strategy_map.get(
             strategy_type,
             (
-                "ground",
-                TestingGroundSignal(moving_avg_type, ma_long_period),
-                DumbFilter(),
+                TestingGroundSignal(smoothing=moving_avg_type, period=ma_long_period),
+                filter,
                 stop_loss,
+                exit_signal,
             ),
         )
 
