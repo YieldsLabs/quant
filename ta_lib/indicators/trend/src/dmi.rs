@@ -4,7 +4,7 @@ pub fn dmi(
     high: &Series<f32>,
     low: &Series<f32>,
     atr: &Series<f32>,
-    smoothing_period: usize,
+    adx_period: usize,
     di_period: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let up = high.change(1);
@@ -15,13 +15,14 @@ pub fn dmi(
     let dm_plus = iff!(up.gt(&down) & up.sgt(0.0), up, zero);
     let dm_minus = iff!(down.gt(&up) & down.sgt(0.0), down, zero);
 
-    let di_plus = 100.0 * dm_plus.smma(smoothing_period) / atr;
-    let di_minus = 100.0 * dm_minus.smma(smoothing_period) / atr;
+    let di_plus = 100.0 * dm_plus.smma(di_period) / atr;
+    let di_minus = 100.0 * dm_minus.smma(di_period) / atr;
 
     let sum = &di_plus + &di_minus;
     let one = Series::fill(1.0, high.len());
 
-    let adx = 100.0 * ((&di_plus - &di_minus).abs() / iff!(sum.seq(0.0), one, sum)).smma(di_period);
+    let adx =
+        100.0 * ((&di_plus - &di_minus).abs() / iff!(sum.seq(0.0), one, sum)).smma(adx_period);
 
     (adx, di_plus, di_minus)
 }
@@ -48,9 +49,9 @@ mod tests {
             6.858, 6.86, 6.8480, 6.8575, 6.864, 6.8565, 6.8455, 6.8450, 6.8365, 6.8310, 6.8355,
             6.8360, 6.8345, 6.8285, 6.8395,
         ]);
-        let smoothing_period = 3;
+        let adx_period = 3;
         let di_period = 3;
-        let atr = atr(&high, &low, &close, smoothing_period, Some("SMMA"));
+        let atr = atr(&high, &low, &close, adx_period, Some("SMMA"));
 
         let expected_adx = [
             0.0, 33.333336, 55.555557, 70.37037, 61.10112, 54.921627, 50.801956, 38.320854,
@@ -71,7 +72,7 @@ mod tests {
         ];
 
         let (result_adx, result_di_plus, result_di_minus) =
-            dmi(&high, &low, &atr, smoothing_period, di_period);
+            dmi(&high, &low, &atr, adx_period, di_period);
 
         let adx: Vec<f32> = result_adx.into();
         let di_plus: Vec<f32> = result_di_plus.into();

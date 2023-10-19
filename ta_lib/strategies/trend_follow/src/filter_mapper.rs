@@ -8,9 +8,8 @@ use serde::Deserialize;
 #[serde(tag = "type")]
 pub enum FilterConfig {
     Adx {
-        smoothing_period: f32,
+        adx_period: f32,
         di_period: f32,
-        atr_period: f32,
         threshold: f32,
     },
     Ma {
@@ -42,16 +41,10 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             threshold,
         )),
         FilterConfig::Adx {
-            smoothing_period,
+            adx_period,
             di_period,
-            atr_period,
             threshold,
-        } => Box::new(ADXFilter::new(
-            smoothing_period,
-            di_period,
-            atr_period,
-            threshold,
-        )),
+        } => Box::new(ADXFilter::new(adx_period, di_period, threshold)),
         FilterConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
     }
 }

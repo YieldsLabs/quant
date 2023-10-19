@@ -9,6 +9,7 @@ from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
 from strategy.exit.dumb import DumbExit
+from strategy.filter.adx import ADXFilter
 from strategy.filter.dumb import DumbFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.rsi import RSIFilter
@@ -108,6 +109,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 MovingAverageFilter(smoothing=moving_avg_type, period=ma_filter_period),
                 RSIFilter(),
                 DumbFilter(period=ma_short_period),
+                ADXFilter(),
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
