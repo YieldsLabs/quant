@@ -58,11 +58,11 @@ class Portfolio(AbstractEventManager):
             strategy,
             [
                 performance.calmar_ratio,
-                performance.ulcer_index,
                 performance.var,
                 performance.sharpe_ratio,
                 performance.profit_factor,
                 performance.max_drawdown,
+                performance.average_pnl,
             ],
         )
 
