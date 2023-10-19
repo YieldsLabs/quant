@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-from enum import Enum
 import json
+from dataclasses import dataclass
 
 from .indicator import Indicator
 from .parameter import Parameter
@@ -15,38 +14,32 @@ class Strategy:
 
     @property
     def parameters(self):
-        signal_data = json.dumps(self.entry_signal).encode()
-        filter_data = json.dumps(self.regime_filter).encode()
-        stoploss_data = json.dumps(self.stop_loss).encode()
-        exit_data = json.dumps(self.exit_signal).encode()
+        signal_data = json.dumps(self.entry_signal.to_dict()).encode()
+        filter_data = json.dumps(self.regime_filter.to_dict()).encode()
+        stoploss_data = json.dumps(self.stop_loss.to_dict()).encode()
+        exit_data = json.dumps(self.exit_signal.to_dict()).encode()
 
         return (signal_data, filter_data, stoploss_data, exit_data)
 
+    def _format_parameters(self, indicator):
+        formatted_values = []
+        for k, v in indicator.__dict__.items():
+            if k != "type":
+                if isinstance(v, Parameter) and v.value.is_integer():
+                    formatted_values.append(str(int(v.value)))
+                else:
+                    formatted_values.append(str(v))
+        parameters = ":".join(formatted_values)
+        return parameters if parameters else "NONE"
+
     def __str__(self) -> str:
-        def process_parameters(param):
-            if isinstance(param, Enum):
-                return str(param)
-            if isinstance(param, Parameter):
-                if param.value.is_integer():
-                    return int(param.value)
-                return float(param.value)
-
-        def serialize_parameters(obj):
-            return [process_parameters(p) for p in obj.parameters]
-
-        signal = serialize_parameters(self.signal)
-        signal_parameters = ":".join(map(str, signal))
-
-        filter = serialize_parameters(self.filter)
-
-        filter_name = filter[0] if len(filter) > 0 else "NONE"
-        filter_parameters = ":".join(map(str, filter[1:]))
-        filter_parameters = (
-            "_" + filter_parameters if len(filter_parameters) > 0 else ""
+        entry_ = f"_SGNL{self.entry_signal.type}:{self._format_parameters(self.entry_signal)}"
+        filter_ = f"_FLTR{self.regime_filter.type}:{self._format_parameters(self.regime_filter)}"
+        stop_loss = (
+            f"_STPLSS{self.stop_loss.type}:{self._format_parameters(self.stop_loss)}"
+        )
+        exit_ = (
+            f"_EXIT{self.exit_signal.type}:{self._format_parameters(self.exit_signal)}"
         )
 
-        stop_loss = serialize_parameters(self.stop_loss)
-        stop_loss_name = stop_loss[0]
-        stop_loss_parameters = ":".join(map(str, stop_loss[1:]))
-
-        return f"_STRTG_{signal_parameters}_FLTR{filter_name}{filter_parameters}_STPLSS{stop_loss_name}_{stop_loss_parameters}"
+        return entry_ + filter_ + stop_loss + exit_

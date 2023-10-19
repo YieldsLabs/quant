@@ -80,7 +80,8 @@ pub fn strategy_stop_loss(strategy_id: i32) -> (f32, f32) {
 
 #[no_mangle]
 pub fn allocate(size: usize) -> *mut u8 {
-    let mut buf = Vec::with_capacity(size);
+    let mut buf = vec![0; size];
+    buf.resize(size, 0);
     let ptr = buf.as_mut_ptr();
     std::mem::forget(buf);
     ptr

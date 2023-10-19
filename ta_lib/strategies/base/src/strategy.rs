@@ -111,13 +111,13 @@ impl Strategy for BaseStrategy {
 
 impl BaseStrategy {
     fn trade_signals(&self, series: &OHLCVSeries) -> (bool, bool, bool, bool) {
-        let (go_long_signal, go_short_signal) = self.signal.generate(&series);
-        let (go_long_filter, go_short_filter) = self.filter.apply(&series);
+        let (go_long_signal, go_short_signal) = self.signal.generate(series);
+        let (go_long_filter, go_short_filter) = self.filter.apply(series);
 
         let go_long_series = go_long_signal & go_long_filter;
         let go_short_series = go_short_signal & go_short_filter;
 
-        let (exit_long_series, exit_short_series) = self.exit.generate(&series);
+        let (exit_long_series, exit_short_series) = self.exit.generate(series);
 
         let go_long = go_long_series.last().unwrap_or_default();
         let go_short = go_short_series.last().unwrap_or_default();
@@ -132,7 +132,7 @@ impl BaseStrategy {
     }
 
     fn stop_loss_levels(&self, series: &OHLCVSeries) -> (f32, f32) {
-        let (stop_loss_long_series, stop_loss_short_series) = self.stop_loss.next(&series);
+        let (stop_loss_long_series, stop_loss_short_series) = self.stop_loss.next(series);
 
         let stop_loss_long = stop_loss_long_series.last().unwrap_or_default();
         let stop_loss_short = stop_loss_short_series.last().unwrap_or_default();

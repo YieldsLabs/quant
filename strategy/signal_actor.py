@@ -1,5 +1,5 @@
 import asyncio
-import json
+from ctypes import addressof, c_ubyte
 from enum import Enum
 from typing import Any
 
@@ -180,7 +180,14 @@ class SignalActor(BaseActor):
         )
 
     def allocate_and_write(self, data: bytes) -> (int, int):
-        ptr = self.exports["allocate"](len(data))
-        self.exports["memory"].data[ptr : ptr + len(data)] = data
+        ptr = self.exports["allocate"](self.store, len(data))
+        memory = self.exports["memory"]
+
+        total_memory_size = memory.data_len(self.store)
+        data_ptr = memory.data_ptr(self.store)
+        data_array = (c_ubyte * total_memory_size).from_address(
+            addressof(data_ptr.contents)
+        )
+        data_array[ptr : ptr + len(data)] = data
 
         return ptr, len(data)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -19,9 +19,10 @@ class Parameter(ABC):
 
 @dataclass(frozen=True)
 class RandomParameter(Parameter):
-    min: float
-    max: float
+    min: float = 1.0
+    max: float = 10.0
     step: float = 5.0
+    _value: float = field(init=False, default=None)
 
     def __post_init__(self):
         object.__setattr__(self, "_value", self._generate_value())
@@ -31,10 +32,13 @@ class RandomParameter(Parameter):
         return self._value
 
     def _generate_value(self) -> float:
-        value = float(
-            np.random.choice(list(np.arange(self.min, self.max + self.step, self.step)))
-        )
+        value = round(np.random.uniform(self.min, self.max), 2)
+        value = round(value / self.step) * self.step
+
         return round(value, 2)
+
+    def __str__(self):
+        return f"{self._value}"
 
 
 @dataclass(frozen=True)
@@ -44,3 +48,6 @@ class StaticParameter(Parameter):
     @property
     def value(self) -> float:
         return self._value
+
+    def __str__(self):
+        return f"{self._value}"

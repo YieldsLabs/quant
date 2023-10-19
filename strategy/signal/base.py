@@ -15,6 +15,9 @@ class SignalType(Enum):
     TrendCandle = "TrendCandle"
     TIICross = "TIICross"
 
+    def __str__(self):
+        return self.value.upper()
+
 
 @dataclass(frozen=True)
 class BaseSignal(Indicator):

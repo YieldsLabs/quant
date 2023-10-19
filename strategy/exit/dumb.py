@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from strategy.exit.base import BaseExit
+from strategy.exit.base import BaseExit, ExitType
 
 
 @dataclass(frozen=True)
 class DumbExit(BaseExit):
-    pass
+    type: ExitType = ExitType.Dumb

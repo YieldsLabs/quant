@@ -93,7 +93,7 @@ mod tests {
             -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
         ];
 
-        let (direction, supertrend) = supertrend(&hl2, &close, &atr, factor).into();
+        let (direction, supertrend) = supertrend(&hl2, &close, &atr, factor);
         let result_direction: Vec<f32> = direction.into();
         let result_supertrend: Vec<f32> = supertrend.into();
 

@@ -14,7 +14,8 @@ pub fn atr(
         Some("WMA") => tr.wma(period),
         Some("SMA") => tr.ma(period),
         Some("EMA") => tr.ema(period),
-        Some("SMMA") | _ => tr.smma(period),
+        Some("SMMA") => tr.smma(period),
+        _ => tr.smma(period),
     }
 }
 

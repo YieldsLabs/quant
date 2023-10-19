@@ -12,7 +12,8 @@ pub fn sso(
         match smoothing {
             Some("WMA") => series.wma(period),
             Some("HMA") => series.hma(period),
-            Some("SMA") | _ => series.ma(period),
+            Some("SMA") => series.ma(period),
+            _ => series.ma(period),
         }
     };
 

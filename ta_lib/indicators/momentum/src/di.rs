@@ -5,7 +5,8 @@ pub fn di(source: &Series<f32>, period: usize, smoothing: Option<&str>) -> Serie
         Some("SMMA") => source.smma(period),
         Some("SMA") => source.ma(period),
         Some("EMA") => source.ema(period),
-        Some("WMA") | _ => source.wma(period),
+        Some("WMA") => source.wma(period),
+        _ => source.wma(period),
     };
 
     100.0 * (source - &ma) / ma

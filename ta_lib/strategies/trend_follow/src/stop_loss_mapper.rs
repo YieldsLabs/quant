@@ -3,7 +3,7 @@ use serde::Deserialize;
 use stop_loss::ATRStopLoss;
 
 #[derive(Deserialize)]
-#[serde(tag = "type", rename_all = "PascalCase")]
+#[serde(tag = "type")]
 pub enum StopLossConfig {
     Atr { period: f32, multi: f32 },
 }

@@ -10,6 +10,9 @@ class FilterType(Enum):
     Ma = "Ma"
     Rsi = "Rsi"
 
+    def __str__(self):
+        return self.value.upper()
+
 
 @dataclass(frozen=True)
 class BaseFilter(Indicator):

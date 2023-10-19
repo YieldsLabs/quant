@@ -53,7 +53,7 @@ impl Signal for RSI2MASignal {
         let short_signal = data.close.lt(&ma_short)
             & data.close.lt(&ma_long)
             & ma_short.lt(&ma_long)
-            & rsi.cross_over_line(self.lower_barrier);
+            & rsi.cross_over_line(self.upper_barrier);
 
         (long_signal, short_signal)
     }
