@@ -5,7 +5,8 @@ use base::Signal;
 use serde::Deserialize;
 use signal::{
     MA3CrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal, SNATRSignal,
-    SupertrendFlipSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
+    SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal,
+    TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -51,6 +52,10 @@ pub enum SignalConfig {
         upper_barrier: f32,
     },
     SupFlip {
+        atr_period: f32,
+        factor: f32,
+    },
+    SupPullBack {
         atr_period: f32,
         factor: f32,
     },
@@ -121,6 +126,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         )),
         SignalConfig::SupFlip { atr_period, factor } => {
             Box::new(SupertrendFlipSignal::new(atr_period, factor))
+        }
+        SignalConfig::SupPullBack { atr_period, factor } => {
+            Box::new(SupertrendPullBackSignal::new(atr_period, factor))
         }
         SignalConfig::TIICross {
             major_period,

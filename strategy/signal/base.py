@@ -11,6 +11,7 @@ class SignalType(Enum):
     RsiV = "RsiV"
     SnAtr = "SnAtr"
     SupFlip = "SupFlip"
+    SupPullBack = "SupPullBack"
     TestGround = "TestGround"
     TrendCandle = "TrendCandle"
     TIICross = "TIICross"

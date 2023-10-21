@@ -19,6 +19,7 @@ from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
 from strategy.signal.supertrend_flip import SupertrendFlipSignal
+from strategy.signal.supertrend_pullback import SupertrendPullBackSignal
 from strategy.signal.testing_ground import TestingGroundSignal
 from strategy.signal.tii_cross import TIICrossSignal
 from strategy.signal.trend_candle import TrendCandleSignal
@@ -32,6 +33,7 @@ class StrategyTypes(Enum):
     Ground = auto()
     SnAtr = auto()
     SupFlip = auto()
+    SupPullBack = auto()
     TrendCandle = auto()
     Rsi2Ma = auto()
     RsiVma = auto()
@@ -141,6 +143,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             StrategyTypes.SnAtr: (SNATRSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.SupFlip: (
                 SupertrendFlipSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.SupPullBack: (
+                SupertrendPullBackSignal(),
                 filter,
                 stop_loss,
                 exit_signal,
