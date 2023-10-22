@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries, Price};
+use base::{Filter, OHLCVSeries};
 use core::Series;
 use trend::tii;
 

@@ -2,6 +2,8 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{rsi_indicator, RSIType};
 
+const RSI_NEUTRALITY: f32 = 50.0;
+
 pub struct RSINeutralityCrossSignal {
     rsi_type: RSIType,
     rsi_period: usize,
@@ -25,18 +27,20 @@ impl Signal for RSINeutralityCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
+        let high_neutrality = RSI_NEUTRALITY + self.threshold;
+        let low_neutrality = RSI_NEUTRALITY - self.threshold;
 
-        let long = rsi.sgt(50.0 + self.threshold)
-            & rsi.shift(1).sgt(50.0)
-            & rsi.shift(2).slt(50.0)
-            & rsi.shift(3).slt(50.0)
-            & rsi.shift(4).slt(50.0);
+        let long = rsi.sgt(high_neutrality)
+            & rsi.shift(1).sgt(high_neutrality)
+            & rsi.shift(2).slt(high_neutrality)
+            & rsi.shift(3).slt(high_neutrality)
+            & rsi.shift(4).slt(high_neutrality);
 
-        let short = rsi.slt(50.0 - self.threshold)
-            & rsi.shift(1).slt(50.0)
-            & rsi.shift(2).sgt(50.0)
-            & rsi.shift(3).sgt(50.0)
-            & rsi.shift(4).sgt(50.0);
+        let short = rsi.slt(low_neutrality)
+            & rsi.shift(1).slt(low_neutrality)
+            & rsi.shift(2).sgt(low_neutrality)
+            & rsi.shift(3).sgt(low_neutrality)
+            & rsi.shift(4).sgt(low_neutrality);
 
         (long, short)
     }

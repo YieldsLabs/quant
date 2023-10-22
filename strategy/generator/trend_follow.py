@@ -71,6 +71,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
+            (
+                TrendCandleSignal(candle=TrendCandleType.HIKKAKE),
+                MovingAverageFilter(
+                    smoothing=MovingAverageType.ZLSMA, period=StaticParameter(300.0)
+                ),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                DumbExit(),
+            ),
         ]
 
         return [Strategy(*strategy) for strategy in strategies]

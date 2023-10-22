@@ -10,4 +10,4 @@ class RSINautralityCrossSignal(BaseSignal):
     type: SignalType = SignalType.RsiNeutralityCross
     rsi_type: RSIType = RSIType.RSI
     rsi_period: Parameter = StaticParameter(21.0)
-    threshold: Parameter = RandomParameter(3.0, 7.0, 1.0)
+    threshold: Parameter = RandomParameter(1.0, 7.0, 1.0)
