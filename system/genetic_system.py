@@ -202,6 +202,7 @@ class GeneticSystem(AbstractSystem):
 
         if not len(strategies):
             await self.event_queue.put(Event.REGENERATE_POPULATION)
+            logger.info("Regenerate population")
             return
 
         await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)

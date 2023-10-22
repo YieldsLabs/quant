@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import Parameter, RandomParameter
+from core.models.parameter import Parameter, StaticParameter
 from strategy.filter.base import BaseFilter, FilterType
 
 
@@ -9,4 +9,4 @@ from strategy.filter.base import BaseFilter, FilterType
 class MovingAverageFilter(BaseFilter):
     type: FilterType = FilterType.Ma
     smoothing: MovingAverageType = MovingAverageType.EMA
-    period: Parameter = RandomParameter(100.0, 300.0, 10.0)
+    period: Parameter = StaticParameter(200.0)
