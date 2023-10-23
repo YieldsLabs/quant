@@ -30,8 +30,8 @@ impl Signal for SupertrendFlipSignal {
         );
 
         (
-            trendline.cross_over(&data.close),
             trendline.cross_under(&data.close),
+            trendline.cross_over(&data.close),
         )
     }
 }
