@@ -62,7 +62,8 @@ class Portfolio(AbstractEventManager):
                 performance.sharpe_ratio,
                 performance.profit_factor,
                 performance.max_drawdown,
-                performance.average_pnl,
+                performance.max_consecutive_losses,
+                performance.annualized_volatility,
             ],
         )
 
