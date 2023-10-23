@@ -25,7 +25,11 @@ class Strategy:
         formatted_values = []
         for k, v in indicator.__dict__.items():
             if k != "type":
-                if isinstance(v, Parameter) and v.value.is_integer():
+                if (
+                    isinstance(v, Parameter)
+                    and isinstance(v.value, float)
+                    and v.value.is_integer()
+                ):
                     formatted_values.append(str(int(v.value)))
                 else:
                     formatted_values.append(str(v))

@@ -52,29 +52,35 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
     def _diversified_strategies(self):
         strategies = [
             (
-                TrendCandleSignal(candle=TrendCandleType.THREE_METHODS),
+                TrendCandleSignal(
+                    candle=StaticParameter(TrendCandleType.THREE_METHODS)
+                ),
                 MovingAverageFilter(
-                    smoothing=MovingAverageType.WMA, period=StaticParameter(250.0)
+                    smoothing=StaticParameter(MovingAverageType.WMA),
+                    period=StaticParameter(250.0),
                 ),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(0.85)),
                 DumbExit(),
             ),
             (
-                TrendCandleSignal(candle=TrendCandleType.DOUBLE_TROUBLE),
+                TrendCandleSignal(
+                    candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
+                ),
                 RSIFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
             (
-                TrendCandleSignal(candle=TrendCandleType.H),
+                TrendCandleSignal(candle=StaticParameter(TrendCandleType.H)),
                 TIIFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
             (
-                TrendCandleSignal(candle=TrendCandleType.HIKKAKE),
+                TrendCandleSignal(candle=StaticParameter(TrendCandleType.HIKKAKE)),
                 MovingAverageFilter(
-                    smoothing=MovingAverageType.ZLSMA, period=StaticParameter(300.0)
+                    smoothing=StaticParameter(MovingAverageType.ZLSMA),
+                    period=StaticParameter(300.0),
                 ),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
@@ -107,8 +113,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return list(strategies_set)
 
     def _generate_strategy(self, strategy_type):
-        moving_avg_type = np.random.choice(list(MovingAverageType))
-        trend_candle_type = np.random.choice(list(TrendCandleType))
         _short_period = RandomParameter(20.0, 50.0, 5.0)
         _long_period = RandomParameter(50.0, 200.0, 10.0)
         ma_medium_period = RandomParameter(50.0, 100.0, 5.0)
@@ -120,7 +124,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
         filter = np.random.choice(
             [
-                MovingAverageFilter(smoothing=moving_avg_type, period=ma_filter_period),
+                MovingAverageFilter(period=ma_filter_period),
                 RSIFilter(),
                 ADXFilter(),
                 TIIFilter(),
@@ -132,7 +136,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         strategy_map = {
             StrategyTypes.Cross3Ma: (
                 MA3CrossSignal(
-                    smoothing=moving_avg_type,
                     short_period=ma_short_period,
                     medium_period=ma_medium_period,
                     long_period=ma_long_period,
@@ -143,7 +146,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.CrossTii: (TIICrossSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.TrendCandle: (
-                TrendCandleSignal(candle=trend_candle_type),
+                TrendCandleSignal(),
                 filter,
                 stop_loss,
                 exit_signal,
@@ -163,7 +166,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.Rsi2Ma: (
                 RSI2MovingAverageSignal(
-                    smoothing=moving_avg_type,
                     lower_barrier=rsi_lower_barrier,
                     upper_barrier=rsi_upper_barrier,
                 ),
@@ -190,7 +192,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         strategy_tuple = strategy_map.get(
             strategy_type,
             (
-                TestingGroundSignal(smoothing=moving_avg_type, period=ma_long_period),
+                TestingGroundSignal(period=ma_long_period),
                 filter,
                 stop_loss,
                 exit_signal,

@@ -9,6 +9,7 @@ from core.interfaces.abstract_position_risk_strategy import AbstractPositionRisk
 from core.interfaces.abstract_position_take_profit_strategy import (
     AbstractPositionTakeProfitStrategy,
 )
+from core.models.indicator import Indicator
 
 
 class Encoder(json.JSONEncoder):
@@ -23,7 +24,9 @@ class Encoder(json.JSONEncoder):
             return obj.tolist()
         if isinstance(obj, Event):
             return obj.to_dict()
+        if isinstance(obj, Indicator):
+            return obj.to_dict()
         if isinstance(obj, type(Any)):
             return "Any"
 
-        return super().default(obj)
+        return str(obj)

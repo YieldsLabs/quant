@@ -16,7 +16,12 @@ class Indicator(ABC):
             value = d[name]
 
             if isinstance(value, dict) and "_value" in value:
-                d[name] = value["_value"]
+                v = value["_value"]
+
+                if isinstance(v, Enum):
+                    d[name] = v.value
+                else:
+                    d[name] = value["_value"]
             elif isinstance(value, Enum):
                 d[name] = value.value
 

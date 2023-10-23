@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from enum import Enum
 
 import numpy as np
 
@@ -43,11 +44,27 @@ class RandomParameter(Parameter):
 
 @dataclass(frozen=True)
 class StaticParameter(Parameter):
-    _value: float
+    _value: float | str | int | Enum
 
     @property
-    def value(self) -> float:
+    def value(self) -> float | str | int | Enum:
         return self._value
 
     def __str__(self):
         return f"{self._value}"
+
+
+@dataclass(frozen=True)
+class CategoricalParameter(Parameter):
+    enum_cls: Enum
+    _value: Enum = field(init=False, default=None)
+
+    def __post_init__(self):
+        object.__setattr__(self, "_value", np.random.choice(list(self.enum_cls)))
+
+    @property
+    def value(self) -> int:
+        return self._value.value
+
+    def __str__(self):
+        return f"{self._value.name.upper()}"
