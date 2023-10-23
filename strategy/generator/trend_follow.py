@@ -87,6 +87,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
+            (
+                SupertrendFlipSignal(),
+                RSIFilter(),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                DumbExit(),
+            ),
         ]
 
         return [Strategy(*strategy) for strategy in strategies]
