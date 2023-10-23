@@ -14,6 +14,7 @@ from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.rsi import RSIFilter
 from strategy.filter.tii import TIIFilter
 from strategy.signal.ma_three_cross import MA3CrossSignal
+from strategy.signal.macd_cross import MACDCrossSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
@@ -30,6 +31,7 @@ class StrategyTypes(Enum):
     Cross3Ma = auto()
     CrossTii = auto()
     CrossRsiN = auto()
+    CrossMACD = auto()
     Ground = auto()
     SnAtr = auto()
     SupFlip = auto()
@@ -140,6 +142,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     medium_period=ma_medium_period,
                     long_period=ma_long_period,
                 ),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.CrossMACD: (
+                MACDCrossSignal(),
                 filter,
                 stop_loss,
                 exit_signal,

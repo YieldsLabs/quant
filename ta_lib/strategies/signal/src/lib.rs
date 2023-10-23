@@ -1,4 +1,5 @@
 mod ma_three_cross;
+mod macd_cross;
 mod rsi_neutrality_cross;
 mod rsi_neutrality_rejection;
 mod rsi_two_ma;
@@ -11,6 +12,7 @@ mod tii_cross;
 mod trend_candle;
 
 pub use ma_three_cross::MA3CrossSignal;
+pub use macd_cross::MACDCrossSignal;
 pub use rsi_neutrality_cross::RSINeutralityCrossSignal;
 pub use rsi_neutrality_rejection::RSINeutralityRejectionSignal;
 pub use rsi_two_ma::RSI2MASignal;

@@ -1,12 +1,13 @@
 use crate::candle_mapper::map_to_candle;
 use crate::ma_mapper::map_to_ma;
+use crate::macd_mapper::map_to_macd;
 use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
 use signal::{
-    MA3CrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal, SNATRSignal,
-    SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal,
-    TrendCandleSignal,
+    MA3CrossSignal, MACDCrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal,
+    SNATRSignal, SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal,
+    TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -17,6 +18,12 @@ pub enum SignalConfig {
         short_period: f32,
         medium_period: f32,
         long_period: f32,
+    },
+    MACDCross {
+        macd_type: f32,
+        fast_period: f32,
+        slow_period: f32,
+        signal_smoothing: f32,
     },
     RsiNeutralityCross {
         rsi_type: f32,
@@ -79,6 +86,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             medium_period,
             long_period,
+        )),
+        SignalConfig::MACDCross {
+            macd_type,
+            fast_period,
+            slow_period,
+            signal_smoothing,
+        } => Box::new(MACDCrossSignal::new(
+            map_to_macd(macd_type as usize),
+            fast_period,
+            slow_period,
+            signal_smoothing,
         )),
         SignalConfig::RsiNeutralityCross {
             rsi_type,
