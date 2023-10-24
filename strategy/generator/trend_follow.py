@@ -17,6 +17,7 @@ from strategy.filter.tii import TIIFilter
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_flip import MACDFlipSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
+from strategy.signal.rsi_neutrality_pullback import RSINautralityPullbackSignal
 from strategy.signal.rsi_neutrality_rejection import RSINautralityRejectionSignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
@@ -33,6 +34,7 @@ class StrategyTypes(Enum):
     ThreeMaCross = auto()
     TiiCross = auto()
     RsiNeutralityCross = auto()
+    RsiNeutralityPullback = auto()
     RsiNeutralityRejection = auto()
     MACDFlip = auto()
     Ground = auto()
@@ -199,6 +201,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.RsiNeutralityCross: (
                 RSINautralityCrossSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.RsiNeutralityCross: (
+                RSINautralityPullbackSignal(),
                 filter,
                 stop_loss,
                 exit_signal,

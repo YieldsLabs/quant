@@ -6,8 +6,9 @@ use base::Signal;
 use serde::Deserialize;
 use signal::{
     MA3CrossSignal, MACDFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
-    RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
-    SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
+    RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
+    SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal,
+    TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -26,6 +27,11 @@ pub enum SignalConfig {
         signal_smoothing: f32,
     },
     RsiNeutralityCross {
+        rsi_type: f32,
+        rsi_period: f32,
+        threshold: f32,
+    },
+    RsiNeutralityPullback {
         rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
@@ -108,6 +114,15 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             rsi_period,
             threshold,
         } => Box::new(RSINeutralityCrossSignal::new(
+            map_to_rsi(rsi_type as usize),
+            rsi_period,
+            threshold,
+        )),
+        SignalConfig::RsiNeutralityPullback {
+            rsi_type,
+            rsi_period,
+            threshold,
+        } => Box::new(RSINeutralityPullbackSignal::new(
             map_to_rsi(rsi_type as usize),
             rsi_period,
             threshold,

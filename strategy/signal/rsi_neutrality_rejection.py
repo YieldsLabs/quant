@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
-from core.models.parameter import CategoricalParameter, Parameter, StaticParameter
+from core.models.parameter import (
+    CategoricalParameter,
+    Parameter,
+    RandomParameter,
+    StaticParameter,
+)
 from core.models.rsi import RSIType
 from strategy.signal.base import BaseSignal, SignalType
 
@@ -9,5 +14,5 @@ from strategy.signal.base import BaseSignal, SignalType
 class RSINautralityRejectionSignal(BaseSignal):
     type: SignalType = SignalType.RsiNeutralityRejection
     rsi_type: Parameter = CategoricalParameter(RSIType)
-    rsi_period: Parameter = StaticParameter(21.0)
-    threshold: Parameter = StaticParameter(0.0)
+    rsi_period: Parameter = StaticParameter(14.0)
+    threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)

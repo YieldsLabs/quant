@@ -28,18 +28,15 @@ impl Signal for RSINeutralityRejectionSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
 
-        let high_neutrality = RSI_NEUTRALITY + self.threshold;
-        let low_neutrality = RSI_NEUTRALITY - self.threshold;
+        let long = rsi.sgt(RSI_NEUTRALITY + self.threshold)
+            & rsi.shift(1).slt(RSI_NEUTRALITY)
+            & rsi.shift(2).sgt(RSI_NEUTRALITY)
+            & rsi.shift(3).sgt(RSI_NEUTRALITY);
 
-        let long = rsi.sgt(high_neutrality)
-            & rsi.shift(1).slt(high_neutrality)
-            & rsi.shift(2).sgt(high_neutrality)
-            & rsi.shift(3).sgt(high_neutrality);
-
-        let short = rsi.slt(low_neutrality)
-            & rsi.shift(1).sgt(low_neutrality)
-            & rsi.shift(2).slt(low_neutrality)
-            & rsi.shift(3).slt(low_neutrality);
+        let short = rsi.slt(RSI_NEUTRALITY - self.threshold)
+            & rsi.shift(1).sgt(RSI_NEUTRALITY)
+            & rsi.shift(2).slt(RSI_NEUTRALITY)
+            & rsi.shift(3).slt(RSI_NEUTRALITY);
 
         (long, short)
     }

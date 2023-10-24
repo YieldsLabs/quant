@@ -11,8 +11,8 @@ from strategy.signal.base import BaseSignal, SignalType
 
 
 @dataclass(frozen=True)
-class RSINautralityCrossSignal(BaseSignal):
-    type: SignalType = SignalType.RsiNeutralityCross
+class RSINautralityPullbackSignal(BaseSignal):
+    type: SignalType = SignalType.RsiNeutralityPullback
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(14.0)
     threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)

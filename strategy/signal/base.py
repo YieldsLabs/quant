@@ -8,6 +8,7 @@ class SignalType(Enum):
     Ma3Cross = "Ma3Cross"
     MACDFlip = "MACDFlip"
     RsiNeutralityCross = "RsiNeutralityCross"
+    RsiNeutralityPullback = "RsiNeutralityPullback"
     RsiNeutralityRejection = "RsiNeutralityRejection"
     Rsi2Ma = "Rsi2Ma"
     RsiV = "RsiV"
