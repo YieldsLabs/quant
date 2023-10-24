@@ -5,9 +5,9 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
 use signal::{
-    MA3CrossSignal, MACDCrossSignal, RSI2MASignal, RSINeutralityCrossSignal, RSIVSignal,
-    SNATRSignal, SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal,
-    TestingGroundSignal, TrendCandleSignal,
+    MA3CrossSignal, MACDFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
+    RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
+    SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -19,13 +19,18 @@ pub enum SignalConfig {
         medium_period: f32,
         long_period: f32,
     },
-    MACDCross {
+    MACDFlip {
         macd_type: f32,
         fast_period: f32,
         slow_period: f32,
         signal_smoothing: f32,
     },
     RsiNeutralityCross {
+        rsi_type: f32,
+        rsi_period: f32,
+        threshold: f32,
+    },
+    RsiNeutralityRejection {
         rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
@@ -87,12 +92,12 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             medium_period,
             long_period,
         )),
-        SignalConfig::MACDCross {
+        SignalConfig::MACDFlip {
             macd_type,
             fast_period,
             slow_period,
             signal_smoothing,
-        } => Box::new(MACDCrossSignal::new(
+        } => Box::new(MACDFlipSignal::new(
             map_to_macd(macd_type as usize),
             fast_period,
             slow_period,
@@ -103,6 +108,15 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             rsi_period,
             threshold,
         } => Box::new(RSINeutralityCrossSignal::new(
+            map_to_rsi(rsi_type as usize),
+            rsi_period,
+            threshold,
+        )),
+        SignalConfig::RsiNeutralityRejection {
+            rsi_type,
+            rsi_period,
+            threshold,
+        } => Box::new(RSINeutralityRejectionSignal::new(
             map_to_rsi(rsi_type as usize),
             rsi_period,
             threshold,

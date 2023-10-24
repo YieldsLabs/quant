@@ -12,10 +12,12 @@ from strategy.exit.dumb import DumbExit
 from strategy.filter.adx import ADXFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.rsi import RSIFilter
+from strategy.filter.stoch import StochFilter
 from strategy.filter.tii import TIIFilter
 from strategy.signal.ma_three_cross import MA3CrossSignal
-from strategy.signal.macd_cross import MACDCrossSignal
+from strategy.signal.macd_flip import MACDFlipSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
+from strategy.signal.rsi_neutrality_rejection import RSINautralityRejectionSignal
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
@@ -28,17 +30,18 @@ from strategy.stop_loss.atr import ATRStopLoss
 
 
 class StrategyTypes(Enum):
-    Cross3Ma = auto()
-    CrossTii = auto()
-    CrossRsiN = auto()
-    CrossMACD = auto()
+    ThreeMaCross = auto()
+    TiiCross = auto()
+    RsiNeutralityCross = auto()
+    RsiNeutralityRejection = auto()
+    MACDFlip = auto()
     Ground = auto()
     SnAtr = auto()
     SupFlip = auto()
     SupPullBack = auto()
     TrendCandle = auto()
     Rsi2Ma = auto()
-    RsiVma = auto()
+    RsiVMa = auto()
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
@@ -84,6 +87,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     smoothing=StaticParameter(MovingAverageType.ZLSMA),
                     period=StaticParameter(300.0),
                 ),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                DumbExit(),
+            ),
+            (
+                TrendCandleSignal(candle=StaticParameter(TrendCandleType.BOTTLE)),
+                StochFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
@@ -136,13 +145,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 RSIFilter(),
                 ADXFilter(),
                 TIIFilter(),
+                StochFilter(),
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
         exit_signal = np.random.choice([DumbExit()])
 
         strategy_map = {
-            StrategyTypes.Cross3Ma: (
+            StrategyTypes.ThreeMaCross: (
                 MA3CrossSignal(
                     short_period=ma_short_period,
                     medium_period=ma_medium_period,
@@ -152,13 +162,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 stop_loss,
                 exit_signal,
             ),
-            StrategyTypes.CrossMACD: (
-                MACDCrossSignal(),
+            StrategyTypes.MACDFlip: (
+                MACDFlipSignal(),
                 filter,
                 stop_loss,
                 exit_signal,
             ),
-            StrategyTypes.CrossTii: (TIICrossSignal(), filter, stop_loss, exit_signal),
+            StrategyTypes.TiiCross: (TIICrossSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.TrendCandle: (
                 TrendCandleSignal(),
                 filter,
@@ -187,13 +197,19 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 stop_loss,
                 exit_signal,
             ),
-            StrategyTypes.CrossRsiN: (
+            StrategyTypes.RsiNeutralityCross: (
                 RSINautralityCrossSignal(),
                 filter,
                 stop_loss,
                 exit_signal,
             ),
-            StrategyTypes.RsiVma: (
+            StrategyTypes.RsiNeutralityRejection: (
+                RSINautralityRejectionSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.RsiVMa: (
                 RSIVSignal(
                     lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier
                 ),

@@ -4,14 +4,14 @@ use shared::{macd_indicator, MACDType};
 
 const ZERO_LINE: f32 = 00.0;
 
-pub struct MACDCrossSignal {
+pub struct MACDFlipSignal {
     macd_type: MACDType,
     fast_period: usize,
     slow_period: usize,
     signal_smoothing: usize,
 }
 
-impl MACDCrossSignal {
+impl MACDFlipSignal {
     pub fn new(
         macd_type: MACDType,
         fast_period: f32,
@@ -27,7 +27,7 @@ impl MACDCrossSignal {
     }
 }
 
-impl Signal for MACDCrossSignal {
+impl Signal for MACDFlipSignal {
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adj_lookback, self.signal_smoothing)

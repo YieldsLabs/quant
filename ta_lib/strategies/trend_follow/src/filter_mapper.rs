@@ -1,7 +1,8 @@
 use crate::ma_mapper::map_to_ma;
 use crate::rsi_mapper::map_to_rsi;
+use crate::stoch_mapper::map_to_stoch;
 use base::Filter;
-use filter::{ADXFilter, DumbFilter, MAFilter, RSIFilter, TIIFilter};
+use filter::{ADXFilter, DumbFilter, MAFilter, RSIFilter, StochFilter, TIIFilter};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -20,6 +21,12 @@ pub enum FilterConfig {
         rsi_type: f32,
         period: f32,
         threshold: f32,
+    },
+    Stoch {
+        stoch_type: f32,
+        period: f32,
+        k_period: f32,
+        d_period: f32,
     },
     Tii {
         major_period: f32,
@@ -44,6 +51,17 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             map_to_rsi(rsi_type as usize),
             period,
             threshold,
+        )),
+        FilterConfig::Stoch {
+            stoch_type,
+            period,
+            k_period,
+            d_period,
+        } => Box::new(StochFilter::new(
+            map_to_stoch(stoch_type as usize),
+            period,
+            k_period,
+            d_period,
         )),
         FilterConfig::Adx {
             adx_period,

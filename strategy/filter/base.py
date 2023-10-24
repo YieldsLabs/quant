@@ -10,6 +10,7 @@ class FilterType(Enum):
     Ma = "Ma"
     Rsi = "Rsi"
     Tii = "Tii"
+    Stoch = "Stoch"
 
     def __str__(self):
         return self.value.upper()
