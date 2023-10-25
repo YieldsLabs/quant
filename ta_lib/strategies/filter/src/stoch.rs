@@ -35,6 +35,6 @@ impl Filter for StochFilter {
             self.d_period,
         );
 
-        (k.gt(&d), k.gt(&d))
+        (k.gt(&d), k.lt(&d))
     }
 }

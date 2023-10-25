@@ -6,7 +6,8 @@ from core.models.indicator import Indicator
 
 class SignalType(Enum):
     Ma3Cross = "Ma3Cross"
-    MACDFlip = "MACDFlip"
+    MacdFlip = "MacdFlip"
+    MacdCross = "MacdCross"
     RsiNeutralityCross = "RsiNeutralityCross"
     RsiNeutralityPullback = "RsiNeutralityPullback"
     RsiNeutralityRejection = "RsiNeutralityRejection"

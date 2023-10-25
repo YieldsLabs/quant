@@ -2,16 +2,14 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{macd_indicator, MACDType};
 
-const ZERO_LINE: f32 = 0.0;
-
-pub struct MACDFlipSignal {
+pub struct MACDCrossSignal {
     macd_type: MACDType,
     fast_period: usize,
     slow_period: usize,
     signal_smoothing: usize,
 }
 
-impl MACDFlipSignal {
+impl MACDCrossSignal {
     pub fn new(
         macd_type: MACDType,
         fast_period: f32,
@@ -27,14 +25,14 @@ impl MACDFlipSignal {
     }
 }
 
-impl Signal for MACDFlipSignal {
+impl Signal for MACDCrossSignal {
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adj_lookback, self.signal_smoothing)
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (macd_line, _, _) = macd_indicator(
+        let (macd_line, signal_line, _) = macd_indicator(
             &self.macd_type,
             data,
             self.fast_period,
@@ -43,8 +41,8 @@ impl Signal for MACDFlipSignal {
         );
 
         (
-            macd_line.cross_over_line(ZERO_LINE),
-            macd_line.cross_under_line(ZERO_LINE),
+            macd_line.cross_over(&signal_line),
+            macd_line.cross_under(&signal_line),
         )
     }
 }

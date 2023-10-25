@@ -29,9 +29,20 @@ impl Signal for SupertrendPullBackSignal {
             self.factor,
         );
 
+        let above = data.close.gt(&trendline);
+        let below = data.close.lt(&trendline);
+
         (
-            direction.shift(1).seq(1.0) & trendline.gt(&data.low) & trendline.lt(&data.close),
-            direction.shift(1).seq(-1.0) & trendline.lt(&data.high) & trendline.gt(&data.close),
+            data.low.lte(&trendline)
+                & data.close.gt(&trendline)
+                & below.shift(1)
+                & below.shift(2)
+                & direction.seq(1.0),
+            data.high.gte(&trendline)
+                & data.close.lt(&trendline)
+                & above.shift(1)
+                & above.shift(2)
+                & direction.seq(-1.0),
         )
     }
 }

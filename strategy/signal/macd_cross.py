@@ -11,8 +11,8 @@ from strategy.signal.base import BaseSignal, SignalType
 
 
 @dataclass(frozen=True)
-class MACDFlipSignal(BaseSignal):
-    type: SignalType = SignalType.MacdFlip
+class MACDCrossSignal(BaseSignal):
+    type: SignalType = SignalType.MacdCross
     macd_type: Parameter = CategoricalParameter(MACDType)
     fast_period: Parameter = RandomParameter(2.0, 15.0, 1.0)
     slow_period: Parameter = RandomParameter(9.0, 26.0, 1.0)

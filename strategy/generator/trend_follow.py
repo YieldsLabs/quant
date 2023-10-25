@@ -17,6 +17,7 @@ from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
 from strategy.filter.tii import TIIFilter
 from strategy.signal.ma_three_cross import MA3CrossSignal
+from strategy.signal.macd_cross import MACDCrossSignal
 from strategy.signal.macd_flip import MACDFlipSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_neutrality_pullback import RSINautralityPullbackSignal
@@ -39,6 +40,7 @@ class StrategyTypes(Enum):
     RsiNeutralityPullback = auto()
     RsiNeutralityRejection = auto()
     MACDFlip = auto()
+    MACDCross = auto()
     Ground = auto()
     SnAtr = auto()
     SupFlip = auto()
@@ -170,6 +172,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.MACDFlip: (
                 MACDFlipSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.MACDCross: (
+                MACDCrossSignal(),
                 filter,
                 stop_loss,
                 exit_signal,
