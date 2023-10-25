@@ -207,7 +207,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 stop_loss,
                 exit_signal,
             ),
-            StrategyTypes.RsiNeutralityCross: (
+            StrategyTypes.RsiNeutralityPullback: (
                 RSINautralityPullbackSignal(),
                 filter,
                 stop_loss,
