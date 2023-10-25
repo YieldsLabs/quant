@@ -1,7 +1,8 @@
 use core::Series;
 
 pub fn snatr(atr: &Series<f32>, atr_period: usize, period: usize) -> Series<f32> {
-    (atr - atr.lowest(atr_period)) / (atr.highest(atr_period) - atr.lowest(atr_period)).wma(period)
+    ((atr - atr.lowest(atr_period)) / (atr.highest(atr_period) - atr.lowest(atr_period)))
+        .wma(period)
 }
 
 #[test]
@@ -22,7 +23,7 @@ fn test_snatr() {
     let period = 3;
     let epsilon = 0.001;
     let expected = [
-        0.0, 0.0, 1.7599846, 1.1353611, 0.73479724, 1.505776, 1.2044822, 0.43536657, 0.05163071,
+        0.0, 0.0, 0.0, 0.8257546, 0.99494743, 0.9974737, 1.0, 0.9014031, 0.5520136,
     ];
 
     let result: Vec<f32> = snatr(&atr, atr_period, period).into();
