@@ -32,6 +32,9 @@ impl Filter for ADXFilter {
             self.di_period,
         );
 
-        (adx.sgt(self.threshold), adx.sgt(self.threshold))
+        (
+            adx.sgt(self.threshold) & adx.gt(&adx.shift(1)),
+            adx.sgt(self.threshold) & adx.gt(&adx.shift(1)),
+        )
     }
 }
