@@ -11,6 +11,7 @@ from core.models.strategy import Strategy
 from strategy.exit.dumb import DumbExit
 from strategy.filter.adx import ADXFilter
 from strategy.filter.ma import MovingAverageFilter
+from strategy.filter.macd import MACDFilter
 from strategy.filter.rsi import RSIFilter
 from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
@@ -150,6 +151,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 TIIFilter(),
                 StochFilter(),
                 SupertrendFilter(),
+                MACDFilter(),
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])

@@ -1,9 +1,11 @@
 use crate::ma_mapper::map_to_ma;
+use crate::macd_mapper::map_to_macd;
 use crate::rsi_mapper::map_to_rsi;
 use crate::stoch_mapper::map_to_stoch;
 use base::Filter;
 use filter::{
-    ADXFilter, DumbFilter, MAFilter, RSIFilter, StochFilter, SupertrendFilter, TIIFilter,
+    ADXFilter, DumbFilter, MACDFilter, MAFilter, RSIFilter, StochFilter, SupertrendFilter,
+    TIIFilter,
 };
 use serde::Deserialize;
 
@@ -18,6 +20,12 @@ pub enum FilterConfig {
     Ma {
         smoothing: f32,
         period: f32,
+    },
+    Macd {
+        macd_type: f32,
+        fast_period: f32,
+        slow_period: f32,
+        signal_smoothing: f32,
     },
     Rsi {
         rsi_type: f32,
@@ -49,6 +57,17 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
         FilterConfig::Ma { smoothing, period } => {
             Box::new(MAFilter::new(map_to_ma(smoothing as usize), period))
         }
+        FilterConfig::Macd {
+            macd_type,
+            fast_period,
+            slow_period,
+            signal_smoothing,
+        } => Box::new(MACDFilter::new(
+            map_to_macd(macd_type as usize),
+            fast_period,
+            slow_period,
+            signal_smoothing,
+        )),
         FilterConfig::Rsi {
             rsi_type,
             period,

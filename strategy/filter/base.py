@@ -12,6 +12,7 @@ class FilterType(Enum):
     Tii = "Tii"
     Stoch = "Stoch"
     Supertrend = "Supertrend"
+    Macd = "Macd"
 
     def __str__(self):
         return self.value.upper()
