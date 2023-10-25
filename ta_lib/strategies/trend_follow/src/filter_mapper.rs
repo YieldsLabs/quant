@@ -2,7 +2,9 @@ use crate::ma_mapper::map_to_ma;
 use crate::rsi_mapper::map_to_rsi;
 use crate::stoch_mapper::map_to_stoch;
 use base::Filter;
-use filter::{ADXFilter, DumbFilter, MAFilter, RSIFilter, StochFilter, TIIFilter};
+use filter::{
+    ADXFilter, DumbFilter, MAFilter, RSIFilter, StochFilter, SupertrendFilter, TIIFilter,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -27,6 +29,10 @@ pub enum FilterConfig {
         period: f32,
         k_period: f32,
         d_period: f32,
+    },
+    Supertrend {
+        atr_period: f32,
+        factor: f32,
     },
     Tii {
         major_period: f32,
@@ -63,6 +69,9 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             k_period,
             d_period,
         )),
+        FilterConfig::Supertrend { atr_period, factor } => {
+            Box::new(SupertrendFilter::new(atr_period, factor))
+        }
         FilterConfig::Adx {
             adx_period,
             di_period,

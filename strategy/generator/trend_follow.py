@@ -13,6 +13,7 @@ from strategy.filter.adx import ADXFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.rsi import RSIFilter
 from strategy.filter.stoch import StochFilter
+from strategy.filter.supertrend import SupertrendFilter
 from strategy.filter.tii import TIIFilter
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_flip import MACDFlipSignal
@@ -148,6 +149,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ADXFilter(),
                 TIIFilter(),
                 StochFilter(),
+                SupertrendFilter(),
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
