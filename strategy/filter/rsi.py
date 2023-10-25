@@ -9,5 +9,5 @@ from strategy.filter.base import BaseFilter, FilterType
 class RSIFilter(BaseFilter):
     type: FilterType = FilterType.Rsi
     rsi_type: Parameter = CategoricalParameter(RSIType)
-    period: Parameter = RandomParameter(14.0, 16.0, 1.0)
+    period: Parameter = RandomParameter(50.0, 55.0, 1.0)
     threshold: Parameter = RandomParameter(49.0, 55.0, 1.0)
