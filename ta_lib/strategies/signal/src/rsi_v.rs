@@ -29,7 +29,7 @@ impl Signal for RSIVSignal {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
 
         let long_signal = rsi.sgt(self.lower_barrier)
-            & rsi.shift(1).slt(self.upper_barrier)
+            & rsi.shift(1).slt(self.lower_barrier)
             & rsi.shift(2).sgt(self.lower_barrier);
         let short_signal = rsi.slt(self.upper_barrier)
             & rsi.shift(1).sgt(self.upper_barrier)
