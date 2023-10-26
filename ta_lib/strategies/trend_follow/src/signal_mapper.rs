@@ -5,10 +5,10 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
 use signal::{
-    MA3CrossSignal, MACDCrossSignal, MACDFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
-    RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
-    SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal,
-    TrendCandleSignal,
+    MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal, RSI2MASignal,
+    RSINeutralityCrossSignal, RSINeutralityPullbackSignal, RSINeutralityRejectionSignal,
+    RSIVSignal, SNATRSignal, SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal,
+    TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -27,6 +27,12 @@ pub enum SignalConfig {
         signal_smoothing: f32,
     },
     MacdCross {
+        macd_type: f32,
+        fast_period: f32,
+        slow_period: f32,
+        signal_smoothing: f32,
+    },
+    MacdColorSwitch {
         macd_type: f32,
         fast_period: f32,
         slow_period: f32,
@@ -117,6 +123,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             slow_period,
             signal_smoothing,
         } => Box::new(MACDCrossSignal::new(
+            map_to_macd(macd_type as usize),
+            fast_period,
+            slow_period,
+            signal_smoothing,
+        )),
+        SignalConfig::MacdColorSwitch {
+            macd_type,
+            fast_period,
+            slow_period,
+            signal_smoothing,
+        } => Box::new(MACDColorSwitchSignal::new(
             map_to_macd(macd_type as usize),
             fast_period,
             slow_period,
