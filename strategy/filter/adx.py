@@ -9,4 +9,4 @@ class ADXFilter(BaseFilter):
     type: FilterType = FilterType.Adx
     adx_period: Parameter = RandomParameter(10.0, 15.0, 2.0)
     di_period: Parameter = RandomParameter(10.0, 15.0, 2.0)
-    threshold: Parameter = StaticParameter(25.0)
+    threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)

@@ -2,6 +2,8 @@ use base::{Filter, OHLCVSeries, Price};
 use core::Series;
 use trend::dmi;
 
+const ADX_TREND: f32 = 25.0;
+
 pub struct ADXFilter {
     adx_period: usize,
     di_period: usize,
@@ -33,8 +35,8 @@ impl Filter for ADXFilter {
         );
 
         (
-            adx.sgt(self.threshold) & adx.gt(&adx.shift(1)),
-            adx.sgt(self.threshold) & adx.gt(&adx.shift(1)),
+            adx.sgt(ADX_TREND + self.threshold) & adx.gt(&adx.shift(1)),
+            adx.sgt(ADX_TREND + self.threshold) & adx.gt(&adx.shift(1)),
         )
     }
 }
