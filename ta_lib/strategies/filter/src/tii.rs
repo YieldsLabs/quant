@@ -2,6 +2,8 @@ use base::{Filter, OHLCVSeries};
 use core::Series;
 use trend::tii;
 
+const TII_NEUTRALITY: f32 = 50.0;
+
 pub struct TIIFilter {
     major_period: usize,
     minor_period: usize,
@@ -26,6 +28,9 @@ impl Filter for TIIFilter {
     fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tii = tii(&data.close, self.major_period, self.minor_period);
 
-        (tii.sgt(self.threshold), tii.slt(self.threshold))
+        (
+            tii.sgt(TII_NEUTRALITY + self.threshold),
+            tii.slt(TII_NEUTRALITY + self.threshold),
+        )
     }
 }
