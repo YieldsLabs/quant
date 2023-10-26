@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from core.models.parameter import Parameter, StaticParameter
+from core.models.parameter import Parameter, RandomParameter, StaticParameter
 from strategy.signal.base import BaseSignal, SignalType
 
 
@@ -9,5 +9,4 @@ class SNATRSignal(BaseSignal):
     type: SignalType = SignalType.SnAtr
     atr_period: Parameter = StaticParameter(60.0)
     atr_smoothing_period: Parameter = StaticParameter(13.0)
-    lower_barrier: Parameter = StaticParameter(0.2)
-    upper_barrier: Parameter = StaticParameter(0.8)
+    threshold: Parameter = RandomParameter(0.0, 0.2, 0.1)

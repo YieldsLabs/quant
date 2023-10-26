@@ -2,25 +2,21 @@ use base::{OHLCVSeries, Price, Signal};
 use core::Series;
 use volatility::snatr;
 
+const SNATR_UPPER_BARRIER: f32 = 0.8;
+const SNATR_LOWER_BARRIER: f32 = 0.2;
+
 pub struct SNATRSignal {
     atr_period: usize,
     atr_smoothing_period: usize,
-    lower_barrier: f32,
-    upper_barrier: f32,
+    threshold: f32,
 }
 
 impl SNATRSignal {
-    pub fn new(
-        atr_period: f32,
-        atr_smoothing_period: f32,
-        lower_barrier: f32,
-        upper_barrier: f32,
-    ) -> Self {
+    pub fn new(atr_period: f32, atr_smoothing_period: f32, threshold: f32) -> Self {
         Self {
             atr_period: atr_period as usize,
             atr_smoothing_period: atr_smoothing_period as usize,
-            lower_barrier,
-            upper_barrier,
+            threshold,
         }
     }
 }
@@ -38,8 +34,8 @@ impl Signal for SNATRSignal {
         );
 
         (
-            snatr.cross_under_line(self.upper_barrier),
-            snatr.cross_over_line(self.lower_barrier),
+            snatr.cross_under_line(SNATR_UPPER_BARRIER - self.threshold),
+            snatr.cross_over_line(SNATR_LOWER_BARRIER + self.threshold),
         )
     }
 }

@@ -70,8 +70,7 @@ pub enum SignalConfig {
     SnAtr {
         atr_period: f32,
         atr_smoothing_period: f32,
-        lower_barrier: f32,
-        upper_barrier: f32,
+        threshold: f32,
     },
     SupFlip {
         atr_period: f32,
@@ -84,8 +83,7 @@ pub enum SignalConfig {
     TIICross {
         major_period: f32,
         minor_period: f32,
-        lower_barrier: f32,
-        upper_barrier: f32,
+        threshold: f32,
     },
 }
 
@@ -176,13 +174,11 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::SnAtr {
             atr_period,
             atr_smoothing_period,
-            lower_barrier,
-            upper_barrier,
+            threshold,
         } => Box::new(SNATRSignal::new(
             atr_period,
             atr_smoothing_period,
-            lower_barrier,
-            upper_barrier,
+            threshold,
         )),
         SignalConfig::SupFlip { atr_period, factor } => {
             Box::new(SupertrendFlipSignal::new(atr_period, factor))
@@ -193,14 +189,8 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::TIICross {
             major_period,
             minor_period,
-            lower_barrier,
-            upper_barrier,
-        } => Box::new(TIICrossSignal::new(
-            major_period,
-            minor_period,
-            lower_barrier,
-            upper_barrier,
-        )),
+            threshold,
+        } => Box::new(TIICrossSignal::new(major_period, minor_period, threshold)),
         SignalConfig::RsiV {
             rsi_type,
             rsi_period,

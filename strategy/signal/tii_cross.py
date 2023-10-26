@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from core.models.parameter import Parameter, StaticParameter
+from core.models.parameter import Parameter, RandomParameter, StaticParameter
 from strategy.signal.base import BaseSignal, SignalType
 
 
@@ -9,5 +9,4 @@ class TIICrossSignal(BaseSignal):
     type: SignalType = SignalType.TIICross
     major_period: Parameter = StaticParameter(60.0)
     minor_period: Parameter = StaticParameter(30.0)
-    lower_barrier: Parameter = StaticParameter(40.0)
-    upper_barrier: Parameter = StaticParameter(60.0)
+    threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)
