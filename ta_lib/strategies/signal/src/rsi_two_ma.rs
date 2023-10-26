@@ -2,11 +2,13 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{ma_indicator, rsi_indicator, MovingAverageType, RSIType};
 
+const RSI_UPPER_BARRIER: f32 = 80.0;
+const RSI_LOWER_BARRIER: f32 = 20.0;
+
 pub struct RSI2MASignal {
     rsi_type: RSIType,
     rsi_period: usize,
-    lower_barrier: f32,
-    upper_barrier: f32,
+    threshold: f32,
     smoothing: MovingAverageType,
     short_period: usize,
     long_period: usize,
@@ -16,8 +18,7 @@ impl RSI2MASignal {
     pub fn new(
         rsi_type: RSIType,
         rsi_period: f32,
-        lower_barrier: f32,
-        upper_barrier: f32,
+        threshold: f32,
         smoothing: MovingAverageType,
         short_period: f32,
         long_period: f32,
@@ -25,8 +26,7 @@ impl RSI2MASignal {
         Self {
             rsi_type,
             rsi_period: rsi_period as usize,
-            lower_barrier,
-            upper_barrier,
+            threshold,
             smoothing,
             short_period: short_period as usize,
             long_period: long_period as usize,
@@ -48,12 +48,12 @@ impl Signal for RSI2MASignal {
         let long_signal = data.close.gt(&ma_short)
             & data.close.gt(&ma_long)
             & ma_short.gt(&ma_long)
-            & rsi.cross_under_line(self.lower_barrier);
+            & rsi.cross_under_line(RSI_LOWER_BARRIER + self.threshold);
 
         let short_signal = data.close.lt(&ma_short)
             & data.close.lt(&ma_long)
             & ma_short.lt(&ma_long)
-            & rsi.cross_over_line(self.upper_barrier);
+            & rsi.cross_over_line(RSI_UPPER_BARRIER - self.threshold);
 
         (long_signal, short_signal)
     }

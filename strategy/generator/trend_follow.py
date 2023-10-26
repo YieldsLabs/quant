@@ -141,8 +141,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         ma_medium_period = RandomParameter(50.0, 100.0, 5.0)
         ma_short_period, ma_long_period = sorted([_short_period, _long_period])
         ma_filter_period = RandomParameter(100.0, 300.0, 25.0)
-        rsi_lower_barrier = RandomParameter(5.0, 15.0, 1.0)
-        rsi_upper_barrier = RandomParameter(75.0, 95, 1.0)
         atr_multi = RandomParameter(0.85, 2, 0.05)
 
         filter = np.random.choice(
@@ -203,10 +201,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 exit_signal,
             ),
             StrategyTypes.Rsi2Ma: (
-                RSI2MovingAverageSignal(
-                    lower_barrier=rsi_lower_barrier,
-                    upper_barrier=rsi_upper_barrier,
-                ),
+                RSI2MovingAverageSignal(),
                 filter,
                 stop_loss,
                 exit_signal,
@@ -230,9 +225,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 exit_signal,
             ),
             StrategyTypes.RsiVMa: (
-                RSIVSignal(
-                    lower_barrier=rsi_lower_barrier, upper_barrier=rsi_upper_barrier
-                ),
+                RSIVSignal(),
                 filter,
                 stop_loss,
                 exit_signal,

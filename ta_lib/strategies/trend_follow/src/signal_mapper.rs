@@ -50,8 +50,7 @@ pub enum SignalConfig {
     Rsi2Ma {
         rsi_type: f32,
         rsi_period: f32,
-        lower_barrier: f32,
-        upper_barrier: f32,
+        threshold: f32,
         smoothing: f32,
         short_period: f32,
         long_period: f32,
@@ -59,8 +58,7 @@ pub enum SignalConfig {
     RsiV {
         rsi_type: f32,
         rsi_period: f32,
-        lower_barrier: f32,
-        upper_barrier: f32,
+        threshold: f32,
     },
     TestGround {
         smoothing: f32,
@@ -156,16 +154,14 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::Rsi2Ma {
             rsi_type,
             rsi_period,
-            lower_barrier,
-            upper_barrier,
+            threshold,
             smoothing,
             short_period,
             long_period,
         } => Box::new(RSI2MASignal::new(
             map_to_rsi(rsi_type as usize),
             rsi_period,
-            lower_barrier,
-            upper_barrier,
+            threshold,
             map_to_ma(smoothing as usize),
             short_period,
             long_period,
@@ -208,13 +204,11 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::RsiV {
             rsi_type,
             rsi_period,
-            lower_barrier,
-            upper_barrier,
+            threshold,
         } => Box::new(RSIVSignal::new(
             map_to_rsi(rsi_type as usize),
             rsi_period,
-            lower_barrier,
-            upper_barrier,
+            threshold,
         )),
     }
 }
