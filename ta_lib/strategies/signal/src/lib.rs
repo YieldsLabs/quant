@@ -15,6 +15,7 @@ mod supertrend_pullback;
 mod testing_ground;
 mod tii_cross;
 mod trend_candle;
+mod trix_flip;
 
 pub use ao_flip::AOFlipSignal;
 pub use ma_three_cross::MA3CrossSignal;
@@ -33,3 +34,4 @@ pub use supertrend_pullback::SupertrendPullBackSignal;
 pub use testing_ground::TestingGroundSignal;
 pub use tii_cross::TIICrossSignal;
 pub use trend_candle::TrendCandleSignal;
+pub use trix_flip::TRIXFlipSignal;

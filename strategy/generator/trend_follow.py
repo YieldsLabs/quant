@@ -33,6 +33,7 @@ from strategy.signal.supertrend_pullback import SupertrendPullBackSignal
 from strategy.signal.testing_ground import TestingGroundSignal
 from strategy.signal.tii_cross import TIICrossSignal
 from strategy.signal.trend_candle import TrendCandleSignal
+from strategy.signal.trix_flip import TRIXFlipSignal
 from strategy.stop_loss.atr import ATRStopLoss
 
 
@@ -52,6 +53,7 @@ class StrategyTypes(Enum):
     SupFlip = auto()
     SupPullBack = auto()
     TrendCandle = auto()
+    TrixFlip = auto()
     Rsi2Ma = auto()
     RsiVMa = auto()
 
@@ -250,6 +252,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.RsiVMa: (
                 RSIVSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.TrixFlip: (
+                TRIXFlipSignal(),
                 filter,
                 stop_loss,
                 exit_signal,

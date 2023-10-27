@@ -8,7 +8,8 @@ use signal::{
     AOFlipSignal, MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal,
     ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
     RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
-    SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
+    SupertrendPullBackSignal, TIICrossSignal, TRIXFlipSignal, TestingGroundSignal,
+    TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -79,6 +80,9 @@ pub enum SignalConfig {
     },
     TrendCandle {
         candle: f32,
+    },
+    TrixFlip {
+        period: f32,
     },
     SnAtr {
         atr_period: f32,
@@ -200,6 +204,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::TrendCandle { candle } => {
             Box::new(TrendCandleSignal::new(map_to_candle(candle as usize)))
         }
+        SignalConfig::TrixFlip { period } => Box::new(TRIXFlipSignal::new(period)),
         SignalConfig::SnAtr {
             atr_period,
             atr_smoothing_period,
