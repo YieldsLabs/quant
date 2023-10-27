@@ -6,7 +6,7 @@ use base::Signal;
 use serde::Deserialize;
 use signal::{
     AOFlipSignal, MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal,
-    RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
+    ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
     RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
     SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
 };
@@ -46,6 +46,9 @@ pub enum SignalConfig {
         rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
+    },
+    RocFlip {
+        period: f32,
     },
     RsiNeutralityPullback {
         rsi_type: f32,
@@ -189,6 +192,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         )),
+        SignalConfig::RocFlip { period } => Box::new(ROCFlipSignal::new(period)),
         SignalConfig::TestGround { smoothing, period } => Box::new(TestingGroundSignal::new(
             map_to_ma(smoothing as usize),
             period,

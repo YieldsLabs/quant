@@ -21,6 +21,7 @@ from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_color_switch import MACDColorSwitchSignal
 from strategy.signal.macd_cross import MACDCrossSignal
 from strategy.signal.macd_flip import MACDFlipSignal
+from strategy.signal.roc_flip import ROCFlipSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_neutrality_pullback import RSINautralityPullbackSignal
 from strategy.signal.rsi_neutrality_rejection import RSINautralityRejectionSignal
@@ -43,6 +44,7 @@ class StrategyTypes(Enum):
     RsiNeutralityPullback = auto()
     RsiNeutralityRejection = auto()
     MACDFlip = auto()
+    RocFlip = auto()
     MACDCross = auto()
     MACDColorSwitch = auto()
     Ground = auto()
@@ -218,6 +220,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.Rsi2Ma: (
                 RSI2MovingAverageSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.RocFlip: (
+                ROCFlipSignal(),
                 filter,
                 stop_loss,
                 exit_signal,
