@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from core.models.parameter import Parameter, RandomParameter, StaticParameter
+from core.models.parameter import Parameter, RandomParameter
 from strategy.filter.base import BaseFilter, FilterType
 
 
