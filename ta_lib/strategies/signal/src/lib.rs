@@ -1,3 +1,4 @@
+mod ao_flip;
 mod ma_three_cross;
 mod macd_color_switch;
 mod macd_cross;
@@ -14,6 +15,7 @@ mod testing_ground;
 mod tii_cross;
 mod trend_candle;
 
+pub use ao_flip::AOFlipSignal;
 pub use ma_three_cross::MA3CrossSignal;
 pub use macd_color_switch::MACDColorSwitchSignal;
 pub use macd_cross::MACDCrossSignal;

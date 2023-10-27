@@ -16,6 +16,7 @@ from strategy.filter.rsi import RSIFilter
 from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
 from strategy.filter.tii import TIIFilter
+from strategy.signal.ao_flip import AOFlipSignal
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_color_switch import MACDColorSwitchSignal
 from strategy.signal.macd_cross import MACDCrossSignal
@@ -35,6 +36,7 @@ from strategy.stop_loss.atr import ATRStopLoss
 
 
 class StrategyTypes(Enum):
+    AoFlip = auto()
     ThreeMaCross = auto()
     TiiCross = auto()
     RsiNeutralityCross = auto()
@@ -160,6 +162,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         exit_signal = np.random.choice([DumbExit()])
 
         strategy_map = {
+            StrategyTypes.AoFlip: (
+                AOFlipSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
             StrategyTypes.ThreeMaCross: (
                 MA3CrossSignal(
                     short_period=ma_short_period,

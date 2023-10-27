@@ -5,6 +5,7 @@ from core.models.indicator import Indicator
 
 
 class SignalType(Enum):
+    AoFlip = "AoFlip"
     Ma3Cross = "Ma3Cross"
     MacdFlip = "MacdFlip"
     MacdCross = "MacdCross"

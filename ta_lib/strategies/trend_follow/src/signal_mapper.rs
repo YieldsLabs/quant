@@ -5,15 +5,19 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
 use signal::{
-    MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal, RSI2MASignal,
-    RSINeutralityCrossSignal, RSINeutralityPullbackSignal, RSINeutralityRejectionSignal,
-    RSIVSignal, SNATRSignal, SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal,
-    TestingGroundSignal, TrendCandleSignal,
+    AOFlipSignal, MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal,
+    RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
+    RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
+    SupertrendPullBackSignal, TIICrossSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum SignalConfig {
+    AoFlip {
+        short_period: f32,
+        long_period: f32,
+    },
     Ma3Cross {
         smoothing: f32,
         short_period: f32,
@@ -95,6 +99,10 @@ pub enum SignalConfig {
 
 pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
     match config {
+        SignalConfig::AoFlip {
+            short_period,
+            long_period,
+        } => Box::new(AOFlipSignal::new(short_period, long_period)),
         SignalConfig::Ma3Cross {
             smoothing,
             short_period,
