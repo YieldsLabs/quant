@@ -2,8 +2,8 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{ma_indicator, rsi_indicator, MovingAverageType, RSIType};
 
-const RSI_UPPER_BARRIER: f32 = 80.0;
-const RSI_LOWER_BARRIER: f32 = 20.0;
+const RSI_UPPER_BARRIER: f32 = 85.0;
+const RSI_LOWER_BARRIER: f32 = 15.0;
 
 pub struct RSI2MASignal {
     rsi_type: RSIType,
