@@ -13,6 +13,6 @@ class RSI2MovingAverageSignal(BaseSignal):
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(2.0)
     threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)
-    smoothing: MovingAverageType = MovingAverageType.EMA
+    smoothing: Parameter = CategoricalParameter(MovingAverageType)
     short_period: Parameter = RandomParameter(20.0, 50.0, 5.0)
     long_period: Parameter = RandomParameter(30.0, 50.0, 5.0)

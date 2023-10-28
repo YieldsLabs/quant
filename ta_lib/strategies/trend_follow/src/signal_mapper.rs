@@ -5,11 +5,11 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
 use signal::{
-    AOFlipSignal, MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal,
-    ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
-    RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
-    SupertrendPullBackSignal, TIICrossSignal, TIIVSignal, TRIXFlipSignal, TSICrossSignal,
-    TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
+    AOFlipSignal, DCH2MASignal, MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal,
+    MACDFlipSignal, ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
+    RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
+    SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TIIVSignal, TRIXFlipSignal,
+    TSICrossSignal, TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -65,6 +65,12 @@ pub enum SignalConfig {
         rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
+        smoothing: f32,
+        short_period: f32,
+        long_period: f32,
+    },
+    Dch2Ma {
+        dch_period: f32,
         smoothing: f32,
         short_period: f32,
         long_period: f32,
@@ -205,6 +211,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             map_to_rsi(rsi_type as usize),
             rsi_period,
             threshold,
+            map_to_ma(smoothing as usize),
+            short_period,
+            long_period,
+        )),
+        SignalConfig::Dch2Ma {
+            dch_period,
+            smoothing,
+            short_period,
+            long_period,
+        } => Box::new(DCH2MASignal::new(
+            dch_period,
             map_to_ma(smoothing as usize),
             short_period,
             long_period,

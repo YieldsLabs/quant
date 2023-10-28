@@ -17,6 +17,7 @@ from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
 from strategy.filter.tii import TIIFilter
 from strategy.signal.ao_flip import AOFlipSignal
+from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_color_switch import MACDColorSwitchSignal
 from strategy.signal.macd_cross import MACDCrossSignal
@@ -61,7 +62,8 @@ class StrategyTypes(Enum):
     TrendCandle = auto()
     TrixFlip = auto()
     Rsi2Ma = auto()
-    RsiVMa = auto()
+    Dch2Ma = auto()
+    RsiV = auto()
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
@@ -233,6 +235,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 stop_loss,
                 exit_signal,
             ),
+            StrategyTypes.Dch2Ma: (
+                DCH2MovingAverageSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
             StrategyTypes.RocFlip: (
                 ROCFlipSignal(),
                 filter,
@@ -257,7 +265,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 stop_loss,
                 exit_signal,
             ),
-            StrategyTypes.RsiVMa: (
+            StrategyTypes.RsiV: (
                 RSIVSignal(),
                 filter,
                 stop_loss,
