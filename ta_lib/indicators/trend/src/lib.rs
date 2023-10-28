@@ -1,5 +1,6 @@
 mod alma;
 mod aosc;
+mod dch;
 mod dema;
 mod dmi;
 mod ema;
@@ -27,6 +28,7 @@ mod zlsma;
 
 pub use alma::alma;
 pub use aosc::aosc;
+pub use dch::dch;
 pub use dema::dema;
 pub use dmi::dmi;
 pub use ema::ema;
