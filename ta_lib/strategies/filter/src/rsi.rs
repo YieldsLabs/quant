@@ -30,7 +30,7 @@ impl Filter for RSIFilter {
 
         (
             rsi.sgt(RSI_NEUTRALITY + self.threshold),
-            rsi.slt(RSI_NEUTRALITY + self.threshold),
+            rsi.slt(RSI_NEUTRALITY - self.threshold),
         )
     }
 }
