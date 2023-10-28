@@ -30,7 +30,7 @@ impl Filter for TIIFilter {
 
         (
             tii.sgt(TII_NEUTRALITY + self.threshold),
-            tii.slt(TII_NEUTRALITY + self.threshold),
+            tii.slt(TII_NEUTRALITY - self.threshold),
         )
     }
 }
