@@ -32,8 +32,11 @@ from strategy.signal.supertrend_flip import SupertrendFlipSignal
 from strategy.signal.supertrend_pullback import SupertrendPullBackSignal
 from strategy.signal.testing_ground import TestingGroundSignal
 from strategy.signal.tii_cross import TIICrossSignal
+from strategy.signal.tii_v import TIIVSignal
 from strategy.signal.trend_candle import TrendCandleSignal
 from strategy.signal.trix_flip import TRIXFlipSignal
+from strategy.signal.tsi_cross import TSICrossSignal
+from strategy.signal.tsi_flip import TSIFlipSignal
 from strategy.stop_loss.atr import ATRStopLoss
 
 
@@ -41,6 +44,9 @@ class StrategyTypes(Enum):
     AoFlip = auto()
     ThreeMaCross = auto()
     TiiCross = auto()
+    TiiV = auto()
+    TsiFlip = auto()
+    TsiCross = auto()
     RsiNeutralityCross = auto()
     RsiNeutralityPullback = auto()
     RsiNeutralityRejection = auto()
@@ -201,6 +207,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 exit_signal,
             ),
             StrategyTypes.TiiCross: (TIICrossSignal(), filter, stop_loss, exit_signal),
+            StrategyTypes.TiiV: (TIIVSignal(), filter, stop_loss, exit_signal),
             StrategyTypes.TrendCandle: (
                 TrendCandleSignal(),
                 filter,
@@ -258,6 +265,18 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             StrategyTypes.TrixFlip: (
                 TRIXFlipSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.TsiFlip: (
+                TSIFlipSignal(),
+                filter,
+                stop_loss,
+                exit_signal,
+            ),
+            StrategyTypes.TsiCross: (
+                TSICrossSignal(),
                 filter,
                 stop_loss,
                 exit_signal,

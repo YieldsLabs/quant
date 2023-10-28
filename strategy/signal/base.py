@@ -22,7 +22,10 @@ class SignalType(Enum):
     TestGround = "TestGround"
     TrendCandle = "TrendCandle"
     TIICross = "TIICross"
+    TiiV = "TiiV"
     TrixFlip = "TrixFlip"
+    TsiFlip = "TsiFlip"
+    TsiCross = "TsiCross"
 
     def __str__(self):
         return self.value.upper()

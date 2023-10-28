@@ -8,8 +8,8 @@ use signal::{
     AOFlipSignal, MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal,
     ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
     RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
-    SupertrendPullBackSignal, TIICrossSignal, TRIXFlipSignal, TestingGroundSignal,
-    TrendCandleSignal,
+    SupertrendPullBackSignal, TIICrossSignal, TIIVSignal, TRIXFlipSignal, TSICrossSignal,
+    TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -101,6 +101,19 @@ pub enum SignalConfig {
         major_period: f32,
         minor_period: f32,
         threshold: f32,
+    },
+    TiiV {
+        major_period: f32,
+        minor_period: f32,
+    },
+    TsiFlip {
+        long_period: f32,
+        short_period: f32,
+    },
+    TsiCross {
+        long_period: f32,
+        short_period: f32,
+        signal_period: f32,
     },
 }
 
@@ -225,6 +238,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             minor_period,
             threshold,
         } => Box::new(TIICrossSignal::new(major_period, minor_period, threshold)),
+        SignalConfig::TiiV {
+            major_period,
+            minor_period,
+        } => Box::new(TIIVSignal::new(major_period, minor_period)),
         SignalConfig::RsiV {
             rsi_type,
             rsi_period,
@@ -233,6 +250,19 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             map_to_rsi(rsi_type as usize),
             rsi_period,
             threshold,
+        )),
+        SignalConfig::TsiFlip {
+            long_period,
+            short_period,
+        } => Box::new(TSIFlipSignal::new(long_period, short_period)),
+        SignalConfig::TsiCross {
+            long_period,
+            short_period,
+            signal_period,
+        } => Box::new(TSICrossSignal::new(
+            long_period,
+            short_period,
+            signal_period,
         )),
     }
 }
