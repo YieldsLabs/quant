@@ -5,8 +5,8 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
 use signal::{
-    AOFlipSignal, DCH2MASignal, MA3CrossSignal, MACDColorSwitchSignal, MACDCrossSignal,
-    MACDFlipSignal, ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
+    AOFlipSignal, DCH2MASignal, DICrossSignal, DIFlipSignal, MA3CrossSignal, MACDColorSwitchSignal,
+    MACDCrossSignal, MACDFlipSignal, ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
     RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
     SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TIIVSignal, TRIXFlipSignal,
     TSICrossSignal, TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
@@ -29,19 +29,19 @@ pub enum SignalConfig {
         macd_type: f32,
         fast_period: f32,
         slow_period: f32,
-        signal_smoothing: f32,
+        signal_period: f32,
     },
     MacdCross {
         macd_type: f32,
         fast_period: f32,
         slow_period: f32,
-        signal_smoothing: f32,
+        signal_period: f32,
     },
     MacdColorSwitch {
         macd_type: f32,
         fast_period: f32,
         slow_period: f32,
-        signal_smoothing: f32,
+        signal_period: f32,
     },
     RsiNeutralityCross {
         rsi_type: f32,
@@ -68,6 +68,13 @@ pub enum SignalConfig {
         smoothing: f32,
         short_period: f32,
         long_period: f32,
+    },
+    DiFlip {
+        period: f32,
+    },
+    DiCross {
+        period: f32,
+        signal_period: f32,
     },
     Dch2Ma {
         dch_period: f32,
@@ -144,34 +151,34 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             macd_type,
             fast_period,
             slow_period,
-            signal_smoothing,
+            signal_period,
         } => Box::new(MACDFlipSignal::new(
             map_to_macd(macd_type as usize),
             fast_period,
             slow_period,
-            signal_smoothing,
+            signal_period,
         )),
         SignalConfig::MacdCross {
             macd_type,
             fast_period,
             slow_period,
-            signal_smoothing,
+            signal_period,
         } => Box::new(MACDCrossSignal::new(
             map_to_macd(macd_type as usize),
             fast_period,
             slow_period,
-            signal_smoothing,
+            signal_period,
         )),
         SignalConfig::MacdColorSwitch {
             macd_type,
             fast_period,
             slow_period,
-            signal_smoothing,
+            signal_period,
         } => Box::new(MACDColorSwitchSignal::new(
             map_to_macd(macd_type as usize),
             fast_period,
             slow_period,
-            signal_smoothing,
+            signal_period,
         )),
         SignalConfig::RsiNeutralityCross {
             rsi_type,
@@ -215,6 +222,11 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         )),
+        SignalConfig::DiFlip { period } => Box::new(DIFlipSignal::new(period)),
+        SignalConfig::DiCross {
+            period,
+            signal_period,
+        } => Box::new(DICrossSignal::new(period, signal_period)),
         SignalConfig::Dch2Ma {
             dch_period,
             smoothing,

@@ -1,5 +1,7 @@
 mod ao_flip;
 mod dch_two_ma;
+mod di_cross;
+mod di_flip;
 mod ma_three_cross;
 mod macd_color_switch;
 mod macd_cross;
@@ -23,6 +25,8 @@ mod tsi_flip;
 
 pub use ao_flip::AOFlipSignal;
 pub use dch_two_ma::DCH2MASignal;
+pub use di_cross::DICrossSignal;
+pub use di_flip::DIFlipSignal;
 pub use ma_three_cross::MA3CrossSignal;
 pub use macd_color_switch::MACDColorSwitchSignal;
 pub use macd_cross::MACDCrossSignal;
