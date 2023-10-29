@@ -28,6 +28,7 @@ from strategy.signal.qstick_cross import QSTICKCrossSignal
 from strategy.signal.qstick_flip import QSTICKFlipSignal
 from strategy.signal.quadruple import QuadrupleSignal
 from strategy.signal.roc_flip import ROCFlipSignal
+from strategy.signal.rsi_ma_pullback import RSIMovingAveragePullbackSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_neutrality_pullback import RSINautralityPullbackSignal
 from strategy.signal.rsi_neutrality_rejection import RSINautralityRejectionSignal
@@ -184,6 +185,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 SupertrendPullBackSignal(),
                 RSINautralityPullbackSignal(),
+                RSIMovingAveragePullbackSignal(),
             ]
         )
 

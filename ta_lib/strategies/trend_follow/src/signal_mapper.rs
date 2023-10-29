@@ -7,7 +7,7 @@ use serde::Deserialize;
 use signal::{
     AOFlipSignal, CCFlipSignal, DCH2MASignal, DICrossSignal, DIFlipSignal, MA3CrossSignal,
     MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal, QSTICKCrossSignal, QSTICKFlipSignal,
-    QuadrupleSignal, ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
+    QuadrupleSignal, ROCFlipSignal, RSI2MASignal, RSIMaPullbackSignal, RSINeutralityCrossSignal,
     RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
     STCFlipSignal, SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TIIVSignal,
     TRIXFlipSignal, TSICrossSignal, TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
@@ -74,6 +74,12 @@ pub enum SignalConfig {
         smoothing: f32,
         short_period: f32,
         long_period: f32,
+    },
+    RsiMaPullback {
+        rsi_type: f32,
+        rsi_period: f32,
+        smoothing_period: f32,
+        threshold: f32,
     },
     DiFlip {
         period: f32,
@@ -253,6 +259,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             map_to_ma(smoothing as usize),
             short_period,
             long_period,
+        )),
+        SignalConfig::RsiMaPullback {
+            rsi_type,
+            rsi_period,
+            smoothing_period,
+            threshold,
+        } => Box::new(RSIMaPullbackSignal::new(
+            map_to_rsi(rsi_type as usize),
+            rsi_period,
+            smoothing_period,
+            threshold,
         )),
         SignalConfig::DiFlip { period } => Box::new(DIFlipSignal::new(period)),
         SignalConfig::DiCross {
