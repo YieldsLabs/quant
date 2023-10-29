@@ -26,6 +26,7 @@ from strategy.signal.macd_cross import MACDCrossSignal
 from strategy.signal.macd_flip import MACDFlipSignal
 from strategy.signal.qstick_cross import QSTICKCrossSignal
 from strategy.signal.qstick_flip import QSTICKFlipSignal
+from strategy.signal.quadruple import QuadrupleSignal
 from strategy.signal.roc_flip import ROCFlipSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_neutrality_pullback import RSINautralityPullbackSignal
@@ -33,6 +34,7 @@ from strategy.signal.rsi_neutrality_rejection import RSINautralityRejectionSigna
 from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
+from strategy.signal.stc_flip import STCFlipSignal
 from strategy.signal.supertrend_flip import SupertrendFlipSignal
 from strategy.signal.supertrend_pullback import SupertrendPullBackSignal
 from strategy.signal.testing_ground import TestingGroundSignal
@@ -149,6 +151,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DIFlipSignal(),
                 QSTICKFlipSignal(),
                 CCFlipSignal(),
+                STCFlipSignal(),
             ]
         )
 
@@ -196,6 +199,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 cross_signal,
                 two_ma_signal,
                 pullback_signal,
+                QuadrupleSignal(),
             ]
         )
 

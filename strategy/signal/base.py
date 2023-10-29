@@ -23,6 +23,7 @@ class SignalType(Enum):
     SnAtr = "SnAtr"
     SupFlip = "SupFlip"
     SupPullBack = "SupPullBack"
+    StcFlip = "StcFlip"
     TestGround = "TestGround"
     TrendCandle = "TrendCandle"
     TIICross = "TIICross"
@@ -32,6 +33,7 @@ class SignalType(Enum):
     TsiCross = "TsiCross"
     QstickFlip = "QstickFlip"
     QstickCross = "QstickCross"
+    Quadruple = "Quadruple"
 
     def __str__(self):
         return self.value.upper()

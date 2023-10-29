@@ -7,10 +7,10 @@ use serde::Deserialize;
 use signal::{
     AOFlipSignal, CCFlipSignal, DCH2MASignal, DICrossSignal, DIFlipSignal, MA3CrossSignal,
     MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal, QSTICKCrossSignal, QSTICKFlipSignal,
-    ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
-    RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
-    SupertrendPullBackSignal, TIICrossSignal, TIIVSignal, TRIXFlipSignal, TSICrossSignal,
-    TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
+    QuadrupleSignal, ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
+    RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
+    STCFlipSignal, SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TIIVSignal,
+    TRIXFlipSignal, TSICrossSignal, TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -108,6 +108,12 @@ pub enum SignalConfig {
         atr_smoothing_period: f32,
         threshold: f32,
     },
+    StcFlip {
+        fast_period: f32,
+        slow_period: f32,
+        period: f32,
+        factor: f32,
+    },
     SupFlip {
         atr_period: f32,
         factor: f32,
@@ -140,6 +146,10 @@ pub enum SignalConfig {
     QstickCross {
         period: f32,
         signal_period: f32,
+    },
+    Quadruple {
+        smoothing: f32,
+        period: f32,
     },
 }
 
@@ -284,6 +294,12 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::SupPullBack { atr_period, factor } => {
             Box::new(SupertrendPullBackSignal::new(atr_period, factor))
         }
+        SignalConfig::StcFlip {
+            fast_period,
+            slow_period,
+            period,
+            factor,
+        } => Box::new(STCFlipSignal::new(fast_period, slow_period, period, factor)),
         SignalConfig::TIICross {
             major_period,
             minor_period,
@@ -320,5 +336,8 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period,
             signal_period,
         } => Box::new(QSTICKCrossSignal::new(period, signal_period)),
+        SignalConfig::Quadruple { smoothing, period } => {
+            Box::new(QuadrupleSignal::new(map_to_ma(smoothing as usize), period))
+        }
     }
 }
