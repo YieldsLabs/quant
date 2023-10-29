@@ -6,6 +6,7 @@ from core.models.indicator import Indicator
 
 class SignalType(Enum):
     AoFlip = "AoFlip"
+    CcFlip = "CcFlip"
     DiFlip = "DiFlip"
     DiCross = "DiCross"
     Ma3Cross = "Ma3Cross"
@@ -29,6 +30,8 @@ class SignalType(Enum):
     TrixFlip = "TrixFlip"
     TsiFlip = "TsiFlip"
     TsiCross = "TsiCross"
+    QstickFlip = "QstickFlip"
+    QstickCross = "QstickCross"
 
     def __str__(self):
         return self.value.upper()

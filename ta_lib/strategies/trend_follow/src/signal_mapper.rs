@@ -5,11 +5,12 @@ use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
 use signal::{
-    AOFlipSignal, DCH2MASignal, DICrossSignal, DIFlipSignal, MA3CrossSignal, MACDColorSwitchSignal,
-    MACDCrossSignal, MACDFlipSignal, ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal,
-    RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
-    SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TIIVSignal, TRIXFlipSignal,
-    TSICrossSignal, TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
+    AOFlipSignal, CCFlipSignal, DCH2MASignal, DICrossSignal, DIFlipSignal, MA3CrossSignal,
+    MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal, QSTICKCrossSignal, QSTICKFlipSignal,
+    ROCFlipSignal, RSI2MASignal, RSINeutralityCrossSignal, RSINeutralityPullbackSignal,
+    RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal, SupertrendFlipSignal,
+    SupertrendPullBackSignal, TIICrossSignal, TIIVSignal, TRIXFlipSignal, TSICrossSignal,
+    TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
 };
 
 #[derive(Deserialize)]
@@ -18,6 +19,11 @@ pub enum SignalConfig {
     AoFlip {
         short_period: f32,
         long_period: f32,
+    },
+    CcFlip {
+        short_period: f32,
+        long_period: f32,
+        smoothing_period: f32,
     },
     Ma3Cross {
         smoothing: f32,
@@ -128,6 +134,13 @@ pub enum SignalConfig {
         short_period: f32,
         signal_period: f32,
     },
+    QstickFlip {
+        period: f32,
+    },
+    QstickCross {
+        period: f32,
+        signal_period: f32,
+    },
 }
 
 pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
@@ -136,6 +149,15 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         } => Box::new(AOFlipSignal::new(short_period, long_period)),
+        SignalConfig::CcFlip {
+            short_period,
+            long_period,
+            smoothing_period,
+        } => Box::new(CCFlipSignal::new(
+            short_period,
+            long_period,
+            smoothing_period,
+        )),
         SignalConfig::Ma3Cross {
             smoothing,
             short_period,
@@ -293,5 +315,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             signal_period,
         )),
+        SignalConfig::QstickFlip { period } => Box::new(QSTICKFlipSignal::new(period)),
+        SignalConfig::QstickCross {
+            period,
+            signal_period,
+        } => Box::new(QSTICKCrossSignal::new(period, signal_period)),
     }
 }

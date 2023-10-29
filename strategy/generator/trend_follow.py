@@ -16,6 +16,7 @@ from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
 from strategy.filter.tii import TIIFilter
 from strategy.signal.ao_flip import AOFlipSignal
+from strategy.signal.cc_flip import CCFlipSignal
 from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
 from strategy.signal.di_cross import DICrossSignal
 from strategy.signal.di_flip import DIFlipSignal
@@ -23,6 +24,8 @@ from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_color_switch import MACDColorSwitchSignal
 from strategy.signal.macd_cross import MACDCrossSignal
 from strategy.signal.macd_flip import MACDFlipSignal
+from strategy.signal.qstick_cross import QSTICKCrossSignal
+from strategy.signal.qstick_flip import QSTICKFlipSignal
 from strategy.signal.roc_flip import ROCFlipSignal
 from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
 from strategy.signal.rsi_neutrality_pullback import RSINautralityPullbackSignal
@@ -144,6 +147,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 TRIXFlipSignal(),
                 TSIFlipSignal(),
                 DIFlipSignal(),
+                QSTICKFlipSignal(),
+                CCFlipSignal(),
             ]
         )
 
@@ -161,6 +166,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 RSINautralityCrossSignal(),
                 TSICrossSignal(),
                 DICrossSignal(),
+                QSTICKCrossSignal(),
             ]
         )
 
