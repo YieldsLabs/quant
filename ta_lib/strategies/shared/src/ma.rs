@@ -1,8 +1,8 @@
 use base::OHLCVSeries;
 use core::Series;
 use trend::{
-    alma, dema, ema, frama, gma, hma, kama, lsma, rmsma, sinwma, sma, smma, t3, tema, tma, vwma,
-    wma, zlema, zlsma,
+    alma, dema, ema, frama, gma, hma, kama, lsma, md, rmsma, sinwma, sma, smma, t3, tema, tma,
+    vwma, wma, zlema, zlsma,
 };
 
 pub enum MovingAverageType {
@@ -14,6 +14,7 @@ pub enum MovingAverageType {
     HMA,
     KAMA,
     LSMA,
+    MD,
     RMSMA,
     SINWMA,
     SMA,
@@ -41,6 +42,7 @@ pub fn ma_indicator(
         MovingAverageType::HMA => hma(&data.close, period),
         MovingAverageType::KAMA => kama(&data.close, period),
         MovingAverageType::LSMA => lsma(&data.close, period),
+        MovingAverageType::MD => md(&data.close, period),
         MovingAverageType::RMSMA => rmsma(&data.close, period),
         MovingAverageType::SINWMA => sinwma(&data.close, period),
         MovingAverageType::SMA => sma(&data.close, period),

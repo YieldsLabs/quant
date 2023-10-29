@@ -6,10 +6,7 @@ pub fn macd(
     slow_period: usize,
     signal_smoothing: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let ema_fast = source.ema(fast_period);
-    let ema_slow = source.ema(slow_period);
-
-    let macd_line = ema_fast - ema_slow;
+    let macd_line = source.ema(fast_period) - source.ema(slow_period);
 
     let signal_line = macd_line.ema(signal_smoothing);
 
