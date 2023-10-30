@@ -4,13 +4,14 @@ pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
 
     let mut mg = Series::zero(len);
+    let seed = source.ema(period);
 
     for _ in 0..len {
         let prev_mg = mg.shift(1);
 
         mg = iff!(
             prev_mg.na(),
-            source.ema(period),
+            seed,
             &prev_mg + (source - &prev_mg) / ((source / &prev_mg).pow(4) * period as f32)
         );
     }
