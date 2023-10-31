@@ -17,6 +17,9 @@ from core.queries.broker import (
 )
 from infrastructure.retry import retry
 
+MAX_RETRIES = 5
+EXCEPTIONS = (RequestTimeout, NetworkError)
+
 
 class FuturesBybitBroker(AbstractBroker):
     def __init__(self, api_key, secret):
@@ -74,13 +77,13 @@ class FuturesBybitBroker(AbstractBroker):
 
     @query_handler(GetAccountBalance)
     def get_account_balance(self, query: GetAccountBalance):
-        balance = self.exchange.fetch_balance()
+        balance = self._fetch_balance()
         return float(balance["total"][query.currency])
 
     @query_handler(GetSymbols)
     def get_symbols(self, _query: GetSymbols):
         symbols = []
-        markets = self.exchange.fetch_markets()
+        markets = self._fetch_markets()
         markets = [
             market_info
             for market_info in markets
@@ -145,7 +148,7 @@ class FuturesBybitBroker(AbstractBroker):
             )
 
     def _get_open_position(self, symbol: str):
-        positions = self.exchange.fetch_positions(symbol)
+        positions = self._fetch_position(symbol)
 
         open_positions = [
             position for position in positions if float(position["info"]["size"]) != 0.0
@@ -268,8 +271,20 @@ class FuturesBybitBroker(AbstractBroker):
             int(abs(math.log10(price_precision))),
         )
 
-    @retry(max_retries=7, handled_exceptions=(RequestTimeout, NetworkError))
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def _fetch(self, symbol, timeframe, start_time, current_limit):
         return self.exchange.fetch_ohlcv(
             symbol, timeframe, since=start_time, limit=current_limit
         )
+
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
+    def _fetch_position(self, symbol):
+        return self.exchange.fetch_positions(symbol)
+
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
+    def _fetch_markets(self):
+        return self.exchange.fetch_markets()
+
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
+    def _fetch_balance(self):
+        return self.exchange.fetch_balance()
