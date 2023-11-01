@@ -4,7 +4,7 @@ use crate::rsi_mapper::map_to_rsi;
 use crate::stoch_mapper::map_to_stoch;
 use base::Filter;
 use filter::{
-    ADXFilter, DumbFilter, MACDFilter, MAFilter, RSIFilter, RibbonFilter, StochFilter,
+    ADXFilter, DumbFilter, FibFilter, MACDFilter, MAFilter, RSIFilter, RibbonFilter, StochFilter,
     SupertrendFilter, TIIFilter,
 };
 use serde::Deserialize;
@@ -17,6 +17,7 @@ pub enum FilterConfig {
         di_period: f32,
         threshold: f32,
     },
+    Fib {},
     Ma {
         smoothing: f32,
         period: f32,
@@ -122,5 +123,6 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             threshold,
         } => Box::new(TIIFilter::new(major_period, minor_period, threshold)),
         FilterConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
+        FilterConfig::Fib {} => Box::new(FibFilter::new()),
     }
 }

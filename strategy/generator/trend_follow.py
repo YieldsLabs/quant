@@ -9,6 +9,7 @@ from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy
 from strategy.exit.dumb import DumbExit
 from strategy.filter.adx import ADXFilter
+from strategy.filter.fib import FibFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.macd import MACDFilter
 from strategy.filter.ribbon import RibbonFilter
@@ -153,6 +154,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 SupertrendFilter(),
                 MACDFilter(),
                 RibbonFilter(),
+                FibFilter(),
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
