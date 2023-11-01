@@ -11,6 +11,7 @@ from strategy.exit.dumb import DumbExit
 from strategy.filter.adx import ADXFilter
 from strategy.filter.ma import MovingAverageFilter
 from strategy.filter.macd import MACDFilter
+from strategy.filter.ribbon import RibbonFilter
 from strategy.filter.rsi import RSIFilter
 from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
@@ -72,6 +73,15 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DumbExit(),
             ),
             (
+                TrendCandleSignal(candle=StaticParameter(TrendCandleType.HEXAD)),
+                MovingAverageFilter(
+                    smoothing=StaticParameter(MovingAverageType.MD),
+                    period=StaticParameter(150.0),
+                ),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(0.85)),
+                DumbExit(),
+            ),
+            (
                 TrendCandleSignal(
                     candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
                 ),
@@ -81,6 +91,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ),
             (
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.H)),
+                TIIFilter(),
+                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                DumbExit(),
+            ),
+            (
+                TrendCandleSignal(candle=StaticParameter(TrendCandleType.GOLDEN)),
                 TIIFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
@@ -136,6 +152,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 StochFilter(),
                 SupertrendFilter(),
                 MACDFilter(),
+                RibbonFilter(),
             ]
         )
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])

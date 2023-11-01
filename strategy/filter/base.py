@@ -8,6 +8,7 @@ class FilterType(Enum):
     Adx = "Adx"
     Dumb = "Dumb"
     Ma = "Ma"
+    Ribbon = "Ribbon"
     Rsi = "Rsi"
     Tii = "Tii"
     Stoch = "Stoch"
