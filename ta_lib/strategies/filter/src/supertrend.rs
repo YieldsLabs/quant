@@ -29,6 +29,6 @@ impl Filter for SupertrendFilter {
             self.factor,
         );
 
-        (trendline.gt(&data.close), trendline.lt(&data.close))
+        (data.close.gt(&trendline), data.close.lt(&trendline))
     }
 }
