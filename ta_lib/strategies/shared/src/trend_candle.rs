@@ -1,7 +1,7 @@
 use base::OHLCVSeries;
 use candlestick::{
     bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets,
-    slingshot, tasuki, three_candles, three_methods,
+    slingshot, tasuki, three_candles, three_methods, three_one_two,
 };
 use core::Series;
 
@@ -19,6 +19,7 @@ pub enum TrendCandleType {
     THREE_CANDLES,
     THREE_METHODS,
     TASUKI,
+    THREE_ONE_TWO,
 }
 
 pub fn trend_candle_indicator(
@@ -77,6 +78,10 @@ pub fn trend_candle_indicator(
         TrendCandleType::TASUKI => (
             tasuki::bullish(&data.open, &data.close),
             tasuki::bearish(&data.open, &data.close),
+        ),
+        TrendCandleType::THREE_ONE_TWO => (
+            three_one_two::bullish(&data.open, &data.high, &data.low, &data.close),
+            three_one_two::bearish(&data.open, &data.high, &data.low, &data.close),
         ),
     }
 }

@@ -15,6 +15,7 @@ class TrendCandleType(Enum):
     THREE_CANDLES = 11
     THREE_METHODS = 12
     TASUKI = 13
+    THREE_ONE_TWO = 14
 
     def __str__(self):
         return self.name.upper()

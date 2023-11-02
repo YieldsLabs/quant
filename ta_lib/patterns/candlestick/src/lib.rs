@@ -29,3 +29,4 @@ pub mod split;
 pub mod tasuki;
 pub mod three_candles;
 pub mod three_methods;
+pub mod three_one_two;

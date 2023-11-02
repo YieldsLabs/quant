@@ -15,6 +15,7 @@ pub fn map_to_candle(candle: usize) -> TrendCandleType {
         11 => TrendCandleType::THREE_CANDLES,
         12 => TrendCandleType::THREE_METHODS,
         13 => TrendCandleType::TASUKI,
+        14 => TrendCandleType::THREE_ONE_TWO,
         _ => TrendCandleType::THREE_CANDLES,
     }
 }

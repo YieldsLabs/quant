@@ -22,11 +22,9 @@ class SquadFactory(AbstractSquadFactory):
         self.position_factory = position_factory
         self.risk_factory = risk_factory
 
-    def create_squad(self, symbol, timeframe, strategy, is_live):
+    def create_squad(self, symbol, timeframe, strategy):
         signal_actor = self.signal_factory.create_actor(symbol, timeframe, strategy)
-        executor_actor = self.executor_factory.create_actor(
-            symbol, timeframe, strategy, is_live
-        )
+        executor_actor = self.executor_factory.create_actor(symbol, timeframe, strategy)
         position_actor = self.position_factory.create_actor(symbol, timeframe, strategy)
         risk_actor = self.risk_factory.create_actor(symbol, timeframe, strategy)
 
