@@ -1,7 +1,8 @@
 import asyncio
 
-from core.interfaces.abstract_broker import AbstractBroker
-from core.interfaces.abstract_datasource import AbstractDatasource
+from core.interfaces.abstract_datasource import AbstractDataSource
+from core.interfaces.abstract_exchange import AbstractExchange
+from core.models.lookback import Lookback
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -9,13 +10,13 @@ from core.models.timeframe import Timeframe
 class AsyncHistoricalData:
     def __init__(
         self,
-        broker: AbstractBroker,
+        exchange: AbstractExchange,
         symbol: Symbol,
         timeframe: Timeframe,
-        lookback: int,
+        lookback: Lookback,
         batch_size: int,
     ):
-        self.broker = broker
+        self.exchange = exchange
         self.symbol = symbol
         self.timeframe = timeframe
         self.lookback = lookback
@@ -39,7 +40,7 @@ class AsyncHistoricalData:
 
     def _init_iterator(self) -> None:
         if self.iterator is None:
-            self.iterator = self.broker.get_historical_data(
+            self.iterator = self.exchange.fetch_ohlcv(
                 self.symbol, self.timeframe, self.lookback, self.batch_size
             )
 
@@ -56,14 +57,14 @@ class AsyncHistoricalData:
         return self.last_row
 
 
-class BybitDataSource(AbstractDatasource):
-    def __init__(self, broker: AbstractBroker):
+class ExchangeDataSource(AbstractDataSource):
+    def __init__(self, exchange: AbstractExchange):
         super().__init__()
-        self.broker = broker
+        self.exchange = exchange
 
     def fetch(
-        self, symbol: Symbol, timeframe: Timeframe, lookback: int, batch_size: int
+        self, symbol: Symbol, timeframe: Timeframe, lookback: Lookback, batch_size: int
     ):
         return AsyncHistoricalData(
-            self.broker, symbol.name, timeframe.value, lookback, batch_size
+            self.exchange, symbol, timeframe, lookback, batch_size
         )

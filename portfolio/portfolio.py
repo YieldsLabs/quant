@@ -61,10 +61,11 @@ class Portfolio(AbstractEventManager):
                 performance.cvar,
                 performance.ulcer_index,
                 performance.max_drawdown,
-                performance.max_consecutive_losses,
                 performance.annualized_return,
                 performance.sterling_ratio,
                 performance.sortino_ratio,
+                performance.burke_ratio,
+                performance.total_trades,
             ],
         )
 

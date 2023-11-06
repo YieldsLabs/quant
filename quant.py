@@ -7,16 +7,18 @@ import uvloop
 from dotenv import load_dotenv
 
 from backtest.backtest import Backtest
-from broker.futures_bybit_broker import FuturesBybitBroker
+from broker.broker_factory import BrokerFactory
 from core.models.lookback import Lookback
 from core.models.timeframe import Timeframe
-from datasource.bybit_datasource import BybitDataSource
 from datasource.bybit_ws import BybitWSHandler
-from executor.executor_actor_factory import ExecutorActorFactory
+from datasource.datasource_factory import DataSourceFactory
+from exchange.exchange_factory import ExchangeFactory
+from executor.order_executor_actor_factory import OrderExecutorActorFactory
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.event_store.event_store import EventStore
 from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
+from optimization.optimizer_factory import StrategyOptimizerFactory
 from portfolio.portfolio import Portfolio
 from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
@@ -24,10 +26,13 @@ from position.risk.break_even import PositionRiskBreakEvenStrategy
 from position.size.fixed import PositionFixedSizeStrategy
 from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
 from risk.risk_actor_factory import RiskActorFactory
-from strategy.generator.trend_follow import TrendFollowStrategyGenerator
+from service.environment_secret_service import EnvironmentSecretService
+from service.wasm_file_service import WasmFileService
+from strategy.generator.strategy_generator_factory import StrategyGeneratorFactory
 from strategy.signal_actor_factory import SignalActorFactory
-from system.genetic_system import GeneticSystem, TradingContext
+from system.context import SystemContext
 from system.squad_factory import SquadFactory
+from system.system import System
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -35,13 +40,11 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 load_dotenv()
 
 
-API_KEY = os.getenv("API_KEY")
-API_SECRET = os.getenv("API_SECRET")
-WSS = os.getenv("WSS")
+BYBIT_WSS = os.getenv("BYBIT_WSS")
 IS_LIVE_MODE = os.getenv("LIVE_MODE") == "1"
 LOG_DIR = os.getenv("LOG_DIR")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-
+WASM_FOLDER = os.getenv("WASM_FOLDER")
 
 configure_logging(LOG_LEVEL)
 
@@ -59,91 +62,94 @@ async def main():
     store_buf_size = 5000
     num_workers = os.cpu_count()
     multi_piority_group = 2
-
-    lookback = Lookback.ONE_MONTH
     batch_size = 1597
-    backtest_parallel = 2
-    sample_size = 13
-    max_generations = 5
-    risk_per_trade = 0.005
-    risk_reward_ratio = 2
+
+    risk_per_trade = 0.0005
+    risk_reward_ratio = 1.5
     risk_buffer = 0.0001
-    slippage = 0.0005
     break_even_percentage = 0.25
     leverage = 1
     initial_account_size = 1000
-    elite_count = 3
+    lookback = Lookback.ONE_MONTH
+
+    num_samples = 3
+    parallel_num = 3
+    active_strategy_num = 3
+    max_generations = 1
+    elite_count = 5
     mutation_rate = 0.05
 
     timeframes = [
-        Timeframe.ONE_MINUTE,
         Timeframe.FIVE_MINUTES,
-        Timeframe.FIFTEEN_MINUTES,
     ]
 
-    blacklist = [
+    symbols_blacklist = [
         "USDCUSDT",
     ]
-
-    trend_follow_wasm_path = "./wasm/trend_follow.wasm"
 
     event_store = EventStore(LOG_DIR, store_buf_size)
     event_bus = EventDispatcher(num_workers, multi_piority_group)
 
-    Backtest()
+    Backtest(batch_size)
     Portfolio(initial_account_size, risk_per_trade)
-    broker = FuturesBybitBroker(API_KEY, API_SECRET)
-    datasource = BybitDataSource(broker)
-    ws_handler = BybitWSHandler(WSS)
 
-    strategy_generator = TrendFollowStrategyGenerator()
+    ws_handler = BybitWSHandler(BYBIT_WSS)
 
-    fixed_size_strategy = PositionFixedSizeStrategy(leverage, risk_per_trade)
-    break_even_risk = PositionRiskBreakEvenStrategy(break_even_percentage)
-    take_profit_strategy = PositionRiskRewardTakeProfitStrategy(risk_reward_ratio)
+    datasource_factory = DataSourceFactory()
+    broker_factory = BrokerFactory()
+    exchange_factory = ExchangeFactory(EnvironmentSecretService())
     position_factory = PositionFactory(
-        fixed_size_strategy, break_even_risk, take_profit_strategy
+        PositionFixedSizeStrategy(leverage, risk_per_trade),
+        PositionRiskBreakEvenStrategy(break_even_percentage),
+        PositionRiskRewardTakeProfitStrategy(risk_reward_ratio),
     )
-
-    trend_follow_squad_factory = SquadFactory(
-        SignalActorFactory(trend_follow_wasm_path),
-        ExecutorActorFactory(slippage),
+    squad_factory = SquadFactory(
+        SignalActorFactory(WasmFileService(WASM_FOLDER)),
         PositionActorFactory(initial_account_size, position_factory),
         RiskActorFactory(risk_buffer),
     )
 
-    context = TradingContext(
-        datasource,
-        trend_follow_squad_factory,
-        strategy_generator,
-        timeframes,
-        blacklist,
+    executor_factory = OrderExecutorActorFactory()
+
+    strategy_optimization_factory = StrategyOptimizerFactory(
+        max_generations, elite_count, mutation_rate
+    )
+
+    strategy_generator_factory = StrategyGeneratorFactory(
+        num_samples, symbols_blacklist, timeframes
+    )
+
+    context = SystemContext(
+        datasource_factory,
+        broker_factory,
+        exchange_factory,
+        squad_factory,
+        executor_factory,
+        strategy_generator_factory,
+        strategy_optimization_factory,
         lookback,
-        batch_size,
-        backtest_parallel,
-        sample_size,
-        max_generations,
+        parallel_num,
+        active_strategy_num,
         leverage,
         IS_LIVE_MODE,
     )
 
-    trading_system = GeneticSystem(context, elite_count, mutation_rate)
+    system = System(context)
 
-    system_task = asyncio.create_task(trading_system.start())
+    trader_task = asyncio.create_task(system.start())
     ws_handler_task = asyncio.create_task(ws_handler.run())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
         logging.info("Started")
-        await asyncio.gather(system_task, ws_handler_task, shutdown_task)
+        await asyncio.gather(trader_task, ws_handler_task, shutdown_task)
     finally:
         logging.info("Closing...")
 
         shutdown_task.cancel()
-        system_task.cancel()
+        trader_task.cancel()
         ws_handler_task.cancel()
-
-        trading_system.stop()
+        system.stop()
 
         await event_bus.stop()
         await event_bus.wait()

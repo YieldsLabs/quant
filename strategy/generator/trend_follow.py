@@ -1,4 +1,6 @@
+from itertools import product
 from random import shuffle
+from symtable import Symbol
 
 import numpy as np
 
@@ -6,7 +8,8 @@ from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerato
 from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
-from core.models.strategy import Strategy
+from core.models.strategy import Strategy, StrategyType
+from core.models.timeframe import Timeframe
 from strategy.exit.dumb import DumbExit
 from strategy.filter.adx import ADXFilter
 from strategy.filter.fib import FibFilter
@@ -51,18 +54,47 @@ from strategy.stop_loss.atr import ATRStopLoss
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
-    def __init__(self):
+    def __init__(
+        self,
+        n_samples: int,
+        symbols: list[Symbol],
+        timeframes: list[Timeframe],
+    ):
         super().__init__()
+        self.n_samples = n_samples
+        self.timeframes = timeframes
+        self.symbols = symbols
 
-    def generate(self, n_samples):
-        strategies = self._diversified_strategies() + self._random_strategies(n_samples)
-        shuffle(strategies)
+    def generate(self) -> list[tuple[Symbol, Timeframe, Strategy]]:
+        strategies = self.generate_strategies()
+        sampled_symbols = self.generate_symbols()
+        sampled_timeframes = self.generate_timeframes()
 
-        return strategies
+        data = list(product(sampled_symbols, sampled_timeframes, strategies))
+
+        shuffle(data)
+
+        return data
+
+    def generate_strategies(self) -> list[Strategy]:
+        return self._diversified_strategies() + self._random_strategies()
+
+    def generate_symbols(self) -> list[Symbol]:
+        num_symbols_to_sample = min(self.n_samples, len(self.symbols))
+
+        return np.random.choice(self.symbols, size=num_symbols_to_sample, replace=False)
+
+    def generate_timeframes(self) -> list[Timeframe]:
+        num_timeframes_to_sample = min(self.n_samples, len(self.timeframes))
+
+        return np.random.choice(
+            self.timeframes, size=num_timeframes_to_sample, replace=False
+        )
 
     def _diversified_strategies(self):
         strategies = [
             (
+                StrategyType.TREND,
                 TrendCandleSignal(
                     candle=StaticParameter(TrendCandleType.THREE_METHODS)
                 ),
@@ -74,6 +106,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DumbExit(),
             ),
             (
+                StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.HEXAD)),
                 MovingAverageFilter(
                     smoothing=StaticParameter(MovingAverageType.MD),
@@ -83,6 +116,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DumbExit(),
             ),
             (
+                StrategyType.TREND,
                 TrendCandleSignal(
                     candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
                 ),
@@ -91,24 +125,28 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DumbExit(),
             ),
             (
+                StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.H)),
                 TIIFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
             (
+                StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.GOLDEN)),
                 TIIFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
             (
+                StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.BOTTLE)),
                 StochFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
                 DumbExit(),
             ),
             (
+                StrategyType.TREND,
                 SupertrendFlipSignal(),
                 RSIFilter(),
                 ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
@@ -118,7 +156,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
         return [Strategy(*strategy) for strategy in strategies]
 
-    def _random_strategies(self, n_samples):
+    def _random_strategies(self):
         strategies_set = set()
 
         def add_strategy():
@@ -126,10 +164,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             if strategy not in strategies_set:
                 strategies_set.add(strategy)
 
-        for _ in range(n_samples):
+        for _ in range(self.n_samples):
             add_strategy()
 
-        remainders = n_samples - len(strategies_set)
+        remainders = self.n_samples - len(strategies_set)
 
         for _ in range(remainders):
             add_strategy()
@@ -224,4 +262,4 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
 
-        return Strategy(*(signal, filter, stop_loss, exit_signal))
+        return Strategy(*(StrategyType.TREND, signal, filter, stop_loss, exit_signal))

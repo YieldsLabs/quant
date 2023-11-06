@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 class MarginMode(Enum):
@@ -9,3 +9,7 @@ class MarginMode(Enum):
 class PositionMode(Enum):
     ONE_WAY = "one way"
     HEDGED = "hedged"
+
+
+class BrokerType(Enum):
+    FUTURES = auto()

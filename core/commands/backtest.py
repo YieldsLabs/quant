@@ -1,16 +1,18 @@
 from dataclasses import dataclass
 
-from core.interfaces.abstract_datasource import AbstractDatasource
-from core.models.lookback import TIMEFRAMES_TO_LOOKBACK, Lookback
+from core.interfaces.abstract_datasource import AbstractDataSource
+from core.models.lookback import Lookback
+from core.models.strategy import Strategy
 from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
 from .base import Command
 
 
 @dataclass(frozen=True)
 class BacktestRun(Command):
-    datasource: AbstractDatasource
+    datasource: AbstractDataSource
     symbol: Symbol
-    timeframe: TIMEFRAMES_TO_LOOKBACK
+    timeframe: Timeframe
+    strategy: Strategy
     lookback: Lookback
-    batch_size: int

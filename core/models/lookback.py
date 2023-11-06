@@ -9,6 +9,9 @@ class Lookback(Enum):
     SIX_MONTH = "6M"
     ONE_YEAR = "1Y"
 
+    def __str__(self):
+        return self.value
+
 
 TIMEFRAMES_TO_LOOKBACK = {
     (Lookback.ONE_MONTH, Timeframe.ONE_MINUTE): 43200,
@@ -22,9 +25,9 @@ TIMEFRAMES_TO_LOOKBACK = {
     (Lookback.SIX_MONTH, Timeframe.ONE_MINUTE): 43200 * 6,
     (Lookback.SIX_MONTH, Timeframe.FIVE_MINUTES): 8640 * 6,
     (Lookback.SIX_MONTH, Timeframe.FIFTEEN_MINUTES): 2880 * 6,
-    (Lookback.SIX_MONTH, Timeframe.ONE_HOUR): 720 * 3,
+    (Lookback.SIX_MONTH, Timeframe.ONE_HOUR): 720 * 6,
     (Lookback.ONE_YEAR, Timeframe.ONE_MINUTE): 43200 * 12,
     (Lookback.ONE_YEAR, Timeframe.FIVE_MINUTES): 8640 * 12,
     (Lookback.ONE_YEAR, Timeframe.FIFTEEN_MINUTES): 2880 * 12,
-    (Lookback.ONE_YEAR, Timeframe.ONE_HOUR): 720 * 3,
+    (Lookback.ONE_YEAR, Timeframe.ONE_HOUR): 720 * 12,
 }

@@ -9,6 +9,9 @@ from core.models.timeframe import Timeframe
 class AbstractSquadFactory(ABC):
     @abstractmethod
     def create_squad(
-        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, is_live: bool
+        self,
+        symbol: Symbol,
+        timeframe: Timeframe,
+        strategy: Strategy,
     ) -> AbstractSquad:
         pass

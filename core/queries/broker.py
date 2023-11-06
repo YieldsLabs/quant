@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, List
+from typing import List
 
+from core.models.position import Position
 from core.models.symbol import Symbol
 
 from .base import Query
@@ -17,10 +18,5 @@ class GetSymbols(Query[List[Symbol]]):
 
 
 @dataclass(frozen=True)
-class GetSymbol(Query[Symbol]):
-    name: str
-
-
-@dataclass(frozen=True)
-class GetOpenPosition(Query[Any]):
-    symbol: Symbol
+class GetOpenPosition(Query[Position]):
+    position: Position

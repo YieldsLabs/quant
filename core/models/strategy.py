@@ -1,12 +1,22 @@
 import json
 from dataclasses import dataclass
+from enum import Enum, auto
 
 from .indicator import Indicator
 from .parameter import Parameter
 
 
+class StrategyType(Enum):
+    TREND = auto()
+
+
+class StrategyOptimizationType(Enum):
+    GENETIC = auto()
+
+
 @dataclass(frozen=True)
 class Strategy:
+    type: StrategyType
     entry_signal: Indicator
     regime_filter: Indicator
     stop_loss: Indicator

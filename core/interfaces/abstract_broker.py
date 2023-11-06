@@ -1,36 +1,32 @@
 from abc import abstractmethod
-from typing import Any
+
+from core.commands.base import Command
+from core.queries.base import Query
 
 from .abstract_event_manager import AbstractEventManager
 
 
 class AbstractBroker(AbstractEventManager):
     @abstractmethod
-    def set_settings(self, command: Any):
+    def update_symbol_settings(self, command: Command):
         pass
 
     @abstractmethod
-    def open_position(self, command: Any):
+    def open_position(self, command: Command):
         pass
 
     @abstractmethod
-    def close_position(self, command: Any):
+    def close_position(self, command: Command):
         pass
 
     @abstractmethod
-    def get_account_balance(self, command: Any):
+    def get_open_position(self, query: Query):
         pass
 
     @abstractmethod
-    def get_symbols(self, command: Any):
+    def get_symbols(self, query: Query):
         pass
 
     @abstractmethod
-    def get_symbol(self, command: Any):
-        pass
-
-    @abstractmethod
-    def get_historical_data(
-        self, symbol: str, timeframe: str, lookback: int, batch_size: int
-    ):
+    def get_account_balance(self, query: Query):
         pass

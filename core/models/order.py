@@ -1,13 +1,18 @@
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import Enum, auto
 
 
 class OrderStatus(Enum):
     PENDING = "pending"
     EXECUTED = "executed"
     FAILED = "failed"
+
+
+class OrderType(Enum):
+    MARKET = auto()
+    PAPER = auto()
 
 
 @dataclass(frozen=True)

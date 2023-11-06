@@ -10,13 +10,11 @@ class Squad(AbstractSquad):
         signal_actor: AbstractActor,
         position_actor: AbstractActor,
         risk_actor: AbstractActor,
-        executor_actor: AbstractActor,
     ):
         super().__init__()
         self.signal_actor = signal_actor
         self.position_actor = position_actor
         self.risk_actor = risk_actor
-        self.executor_actor = executor_actor
 
     @property
     def symbol(self):
@@ -36,7 +34,6 @@ class Squad(AbstractSquad):
                 self.signal_actor.start(),
                 self.position_actor.start(),
                 self.risk_actor.start(),
-                self.executor_actor.start(),
             ]
         )
 
@@ -46,6 +43,5 @@ class Squad(AbstractSquad):
                 self.signal_actor.stop(),
                 self.position_actor.stop(),
                 self.risk_actor.stop(),
-                self.executor_actor.stop(),
             ]
         )
