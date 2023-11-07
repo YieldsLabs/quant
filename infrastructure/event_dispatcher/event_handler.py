@@ -52,7 +52,7 @@ class EventHandler:
     ) -> None:
         try:
             await self._create_handler(handler, event, *args, **kwargs)
-            logger.debug(event, handler)
+            logger.debug(event)
         except Exception as e:
             self._dead_letter_queue.append((event, e))
             logger.error(

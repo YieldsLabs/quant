@@ -62,7 +62,7 @@ class BybitWSHandler(AbstractWS):
             ohlcv_event = self.parse_candle_message(symbol, interval, ohlcv)
 
             if ohlcv[self.CONFIRM_KEY]:
-                logger.info(f"Tick: {symbol}:{interval}:{ohlcv_event}")
+                logger.debug(f"Tick: {symbol}:{interval}:{ohlcv_event}")
 
             await self.dispatch(ohlcv_event)
 
