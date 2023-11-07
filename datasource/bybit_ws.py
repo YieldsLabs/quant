@@ -11,6 +11,7 @@ from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_ws import AbstractWS
 from core.models.ohlcv import OHLCV
 from core.models.timeframe import Timeframe
+from core.queries.broker import GetSymbol
 from infrastructure.retry import retry
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ class BybitWSHandler(AbstractWS):
                 logger.error(f"Unknown interval: {interval}")
                 return None
 
-            ohlcv_event = self.parse_candle_message(symbol, interval, ohlcv)
+            ohlcv_event = await self.parse_candle_message(symbol, interval, ohlcv)
 
             if ohlcv[self.CONFIRM_KEY]:
                 logger.debug(f"Tick: {symbol}:{interval}:{ohlcv_event}")
@@ -94,9 +95,10 @@ class BybitWSHandler(AbstractWS):
 
             ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
             message_processing_task = asyncio.create_task(self.process_messages())
-            
+
             done, pending = await asyncio.wait(
-                [ping_task, message_processing_task], return_when=asyncio.FIRST_EXCEPTION
+                [ping_task, message_processing_task],
+                return_when=asyncio.FIRST_EXCEPTION,
             )
 
             for task in pending:
@@ -109,8 +111,9 @@ class BybitWSHandler(AbstractWS):
             if self.ws:
                 await self.ws.close()
 
-    def parse_candle_message(self, symbol, interval, data):
+    async def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV.from_dict(data)
+        symbol = await self.query(GetSymbol(symbol))
         return NewMarketDataReceived(
             symbol, self.TIMEFRAMES[interval], ohlcv, data[self.CONFIRM_KEY]
         )

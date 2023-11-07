@@ -18,6 +18,7 @@ plotly = "*"
 nbformat = "*"
 matplotlib = "*"
 seaborn = "*"
+cachetools = "*"
 
 [dev-packages]
 mypy = "*"

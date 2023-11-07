@@ -13,9 +13,9 @@ from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
-from core.models.order import OrderType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.models.order import OrderType
 from core.models.strategy import Strategy, StrategyType
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
@@ -23,6 +23,7 @@ from infrastructure.estimator import Estimator
 
 from .context import SystemContext
 from .squad import Squad
+
 
 logger = logging.getLogger(__name__)
 

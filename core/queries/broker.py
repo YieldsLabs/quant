@@ -18,5 +18,10 @@ class GetSymbols(Query[List[Symbol]]):
 
 
 @dataclass(frozen=True)
+class GetSymbol(Query[Symbol]):
+    symbol: str
+
+
+@dataclass(frozen=True)
 class GetOpenPosition(Query[Position]):
     position: Position

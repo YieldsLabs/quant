@@ -65,7 +65,7 @@ class Portfolio(AbstractEventManager):
                 performance.sterling_ratio,
                 performance.sortino_ratio,
                 performance.burke_ratio,
-                performance.total_trades,
+                performance.average_pnl
             ],
         )
 

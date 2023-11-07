@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from ctypes import addressof, c_ubyte
 from enum import Enum
 from typing import Any
@@ -16,6 +17,8 @@ from core.events.signal import (
 from core.models.signal import Signal, SignalSide
 from core.models.strategy import Strategy
 from core.models.timeframe import Timeframe
+
+logger = logging.getLogger(__name__)
 
 
 class Action(Enum):
@@ -73,8 +76,16 @@ class SignalActor(BaseActor):
             data.close,
             data.volume,
         )
-        [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](
-            self.store, self.register_id
+
+        long_stop_loss, short_stop_loss = 0.0, 0.0
+
+        if action in [Action.GO_LONG.value, Action.GO_SHORT.value]:
+            [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](
+                self.store, self.register_id
+            )
+
+        logger.debug(
+            f"Action: {action} price: {price} stop_loss: lng{long_stop_loss} sht{short_stop_loss}"
         )
 
         action_dispatch_map = {
@@ -130,7 +141,7 @@ class SignalActor(BaseActor):
         return (
             event.symbol == self._symbol
             and event.timeframe == self._timeframe
-            and event.closed is True
+            and event.closed
         )
 
     async def _dispatch_go_long_signal(self, data, price, stop_loss):

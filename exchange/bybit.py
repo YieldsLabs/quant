@@ -1,6 +1,8 @@
+import logging
 import math
 
 import ccxt
+from cachetools import TTLCache, cached
 from ccxt.base.errors import NetworkError, RequestTimeout
 
 from core.interfaces.abstract_exchange import AbstractExchange
@@ -13,6 +15,9 @@ from infrastructure.retry import retry
 
 MAX_RETRIES = 5
 EXCEPTIONS = (RequestTimeout, NetworkError)
+
+
+logger = logging.getLogger(__name__)
 
 
 class Bybit(AbstractExchange):
@@ -33,7 +38,8 @@ class Bybit(AbstractExchange):
             self.connector.set_margin_mode(
                 margin_mode.value, symbol.name, {"leverage": leverage}
             )
-        except Exception:
+        except Exception as e:
+            logger.error(e)
             pass
 
     def open_market_position(self, symbol: Symbol, side: PositionSide, size: float):
@@ -89,6 +95,7 @@ class Bybit(AbstractExchange):
         balance = self.connector.fetch_balance()
         return float(balance["total"][currency])
 
+    @cached(TTLCache(maxsize=10, ttl=10))
     def fetch_symbols(self):
         markets = self._fetch_futures_market()
         symbols = [self._create_symbol(market) for market in markets]

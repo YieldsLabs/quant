@@ -6,6 +6,7 @@ from core.models.order import Order, OrderStatus
 from core.queries.broker import (
     GetAccountBalance,
     GetOpenPosition,
+    GetSymbol,
     GetSymbols,
 )
 
@@ -56,6 +57,11 @@ class FuturesBroker(AbstractBroker):
     @query_handler(GetSymbols)
     def get_symbols(self, _query: GetSymbols):
         return self.exchange.fetch_symbols()
+
+    @query_handler(GetSymbol)
+    def get_symbol(self, query: GetSymbol):
+        symbols = self.exchange.fetch_symbols()
+        return next((symbol for symbol in symbols if symbol.name == query.symbol), None)
 
     @query_handler(GetAccountBalance)
     def get_account_balance(self, query: GetAccountBalance):

@@ -28,5 +28,9 @@ class AbstractBroker(AbstractEventManager):
         pass
 
     @abstractmethod
+    def get_symbol(self, query: Query):
+        pass
+
+    @abstractmethod
     def get_account_balance(self, query: Query):
         pass
