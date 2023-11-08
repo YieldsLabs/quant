@@ -40,7 +40,7 @@ class Backtest(AbstractBacktest):
 
         if last_row:
             last_close = last_row[-2]
-            await self.dispatch(BacktestEnded(symbol, timeframe, last_close))
+            await self.dispatch(BacktestEnded(symbol, timeframe, strategy, last_close))
 
     async def _process_historical_data(
         self, symbol: Symbol, timeframe: Timeframe, data: List[Any]

@@ -11,6 +11,7 @@ from .base import Event, EventGroup, EventMeta
 class BacktestEvent(Event):
     symbol: Symbol
     timeframe: Timeframe
+    strategy: Strategy
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=6, group=EventGroup.backtest),
         init=False,
@@ -19,7 +20,7 @@ class BacktestEvent(Event):
 
 @dataclass(frozen=True)
 class BacktestStarted(BacktestEvent):
-    strategy: Strategy
+    pass
 
 
 @dataclass(frozen=True)

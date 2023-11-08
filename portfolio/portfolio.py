@@ -3,7 +3,7 @@ import logging
 from core.commands.account import UpdateAccountSize
 from core.event_decorators import command_handler, event_handler, query_handler
 from core.events.account import PortfolioAccountUpdated
-from core.events.backtest import BacktestStarted
+from core.events.backtest import BacktestEnded, BacktestStarted
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
@@ -29,8 +29,8 @@ class Portfolio(AbstractEventManager):
 
         await self.dispatch(PortfolioAccountUpdated(self.account_size))
 
-    @event_handler(BacktestStarted)
-    async def handle_backtest_started(self, event: BacktestStarted):
+    @event_handler(BacktestEnded)
+    async def handle_backtest_started(self, event: BacktestEnded):
         await self.state.reset(event.symbol, event.timeframe, event.strategy)
 
     @event_handler(PositionClosed)
