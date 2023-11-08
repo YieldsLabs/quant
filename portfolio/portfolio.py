@@ -65,20 +65,14 @@ class Portfolio(AbstractEventManager):
                 performance.sterling_ratio,
                 performance.sortino_ratio,
                 performance.burke_ratio,
-                performance.average_pnl
+                performance.average_pnl,
             ],
         )
 
     @query_handler(GetTopStrategy)
     async def top_strategies(self, query: GetTopStrategy):
         strategies = await self.strategy.get_top(query.num)
-
-        results = [
-            (symbol, timeframe, strategy)
-            for symbol, timeframe, strategy in strategies
-        ]
-
-        return results
+        return strategies
 
     @query_handler(GetTotalPnL)
     async def total_pnl(self, query: GetTotalPnL):
