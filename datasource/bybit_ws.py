@@ -39,13 +39,12 @@ class BybitWSHandler(AbstractWS):
         super().__init__()
         self.url = url
         self.ws = None
+        self.last_pairs = None
 
-    @retry(
-        max_retries=5,
-        initial_retry_delay=5,
-        handled_exceptions=(ConnectionError, ConnectionClosedError),
-    )
     async def connect_to_websocket(self):
+        if self.ws and self.ws.open:
+            await self.ws.close()
+
         self.ws = await websockets.connect(self.url)
 
     async def process_message(self, message):
@@ -63,7 +62,7 @@ class BybitWSHandler(AbstractWS):
             ohlcv_event = await self.parse_candle_message(symbol, interval, ohlcv)
 
             if ohlcv[self.CONFIRM_KEY]:
-                logger.debug(f"Tick: {symbol}:{interval}:{ohlcv_event}")
+                logger.info(f"Tick: {symbol}:{interval}:{ohlcv_event}")
 
             await self.dispatch(ohlcv_event)
 
@@ -89,12 +88,20 @@ class BybitWSHandler(AbstractWS):
 
             await self.process_message(message)
 
-    async def run(self, ping_interval=10):
+    @retry(
+        max_retries=8,
+        initial_retry_delay=1,
+        handled_exceptions=(ConnectionError, ValueError, ConnectionClosedError),
+    )
+    async def run(self, ping_interval=15):
         try:
             await self.connect_to_websocket()
 
             ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
             message_processing_task = asyncio.create_task(self.process_messages())
+
+            if self.last_pairs:
+                await self._subscribe()
 
             done, pending = await asyncio.wait(
                 [ping_task, message_processing_task],
@@ -106,10 +113,9 @@ class BybitWSHandler(AbstractWS):
 
             for task in done:
                 if task.exception():
-                    logger.error(f"Task raised an exception: {task.exception()}")
+                    logger.error(task.exception())
         finally:
-            if self.ws:
-                await self.ws.close()
+            raise ValueError("WS Error")
 
     async def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV.from_dict(data)
@@ -121,14 +127,20 @@ class BybitWSHandler(AbstractWS):
     @command_handler(Subscribe)
     async def subscribe(self, command: Subscribe):
         if not self.ws or not self.ws.open:
-            raise ValueError("WebSocket is not connected or open.")
+            logger.error("WebSocket is not connected or open.")
+            return
 
+        self.last_pairs = command.symbols_and_timeframes
+        await self._subscribe()
+
+    async def _subscribe(self):
         channels = [
             f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol}"
-            for symbol, timeframe in command.symbols_and_timeframes
+            for symbol, timeframe in self.last_pairs
         ]
 
         subscribe_message = json.dumps(
             {"op": self.SUBSCRIBE_OPERATION, "args": channels}
         )
+
         await self.ws.send(subscribe_message)
