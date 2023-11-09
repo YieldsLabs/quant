@@ -55,4 +55,15 @@ class StrategyStorage:
                 reverse=True,
             )
 
-            return sorted_strategies[:num]
+            selected_symbols = set()
+            top_strategies = []
+
+            for key in sorted_strategies:
+                symbol, _, _ = key
+                if symbol not in selected_symbols:
+                    top_strategies.append(key)
+                    selected_symbols.add(symbol)
+                    if len(top_strategies) == num:
+                        break
+
+            return top_strategies

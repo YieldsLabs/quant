@@ -27,7 +27,7 @@ class Backtest(AbstractBacktest):
         lookback = command.lookback
 
         logger.info(
-            f"Backtest: symbol={symbol}, timeframe={timeframe}, lookback={lookback}"
+            f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={lookback}"
         )
 
         await self.dispatch(BacktestStarted(symbol, timeframe, strategy))
