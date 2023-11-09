@@ -5,6 +5,7 @@ from enum import Enum, auto
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
 from core.commands.broker import Subscribe, UpdateSettings
+from core.commands.portfolio import PortfolioReset
 from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_datasource import AbstractDataSource
 from core.interfaces.abstract_system import AbstractSystem
@@ -166,6 +167,10 @@ class System(AbstractSystem):
         )
 
         await self.execute(
+            PortfolioReset(squad.symbol, squad.timeframe, squad.strategy)
+        )
+
+        await self.execute(
             BacktestRun(
                 datasource,
                 squad.symbol,
@@ -233,6 +238,10 @@ class System(AbstractSystem):
                     squad.strategy,
                     Lookback.ONE_MONTH,
                 )
+            )
+
+            await self.execute(
+                PortfolioReset(squad.symbol, squad.timeframe, squad.strategy)
             )
 
             await order_executor.stop()
