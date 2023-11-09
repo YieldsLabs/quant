@@ -209,13 +209,6 @@ class System(AbstractSystem):
             GetTopStrategy(num=self.context.active_strategy_num)
         )
 
-        logger.info(
-            [
-                f"{str(strategy[0])}_{str(strategy[1])}{str(strategy[2])}"
-                for strategy in strategies
-            ]
-        )
-
         datasource = self.context.datasource_factory.create(
             DataSourceType.EXCHANGE,
             self.context.exchange_factory.create(ExchangeType.BYBIT),
@@ -277,6 +270,12 @@ class System(AbstractSystem):
             )
 
         logger.info("Start trading")
+        logger.info(
+            [
+                f"{str(strategy[0])}_{str(strategy[1])}{str(strategy[2])}"
+                for strategy in strategies
+            ]
+        )
 
         symbols_and_timeframes = [(strategy[0], strategy[1]) for strategy in strategies]
         await self.execute(Subscribe(symbols_and_timeframes))
