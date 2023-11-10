@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from core.commands.account import UpdateAccountSize
@@ -43,9 +44,15 @@ class Portfolio(AbstractEventManager):
         strategy = signal.strategy
 
         performance = await self.state.get(event.position)
-
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, pnl={round(performance.total_pnl, 2)}"
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, return={round(performance.annualized_return * 100, 2)}%, pnl={round(performance.total_pnl, 2)}"
+        )
+
+        pnl, annualized_return = await asyncio.gather(
+            *[self.state.get_pnl(), self.state.annualized_return()]
+        )
+        logger.info(
+            f"Info: pnl={round(pnl, 2)}, return={round(annualized_return * 100)}%"
         )
 
         await self.dispatch(

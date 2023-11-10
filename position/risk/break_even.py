@@ -31,5 +31,6 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
 
         return stop_loss_price
 
-    def _weighted_typical_price(self, ohlcv: OHLCV) -> float:
+    @staticmethod
+    def _weighted_typical_price(ohlcv: OHLCV) -> float:
         return (ohlcv.high + ohlcv.low + (ohlcv.close * 2.0)) / 4.0

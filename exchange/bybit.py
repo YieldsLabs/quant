@@ -95,7 +95,7 @@ class Bybit(AbstractExchange):
         balance = self.connector.fetch_balance()
         return float(balance["total"][currency])
 
-    @cached(TTLCache(maxsize=10, ttl=10))
+    @cached(TTLCache(maxsize=10, ttl=120))
     def fetch_symbols(self):
         markets = self._fetch_futures_market()
         symbols = [self._create_symbol(market) for market in markets]

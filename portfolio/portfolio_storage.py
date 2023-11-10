@@ -53,6 +53,26 @@ class PortfolioStorage:
 
             return performance.total_pnl if performance else 0
 
+    async def get_pnl(self):
+        async with self._lock:
+            return sum(
+                [
+                    performance.total_pnl
+                    for performance in self.data.values()
+                    if performance
+                ]
+            )
+
+    async def annualized_return(self):
+        async with self._lock:
+            return sum(
+                [
+                    performance.annualized_return
+                    for performance in self.data.values()
+                    if performance
+                ]
+            )
+
     async def get_fitness(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
     ):
