@@ -14,8 +14,6 @@ from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
 from core.models.order import OrderType
 from core.models.strategy import Strategy, StrategyType
 from core.queries.broker import GetAccountBalance, GetSymbols
@@ -167,10 +165,6 @@ class System(AbstractSystem):
         )
 
         await self.execute(
-            PortfolioReset(squad.symbol, squad.timeframe, squad.strategy)
-        )
-
-        await self.execute(
             BacktestRun(
                 datasource,
                 squad.symbol,
@@ -233,11 +227,9 @@ class System(AbstractSystem):
                 )
             )
 
-            await self.execute(
-                PortfolioReset(squad.symbol, squad.timeframe, squad.strategy)
+            await asyncio.gather(
+                *[self.execute(PortfolioReset()), order_executor.stop()]
             )
-
-            await order_executor.stop()
 
             paper_trading_actors.append(squad)
 

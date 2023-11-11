@@ -58,7 +58,7 @@ class Bybit(AbstractExchange):
         position = self.fetch_position(symbol)
 
         if not position:
-            return None
+            return
 
         self._create_order(
             "market",
@@ -69,23 +69,17 @@ class Bybit(AbstractExchange):
 
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def fetch_position(self, symbol: Symbol):
-        positions = self.connector.fetch_positions(symbol.name)
+        positions = self.connector.fetch_position(symbol.name)
 
-        open_positions = [
-            position for position in positions if float(position["info"]["size"]) != 0.0
-        ]
-
-        if len(open_positions) > 0:
-            current_position = open_positions[0]
-
+        if positions["entryPrice"] is not None:
             return {
                 "position_side": PositionSide.LONG
-                if current_position["side"] == "long"
+                if positions["side"] == "long"
                 else PositionSide.SHORT,
-                "entry_price": float(current_position["entryPrice"]),
-                "position_size": float(current_position["info"]["size"]),
-                "stop_loss_price": float(current_position["info"]["stopLoss"]),
-                "take_profit_price": float(current_position["info"]["takeProfit"]),
+                "entry_price": float(positions["entryPrice"]),
+                "position_size": float(positions["info"]["size"]),
+                "stop_loss_price": float(positions["stopLossPrice"]),
+                "take_profit_price": float(positions["takeProfitPrice"]),
             }
 
         return None

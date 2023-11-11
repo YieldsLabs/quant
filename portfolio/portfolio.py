@@ -5,6 +5,7 @@ from core.commands.account import UpdateAccountSize
 from core.commands.portfolio import PortfolioReset
 from core.event_decorators import command_handler, event_handler, query_handler
 from core.events.account import PortfolioAccountUpdated
+from core.events.backtest import BacktestStarted
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
@@ -30,9 +31,13 @@ class Portfolio(AbstractEventManager):
 
         await self.dispatch(PortfolioAccountUpdated(self.account_size))
 
-    @command_handler(PortfolioReset)
-    async def handle_backtest_started(self, event: PortfolioReset):
+    @event_handler(BacktestStarted)
+    async def handle_backtest_started(self, event: BacktestStarted):
         await self.state.reset(event.symbol, event.timeframe, event.strategy)
+
+    @command_handler(PortfolioReset)
+    async def portfolio_reset(self, _event: PortfolioReset):
+        await self.state.reset_all()
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):

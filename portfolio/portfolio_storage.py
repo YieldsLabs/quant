@@ -44,6 +44,10 @@ class PortfolioStorage:
             key = self._get_key(symbol, timeframe, strategy)
             self.data[key] = {}
 
+    async def reset_all(self):
+        async with self._lock:
+            self.data = {}
+
     async def get_total_pnl(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
     ):

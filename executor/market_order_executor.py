@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 
 from core.actors.base import BaseActor
@@ -13,6 +14,9 @@ from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.broker import GetOpenPosition
+
+logger = logging.getLogger(__name__)
+
 
 PositionEventType = Union[PositionInitialized, PositionCloseRequested]
 
@@ -51,12 +55,18 @@ class MarketOrderExecutor(BaseActor):
         return signal.symbol == self._symbol and signal.timeframe == self._timeframe
 
     async def _execute_order(self, position: Position):
+        logger.info(f"New Position: {position}")
+
         await self.execute(OpenPosition(position))
 
         next_position = await self.query(GetOpenPosition(position))
 
+        logger.info(f"Opened Position: {next_position}")
+
         await self.dispatch(BrokerPositionOpened(next_position))
 
     async def _close_position(self, position: Position):
+        logger.info(f"Closed Position: {position}")
+
         await self.execute(ClosePosition(position))
         await self.dispatch(BrokerPositionClosed(position))
