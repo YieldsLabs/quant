@@ -8,6 +8,7 @@ class OrderStatus(Enum):
     PENDING = "pending"
     EXECUTED = "executed"
     FAILED = "failed"
+    CLOSED = "closed"
 
 
 class OrderType(Enum):

@@ -9,7 +9,7 @@ from core.interfaces.abstract_position_take_profit_strategy import (
 )
 
 from .ohlcv import OHLCV
-from .order import Order
+from .order import Order, OrderStatus
 from .signal import Signal
 
 
@@ -36,11 +36,7 @@ class Position:
     open_timestamp: float = field(default_factory=lambda: 0)
     closed_timestamp: float = field(default_factory=lambda: 0)
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
-    exit_price: float = field(default_factory=lambda: 0.0001)
-
-    @property
-    def closed_key(self) -> str:
-        return f"{self.signal}_{self.side}_{self.closed_timestamp}"
+    exit_price: float = field(default_factory=lambda: 0.0000001)
 
     @property
     def trade_time(self) -> int:
@@ -61,33 +57,43 @@ class Position:
         return pnl
 
     def add_order(self, order: Order) -> "Position":
-        return replace(
-            self,
-            orders=(*self.orders, order),
-            last_modified=datetime.now().timestamp(),
-        )
-
-    def close(self, closed_timestamp: float) -> "Position":
         if self.closed:
-            return self
+            return
 
-        return replace(
-            self,
-            closed=True,
-            closed_timestamp=closed_timestamp,
-            last_modified=datetime.now().timestamp(),
-        )
-
-    def update_prices(self, execution_price: float) -> "Position":
         last_modified = datetime.now().timestamp()
 
-        if not self.closed:
+        if order.status == OrderStatus.PENDING:
             return replace(
-                self, entry_price=execution_price, last_modified=last_modified
+                self, orders=(*self.orders, order), last_modified=last_modified
             )
-        else:
+
+        if order.status == OrderStatus.EXECUTED:
             return replace(
-                self, exit_price=execution_price, last_modified=last_modified
+                self,
+                orders=(*self.orders, order),
+                entry_price=order.price,
+                size=order.size,
+                last_modified=last_modified,
+            )
+
+        if order.status == OrderStatus.CLOSED:
+            return replace(
+                self,
+                closed=True,
+                orders=(*self.orders, order),
+                exit_price=order.price,
+                closed_timestamp=last_modified,
+                last_modified=last_modified,
+            )
+
+        if order.status == OrderStatus.FAILED:
+            return replace(
+                self,
+                closed=True,
+                orders=(*self.orders, order),
+                exit_price=self.entry_price,
+                closed_timestamp=last_modified,
+                last_modified=last_modified,
             )
 
     def next(self, ohlcv: OHLCV) -> "Position":
@@ -123,3 +129,6 @@ class Position:
             "open_timestamp": self.open_timestamp,
             "trade_time": self.trade_time,
         }
+
+    def __str__(self):
+        return f"Position(signal={self.signal}, side={self.side}, entry_price={self.entry_price}, exit_price={self.exit_price}, trade_time={self.trade_time}, closed={self.closed})"

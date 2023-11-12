@@ -72,15 +72,14 @@ async def main():
     initial_account_size = 1000
     lookback = Lookback.ONE_MONTH
 
-    num_samples = 3
-    parallel_num = 3
-    active_strategy_num = 3
+    num_samples = 8
+    active_strategy_num = 5
     max_generations = 1
     elite_count = 5
     mutation_rate = 0.05
 
     timeframes = [
-        Timeframe.FIVE_MINUTES,
+        Timeframe.ONE_MINUTE,
     ]
 
     symbols_blacklist = [
@@ -128,7 +127,6 @@ async def main():
         strategy_generator_factory,
         strategy_optimization_factory,
         lookback,
-        parallel_num,
         active_strategy_num,
         leverage,
         IS_LIVE_MODE,

@@ -9,7 +9,7 @@ from core.events.position import (
     PositionCloseRequested,
     PositionInitialized,
 )
-from core.models.position import Position
+from core.models.order import Order, OrderStatus
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -48,25 +48,49 @@ class MarketOrderExecutor(BaseActor):
         handler = handlers.get(type(event))
 
         if handler:
-            await handler(event.position)
+            await handler(event)
 
     def _filter_event(self, event: PositionEventType):
         signal = event.position.signal
         return signal.symbol == self._symbol and signal.timeframe == self._timeframe
 
-    async def _execute_order(self, position: Position):
+    async def _execute_order(self, event: PositionInitialized):
+        position = event.position
+
         logger.info(f"New Position: {position}")
 
         await self.execute(OpenPosition(position))
 
-        next_position = await self.query(GetOpenPosition(position))
+        broker_position = await self.query(GetOpenPosition(position))
+
+        if not broker_position:
+            order = Order(status=OrderStatus.FAILED, price=0, size=0)
+        else:
+            order = Order(
+                status=OrderStatus.EXECUTED,
+                size=broker_position["position_size"],
+                price=broker_position["entry_price"],
+            )
+
+        next_position = position.add_order(order)
 
         logger.info(f"Opened Position: {next_position}")
 
         await self.dispatch(BrokerPositionOpened(next_position))
 
-    async def _close_position(self, position: Position):
+    async def _close_position(self, event: PositionCloseRequested):
+        position = event.position
+
         logger.info(f"Closed Position: {position}")
 
         await self.execute(ClosePosition(position))
-        await self.dispatch(BrokerPositionClosed(position))
+
+        order = Order(
+            status=OrderStatus.CLOSED,
+            price=event.exit_price,
+            size=position.size,
+        )
+
+        next_position = position.add_order(order)
+
+        await self.dispatch(BrokerPositionClosed(next_position))

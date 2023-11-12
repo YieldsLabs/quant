@@ -13,6 +13,7 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_position_manager import AbstractPositionManager
 from core.models.signal import Signal
+from core.models.symbol import Symbol
 
 logger = logging.getLogger(__name__)
 
@@ -74,11 +75,11 @@ class PositionStateMachine:
         self._position_manager = position_manager
         self._state_lock = asyncio.Lock()
 
-    async def _get_state(self, symbol: str) -> PositionState:
+    async def _get_state(self, symbol: Symbol) -> PositionState:
         async with self._state_lock:
             return self._state.get(symbol, PositionState.IDLE)
 
-    async def _set_state(self, symbol: str, state: PositionState) -> None:
+    async def _set_state(self, symbol: Symbol, state: PositionState) -> None:
         async with self._state_lock:
             self._state[symbol] = state
 

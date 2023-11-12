@@ -81,21 +81,20 @@ class PaperOrderExecutor(BaseActor):
             size=current_position.size,
         )
 
-        next_position = current_position.add_order(order).update_prices(order.price)
-
+        next_position = current_position.add_order(order)
         await self.dispatch(BrokerPositionOpened(next_position))
 
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
         fill_price = self._determine_fill_price(current_position.side)
 
-        if current_position.closed:
-            next_position = current_position.update_prices(fill_price)
-        else:
-            next_position = current_position.close(event.meta.timestamp).update_prices(
-                fill_price
-            )
+        order = Order(
+            status=OrderStatus.CLOSED,
+            price=fill_price,
+            size=current_position.size,
+        )
 
+        next_position = current_position.add_order(order)
         await self.dispatch(BrokerPositionClosed(next_position))
 
     async def _update_tick(self, event: NewMarketDataReceived):

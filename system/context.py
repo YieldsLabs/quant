@@ -22,7 +22,6 @@ class SystemContext:
     strategy_generator_factory: AbstractStrategyGeneratorFactory
     strategy_optimizer_factory: AbstractStrategyOptimizerFactory
     lookback: Lookback
-    parallel_num: int
     active_strategy_num: int
     leverage: int
     is_live: bool

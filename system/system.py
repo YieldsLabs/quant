@@ -15,6 +15,8 @@ from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 from core.models.strategy import Strategy, StrategyType
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
@@ -113,28 +115,19 @@ class System(AbstractSystem):
 
     async def _run_backtest(self):
         population = self.optimizer.population
+        total_steps = len(population)
 
-        logger.info(f"Run backtest for: {len(population)}")
+        logger.info(f"Run backtest for: {total_steps}")
 
-        total_steps = len(population) // self.context.parallel_num
         estimator = Estimator(total_steps)
-
         datasource = self.context.datasource_factory.create(
             DataSourceType.EXCHANGE,
             self.context.exchange_factory.create(ExchangeType.BYBIT),
         )
 
-        batch = []
         async for actors in self._generate_backtest_actors(population):
-            batch.append(actors)
-
-            if len(batch) >= self.context.parallel_num:
-                await self._process_batch(datasource, batch)
-                logger.info(f"Remaining time: {estimator.remaining_time():.2f}sec")
-                batch = []
-
-        if batch:
-            await self._process_batch(datasource, batch)
+            await self._process_backtest(datasource, actors)
+            logger.info(f"Remaining time: {estimator.remaining_time():.2f}sec")
 
         await self.event_queue.put(Event.BACKTEST_COMPLETE)
 
@@ -150,10 +143,6 @@ class System(AbstractSystem):
     async def _refresh_account(self):
         account_size = await self.query(GetAccountBalance())
         await self.execute(UpdateAccountSize(account_size))
-
-    async def _process_batch(self, datasource, batch):
-        tasks = [self._process_backtest(datasource, actors) for actors in batch]
-        await asyncio.gather(*tasks)
 
     async def _process_backtest(
         self, datasource: AbstractDataSource, actors: tuple[Squad, AbstractActor]

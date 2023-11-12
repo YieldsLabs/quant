@@ -142,12 +142,7 @@ class PositionActor(BaseActor):
         position = await self.state.retrieve_position(signal)
 
         if position and self.can_close_position(event, position):
-            position = position.close(event.ohlcv.timestamp).update_prices(
-                event.exit_price
-            )
-
-            await self.dispatch(PositionCloseRequested(position))
-
+            await self.dispatch(PositionCloseRequested(position, event.exit_price))
             return True
 
         return False
