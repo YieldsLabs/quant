@@ -155,8 +155,8 @@ class System(AbstractSystem):
                 yield actors_batch
                 actors_batch = []
 
-            if actors_batch:
-                yield actors_batch
+        if actors_batch:
+            yield actors_batch
 
     async def _refresh_account(self):
         account_size = await self.query(GetAccountBalance())
@@ -231,6 +231,13 @@ class System(AbstractSystem):
             GetTopStrategy(num=self.context.active_strategy_num)
         )
 
+        logger.info(
+            [
+                f"{str(strategy[0])}_{str(strategy[1])}{str(strategy[2])}"
+                for strategy in strategies
+            ]
+        )
+
         datasource = self.context.datasource_factory.create(
             DataSourceType.EXCHANGE,
             self.context.exchange_factory.create(ExchangeType.BYBIT),
@@ -239,24 +246,17 @@ class System(AbstractSystem):
         trading_actors = []
 
         async for batch_actors in self._generate_batch_actors(strategies):
-            tasks = [
-                self._process_pretrading(datasource, actors) for actors in batch_actors
-            ]
-            await asyncio.gather(*tasks)
+            for actors in batch_actors:
+                await self._process_pretrading(datasource, actors)
+                trading_actors.append(actors)
 
-            for squad, _ in batch_actors:
-                executor = self.context.executor_factory.create_actor(
-                    OrderType.MARKET if self.context.is_live else OrderType.PAPER,
-                    squad.symbol,
-                    squad.timeframe,
-                    squad.strategy,
-                )
-
-                trading_actors.append((squad, executor))
-
-        await self._refresh_account()
-
-        for squad, order_executor in trading_actors:
+        for squad, _ in trading_actors:
+            order_executor = self.context.executor_factory.create_actor(
+                OrderType.MARKET if self.context.is_live else OrderType.PAPER,
+                squad.symbol,
+                squad.timeframe,
+                squad.strategy,
+            )
             await asyncio.gather(
                 *[
                     self.execute(
@@ -271,14 +271,7 @@ class System(AbstractSystem):
                 ]
             )
 
-        logger.info("Start trading")
-        logger.info(
-            [
-                f"{str(strategy[0])}_{str(strategy[1])}{str(strategy[2])}"
-                for strategy in strategies
-            ]
-        )
-
+        await self._refresh_account()
         await self.execute(
             Subscribe([(strategy[0], strategy[1]) for strategy in strategies])
         )

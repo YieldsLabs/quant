@@ -41,14 +41,13 @@ class BybitWSHandler(AbstractWS):
         self.ws = None
         self.last_pairs = None
 
-    @retry(
-        max_retries=3,
-        initial_retry_delay=2,
-        handled_exceptions=(ConnectionError, ConnectionClosedError),
-    )
-    async def connect_to_websocket(self):
+    async def connect_to_websocket(self, interval=5):
         await self.close()
         self.ws = await websockets.connect(self.url)
+        await asyncio.sleep(interval)
+
+        if not self.ws.open:
+            raise RuntimeError("Reconnect WS")
 
     async def process_message(self, message):
         message_data = json.loads(message)
@@ -76,11 +75,11 @@ class BybitWSHandler(AbstractWS):
             if not self.ws:
                 continue
 
-            if self.ws.open:
-                await self.ws.ping()
-            else:
-                logger.info("WebSocket not open, attempting to reconnect...")
-                raise ValueError("WS Ping Error")
+            if not self.ws.open:
+                continue
+
+            pong = await self.ws.ping()
+            await pong
 
     async def process_messages(self):
         async for message in self.ws:
@@ -89,9 +88,9 @@ class BybitWSHandler(AbstractWS):
     @retry(
         max_retries=8,
         initial_retry_delay=1,
-        handled_exceptions=(ConnectionError, ValueError, ConnectionClosedError),
+        handled_exceptions=(ConnectionError, RuntimeError, ConnectionClosedError),
     )
-    async def run(self, ping_interval=5):
+    async def run(self, ping_interval=15):
         try:
             await self.connect_to_websocket()
 
@@ -112,9 +111,10 @@ class BybitWSHandler(AbstractWS):
             for task in done:
                 if task.exception():
                     raise task.exception()
+        except Exception as e:
+            logger.error(e)
         finally:
-            logger.error("WebSocket connection closed unexpectedly")
-            raise ValueError("WS Message Error")
+            raise RuntimeError("WS Message Error")
 
     async def close(self):
         if self.ws and self.ws.open:

@@ -72,7 +72,7 @@ async def main():
     initial_account_size = 1000
     lookback = Lookback.ONE_MONTH
 
-    num_samples = 5
+    num_samples = 3
     parallel_num = 2
     active_strategy_num = 5
     max_generations = 1
@@ -142,7 +142,7 @@ async def main():
 
     try:
         logging.info("Started")
-        await asyncio.gather(trader_task, ws_handler_task, shutdown_task)
+        await asyncio.gather(*[trader_task, ws_handler_task, shutdown_task])
     finally:
         logging.info("Closing...")
         shutdown_task.cancel()
