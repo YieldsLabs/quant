@@ -41,10 +41,13 @@ class BybitWSHandler(AbstractWS):
         self.ws = None
         self.last_pairs = None
 
+    @retry(
+        max_retries=3,
+        initial_retry_delay=2,
+        handled_exceptions=(ConnectionError, ConnectionClosedError),
+    )
     async def connect_to_websocket(self):
-        if self.ws and self.ws.open:
-            await self.ws.close()
-
+        await self.close()
         self.ws = await websockets.connect(self.url)
 
     async def process_message(self, message):
@@ -77,15 +80,10 @@ class BybitWSHandler(AbstractWS):
                 await self.ws.ping()
             else:
                 logger.info("WebSocket not open, attempting to reconnect...")
-                await self.connect_to_websocket()
+                raise ValueError("WS Ping Error")
 
     async def process_messages(self):
-        while True:
-            message = await self.ws.recv()
-
-            if message is None:
-                break
-
+        async for message in self.ws:
             await self.process_message(message)
 
     @retry(
@@ -93,7 +91,7 @@ class BybitWSHandler(AbstractWS):
         initial_retry_delay=1,
         handled_exceptions=(ConnectionError, ValueError, ConnectionClosedError),
     )
-    async def run(self, ping_interval=15):
+    async def run(self, ping_interval=5):
         try:
             await self.connect_to_websocket()
 
@@ -113,9 +111,14 @@ class BybitWSHandler(AbstractWS):
 
             for task in done:
                 if task.exception():
-                    logger.error(task.exception())
+                    raise task.exception()
         finally:
-            raise ValueError("WS Error")
+            logger.error("WebSocket connection closed unexpectedly")
+            raise ValueError("WS Message Error")
+
+    async def close(self):
+        if self.ws and self.ws.open:
+            await self.ws.close()
 
     async def parse_candle_message(self, symbol, interval, data):
         ohlcv = OHLCV.from_dict(data)

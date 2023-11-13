@@ -7,3 +7,7 @@ class AbstractWS(AbstractEventManager):
     @abstractmethod
     def run(self):
         pass
+
+    @abstractmethod
+    def close(self):
+        pass

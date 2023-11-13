@@ -1,3 +1,4 @@
+import logging
 from enum import Enum, auto
 from typing import Union
 
@@ -20,6 +21,8 @@ OrderEventType = Union[
     NewMarketDataReceived, PositionInitialized, PositionCloseRequested
 ]
 PositionEventType = Union[PositionInitialized, PositionCloseRequested]
+
+logger = logging.getLogger(__name__)
 
 
 class PriceDirection(Enum):
@@ -82,6 +85,9 @@ class PaperOrderExecutor(BaseActor):
         )
 
         next_position = current_position.add_order(order)
+
+        logger.debug(f"Opened Position: {next_position}")
+
         await self.dispatch(BrokerPositionOpened(next_position))
 
     async def _close_position(self, event: PositionCloseRequested):
@@ -95,6 +101,9 @@ class PaperOrderExecutor(BaseActor):
         )
 
         next_position = current_position.add_order(order)
+
+        logger.debug(f"Closed Position: {next_position}")
+
         await self.dispatch(BrokerPositionClosed(next_position))
 
     async def _update_tick(self, event: NewMarketDataReceived):

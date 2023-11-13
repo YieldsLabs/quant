@@ -81,8 +81,6 @@ class MarketOrderExecutor(BaseActor):
     async def _close_position(self, event: PositionCloseRequested):
         position = event.position
 
-        logger.info(f"Closed Position: {position}")
-
         await self.execute(ClosePosition(position))
 
         order = Order(
@@ -92,5 +90,7 @@ class MarketOrderExecutor(BaseActor):
         )
 
         next_position = position.add_order(order)
+
+        logger.info(f"Closed Position: {next_position}")
 
         await self.dispatch(BrokerPositionClosed(next_position))

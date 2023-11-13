@@ -72,7 +72,8 @@ async def main():
     initial_account_size = 1000
     lookback = Lookback.ONE_MONTH
 
-    num_samples = 8
+    num_samples = 5
+    parallel_num = 2
     active_strategy_num = 5
     max_generations = 1
     elite_count = 5
@@ -128,6 +129,7 @@ async def main():
         strategy_optimization_factory,
         lookback,
         active_strategy_num,
+        parallel_num,
         leverage,
         IS_LIVE_MODE,
     )
@@ -143,10 +145,12 @@ async def main():
         await asyncio.gather(trader_task, ws_handler_task, shutdown_task)
     finally:
         logging.info("Closing...")
-
         shutdown_task.cancel()
         trader_task.cancel()
         ws_handler_task.cancel()
+
+        await ws_handler.close()
+
         system.stop()
 
         await event_bus.stop()
