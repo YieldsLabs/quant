@@ -8,7 +8,6 @@ class AbstractPositionSizeStrategy(ABC):
         self,
         account_size: float,
         entry_price: float,
-        trading_fee: float,
         stop_loss_price: Optional[float] = None,
     ) -> float:
         pass

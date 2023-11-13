@@ -131,7 +131,7 @@ class System(AbstractSystem):
             self.context.exchange_factory.create(ExchangeType.BYBIT),
         )
 
-        async for batch_actors in self._generate_batch_actors(population):
+        async for batch_actors in self._generate_batch_actors(population, False):
             tasks = [
                 self._process_backtest(datasource, actors) for actors in batch_actors
             ]
@@ -140,11 +140,13 @@ class System(AbstractSystem):
 
         await self.event_queue.put(Event.BACKTEST_COMPLETE)
 
-    async def _generate_batch_actors(self, data):
+    async def _generate_batch_actors(self, data, is_trading):
         actors_batch = []
 
         for symbol, timeframe, strategy in data:
-            squad = self.context.squad_factory.create_squad(symbol, timeframe, strategy)
+            squad = self.context.squad_factory.create_squad(
+                symbol, timeframe, strategy, is_trading
+            )
             order_executor = self.context.executor_factory.create_actor(
                 OrderType.PAPER, symbol, timeframe, strategy
             )
@@ -245,7 +247,7 @@ class System(AbstractSystem):
 
         trading_actors = []
 
-        async for batch_actors in self._generate_batch_actors(strategies):
+        async for batch_actors in self._generate_batch_actors(strategies, True):
             for actors in batch_actors:
                 await self._process_pretrading(datasource, actors)
                 trading_actors.append(actors)

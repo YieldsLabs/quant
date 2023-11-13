@@ -20,6 +20,11 @@ class GetTotalPnL(Query[float]):
 
 
 @dataclass(frozen=True)
+class GetAllPnL(Query[float]):
+    pass
+
+
+@dataclass(frozen=True)
 class GetFitness(Query[float]):
     symbol: Symbol
     timeframe: Timeframe

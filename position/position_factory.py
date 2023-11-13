@@ -37,7 +37,7 @@ class PositionFactory(AbstractPositionFactory):
         entry_price = round(entry_price, symbol.price_precision)
 
         position_size = self.position_size_strategy.calculate(
-            account_size, entry_price, symbol.fee, stop_loss_price
+            account_size, entry_price, stop_loss_price
         )
 
         adjusted_position_size = max(position_size, symbol.min_position_size)

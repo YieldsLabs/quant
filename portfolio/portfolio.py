@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from core.commands.account import UpdateAccountSize
@@ -9,7 +8,7 @@ from core.events.backtest import BacktestStarted
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.queries.portfolio import GetFitness, GetTopStrategy, GetTotalPnL
+from core.queries.portfolio import GetAllPnL, GetFitness, GetTopStrategy, GetTotalPnL
 
 from .portfolio_storage import PortfolioStorage
 from .strategy_storage import StrategyStorage
@@ -53,13 +52,6 @@ class Portfolio(AbstractEventManager):
             f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, return={round(performance.annualized_return * 100, 2)}%, pnl={round(performance.total_pnl, 2)}"
         )
 
-        pnl, annualized_return = await asyncio.gather(
-            *[self.state.get_pnl(), self.state.annualized_return()]
-        )
-        logger.info(
-            f"Info: pnl={round(pnl, 2)}, return={round(annualized_return * 100)}%"
-        )
-
         await self.dispatch(
             PortfolioPerformanceUpdated(symbol, timeframe, strategy, performance)
         )
@@ -92,6 +84,10 @@ class Portfolio(AbstractEventManager):
         return await self.state.get_total_pnl(
             signal.symbol, signal.timeframe, signal.strategy
         )
+
+    @query_handler(GetAllPnL)
+    async def all_pnl(self, _query: GetAllPnL):
+        return await self.state.get_pnl()
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):

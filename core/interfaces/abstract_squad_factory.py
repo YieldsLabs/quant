@@ -13,5 +13,6 @@ class AbstractSquadFactory(ABC):
         symbol: Symbol,
         timeframe: Timeframe,
         strategy: Strategy,
+        is_trading: bool,
     ) -> AbstractSquad:
         pass

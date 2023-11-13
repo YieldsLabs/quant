@@ -92,6 +92,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
 
     def _diversified_strategies(self):
+        atr_period = StaticParameter(14.0)
+        atr_multi = StaticParameter(0.85)
         strategies = [
             (
                 StrategyType.TREND,
@@ -102,7 +104,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     smoothing=StaticParameter(MovingAverageType.WMA),
                     period=StaticParameter(250.0),
                 ),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(0.85)),
+                ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
             (
@@ -112,7 +114,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     smoothing=StaticParameter(MovingAverageType.MD),
                     period=StaticParameter(150.0),
                 ),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(0.85)),
+                ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
             (
@@ -121,35 +123,35 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
                 ),
                 RSIFilter(),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
             (
                 StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.H)),
                 TIIFilter(),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
             (
                 StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.GOLDEN)),
                 TIIFilter(),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
             (
                 StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.BOTTLE)),
                 StochFilter(),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
             (
                 StrategyType.TREND,
                 SupertrendFlipSignal(),
                 RSIFilter(),
-                ATRStopLoss(period=StaticParameter(14.0), multi=StaticParameter(1.5)),
+                ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
         ]
@@ -180,7 +182,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         ma_medium_period = RandomParameter(50.0, 100.0, 5.0)
         ma_short_period, ma_long_period = sorted([_short_period, _long_period])
         ma_filter_period = RandomParameter(100.0, 300.0, 25.0)
-        atr_multi = RandomParameter(0.85, 2, 0.05)
+        atr_multi = RandomParameter(1.0, 2, 0.25)
 
         filter = np.random.choice(
             [

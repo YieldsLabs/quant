@@ -15,11 +15,14 @@ class PositionActorFactory(AbstractPositionActorFactory):
         self.position_factory = position_factory
         self.initial_account_size = initial_account_size
 
-    def create_actor(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
+    def create_actor(
+        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, is_trading: bool
+    ):
         return PositionActor(
             symbol,
             timeframe,
             strategy,
             self.position_factory,
             self.initial_account_size,
+            is_trading,
         )

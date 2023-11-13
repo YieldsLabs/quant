@@ -24,7 +24,7 @@ from core.models.position import Position, PositionSide
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.portfolio import GetTotalPnL
+from core.queries.portfolio import GetAllPnL, GetTotalPnL
 
 from .position_state_machine import PositionStateMachine
 from .position_storage import PositionStorage
@@ -52,11 +52,13 @@ class PositionActor(BaseActor):
         strategy: Strategy,
         position_factory: AbstractPositionFactory,
         initial_account_size: int,
+        is_trading: bool,
     ):
         super().__init__(symbol, timeframe, strategy)
 
         self.account_size = initial_account_size
         self.position_factory = position_factory
+        self.is_trading = is_trading
 
         self.sm = PositionStateMachine(self)
         self.state = PositionStorage()
@@ -105,7 +107,13 @@ class PositionActor(BaseActor):
         await self.dispatch(PositionAccountUpdated(self.account_size))
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        account_size = self.account_size + await self.query(GetTotalPnL(event.signal))
+        pnl_fn = (
+            self.query(GetAllPnL())
+            if self.is_trading
+            else self.query(GetTotalPnL(event.signal))
+        )
+
+        account_size = self.account_size + await pnl_fn
 
         position = self.position_factory.create_position(
             event.signal, event.ohlcv, account_size, event.entry_price, event.stop_loss

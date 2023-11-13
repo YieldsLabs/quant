@@ -72,15 +72,15 @@ async def main():
     initial_account_size = 1000
     lookback = Lookback.ONE_MONTH
 
-    num_samples = 3
+    num_samples = 8
     parallel_num = 2
     active_strategy_num = 5
-    max_generations = 1
+    max_generations = 3
     elite_count = 5
     mutation_rate = 0.05
 
     timeframes = [
-        Timeframe.ONE_MINUTE,
+        Timeframe.FIVE_MINUTES,
     ]
 
     symbols_blacklist = [
@@ -99,7 +99,7 @@ async def main():
     broker_factory = BrokerFactory()
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
     position_factory = PositionFactory(
-        PositionFixedSizeStrategy(leverage, risk_per_trade),
+        PositionFixedSizeStrategy(risk_per_trade),
         PositionRiskBreakEvenStrategy(break_even_percentage),
         PositionRiskRewardTakeProfitStrategy(risk_reward_ratio),
     )
