@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 from core.models.parameter import CategoricalParameter, Parameter, RandomParameter
 from core.models.rsi import RSIType
-from strategy.filter.base import BaseFilter, FilterType
+from strategy.regime.base import BaseRegime, FilterType
 
 
 @dataclass(frozen=True)
-class RSIFilter(BaseFilter):
+class RSIFilter(BaseRegime):
     type: FilterType = FilterType.Rsi
     rsi_type: Parameter = CategoricalParameter(RSIType)
     period: Parameter = RandomParameter(50.0, 55.0, 1.0)

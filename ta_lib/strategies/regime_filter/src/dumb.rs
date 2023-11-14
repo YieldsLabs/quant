@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 
 pub struct DumbFilter {
@@ -13,7 +13,7 @@ impl DumbFilter {
     }
 }
 
-impl Filter for DumbFilter {
+impl Regime for DumbFilter {
     fn lookback(&self) -> usize {
         self.period
     }

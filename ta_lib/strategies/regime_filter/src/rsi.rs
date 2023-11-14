@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 use shared::{rsi_indicator, RSIType};
 
@@ -20,7 +20,7 @@ impl RSIFilter {
     }
 }
 
-impl Filter for RSIFilter {
+impl Regime for RSIFilter {
     fn lookback(&self) -> usize {
         self.period
     }

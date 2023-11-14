@@ -11,15 +11,15 @@ from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
 from strategy.exit.dumb import DumbExit
-from strategy.filter.adx import ADXFilter
-from strategy.filter.fib import FibFilter
-from strategy.filter.ma import MovingAverageFilter
-from strategy.filter.macd import MACDFilter
-from strategy.filter.ribbon import RibbonFilter
-from strategy.filter.rsi import RSIFilter
-from strategy.filter.stoch import StochFilter
-from strategy.filter.supertrend import SupertrendFilter
-from strategy.filter.tii import TIIFilter
+from strategy.regime.adx import ADXFilter
+from strategy.regime.fib import FibFilter
+from strategy.regime.ma import MovingAverageFilter
+from strategy.regime.macd import MACDFilter
+from strategy.regime.ribbon import RibbonFilter
+from strategy.regime.rsi import RSIFilter
+from strategy.regime.stoch import StochFilter
+from strategy.regime.supertrend import SupertrendFilter
+from strategy.regime.tii import TIIFilter
 from strategy.signal.ao_flip import AOFlipSignal
 from strategy.signal.cc_flip import CCFlipSignal
 from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
@@ -51,6 +51,8 @@ from strategy.signal.trix_flip import TRIXFlipSignal
 from strategy.signal.tsi_cross import TSICrossSignal
 from strategy.signal.tsi_flip import TSIFlipSignal
 from strategy.stop_loss.atr import ATRStopLoss
+from strategy.volume.dumb import DumbVolume
+from strategy.volume.osc import OSCVolume
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
@@ -104,6 +106,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     smoothing=StaticParameter(MovingAverageType.WMA),
                     period=StaticParameter(250.0),
                 ),
+                DumbVolume(),
                 ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
@@ -114,6 +117,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     smoothing=StaticParameter(MovingAverageType.MD),
                     period=StaticParameter(150.0),
                 ),
+                DumbVolume(),
                 ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
@@ -123,6 +127,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
                 ),
                 RSIFilter(),
+                DumbVolume(),
                 ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
@@ -130,6 +135,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.H)),
                 TIIFilter(),
+                DumbVolume(),
                 ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
@@ -137,6 +143,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.GOLDEN)),
                 TIIFilter(),
+                DumbVolume(),
                 ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
@@ -144,6 +151,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 StrategyType.TREND,
                 TrendCandleSignal(candle=StaticParameter(TrendCandleType.BOTTLE)),
                 StochFilter(),
+                DumbVolume(),
                 ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
@@ -151,6 +159,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 StrategyType.TREND,
                 SupertrendFlipSignal(),
                 RSIFilter(),
+                DumbVolume(),
                 ATRStopLoss(period=atr_period, multi=atr_multi),
                 DumbExit(),
             ),
@@ -184,7 +193,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         ma_filter_period = RandomParameter(100.0, 300.0, 25.0)
         atr_multi = RandomParameter(1.0, 2, 0.25)
 
-        filter = np.random.choice(
+        regime = np.random.choice(
             [
                 MovingAverageFilter(period=ma_filter_period),
                 RSIFilter(),
@@ -197,6 +206,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 FibFilter(),
             ]
         )
+        volume = np.random.choice([DumbVolume(), OSCVolume()])
         stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
         exit_signal = np.random.choice([DumbExit()])
 
@@ -264,4 +274,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
 
-        return Strategy(*(StrategyType.TREND, signal, filter, stop_loss, exit_signal))
+        return Strategy(
+            *(StrategyType.TREND, signal, regime, volume, stop_loss, exit_signal)
+        )

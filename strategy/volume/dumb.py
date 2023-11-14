@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
 from core.models.parameter import Parameter, StaticParameter
-from strategy.filter.base import BaseFilter, FilterType
+from strategy.volume.base import BaseVolume, VolumeType
 
 
 @dataclass(frozen=True)
-class DumbFilter(BaseFilter):
-    type: FilterType = FilterType.Dumb
+class DumbVolume(BaseVolume):
+    type: VolumeType = VolumeType.Dumb
     period: Parameter = StaticParameter(50.0)

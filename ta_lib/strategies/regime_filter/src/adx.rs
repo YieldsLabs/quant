@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries, Price};
+use base::{Regime, OHLCVSeries, Price};
 use core::Series;
 use trend::dmi;
 
@@ -20,7 +20,7 @@ impl ADXFilter {
     }
 }
 
-impl Filter for ADXFilter {
+impl Regime for ADXFilter {
     fn lookback(&self) -> usize {
         std::cmp::max(self.adx_period, self.di_period)
     }

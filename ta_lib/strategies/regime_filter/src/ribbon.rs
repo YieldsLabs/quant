@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 use shared::{ma_indicator, MovingAverageType};
 
@@ -28,7 +28,7 @@ impl RibbonFilter {
     }
 }
 
-impl Filter for RibbonFilter {
+impl Regime for RibbonFilter {
     fn lookback(&self) -> usize {
         let adj_lookback_first = std::cmp::max(self.first_period, self.second_period);
         let adj_lookback_second = std::cmp::max(adj_lookback_first, self.third_period);

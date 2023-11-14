@@ -7,3 +7,4 @@ edition = "2021"
 [dependencies]
 base = { path = "../base" }
 core = { path = "../../core" }
+volume = { path = "../../indicators/volume" }

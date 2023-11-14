@@ -1,7 +1,7 @@
 mod candle_mapper;
 mod exit_mapper;
 mod ffi;
-mod filter_mapper;
+mod regime_mapper;
 mod ma_mapper;
 mod macd_mapper;
 mod rsi_mapper;

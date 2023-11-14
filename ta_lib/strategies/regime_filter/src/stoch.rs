@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 use shared::{stoch_indicator, StochType};
 
@@ -20,7 +20,7 @@ impl StochFilter {
     }
 }
 
-impl Filter for StochFilter {
+impl Regime for StochFilter {
     fn lookback(&self) -> usize {
         let adjusted_lookback = std::cmp::max(self.period, self.k_period);
         std::cmp::max(adjusted_lookback, self.d_period)

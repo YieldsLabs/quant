@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 use shared::{macd_indicator, MACDType};
 
@@ -25,7 +25,7 @@ impl MACDFilter {
     }
 }
 
-impl Filter for MACDFilter {
+impl Regime for MACDFilter {
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adj_lookback, self.signal_smoothing)

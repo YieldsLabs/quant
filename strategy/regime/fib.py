@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from strategy.filter.base import BaseFilter, FilterType
+from strategy.regime.base import BaseRegime, FilterType
 
 
 @dataclass(frozen=True)
-class FibFilter(BaseFilter):
+class FibFilter(BaseRegime):
     type: FilterType = FilterType.Fib

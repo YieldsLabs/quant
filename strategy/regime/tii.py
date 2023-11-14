@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
 from core.models.parameter import Parameter, RandomParameter
-from strategy.filter.base import BaseFilter, FilterType
+from strategy.regime.base import BaseRegime, FilterType
 
 
 @dataclass(frozen=True)
-class TIIFilter(BaseFilter):
+class TIIFilter(BaseRegime):
     type: FilterType = FilterType.Tii
     major_period: Parameter = RandomParameter(55.0, 65.0, 5.0)
     minor_period: Parameter = RandomParameter(25.0, 40.0, 5.0)
