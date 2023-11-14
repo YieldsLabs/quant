@@ -1,4 +1,4 @@
-use crate::{BaseStrategy, Exit, Volume, Regime, Signal, StopLoss, Strategy, TradeAction, OHLCV};
+use crate::{BaseStrategy, Exit, Regime, Signal, StopLoss, Strategy, TradeAction, Volume, OHLCV};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::RwLock;

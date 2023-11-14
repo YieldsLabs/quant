@@ -98,6 +98,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                     parent1.strategy.type,
                     parent2.strategy.entry_signal,
                     parent1.strategy.regime_filter,
+                    parent1.strategy.volume_filter,
                     parent1.strategy.stop_loss,
                     parent1.strategy.exit_signal,
                 )
@@ -105,6 +106,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                     parent2.strategy.type,
                     parent1.strategy.entry_signal,
                     parent2.strategy.regime_filter,
+                    parent2.strategy.volume_filter,
                     parent2.strategy.stop_loss,
                     parent2.strategy.exit_signal,
                 )

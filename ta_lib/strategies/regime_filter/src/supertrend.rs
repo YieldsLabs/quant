@@ -1,4 +1,4 @@
-use base::{Regime, OHLCVSeries, Price};
+use base::{OHLCVSeries, Price, Regime};
 use core::Series;
 use trend::supertrend;
 

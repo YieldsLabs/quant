@@ -1,4 +1,4 @@
-use base::{Regime, OHLCVSeries};
+use base::{OHLCVSeries, Regime};
 use core::Series;
 use trend::tii;
 

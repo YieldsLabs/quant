@@ -1,5 +1,5 @@
 use crate::price::Price;
-use crate::{Exit, Regime, Volume, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
+use crate::{Exit, OHLCVSeries, Regime, Signal, StopLoss, Strategy, Volume, OHLCV};
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
@@ -149,7 +149,9 @@ impl BaseStrategy {
 #[cfg(test)]
 mod tests {
     use crate::price::Price;
-    use crate::{BaseStrategy, Exit, Regime, Volume, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
+    use crate::{
+        BaseStrategy, Exit, OHLCVSeries, Regime, Signal, StopLoss, Strategy, Volume, OHLCV,
+    };
     use core::Series;
 
     struct MockSignal {

@@ -1,4 +1,4 @@
-use base::{Regime, OHLCVSeries};
+use base::{OHLCVSeries, Regime};
 use core::Series;
 
 pub struct DumbFilter {

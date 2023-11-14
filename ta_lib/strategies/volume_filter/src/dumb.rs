@@ -19,6 +19,9 @@ impl Volume for DumbVolume {
     }
 
     fn apply(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::fill(1.0, self.period).into(), Series::fill(1.0, self.period).into())
+        (
+            Series::fill(1.0, self.period).into(),
+            Series::fill(1.0, self.period).into(),
+        )
     }
 }
