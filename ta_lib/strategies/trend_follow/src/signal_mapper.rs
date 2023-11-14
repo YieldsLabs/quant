@@ -4,14 +4,7 @@ use crate::macd_mapper::map_to_macd;
 use crate::rsi_mapper::map_to_rsi;
 use base::Signal;
 use serde::Deserialize;
-use signal::{
-    AOFlipSignal, CCFlipSignal, DCH2MASignal, DICrossSignal, DIFlipSignal, MA3CrossSignal,
-    MACDColorSwitchSignal, MACDCrossSignal, MACDFlipSignal, QSTICKCrossSignal, QSTICKFlipSignal,
-    QuadrupleSignal, ROCFlipSignal, RSI2MASignal, RSIMaPullbackSignal, RSINeutralityCrossSignal,
-    RSINeutralityPullbackSignal, RSINeutralityRejectionSignal, RSIVSignal, SNATRSignal,
-    STCFlipSignal, SupertrendFlipSignal, SupertrendPullBackSignal, TIICrossSignal, TIIVSignal,
-    TRIXFlipSignal, TSICrossSignal, TSIFlipSignal, TestingGroundSignal, TrendCandleSignal,
-};
+use signal::*;
 
 #[derive(Deserialize)]
 #[serde(tag = "type")]

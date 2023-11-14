@@ -3,10 +3,7 @@ use crate::macd_mapper::map_to_macd;
 use crate::rsi_mapper::map_to_rsi;
 use crate::stoch_mapper::map_to_stoch;
 use base::Filter;
-use filter::{
-    ADXFilter, DumbFilter, FibFilter, MACDFilter, MAFilter, RSIFilter, RibbonFilter, StochFilter,
-    SupertrendFilter, TIIFilter,
-};
+use regime_filter::*;
 use serde::Deserialize;
 
 #[derive(Deserialize)]

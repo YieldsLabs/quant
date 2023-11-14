@@ -8,5 +8,6 @@ mod rsi_mapper;
 mod signal_mapper;
 mod stoch_mapper;
 mod stop_loss_mapper;
+mod volume_mapper;
 
 pub use ffi::*;

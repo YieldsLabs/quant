@@ -21,6 +21,11 @@ pub trait Filter: Send + Sync {
     fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
+pub trait Volume: Send + Sync {
+    fn lookback(&self) -> usize;
+    fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+}
+
 pub trait Strategy {
     fn next(&mut self, ohlcv: OHLCV) -> TradeAction;
     fn stop_loss(&self) -> StopLossLevels;
