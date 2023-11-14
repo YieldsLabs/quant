@@ -6,12 +6,11 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.filter.base import FilterType
-from strategy.signal.base import BaseSignal
+from strategy.regime.base import BaseRegime, FilterType
 
 
 @dataclass(frozen=True)
-class MACDFilter(BaseSignal):
+class MACDFilter(BaseRegime):
     type: FilterType = FilterType.Macd
     macd_type: Parameter = CategoricalParameter(MACDType)
     fast_period: Parameter = StaticParameter(12.0)

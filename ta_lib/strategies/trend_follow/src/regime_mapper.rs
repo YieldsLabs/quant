@@ -2,16 +2,13 @@ use crate::ma_mapper::map_to_ma;
 use crate::macd_mapper::map_to_macd;
 use crate::rsi_mapper::map_to_rsi;
 use crate::stoch_mapper::map_to_stoch;
-use base::Filter;
-use filter::{
-    ADXFilter, DumbFilter, FibFilter, MACDFilter, MAFilter, RSIFilter, RibbonFilter, StochFilter,
-    SupertrendFilter, TIIFilter,
-};
+use base::Regime;
+use regime_filter::*;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(tag = "type")]
-pub enum FilterConfig {
+pub enum RegimeConfig {
     Adx {
         adx_period: f32,
         di_period: f32,
@@ -60,12 +57,12 @@ pub enum FilterConfig {
     },
 }
 
-pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
+pub fn map_to_regime(config: RegimeConfig) -> Box<dyn Regime> {
     match config {
-        FilterConfig::Ma { smoothing, period } => {
+        RegimeConfig::Ma { smoothing, period } => {
             Box::new(MAFilter::new(map_to_ma(smoothing as usize), period))
         }
-        FilterConfig::Macd {
+        RegimeConfig::Macd {
             macd_type,
             fast_period,
             slow_period,
@@ -76,7 +73,7 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             slow_period,
             signal_smoothing,
         )),
-        FilterConfig::Rsi {
+        RegimeConfig::Rsi {
             rsi_type,
             period,
             threshold,
@@ -85,7 +82,7 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             period,
             threshold,
         )),
-        FilterConfig::Ribbon {
+        RegimeConfig::Ribbon {
             smoothing,
             first_period,
             second_period,
@@ -98,7 +95,7 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             third_period,
             fourth_period,
         )),
-        FilterConfig::Stoch {
+        RegimeConfig::Stoch {
             stoch_type,
             period,
             k_period,
@@ -109,20 +106,20 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             k_period,
             d_period,
         )),
-        FilterConfig::Supertrend { atr_period, factor } => {
+        RegimeConfig::Supertrend { atr_period, factor } => {
             Box::new(SupertrendFilter::new(atr_period, factor))
         }
-        FilterConfig::Adx {
+        RegimeConfig::Adx {
             adx_period,
             di_period,
             threshold,
         } => Box::new(ADXFilter::new(adx_period, di_period, threshold)),
-        FilterConfig::Tii {
+        RegimeConfig::Tii {
             major_period,
             minor_period,
             threshold,
         } => Box::new(TIIFilter::new(major_period, minor_period, threshold)),
-        FilterConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
-        FilterConfig::Fib {} => Box::new(FibFilter::new()),
+        RegimeConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
+        RegimeConfig::Fib {} => Box::new(FibFilter::new()),
     }
 }

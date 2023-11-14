@@ -16,7 +16,12 @@ pub trait StopLoss: Send + Sync {
     fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>);
 }
 
-pub trait Filter: Send + Sync {
+pub trait Regime: Send + Sync {
+    fn lookback(&self) -> usize;
+    fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+}
+
+pub trait Volume: Send + Sync {
     fn lookback(&self) -> usize;
     fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }

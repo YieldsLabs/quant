@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 use shared::{ma_indicator, MovingAverageType};
 
@@ -16,7 +16,7 @@ impl MAFilter {
     }
 }
 
-impl Filter for MAFilter {
+impl Regime for MAFilter {
     fn lookback(&self) -> usize {
         self.period
     }

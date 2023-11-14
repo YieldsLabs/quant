@@ -21,5 +21,5 @@ class FilterType(Enum):
 
 
 @dataclass(frozen=True)
-class BaseFilter(Indicator):
+class BaseRegime(Indicator):
     type: FilterType

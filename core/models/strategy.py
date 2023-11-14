@@ -19,17 +19,19 @@ class Strategy:
     type: StrategyType
     entry_signal: Indicator
     regime_filter: Indicator
+    volume_filter: Indicator
     stop_loss: Indicator
     exit_signal: Indicator
 
     @property
     def parameters(self):
         signal_data = json.dumps(self.entry_signal.to_dict()).encode()
-        filter_data = json.dumps(self.regime_filter.to_dict()).encode()
+        regime_data = json.dumps(self.regime_filter.to_dict()).encode()
+        volume_data = json.dumps(self.volume_filter.to_dict()).encode()
         stoploss_data = json.dumps(self.stop_loss.to_dict()).encode()
         exit_data = json.dumps(self.exit_signal.to_dict()).encode()
 
-        return (signal_data, filter_data, stoploss_data, exit_data)
+        return (signal_data, regime_data, volume_data, stoploss_data, exit_data)
 
     def _format_parameters(self, indicator):
         formatted_values = []
@@ -48,12 +50,13 @@ class Strategy:
 
     def __str__(self) -> str:
         entry_ = f"_SGNL{self.entry_signal.type}:{self._format_parameters(self.entry_signal)}"
-        filter_ = f"_FLTR{self.regime_filter.type}:{self._format_parameters(self.regime_filter)}"
+        regime_ = f"_RGM{self.regime_filter.type}:{self._format_parameters(self.regime_filter)}"
+        volume_ = f"_VLM{self.volume_filter.type}:{self._format_parameters(self.volume_filter)}"
         stop_loss = (
             f"_STPLSS{self.stop_loss.type}:{self._format_parameters(self.stop_loss)}"
         )
         exit_ = (
-            f"_EXIT{self.exit_signal.type}:{self._format_parameters(self.exit_signal)}"
+            f"_EXT{self.exit_signal.type}:{self._format_parameters(self.exit_signal)}"
         )
 
-        return entry_ + filter_ + stop_loss + exit_
+        return entry_ + regime_ + volume_ + stop_loss + exit_

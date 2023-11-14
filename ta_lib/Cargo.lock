@@ -33,17 +33,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "filter"
-version = "0.1.0"
-dependencies = [
- "base",
- "core",
- "momentum",
- "shared",
- "trend",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -86,6 +75,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "regime_filter"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "momentum",
+ "shared",
+ "trend",
 ]
 
 [[package]]
@@ -184,12 +184,13 @@ dependencies = [
  "base",
  "core",
  "exit",
- "filter",
+ "regime_filter",
  "serde",
  "serde_json",
  "shared",
  "signal",
  "stop_loss",
+ "volume_filter",
 ]
 
 [[package]]
@@ -212,4 +213,13 @@ version = "0.1.0"
 dependencies = [
  "core",
  "price",
+]
+
+[[package]]
+name = "volume_filter"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "volume",
 ]

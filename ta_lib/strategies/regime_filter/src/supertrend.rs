@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries, Price};
+use base::{Regime, OHLCVSeries, Price};
 use core::Series;
 use trend::supertrend;
 
@@ -16,7 +16,7 @@ impl SupertrendFilter {
     }
 }
 
-impl Filter for SupertrendFilter {
+impl Regime for SupertrendFilter {
     fn lookback(&self) -> usize {
         self.atr_period
     }

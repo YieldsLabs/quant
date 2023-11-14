@@ -4,11 +4,11 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.filter.base import BaseFilter, FilterType
+from strategy.regime.base import BaseRegime, FilterType
 
 
 @dataclass(frozen=True)
-class SupertrendFilter(BaseFilter):
+class SupertrendFilter(BaseRegime):
     type: FilterType = FilterType.Supertrend
     atr_period: Parameter = StaticParameter(20.0)
     factor: Parameter = StaticParameter(3.0)

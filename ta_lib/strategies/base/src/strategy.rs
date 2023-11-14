@@ -1,5 +1,5 @@
 use crate::price::Price;
-use crate::{Exit, Filter, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
+use crate::{Exit, Regime, Volume, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
@@ -23,7 +23,8 @@ pub struct StopLossLevels {
 pub struct BaseStrategy {
     data: VecDeque<OHLCV>,
     signal: Box<dyn Signal>,
-    filter: Box<dyn Filter>,
+    regime: Box<dyn Regime>,
+    volume: Box<dyn Volume>,
     stop_loss: Box<dyn StopLoss>,
     exit: Box<dyn Exit>,
     lookback_period: usize,
@@ -32,13 +33,15 @@ pub struct BaseStrategy {
 impl BaseStrategy {
     pub fn new(
         signal: Box<dyn Signal>,
-        filter: Box<dyn Filter>,
+        regime: Box<dyn Regime>,
+        volume: Box<dyn Volume>,
         stop_loss: Box<dyn StopLoss>,
         exit: Box<dyn Exit>,
     ) -> Self {
         let lookbacks = [
             signal.lookback(),
-            filter.lookback(),
+            regime.lookback(),
+            volume.lookback(),
             stop_loss.lookback(),
             exit.lookback(),
             DEFAULT_LOOKBACK,
@@ -49,7 +52,8 @@ impl BaseStrategy {
             data: VecDeque::with_capacity(adjusted_lookback),
             lookback_period: adjusted_lookback,
             signal,
-            filter,
+            regime,
+            volume,
             stop_loss,
             exit,
         }
@@ -112,10 +116,11 @@ impl Strategy for BaseStrategy {
 impl BaseStrategy {
     fn trade_signals(&self, series: &OHLCVSeries) -> (bool, bool, bool, bool) {
         let (go_long_signal, go_short_signal) = self.signal.generate(series);
-        let (go_long_filter, go_short_filter) = self.filter.apply(series);
+        let (go_long_regime, go_short_regime) = self.regime.apply(series);
+        let (go_long_volume, go_short_volume) = self.volume.apply(series);
 
-        let go_long_series = go_long_signal & go_long_filter;
-        let go_short_series = go_short_signal & go_short_filter;
+        let go_long_series = go_long_signal & go_long_regime & go_long_volume;
+        let go_short_series = go_short_signal & go_short_regime & go_short_volume;
 
         let (exit_long_series, exit_short_series) = self.exit.generate(series);
 
@@ -144,7 +149,7 @@ impl BaseStrategy {
 #[cfg(test)]
 mod tests {
     use crate::price::Price;
-    use crate::{BaseStrategy, Exit, Filter, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
+    use crate::{BaseStrategy, Exit, Regime, Volume, OHLCVSeries, Signal, StopLoss, Strategy, OHLCV};
     use core::Series;
 
     struct MockSignal {
@@ -191,11 +196,28 @@ mod tests {
         }
     }
 
-    struct MockFilter {
+    struct MockRegime {
         period: usize,
     }
 
-    impl Filter for MockFilter {
+    impl Regime for MockRegime {
+        fn lookback(&self) -> usize {
+            self.period
+        }
+
+        fn apply(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            (
+                Series::empty(1).nz(Some(0.0)).into(),
+                Series::empty(1).nz(Some(0.0)).into(),
+            )
+        }
+    }
+
+    struct MockVolume {
+        period: usize,
+    }
+
+    impl Volume for MockVolume {
         fn lookback(&self) -> usize {
             self.period
         }
@@ -212,7 +234,8 @@ mod tests {
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
             Box::new(MockSignal { short_period: 10 }),
-            Box::new(MockFilter { period: 1 }),
+            Box::new(MockRegime { period: 1 }),
+            Box::new(MockVolume { period: 15 }),
             Box::new(MockStopLoss {
                 period: 2,
                 multi: 2.0,
@@ -226,7 +249,8 @@ mod tests {
     fn test_strategy_data() {
         let mut strategy = BaseStrategy::new(
             Box::new(MockSignal { short_period: 10 }),
-            Box::new(MockFilter { period: 1 }),
+            Box::new(MockRegime { period: 1 }),
+            Box::new(MockVolume { period: 15 }),
             Box::new(MockStopLoss {
                 period: 2,
                 multi: 2.0,

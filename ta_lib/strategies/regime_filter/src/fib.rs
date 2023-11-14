@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 
 const LOOKBACK: usize = 21;
@@ -11,7 +11,7 @@ impl FibFilter {
     }
 }
 
-impl Filter for FibFilter {
+impl Regime for FibFilter {
     fn lookback(&self) -> usize {
         LOOKBACK
     }

@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::{Regime, OHLCVSeries};
 use core::Series;
 use trend::tii;
 
@@ -20,7 +20,7 @@ impl TIIFilter {
     }
 }
 
-impl Filter for TIIFilter {
+impl Regime for TIIFilter {
     fn lookback(&self) -> usize {
         std::cmp::max(self.major_period, self.minor_period)
     }
