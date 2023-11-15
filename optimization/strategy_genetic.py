@@ -12,7 +12,11 @@ from core.queries.portfolio import GetFitness
 class GeneticAttributes(Enum):
     SYMBOL = auto()
     TIMEFRAME = auto()
-    STRATEGY = auto()
+    SIGNAL = auto()
+    REGIME = auto()
+    VOLUME = auto()
+    STOP_LOSS = auto()
+    EXIT = auto()
 
 
 class GeneticStrategyOptimization(AbstractStrategyOptimization):
@@ -113,27 +117,53 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
     def _crossover(self, parent1, parent2):
         chosen_attr = np.random.choice(list(GeneticAttributes))
 
-        if parent1.strategy.type == parent2.strategy.type:
-            if chosen_attr == GeneticAttributes.STRATEGY:
-                child1_strategy = Strategy(
-                    parent1.strategy.type,
-                    parent2.strategy.entry_signal,
-                    parent1.strategy.regime_filter,
-                    parent1.strategy.volume_filter,
-                    parent1.strategy.stop_loss,
-                    parent1.strategy.exit_signal,
-                )
-                child2_strategy = Strategy(
-                    parent2.strategy.type,
-                    parent1.strategy.entry_signal,
-                    parent2.strategy.regime_filter,
-                    parent2.strategy.volume_filter,
-                    parent2.strategy.stop_loss,
-                    parent2.strategy.exit_signal,
-                )
-                return Individual(
-                    parent1.symbol, parent1.timeframe, child1_strategy
-                ), Individual(parent2.symbol, parent2.timeframe, child2_strategy)
+        if chosen_attr in [
+            GeneticAttributes.SIGNAL,
+            GeneticAttributes.REGIME,
+            GeneticAttributes.VOLUME,
+            GeneticAttributes.STOP_LOSS,
+            GeneticAttributes.EXIT,
+        ]:
+            child1_strategy = Strategy(
+                parent1.strategy.type,
+                parent2.strategy.entry_signal
+                if chosen_attr == GeneticAttributes.SIGNAL
+                else parent1.strategy.entry_signal,
+                parent1.strategy.regime_filter
+                if chosen_attr == GeneticAttributes.REGIME
+                else parent2.strategy.regime_filter,
+                parent1.strategy.volume_filter
+                if chosen_attr == GeneticAttributes.VOLUME
+                else parent2.strategy.volume_filter,
+                parent1.strategy.stop_loss
+                if chosen_attr == GeneticAttributes.STOP_LOSS
+                else parent2.strategy.stop_loss,
+                parent1.strategy.exit_signal
+                if chosen_attr == GeneticAttributes.EXIT
+                else parent2.strategy.exit_signal,
+            )
+            child2_strategy = Strategy(
+                parent2.strategy.type,
+                parent1.strategy.entry_signal
+                if chosen_attr == GeneticAttributes.SIGNAL
+                else parent2.strategy.entry_signal,
+                parent2.strategy.regime_filter
+                if chosen_attr == GeneticAttributes.REGIME
+                else parent1.strategy.regime_filter,
+                parent2.strategy.volume_filter
+                if chosen_attr == GeneticAttributes.VOLUME
+                else parent1.strategy.volume_filter,
+                parent2.strategy.stop_loss
+                if chosen_attr == GeneticAttributes.STOP_LOSS
+                else parent1.strategy.stop_loss,
+                parent2.strategy.exit_signal
+                if chosen_attr == GeneticAttributes.EXIT
+                else parent1.strategy.exit_signal,
+            )
+
+            return Individual(
+                parent1.symbol, parent1.timeframe, child1_strategy
+            ), Individual(parent2.symbol, parent2.timeframe, child2_strategy)
 
         if chosen_attr == GeneticAttributes.SYMBOL:
             return Individual(
@@ -150,7 +180,13 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
     async def _mutate(self, individual):
         mutation_choice = np.random.choice(list(GeneticAttributes))
 
-        if mutation_choice == GeneticAttributes.STRATEGY:
+        if mutation_choice in [
+            GeneticAttributes.SIGNAL,
+            GeneticAttributes.REGIME,
+            GeneticAttributes.VOLUME,
+            GeneticAttributes.STOP_LOSS,
+            GeneticAttributes.EXIT,
+        ]:
             strategies = self.strategy_generator.generate_strategies()
             individual.strategy = np.random.choice(strategies)
 
