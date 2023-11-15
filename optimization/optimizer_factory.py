@@ -8,11 +8,18 @@ from optimization.strategy_genetic import GeneticStrategyOptimization
 class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
     _optimizer_type = {Optimizer.GENETIC: GeneticStrategyOptimization}
 
-    def __init__(self, max_generations: int, elite_count: int, mutation_rate: float):
+    def __init__(
+        self,
+        max_generations: int,
+        elite_count: int,
+        mutation_rate: float,
+        tournament_size: int,
+    ):
         super().__init__()
         self.max_generations = max_generations
         self.elite_count = elite_count
         self.mutation_rate = mutation_rate
+        self.tournament_size = tournament_size
 
     def create(
         self, type: Optimizer, generator: AbstractStrategyGenerator
@@ -23,5 +30,9 @@ class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
         optimizer = self._optimizer_type.get(type)
 
         return optimizer(
-            generator, self.max_generations, self.elite_count, self.mutation_rate
+            generator,
+            self.max_generations,
+            self.elite_count,
+            self.mutation_rate,
+            self.tournament_size,
         )

@@ -78,9 +78,10 @@ async def main():
     max_generations = 3
     elite_count = 5
     mutation_rate = 0.05
+    tournament_size = 5
 
     timeframes = [
-        Timeframe.FIVE_MINUTES,
+        Timeframe.FIFTEEN_MINUTES,
     ]
 
     symbols_blacklist = [
@@ -112,7 +113,7 @@ async def main():
     executor_factory = OrderExecutorActorFactory()
 
     strategy_optimization_factory = StrategyOptimizerFactory(
-        max_generations, elite_count, mutation_rate
+        max_generations, elite_count, mutation_rate, tournament_size
     )
 
     strategy_generator_factory = StrategyGeneratorFactory(

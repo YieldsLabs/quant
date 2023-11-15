@@ -22,11 +22,13 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         max_generations: int,
         elite_count: int,
         mutation_rate: float,
+        tournament_size: int,
     ):
         super().__init__()
         self.max_generations = max_generations
         self.elite_count = elite_count
         self.mutation_rate = mutation_rate
+        self.tournament_size = tournament_size
         self.strategy_generator = strategy_generator
         self._population: list[Individual] = []
         self.generation = 0
@@ -47,47 +49,66 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         self.generation = 0
 
         data = self.strategy_generator.generate()
-
-        for symbol, timeframe, strategy in data:
-            self._population.append(Individual(symbol, timeframe, strategy))
+        self._population = [
+            Individual(symbol, timeframe, strategy)
+            for symbol, timeframe, strategy in data
+        ]
 
     async def optimize(self):
+        await self._evaluate_fitness()
+
+        elite, parents = self._select_elite_and_parents()
+
+        await self._mutate_parents(parents)
+
+        children = self._crossover_parents(parents)
+        self._update_population(elite, children)
+
+        self.generation += 1
+
+    async def _evaluate_fitness(self) -> None:
         for individual in self._population:
             fitness_value = await self.query(
                 GetFitness(individual.symbol, individual.timeframe, individual.strategy)
             )
             individual.update_fitness(fitness_value)
 
-        elite = sorted(
+    def _select_elite_and_parents(self) -> tuple[list[Individual], list[Individual]]:
+        sorted_population = sorted(
             self._population, key=lambda individual: individual.fitness, reverse=True
-        )[: self.elite_count]
+        )
+        elite = sorted_population[: self.elite_count]
+        parents = self._tournament_selection(sorted_population[self.elite_count :])
+        return elite, parents
 
-        candidates = list(self._population)
+    def _tournament_selection(self, candidates: list[Individual]) -> list[Individual]:
         parents = []
 
-        while len(parents) < (len(self._population) - self.elite_count):
-            contenders = np.random.choice(candidates, size=5, replace=True)
+        while len(parents) < len(candidates):
+            contenders = np.random.choice(
+                candidates, size=self.tournament_size, replace=True
+            )
             winner = max(contenders, key=lambda individual: individual.fitness)
             parents.append(winner)
-            candidates.remove(winner)
 
-        if len(parents) % 2 != 0:
-            parents.pop()
+        return parents
 
+    async def _mutate_parents(self, parents: list[Individual]) -> None:
         for idx, parent in enumerate(parents):
             if np.random.rand() < self.mutation_rate:
                 parents[idx] = await self._mutate(parent)
 
-        children = []
+    def _crossover_parents(self, parents: list[Individual]) -> list[Individual]:
+        children = [
+            self._crossover(parents[i], parents[i + 1])
+            for i in range(0, len(parents) - 1, 2)
+        ]
+        return [child for pair in children for child in pair]
 
-        for i in range(0, len(parents), 2):
-            child1, child2 = self._crossover(parents[i], parents[i + 1])
-            children.extend([child1, child2])
-
-        self._population[: len(children)] = children
-        self._population[: self.elite_count] = elite
-
-        self.generation += 1
+    def _update_population(
+        self, elite: list[Individual], children: list[Individual]
+    ) -> None:
+        self._population = elite + children
 
     def _crossover(self, parent1, parent2):
         chosen_attr = np.random.choice(list(GeneticAttributes))

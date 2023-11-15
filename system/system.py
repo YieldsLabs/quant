@@ -92,7 +92,7 @@ class System(AbstractSystem):
 
             while True:
                 event = await self.event_queue.get()
-                
+
                 if self.state == SystemState.STOPPED:
                     return
 
