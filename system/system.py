@@ -60,45 +60,54 @@ class System(AbstractSystem):
         self.optimizer = None
 
     async def start(self):
+        transitions = {
+            SystemState.INIT: {
+                Event.REGENERATE: SystemState.GENERATE,
+                Event.SYSTEM_STOP: SystemState.STOPPED,
+            },
+            SystemState.GENERATE: {
+                Event.GENERATE_COMPLETE: SystemState.BACKTEST,
+                Event.SYSTEM_STOP: SystemState.STOPPED,
+            },
+            SystemState.BACKTEST: {
+                Event.BACKTEST_COMPLETE: SystemState.OPTIMIZATION,
+                Event.SYSTEM_STOP: SystemState.STOPPED,
+            },
+            SystemState.OPTIMIZATION: {
+                Event.OPTIMIZATION_COMPLETE: SystemState.TRADING,
+                Event.REGENERATE: SystemState.GENERATE,
+                Event.RUN_BACKTEST: SystemState.BACKTEST,
+                Event.SYSTEM_STOP: SystemState.STOPPED,
+            },
+            SystemState.TRADING: {
+                Event.SYSTEM_STOP: SystemState.STOPPED,
+            },
+        }
+
         async with self.context.broker_factory.create(
-            BrokerType.FUTURES, self.context.exchange_factory.create(ExchangeType.BYBIT)
+            BrokerType.FUTURES,
+            self.context.exchange_factory.create(ExchangeType.BYBIT),
         ):
             await self.event_queue.put(Event.REGENERATE)
 
             while True:
                 event = await self.event_queue.get()
+                
+                if self.state == SystemState.STOPPED:
+                    return
 
-                match self.state:
-                    case SystemState.INIT:
-                        if event == Event.REGENERATE:
-                            self.state = SystemState.GENERATE
-                            await self._generate()
-                        if event == Event.SYSTEM_STOP:
-                            return
-                    case SystemState.GENERATE:
-                        if event == Event.GENERATE_COMPLETE:
-                            self.state = SystemState.BACKTEST
-                            await self._run_backtest()
-                        if event == Event.SYSTEM_STOP:
-                            return
-                    case SystemState.BACKTEST:
-                        if event == Event.BACKTEST_COMPLETE:
-                            self.state = SystemState.OPTIMIZATION
-                            await self._run_optimization()
-                        if event == Event.SYSTEM_STOP:
-                            return
-                    case SystemState.OPTIMIZATION:
-                        if event == Event.OPTIMIZATION_COMPLETE:
-                            self.state = SystemState.TRADING
-                            await self._run_trading()
-                        if event == Event.REGENERATE:
-                            self.state = SystemState.GENERATE
-                            await self._generate()
-                        if event == Event.RUN_BACKTEST:
-                            self.state = SystemState.BACKTEST
-                            await self._run_backtest()
-                        if event == Event.SYSTEM_STOP:
-                            return
+                self.state = transitions[self.state].get(event, self.state)
+                await self._handle_state()
+
+    async def _handle_state(self):
+        if self.state == SystemState.GENERATE:
+            await self._generate()
+        elif self.state == SystemState.BACKTEST:
+            await self._run_backtest()
+        elif self.state == SystemState.OPTIMIZATION:
+            await self._run_optimization()
+        elif self.state == SystemState.TRADING:
+            await self._run_trading()
 
     def stop(self):
         self.event_queue.put_nowait(Event.SYSTEM_STOP)
@@ -125,7 +134,7 @@ class System(AbstractSystem):
 
         logger.info(f"Run backtest for: {total_steps}")
 
-        estimator = Estimator(total_steps)
+        estimator = Estimator(total_steps // self.context.parallel_num)
         datasource = self.context.datasource_factory.create(
             DataSourceType.EXCHANGE,
             self.context.exchange_factory.create(ExchangeType.BYBIT),

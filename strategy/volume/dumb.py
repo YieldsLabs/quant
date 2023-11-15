@@ -7,4 +7,4 @@ from strategy.volume.base import BaseVolume, VolumeType
 @dataclass(frozen=True)
 class DumbVolume(BaseVolume):
     type: VolumeType = VolumeType.Dumb
-    period: Parameter = StaticParameter(50.0)
+    period: Parameter = StaticParameter(10.0)

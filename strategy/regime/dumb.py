@@ -7,4 +7,4 @@ from strategy.regime.base import BaseRegime, FilterType
 @dataclass(frozen=True)
 class DumbFilter(BaseRegime):
     type: FilterType = FilterType.Dumb
-    period: Parameter = StaticParameter(50.0)
+    period: Parameter = StaticParameter(10.0)
