@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from itertools import product
 from random import shuffle
 from symtable import Symbol
@@ -6,7 +7,6 @@ import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.candle import TrendCandleType
-from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
@@ -55,6 +55,15 @@ from strategy.volume.dumb import DumbVolume
 from strategy.volume.osc import OSCVolume
 
 
+class SignalType(Enum):
+    CROSS = auto()
+    FLIP = auto()
+    V = auto()
+    TWO_MA = auto()
+    CUSTOM = auto()
+    PULLBACK = auto()
+
+
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
     def __init__(
         self,
@@ -94,74 +103,30 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
 
     def _diversified_strategies(self):
-        atr_period = StaticParameter(14.0)
-        atr_multi = StaticParameter(0.85)
+        stop_loss = ATRStopLoss(
+            period=StaticParameter(14.0), multi=StaticParameter(1.5)
+        )
+        regime = RSIFilter()
+        exit = DumbExit()
+        volume = DumbVolume()
         strategies = [
-            (
-                StrategyType.TREND,
-                TrendCandleSignal(
-                    candle=StaticParameter(TrendCandleType.THREE_METHODS)
-                ),
-                MovingAverageFilter(
-                    smoothing=StaticParameter(MovingAverageType.WMA),
-                    period=StaticParameter(250.0),
-                ),
-                DumbVolume(),
-                ATRStopLoss(period=atr_period, multi=atr_multi),
-                DumbExit(),
-            ),
-            (
-                StrategyType.TREND,
-                TrendCandleSignal(candle=StaticParameter(TrendCandleType.HEXAD)),
-                MovingAverageFilter(
-                    smoothing=StaticParameter(MovingAverageType.MD),
-                    period=StaticParameter(150.0),
-                ),
-                DumbVolume(),
-                ATRStopLoss(period=atr_period, multi=atr_multi),
-                DumbExit(),
-            ),
             (
                 StrategyType.TREND,
                 TrendCandleSignal(
                     candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
                 ),
-                RSIFilter(),
-                DumbVolume(),
-                ATRStopLoss(period=atr_period, multi=atr_multi),
-                DumbExit(),
-            ),
-            (
-                StrategyType.TREND,
-                TrendCandleSignal(candle=StaticParameter(TrendCandleType.H)),
-                TIIFilter(),
-                DumbVolume(),
-                ATRStopLoss(period=atr_period, multi=atr_multi),
-                DumbExit(),
-            ),
-            (
-                StrategyType.TREND,
-                TrendCandleSignal(candle=StaticParameter(TrendCandleType.GOLDEN)),
-                TIIFilter(),
-                DumbVolume(),
-                ATRStopLoss(period=atr_period, multi=atr_multi),
-                DumbExit(),
-            ),
-            (
-                StrategyType.TREND,
-                TrendCandleSignal(candle=StaticParameter(TrendCandleType.BOTTLE)),
-                StochFilter(),
-                DumbVolume(),
-                ATRStopLoss(period=atr_period, multi=atr_multi),
-                DumbExit(),
+                regime,
+                volume,
+                stop_loss,
+                exit,
             ),
             (
                 StrategyType.TREND,
                 SupertrendFlipSignal(),
-                RSIFilter(),
-                DumbVolume(),
-                ATRStopLoss(period=atr_period, multi=atr_multi),
-                DumbExit(),
+                regime,
+                volume,
+                stop_loss,
+                exit,
             ),
         ]
 
@@ -186,16 +151,11 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return list(strategies_set)
 
     def _generate_strategy(self):
-        _short_period = RandomParameter(20.0, 50.0, 5.0)
-        _long_period = RandomParameter(50.0, 200.0, 10.0)
-        ma_medium_period = RandomParameter(50.0, 100.0, 5.0)
-        ma_short_period, ma_long_period = sorted([_short_period, _long_period])
-        ma_filter_period = RandomParameter(100.0, 300.0, 25.0)
-        atr_multi = RandomParameter(1.0, 2, 0.25)
-
+        signal_groups = list(SignalType)
+        entry_signal = self._generate_signal(np.random.choice(signal_groups))
         regime = np.random.choice(
             [
-                MovingAverageFilter(period=ma_filter_period),
+                MovingAverageFilter(period=RandomParameter(100.0, 300.0, 25.0)),
                 RSIFilter(),
                 ADXFilter(),
                 TIIFilter(),
@@ -207,73 +167,79 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
         volume = np.random.choice([DumbVolume(), OSCVolume()])
-        stop_loss = np.random.choice([ATRStopLoss(multi=atr_multi)])
+        stop_loss = np.random.choice([ATRStopLoss(multi=RandomParameter(1.0, 2, 0.25))])
         exit_signal = np.random.choice([DumbExit()])
 
-        flip_signal = np.random.choice(
+        return Strategy(
+            *(StrategyType.TREND, entry_signal, regime, volume, stop_loss, exit_signal)
+        )
+
+    def _generate_signal(self, signal: SignalType):
+        ma_short_period, ma_medium_period, ma_long_period = sorted(
             [
-                AOFlipSignal(),
-                MACDFlipSignal(),
-                SupertrendFlipSignal(),
-                ROCFlipSignal(),
-                TRIXFlipSignal(),
-                TSIFlipSignal(),
-                DIFlipSignal(),
-                QSTICKFlipSignal(),
-                CCFlipSignal(),
-                STCFlipSignal(),
+                RandomParameter(20.0, 50.0, 5.0),
+                RandomParameter(50.0, 100.0, 5.0),
+                RandomParameter(50.0, 200.0, 10.0),
             ]
         )
 
-        v_signal = np.random.choice([TIIVSignal(), RSIVSignal()])
+        if signal == SignalType.FLIP:
+            return np.random.choice(
+                [
+                    AOFlipSignal(),
+                    MACDFlipSignal(),
+                    SupertrendFlipSignal(),
+                    ROCFlipSignal(),
+                    TRIXFlipSignal(),
+                    TSIFlipSignal(),
+                    DIFlipSignal(),
+                    QSTICKFlipSignal(),
+                    CCFlipSignal(),
+                    STCFlipSignal(),
+                ]
+            )
+        if signal == SignalType.V:
+            return np.random.choice([TIIVSignal(), RSIVSignal()])
 
-        cross_signal = np.random.choice(
-            [
-                MA3CrossSignal(
-                    short_period=ma_short_period,
-                    medium_period=ma_medium_period,
-                    long_period=ma_long_period,
-                ),
-                MACDCrossSignal(),
-                TIICrossSignal(),
-                RSINautralityCrossSignal(),
-                TSICrossSignal(),
-                DICrossSignal(),
-                QSTICKCrossSignal(),
-            ]
-        )
+        if signal == SignalType.CROSS:
+            return np.random.choice(
+                [
+                    MA3CrossSignal(
+                        short_period=ma_short_period,
+                        medium_period=ma_medium_period,
+                        long_period=ma_long_period,
+                    ),
+                    MACDCrossSignal(),
+                    TIICrossSignal(),
+                    RSINautralityCrossSignal(),
+                    TSICrossSignal(),
+                    DICrossSignal(),
+                    QSTICKCrossSignal(),
+                ]
+            )
+        if signal == SignalType.TWO_MA:
+            return np.random.choice(
+                [
+                    RSI2MovingAverageSignal(),
+                    DCH2MovingAverageSignal(),
+                ]
+            )
+        if signal == SignalType.PULLBACK:
+            return np.random.choice(
+                [
+                    SupertrendPullBackSignal(),
+                    RSINautralityPullbackSignal(),
+                    RSIMovingAveragePullbackSignal(),
+                ]
+            )
 
-        two_ma_signal = np.random.choice(
-            [
-                RSI2MovingAverageSignal(),
-                DCH2MovingAverageSignal(),
-            ]
-        )
-
-        pullback_signal = np.random.choice(
-            [
-                SupertrendPullBackSignal(),
-                RSINautralityPullbackSignal(),
-                RSIMovingAveragePullbackSignal(),
-            ]
-        )
-
-        signal = np.random.choice(
+        return np.random.choice(
             [
                 MACDColorSwitchSignal(),
                 TrendCandleSignal(),
                 SNATRSignal(),
                 RSINautralityRejectionSignal(),
                 TestingGroundSignal(period=ma_long_period),
-                flip_signal,
-                v_signal,
-                cross_signal,
-                two_ma_signal,
-                pullback_signal,
                 QuadrupleSignal(),
             ]
-        )
-
-        return Strategy(
-            *(StrategyType.TREND, signal, regime, volume, stop_loss, exit_signal)
         )
