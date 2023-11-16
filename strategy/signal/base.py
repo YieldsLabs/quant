@@ -35,6 +35,7 @@ class SignalType(Enum):
     QstickFlip = "QstickFlip"
     QstickCross = "QstickCross"
     Quadruple = "Quadruple"
+    VwapCross = "VwapCross"
 
     def __str__(self):
         return self.value.upper()

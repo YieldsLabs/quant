@@ -150,6 +150,9 @@ pub enum SignalConfig {
         smoothing: f32,
         period: f32,
     },
+    VwapCross {
+        period: f32,
+    },
 }
 
 pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
@@ -349,5 +352,6 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::Quadruple { smoothing, period } => {
             Box::new(QuadrupleSignal::new(map_to_ma(smoothing as usize), period))
         }
+        SignalConfig::VwapCross { period } => Box::new(VWAPCrossSignal::new(period)),
     }
 }

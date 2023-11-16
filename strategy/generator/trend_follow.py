@@ -50,6 +50,7 @@ from strategy.signal.trend_candle import TrendCandleSignal
 from strategy.signal.trix_flip import TRIXFlipSignal
 from strategy.signal.tsi_cross import TSICrossSignal
 from strategy.signal.tsi_flip import TSIFlipSignal
+from strategy.signal.vwap_cross import VWAPCrossSignal
 from strategy.stop_loss.atr import ATRStopLoss
 from strategy.volume.dumb import DumbVolume
 from strategy.volume.osc import OSCVolume
@@ -215,6 +216,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     TSICrossSignal(),
                     DICrossSignal(),
                     QSTICKCrossSignal(),
+                    VWAPCrossSignal()
                 ]
             )
         if signal == SignalType.TWO_MA:

@@ -28,6 +28,7 @@ mod trend_candle;
 mod trix_flip;
 mod tsi_cross;
 mod tsi_flip;
+mod vwap_cross;
 
 pub use ao_flip::AOFlipSignal;
 pub use cc_flip::CCFlipSignal;
@@ -59,3 +60,4 @@ pub use trend_candle::TrendCandleSignal;
 pub use trix_flip::TRIXFlipSignal;
 pub use tsi_cross::TSICrossSignal;
 pub use tsi_flip::TSIFlipSignal;
+pub use vwap_cross::VWAPCrossSignal;

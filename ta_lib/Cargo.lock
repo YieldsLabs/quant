@@ -146,6 +146,7 @@ dependencies = [
  "shared",
  "trend",
  "volatility",
+ "volume",
 ]
 
 [[package]]
