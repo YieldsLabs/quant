@@ -14,7 +14,9 @@ pub enum RegimeConfig {
         di_period: f32,
         threshold: f32,
     },
-    Fib {},
+    Fib {
+        period: f32,
+    },
     Ma {
         smoothing: f32,
         period: f32,
@@ -120,6 +122,6 @@ pub fn map_to_regime(config: RegimeConfig) -> Box<dyn Regime> {
             threshold,
         } => Box::new(TIIFilter::new(major_period, minor_period, threshold)),
         RegimeConfig::Dumb { period } => Box::new(DumbFilter::new(period)),
-        RegimeConfig::Fib {} => Box::new(FibFilter::new()),
+        RegimeConfig::Fib { period } => Box::new(FibFilter::new(period)),
     }
 }

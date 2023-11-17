@@ -1,19 +1,21 @@
 use base::{OHLCVSeries, Regime};
 use core::Series;
 
-const LOOKBACK: usize = 21;
-
-pub struct FibFilter {}
+pub struct FibFilter {
+    period: usize,
+}
 
 impl FibFilter {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(period: f32) -> Self {
+        Self {
+            period: period as usize,
+        }
     }
 }
 
 impl Regime for FibFilter {
     fn lookback(&self) -> usize {
-        LOOKBACK
+        self.period
     }
 
     fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {

@@ -21,6 +21,7 @@ from strategy.regime.stoch import StochFilter
 from strategy.regime.supertrend import SupertrendFilter
 from strategy.regime.tii import TIIFilter
 from strategy.signal.ao_flip import AOFlipSignal
+from strategy.signal.ao_saucer import AOSaucerSignal
 from strategy.signal.cc_flip import CCFlipSignal
 from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
 from strategy.signal.di_cross import DICrossSignal
@@ -239,6 +240,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
         return np.random.choice(
             [
+                AOSaucerSignal(),
                 MACDColorSwitchSignal(),
                 TrendCandleSignal(),
                 SNATRSignal(),

@@ -9,6 +9,10 @@ use signal::*;
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum SignalConfig {
+    AoSaucer {
+        short_period: f32,
+        long_period: f32,
+    },
     AoFlip {
         short_period: f32,
         long_period: f32,
@@ -165,6 +169,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         } => Box::new(AOFlipSignal::new(short_period, long_period)),
+        SignalConfig::AoSaucer {
+            short_period,
+            long_period,
+        } => Box::new(AOSaucerSignal::new(short_period, long_period)),
         SignalConfig::CcFlip {
             short_period,
             long_period,

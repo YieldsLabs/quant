@@ -1,4 +1,5 @@
 mod ao_flip;
+mod ao_saucer;
 mod cc_flip;
 mod dch_two_ma;
 mod di_cross;
@@ -32,6 +33,7 @@ mod tsi_flip;
 mod vwap_cross;
 
 pub use ao_flip::AOFlipSignal;
+pub use ao_saucer::AOSaucerSignal;
 pub use cc_flip::CCFlipSignal;
 pub use dch_two_ma::DCH2MASignal;
 pub use di_cross::DICrossSignal;
