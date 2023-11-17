@@ -43,6 +43,7 @@ from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
 from strategy.signal.stc_flip import STCFlipSignal
+from strategy.signal.stc_uturn import STCUTurnSignal
 from strategy.signal.stoch_cross import StochCrossSignal
 from strategy.signal.supertrend_flip import SupertrendFlipSignal
 from strategy.signal.supertrend_pullback import SupertrendPullBackSignal
@@ -59,10 +60,11 @@ from strategy.volume.dumb import DumbVolume
 from strategy.volume.osc import OSCVolume
 
 
-class SignalType(Enum):
+class TrendSignalType(Enum):
     CROSS = auto()
     FLIP = auto()
     V = auto()
+    UTurn = auto()
     TWO_MA = auto()
     CUSTOM = auto()
     PULLBACK = auto()
@@ -155,7 +157,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return list(strategies_set)
 
     def _generate_strategy(self):
-        signal_groups = list(SignalType)
+        signal_groups = list(TrendSignalType)
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
         regime = np.random.choice(
             [
@@ -178,7 +180,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             *(StrategyType.TREND, entry_signal, regime, volume, stop_loss, exit_signal)
         )
 
-    def _generate_signal(self, signal: SignalType):
+    def _generate_signal(self, signal: TrendSignalType):
         ma_short_period, ma_medium_period, ma_long_period = sorted(
             [
                 RandomParameter(20.0, 50.0, 5.0),
@@ -187,7 +189,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
 
-        if signal == SignalType.FLIP:
+        if signal == TrendSignalType.FLIP:
             return np.random.choice(
                 [
                     AOFlipSignal(),
@@ -202,10 +204,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     STCFlipSignal(),
                 ]
             )
-        if signal == SignalType.V:
+        if signal == TrendSignalType.V:
             return np.random.choice([TIIVSignal(), RSIVSignal()])
 
-        if signal == SignalType.CROSS:
+        if signal == TrendSignalType.UTurn:
+            return np.random.choice([STCUTurnSignal()])
+
+        if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
                     MA3CrossSignal(
@@ -224,14 +229,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     StochCrossSignal(),
                 ]
             )
-        if signal == SignalType.TWO_MA:
+        if signal == TrendSignalType.TWO_MA:
             return np.random.choice(
                 [
                     RSI2MovingAverageSignal(),
                     DCH2MovingAverageSignal(),
                 ]
             )
-        if signal == SignalType.PULLBACK:
+        if signal == TrendSignalType.PULLBACK:
             return np.random.choice(
                 [
                     SupertrendPullBackSignal(),
