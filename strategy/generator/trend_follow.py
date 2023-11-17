@@ -25,6 +25,7 @@ from strategy.signal.cc_flip import CCFlipSignal
 from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
 from strategy.signal.di_cross import DICrossSignal
 from strategy.signal.di_flip import DIFlipSignal
+from strategy.signal.dmi_cross import DMICrossSignal
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_color_switch import MACDColorSwitchSignal
 from strategy.signal.macd_cross import MACDCrossSignal
@@ -216,7 +217,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     TSICrossSignal(),
                     DICrossSignal(),
                     QSTICKCrossSignal(),
-                    VWAPCrossSignal()
+                    VWAPCrossSignal(),
+                    DMICrossSignal(),
                 ]
             )
         if signal == SignalType.TWO_MA:

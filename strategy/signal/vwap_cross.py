@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from core.models.parameter import Parameter, StaticParameter
 
+from core.models.parameter import Parameter, StaticParameter
 from strategy.signal.base import BaseSignal, SignalType
 
 

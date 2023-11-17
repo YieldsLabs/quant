@@ -18,6 +18,10 @@ pub enum SignalConfig {
         long_period: f32,
         smoothing_period: f32,
     },
+    DmiCross {
+        adx_period: f32,
+        di_period: f32,
+    },
     Ma3Cross {
         smoothing: f32,
         short_period: f32,
@@ -170,6 +174,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             long_period,
             smoothing_period,
         )),
+        SignalConfig::DmiCross {
+            adx_period,
+            di_period,
+        } => Box::new(DMICrossSignal::new(adx_period, di_period)),
         SignalConfig::Ma3Cross {
             smoothing,
             short_period,
