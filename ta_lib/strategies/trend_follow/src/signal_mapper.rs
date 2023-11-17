@@ -2,6 +2,7 @@ use crate::candle_mapper::map_to_candle;
 use crate::ma_mapper::map_to_ma;
 use crate::macd_mapper::map_to_macd;
 use crate::rsi_mapper::map_to_rsi;
+use crate::stoch_mapper::map_to_stoch;
 use base::Signal;
 use serde::Deserialize;
 use signal::*;
@@ -120,6 +121,12 @@ pub enum SignalConfig {
         slow_period: f32,
         period: f32,
         factor: f32,
+    },
+    StochCross {
+        stoch_type: f32,
+        period: f32,
+        k_period: f32,
+        d_period: f32,
     },
     SupFlip {
         atr_period: f32,
@@ -329,6 +336,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period,
             factor,
         } => Box::new(STCFlipSignal::new(fast_period, slow_period, period, factor)),
+        SignalConfig::StochCross {
+            stoch_type,
+            period,
+            k_period,
+            d_period,
+        } => Box::new(StochCrossSignal::new(
+            map_to_stoch(stoch_type as usize),
+            period,
+            k_period,
+            d_period,
+        )),
         SignalConfig::TIICross {
             major_period,
             minor_period,

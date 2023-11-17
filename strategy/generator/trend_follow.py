@@ -43,6 +43,7 @@ from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
 from strategy.signal.rsi_v import RSIVSignal
 from strategy.signal.snatr import SNATRSignal
 from strategy.signal.stc_flip import STCFlipSignal
+from strategy.signal.stoch_cross import StochCrossSignal
 from strategy.signal.supertrend_flip import SupertrendFlipSignal
 from strategy.signal.supertrend_pullback import SupertrendPullBackSignal
 from strategy.signal.testing_ground import TestingGroundSignal
@@ -220,6 +221,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     QSTICKCrossSignal(),
                     VWAPCrossSignal(),
                     DMICrossSignal(),
+                    StochCrossSignal(),
                 ]
             )
         if signal == SignalType.TWO_MA:

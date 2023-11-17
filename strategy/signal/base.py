@@ -27,6 +27,7 @@ class SignalType(Enum):
     SupFlip = "SupFlip"
     SupPullBack = "SupPullBack"
     StcFlip = "StcFlip"
+    StochCross = "StochCross"
     TestGround = "TestGround"
     TrendCandle = "TrendCandle"
     TIICross = "TIICross"
