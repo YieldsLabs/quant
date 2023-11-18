@@ -29,6 +29,7 @@ name = "exit"
 version = "0.1.0"
 dependencies = [
  "base",
+ "candlestick",
  "core",
 ]
 
