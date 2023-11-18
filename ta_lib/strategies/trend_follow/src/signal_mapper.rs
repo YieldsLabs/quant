@@ -347,7 +347,12 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             slow_period,
             period,
             factor,
-        } => Box::new(STCUturnSignal::new(fast_period, slow_period, period, factor)),
+        } => Box::new(STCUturnSignal::new(
+            fast_period,
+            slow_period,
+            period,
+            factor,
+        )),
         SignalConfig::StochCross {
             stoch_type,
             period,

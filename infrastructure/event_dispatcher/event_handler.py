@@ -30,14 +30,11 @@ class EventHandler:
         self._event_handlers[event_class].append((handler, filter_func))
 
     def unregister(self, event_class: Type[Event], handler: HandlerType) -> None:
-        try:
-            self._event_handlers[event_class] = [
-                (h, filter_fn)
-                for h, filter_fn in self._event_handlers.get(event_class, [])
-                if h != handler
-            ]
-        except ValueError:
-            pass
+        self._event_handlers[event_class] = [
+            (h, filter_fn)
+            for h, filter_fn in self._event_handlers.get(event_class, [])
+            if h != handler
+        ]
 
     async def handle_event(self, event: Event, *args, **kwargs) -> None:
         event_type = type(event)

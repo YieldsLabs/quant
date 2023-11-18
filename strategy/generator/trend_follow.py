@@ -110,7 +110,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _diversified_strategies(self):
         stop_loss = ATRStopLoss(
-            period=StaticParameter(14.0), multi=StaticParameter(1.5)
+            period=StaticParameter(14.0), multi=StaticParameter(1.0)
         )
         regime = RSIFilter()
         exit = DumbExit()
@@ -161,7 +161,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
         regime = np.random.choice(
             [
-                MovingAverageFilter(period=RandomParameter(100.0, 300.0, 25.0)),
+                MovingAverageFilter(period=RandomParameter(150.0, 300.0, 25.0)),
                 RSIFilter(),
                 ADXFilter(),
                 TIIFilter(),
@@ -173,7 +173,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
         volume = np.random.choice([DumbVolume(), OSCVolume()])
-        stop_loss = np.random.choice([ATRStopLoss(multi=RandomParameter(1.0, 2, 0.25))])
+        stop_loss = np.random.choice(
+            [ATRStopLoss(multi=RandomParameter(0.85, 1.5, 0.15))]
+        )
         exit_signal = np.random.choice([DumbExit()])
 
         return Strategy(
