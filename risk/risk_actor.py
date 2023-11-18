@@ -42,14 +42,24 @@ class RiskActor(BaseActor):
             self._dispatcher.unregister(event, self.handle)
 
     async def handle(self, event: RiskEvent):
-        if isinstance(event, NewMarketDataReceived):
-            await self.handle_risk(event)
-        elif isinstance(event, PositionOpened):
-            self._position = event.position
-        elif isinstance(event, PositionClosed):
-            self._position = None
+        handlers = {
+            NewMarketDataReceived: self._handle_risk,
+            PositionOpened: self._update_position,
+            PositionClosed: self._close_position,
+        }
 
-    async def handle_risk(self, event: NewMarketDataReceived):
+        handler = handlers.get(type(event))
+
+        if handler:
+            await handler(event)
+
+    async def _update_position(self, event: PositionOpened):
+        self._position = event.position
+
+    async def _close_position(self, _event: PositionClosed):
+        self._position = None
+
+    async def _handle_risk(self, event: NewMarketDataReceived):
         current_position = self._position
 
         next_position = current_position.next(event.ohlcv)

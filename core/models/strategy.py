@@ -1,6 +1,7 @@
-import json
 from dataclasses import dataclass
 from enum import Enum, auto
+
+import orjson as json
 
 from .indicator import Indicator
 from .parameter import Parameter
@@ -25,11 +26,11 @@ class Strategy:
 
     @property
     def parameters(self):
-        signal_data = json.dumps(self.entry_signal.to_dict()).encode()
-        regime_data = json.dumps(self.regime_filter.to_dict()).encode()
-        volume_data = json.dumps(self.volume_filter.to_dict()).encode()
-        stoploss_data = json.dumps(self.stop_loss.to_dict()).encode()
-        exit_data = json.dumps(self.exit_signal.to_dict()).encode()
+        signal_data = json.dumps(self.entry_signal.to_dict())
+        regime_data = json.dumps(self.regime_filter.to_dict())
+        volume_data = json.dumps(self.volume_filter.to_dict())
+        stoploss_data = json.dumps(self.stop_loss.to_dict())
+        exit_data = json.dumps(self.exit_signal.to_dict())
 
         return (signal_data, regime_data, volume_data, stoploss_data, exit_data)
 

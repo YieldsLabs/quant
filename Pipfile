@@ -19,6 +19,7 @@ nbformat = "*"
 matplotlib = "*"
 seaborn = "*"
 cachetools = "*"
+orjson = "*"
 
 [dev-packages]
 mypy = "*"
