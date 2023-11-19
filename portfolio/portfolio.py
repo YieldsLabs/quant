@@ -49,7 +49,7 @@ class Portfolio(AbstractEventManager):
 
         performance = await self.state.get(event.position)
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, return={round(performance.annualized_return * 100, 2)}%, pnl={round(performance.total_pnl, 2)}"
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, cagr={round(performance.cagr * 100, 2)}%, pnl={round(performance.total_pnl, 2)}"
         )
 
         await self.dispatch(

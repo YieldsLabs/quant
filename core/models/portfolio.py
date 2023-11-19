@@ -101,6 +101,19 @@ class Performance:
         return avg_return / downside_std
 
     @property
+    def cagr(self) -> float:
+        if self.total_trades < 2:
+            return 0
+
+        periods = self.total_trades
+        final_value = self.equity[-1]
+        initial_value = self._account_size
+        compound_factor = final_value / initial_value
+        time_factor = 1 / (periods / self._periods_per_year)
+
+        return compound_factor**time_factor - 1
+
+    @property
     def annualized_return(self) -> float:
         rate_of_return = self._rate_of_return(self._account_size, self.total_pnl)
 
@@ -373,7 +386,7 @@ class Performance:
             + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, "
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, sharpe_ratio={self.sharpe_ratio}, "
             + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, "
-            + f"annualized_return={self.annualized_return}, annualized_volatility={self.annualized_volatility}, "
+            + f"cagr={self.cagr}, annualized_return={self.annualized_return}, annualized_volatility={self.annualized_volatility}, "
             + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, "
             + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, "
             + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, "
@@ -397,6 +410,7 @@ class Performance:
             "sharpe_ratio": self.sharpe_ratio,
             "calmar_ratio": self.calmar_ratio,
             "sortino_ratio": self.sortino_ratio,
+            "cagr": self.cagr,
             "annualized_return": self.annualized_return,
             "annualized_volatility": self.annualized_volatility,
             "recovery_factor": self.recovery_factor,
