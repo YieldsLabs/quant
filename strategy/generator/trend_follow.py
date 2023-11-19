@@ -11,6 +11,7 @@ from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
 from strategy.exit.dumb import DumbExit
+from strategy.exit.highlow import HighLowExit
 from strategy.exit.pattern import PatternExit
 from strategy.regime.adx import ADXFilter
 from strategy.regime.fib import FibFilter
@@ -177,7 +178,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         stop_loss = np.random.choice(
             [ATRStopLoss(multi=RandomParameter(0.85, 1.5, 0.15))]
         )
-        exit_signal = np.random.choice([DumbExit(), PatternExit()])
+        exit_signal = np.random.choice([DumbExit(), PatternExit(), HighLowExit()])
 
         return Strategy(
             *(StrategyType.TREND, entry_signal, regime, volume, stop_loss, exit_signal)

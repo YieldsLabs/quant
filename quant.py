@@ -62,26 +62,29 @@ async def main():
     store_buf_size = 5000
     num_workers = os.cpu_count()
     multi_piority_group = 2
-    batch_size = 1597
+    batch_size = 2584
 
     risk_per_trade = 0.0005
-    risk_reward_ratio = 1.5
+    risk_reward_ratio = 3.0
     risk_buffer = 0.0001
     break_even_percentage = 0.25
     leverage = 1
     initial_account_size = 1000
     lookback = Lookback.ONE_MONTH
 
-    num_samples = 8
-    parallel_num = 2
+    num_samples = 13
+    parallel_num = 3
     active_strategy_num = 5
-    max_generations = 3
+    max_generations = 5
     elite_count = 5
-    mutation_rate = 0.05
-    tournament_size = 5
+    mutation_rate = 0.02
+    crossover_rate = 0.8
+    tournament_size = 3
+    reset_percentage = 0.2
+    stability_percentage = 0.3
 
     timeframes = [
-        Timeframe.FIFTEEN_MINUTES,
+        Timeframe.FIVE_MINUTES,
     ]
 
     symbols_blacklist = [
@@ -113,7 +116,13 @@ async def main():
     executor_factory = OrderExecutorActorFactory()
 
     strategy_optimization_factory = StrategyOptimizerFactory(
-        max_generations, elite_count, mutation_rate, tournament_size
+        max_generations,
+        elite_count,
+        crossover_rate,
+        mutation_rate,
+        tournament_size,
+        reset_percentage,
+        stability_percentage,
     )
 
     strategy_generator_factory = StrategyGeneratorFactory(

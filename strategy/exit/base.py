@@ -6,6 +6,7 @@ from core.models.indicator import Indicator
 
 class ExitType(Enum):
     Dumb = "Dumb"
+    HighLow = "HighLow"
     Pattern = "Pattern"
 
     def __str__(self):

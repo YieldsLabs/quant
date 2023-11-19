@@ -25,14 +25,20 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         strategy_generator: AbstractStrategyGenerator,
         max_generations: int,
         elite_count: int,
+        crossover_rate: float,
         mutation_rate: float,
         tournament_size: int,
+        reset_percentage: float,
+        stability_percentage: float,
     ):
         super().__init__()
         self.max_generations = max_generations
         self.elite_count = elite_count
+        self.crossover_rate = crossover_rate
         self.mutation_rate = mutation_rate
         self.tournament_size = tournament_size
+        self.reset_percentage = reset_percentage
+        self.stability_percentage = stability_percentage
         self.strategy_generator = strategy_generator
         self._population: list[Individual] = []
         self.generation = 0
@@ -82,7 +88,25 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
             self._population, key=lambda individual: individual.fitness, reverse=True
         )
         elite = sorted_population[: self.elite_count]
-        parents = self._tournament_selection(sorted_population[self.elite_count :])
+
+        total_size = len(sorted_population)
+        reset_size = int(self.reset_percentage * total_size)
+        stability_size = int(self.stability_percentage * total_size)
+
+        reset_parents = self._tournament_selection(
+            sorted_population[self.elite_count : self.elite_count + reset_size]
+        )
+
+        stability_parents = self._tournament_selection(
+            sorted_population[
+                self.elite_count
+                + reset_size : self.elite_count
+                + reset_size
+                + stability_size
+            ]
+        )
+
+        parents = reset_parents + stability_parents
         return elite, parents
 
     def _tournament_selection(self, candidates: list[Individual]) -> list[Individual]:
@@ -103,11 +127,16 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parents[idx] = await self._mutate(parent)
 
     def _crossover_parents(self, parents: list[Individual]) -> list[Individual]:
-        children = [
-            self._crossover(parents[i], parents[i + 1])
-            for i in range(0, len(parents) - 1, 2)
-        ]
-        return [child for pair in children for child in pair]
+        children = []
+
+        for i in range(0, len(parents) - 1, 2):
+            if np.random.rand() < self.crossover_rate:
+                child1, child2 = self._crossover(parents[i], parents[i + 1])
+                children.extend([child1, child2])
+            else:
+                children.extend([parents[i], parents[i + 1]])
+
+        return children
 
     def _update_population(
         self, elite: list[Individual], children: list[Individual]
