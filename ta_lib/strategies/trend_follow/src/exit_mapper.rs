@@ -1,3 +1,5 @@
+use crate::ma_mapper::map_to_ma;
+use crate::rsi_mapper::map_to_rsi;
 use base::Exit;
 use exit::*;
 use serde::Deserialize;
@@ -6,8 +8,21 @@ use serde::Deserialize;
 #[serde(tag = "type")]
 pub enum ExitConfig {
     Dumb {},
-    Pattern { period: f32 },
-    HighLow { period: f32 },
+    Pattern {
+        period: f32,
+    },
+    HighLow {
+        period: f32,
+    },
+    Ma {
+        smoothing: f32,
+        period: f32,
+    },
+    Rsi {
+        rsi_type: f32,
+        period: f32,
+        threshold: f32,
+    },
 }
 
 pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
@@ -15,5 +30,17 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
         ExitConfig::Dumb {} => Box::new(DumbExit {}),
         ExitConfig::Pattern { period } => Box::new(PatternExit::new(period)),
         ExitConfig::HighLow { period } => Box::new(HighLowExit::new(period)),
+        ExitConfig::Ma { smoothing, period } => {
+            Box::new(MAExit::new(map_to_ma(smoothing as usize), period))
+        }
+        ExitConfig::Rsi {
+            rsi_type,
+            period,
+            threshold,
+        } => Box::new(RSIExit::new(
+            map_to_rsi(rsi_type as usize),
+            period,
+            threshold,
+        )),
     }
 }

@@ -8,6 +8,8 @@ class ExitType(Enum):
     Dumb = "Dumb"
     HighLow = "HighLow"
     Pattern = "Pattern"
+    Ma = "Ma"
+    Rsi = "Rsi"
 
     def __str__(self):
         return self.value.upper()
