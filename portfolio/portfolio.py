@@ -93,6 +93,19 @@ class Portfolio(AbstractEventManager):
                 * self.risk_per_trade
             )
 
+        if query.type == PositionSizeType.Kelly:
+            kelly = await self.state.get_kelly(
+                query.signal.symbol, query.signal.timeframe, query.signal.strategy
+            )
+            return (
+                await self.state.get_equity(
+                    query.signal.symbol, query.signal.timeframe, query.signal.strategy
+                )
+                * kelly
+                if kelly
+                else self.risk_per_trade
+            )
+
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):
         return await self.state.get_fitness(

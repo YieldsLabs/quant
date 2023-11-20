@@ -130,19 +130,26 @@ class Performance:
         if max_loss == 0:
             return 0
 
-        return abs(max_loss) / self._account_size
+        return abs(max_loss) / abs(self._account_size)
 
     @property
     def kelly(self) -> float:
         if self.total_trades < 2:
             return self._risk_per_trade
 
-        expected_variance = np.var(self._pnl, ddof=1)
+        win_trades = self._pnl[self._pnl > 0]
+        loss_trades = self._pnl[self._pnl < 0]
 
-        if expected_variance == 0:
+        if len(win_trades) == 0 or len(loss_trades) == 0:
             return self._risk_per_trade
 
-        return abs(self.average_pnl) / abs(expected_variance)
+        win_probability = len(win_trades) / self.total_trades
+        average_win_to_loss_ratio = np.mean(win_trades) / np.abs(np.mean(loss_trades))
+
+        p = 1 / average_win_to_loss_ratio
+        q = 1 - win_probability
+
+        return (win_probability * p - q) / p
 
     @property
     def annualized_return(self) -> float:

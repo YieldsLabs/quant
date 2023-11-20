@@ -57,6 +57,13 @@ class PortfolioStorage:
 
             return performance.equity[-1] if performance else 0
 
+    async def get_kelly(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
+        async with self._lock:
+            key = self._get_key(symbol, timeframe, strategy)
+            performance = self.data.get(key)
+
+            return performance.kelly if performance else 0
+
     async def get_fitness(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
     ):
