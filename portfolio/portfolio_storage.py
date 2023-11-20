@@ -64,6 +64,15 @@ class PortfolioStorage:
 
             return performance.kelly if performance else 0
 
+    async def get_optimalf(
+        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
+    ):
+        async with self._lock:
+            key = self._get_key(symbol, timeframe, strategy)
+            performance = self.data.get(key)
+
+            return performance.optimal_f if performance else 0
+
     async def get_fitness(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
     ):

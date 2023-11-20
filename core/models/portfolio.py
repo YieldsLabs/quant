@@ -123,14 +123,20 @@ class Performance:
     @property
     def optimal_f(self) -> float:
         if self.total_trades < 2:
-            return 0
+            return self._risk_per_trade
 
         max_loss = np.min(self.drawdown)
 
         if max_loss == 0:
-            return 0
+            return self._risk_per_trade
 
-        return abs(max_loss) / abs(self._account_size)
+        initial_value = self._account_size
+        final_value = self.equity[-1]
+        compound_factor = final_value / initial_value
+
+        f = abs(max_loss) / abs(initial_value)
+
+        return f * np.sqrt(compound_factor)
 
     @property
     def kelly(self) -> float:
