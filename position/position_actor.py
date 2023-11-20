@@ -1,9 +1,6 @@
 from typing import Union
 
 from core.actors.base import BaseActor
-from core.commands.account import UpdateAccountSize
-from core.event_decorators import command_handler
-from core.events.account import PositionAccountUpdated
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
@@ -24,7 +21,6 @@ from core.models.position import Position, PositionSide
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.portfolio import GetAllPnL, GetTotalPnL
 
 from .position_state_machine import PositionStateMachine
 from .position_storage import PositionStorage
@@ -51,14 +47,9 @@ class PositionActor(BaseActor):
         timeframe: Timeframe,
         strategy: Strategy,
         position_factory: AbstractPositionFactory,
-        initial_account_size: int,
-        is_trading: bool,
     ):
         super().__init__(symbol, timeframe, strategy)
-
-        self.account_size = initial_account_size
         self.position_factory = position_factory
-        self.is_trading = is_trading
 
         self.sm = PositionStateMachine(self)
         self.state = PositionStorage()
@@ -100,23 +91,9 @@ class PositionActor(BaseActor):
 
         return position and position.last_modified > event.meta.timestamp
 
-    @command_handler(UpdateAccountSize)
-    async def update_account_size(self, command: UpdateAccountSize):
-        self.account_size = command.amount
-
-        await self.dispatch(PositionAccountUpdated(self.account_size))
-
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        pnl_fn = (
-            self.query(GetAllPnL())
-            if self.is_trading
-            else self.query(GetTotalPnL(event.signal))
-        )
-
-        account_size = self.account_size + await pnl_fn
-
-        position = self.position_factory.create_position(
-            event.signal, event.ohlcv, account_size, event.entry_price, event.stop_loss
+        position = await self.position_factory.create_position(
+            event.signal, event.ohlcv, event.entry_price, event.stop_loss
         )
 
         await self.state.store_position(position)

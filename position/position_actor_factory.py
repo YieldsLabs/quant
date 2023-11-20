@@ -8,21 +8,9 @@ from .position_actor import PositionActor
 
 
 class PositionActorFactory(AbstractPositionActorFactory):
-    def __init__(
-        self, initial_account_size: float, position_factory: AbstractPositionFactory
-    ):
+    def __init__(self, position_factory: AbstractPositionFactory):
         super().__init__()
         self.position_factory = position_factory
-        self.initial_account_size = initial_account_size
 
-    def create_actor(
-        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, is_trading: bool
-    ):
-        return PositionActor(
-            symbol,
-            timeframe,
-            strategy,
-            self.position_factory,
-            self.initial_account_size,
-            is_trading,
-        )
+    def create_actor(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
+        return PositionActor(symbol, timeframe, strategy, self.position_factory)

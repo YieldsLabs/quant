@@ -15,13 +15,8 @@ class GetTopStrategy(Query[List[Strategy]]):
 
 
 @dataclass(frozen=True)
-class GetTotalPnL(Query[float]):
+class GetEquity(Query[float]):
     signal: Signal
-
-
-@dataclass(frozen=True)
-class GetAllPnL(Query[float]):
-    pass
 
 
 @dataclass(frozen=True)

@@ -21,11 +21,10 @@ class PositionFactory(AbstractPositionFactory):
         self.risk_strategy = risk_strategy
         self.take_profit_strategy = take_profit_strategy
 
-    def create_position(
+    async def create_position(
         self,
         signal: Signal,
         ohlcv: OHLCV,
-        account_size: float,
         entry_price: float,
         stop_loss_price: float | None,
     ) -> Position:
@@ -36,8 +35,8 @@ class PositionFactory(AbstractPositionFactory):
         )
         entry_price = round(entry_price, symbol.price_precision)
 
-        position_size = self.position_size_strategy.calculate(
-            account_size, entry_price, stop_loss_price
+        position_size = await self.position_size_strategy.calculate(
+            signal, entry_price, stop_loss_price
         )
 
         adjusted_position_size = max(position_size, symbol.min_position_size)

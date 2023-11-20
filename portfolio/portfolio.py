@@ -8,7 +8,7 @@ from core.events.backtest import BacktestStarted
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.queries.portfolio import GetAllPnL, GetFitness, GetTopStrategy, GetTotalPnL
+from core.queries.portfolio import GetEquity, GetFitness, GetTopStrategy
 
 from .portfolio_storage import PortfolioStorage
 from .strategy_storage import StrategyStorage
@@ -78,16 +78,11 @@ class Portfolio(AbstractEventManager):
         strategies = await self.strategy.get_top(query.num)
         return strategies
 
-    @query_handler(GetTotalPnL)
-    async def total_pnl(self, query: GetTotalPnL):
-        signal = query.signal
-        return await self.state.get_total_pnl(
-            signal.symbol, signal.timeframe, signal.strategy
+    @query_handler(GetEquity)
+    async def equity(self, query: GetEquity):
+        return await self.state.get_equity(
+            query.signal.symbol, query.signal.timeframe, query.signal.strategy
         )
-
-    @query_handler(GetAllPnL)
-    async def all_pnl(self, _query: GetAllPnL):
-        return await self.state.get_pnl()
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):

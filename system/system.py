@@ -117,11 +117,12 @@ class System(AbstractSystem):
 
         futures_symbols = await self.query(GetSymbols())
 
+        trend_follow = self.context.strategy_generator_factory.create(
+            StrategyType.TREND, futures_symbols
+        )
         self.optimizer = self.context.strategy_optimizer_factory.create(
             Optimizer.GENETIC,
-            self.context.strategy_generator_factory.create(
-                StrategyType.TREND, futures_symbols
-            ),
+            trend_follow,
         )
 
         self.optimizer.init()
@@ -135,12 +136,13 @@ class System(AbstractSystem):
         logger.info(f"Run backtest for: {total_steps}")
 
         estimator = Estimator(total_steps // self.context.parallel_num)
+        exchange = self.context.exchange_factory.create(ExchangeType.BYBIT)
         datasource = self.context.datasource_factory.create(
             DataSourceType.EXCHANGE,
-            self.context.exchange_factory.create(ExchangeType.BYBIT),
+            exchange,
         )
 
-        async for batch_actors in self._generate_batch_actors(population, False):
+        async for batch_actors in self._generate_batch_actors(population):
             tasks = [
                 self._process_backtest(datasource, actors) for actors in batch_actors
             ]
@@ -149,13 +151,11 @@ class System(AbstractSystem):
 
         await self.event_queue.put(Event.BACKTEST_COMPLETE)
 
-    async def _generate_batch_actors(self, data, is_trading):
+    async def _generate_batch_actors(self, data):
         actors_batch = []
 
         for symbol, timeframe, strategy in data:
-            squad = self.context.squad_factory.create_squad(
-                symbol, timeframe, strategy, is_trading
-            )
+            squad = self.context.squad_factory.create_squad(symbol, timeframe, strategy)
             order_executor = self.context.executor_factory.create_actor(
                 OrderType.PAPER, symbol, timeframe, strategy
             )
@@ -256,7 +256,7 @@ class System(AbstractSystem):
 
         trading_actors = []
 
-        async for batch_actors in self._generate_batch_actors(strategies, True):
+        async for batch_actors in self._generate_batch_actors(strategies):
             for actors in batch_actors:
                 await self._process_pretrading(datasource, actors)
                 trading_actors.append(actors)

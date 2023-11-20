@@ -11,7 +11,6 @@ class AbstractPositionFactory(ABC):
         self,
         signal: Signal,
         ohlcv: OHLCV,
-        account_size: float,
         entry_price: float,
         stop_loss: float | None,
     ) -> Position:

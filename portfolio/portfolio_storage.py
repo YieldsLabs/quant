@@ -48,34 +48,14 @@ class PortfolioStorage:
         async with self._lock:
             self.data = {}
 
-    async def get_total_pnl(
+    async def get_equity(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
     ):
         async with self._lock:
             key = self._get_key(symbol, timeframe, strategy)
             performance = self.data.get(key)
 
-            return performance.total_pnl if performance else 0
-
-    async def get_pnl(self):
-        async with self._lock:
-            return sum(
-                [
-                    performance.total_pnl
-                    for performance in self.data.values()
-                    if performance
-                ]
-            )
-
-    async def annualized_return(self):
-        async with self._lock:
-            return sum(
-                [
-                    performance.annualized_return
-                    for performance in self.data.values()
-                    if performance
-                ]
-            )
+            return performance.equity[-1] if performance else 0
 
     async def get_fitness(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
