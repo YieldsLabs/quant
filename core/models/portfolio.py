@@ -108,10 +108,17 @@ class Performance:
         periods = self.total_trades
         final_value = self.equity[-1]
         initial_value = self._account_size
+
+        if initial_value == 0:
+            return 0
+
+        if final_value < initial_value:
+            return -1
+
         compound_factor = final_value / initial_value
         time_factor = 1 / (periods / self._periods_per_year)
 
-        return compound_factor**time_factor - 1
+        return np.power(compound_factor, time_factor) - 1
 
     @property
     def optimal_f(self) -> float:
@@ -128,15 +135,14 @@ class Performance:
     @property
     def kelly(self) -> float:
         if self.total_trades < 2:
-            return 0
+            return self._risk_per_trade
 
-        expected_return = self.average_pnl * self.total_trades / self.total_trades
         expected_variance = np.var(self._pnl, ddof=1)
 
         if expected_variance == 0:
-            return 0
+            return self._risk_per_trade
 
-        return expected_return / expected_variance
+        return abs(self.average_pnl) / abs(expected_variance)
 
     @property
     def annualized_return(self) -> float:
