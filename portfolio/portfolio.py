@@ -8,7 +8,12 @@ from core.events.backtest import BacktestStarted
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.queries.portfolio import GetEquity, GetFitness, GetTopStrategy
+from core.models.size import PositionSizeType
+from core.queries.portfolio import (
+    GetFitness,
+    GetPositionRisk,
+    GetTopStrategy,
+)
 
 from .portfolio_storage import PortfolioStorage
 from .strategy_storage import StrategyStorage
@@ -78,11 +83,15 @@ class Portfolio(AbstractEventManager):
         strategies = await self.strategy.get_top(query.num)
         return strategies
 
-    @query_handler(GetEquity)
-    async def equity(self, query: GetEquity):
-        return await self.state.get_equity(
-            query.signal.symbol, query.signal.timeframe, query.signal.strategy
-        )
+    @query_handler(GetPositionRisk)
+    async def equity(self, query: GetPositionRisk):
+        if query.type == PositionSizeType.Fixed:
+            return (
+                await self.state.get_equity(
+                    query.signal.symbol, query.signal.timeframe, query.signal.strategy
+                )
+                * self.risk_per_trade
+            )
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):

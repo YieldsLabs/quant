@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 from core.models.signal import Signal
+from core.models.size import PositionSizeType
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -15,8 +16,9 @@ class GetTopStrategy(Query[List[Strategy]]):
 
 
 @dataclass(frozen=True)
-class GetEquity(Query[float]):
+class GetPositionRisk(Query[float]):
     signal: Signal
+    type: PositionSizeType
 
 
 @dataclass(frozen=True)

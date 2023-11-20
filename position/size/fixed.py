@@ -2,13 +2,13 @@ from typing import Optional
 
 from core.interfaces.abstract_position_size_strategy import AbstractPositionSizeStrategy
 from core.models.signal import Signal
-from core.queries.portfolio import GetEquity
+from core.models.size import PositionSizeType
+from core.queries.portfolio import GetPositionRisk
 
 
 class PositionFixedSizeStrategy(AbstractPositionSizeStrategy):
-    def __init__(self, risk_per_trade: float):
+    def __init__(self):
         super().__init__()
-        self.risk_per_trade = risk_per_trade
 
     async def calculate(
         self,
@@ -16,7 +16,7 @@ class PositionFixedSizeStrategy(AbstractPositionSizeStrategy):
         entry_price: float,
         stop_loss_price: Optional[float] = None,
     ) -> float:
-        risk_amount = self.risk_per_trade * await self.query(GetEquity(signal))
+        risk_amount = await self.query(GetPositionRisk(signal, PositionSizeType.Fixed))
 
         if stop_loss_price is not None and entry_price is not None:
             price_difference = abs(entry_price - stop_loss_price)
