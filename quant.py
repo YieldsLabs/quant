@@ -59,13 +59,13 @@ signal.signal(signal.SIGTERM, graceful_shutdown.exit)
 async def main():
     logging.info("Initializing...")
 
-    store_buf_size = 5000
-    num_workers = os.cpu_count()
+    store_buf_size = 1000
+    num_workers = os.cpu_count() + 1
     multi_piority_group = 2
     batch_size = 2584
 
     risk_per_trade = 0.0005
-    risk_reward_ratio = 3.0
+    risk_reward_ratio = 3.8
     risk_buffer = 0.0001
     break_even_percentage = 0.25
     leverage = 1
@@ -76,7 +76,7 @@ async def main():
     parallel_num = 3
     active_strategy_num = 5
     max_generations = 5
-    elite_count = 5
+    elite_count = 2
     mutation_rate = 0.02
     crossover_rate = 0.8
     tournament_size = 3
@@ -102,14 +102,16 @@ async def main():
     datasource_factory = DataSourceFactory()
     broker_factory = BrokerFactory()
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
+
     position_factory = PositionFactory(
-        PositionFixedSizeStrategy(risk_per_trade),
+        PositionFixedSizeStrategy(),
         PositionRiskBreakEvenStrategy(break_even_percentage),
         PositionRiskRewardTakeProfitStrategy(risk_reward_ratio),
     )
+
     squad_factory = SquadFactory(
         SignalActorFactory(WasmFileService(WASM_FOLDER)),
-        PositionActorFactory(initial_account_size, position_factory),
+        PositionActorFactory(position_factory),
         RiskActorFactory(risk_buffer),
     )
 
