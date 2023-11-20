@@ -114,6 +114,18 @@ class Performance:
         return compound_factor**time_factor - 1
 
     @property
+    def optimal_f(self) -> float:
+        if self.total_trades < 2:
+            return 0
+
+        max_loss = np.min(self.drawdown)
+
+        if max_loss == 0:
+            return 0
+
+        return abs(max_loss) / self._account_size
+
+    @property
     def annualized_return(self) -> float:
         rate_of_return = self._rate_of_return(self._account_size, self.total_pnl)
 
@@ -383,7 +395,7 @@ class Performance:
         return (
             f"Performance(total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, "
             + f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
-            + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, "
+            + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, optimal_f={self.optimal_f}"
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, sharpe_ratio={self.sharpe_ratio}, "
             + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, "
             + f"cagr={self.cagr}, annualized_return={self.annualized_return}, annualized_volatility={self.annualized_volatility}, "
@@ -411,6 +423,7 @@ class Performance:
             "calmar_ratio": self.calmar_ratio,
             "sortino_ratio": self.sortino_ratio,
             "cagr": self.cagr,
+            "optimal_f": self.optimal_f,
             "annualized_return": self.annualized_return,
             "annualized_volatility": self.annualized_volatility,
             "recovery_factor": self.recovery_factor,
