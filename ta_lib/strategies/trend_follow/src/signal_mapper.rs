@@ -27,6 +27,17 @@ pub enum SignalConfig {
         adx_period: f32,
         di_period: f32,
     },
+    KstCross {
+        roc_period_first: f32,
+        roc_period_second: f32,
+        roc_period_third: f32,
+        roc_period_fouth: f32,
+        period_first: f32,
+        period_second: f32,
+        period_third: f32,
+        period_fouth: f32,
+        signal_period: f32,
+    },
     Ma3Cross {
         smoothing: f32,
         short_period: f32,
@@ -404,5 +415,26 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             Box::new(QuadrupleSignal::new(map_to_ma(smoothing as usize), period))
         }
         SignalConfig::VwapCross { period } => Box::new(VWAPCrossSignal::new(period)),
+        SignalConfig::KstCross {
+            roc_period_first,
+            roc_period_second,
+            roc_period_third,
+            roc_period_fouth,
+            period_first,
+            period_second,
+            period_third,
+            period_fouth,
+            signal_period,
+        } => Box::new(KSTCrossSignal::new(
+            roc_period_first,
+            roc_period_second,
+            roc_period_third,
+            roc_period_fouth,
+            period_first,
+            period_second,
+            period_third,
+            period_fouth,
+            signal_period,
+        )),
     }
 }

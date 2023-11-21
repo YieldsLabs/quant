@@ -21,6 +21,7 @@ class SignalType(Enum):
     Rsi2Ma = "Rsi2Ma"
     RsiMaPullback = "RsiMaPullback"
     Dch2Ma = "Dch2Ma"
+    KstCross = "KstCross"
     RocFlip = "RocFlip"
     RsiV = "RsiV"
     SnAtr = "SnAtr"
