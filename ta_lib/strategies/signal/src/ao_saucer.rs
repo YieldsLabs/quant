@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Price, Signal};
 use core::Series;
-use momentum::aosc;
+use momentum::ao;
 
 const AO_ZERO: f32 = 0.0;
 
@@ -24,7 +24,7 @@ impl Signal for AOSaucerSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ao = aosc(&data.hl2(), self.short_period, self.long_period);
+        let ao = ao(&data.hl2(), self.short_period, self.long_period);
         (
             ao.sgt(AO_ZERO)
                 & ao.shift(1).gt(&ao)

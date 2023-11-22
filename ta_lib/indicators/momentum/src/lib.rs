@@ -1,4 +1,4 @@
-mod aosc;
+mod ao;
 mod cc;
 mod cci;
 mod cmo;
@@ -16,7 +16,7 @@ mod tii;
 mod trix;
 mod tsi;
 
-pub use aosc::aosc;
+pub use ao::ao;
 pub use cc::cc;
 pub use cci::cci;
 pub use cmo::cmo;

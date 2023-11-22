@@ -1,6 +1,6 @@
 use core::Series;
 
-pub fn aosc(hl2: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
+pub fn ao(hl2: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
     hl2.ma(short_period) - hl2.ma(long_period)
 }
 
@@ -10,7 +10,7 @@ mod tests {
     use price::median_price;
 
     #[test]
-    fn test_aosc() {
+    fn test_ao() {
         let high = Series::from([3.0, 4.0, 5.0, 6.0, 7.0]);
         let low = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let hl2 = median_price(&high, &low);
@@ -18,7 +18,7 @@ mod tests {
         let long_period = 4;
         let expected = vec![0.0, 0.0, 0.5, 1.0, 1.0];
 
-        let result: Vec<f32> = aosc(&hl2, short_period, long_period).into();
+        let result: Vec<f32> = ao(&hl2, short_period, long_period).into();
 
         assert_eq!(result, expected);
     }
