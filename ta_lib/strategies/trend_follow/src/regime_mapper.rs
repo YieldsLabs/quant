@@ -14,6 +14,12 @@ pub enum RegimeConfig {
         di_period: f32,
         threshold: f32,
     },
+    Braid {
+        period_one: f32,
+        period_two: f32,
+        period_three: f32,
+        atr_period: f32,
+    },
     Fib {
         period: f32,
     },
@@ -26,6 +32,13 @@ pub enum RegimeConfig {
         fast_period: f32,
         slow_period: f32,
         signal_smoothing: f32,
+    },
+    Eis {
+        macd_type: f32,
+        fast_period: f32,
+        slow_period: f32,
+        signal_smoothing: f32,
+        signal_period: f32,
     },
     Ribbon {
         smoothing: f32,
@@ -75,6 +88,19 @@ pub fn map_to_regime(config: RegimeConfig) -> Box<dyn Regime> {
             slow_period,
             signal_smoothing,
         )),
+        RegimeConfig::Eis {
+            macd_type,
+            fast_period,
+            slow_period,
+            signal_smoothing,
+            signal_period,
+        } => Box::new(EISFilter::new(
+            map_to_macd(macd_type as usize),
+            fast_period,
+            slow_period,
+            signal_smoothing,
+            signal_period,
+        )),
         RegimeConfig::Rsi {
             rsi_type,
             period,
@@ -116,6 +142,17 @@ pub fn map_to_regime(config: RegimeConfig) -> Box<dyn Regime> {
             di_period,
             threshold,
         } => Box::new(ADXFilter::new(adx_period, di_period, threshold)),
+        RegimeConfig::Braid {
+            period_one,
+            period_two,
+            period_three,
+            atr_period,
+        } => Box::new(BraidFilter::new(
+            period_one,
+            period_two,
+            period_three,
+            atr_period,
+        )),
         RegimeConfig::Tii {
             major_period,
             minor_period,

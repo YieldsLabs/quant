@@ -16,6 +16,8 @@ from strategy.exit.ma import MovingAverageExit
 from strategy.exit.pattern import PatternExit
 from strategy.exit.rsi import RSIExit
 from strategy.regime.adx import ADXFilter
+from strategy.regime.braid import BraidFilter
+from strategy.regime.eis import EISFilter
 from strategy.regime.fib import FibFilter
 from strategy.regime.ma import MovingAverageFilter
 from strategy.regime.macd import MACDFilter
@@ -175,6 +177,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 MACDFilter(),
                 RibbonFilter(),
                 FibFilter(),
+                EISFilter(),
+                BraidFilter(),
             ]
         )
         volume = np.random.choice([DumbVolume(), OSCVolume()])
