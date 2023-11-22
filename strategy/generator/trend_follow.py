@@ -16,6 +16,7 @@ from strategy.exit.ma import MovingAverageExit
 from strategy.exit.pattern import PatternExit
 from strategy.exit.rsi import RSIExit
 from strategy.regime.adx import ADXFilter
+from strategy.regime.apo import APOFilter
 from strategy.regime.braid import BraidFilter
 from strategy.regime.eis import EISFilter
 from strategy.regime.fib import FibFilter
@@ -28,6 +29,7 @@ from strategy.regime.supertrend import SupertrendFilter
 from strategy.regime.tii import TIIFilter
 from strategy.signal.ao_flip import AOFlipSignal
 from strategy.signal.ao_saucer import AOSaucerSignal
+from strategy.signal.apo_flip import APOFlipSignal
 from strategy.signal.cc_flip import CCFlipSignal
 from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
 from strategy.signal.di_cross import DICrossSignal
@@ -180,6 +182,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 FibFilter(),
                 EISFilter(),
                 BraidFilter(),
+                APOFilter(),
             ]
         )
         volume = np.random.choice([DumbVolume(), OSCVolume()])
@@ -216,6 +219,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     QSTICKFlipSignal(),
                     CCFlipSignal(),
                     STCFlipSignal(),
+                    APOFlipSignal(),
                 ]
             )
         if signal == TrendSignalType.V:

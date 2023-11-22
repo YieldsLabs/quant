@@ -1,4 +1,5 @@
 mod adx;
+mod apo;
 mod braid;
 mod dumb;
 mod eis;
@@ -12,6 +13,7 @@ mod supertrend;
 mod tii;
 
 pub use adx::ADXFilter;
+pub use apo::APOFilter;
 pub use braid::BraidFilter;
 pub use dumb::DumbFilter;
 pub use eis::EISFilter;
