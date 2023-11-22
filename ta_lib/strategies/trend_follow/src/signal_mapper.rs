@@ -18,6 +18,10 @@ pub enum SignalConfig {
         short_period: f32,
         long_period: f32,
     },
+    ApoFlip {
+        short_period: f32,
+        long_period: f32,
+    },
     CcFlip {
         short_period: f32,
         long_period: f32,
@@ -200,6 +204,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         } => Box::new(AOSaucerSignal::new(short_period, long_period)),
+        SignalConfig::ApoFlip {
+            short_period,
+            long_period,
+        } => Box::new(APOFlipSignal::new(short_period, long_period)),
         SignalConfig::CcFlip {
             short_period,
             long_period,
