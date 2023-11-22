@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Signal};
 use core::Series;
-use momentum::qstick;
+use trend::qstick;
 
 pub struct QSTICKCrossSignal {
     period: usize,

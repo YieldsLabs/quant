@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Signal};
 use core::Series;
-use trend::tii;
+use momentum::tii;
 
 const TII_ZERO: f32 = 0.0;
 const TII_ONEH: f32 = 100.0;

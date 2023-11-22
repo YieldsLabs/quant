@@ -1,7 +1,7 @@
 use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{ma_indicator, MovingAverageType};
-use trend::dch;
+use volatility::dch;
 
 pub struct DCH2MASignal {
     dch_period: usize,

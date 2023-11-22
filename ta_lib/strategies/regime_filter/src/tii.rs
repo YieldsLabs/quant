@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Regime};
 use core::Series;
-use trend::tii;
+use momentum::tii;
 
 const TII_NEUTRALITY: f32 = 50.0;
 

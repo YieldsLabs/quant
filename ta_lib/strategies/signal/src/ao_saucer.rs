@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Price, Signal};
 use core::Series;
-use trend::aosc;
+use momentum::aosc;
 
 const AO_ZERO: f32 = 0.0;
 

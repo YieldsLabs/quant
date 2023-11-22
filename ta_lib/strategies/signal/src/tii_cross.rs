@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Signal};
 use core::Series;
-use trend::tii;
+use momentum::tii;
 
 const TII_UPPER_BARRIER: f32 = 60.0;
 const TII_LOWER_BARRIER: f32 = 40.0;

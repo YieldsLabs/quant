@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Price, Regime};
 use core::Series;
-use trend::dmi;
+use momentum::dmi;
 
 const ADX_TREND: f32 = 25.0;
 

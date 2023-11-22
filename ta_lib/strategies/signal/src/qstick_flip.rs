@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Signal};
 use core::Series;
-use momentum::qstick;
+use trend::qstick;
 
 const ZERO_LINE: f32 = 0.0;
 

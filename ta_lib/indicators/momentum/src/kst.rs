@@ -1,3 +1,4 @@
+use crate::roc;
 use core::Series;
 
 pub fn kst(
@@ -11,16 +12,11 @@ pub fn kst(
     period_third: usize,
     period_fouth: usize,
 ) -> Series<f32> {
-    ((100.0 * source.change(roc_period_first) / source.shift(roc_period_first)).ma(period_first))
-        + (2.0
-            * (100.0 * source.change(roc_period_second) / source.shift(roc_period_second))
-                .ma(period_second))
-        + (3.0
-            * (100.0 * source.change(roc_period_third) / source.shift(roc_period_third))
-                .ma(period_third))
-        + (4.0
-            * (100.0 * source.change(roc_period_fouth) / source.shift(roc_period_fouth))
-                .ma(period_fouth))
+    100.0
+        * (roc(source, roc_period_first).ma(period_first)
+            + (2.0 * roc(source, roc_period_second).ma(period_second))
+            + (3.0 * roc(source, roc_period_third).ma(period_third))
+            + (4.0 * roc(source, roc_period_fouth).ma(period_fouth)))
 }
 
 #[cfg(test)]

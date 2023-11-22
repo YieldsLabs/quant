@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Signal};
 use core::Series;
-use trend::trix;
+use momentum::trix;
 
 const TRIX_ZERO: f32 = 0.0;
 

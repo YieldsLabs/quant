@@ -33,6 +33,7 @@ from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
 from strategy.signal.di_cross import DICrossSignal
 from strategy.signal.di_flip import DIFlipSignal
 from strategy.signal.dmi_cross import DMICrossSignal
+from strategy.signal.hl import HighLowSignal
 from strategy.signal.kst_cross import KSTCrossSignal
 from strategy.signal.ma_three_cross import MA3CrossSignal
 from strategy.signal.macd_color_switch import MACDColorSwitchSignal
@@ -268,5 +269,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 RSINautralityRejectionSignal(),
                 TestingGroundSignal(period=ma_long_period),
                 QuadrupleSignal(),
+                HighLowSignal(),
             ]
         )

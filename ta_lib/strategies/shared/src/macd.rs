@@ -1,6 +1,6 @@
 use base::OHLCVSeries;
 use core::Series;
-use trend::macd;
+use momentum::macd;
 
 pub enum MACDType {
     MACD,

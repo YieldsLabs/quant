@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Signal};
 use core::Series;
-use trend::kst;
+use momentum::kst;
 
 pub struct KSTCrossSignal {
     roc_period_first: usize,

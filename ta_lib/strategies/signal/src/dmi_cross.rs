@@ -1,6 +1,6 @@
 use base::{OHLCVSeries, Price, Signal};
 use core::Series;
-use trend::dmi;
+use momentum::dmi;
 
 pub struct DMICrossSignal {
     adx_period: usize,
