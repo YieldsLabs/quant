@@ -11,6 +11,7 @@ class SignalType(Enum):
     DiFlip = "DiFlip"
     DiCross = "DiCross"
     DmiCross = "DmiCross"
+    HighLow = "HighLow"
     Ma3Cross = "Ma3Cross"
     MacdFlip = "MacdFlip"
     MacdCross = "MacdCross"

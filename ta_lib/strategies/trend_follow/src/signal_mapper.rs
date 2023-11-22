@@ -27,6 +27,9 @@ pub enum SignalConfig {
         adx_period: f32,
         di_period: f32,
     },
+    HighLow {
+        period: f32,
+    },
     KstCross {
         roc_period_first: f32,
         roc_period_second: f32,
@@ -312,6 +315,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period,
             signal_period,
         } => Box::new(DICrossSignal::new(period, signal_period)),
+        SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
         SignalConfig::Dch2Ma {
             dch_period,
             smoothing,
