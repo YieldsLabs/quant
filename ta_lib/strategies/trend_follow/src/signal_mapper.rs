@@ -22,6 +22,9 @@ pub enum SignalConfig {
         short_period: f32,
         long_period: f32,
     },
+    BopFlip {
+        smoothing_period: f32,
+    },
     CcFlip {
         short_period: f32,
         long_period: f32,
@@ -208,6 +211,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         } => Box::new(APOFlipSignal::new(short_period, long_period)),
+        SignalConfig::BopFlip { smoothing_period } => {
+            Box::new(BOPFlipSignal::new(smoothing_period))
+        }
         SignalConfig::CcFlip {
             short_period,
             long_period,

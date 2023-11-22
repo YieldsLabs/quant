@@ -8,6 +8,7 @@ class SignalType(Enum):
     AoFlip = "AoFlip"
     ApoFlip = "ApoFlip"
     AoSaucer = "AoSaucer"
+    BopFlip = "BopFlip"
     CcFlip = "CcFlip"
     DiFlip = "DiFlip"
     DiCross = "DiCross"
