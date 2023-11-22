@@ -5,8 +5,9 @@ pub fn bop(
     high: &Series<f32>,
     low: &Series<f32>,
     close: &Series<f32>,
+    smoothing_period: usize,
 ) -> Series<f32> {
-    (close - open) / (high - low)
+    ((close - open) / (high - low)).ma(smoothing_period)
 }
 
 #[cfg(test)]
@@ -19,9 +20,9 @@ mod tests {
         let high = Series::from([2.0507, 2.0310, 2.0299, 1.9977, 1.9824]);
         let low = Series::from([2.0174, 2.0208, 1.9928, 1.9792, 1.9616]);
         let close = Series::from([2.0310, 2.0282, 1.9937, 1.9795, 1.9632]);
-        let expected = vec![-0.58558744, -0.27451438, -0.92991406, -0.7675673, -0.783658];
+        let expected = vec![-0.58558744, -0.4300509, -0.6022142, -0.8487407, -0.77561265];
 
-        let result: Vec<f32> = bop(&open, &high, &low, &close).into();
+        let result: Vec<f32> = bop(&open, &high, &low, &close, 2).into();
 
         assert_eq!(result, expected);
     }
