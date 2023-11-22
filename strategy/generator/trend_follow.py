@@ -10,6 +10,7 @@ from core.models.candle import TrendCandleType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
+from strategy.exit.ce import ChExit
 from strategy.exit.dumb import DumbExit
 from strategy.exit.highlow import HighLowExit
 from strategy.exit.ma import MovingAverageExit
@@ -193,7 +194,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [ATRStopLoss(multi=RandomParameter(0.85, 1.5, 0.15))]
         )
         exit_signal = np.random.choice(
-            [DumbExit(), PatternExit(), HighLowExit(), MovingAverageExit(), RSIExit()]
+            [
+                ChExit(),
+                DumbExit(),
+                PatternExit(),
+                HighLowExit(),
+                MovingAverageExit(),
+                RSIExit(),
+            ]
         )
 
         return Strategy(

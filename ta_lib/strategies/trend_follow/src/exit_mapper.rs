@@ -23,10 +23,20 @@ pub enum ExitConfig {
         period: f32,
         threshold: f32,
     },
+    Ch {
+        period: f32,
+        atr_period: f32,
+        multi: f32,
+    },
 }
 
 pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
     match config {
+        ExitConfig::Ch {
+            period,
+            atr_period,
+            multi,
+        } => Box::new(ChExit::new(period, atr_period, multi)),
         ExitConfig::Dumb {} => Box::new(DumbExit {}),
         ExitConfig::Pattern { period } => Box::new(PatternExit::new(period)),
         ExitConfig::HighLow { period } => Box::new(HighLowExit::new(period)),
