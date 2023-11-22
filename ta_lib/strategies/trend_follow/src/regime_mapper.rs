@@ -15,8 +15,8 @@ pub enum RegimeConfig {
         threshold: f32,
     },
     Apo {
-        fast_period: f32,
-        slow_period: f32,
+        short_period: f32,
+        long_period: f32,
     },
     Bop {
         signal_smoothing: f32,
@@ -82,9 +82,9 @@ pub enum RegimeConfig {
 pub fn map_to_regime(config: RegimeConfig) -> Box<dyn Regime> {
     match config {
         RegimeConfig::Apo {
-            fast_period,
-            slow_period,
-        } => Box::new(APOFilter::new(fast_period, slow_period)),
+            short_period,
+            long_period,
+        } => Box::new(APOFilter::new(short_period, long_period)),
         RegimeConfig::Bop { signal_smoothing } => Box::new(BOPFilter::new(signal_smoothing)),
         RegimeConfig::Ma { smoothing, period } => {
             Box::new(MAFilter::new(map_to_ma(smoothing as usize), period))
