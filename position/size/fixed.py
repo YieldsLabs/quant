@@ -25,7 +25,7 @@ class PositionFixedSizeStrategy(AbstractPositionSizeStrategy):
 
         if price_difference == 0:
             raise ValueError(
-                f"Price difference cannot be zero. For entry price {entry_price} and for stop loss {stop_loss_price}"
+                f"Price difference cannot be zero. For entry price {entry_price} and for stoploss {stop_loss_price}"
             )
 
         position_size = risk_amount / price_difference

@@ -29,8 +29,8 @@ impl Regime for RSIFilter {
         let rsi = rsi_indicator(&self.rsi_type, data, self.period);
 
         (
-            rsi.sgt(RSI_NEUTRALITY + self.threshold),
-            rsi.slt(RSI_NEUTRALITY - self.threshold),
+            rsi.sgte(RSI_NEUTRALITY + self.threshold),
+            rsi.slte(RSI_NEUTRALITY - self.threshold),
         )
     }
 }

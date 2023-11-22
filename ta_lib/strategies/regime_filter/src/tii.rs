@@ -29,8 +29,8 @@ impl Regime for TIIFilter {
         let tii = tii(&data.close, self.major_period, self.minor_period);
 
         (
-            tii.sgt(TII_NEUTRALITY + self.threshold),
-            tii.slt(TII_NEUTRALITY - self.threshold),
+            tii.sgte(TII_NEUTRALITY + self.threshold),
+            tii.slte(TII_NEUTRALITY - self.threshold),
         )
     }
 }

@@ -7,7 +7,7 @@ from core.queries.portfolio import GetPositionRisk
 
 
 class PositionKellySizeStrategy(AbstractPositionSizeStrategy):
-    def __init__(self, kelly_factor: float = 0.2):
+    def __init__(self, kelly_factor: float = 0.33):
         super().__init__()
         self.kelly_factor = kelly_factor
 
@@ -28,7 +28,7 @@ class PositionKellySizeStrategy(AbstractPositionSizeStrategy):
 
         if price_difference == 0:
             raise ValueError(
-                f"Price difference cannot be zero. For entry price {entry_price} and for stop loss {stop_loss_price}"
+                f"Price difference cannot be zero. For entry price {entry_price} and for stoploss {stop_loss_price}"
             )
 
         position_size = risk_amount / price_difference
