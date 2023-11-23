@@ -85,39 +85,25 @@ class Portfolio(AbstractEventManager):
 
     @query_handler(GetPositionRisk)
     async def equity(self, query: GetPositionRisk):
+        symbol = query.signal.symbol
+        timeframe = query.signal.timeframe
+        strategy = query.signal.strategy
+
+        equity = await self.state.get_equity(symbol, timeframe, strategy)
+
         if query.type == PositionSizeType.Fixed:
-            return (
-                await self.state.get_equity(
-                    query.signal.symbol, query.signal.timeframe, query.signal.strategy
-                )
-                * self.risk_per_trade
-            )
+            return equity * self.risk_per_trade
 
-        if query.type == PositionSizeType.Kelly:
-            kelly = await self.state.get_kelly(
-                query.signal.symbol, query.signal.timeframe, query.signal.strategy
-            )
-            return (
-                await self.state.get_equity(
-                    query.signal.symbol, query.signal.timeframe, query.signal.strategy
-                )
-                * kelly
-                if kelly
-                else self.risk_per_trade
-            )
+        elif query.type == PositionSizeType.Kelly:
+            kelly = await self.state.get_kelly(symbol, timeframe, strategy)
+            return equity * kelly if kelly else self.risk_per_trade
 
-        if query.type == PositionSizeType.Optimalf:
-            optimalf = await self.state.get_optimalf(
-                query.signal.symbol, query.signal.timeframe, query.signal.strategy
-            )
-            return (
-                await self.state.get_equity(
-                    query.signal.symbol, query.signal.timeframe, query.signal.strategy
-                )
-                * optimalf
-                if optimalf
-                else self.risk_per_trade
-            )
+        elif query.type == PositionSizeType.Optimalf:
+            optimalf = await self.state.get_optimalf(symbol, timeframe, strategy)
+            return equity * optimalf if optimalf else self.risk_per_trade
+
+        else:
+            return equity * self.risk_per_trade
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):
