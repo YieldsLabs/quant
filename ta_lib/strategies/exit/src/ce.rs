@@ -1,5 +1,8 @@
 use base::{Exit, OHLCVSeries, Price};
 use core::Series;
+use trend::ce;
+
+const CE_MIDDLE: f32 = 0.0;
 
 pub struct ChExit {
     period: usize,
@@ -23,15 +26,18 @@ impl Exit for ChExit {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let atr = data.atr(self.period);
-        let atr_multi = atr * self.multi;
-
-        let ch_long = data.high.highest(self.period) - &atr_multi;
-        let ch_short = data.low.lowest(self.period) + &atr_multi;
+        let (direction, trend) = ce(
+            &data.high,
+            &data.low,
+            &data.close,
+            &data.atr(self.atr_period),
+            self.period,
+            self.multi,
+        );
 
         (
-            data.close.cross_under(&ch_long),
-            data.close.cross_over(&ch_short),
+            data.close.cross_under(&trend) & direction.slt(CE_MIDDLE),
+            data.close.cross_over(&trend) & direction.sgt(CE_MIDDLE),
         )
     }
 }

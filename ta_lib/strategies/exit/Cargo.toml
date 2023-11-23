@@ -7,4 +7,5 @@ edition = "2021"
 base = { path = "../base" }
 core = { path = "../../core" }
 candlestick = { path = "../../patterns/candlestick" }
+trend = { path = "../../indicators/trend" }
 shared = { path = "../shared" }
