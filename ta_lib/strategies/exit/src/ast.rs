@@ -2,7 +2,6 @@ use base::{Exit, OHLCVSeries, Price};
 use core::Series;
 use trend::ast;
 
-
 pub struct AstExit {
     atr_period: usize,
     multi: f32,
