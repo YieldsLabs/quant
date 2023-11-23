@@ -7,6 +7,10 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum ExitConfig {
+    Ast {
+        atr_period: f32,
+        multi: f32,
+    },
     Dumb {},
     Pattern {
         period: f32,
@@ -32,6 +36,7 @@ pub enum ExitConfig {
 
 pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
     match config {
+        ExitConfig::Ast { atr_period, multi } => Box::new(AstExit::new(atr_period, multi)),
         ExitConfig::Ch {
             period,
             atr_period,

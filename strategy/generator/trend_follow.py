@@ -10,6 +10,7 @@ from core.models.candle import TrendCandleType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
+from strategy.exit.ast import AstExit
 from strategy.exit.ce import ChExit
 from strategy.exit.dumb import DumbExit
 from strategy.exit.highlow import HighLowExit
@@ -195,6 +196,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
         exit_signal = np.random.choice(
             [
+                AstExit(),
                 ChExit(),
                 DumbExit(),
                 PatternExit(),
