@@ -23,6 +23,7 @@ from strategy.regime.bop import BOPFilter
 from strategy.regime.braid import BraidFilter
 from strategy.regime.eis import EISFilter
 from strategy.regime.fib import FibFilter
+from strategy.regime.kst import KSTFilter
 from strategy.regime.ma import MovingAverageFilter
 from strategy.regime.macd import MACDFilter
 from strategy.regime.ribbon import RibbonFilter
@@ -189,6 +190,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 BraidFilter(),
                 APOFilter(),
                 BOPFilter(),
+                KSTFilter(),
             ]
         )
         volume = np.random.choice([DumbVolume(), OSCVolume()])
