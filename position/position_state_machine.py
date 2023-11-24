@@ -3,6 +3,7 @@ import logging
 from enum import Enum, auto
 from typing import Callable, Dict, Type, Union
 
+from core.events.backtest import BacktestEnded
 from core.events.position import BrokerPositionClosed, BrokerPositionOpened
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import (
@@ -51,6 +52,10 @@ class PositionStateMachine:
             PositionState.OPENED,
             "handle_position_opened",
         ),
+        (PositionState.WAITING_BROKER_CONFIRMATION, BacktestEnded): (
+            PositionState.CLOSE,
+            "handle_exit_received",
+        ),
         (PositionState.OPENED, ExitLongSignalReceived): (
             PositionState.CLOSE,
             "handle_exit_received",
@@ -60,6 +65,10 @@ class PositionStateMachine:
             "handle_exit_received",
         ),
         (PositionState.OPENED, RiskThresholdBreached): (
+            PositionState.CLOSE,
+            "handle_exit_received",
+        ),
+        (PositionState.OPENED, BacktestEnded): (
             PositionState.CLOSE,
             "handle_exit_received",
         ),

@@ -1,6 +1,7 @@
 from typing import Union
 
 from core.actors.base import BaseActor
+from core.events.backtest import BacktestEnded
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
@@ -28,13 +29,16 @@ from .position_storage import PositionStorage
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
 PositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
 ExitSignal = Union[
-    ExitLongSignalReceived, ExitShortSignalReceived, RiskThresholdBreached
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+    RiskThresholdBreached,
+    BacktestEnded,
 ]
 
 
 class PositionActor(BaseActor):
     SIGNAL_EVENTS = (GoLongSignalReceived, GoShortSignalReceived)
-    EXIT_EVENTS = (ExitLongSignalReceived, ExitShortSignalReceived)
+    EXIT_EVENTS = (ExitLongSignalReceived, ExitShortSignalReceived, BacktestEnded)
     POSITION_EVENTS = (
         BrokerPositionOpened,
         BrokerPositionClosed,
@@ -67,26 +71,19 @@ class PositionActor(BaseActor):
             self._dispatcher.unregister(event, self.handle)
 
     async def handle(self, event):
-        signal = (
-            event.signal
-            if isinstance(event, self.SIGNAL_EVENTS + self.EXIT_EVENTS)
-            else event.position.signal
-        )
-        symbol = signal.symbol
-        timeframe = signal.timeframe
+        (symbol, timeframe) = self._get_event_key(event)
 
         if (
             isinstance(event, self.SIGNAL_EVENTS)
             and not await self.state.position_exists(symbol, timeframe)
-        ) or not await self._is_event_stale(symbol, timeframe, event):
+            or not await self._is_event_stale(symbol, timeframe, event)
+        ):
             await self.sm.process_event(symbol, event)
 
     def _event_filter(
         self, event: Union[SignalEvent, ExitSignal, PositionEvent]
     ) -> bool:
-        signal = event.signal if hasattr(event, "signal") else event.position.signal
-        symbol = signal.symbol
-        timeframe = signal.timeframe
+        (symbol, timeframe) = self._get_event_key(event)
 
         return self._symbol == symbol and self._timeframe == timeframe
 
@@ -121,14 +118,9 @@ class PositionActor(BaseActor):
         return True
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
-        if isinstance(event, ExitLongSignalReceived) or isinstance(
-            event, ExitShortSignalReceived
-        ):
-            signal = event.signal
-        else:
-            signal = event.position.signal
+        (symbol, timeframe) = self._get_event_key(event)
 
-        position = await self.state.retrieve_position(signal.symbol, signal.timeframe)
+        position = await self.state.retrieve_position(symbol, timeframe)
 
         if position and self.can_close_position(event, position):
             await self.dispatch(PositionCloseRequested(position, event.exit_price))
@@ -154,4 +146,19 @@ class PositionActor(BaseActor):
         ):
             return True
 
+        if isinstance(event, BacktestEnded):
+            return True
+
         return False
+
+    @staticmethod
+    def _get_event_key(event: Union[SignalEvent, ExitSignal, PositionEvent]):
+        signal = (
+            event.signal
+            if hasattr(event, "signal")
+            else event.position.signal
+            if hasattr(event, "position")
+            else event
+        )
+
+        return (signal.symbol, signal.timeframe)
