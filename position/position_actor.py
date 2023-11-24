@@ -73,11 +73,12 @@ class PositionActor(BaseActor):
             else event.position.signal
         )
         symbol = signal.symbol
+        timeframe = signal.timeframe
 
         if (
             isinstance(event, self.SIGNAL_EVENTS)
-            and not await self.state.position_exists(signal)
-        ) or not await self._is_event_stale(signal, event):
+            and not await self.state.position_exists(symbol, timeframe)
+        ) or not await self._is_event_stale(symbol, timeframe, event):
             await self.sm.process_event(symbol, event)
 
     def _event_filter(
@@ -89,8 +90,8 @@ class PositionActor(BaseActor):
 
         return self._symbol == symbol and self._timeframe == timeframe
 
-    async def _is_event_stale(self, signal, event) -> bool:
-        position = await self.state.retrieve_position(signal)
+    async def _is_event_stale(self, symbol, timeframe, event) -> bool:
+        position = await self.state.retrieve_position(symbol, timeframe)
 
         return position and position.last_modified > event.meta.timestamp
 
@@ -127,7 +128,7 @@ class PositionActor(BaseActor):
         else:
             signal = event.position.signal
 
-        position = await self.state.retrieve_position(signal)
+        position = await self.state.retrieve_position(signal.symbol, signal.timeframe)
 
         if position and self.can_close_position(event, position):
             await self.dispatch(PositionCloseRequested(position, event.exit_price))
