@@ -10,7 +10,8 @@ from strategy.signal.base import BaseSignal, SignalType
 @dataclass(frozen=True)
 class STCFlipSignal(BaseSignal):
     type: SignalType = SignalType.StcFlip
-    fast_period: Parameter = StaticParameter(26.0)
-    slow_period: Parameter = StaticParameter(50.0)
-    period: Parameter = StaticParameter(12.0)
-    factor: Parameter = StaticParameter(0.5)
+    fast_period: Parameter = StaticParameter(32.0)
+    slow_period: Parameter = StaticParameter(44.0)
+    cycle: Parameter = StaticParameter(17.0)
+    d_first: Parameter = StaticParameter(12.0)
+    d_second: Parameter = StaticParameter(5.0)

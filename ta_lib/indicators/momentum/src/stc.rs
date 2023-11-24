@@ -1,36 +1,20 @@
 use crate::stoch;
-use core::{iff, Series};
+use core::Series;
 
 pub fn stc(
     close: &Series<f32>,
     fast_period: usize,
     slow_period: usize,
-    period: usize,
-    factor: f32,
+    cycle: usize,
+    d_first: usize,
+    d_second: usize,
 ) -> Series<f32> {
     let macd_line = close.ema(fast_period) - close.ema(slow_period);
-    let k = stoch(&macd_line, &macd_line, &macd_line, period);
+    let k = stoch(&macd_line, &macd_line, &macd_line, cycle);
+    let d = k.ema(d_first);
+    let kd = stoch(&d, &d, &d, cycle);
 
-    let len = close.len();
-    let mut d = Series::zero(len);
-
-    for _ in 0..len {
-        let prev_d = d.shift(1);
-
-        d = iff!(prev_d.na(), k, &prev_d + factor * (&k - &prev_d));
-    }
-
-    let kd = stoch(&d, &d, &d, period);
-
-    let mut stc = Series::zero(len);
-
-    for _ in 0..len {
-        let prev_stc = stc.shift(1);
-
-        stc = iff!(prev_stc.na(), kd, &prev_stc + factor * (&kd - &prev_stc));
-    }
-
-    stc
+    kd.ema(d_second)
 }
 
 #[cfg(test)]
@@ -45,13 +29,15 @@ mod tests {
         ]);
         let fast_period = 2;
         let slow_period = 3;
-        let period = 2;
-        let factor = 0.5;
+        let cycle = 2;
+        let d_first = 3;
+        let d_second = 3;
         let expected = vec![
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 50.0, 25.0, 62.5, 31.25, 65.625, 82.8125,
         ];
 
-        let result: Vec<f32> = stc(&source, fast_period, slow_period, period, factor).into();
+        let result: Vec<f32> =
+            stc(&source, fast_period, slow_period, cycle, d_first, d_second).into();
 
         assert_eq!(result, expected);
     }

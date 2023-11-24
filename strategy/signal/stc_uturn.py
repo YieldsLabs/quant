@@ -12,5 +12,6 @@ class STCUTurnSignal(BaseSignal):
     type: SignalType = SignalType.StcUturn
     fast_period: Parameter = StaticParameter(26.0)
     slow_period: Parameter = StaticParameter(50.0)
-    period: Parameter = StaticParameter(10.0)
-    factor: Parameter = StaticParameter(0.5)
+    cycle: Parameter = StaticParameter(10.0)
+    d_first: Parameter = StaticParameter(3.0)
+    d_second: Parameter = StaticParameter(3.0)
