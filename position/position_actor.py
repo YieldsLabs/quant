@@ -72,19 +72,22 @@ class PositionActor(BaseActor):
             if isinstance(event, self.SIGNAL_EVENTS + self.EXIT_EVENTS)
             else event.position.signal
         )
+        symbol = signal.symbol
 
         if (
             isinstance(event, self.SIGNAL_EVENTS)
             and not await self.state.position_exists(signal)
         ) or not await self._is_event_stale(signal, event):
-            await self.sm.process_event(signal, event)
+            await self.sm.process_event(symbol, event)
 
     def _event_filter(
         self, event: Union[SignalEvent, ExitSignal, PositionEvent]
     ) -> bool:
         signal = event.signal if hasattr(event, "signal") else event.position.signal
+        symbol = signal.symbol
+        timeframe = signal.timeframe
 
-        return self._symbol == signal.symbol and self._timeframe == signal.timeframe
+        return self._symbol == symbol and self._timeframe == timeframe
 
     async def _is_event_stale(self, signal, event) -> bool:
         position = await self.state.retrieve_position(signal)

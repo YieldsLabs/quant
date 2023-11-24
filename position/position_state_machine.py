@@ -12,7 +12,6 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.interfaces.abstract_position_manager import AbstractPositionManager
-from core.models.signal import Signal
 from core.models.symbol import Symbol
 
 logger = logging.getLogger(__name__)
@@ -83,8 +82,7 @@ class PositionStateMachine:
         async with self._state_lock:
             self._state[symbol] = state
 
-    async def process_event(self, signal: Signal, event: PortfolioEvent):
-        symbol = signal.symbol
+    async def process_event(self, symbol: Symbol, event: PortfolioEvent):
         current_state = await self._get_state(symbol)
 
         if not self._is_valid_state(current_state, event):
