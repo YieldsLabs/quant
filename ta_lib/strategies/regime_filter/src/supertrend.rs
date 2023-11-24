@@ -2,6 +2,8 @@ use base::{OHLCVSeries, Price, Regime};
 use core::Series;
 use trend::supertrend;
 
+const SUP_ZERO: f32 = 0.0;
+
 pub struct SupertrendFilter {
     atr_period: usize,
     factor: f32,
@@ -22,13 +24,16 @@ impl Regime for SupertrendFilter {
     }
 
     fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (_, trendline) = supertrend(
+        let (direction, trendline) = supertrend(
             &data.hl2(),
             &data.close,
             &data.atr(self.atr_period),
             self.factor,
         );
 
-        (data.close.gt(&trendline), data.close.lt(&trendline))
+        (
+            data.close.gt(&trendline) & direction.sgt(SUP_ZERO),
+            data.close.lt(&trendline) & direction.slt(SUP_ZERO),
+        )
     }
 }
