@@ -65,6 +65,7 @@ from strategy.signal.testing_ground import TestingGroundSignal
 from strategy.signal.tii_cross import TIICrossSignal
 from strategy.signal.tii_v import TIIVSignal
 from strategy.signal.trend_candle import TrendCandleSignal
+from strategy.signal.trix_cross import TRIXCrossSignal
 from strategy.signal.trix_flip import TRIXFlipSignal
 from strategy.signal.tsi_cross import TSICrossSignal
 from strategy.signal.tsi_flip import TSIFlipSignal
@@ -192,7 +193,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
         volume = np.random.choice([DumbVolume(), OSCVolume()])
         stop_loss = np.random.choice(
-            [ATRStopLoss(multi=RandomParameter(0.85, 1.5, 0.15))]
+            [ATRStopLoss(multi=RandomParameter(0.85, 1.8, 0.15))]
         )
         exit_signal = np.random.choice(
             [
@@ -260,6 +261,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     DMICrossSignal(),
                     StochCrossSignal(),
                     KSTCrossSignal(),
+                    TRIXCrossSignal(),
                 ]
             )
         if signal == TrendSignalType.TWO_MA:

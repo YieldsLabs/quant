@@ -132,6 +132,10 @@ pub enum SignalConfig {
     TrixFlip {
         period: f32,
     },
+    TrixCross {
+        period: f32,
+        signal_period: f32,
+    },
     SnAtr {
         atr_period: f32,
         atr_smoothing_period: f32,
@@ -350,6 +354,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             Box::new(TrendCandleSignal::new(map_to_candle(candle as usize)))
         }
         SignalConfig::TrixFlip { period } => Box::new(TRIXFlipSignal::new(period)),
+        SignalConfig::TrixCross {
+            period,
+            signal_period,
+        } => Box::new(TRIXCrossSignal::new(period, signal_period)),
         SignalConfig::SnAtr {
             atr_period,
             atr_smoothing_period,

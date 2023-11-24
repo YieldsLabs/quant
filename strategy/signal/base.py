@@ -38,6 +38,7 @@ class SignalType(Enum):
     TIICross = "TIICross"
     TiiV = "TiiV"
     TrixFlip = "TrixFlip"
+    TrixCross = "TrixCross"
     TsiFlip = "TsiFlip"
     TsiCross = "TsiCross"
     QstickFlip = "QstickFlip"
