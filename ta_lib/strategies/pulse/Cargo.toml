@@ -1,0 +1,12 @@
+[package]
+name = "pulse"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+base = { path = "../base" }
+core = { path = "../../core" }
+volume = { path = "../../indicators/volume" }
+trend = { path = "../../indicators/trend" }
+momentum = { path = "../../indicators/momentum" }

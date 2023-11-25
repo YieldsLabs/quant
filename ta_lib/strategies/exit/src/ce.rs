@@ -25,7 +25,7 @@ impl Exit for ChExit {
         std::cmp::max(self.period, self.atr_period)
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, trend) = ce(
             &data.high,
             &data.low,

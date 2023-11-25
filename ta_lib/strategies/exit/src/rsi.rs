@@ -26,7 +26,7 @@ impl Exit for RSIExit {
         self.period
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.period);
 
         (

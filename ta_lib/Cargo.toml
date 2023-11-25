@@ -11,9 +11,10 @@ members = [
 "strategies/trend_follow",
 "strategies/stop_loss",
 "strategies/signal",
-"strategies/regime_filter",
+"strategies/filter",
 "strategies/shared",
-"strategies/volume_filter"
+"strategies/pulse",
+"strategies/baseline"
 ]
 
 [profile.release]

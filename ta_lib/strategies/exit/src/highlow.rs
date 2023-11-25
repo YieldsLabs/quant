@@ -18,7 +18,7 @@ impl Exit for HighLowExit {
         self.period
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
             data.close.gt(&data.high.shift(self.period)),
             data.close.lt(&data.low.shift(self.period)),

@@ -51,5 +51,5 @@ class SignalType(Enum):
 
 
 @dataclass(frozen=True)
-class BaseSignal(Indicator):
+class Signal(Indicator):
     type: SignalType

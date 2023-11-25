@@ -7,9 +7,11 @@ import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.candle import TrendCandleType
+from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
+from strategy.baseline.ma import MABaseLine
 from strategy.exit.ast import AstExit
 from strategy.exit.ce import ChExit
 from strategy.exit.dumb import DumbExit
@@ -17,20 +19,21 @@ from strategy.exit.highlow import HighLowExit
 from strategy.exit.ma import MovingAverageExit
 from strategy.exit.pattern import PatternExit
 from strategy.exit.rsi import RSIExit
-from strategy.regime.adx import ADXFilter
-from strategy.regime.apo import APOFilter
-from strategy.regime.bop import BOPFilter
-from strategy.regime.braid import BraidFilter
-from strategy.regime.eis import EISFilter
-from strategy.regime.fib import FibFilter
-from strategy.regime.kst import KSTFilter
-from strategy.regime.ma import MovingAverageFilter
-from strategy.regime.macd import MACDFilter
-from strategy.regime.ribbon import RibbonFilter
-from strategy.regime.rsi import RSIFilter
-from strategy.regime.stoch import StochFilter
-from strategy.regime.supertrend import SupertrendFilter
-from strategy.regime.tii import TIIFilter
+from strategy.filter.apo import APOFilter
+from strategy.filter.bop import BOPFilter
+from strategy.filter.braid import BraidFilter
+from strategy.filter.eis import EISFilter
+from strategy.filter.fib import FibFilter
+from strategy.filter.kst import KSTFilter
+from strategy.filter.macd import MACDFilter
+from strategy.filter.ribbon import RibbonFilter
+from strategy.filter.rsi import RSIFilter
+from strategy.filter.stoch import StochFilter
+from strategy.filter.supertrend import SupertrendFilter
+from strategy.filter.tii import TIIFilter
+from strategy.pulse.adx import ADXPulse
+from strategy.pulse.dumb import DumbPulse
+from strategy.pulse.osc import OSCPulse
 from strategy.signal.ao_flip import AOFlipSignal
 from strategy.signal.ao_saucer import AOSaucerSignal
 from strategy.signal.apo_flip import APOFlipSignal
@@ -72,8 +75,6 @@ from strategy.signal.tsi_cross import TSICrossSignal
 from strategy.signal.tsi_flip import TSIFlipSignal
 from strategy.signal.vwap_cross import VWAPCrossSignal
 from strategy.stop_loss.atr import ATRStopLoss
-from strategy.volume.dumb import DumbVolume
-from strategy.volume.osc import OSCVolume
 
 
 class TrendSignalType(Enum):
@@ -128,25 +129,31 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         stop_loss = ATRStopLoss(
             period=StaticParameter(14.0), multi=StaticParameter(1.0)
         )
-        regime = RSIFilter()
-        exit = DumbExit()
-        volume = DumbVolume()
+        filter = RSIFilter()
+        exit = AstExit()
+        pulse = DumbPulse()
+        baseline = MABaseLine(
+            smoothing=StaticParameter(MovingAverageType.EMA),
+            period=StaticParameter(100.0),
+        )
         strategies = [
             (
                 StrategyType.TREND,
                 TrendCandleSignal(
                     candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
                 ),
-                regime,
-                volume,
+                filter,
+                pulse,
+                baseline,
                 stop_loss,
                 exit,
             ),
             (
                 StrategyType.TREND,
                 SupertrendFlipSignal(),
-                regime,
-                volume,
+                filter,
+                pulse,
+                baseline,
                 stop_loss,
                 exit,
             ),
@@ -175,11 +182,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
     def _generate_strategy(self):
         signal_groups = list(TrendSignalType)
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
-        regime = np.random.choice(
+        filter = np.random.choice(
             [
-                MovingAverageFilter(period=RandomParameter(150.0, 300.0, 25.0)),
                 RSIFilter(),
-                ADXFilter(),
                 TIIFilter(),
                 StochFilter(),
                 SupertrendFilter(),
@@ -193,7 +198,27 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 KSTFilter(),
             ]
         )
-        volume = np.random.choice([DumbVolume(), OSCVolume()])
+        pulse = np.random.choice([DumbPulse(), ADXPulse(), OSCPulse()])
+        baseline = np.random.choice(
+            [
+                MABaseLine(
+                    smoothing=StaticParameter(MovingAverageType.EMA),
+                    period=RandomParameter(100.0, 200.0, 10.0),
+                ),
+                MABaseLine(
+                    smoothing=StaticParameter(MovingAverageType.HMA),
+                    period=RandomParameter(86.0, 90.0, 1.0),
+                ),
+                MABaseLine(
+                    smoothing=StaticParameter(MovingAverageType.DEMA),
+                    period=RandomParameter(26.0, 30.0, 1.0),
+                ),
+                MABaseLine(
+                    smoothing=StaticParameter(MovingAverageType.KAMA),
+                    period=RandomParameter(30.0, 50.0, 1.0),
+                ),
+            ]
+        )
         stop_loss = np.random.choice(
             [ATRStopLoss(multi=RandomParameter(0.85, 1.8, 0.15))]
         )
@@ -210,7 +235,15 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
 
         return Strategy(
-            *(StrategyType.TREND, entry_signal, regime, volume, stop_loss, exit_signal)
+            *(
+                StrategyType.TREND,
+                entry_signal,
+                filter,
+                pulse,
+                baseline,
+                stop_loss,
+                exit_signal,
+            )
         )
 
     def _generate_signal(self, signal: TrendSignalType):

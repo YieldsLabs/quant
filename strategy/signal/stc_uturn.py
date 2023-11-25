@@ -4,11 +4,11 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class STCUTurnSignal(BaseSignal):
+class STCUTurnSignal(Signal):
     type: SignalType = SignalType.StcUturn
     fast_period: Parameter = StaticParameter(26.0)
     slow_period: Parameter = StaticParameter(50.0)

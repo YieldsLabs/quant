@@ -6,24 +6,29 @@ pub trait Signal: Send + Sync {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
+pub trait Filter: Send + Sync {
+    fn lookback(&self) -> usize;
+    fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+}
+
+pub trait Pulse: Send + Sync {
+    fn lookback(&self) -> usize;
+    fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+}
+
+pub trait BaseLine: Send + Sync {
+    fn lookback(&self) -> usize;
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+}
+
 pub trait Exit: Send + Sync {
     fn lookback(&self) -> usize;
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait StopLoss: Send + Sync {
     fn lookback(&self) -> usize;
-    fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>);
-}
-
-pub trait Regime: Send + Sync {
-    fn lookback(&self) -> usize;
-    fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
-}
-
-pub trait Volume: Send + Sync {
-    fn lookback(&self) -> usize;
-    fn apply(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>);
 }
 
 pub trait Strategy {

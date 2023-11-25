@@ -4,11 +4,11 @@ from inspect import Parameter
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
 from core.models.rsi import RSIType
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RSI2MovingAverageSignal(BaseSignal):
+class RSI2MovingAverageSignal(Signal):
     type: SignalType = SignalType.Rsi2Ma
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(2.0)

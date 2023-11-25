@@ -1,0 +1,11 @@
+[package]
+name = "baseline"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+base = { path = "../base" }
+core = { path = "../../core" }
+trend = { path = "../../indicators/trend" }
+shared = { path = "../shared" }

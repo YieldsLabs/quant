@@ -4,11 +4,11 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.exit.base import BaseExit, ExitType
+from strategy.exit.base import Exit, ExitType
 
 
 @dataclass(frozen=True)
-class ChExit(BaseExit):
+class ChExit(Exit):
     type: ExitType = ExitType.Ch
     period: Parameter = StaticParameter(22.0)
     atr_period: Parameter = StaticParameter(14.0)

@@ -6,11 +6,11 @@ from core.models.parameter import (
     RandomParameter,
 )
 from core.models.rsi import RSIType
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RSIMovingAveragePullbackSignal(BaseSignal):
+class RSIMovingAveragePullbackSignal(Signal):
     type: SignalType = SignalType.RsiMaPullback
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = RandomParameter(12.0, 15.0, 1.0)

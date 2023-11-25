@@ -4,11 +4,11 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class KSTCrossSignal(BaseSignal):
+class KSTCrossSignal(Signal):
     type: SignalType = SignalType.KstCross
     roc_period_first: Parameter = StaticParameter(10.0)
     roc_period_second: Parameter = StaticParameter(15.0)

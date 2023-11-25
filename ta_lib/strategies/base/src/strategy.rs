@@ -1,5 +1,5 @@
 use crate::price::Price;
-use crate::{Exit, OHLCVSeries, Regime, Signal, StopLoss, Strategy, Volume, OHLCV};
+use crate::{BaseLine, Exit, Filter, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
@@ -23,8 +23,9 @@ pub struct StopLossLevels {
 pub struct BaseStrategy {
     data: VecDeque<OHLCV>,
     signal: Box<dyn Signal>,
-    regime: Box<dyn Regime>,
-    volume: Box<dyn Volume>,
+    filter: Box<dyn Filter>,
+    pulse: Box<dyn Pulse>,
+    base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
     exit: Box<dyn Exit>,
     lookback_period: usize,
@@ -33,15 +34,17 @@ pub struct BaseStrategy {
 impl BaseStrategy {
     pub fn new(
         signal: Box<dyn Signal>,
-        regime: Box<dyn Regime>,
-        volume: Box<dyn Volume>,
+        filter: Box<dyn Filter>,
+        pulse: Box<dyn Pulse>,
+        base_line: Box<dyn BaseLine>,
         stop_loss: Box<dyn StopLoss>,
         exit: Box<dyn Exit>,
     ) -> Self {
         let lookbacks = [
             signal.lookback(),
-            regime.lookback(),
-            volume.lookback(),
+            filter.lookback(),
+            pulse.lookback(),
+            base_line.lookback(),
             stop_loss.lookback(),
             exit.lookback(),
             DEFAULT_LOOKBACK,
@@ -52,8 +55,9 @@ impl BaseStrategy {
             data: VecDeque::with_capacity(adjusted_lookback),
             lookback_period: adjusted_lookback,
             signal,
-            regime,
-            volume,
+            filter,
+            pulse,
+            base_line,
             stop_loss,
             exit,
         }
@@ -115,19 +119,21 @@ impl Strategy for BaseStrategy {
 
 impl BaseStrategy {
     fn trade_signals(&self, series: &OHLCVSeries) -> (bool, bool, bool, bool) {
-        let (go_long_signal, go_short_signal) = self.signal.generate(series);
-        let (go_long_regime, go_short_regime) = self.regime.apply(series);
-        let (go_long_volume, go_short_volume) = self.volume.apply(series);
+        let (go_long_trigger, go_short_trigger) = self.signal.generate(series);
+        let (go_long_confirm, go_short_confirm) = self.filter.confirm(series);
+        let (go_long_momentum, go_short_momentum) = self.pulse.assess(series);
+        let (go_long_filter, go_short_filter) = self.base_line.filter(series);
 
-        let go_long_series = go_long_signal & go_long_regime & go_long_volume;
-        let go_short_series = go_short_signal & go_short_regime & go_short_volume;
+        let go_long_signal = go_long_trigger & go_long_confirm & go_long_momentum & go_long_filter;
+        let go_short_signal =
+            go_short_trigger & go_short_confirm & go_short_momentum & go_short_filter;
 
-        let (exit_long_series, exit_short_series) = self.exit.generate(series);
+        let (exit_long_eval, exit_short_eval) = self.exit.evaluate(series);
 
-        let go_long = go_long_series.last().unwrap_or_default();
-        let go_short = go_short_series.last().unwrap_or_default();
-        let exit_long = exit_long_series.last().unwrap_or_default();
-        let exit_short = exit_short_series.last().unwrap_or_default();
+        let go_long = go_long_signal.last().unwrap_or_default();
+        let go_short = go_short_signal.last().unwrap_or_default();
+        let exit_long = exit_long_eval.last().unwrap_or_default();
+        let exit_short = exit_short_eval.last().unwrap_or_default();
 
         (go_long, go_short, exit_long, exit_short)
     }
@@ -137,10 +143,10 @@ impl BaseStrategy {
     }
 
     fn stop_loss_levels(&self, series: &OHLCVSeries) -> (f32, f32) {
-        let (stop_loss_long_series, stop_loss_short_series) = self.stop_loss.next(series);
+        let (sl_long_find, sl_short_find) = self.stop_loss.find(series);
 
-        let stop_loss_long = stop_loss_long_series.last().unwrap_or_default();
-        let stop_loss_short = stop_loss_short_series.last().unwrap_or_default();
+        let stop_loss_long = sl_long_find.last().unwrap_or_default();
+        let stop_loss_short = sl_short_find.last().unwrap_or_default();
 
         (stop_loss_long, stop_loss_short)
     }
@@ -150,7 +156,7 @@ impl BaseStrategy {
 mod tests {
     use crate::price::Price;
     use crate::{
-        BaseStrategy, Exit, OHLCVSeries, Regime, Signal, StopLoss, Strategy, Volume, OHLCV,
+        BaseLine, BaseStrategy, Exit, Filter, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV,
     };
     use core::Series;
 
@@ -168,15 +174,54 @@ mod tests {
         }
     }
 
-    struct MockExit {}
+    struct MockFilter {
+        period: usize,
+    }
 
-    impl Exit for MockExit {
+    impl Filter for MockFilter {
         fn lookback(&self) -> usize {
-            0
+            self.period
         }
 
-        fn generate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (Series::empty(1), Series::empty(1))
+        fn confirm(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            (
+                Series::empty(1).nz(Some(0.0)).into(),
+                Series::empty(1).nz(Some(0.0)).into(),
+            )
+        }
+    }
+
+    struct MockPulse {
+        period: usize,
+    }
+
+    impl Pulse for MockPulse {
+        fn lookback(&self) -> usize {
+            self.period
+        }
+
+        fn assess(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            (
+                Series::empty(1).nz(Some(0.0)).into(),
+                Series::empty(1).nz(Some(0.0)).into(),
+            )
+        }
+    }
+
+    struct MockBaseLine {
+        period: usize,
+    }
+
+    impl BaseLine for MockBaseLine {
+        fn lookback(&self) -> usize {
+            self.period
+        }
+
+        fn filter(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            (
+                Series::empty(1).nz(Some(0.0)).into(),
+                Series::empty(1).nz(Some(0.0)).into(),
+            )
         }
     }
 
@@ -190,7 +235,7 @@ mod tests {
             self.period
         }
 
-        fn next(&self, _data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
+        fn find(&self, _data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
             (
                 Series::from([5.0]) * self.multi,
                 Series::from([6.0]) * self.multi,
@@ -198,37 +243,15 @@ mod tests {
         }
     }
 
-    struct MockRegime {
-        period: usize,
-    }
+    struct MockExit {}
 
-    impl Regime for MockRegime {
+    impl Exit for MockExit {
         fn lookback(&self) -> usize {
-            self.period
+            0
         }
 
-        fn apply(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (
-                Series::empty(1).nz(Some(0.0)).into(),
-                Series::empty(1).nz(Some(0.0)).into(),
-            )
-        }
-    }
-
-    struct MockVolume {
-        period: usize,
-    }
-
-    impl Volume for MockVolume {
-        fn lookback(&self) -> usize {
-            self.period
-        }
-
-        fn apply(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (
-                Series::empty(1).nz(Some(0.0)).into(),
-                Series::empty(1).nz(Some(0.0)).into(),
-            )
+        fn evaluate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            (Series::empty(1), Series::empty(1))
         }
     }
 
@@ -236,8 +259,9 @@ mod tests {
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
             Box::new(MockSignal { short_period: 10 }),
-            Box::new(MockRegime { period: 1 }),
-            Box::new(MockVolume { period: 15 }),
+            Box::new(MockFilter { period: 1 }),
+            Box::new(MockPulse { period: 7 }),
+            Box::new(MockBaseLine { period: 15 }),
             Box::new(MockStopLoss {
                 period: 2,
                 multi: 2.0,
@@ -251,8 +275,9 @@ mod tests {
     fn test_strategy_data() {
         let mut strategy = BaseStrategy::new(
             Box::new(MockSignal { short_period: 10 }),
-            Box::new(MockRegime { period: 1 }),
-            Box::new(MockVolume { period: 15 }),
+            Box::new(MockFilter { period: 1 }),
+            Box::new(MockPulse { period: 7 }),
+            Box::new(MockBaseLine { period: 15 }),
             Box::new(MockStopLoss {
                 period: 2,
                 multi: 2.0,

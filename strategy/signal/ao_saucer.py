@@ -4,11 +4,11 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class AOSaucerSignal(BaseSignal):
+class AOSaucerSignal(Signal):
     type: SignalType = SignalType.AoSaucer
     short_period: Parameter = StaticParameter(5.0)
     long_period: Parameter = StaticParameter(34.0)

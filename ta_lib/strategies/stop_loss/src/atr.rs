@@ -20,7 +20,7 @@ impl StopLoss for ATRStopLoss {
         self.period
     }
 
-    fn next(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
+    fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
         let atr = &data.atr(self.period);
 
         let atr_multi = atr * self.multi;

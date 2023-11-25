@@ -13,8 +13,9 @@ class GeneticAttributes(Enum):
     SYMBOL = auto()
     TIMEFRAME = auto()
     SIGNAL = auto()
-    REGIME = auto()
-    VOLUME = auto()
+    FILTER = auto()
+    PULSE = auto()
+    BASELINE = auto()
     STOP_LOSS = auto()
     EXIT = auto()
 
@@ -148,8 +149,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
         if chosen_attr in [
             GeneticAttributes.SIGNAL,
-            GeneticAttributes.REGIME,
-            GeneticAttributes.VOLUME,
+            GeneticAttributes.FILTER,
+            GeneticAttributes.PULSE,
+            GeneticAttributes.BASELINE,
             GeneticAttributes.STOP_LOSS,
             GeneticAttributes.EXIT,
         ]:
@@ -158,12 +160,15 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent2.strategy.entry_signal
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent1.strategy.entry_signal,
-                parent1.strategy.regime_filter
-                if chosen_attr == GeneticAttributes.REGIME
-                else parent2.strategy.regime_filter,
-                parent1.strategy.volume_filter
-                if chosen_attr == GeneticAttributes.VOLUME
-                else parent2.strategy.volume_filter,
+                parent1.strategy.filter
+                if chosen_attr == GeneticAttributes.FILTER
+                else parent2.strategy.filter,
+                parent1.strategy.pulse
+                if chosen_attr == GeneticAttributes.PULSE
+                else parent2.strategy.pulse,
+                parent1.strategy.baseline
+                if chosen_attr == GeneticAttributes.BASELINE
+                else parent2.strategy.baseline,
                 parent1.strategy.stop_loss
                 if chosen_attr == GeneticAttributes.STOP_LOSS
                 else parent2.strategy.stop_loss,
@@ -176,12 +181,15 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent1.strategy.entry_signal
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent2.strategy.entry_signal,
-                parent2.strategy.regime_filter
-                if chosen_attr == GeneticAttributes.REGIME
-                else parent1.strategy.regime_filter,
-                parent2.strategy.volume_filter
-                if chosen_attr == GeneticAttributes.VOLUME
-                else parent1.strategy.volume_filter,
+                parent2.strategy.filter
+                if chosen_attr == GeneticAttributes.FILTER
+                else parent1.strategy.filter,
+                parent2.strategy.pulse
+                if chosen_attr == GeneticAttributes.PULSE
+                else parent1.strategy.pulse,
+                parent2.strategy.baseline
+                if chosen_attr == GeneticAttributes.BASELINE
+                else parent1.strategy.baseline,
                 parent2.strategy.stop_loss
                 if chosen_attr == GeneticAttributes.STOP_LOSS
                 else parent1.strategy.stop_loss,
@@ -211,8 +219,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
         if mutation_choice in [
             GeneticAttributes.SIGNAL,
-            GeneticAttributes.REGIME,
-            GeneticAttributes.VOLUME,
+            GeneticAttributes.FILTER,
+            GeneticAttributes.PULSE,
+            GeneticAttributes.BASELINE,
             GeneticAttributes.STOP_LOSS,
             GeneticAttributes.EXIT,
         ]:

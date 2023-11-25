@@ -3,11 +3,11 @@ from inspect import Parameter
 
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class DCH2MovingAverageSignal(BaseSignal):
+class DCH2MovingAverageSignal(Signal):
     type: SignalType = SignalType.Dch2Ma
     dch_period: Parameter = StaticParameter(20.0)
     smoothing: Parameter = CategoricalParameter(MovingAverageType)

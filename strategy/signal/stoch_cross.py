@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 from core.models.parameter import CategoricalParameter, Parameter, RandomParameter
 from core.models.stoch import StochType
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class StochCrossSignal(BaseSignal):
+class StochCrossSignal(Signal):
     type: SignalType = SignalType.StochCross
     stoch_type: Parameter = CategoricalParameter(StochType)
     period: Parameter = RandomParameter(13.0, 16.0, 1.0)

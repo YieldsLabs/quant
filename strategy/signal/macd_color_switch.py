@@ -7,11 +7,11 @@ from core.models.parameter import (
     RandomParameter,
     StaticParameter,
 )
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class MACDColorSwitchSignal(BaseSignal):
+class MACDColorSwitchSignal(Signal):
     type: SignalType = SignalType.MacdColorSwitch
     macd_type: Parameter = CategoricalParameter(MACDType)
     fast_period: Parameter = RandomParameter(2.0, 15.0, 1.0)

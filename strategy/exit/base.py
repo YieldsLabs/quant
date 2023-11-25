@@ -18,5 +18,5 @@ class ExitType(Enum):
 
 
 @dataclass(frozen=True)
-class BaseExit(Indicator):
+class Exit(Indicator):
     type: ExitType

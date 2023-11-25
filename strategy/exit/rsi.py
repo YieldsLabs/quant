@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 from core.models.parameter import CategoricalParameter, Parameter, RandomParameter
 from core.models.rsi import RSIType
-from strategy.exit.base import BaseExit, ExitType
+from strategy.exit.base import Exit, ExitType
 
 
 @dataclass(frozen=True)
-class RSIExit(BaseExit):
+class RSIExit(Exit):
     type: ExitType = ExitType.Rsi
     rsi_type: Parameter = CategoricalParameter(RSIType)
     period: Parameter = RandomParameter(14.0, 30.0, 1.0)

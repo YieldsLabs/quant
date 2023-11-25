@@ -111,15 +111,17 @@ class SignalActor(BaseActor):
     def _register_strategy(self):
         (
             signal_data,
-            regime_data,
-            volume_data,
+            filter_data,
+            pulse_data,
+            baseline_data,
             stoploss_data,
             exit_data,
         ) = self._strategy.parameters
 
         signal_ptr, signal_len = self.allocate_and_write(signal_data)
-        regime_ptr, regime_len = self.allocate_and_write(regime_data)
-        volume_prt, volume_len = self.allocate_and_write(volume_data)
+        filter_ptr, filter_len = self.allocate_and_write(filter_data)
+        pulse_prt, pulse_len = self.allocate_and_write(pulse_data)
+        baseline_prt, baseline_len = self.allocate_and_write(baseline_data)
         stoploss_ptr, stoploss_len = self.allocate_and_write(stoploss_data)
         exit_ptr, exit_len = self.allocate_and_write(exit_data)
 
@@ -127,10 +129,12 @@ class SignalActor(BaseActor):
             self.store,
             signal_ptr,
             signal_len,
-            regime_ptr,
-            regime_len,
-            volume_prt,
-            volume_len,
+            filter_ptr,
+            filter_len,
+            pulse_prt,
+            pulse_len,
+            baseline_prt,
+            baseline_len,
             stoploss_ptr,
             stoploss_len,
             exit_ptr,

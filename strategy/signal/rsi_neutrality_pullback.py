@@ -7,11 +7,11 @@ from core.models.parameter import (
     StaticParameter,
 )
 from core.models.rsi import RSIType
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RSINautralityPullbackSignal(BaseSignal):
+class RSINautralityPullbackSignal(Signal):
     type: SignalType = SignalType.RsiNeutralityPullback
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(14.0)

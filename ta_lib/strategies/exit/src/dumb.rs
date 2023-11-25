@@ -8,7 +8,7 @@ impl Exit for DumbExit {
         0
     }
 
-    fn generate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn evaluate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (Series::empty(1), Series::empty(1))
     }
 }

@@ -4,10 +4,10 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class TRIXFlipSignal(BaseSignal):
+class TRIXFlipSignal(Signal):
     type: SignalType = SignalType.TrixFlip
     period: Parameter = StaticParameter(18.0)

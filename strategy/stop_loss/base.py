@@ -12,5 +12,5 @@ class StopLossType(Enum):
 
 
 @dataclass(frozen=True)
-class BaseStopLoss(Indicator):
+class StopLoss(Indicator):
     type: StopLossType

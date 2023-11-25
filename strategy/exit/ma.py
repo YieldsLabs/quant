@@ -6,11 +6,11 @@ from core.models.parameter import (
     Parameter,
     RandomParameter,
 )
-from strategy.exit.base import BaseExit, ExitType
+from strategy.exit.base import Exit, ExitType
 
 
 @dataclass(frozen=True)
-class MovingAverageExit(BaseExit):
+class MovingAverageExit(Exit):
     type: ExitType = ExitType.Ma
     smoothing: Parameter = CategoricalParameter(MovingAverageType)
     period: Parameter = RandomParameter(15.0, 40.0, 5.0)

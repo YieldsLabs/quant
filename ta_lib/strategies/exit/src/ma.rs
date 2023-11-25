@@ -21,7 +21,7 @@ impl Exit for MAExit {
         self.period
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.smoothing, data, self.period);
 
         (data.close.cross_under(&ma), data.close.cross_over(&ma))

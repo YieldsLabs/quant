@@ -13,6 +13,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "baseline"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "shared",
+ "trend",
+]
+
+[[package]]
 name = "candlestick"
 version = "0.1.0"
 dependencies = [
@@ -31,6 +41,17 @@ dependencies = [
  "base",
  "candlestick",
  "core",
+ "shared",
+ "trend",
+]
+
+[[package]]
+name = "filter"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "momentum",
  "shared",
  "trend",
 ]
@@ -73,23 +94,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulse"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "momentum",
+ "trend",
+ "volume",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
 dependencies = [
  "proc-macro2",
-]
-
-[[package]]
-name = "regime_filter"
-version = "0.1.0"
-dependencies = [
- "base",
- "core",
- "momentum",
- "shared",
- "trend",
 ]
 
 [[package]]
@@ -187,15 +208,16 @@ name = "trend_follow"
 version = "0.1.0"
 dependencies = [
  "base",
+ "baseline",
  "core",
  "exit",
- "regime_filter",
+ "filter",
+ "pulse",
  "serde",
  "serde_json",
  "shared",
  "signal",
  "stop_loss",
- "volume_filter",
 ]
 
 [[package]]
@@ -218,13 +240,4 @@ version = "0.1.0"
 dependencies = [
  "core",
  "price",
-]
-
-[[package]]
-name = "volume_filter"
-version = "0.1.0"
-dependencies = [
- "base",
- "core",
- "volume",
 ]

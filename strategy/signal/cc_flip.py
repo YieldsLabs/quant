@@ -4,12 +4,12 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from strategy.signal.base import BaseSignal, SignalType
+from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class CCFlipSignal(BaseSignal):
+class CCFlipSignal(Signal):
     type: SignalType = SignalType.CcFlip
-    short_period: Parameter = StaticParameter(11.0)
-    long_period: Parameter = StaticParameter(14.0)
-    smoothing_period: Parameter = StaticParameter(10.0)
+    short_period: Parameter = StaticParameter(20.0)
+    long_period: Parameter = StaticParameter(15.0)
+    smoothing_period: Parameter = StaticParameter(13.0)

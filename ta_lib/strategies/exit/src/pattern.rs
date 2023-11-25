@@ -19,7 +19,7 @@ impl Exit for PatternExit {
         self.period
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
             doji::bearish(&data.open, &data.close),
             engulfing::bullish(&data.open, &data.high, &data.low, &data.close),

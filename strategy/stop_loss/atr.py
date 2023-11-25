@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
 from core.models.parameter import Parameter, StaticParameter
-from strategy.stop_loss.base import BaseStopLoss, StopLossType
+from strategy.stop_loss.base import StopLoss, StopLossType
 
 
 @dataclass(frozen=True)
-class ATRStopLoss(BaseStopLoss):
+class ATRStopLoss(StopLoss):
     type: StopLossType = StopLossType.Atr
     period: Parameter = StaticParameter(14.0)
     multi: Parameter = StaticParameter(1.2)

@@ -21,7 +21,7 @@ impl Exit for AstExit {
         self.atr_period
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (_, trend) = ast(&data.close, &data.atr(self.atr_period), self.multi);
 
         (
