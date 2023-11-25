@@ -1,6 +1,7 @@
 mod apo;
 mod bop;
 mod braid;
+mod dpo;
 mod dumb;
 mod eis;
 mod fib;
@@ -15,6 +16,7 @@ mod tii;
 pub use apo::APOFilter;
 pub use bop::BOPFilter;
 pub use braid::BraidFilter;
+pub use dpo::DPOFilter;
 pub use dumb::DumbFilter;
 pub use eis::EISFilter;
 pub use fib::FibFilter;

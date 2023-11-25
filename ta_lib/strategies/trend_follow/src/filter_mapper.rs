@@ -23,6 +23,9 @@ pub enum FilterConfig {
         strength: f32,
         atr_period: f32,
     },
+    Dpo {
+        period: f32,
+    },
     Fib {
         period: f32,
     },
@@ -89,6 +92,7 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             long_period,
         } => Box::new(APOFilter::new(short_period, long_period)),
         FilterConfig::Bop { signal_smoothing } => Box::new(BOPFilter::new(signal_smoothing)),
+        FilterConfig::Dpo { period } => Box::new(DPOFilter::new(period)),
         FilterConfig::Macd {
             macd_type,
             fast_period,

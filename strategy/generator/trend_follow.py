@@ -6,7 +6,6 @@ from symtable import Symbol
 import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
-from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
@@ -22,6 +21,7 @@ from strategy.exit.rsi import RSIExit
 from strategy.filter.apo import APOFilter
 from strategy.filter.bop import BOPFilter
 from strategy.filter.braid import BraidFilter
+from strategy.filter.dpo import DPOFilter
 from strategy.filter.eis import EISFilter
 from strategy.filter.fib import FibFilter
 from strategy.filter.kst import KSTFilter
@@ -162,6 +162,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 BraidFilter(),
                 APOFilter(),
                 BOPFilter(),
+                DPOFilter(),
                 KSTFilter(),
             ]
         )
