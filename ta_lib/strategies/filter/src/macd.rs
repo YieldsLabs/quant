@@ -2,6 +2,8 @@ use base::{Filter, OHLCVSeries};
 use core::Series;
 use shared::{macd_indicator, MACDType};
 
+const MACD_ZERO: f32 = 0.0;
+
 pub struct MACDFilter {
     macd_type: MACDType,
     fast_period: usize,
@@ -32,7 +34,7 @@ impl Filter for MACDFilter {
     }
 
     fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (macd_line, signal_line, _) = macd_indicator(
+        let (_, _, histogram) = macd_indicator(
             &self.macd_type,
             data,
             self.fast_period,
@@ -40,6 +42,6 @@ impl Filter for MACDFilter {
             self.signal_smoothing,
         );
 
-        (macd_line.gt(&signal_line), macd_line.lt(&signal_line))
+        (histogram.sgt(MACD_ZERO), histogram.slt(MACD_ZERO))
     }
 }

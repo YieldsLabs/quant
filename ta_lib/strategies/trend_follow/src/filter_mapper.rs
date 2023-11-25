@@ -20,6 +20,7 @@ pub enum FilterConfig {
         period_one: f32,
         period_two: f32,
         period_three: f32,
+        strength: f32,
         atr_period: f32,
     },
     Fib {
@@ -152,11 +153,13 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             period_one,
             period_two,
             period_three,
+            strength,
             atr_period,
         } => Box::new(BraidFilter::new(
             period_one,
             period_two,
             period_three,
+            strength,
             atr_period,
         )),
         FilterConfig::Tii {

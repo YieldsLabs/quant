@@ -126,40 +126,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
 
     def _diversified_strategies(self):
-        stop_loss = ATRStopLoss(
-            period=StaticParameter(14.0), multi=StaticParameter(1.0)
-        )
-        filter = RSIFilter()
-        exit = AstExit()
-        pulse = DumbPulse()
-        baseline = MABaseLine(
-            smoothing=StaticParameter(MovingAverageType.EMA),
-            period=StaticParameter(100.0),
-        )
-        strategies = [
-            (
-                StrategyType.TREND,
-                TrendCandleSignal(
-                    candle=StaticParameter(TrendCandleType.DOUBLE_TROUBLE)
-                ),
-                filter,
-                pulse,
-                baseline,
-                stop_loss,
-                exit,
-            ),
-            (
-                StrategyType.TREND,
-                SupertrendFlipSignal(),
-                filter,
-                pulse,
-                baseline,
-                stop_loss,
-                exit,
-            ),
-        ]
-
-        return [Strategy(*strategy) for strategy in strategies]
+        return []
 
     def _random_strategies(self):
         strategies_set = set()
