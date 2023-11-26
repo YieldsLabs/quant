@@ -194,6 +194,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     smoothing=StaticParameter(MovingAverageType.KAMA),
                     period=RandomParameter(30.0, 50.0, 1.0),
                 ),
+                MABaseLine(
+                    smoothing=StaticParameter(MovingAverageType.KIJUN),
+                    period=RandomParameter(30.0, 40.0, 1.0),
+                ),
             ]
         )
         stop_loss = np.random.choice(
