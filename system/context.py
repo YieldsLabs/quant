@@ -10,6 +10,7 @@ from core.interfaces.abstract_strategy_generator_factory import (
     AbstractStrategyGeneratorFactory,
 )
 from core.models.lookback import Lookback
+from core.models.strategy import StrategyType
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class SystemContext:
     executor_factory: AbstractExecutorActorFactory
     strategy_generator_factory: AbstractStrategyGeneratorFactory
     strategy_optimizer_factory: AbstractStrategyOptimizerFactory
+    strategy_type: StrategyType
     in_sample: Lookback
     out_sample: Lookback
     active_strategy_num: int
