@@ -7,6 +7,7 @@ from core.models.indicator import Indicator
 class PulseType(Enum):
     Adx = "Adx"
     Dumb = "Dumb"
+    Chop = "Chop"
     Osc = "Osc"
 
     def __str__(self):

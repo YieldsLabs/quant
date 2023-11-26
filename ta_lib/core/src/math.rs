@@ -38,6 +38,13 @@ impl Series<f32> {
         })
     }
 
+    pub fn log10(&self) -> Self {
+        self.fmap(|val| match val {
+            Some(v) if *v > 0.0 => Some(v.log10()),
+            _ => None,
+        })
+    }
+
     pub fn exp(&self) -> Self {
         self.fmap(|val| val.map(|v| v.exp()))
     }
@@ -282,6 +289,22 @@ mod tests {
         let series = Series::from(&source);
 
         let result = series.log();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_log10() {
+        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
+        let expected = vec![
+            None,
+            Some(std::f32::consts::LOG10_2),
+            Some(0.47712126),
+            Some(0.60206),
+            Some(0.69897),
+        ];
+        let series = Series::from(&source);
+        let result = series.log10();
 
         assert_eq!(result, expected);
     }

@@ -33,6 +33,7 @@ from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
 from strategy.filter.tii import TIIFilter
 from strategy.pulse.adx import ADXPulse
+from strategy.pulse.chop import CHOPPulse
 from strategy.pulse.dumb import DumbPulse
 from strategy.pulse.osc import OSCPulse
 from strategy.signal.ao_flip import AOFlipSignal
@@ -169,7 +170,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 EOMFilter(),
             ]
         )
-        pulse = np.random.choice([DumbPulse(), ADXPulse(), OSCPulse()])
+        pulse = np.random.choice([DumbPulse(), ADXPulse(), CHOPPulse(), OSCPulse()])
         baseline = np.random.choice(
             [
                 MABaseLine(

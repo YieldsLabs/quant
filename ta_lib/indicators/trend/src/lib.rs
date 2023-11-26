@@ -1,6 +1,7 @@
 mod alma;
 mod ast;
 mod ce;
+mod chop;
 mod dema;
 mod dpo;
 mod ema;
@@ -28,6 +29,7 @@ mod zlsma;
 pub use alma::alma;
 pub use ast::ast;
 pub use ce::ce;
+pub use chop::chop;
 pub use dema::dema;
 pub use dpo::dpo;
 pub use ema::ema;
