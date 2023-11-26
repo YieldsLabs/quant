@@ -39,6 +39,7 @@ from strategy.signal.ao_saucer import AOSaucerSignal
 from strategy.signal.apo_flip import APOFlipSignal
 from strategy.signal.bop_flip import BOPFlipSignal
 from strategy.signal.cc_flip import CCFlipSignal
+from strategy.signal.cfo_flip import CFOFlipSignal
 from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
 from strategy.signal.di_cross import DICrossSignal
 from strategy.signal.di_flip import DIFlipSignal
@@ -174,6 +175,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     period=RandomParameter(100.0, 200.0, 10.0),
                 ),
                 MABaseLine(
+                    smoothing=StaticParameter(MovingAverageType.WMA),
+                    period=RandomParameter(15.0, 30.0, 1.0),
+                ),
+                MABaseLine(
                     smoothing=StaticParameter(MovingAverageType.SMMA),
                     period=RandomParameter(100.0, 200.0, 10.0),
                 ),
@@ -242,6 +247,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     STCFlipSignal(),
                     APOFlipSignal(),
                     BOPFlipSignal(),
+                    CFOFlipSignal(),
                 ]
             )
         if signal == TrendSignalType.V:
