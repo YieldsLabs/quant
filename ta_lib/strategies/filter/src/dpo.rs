@@ -1,6 +1,6 @@
 use base::{Filter, OHLCVSeries};
 use core::Series;
-use momentum::dpo;
+use trend::dpo;
 
 const DPO_FILTER: f32 = 0.0;
 
