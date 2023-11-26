@@ -54,6 +54,7 @@ dependencies = [
  "momentum",
  "shared",
  "trend",
+ "volume",
 ]
 
 [[package]]

@@ -23,6 +23,7 @@ from strategy.filter.bop import BOPFilter
 from strategy.filter.braid import BraidFilter
 from strategy.filter.dpo import DPOFilter
 from strategy.filter.eis import EISFilter
+from strategy.filter.eom import EOMFilter
 from strategy.filter.fib import FibFilter
 from strategy.filter.kst import KSTFilter
 from strategy.filter.macd import MACDFilter
@@ -165,6 +166,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 BOPFilter(),
                 DPOFilter(),
                 KSTFilter(),
+                EOMFilter(),
             ]
         )
         pulse = np.random.choice([DumbPulse(), ADXPulse(), OSCPulse()])

@@ -12,6 +12,7 @@ class FilterType(Enum):
     Dpo = "Dpo"
     Fib = "Fib"
     Eis = "Eis"
+    Eom = "Eom"
     Ribbon = "Ribbon"
     Rsi = "Rsi"
     Tii = "Tii"

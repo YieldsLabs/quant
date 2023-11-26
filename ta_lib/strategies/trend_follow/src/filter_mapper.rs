@@ -26,6 +26,10 @@ pub enum FilterConfig {
     Dpo {
         period: f32,
     },
+    Eom {
+        period: f32,
+        divisor: f32,
+    },
     Fib {
         period: f32,
     },
@@ -117,6 +121,7 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
             signal_smoothing,
             signal_period,
         )),
+        FilterConfig::Eom { period, divisor } => Box::new(EOMFilter::new(period, divisor)),
         FilterConfig::Rsi {
             rsi_type,
             period,
