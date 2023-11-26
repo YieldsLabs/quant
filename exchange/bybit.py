@@ -96,9 +96,19 @@ class Bybit(AbstractExchange):
         return symbols
 
     def fetch_ohlcv(
-        self, symbol: Symbol, timeframe: Timeframe, lookback: Lookback, batch_size: int
+        self,
+        symbol: Symbol,
+        timeframe: Timeframe,
+        in_sample: Lookback,
+        out_sample: Lookback | None,
+        batch_size: int,
     ):
-        lookback = TIMEFRAMES_TO_LOOKBACK[(lookback, timeframe)]
+        in_sample = TIMEFRAMES_TO_LOOKBACK[(in_sample, timeframe)]
+        out_sample = (
+            TIMEFRAMES_TO_LOOKBACK[(out_sample, timeframe)] if out_sample else 0
+        )
+
+        lookback = in_sample + out_sample
 
         start_time = (
             self.connector.milliseconds()
@@ -107,8 +117,8 @@ class Bybit(AbstractExchange):
 
         fetched_ohlcv = 0
 
-        while fetched_ohlcv < lookback:
-            current_limit = min(lookback - fetched_ohlcv, batch_size)
+        while fetched_ohlcv < in_sample:
+            current_limit = min(in_sample - fetched_ohlcv, batch_size)
 
             current_ohlcv = self._fetch_ohlcv(
                 symbol, timeframe, start_time, current_limit

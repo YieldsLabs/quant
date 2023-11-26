@@ -15,4 +15,5 @@ class BacktestRun(Command):
     symbol: Symbol
     timeframe: Timeframe
     strategy: Strategy
-    lookback: Lookback
+    in_sample: Lookback
+    out_sample: Lookback | None

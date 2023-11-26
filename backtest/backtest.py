@@ -24,14 +24,17 @@ class Backtest(AbstractBacktest):
         symbol = command.symbol
         timeframe = command.timeframe
         strategy = command.strategy
-        lookback = command.lookback
+        in_sample = command.in_sample
+        out_sample = command.out_sample
 
         logger.info(
-            f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={lookback}"
+            f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={in_sample}"
         )
 
         await self.dispatch(BacktestStarted(symbol, timeframe, strategy))
-        iterator = datasource.fetch(symbol, timeframe, lookback, self.batch_size)
+        iterator = datasource.fetch(
+            symbol, timeframe, in_sample, out_sample, self.batch_size
+        )
 
         async for data in iterator:
             await self._process_historical_data(symbol, timeframe, data)

@@ -28,7 +28,12 @@ class AbstractExchange(ABC):
 
     @abstractmethod
     def fetch_ohlcv(
-        self, symbol: Symbol, timeframe: Timeframe, lookback: Lookback, batch_size: int
+        self,
+        symbol: Symbol,
+        timeframe: Timeframe,
+        in_sample: Lookback,
+        out_sample: Lookback,
+        batch_size: int,
     ):
         pass
 

@@ -12,11 +12,8 @@ from core.interfaces.abstract_system import AbstractSystem
 from core.models.broker import BrokerType, MarginMode, PositionMode
 from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
-from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
 from core.models.strategy import Strategy, StrategyType
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
@@ -117,12 +114,12 @@ class System(AbstractSystem):
 
         futures_symbols = await self.query(GetSymbols())
 
-        trend_follow = self.context.strategy_generator_factory.create(
+        generator = self.context.strategy_generator_factory.create(
             StrategyType.TREND, futures_symbols
         )
         self.optimizer = self.context.strategy_optimizer_factory.create(
             Optimizer.GENETIC,
-            trend_follow,
+            generator,
         )
 
         self.optimizer.init()
@@ -188,7 +185,8 @@ class System(AbstractSystem):
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
-                self.context.lookback,
+                self.context.in_sample,
+                self.context.out_sample,
             )
         )
         await asyncio.gather(*[squad.stop(), order_executor.stop()])
@@ -208,7 +206,8 @@ class System(AbstractSystem):
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
-                Lookback.ONE_MONTH,
+                self.context.out_sample,
+                None,
             )
         )
 

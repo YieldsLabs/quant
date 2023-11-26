@@ -21,7 +21,8 @@ class SystemContext:
     executor_factory: AbstractExecutorActorFactory
     strategy_generator_factory: AbstractStrategyGeneratorFactory
     strategy_optimizer_factory: AbstractStrategyOptimizerFactory
-    lookback: Lookback
+    in_sample: Lookback
+    out_sample: Lookback
     active_strategy_num: int
     parallel_num: int
     leverage: int

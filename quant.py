@@ -22,8 +22,8 @@ from optimization.optimizer_factory import StrategyOptimizerFactory
 from portfolio.portfolio import Portfolio
 from position.position_actor_factory import PositionActorFactory
 from position.position_factory import PositionFactory
-from position.risk.break_even import PositionRiskBreakEvenStrategy
-from position.size.fixed import PositionFixedSizeStrategy
+from position.risk.simple import PositionRiskSimpleStrategy
+from position.size.optimal_f import PositionOptinalFSizeStrategy
 from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
 from risk.risk_actor_factory import RiskActorFactory
 from service.environment_secret_service import EnvironmentSecretService
@@ -60,23 +60,23 @@ async def main():
     logging.info("Initializing...")
 
     store_buf_size = 1000
-    num_workers = os.cpu_count() + 1
+    num_workers = os.cpu_count()
     multi_piority_group = 2
     batch_size = 2584
 
     risk_per_trade = 0.0005
-    risk_reward_ratio = 3.8
+    risk_reward_ratio = 1.6
     risk_buffer = 0.0001
-    break_even_percentage = 0.25
     leverage = 1
     initial_account_size = 1000
-    lookback = Lookback.ONE_MONTH
+    in_sample = Lookback.ONE_MONTH
+    out_sample = Lookback.ONE_MONTH
 
-    num_samples = 13
-    parallel_num = 3
-    active_strategy_num = 5
-    max_generations = 5
-    elite_count = 2
+    num_samples = 3
+    parallel_num = 2
+    active_strategy_num = 2
+    max_generations = 1
+    elite_count = 3
     mutation_rate = 0.02
     crossover_rate = 0.8
     tournament_size = 3
@@ -84,7 +84,7 @@ async def main():
     stability_percentage = 0.3
 
     timeframes = [
-        Timeframe.FIVE_MINUTES,
+        Timeframe.ONE_MINUTE,
     ]
 
     symbols_blacklist = [
@@ -104,8 +104,8 @@ async def main():
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
 
     position_factory = PositionFactory(
-        PositionFixedSizeStrategy(),
-        PositionRiskBreakEvenStrategy(break_even_percentage),
+        PositionOptinalFSizeStrategy(),
+        PositionRiskSimpleStrategy(),
         PositionRiskRewardTakeProfitStrategy(risk_reward_ratio),
     )
 
@@ -139,7 +139,8 @@ async def main():
         executor_factory,
         strategy_generator_factory,
         strategy_optimization_factory,
-        lookback,
+        in_sample,
+        out_sample,
         active_strategy_num,
         parallel_num,
         leverage,

@@ -13,13 +13,15 @@ class AsyncHistoricalData:
         exchange: AbstractExchange,
         symbol: Symbol,
         timeframe: Timeframe,
-        lookback: Lookback,
+        in_sample: Lookback,
+        out_sample: Lookback,
         batch_size: int,
     ):
         self.exchange = exchange
         self.symbol = symbol
         self.timeframe = timeframe
-        self.lookback = lookback
+        self.in_sample = in_sample
+        self.out_sample = out_sample
         self.batch_size = batch_size
         self.iterator = None
         self.sentinel = object()
@@ -41,7 +43,11 @@ class AsyncHistoricalData:
     def _init_iterator(self) -> None:
         if self.iterator is None:
             self.iterator = self.exchange.fetch_ohlcv(
-                self.symbol, self.timeframe, self.lookback, self.batch_size
+                self.symbol,
+                self.timeframe,
+                self.in_sample,
+                self.out_sample,
+                self.batch_size,
             )
 
     async def _fetch_next_item(self):
@@ -63,8 +69,13 @@ class ExchangeDataSource(AbstractDataSource):
         self.exchange = exchange
 
     def fetch(
-        self, symbol: Symbol, timeframe: Timeframe, lookback: Lookback, batch_size: int
+        self,
+        symbol: Symbol,
+        timeframe: Timeframe,
+        in_sample: Lookback,
+        out_sample: Lookback,
+        batch_size: int,
     ):
         return AsyncHistoricalData(
-            self.exchange, symbol, timeframe, lookback, batch_size
+            self.exchange, symbol, timeframe, in_sample, out_sample, batch_size
         )

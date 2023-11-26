@@ -174,7 +174,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 MABaseLine(
                     smoothing=StaticParameter(MovingAverageType.EMA),
-                    period=RandomParameter(100.0, 200.0, 10.0),
+                    period=RandomParameter(100.0, 150.0, 10.0),
                 ),
                 MABaseLine(
                     smoothing=StaticParameter(MovingAverageType.WMA),
@@ -182,7 +182,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MABaseLine(
                     smoothing=StaticParameter(MovingAverageType.SMMA),
-                    period=RandomParameter(100.0, 200.0, 10.0),
+                    period=RandomParameter(100.0, 150.0, 10.0),
                 ),
                 MABaseLine(
                     smoothing=StaticParameter(MovingAverageType.HMA),
