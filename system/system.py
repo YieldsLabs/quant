@@ -14,7 +14,9 @@ from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
-from core.models.strategy import Strategy, StrategyType
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
@@ -115,7 +117,7 @@ class System(AbstractSystem):
         futures_symbols = await self.query(GetSymbols())
 
         generator = self.context.strategy_generator_factory.create(
-            StrategyType.TREND, futures_symbols
+            self.context.strategy_type, futures_symbols
         )
         self.optimizer = self.context.strategy_optimizer_factory.create(
             Optimizer.GENETIC,

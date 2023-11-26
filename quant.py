@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from backtest.backtest import Backtest
 from broker.broker_factory import BrokerFactory
 from core.models.lookback import Lookback
+from core.models.strategy import StrategyType
 from core.models.timeframe import Timeframe
 from datasource.bybit_ws import BybitWSHandler
 from datasource.datasource_factory import DataSourceFactory
@@ -65,7 +66,7 @@ async def main():
     batch_size = 2584
 
     risk_per_trade = 0.0005
-    risk_reward_ratio = 1.6
+    risk_reward_ratio = 1.5
     risk_buffer = 0.0001
     leverage = 1
     initial_account_size = 1000
@@ -131,6 +132,8 @@ async def main():
         num_samples, symbols_blacklist, timeframes
     )
 
+    strategy_type = StrategyType.TREND
+
     context = SystemContext(
         datasource_factory,
         broker_factory,
@@ -139,6 +142,7 @@ async def main():
         executor_factory,
         strategy_generator_factory,
         strategy_optimization_factory,
+        strategy_type,
         in_sample,
         out_sample,
         active_strategy_num,
@@ -147,24 +151,24 @@ async def main():
         IS_LIVE_MODE,
     )
 
-    system = System(context)
+    trend_system = System(context)
 
-    trader_task = asyncio.create_task(system.start())
+    trend_system_task = asyncio.create_task(trend_system.start())
     ws_handler_task = asyncio.create_task(ws_handler.run())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
         logging.info("Started")
-        await asyncio.gather(*[trader_task, ws_handler_task, shutdown_task])
+        await asyncio.gather(*[trend_system_task, ws_handler_task, shutdown_task])
     finally:
         logging.info("Closing...")
         shutdown_task.cancel()
-        trader_task.cancel()
+        trend_system_task.cancel()
         ws_handler_task.cancel()
 
         await ws_handler.close()
 
-        system.stop()
+        trend_system.stop()
 
         await event_bus.stop()
         await event_bus.wait()
