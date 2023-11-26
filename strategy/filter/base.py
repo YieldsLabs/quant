@@ -9,6 +9,7 @@ class FilterType(Enum):
     Bop = "Bop"
     Braid = "Braid"
     Dumb = "Dumb"
+    Dpo = "Dpo"
     Fib = "Fib"
     Eis = "Eis"
     Ribbon = "Ribbon"
