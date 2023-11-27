@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from backtest.backtest import Backtest
 from broker.broker_factory import BrokerFactory
+from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.strategy import StrategyType
 from core.models.timeframe import Timeframe
@@ -76,11 +77,11 @@ async def main():
     num_samples = 3
     parallel_num = 2
     active_strategy_num = 2
-    max_generations = 1
-    elite_count = 3
+    max_generations = 3
+    elite_count = 2
     mutation_rate = 0.02
     crossover_rate = 0.8
-    tournament_size = 3
+    tournament_size = 2
     reset_percentage = 0.2
     stability_percentage = 0.3
 
@@ -95,14 +96,13 @@ async def main():
     event_store = EventStore(LOG_DIR, store_buf_size)
     event_bus = EventDispatcher(num_workers, multi_piority_group)
 
-    Backtest(batch_size)
+    exchange_factory = ExchangeFactory(EnvironmentSecretService())
+
+    Backtest(DataSourceFactory(), exchange_factory, batch_size)
     Portfolio(initial_account_size, risk_per_trade)
 
     ws_handler = BybitWSHandler(BYBIT_WSS)
-
-    datasource_factory = DataSourceFactory()
     broker_factory = BrokerFactory()
-    exchange_factory = ExchangeFactory(EnvironmentSecretService())
 
     position_factory = PositionFactory(
         PositionOptinalFSizeStrategy(),
@@ -133,9 +133,9 @@ async def main():
     )
 
     strategy_type = StrategyType.TREND
+    datasource_exchange = ExchangeType.BYBIT
 
     context = SystemContext(
-        datasource_factory,
         broker_factory,
         exchange_factory,
         squad_factory,
@@ -143,6 +143,7 @@ async def main():
         strategy_generator_factory,
         strategy_optimization_factory,
         strategy_type,
+        datasource_exchange,
         in_sample,
         out_sample,
         active_strategy_num,

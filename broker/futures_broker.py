@@ -2,12 +2,12 @@ from core.commands.broker import ClosePosition, OpenPosition, UpdateSettings
 from core.event_decorators import command_handler, query_handler
 from core.interfaces.abstract_broker import AbstractBroker
 from core.interfaces.abstract_exchange import AbstractExchange
+from core.queries.account import GetBalance
 from core.queries.broker import (
-    GetAccountBalance,
-    GetOpenPosition,
     GetSymbol,
     GetSymbols,
 )
+from core.queries.position import GetOpenPosition
 
 
 class FuturesBroker(AbstractBroker):
@@ -24,9 +24,12 @@ class FuturesBroker(AbstractBroker):
     @command_handler(OpenPosition)
     def open_position(self, command: OpenPosition):
         position = command.position
+        size = position.size
+        side = position.side
+
         symbol = position.signal.symbol
 
-        self.exchange.open_market_position(symbol, position.side, position.size)
+        self.exchange.open_market_position(symbol, side, size)
 
     @command_handler(ClosePosition)
     def close_position(self, command: ClosePosition):
@@ -48,6 +51,6 @@ class FuturesBroker(AbstractBroker):
         symbols = self.exchange.fetch_symbols()
         return next((symbol for symbol in symbols if symbol.name == query.symbol), None)
 
-    @query_handler(GetAccountBalance)
-    def get_account_balance(self, query: GetAccountBalance):
+    @query_handler(GetBalance)
+    def get_account_balance(self, query: GetBalance):
         return self.exchange.fetch_account_balance(query.currency)

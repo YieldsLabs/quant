@@ -6,6 +6,8 @@ from core.event_decorators import command_handler
 from core.events.backtest import BacktestEnded, BacktestStarted
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_backtest import AbstractBacktest
+from core.interfaces.abstract_datasource_factory import AbstractDataSourceFactory
+from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -14,27 +16,37 @@ logger = logging.getLogger(__name__)
 
 
 class Backtest(AbstractBacktest):
-    def __init__(self, batch_size: int):
+    def __init__(
+        self,
+        datasource_factory: AbstractDataSourceFactory,
+        exchange_factory: AbstractExchangeFactory,
+        batch_size: int,
+    ):
         super().__init__()
+        self.datasource_factory = datasource_factory
+        self.exchange_factory = exchange_factory
         self.batch_size = batch_size
 
     @command_handler(BacktestRun)
     async def _run_backtest(self, command: BacktestRun):
-        datasource = command.datasource
         symbol = command.symbol
         timeframe = command.timeframe
         strategy = command.strategy
-        in_sample = command.in_sample
-        out_sample = command.out_sample
+        datasource = self.datasource_factory.create(
+            command.datasource,
+            self.exchange_factory.create(command.exchange),
+            symbol,
+            timeframe,
+        )
+        lookback = command.in_sample
 
         logger.info(
-            f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={in_sample}"
+            f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={lookback}"
         )
 
         await self.dispatch(BacktestStarted(symbol, timeframe, strategy))
-        iterator = datasource.fetch(
-            symbol, timeframe, in_sample, out_sample, self.batch_size
-        )
+
+        iterator = datasource.fetch(lookback, command.out_sample, self.batch_size)
 
         async for data in iterator:
             await self._process_historical_data(symbol, timeframe, data)

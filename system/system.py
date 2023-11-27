@@ -1,31 +1,28 @@
 import asyncio
 import logging
 from enum import Enum, auto
-from typing import TYPE_CHECKING
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
 from core.commands.broker import Subscribe, UpdateSettings
 from core.commands.portfolio import PortfolioReset
 from core.interfaces.abstract_actor import AbstractActor
-from core.interfaces.abstract_datasource import AbstractDataSource
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.broker import BrokerType, MarginMode, PositionMode
 from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
-from core.queries.broker import GetAccountBalance, GetSymbols
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
+from core.queries.account import GetBalance
+from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
 
 from .context import SystemContext
 from .squad import Squad
-
-if TYPE_CHECKING:
-    from core.models.strategy import Strategy
-    from core.models.symbol import Symbol
-    from core.models.timeframe import Timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -137,16 +134,9 @@ class System(AbstractSystem):
         logger.info(f"Run backtest for: {total_steps}")
 
         estimator = Estimator(total_steps // self.context.parallel_num)
-        exchange = self.context.exchange_factory.create(ExchangeType.BYBIT)
-        datasource = self.context.datasource_factory.create(
-            DataSourceType.EXCHANGE,
-            exchange,
-        )
 
         async for batch_actors in self._generate_batch_actors(population):
-            tasks = [
-                self._process_backtest(datasource, actors) for actors in batch_actors
-            ]
+            tasks = [self._process_backtest(actors) for actors in batch_actors]
             await asyncio.gather(*tasks)
             logger.info(f"Remaining time: {estimator.remaining_time():.2f}sec")
 
@@ -171,12 +161,10 @@ class System(AbstractSystem):
             yield actors_batch
 
     async def _refresh_account(self):
-        account_size = await self.query(GetAccountBalance())
+        account_size = await self.query(GetBalance())
         await self.execute(UpdateAccountSize(account_size))
 
-    async def _process_backtest(
-        self, datasource: AbstractDataSource, actors: tuple[Squad, AbstractActor]
-    ):
+    async def _process_backtest(self, actors: tuple[Squad, AbstractActor]):
         squad, order_executor = actors
 
         await asyncio.gather(
@@ -185,7 +173,8 @@ class System(AbstractSystem):
 
         await self.execute(
             BacktestRun(
-                datasource,
+                DataSourceType.EXCHANGE,
+                self.context.exchange_type,
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
@@ -195,9 +184,7 @@ class System(AbstractSystem):
         )
         await asyncio.gather(*[squad.stop(), order_executor.stop()])
 
-    async def _process_pretrading(
-        self, datasource: AbstractDataSource, actors: tuple[Squad, AbstractActor]
-    ):
+    async def _process_pretrading(self, actors: tuple[Squad, AbstractActor]):
         squad, order_executor = actors
 
         await asyncio.gather(
@@ -206,7 +193,8 @@ class System(AbstractSystem):
 
         await self.execute(
             BacktestRun(
-                datasource,
+                DataSourceType.EXCHANGE,
+                self.context.exchange_type,
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
@@ -252,16 +240,11 @@ class System(AbstractSystem):
             ]
         )
 
-        datasource = self.context.datasource_factory.create(
-            DataSourceType.EXCHANGE,
-            self.context.exchange_factory.create(ExchangeType.BYBIT),
-        )
-
         trading_actors = []
 
         async for batch_actors in self._generate_batch_actors(strategies):
             for actors in batch_actors:
-                await self._process_pretrading(datasource, actors)
+                await self._process_pretrading(actors)
                 trading_actors.append(actors)
 
         for squad, _ in trading_actors:

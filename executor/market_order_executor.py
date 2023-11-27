@@ -13,7 +13,7 @@ from core.models.order import Order, OrderStatus
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.broker import GetOpenPosition
+from core.queries.position import GetOpenPosition
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,7 @@ class MarketOrderExecutor(BaseActor):
 
     async def _execute_order(self, event: PositionInitialized):
         position = event.position
+        size = position.size
 
         logger.info(f"New Position: {position}")
 
@@ -66,6 +67,11 @@ class MarketOrderExecutor(BaseActor):
         if not broker_position:
             order = Order(status=OrderStatus.FAILED, price=0, size=0)
         else:
+            filled_size = broker_position["position_size"]
+
+            if size != filled_size:
+                logger.info(f"Partially filled Position: {filled_size}")
+
             order = Order(
                 status=OrderStatus.EXECUTED,
                 size=broker_position["position_size"],

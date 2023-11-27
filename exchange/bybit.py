@@ -21,7 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 class Bybit(AbstractExchange):
-    def __init__(self, api_key: str, api_secret: str):
+    _instance = None
+
+    def __new__(cls, api_key: str, api_secret: str):
+        if not cls._instance:
+            cls._instance = super(Bybit, cls).__new__(cls)
+            cls._instance._initialize(api_key, api_secret)
+        return cls._instance
+
+    def _initialize(self, api_key: str, api_secret: str):
         self.connector = ccxt.bybit({"apiKey": api_key, "secret": api_secret})
 
     def update_symbol_settings(

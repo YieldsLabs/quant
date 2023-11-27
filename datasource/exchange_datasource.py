@@ -64,18 +64,25 @@ class AsyncHistoricalData:
 
 
 class ExchangeDataSource(AbstractDataSource):
-    def __init__(self, exchange: AbstractExchange):
+    def __init__(
+        self, exchange: AbstractExchange, symbol: Symbol, timeframe: Timeframe
+    ):
         super().__init__()
         self.exchange = exchange
+        self.symbol = symbol
+        self.timeframe = timeframe
 
     def fetch(
         self,
-        symbol: Symbol,
-        timeframe: Timeframe,
         in_sample: Lookback,
         out_sample: Lookback,
         batch_size: int,
     ):
         return AsyncHistoricalData(
-            self.exchange, symbol, timeframe, in_sample, out_sample, batch_size
+            self.exchange,
+            self.symbol,
+            self.timeframe,
+            in_sample,
+            out_sample,
+            batch_size,
         )
