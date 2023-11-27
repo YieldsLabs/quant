@@ -6,6 +6,6 @@ from strategy.filter.base import Filter, FilterType
 
 
 @dataclass(frozen=True)
-class BOPFilter(Filter):
+class BopFilter(Filter):
     type: FilterType = FilterType.Bop
     signal_smoothing: Parameter = StaticParameter(14.0)

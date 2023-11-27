@@ -5,7 +5,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class SNATRSignal(Signal):
+class SnatrSignal(Signal):
     type: SignalType = SignalType.SnAtr
     atr_period: Parameter = StaticParameter(60.0)
     atr_smoothing_period: Parameter = StaticParameter(13.0)

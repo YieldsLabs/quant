@@ -5,7 +5,7 @@ from strategy.pulse.base import Pulse, PulseType
 
 
 @dataclass(frozen=True)
-class CHOPPulse(Pulse):
+class ChopPulse(Pulse):
     type: PulseType = PulseType.Chop
     atr_period: Parameter = StaticParameter(1.0)
     period: Parameter = StaticParameter(14.0)

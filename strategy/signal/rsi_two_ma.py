@@ -8,7 +8,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RSI2MovingAverageSignal(Signal):
+class Rsi2MaSignal(Signal):
     type: SignalType = SignalType.Rsi2Ma
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(2.0)

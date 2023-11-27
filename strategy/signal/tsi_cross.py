@@ -8,7 +8,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class TSICrossSignal(Signal):
+class TsiCrossSignal(Signal):
     type: SignalType = SignalType.TsiCross
     long_period: Parameter = StaticParameter(25.0)
     short_period: Parameter = StaticParameter(13.0)

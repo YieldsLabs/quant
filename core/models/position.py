@@ -131,4 +131,4 @@ class Position:
         }
 
     def __str__(self):
-        return f"Position(signal={self.signal}, side={self.side}, entry_price={self.entry_price}, exit_price={self.exit_price}, take_profit_price={self.take_profit_price}, stop_loss_price={self.stop_loss_price}, trade_time={self.trade_time}, closed={self.closed})"
+        return f"Position(signal={self.signal}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, take_profit_price={self.take_profit_price}, stop_loss_price={self.stop_loss_price}, trade_time={self.trade_time}, closed={self.closed})"

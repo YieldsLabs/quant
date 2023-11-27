@@ -7,7 +7,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RSIVSignal(Signal):
+class RsiVSignal(Signal):
     type: SignalType = SignalType.RsiV
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(8.0)

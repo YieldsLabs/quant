@@ -18,7 +18,7 @@ pub enum PulseConfig {
         period: f32,
         threshold: f32,
     },
-    Osc {
+    Vo {
         short_period: f32,
         long_period: f32,
     },
@@ -37,9 +37,9 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             threshold,
         } => Box::new(CHOPPulse::new(atr_period, period, threshold)),
         PulseConfig::Dumb { period } => Box::new(DumbPulse::new(period)),
-        PulseConfig::Osc {
+        PulseConfig::Vo {
             short_period,
             long_period,
-        } => Box::new(OSCPulse::new(short_period, long_period)),
+        } => Box::new(VoPulse::new(short_period, long_period)),
     }
 }

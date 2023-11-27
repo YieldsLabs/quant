@@ -5,7 +5,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class TIIVSignal(Signal):
+class TiiVSignal(Signal):
     type: SignalType = SignalType.TiiV
     major_period: Parameter = StaticParameter(5.0)
     minor_period: Parameter = StaticParameter(2.0)

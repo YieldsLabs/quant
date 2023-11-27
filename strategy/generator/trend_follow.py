@@ -10,74 +10,74 @@ from core.models.moving_average import MovingAverageType
 from core.models.parameter import RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
-from strategy.baseline.ma import MABaseLine
+from strategy.baseline.ma import MaBaseLine
 from strategy.exit.ast import AstExit
-from strategy.exit.ce import ChExit
+from strategy.exit.ce import CeExit
 from strategy.exit.dumb import DumbExit
 from strategy.exit.highlow import HighLowExit
-from strategy.exit.ma import MovingAverageExit
+from strategy.exit.ma import MaExit
 from strategy.exit.pattern import PatternExit
-from strategy.exit.rsi import RSIExit
-from strategy.filter.apo import APOFilter
-from strategy.filter.bop import BOPFilter
+from strategy.exit.rsi import RsiExit
+from strategy.filter.apo import ApoFilter
+from strategy.filter.bop import BopFilter
 from strategy.filter.braid import BraidFilter
-from strategy.filter.dpo import DPOFilter
-from strategy.filter.eis import EISFilter
-from strategy.filter.eom import EOMFilter
+from strategy.filter.dpo import DpoFilter
+from strategy.filter.eis import EisFilter
+from strategy.filter.eom import EomFilter
 from strategy.filter.fib import FibFilter
-from strategy.filter.kst import KSTFilter
-from strategy.filter.macd import MACDFilter
+from strategy.filter.kst import KstFilter
+from strategy.filter.macd import MacdFilter
 from strategy.filter.ribbon import RibbonFilter
-from strategy.filter.rsi import RSIFilter
+from strategy.filter.rsi import RsiFilter
 from strategy.filter.stoch import StochFilter
 from strategy.filter.supertrend import SupertrendFilter
-from strategy.filter.tii import TIIFilter
-from strategy.pulse.adx import ADXPulse
-from strategy.pulse.chop import CHOPPulse
+from strategy.filter.tii import TiiFilter
+from strategy.pulse.adx import AdxPulse
+from strategy.pulse.chop import ChopPulse
 from strategy.pulse.dumb import DumbPulse
-from strategy.pulse.osc import OSCPulse
-from strategy.signal.ao_flip import AOFlipSignal
-from strategy.signal.ao_saucer import AOSaucerSignal
-from strategy.signal.apo_flip import APOFlipSignal
-from strategy.signal.bop_flip import BOPFlipSignal
-from strategy.signal.cc_flip import CCFlipSignal
-from strategy.signal.cfo_flip import CFOFlipSignal
-from strategy.signal.dch_two_ma import DCH2MovingAverageSignal
-from strategy.signal.di_cross import DICrossSignal
-from strategy.signal.di_flip import DIFlipSignal
-from strategy.signal.dmi_cross import DMICrossSignal
+from strategy.pulse.vo import VoPulse
+from strategy.signal.ao_flip import AoFlipSignal
+from strategy.signal.ao_saucer import AoSaucerSignal
+from strategy.signal.apo_flip import ApoFlipSignal
+from strategy.signal.bop_flip import BopFlipSignal
+from strategy.signal.cc_flip import CcFlipSignal
+from strategy.signal.cfo_flip import CfoFlipSignal
+from strategy.signal.dch_two_ma import Dch2MaSignal
+from strategy.signal.di_cross import DiCrossSignal
+from strategy.signal.di_flip import DiFlipSignal
+from strategy.signal.dmi_cross import DmiCrossSignal
 from strategy.signal.hl import HighLowSignal
-from strategy.signal.kst_cross import KSTCrossSignal
-from strategy.signal.ma_three_cross import MA3CrossSignal
-from strategy.signal.macd_color_switch import MACDColorSwitchSignal
-from strategy.signal.macd_cross import MACDCrossSignal
-from strategy.signal.macd_flip import MACDFlipSignal
-from strategy.signal.qstick_cross import QSTICKCrossSignal
-from strategy.signal.qstick_flip import QSTICKFlipSignal
+from strategy.signal.kst_cross import KstCrossSignal
+from strategy.signal.ma_three_cross import Ma3CrossSignal
+from strategy.signal.macd_color_switch import MacdColorSwitchSignal
+from strategy.signal.macd_cross import MacdCrossSignal
+from strategy.signal.macd_flip import MacdFlipSignal
+from strategy.signal.qstick_cross import QstickCrossSignal
+from strategy.signal.qstick_flip import QstickFlipSignal
 from strategy.signal.quadruple import QuadrupleSignal
-from strategy.signal.roc_flip import ROCFlipSignal
-from strategy.signal.rsi_ma_pullback import RSIMovingAveragePullbackSignal
-from strategy.signal.rsi_neutrality_cross import RSINautralityCrossSignal
-from strategy.signal.rsi_neutrality_pullback import RSINautralityPullbackSignal
-from strategy.signal.rsi_neutrality_rejection import RSINautralityRejectionSignal
-from strategy.signal.rsi_two_ma import RSI2MovingAverageSignal
-from strategy.signal.rsi_v import RSIVSignal
-from strategy.signal.snatr import SNATRSignal
-from strategy.signal.stc_flip import STCFlipSignal
-from strategy.signal.stc_uturn import STCUTurnSignal
+from strategy.signal.roc_flip import RocFlipSignal
+from strategy.signal.rsi_ma_pullback import RsiMaPullbackSignal
+from strategy.signal.rsi_neutrality_cross import RsiNautralityCrossSignal
+from strategy.signal.rsi_neutrality_pullback import RsiNautralityPullbackSignal
+from strategy.signal.rsi_neutrality_rejection import RsiNautralityRejectionSignal
+from strategy.signal.rsi_two_ma import Rsi2MaSignal
+from strategy.signal.rsi_v import RsiVSignal
+from strategy.signal.snatr import SnatrSignal
+from strategy.signal.stc_flip import StcFlipSignal
+from strategy.signal.stc_uturn import StcUTurnSignal
 from strategy.signal.stoch_cross import StochCrossSignal
 from strategy.signal.supertrend_flip import SupertrendFlipSignal
 from strategy.signal.supertrend_pullback import SupertrendPullBackSignal
 from strategy.signal.testing_ground import TestingGroundSignal
-from strategy.signal.tii_cross import TIICrossSignal
-from strategy.signal.tii_v import TIIVSignal
+from strategy.signal.tii_cross import TiiCrossSignal
+from strategy.signal.tii_v import TiiVSignal
 from strategy.signal.trend_candle import TrendCandleSignal
-from strategy.signal.trix_cross import TRIXCrossSignal
-from strategy.signal.trix_flip import TRIXFlipSignal
-from strategy.signal.tsi_cross import TSICrossSignal
-from strategy.signal.tsi_flip import TSIFlipSignal
-from strategy.signal.vwap_cross import VWAPCrossSignal
-from strategy.stop_loss.atr import ATRStopLoss
+from strategy.signal.trix_cross import TrixCrossSignal
+from strategy.signal.trix_flip import TrixFlipSignal
+from strategy.signal.tsi_cross import TsiCrossSignal
+from strategy.signal.tsi_flip import TsiFlipSignal
+from strategy.signal.vwap_cross import VwapCrossSignal
+from strategy.stop_loss.atr import AtrStopLoss
 
 
 class TrendSignalType(Enum):
@@ -154,67 +154,67 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
         filter = np.random.choice(
             [
-                RSIFilter(),
-                TIIFilter(),
+                RsiFilter(),
+                TiiFilter(),
                 StochFilter(),
                 SupertrendFilter(),
-                MACDFilter(),
+                MacdFilter(),
                 RibbonFilter(),
                 FibFilter(),
-                EISFilter(),
+                EisFilter(),
                 BraidFilter(),
-                APOFilter(),
-                BOPFilter(),
-                DPOFilter(),
-                KSTFilter(),
-                EOMFilter(),
+                ApoFilter(),
+                BopFilter(),
+                DpoFilter(),
+                KstFilter(),
+                EomFilter(),
             ]
         )
-        pulse = np.random.choice([DumbPulse(), ADXPulse(), CHOPPulse(), OSCPulse()])
+        pulse = np.random.choice([DumbPulse(), AdxPulse(), ChopPulse(), VoPulse()])
         baseline = np.random.choice(
             [
-                MABaseLine(
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.EMA),
                     period=RandomParameter(100.0, 150.0, 10.0),
                 ),
-                MABaseLine(
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.WMA),
                     period=RandomParameter(15.0, 30.0, 1.0),
                 ),
-                MABaseLine(
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.SMMA),
                     period=RandomParameter(100.0, 150.0, 10.0),
                 ),
-                MABaseLine(
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.HMA),
                     period=RandomParameter(86.0, 90.0, 1.0),
                 ),
-                MABaseLine(
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.DEMA),
                     period=RandomParameter(26.0, 30.0, 1.0),
                 ),
-                MABaseLine(
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.KAMA),
                     period=RandomParameter(30.0, 50.0, 1.0),
                 ),
-                MABaseLine(
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.KIJUN),
                     period=RandomParameter(30.0, 40.0, 1.0),
                 ),
             ]
         )
         stop_loss = np.random.choice(
-            [ATRStopLoss(multi=RandomParameter(0.85, 1.8, 0.15))]
+            [AtrStopLoss(multi=RandomParameter(0.85, 1.8, 0.15))]
         )
         exit_signal = np.random.choice(
             [
                 AstExit(),
-                ChExit(),
+                CeExit(),
                 DumbExit(),
                 PatternExit(),
                 HighLowExit(),
-                MovingAverageExit(),
-                RSIExit(),
+                MaExit(),
+                RsiExit(),
             ]
         )
 
@@ -242,71 +242,71 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.FLIP:
             return np.random.choice(
                 [
-                    AOFlipSignal(),
-                    MACDFlipSignal(),
+                    AoFlipSignal(),
+                    MacdFlipSignal(),
                     SupertrendFlipSignal(),
-                    ROCFlipSignal(),
-                    TRIXFlipSignal(),
-                    TSIFlipSignal(),
-                    DIFlipSignal(),
-                    QSTICKFlipSignal(),
-                    CCFlipSignal(),
-                    STCFlipSignal(),
-                    APOFlipSignal(),
-                    BOPFlipSignal(),
-                    CFOFlipSignal(),
+                    RocFlipSignal(),
+                    TrixFlipSignal(),
+                    TsiFlipSignal(),
+                    DiFlipSignal(),
+                    QstickFlipSignal(),
+                    CcFlipSignal(),
+                    StcFlipSignal(),
+                    ApoFlipSignal(),
+                    BopFlipSignal(),
+                    CfoFlipSignal(),
                 ]
             )
         if signal == TrendSignalType.V:
-            return np.random.choice([TIIVSignal(), RSIVSignal()])
+            return np.random.choice([TiiVSignal(), RsiVSignal()])
 
         if signal == TrendSignalType.UTurn:
-            return np.random.choice([STCUTurnSignal()])
+            return np.random.choice([StcUTurnSignal()])
 
         if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
-                    MA3CrossSignal(
+                    Ma3CrossSignal(
                         short_period=ma_short_period,
                         medium_period=ma_medium_period,
                         long_period=ma_long_period,
                     ),
-                    MACDCrossSignal(),
-                    TIICrossSignal(),
-                    RSINautralityCrossSignal(),
-                    TSICrossSignal(),
-                    DICrossSignal(),
-                    QSTICKCrossSignal(),
-                    VWAPCrossSignal(),
-                    DMICrossSignal(),
+                    MacdCrossSignal(),
+                    TiiCrossSignal(),
+                    RsiNautralityCrossSignal(),
+                    TsiCrossSignal(),
+                    DiCrossSignal(),
+                    QstickCrossSignal(),
+                    VwapCrossSignal(),
+                    DmiCrossSignal(),
                     StochCrossSignal(),
-                    KSTCrossSignal(),
-                    TRIXCrossSignal(),
+                    KstCrossSignal(),
+                    TrixCrossSignal(),
                 ]
             )
         if signal == TrendSignalType.TWO_MA:
             return np.random.choice(
                 [
-                    RSI2MovingAverageSignal(),
-                    DCH2MovingAverageSignal(),
+                    Rsi2MaSignal(),
+                    Dch2MaSignal(),
                 ]
             )
         if signal == TrendSignalType.PULLBACK:
             return np.random.choice(
                 [
                     SupertrendPullBackSignal(),
-                    RSINautralityPullbackSignal(),
-                    RSIMovingAveragePullbackSignal(),
+                    RsiNautralityPullbackSignal(),
+                    RsiMaPullbackSignal(),
                 ]
             )
 
         return np.random.choice(
             [
-                AOSaucerSignal(),
-                MACDColorSwitchSignal(),
+                AoSaucerSignal(),
+                MacdColorSwitchSignal(),
                 TrendCandleSignal(),
-                SNATRSignal(),
-                RSINautralityRejectionSignal(),
+                SnatrSignal(),
+                RsiNautralityRejectionSignal(),
                 TestingGroundSignal(period=ma_long_period),
                 QuadrupleSignal(),
                 HighLowSignal(),

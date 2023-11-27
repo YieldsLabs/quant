@@ -7,7 +7,7 @@ from core.models.indicator import Indicator
 class ExitType(Enum):
     Ast = "Ast"
     Dumb = "Dumb"
-    Ch = "Ch"
+    Ce = "Ce"
     HighLow = "HighLow"
     Pattern = "Pattern"
     Ma = "Ma"

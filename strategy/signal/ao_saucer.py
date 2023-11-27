@@ -8,7 +8,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class AOSaucerSignal(Signal):
+class AoSaucerSignal(Signal):
     type: SignalType = SignalType.AoSaucer
     short_period: Parameter = StaticParameter(5.0)
     long_period: Parameter = StaticParameter(34.0)

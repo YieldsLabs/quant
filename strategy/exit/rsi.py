@@ -6,7 +6,7 @@ from strategy.exit.base import Exit, ExitType
 
 
 @dataclass(frozen=True)
-class RSIExit(Exit):
+class RsiExit(Exit):
     type: ExitType = ExitType.Rsi
     rsi_type: Parameter = CategoricalParameter(RSIType)
     period: Parameter = RandomParameter(14.0, 30.0, 1.0)

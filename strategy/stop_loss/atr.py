@@ -5,7 +5,7 @@ from strategy.stop_loss.base import StopLoss, StopLossType
 
 
 @dataclass(frozen=True)
-class ATRStopLoss(StopLoss):
+class AtrStopLoss(StopLoss):
     type: StopLossType = StopLossType.Atr
     period: Parameter = StaticParameter(14.0)
     multi: Parameter = StaticParameter(1.2)

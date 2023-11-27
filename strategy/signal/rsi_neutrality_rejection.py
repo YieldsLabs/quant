@@ -11,7 +11,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RSINautralityRejectionSignal(Signal):
+class RsiNautralityRejectionSignal(Signal):
     type: SignalType = SignalType.RsiNeutralityRejection
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(14.0)

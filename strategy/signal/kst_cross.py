@@ -8,7 +8,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class KSTCrossSignal(Signal):
+class KstCrossSignal(Signal):
     type: SignalType = SignalType.KstCross
     roc_period_first: Parameter = StaticParameter(10.0)
     roc_period_second: Parameter = StaticParameter(15.0)

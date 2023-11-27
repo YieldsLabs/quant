@@ -8,6 +8,6 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class QSTICKFlipSignal(Signal):
+class QstickFlipSignal(Signal):
     type: SignalType = SignalType.QstickFlip
     period: Parameter = RandomParameter(10.0, 15.0, 1.0)

@@ -8,6 +8,6 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class ROCFlipSignal(Signal):
+class RocFlipSignal(Signal):
     type: SignalType = SignalType.RocFlip
     period: Parameter = StaticParameter(9.0)

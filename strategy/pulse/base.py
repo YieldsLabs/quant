@@ -8,7 +8,7 @@ class PulseType(Enum):
     Adx = "Adx"
     Dumb = "Dumb"
     Chop = "Chop"
-    Osc = "Osc"
+    Vo = "Vo"
 
     def __str__(self):
         return self.value.upper()

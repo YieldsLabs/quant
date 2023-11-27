@@ -8,7 +8,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class STCUTurnSignal(Signal):
+class StcUTurnSignal(Signal):
     type: SignalType = SignalType.StcUturn
     fast_period: Parameter = StaticParameter(26.0)
     slow_period: Parameter = StaticParameter(50.0)

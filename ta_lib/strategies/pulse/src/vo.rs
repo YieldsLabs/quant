@@ -4,12 +4,12 @@ use volume::vo;
 
 const VO_THRESHOLD: f32 = 0.0;
 
-pub struct OSCPulse {
+pub struct VoPulse {
     short_period: usize,
     long_period: usize,
 }
 
-impl OSCPulse {
+impl VoPulse {
     pub fn new(short_period: f32, long_period: f32) -> Self {
         Self {
             short_period: short_period as usize,
@@ -18,7 +18,7 @@ impl OSCPulse {
     }
 }
 
-impl Pulse for OSCPulse {
+impl Pulse for VoPulse {
     fn lookback(&self) -> usize {
         std::cmp::max(self.short_period, self.long_period)
     }

@@ -7,7 +7,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class DCH2MovingAverageSignal(Signal):
+class Dch2MaSignal(Signal):
     type: SignalType = SignalType.Dch2Ma
     dch_period: Parameter = StaticParameter(20.0)
     smoothing: Parameter = CategoricalParameter(MovingAverageType)

@@ -10,7 +10,7 @@ from strategy.filter.base import Filter, FilterType
 
 
 @dataclass(frozen=True)
-class EISFilter(Filter):
+class EisFilter(Filter):
     type: FilterType = FilterType.Eis
     macd_type: Parameter = CategoricalParameter(MACDType)
     fast_period: Parameter = StaticParameter(12.0)

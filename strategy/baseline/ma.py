@@ -6,7 +6,7 @@ from strategy.baseline.base import BaseLine, BaseLineType
 
 
 @dataclass(frozen=True)
-class MABaseLine(BaseLine):
+class MaBaseLine(BaseLine):
     type: BaseLineType = BaseLineType.Ma
     smoothing: Parameter = CategoricalParameter(MovingAverageType)
     period: Parameter = RandomParameter(15.0, 40.0, 5.0)

@@ -8,7 +8,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class TRIXCrossSignal(Signal):
+class TrixCrossSignal(Signal):
     type: SignalType = SignalType.TrixCross
     period: Parameter = StaticParameter(18.0)
     signal_period: Parameter = StaticParameter(9.0)

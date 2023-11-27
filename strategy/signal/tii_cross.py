@@ -5,7 +5,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class TIICrossSignal(Signal):
+class TiiCrossSignal(Signal):
     type: SignalType = SignalType.TIICross
     major_period: Parameter = StaticParameter(60.0)
     minor_period: Parameter = StaticParameter(30.0)

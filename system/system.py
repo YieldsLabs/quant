@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
@@ -14,9 +15,6 @@ from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
-from core.models.strategy import Strategy
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
 from core.queries.broker import GetAccountBalance, GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
@@ -24,6 +22,10 @@ from infrastructure.estimator import Estimator
 from .context import SystemContext
 from .squad import Squad
 
+if TYPE_CHECKING:
+    from core.models.strategy import Strategy
+    from core.models.symbol import Symbol
+    from core.models.timeframe import Timeframe
 
 logger = logging.getLogger(__name__)
 

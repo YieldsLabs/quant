@@ -10,7 +10,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RSIMovingAveragePullbackSignal(Signal):
+class RsiMaPullbackSignal(Signal):
     type: SignalType = SignalType.RsiMaPullback
     rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = RandomParameter(12.0, 15.0, 1.0)

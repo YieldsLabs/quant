@@ -8,6 +8,6 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class CFOFlipSignal(Signal):
+class CfoFlipSignal(Signal):
     type: SignalType = SignalType.CfoFlip
     period: Parameter = StaticParameter(14.0)

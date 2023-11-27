@@ -5,7 +5,7 @@ from strategy.filter.base import Filter, FilterType
 
 
 @dataclass(frozen=True)
-class TIIFilter(Filter):
+class TiiFilter(Filter):
     type: FilterType = FilterType.Tii
     major_period: Parameter = RandomParameter(55.0, 65.0, 5.0)
     minor_period: Parameter = RandomParameter(25.0, 40.0, 5.0)

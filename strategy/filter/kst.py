@@ -5,7 +5,7 @@ from strategy.filter.base import Filter, FilterType
 
 
 @dataclass(frozen=True)
-class KSTFilter(Filter):
+class KstFilter(Filter):
     type: FilterType = FilterType.Kst
     roc_period_first: Parameter = StaticParameter(10.0)
     roc_period_second: Parameter = StaticParameter(15.0)

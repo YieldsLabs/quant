@@ -5,6 +5,6 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class VWAPCrossSignal(Signal):
+class VwapCrossSignal(Signal):
     type: SignalType = SignalType.VwapCross
     period: Parameter = StaticParameter(100.0)

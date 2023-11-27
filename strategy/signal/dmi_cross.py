@@ -8,7 +8,7 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class DMICrossSignal(Signal):
+class DmiCrossSignal(Signal):
     type: SignalType = SignalType.DmiCross
     adx_period: Parameter = StaticParameter(12.0)
     di_period: Parameter = StaticParameter(12.0)

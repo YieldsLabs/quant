@@ -6,7 +6,7 @@ from strategy.filter.base import Filter, FilterType
 
 
 @dataclass(frozen=True)
-class RSIFilter(Filter):
+class RsiFilter(Filter):
     type: FilterType = FilterType.Rsi
     rsi_type: Parameter = CategoricalParameter(RSIType)
     period: Parameter = RandomParameter(50.0, 55.0, 1.0)

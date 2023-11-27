@@ -10,7 +10,7 @@ from strategy.filter.base import Filter, FilterType
 
 
 @dataclass(frozen=True)
-class MACDFilter(Filter):
+class MacdFilter(Filter):
     type: FilterType = FilterType.Macd
     macd_type: Parameter = CategoricalParameter(MACDType)
     fast_period: Parameter = StaticParameter(12.0)

@@ -5,7 +5,7 @@ from strategy.pulse.base import Pulse, PulseType
 
 
 @dataclass(frozen=True)
-class ADXPulse(Pulse):
+class AdxPulse(Pulse):
     type: PulseType = PulseType.Adx
     adx_period: Parameter = RandomParameter(10.0, 15.0, 2.0)
     di_period: Parameter = RandomParameter(10.0, 15.0, 2.0)

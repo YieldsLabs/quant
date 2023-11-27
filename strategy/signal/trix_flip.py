@@ -8,6 +8,6 @@ from strategy.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class TRIXFlipSignal(Signal):
+class TrixFlipSignal(Signal):
     type: SignalType = SignalType.TrixFlip
     period: Parameter = StaticParameter(18.0)

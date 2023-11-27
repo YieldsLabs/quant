@@ -6,6 +6,6 @@ from strategy.filter.base import Filter, FilterType
 
 
 @dataclass(frozen=True)
-class DPOFilter(Filter):
+class DpoFilter(Filter):
     type: FilterType = FilterType.Dpo
     period: Parameter = StaticParameter(21.0)
