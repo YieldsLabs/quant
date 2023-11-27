@@ -76,10 +76,8 @@ class Bybit(AbstractExchange):
                 "position_side": PositionSide.LONG
                 if positions["side"] == "long"
                 else PositionSide.SHORT,
-                "entry_price": float(positions["entryPrice"]),
-                "position_size": float(positions["contracts"]),
-                "stop_loss_price": float(positions["stopLossPrice"]),
-                "take_profit_price": float(positions["takeProfitPrice"]),
+                "entry_price": float(positions.get("entryPrice", 0)),
+                "position_size": float(positions.get("contracts", 0)),
             }
 
         return None
