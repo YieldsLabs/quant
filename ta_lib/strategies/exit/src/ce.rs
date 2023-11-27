@@ -4,13 +4,13 @@ use trend::ce;
 
 const CE_MIDDLE: f32 = 0.0;
 
-pub struct ChExit {
+pub struct CeExit {
     period: usize,
     atr_period: usize,
     multi: f32,
 }
 
-impl ChExit {
+impl CeExit {
     pub fn new(period: f32, atr_period: f32, multi: f32) -> Self {
         Self {
             period: period as usize,
@@ -20,7 +20,7 @@ impl ChExit {
     }
 }
 
-impl Exit for ChExit {
+impl Exit for CeExit {
     fn lookback(&self) -> usize {
         std::cmp::max(self.period, self.atr_period)
     }

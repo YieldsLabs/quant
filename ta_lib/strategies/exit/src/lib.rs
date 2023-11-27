@@ -7,7 +7,7 @@ mod pattern;
 mod rsi;
 
 pub use ast::AstExit;
-pub use ce::ChExit;
+pub use ce::CeExit;
 pub use dumb::DumbExit;
 pub use highlow::HighLowExit;
 pub use ma::MAExit;

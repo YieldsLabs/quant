@@ -295,11 +295,11 @@ mod tests {
 
     #[test]
     fn test_log10() {
-        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = vec![-1.0, 2.0, 0.0, 4.0, 5.0];
         let expected = vec![
             None,
             Some(std::f32::consts::LOG10_2),
-            Some(0.47712126),
+            None,
             Some(0.60206),
             Some(0.69897),
         ];
