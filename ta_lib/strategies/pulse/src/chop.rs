@@ -34,8 +34,8 @@ impl Pulse for CHOPPulse {
         );
 
         (
-            chop.slt(CHOP_TREND + self.threshold),
-            chop.slt(CHOP_TREND + self.threshold),
+            chop.slt(CHOP_TREND - self.threshold),
+            chop.slt(CHOP_TREND - self.threshold),
         )
     }
 }
