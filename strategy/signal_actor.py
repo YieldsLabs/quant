@@ -26,6 +26,18 @@ class Action(Enum):
     GO_SHORT = 2.0
     EXIT_LONG = 3.0
     EXIT_SHORT = 4.0
+    DO_NOTHING = 0.0
+
+    @classmethod
+    def from_raw(cls, value: float):
+        for action in cls:
+            if action.value == value:
+                return action
+
+        raise ValueError(f"No matching Action for float value: {value}")
+
+    def __str__(self):
+        return self.name
 
 
 class SignalActor(BaseActor):
@@ -65,21 +77,23 @@ class SignalActor(BaseActor):
         if not await self.running:
             return
 
-        data = event.ohlcv
+        ohlcv = event.ohlcv
 
-        [action, price] = self.exports["strategy_next"](
+        [raw_action, price] = self.exports["strategy_next"](
             self.store,
             self.register_id,
-            data.open,
-            data.high,
-            data.low,
-            data.close,
-            data.volume,
+            ohlcv.open,
+            ohlcv.high,
+            ohlcv.low,
+            ohlcv.close,
+            ohlcv.volume,
         )
+
+        action = Action.from_raw(raw_action)
 
         long_stop_loss, short_stop_loss = 0.0, 0.0
 
-        if action in [Action.GO_LONG.value, Action.GO_SHORT.value]:
+        if action in (Action.GO_LONG, Action.GO_SHORT):
             [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](
                 self.store, self.register_id
             )
@@ -88,57 +102,60 @@ class SignalActor(BaseActor):
             f"Action: {action} price: {price} stop_loss: lng{long_stop_loss} sht{short_stop_loss}"
         )
 
-        action_dispatch_map = {
-            Action.GO_LONG.value: lambda: self._dispatch_go_long_signal(
-                data, price, long_stop_loss
+        buy_signal = Signal(
+            self._symbol, self._timeframe, self._strategy, SignalSide.BUY
+        )
+        sell_signal = Signal(
+            self._symbol, self._timeframe, self._strategy, SignalSide.SELL
+        )
+
+        action_event_map = {
+            Action.GO_LONG: GoLongSignalReceived(
+                signal=buy_signal,
+                ohlcv=ohlcv,
+                entry_price=price,
+                stop_loss=long_stop_loss,
             ),
-            Action.GO_SHORT.value: lambda: self._dispatch_go_short_signal(
-                data, price, short_stop_loss
+            Action.GO_SHORT: GoShortSignalReceived(
+                signal=sell_signal,
+                ohlcv=ohlcv,
+                entry_price=price,
+                stop_loss=short_stop_loss,
             ),
-            Action.EXIT_LONG.value: lambda: self._dispatch_exit_long_signal(
-                data, data.close
+            Action.EXIT_LONG: ExitLongSignalReceived(
+                signal=buy_signal,
+                ohlcv=ohlcv,
+                exit_price=ohlcv.close,
             ),
-            Action.EXIT_SHORT.value: lambda: self._dispatch_exit_short_signal(
-                data, data.close
+            Action.EXIT_SHORT: ExitShortSignalReceived(
+                signal=sell_signal,
+                ohlcv=ohlcv,
+                exit_price=ohlcv.close,
             ),
         }
 
-        dispatch_func = action_dispatch_map.get(action)
+        event = action_event_map.get(action)
 
-        if dispatch_func:
-            await dispatch_func()
+        if event:
+            await self.dispatch(event)
 
     def _register_strategy(self):
-        (
-            signal_data,
-            filter_data,
-            pulse_data,
-            baseline_data,
-            stoploss_data,
-            exit_data,
-        ) = self._strategy.parameters
+        data = {
+            "signal": self._strategy.parameters[0],
+            "filter": self._strategy.parameters[1],
+            "pulse": self._strategy.parameters[2],
+            "baseline": self._strategy.parameters[3],
+            "stoploss": self._strategy.parameters[4],
+            "exit": self._strategy.parameters[5],
+        }
 
-        signal_ptr, signal_len = self.allocate_and_write(signal_data)
-        filter_ptr, filter_len = self.allocate_and_write(filter_data)
-        pulse_prt, pulse_len = self.allocate_and_write(pulse_data)
-        baseline_prt, baseline_len = self.allocate_and_write(baseline_data)
-        stoploss_ptr, stoploss_len = self.allocate_and_write(stoploss_data)
-        exit_ptr, exit_len = self.allocate_and_write(exit_data)
+        allocation_data = {
+            key: self._allocate_and_write(self.store, self.exports, data)
+            for key, data in data.items()
+        }
 
         self.register_id = self.exports["register"](
-            self.store,
-            signal_ptr,
-            signal_len,
-            filter_ptr,
-            filter_len,
-            pulse_prt,
-            pulse_len,
-            baseline_prt,
-            baseline_len,
-            stoploss_ptr,
-            stoploss_len,
-            exit_ptr,
-            exit_len,
+            self.store, *[item for pair in allocation_data.values() for item in pair]
         )
 
     def _unregister_strategy(self):
@@ -152,58 +169,12 @@ class SignalActor(BaseActor):
             and event.closed
         )
 
-    async def _dispatch_go_long_signal(self, data, price, stop_loss):
-        await self.dispatch(
-            GoLongSignalReceived(
-                signal=Signal(
-                    self._symbol, self._timeframe, self._strategy, SignalSide.BUY
-                ),
-                ohlcv=data,
-                entry_price=price,
-                stop_loss=stop_loss,
-            )
-        )
+    def _allocate_and_write(self, store, exports, data: bytes) -> (int, int):
+        ptr = exports["allocate"](store, len(data))
+        memory = exports["memory"]
 
-    async def _dispatch_go_short_signal(self, data, price, stop_loss):
-        await self.dispatch(
-            GoShortSignalReceived(
-                signal=Signal(
-                    self._symbol, self._timeframe, self._strategy, SignalSide.SELL
-                ),
-                ohlcv=data,
-                entry_price=price,
-                stop_loss=stop_loss,
-            )
-        )
-
-    async def _dispatch_exit_long_signal(self, data, exit_price):
-        await self.dispatch(
-            ExitLongSignalReceived(
-                signal=Signal(
-                    self._symbol, self._timeframe, self._strategy, SignalSide.BUY
-                ),
-                ohlcv=data,
-                exit_price=exit_price,
-            )
-        )
-
-    async def _dispatch_exit_short_signal(self, data, exit_price):
-        await self.dispatch(
-            ExitShortSignalReceived(
-                signal=Signal(
-                    self._symbol, self._timeframe, self._strategy, SignalSide.SELL
-                ),
-                ohlcv=data,
-                exit_price=exit_price,
-            )
-        )
-
-    def allocate_and_write(self, data: bytes) -> (int, int):
-        ptr = self.exports["allocate"](self.store, len(data))
-        memory = self.exports["memory"]
-
-        total_memory_size = memory.data_len(self.store)
-        data_ptr = memory.data_ptr(self.store)
+        total_memory_size = memory.data_len(store)
+        data_ptr = memory.data_ptr(store)
         data_array = (c_ubyte * total_memory_size).from_address(
             addressof(data_ptr.contents)
         )
