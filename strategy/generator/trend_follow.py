@@ -7,7 +7,7 @@ import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import RandomParameter, StaticParameter
+from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
 from strategy.baseline.ma import MaBaseLine
@@ -174,33 +174,17 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         baseline = np.random.choice(
             [
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.EMA),
+                    smoothing=CategoricalParameter(MovingAverageType),
                     period=RandomParameter(100.0, 150.0, 10.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.WMA),
-                    period=RandomParameter(15.0, 30.0, 1.0),
+                    smoothing=CategoricalParameter(MovingAverageType),
+                    period=RandomParameter(30.0, 50.0, 5.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.SMMA),
-                    period=RandomParameter(100.0, 150.0, 10.0),
-                ),
-                MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.HMA),
-                    period=RandomParameter(86.0, 90.0, 1.0),
-                ),
-                MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.DEMA),
-                    period=RandomParameter(26.0, 30.0, 1.0),
-                ),
-                MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.KAMA),
-                    period=RandomParameter(30.0, 50.0, 1.0),
-                ),
-                MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.KIJUN),
-                    period=RandomParameter(30.0, 40.0, 1.0),
-                ),
+                    smoothing=CategoricalParameter(MovingAverageType),
+                    period=RandomParameter(60.0, 90.0, 5.0),
+                )
             ]
         )
         stop_loss = np.random.choice(
