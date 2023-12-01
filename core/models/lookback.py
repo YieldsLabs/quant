@@ -9,6 +9,14 @@ class Lookback(Enum):
     SIX_MONTH = "6M"
     ONE_YEAR = "1Y"
 
+    @classmethod
+    def from_raw(cls, value: str) -> "Lookback":
+        for lookback in cls:
+            if lookback.value == value:
+                return lookback
+
+        raise ValueError(f"No matching Lookback for value: {value}")
+
     def __str__(self):
         return self.value
 

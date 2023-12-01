@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
@@ -11,11 +12,9 @@ from core.interfaces.abstract_system import AbstractSystem
 from core.models.broker import BrokerType, MarginMode, PositionMode
 from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
+from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
-from core.models.strategy import Strategy
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
@@ -23,6 +22,11 @@ from infrastructure.estimator import Estimator
 
 from .context import SystemContext
 from .squad import Squad
+
+if TYPE_CHECKING:
+    from core.models.strategy import Strategy
+    from core.models.symbol import Symbol
+    from core.models.timeframe import Timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +60,8 @@ class System(AbstractSystem):
         self.active_strategy: list[tuple[Symbol, Timeframe, Strategy]] = []
         self.strategy: tuple[Symbol, Timeframe, Strategy] = []
         self.optimizer = None
+        self.exchange = ExchangeType.BYBIT
+        self.config = self.context.config.get("system")
 
     async def start(self):
         transitions = {
@@ -133,7 +139,7 @@ class System(AbstractSystem):
 
         logger.info(f"Run backtest for: {total_steps}")
 
-        estimator = Estimator(total_steps // self.context.parallel_num)
+        estimator = Estimator(total_steps // self.config["parallel_num"])
 
         async for batch_actors in self._generate_batch_actors(population):
             tasks = [self._process_backtest(actors) for actors in batch_actors]
@@ -153,7 +159,7 @@ class System(AbstractSystem):
 
             actors_batch.append((squad, order_executor))
 
-            if len(actors_batch) == self.context.parallel_num:
+            if len(actors_batch) == self.config["parallel_num"]:
                 yield actors_batch
                 actors_batch = []
 
@@ -171,15 +177,17 @@ class System(AbstractSystem):
             *[squad.start(), self._refresh_account(), order_executor.start()]
         )
 
+        backtest_config = self.context.config.get("backtest")
+
         await self.execute(
             BacktestRun(
                 DataSourceType.EXCHANGE,
-                self.context.exchange_type,
+                self.exchange,
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
-                self.context.in_sample,
-                self.context.out_sample,
+                Lookback.from_raw(backtest_config["in_sample"]),
+                Lookback.from_raw(backtest_config["out_sample"]),
             )
         )
         await asyncio.gather(*[squad.stop(), order_executor.stop()])
@@ -191,14 +199,16 @@ class System(AbstractSystem):
             *[squad.start(), self._refresh_account(), order_executor.start()]
         )
 
+        backtest_config = self.context.config.get("backtest")
+
         await self.execute(
             BacktestRun(
                 DataSourceType.EXCHANGE,
-                self.context.exchange_type,
+                self.exchange,
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
-                self.context.out_sample,
+                Lookback.from_raw(backtest_config["out_sample"]),
                 None,
             )
         )
@@ -209,7 +219,7 @@ class System(AbstractSystem):
         logger.info("Run optimization")
 
         strategies = await self.query(
-            GetTopStrategy(num=self.context.active_strategy_num)
+            GetTopStrategy(num=self.config["active_strategy_num"])
         )
 
         if not len(strategies):
@@ -230,7 +240,7 @@ class System(AbstractSystem):
         logger.info("Run trading")
 
         strategies = await self.query(
-            GetTopStrategy(num=self.context.active_strategy_num)
+            GetTopStrategy(num=self.config["active_strategy_num"])
         )
 
         logger.info(
@@ -249,7 +259,7 @@ class System(AbstractSystem):
 
         for squad, _ in trading_actors:
             order_executor = self.context.executor_factory.create_actor(
-                OrderType.MARKET if self.context.is_live else OrderType.PAPER,
+                OrderType.MARKET if self.config["mode"] == 1 else OrderType.PAPER,
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
@@ -259,7 +269,7 @@ class System(AbstractSystem):
                     self.execute(
                         UpdateSettings(
                             squad.symbol,
-                            self.context.leverage,
+                            self.config["leverage"],
                             PositionMode.ONE_WAY,
                             MarginMode.ISOLATED,
                         )

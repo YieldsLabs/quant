@@ -1,3 +1,4 @@
+from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_risk_actor_factory import AbstractRiskActorFactory
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
@@ -7,13 +8,13 @@ from .risk_actor import RiskActor
 
 
 class RiskActorFactory(AbstractRiskActorFactory):
-    def __init__(self, risk_buffer: float):
-        self.risk_buffer = risk_buffer
+    def __init__(self, config_service: AbstractConfig):
+        self.config = config_service.get("position")
 
     def create_actor(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         return RiskActor(
             symbol,
             timeframe,
             strategy,
-            self.risk_buffer,
+            self.config["risk_buffer"],
         )

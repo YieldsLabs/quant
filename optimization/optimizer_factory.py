@@ -1,3 +1,4 @@
+from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_optimizer_factory import AbstractStrategyOptimizerFactory
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.interfaces.abstract_strategy_optimization import AbstractStrategyOptimization
@@ -8,24 +9,9 @@ from optimization.strategy_genetic import GeneticStrategyOptimization
 class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
     _optimizer_type = {Optimizer.GENETIC: GeneticStrategyOptimization}
 
-    def __init__(
-        self,
-        max_generations: int,
-        elite_count: int,
-        crossover_rate: float,
-        mutation_rate: float,
-        tournament_size: int,
-        reset_percentage: float,
-        stability_percentage: float,
-    ):
+    def __init__(self, config_service: AbstractConfig):
         super().__init__()
-        self.max_generations = max_generations
-        self.elite_count = elite_count
-        self.crossover_rate = crossover_rate
-        self.mutation_rate = mutation_rate
-        self.tournament_size = tournament_size
-        self.reset_percentage = reset_percentage
-        self.stability_percentage = stability_percentage
+        self.config = config_service.get("optimization")
 
     def create(
         self, type: Optimizer, generator: AbstractStrategyGenerator
@@ -37,11 +23,11 @@ class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
 
         return optimizer(
             generator,
-            self.max_generations,
-            self.elite_count,
-            self.crossover_rate,
-            self.mutation_rate,
-            self.tournament_size,
-            self.reset_percentage,
-            self.stability_percentage,
+            self.config["max_generations"],
+            self.config["elite_count"],
+            self.config["crossover_rate"],
+            self.config["mutation_rate"],
+            self.config["tournament_size"],
+            self.config["reset_percentage"],
+            self.config["stability_percentage"],
         )
