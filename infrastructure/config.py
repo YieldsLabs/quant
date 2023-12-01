@@ -28,9 +28,20 @@ class ConfigService(AbstractConfig):
                     elif current_section is not None and "=" in line:
                         key, value = map(str.strip, line.split("=", 1))
                         if "." in value:
-                            self._config[current_section][key] = float(value)
+                            try:
+                                float_value = float(value)
+                                self._config[current_section][key] = (
+                                    int(float_value)
+                                    if float_value.is_integer()
+                                    else float_value
+                                )
+                            except ValueError:
+                                self._config[current_section][key] = value
                         else:
-                            self._config[current_section][key] = value
+                            try:
+                                self._config[current_section][key] = int(value)
+                            except ValueError:
+                                self._config[current_section][key] = value
         except FileNotFoundError:
             pass
 

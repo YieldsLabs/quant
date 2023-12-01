@@ -11,7 +11,7 @@ class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
 
     def __init__(self, config_service: AbstractConfig):
         super().__init__()
-        self.config = config_service.get("optimizer")
+        self.config = config_service.get("optimization")
 
     def create(
         self, type: Optimizer, generator: AbstractStrategyGenerator

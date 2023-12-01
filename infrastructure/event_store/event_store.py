@@ -26,7 +26,7 @@ class EventStore(metaclass=SingletonMeta):
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)
 
-        self.buffer_size = config["buffer_size"]
+        self.buffer_size = config["buf_size"]
         self.buffer = {}
 
     def append(self, event: Event):

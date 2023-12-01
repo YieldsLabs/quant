@@ -62,9 +62,10 @@ async def main():
     config_service = ConfigService()
     config_service.load(config_path="config.ini")
     config = {
-        "bus": {"num_workers": os.cpu_count(), "base_dir": LOG_DIR},
+        "bus": {"num_workers": os.cpu_count()},
+        "store": {"base_dir": LOG_DIR},
         "generator": {
-            "timeframes": [str(Timeframe.ONE_MINUTE)],
+            "timeframes": [str(Timeframe.FIVE_MINUTES)],
             "blacklist": ["USDCUSDT"],
         },
     }
