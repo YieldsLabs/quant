@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 from backtest.backtest import Backtest
 from broker.broker_factory import BrokerFactory
-from core.models.lookback import Lookback
 from core.models.strategy import StrategyType
 from core.models.timeframe import Timeframe
 from datasource.bybit_ws import BybitWSHandler
@@ -68,7 +67,6 @@ async def main():
             "timeframes": [str(Timeframe.ONE_MINUTE)],
             "blacklist": ["USDCUSDT"],
         },
-        
     }
 
     config_service.update(config)

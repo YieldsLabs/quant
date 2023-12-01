@@ -3,8 +3,8 @@ from typing import Any, Callable, Optional, Type
 
 from core.commands.base import Command
 from core.events.base import Event, EventEnded
+from core.interfaces.abstract_config import AbstractConfig
 from core.queries.base import Query
-from infrastructure.config import Config
 
 from .event_handler import EventHandler
 from .worker_pool import WorkerPool
@@ -20,32 +20,15 @@ class SingletonMeta(type):
 
 
 class EventDispatcher(metaclass=SingletonMeta):
-    def __init__(self, config_service: Config):
+    def __init__(self, config_service: AbstractConfig):
         self.event_handler = EventHandler()
         self.cancel_event = asyncio.Event()
 
-        config = config_service.get("bus")
-        num_workers = config["num_workers"]
-        piority_groups = config["piority_groups"]
+        self.config = config_service.get("bus")
 
-        self.command_worker_pool = WorkerPool(
-            num_workers,
-            num_workers * piority_groups,
-            self.event_handler,
-            self.cancel_event,
-        )
-        self.query_worker_pool = WorkerPool(
-            num_workers,
-            num_workers * piority_groups,
-            self.event_handler,
-            self.cancel_event,
-        )
-        self.event_worker_pool = WorkerPool(
-            num_workers,
-            num_workers * piority_groups,
-            self.event_handler,
-            self.cancel_event,
-        )
+        self.command_worker_pool = self._create_worker_pool()
+        self.query_worker_pool = self._create_worker_pool()
+        self.event_worker_pool = self._create_worker_pool()
 
     def register(
         self,
@@ -71,15 +54,6 @@ class EventDispatcher(metaclass=SingletonMeta):
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)
 
-    async def _dispatch_to_poll(
-        self, event: Type[Event], worker_pool: WorkerPool, *args, **kwargs
-    ) -> None:
-        if isinstance(event, EventEnded):
-            self.cancel_event.set()
-            return
-
-        await worker_pool.dispatch_to_worker(event, *args, **kwargs)
-
     async def wait(self) -> None:
         await self.event_worker_pool.wait()
         await self.query_worker_pool.wait()
@@ -89,3 +63,20 @@ class EventDispatcher(metaclass=SingletonMeta):
         await self._dispatch_to_poll(EventEnded(), self.event_worker_pool)
         await self._dispatch_to_poll(EventEnded(), self.query_worker_pool)
         await self._dispatch_to_poll(EventEnded(), self.command_worker_pool)
+
+    async def _dispatch_to_poll(
+        self, event: Type[Event], worker_pool: WorkerPool, *args, **kwargs
+    ) -> None:
+        if isinstance(event, EventEnded):
+            self.cancel_event.set()
+            return
+
+        await worker_pool.dispatch_to_worker(event, *args, **kwargs)
+
+    def _create_worker_pool(self) -> WorkerPool:
+        return WorkerPool(
+            self.config["num_workers"],
+            self.config["num_workers"] * self.config["piority_groups"],
+            self.event_handler,
+            self.cancel_event,
+        )
