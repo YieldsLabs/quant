@@ -11,6 +11,7 @@ from core.interfaces.abstract_strategy_generator_factory import (
 from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.strategy import StrategyType
+from infrastructure.config import ConfigService
 
 
 @dataclass(frozen=True)
@@ -22,10 +23,4 @@ class SystemContext:
     strategy_generator_factory: AbstractStrategyGeneratorFactory
     strategy_optimizer_factory: AbstractStrategyOptimizerFactory
     strategy_type: StrategyType
-    exchange_type: ExchangeType
-    in_sample: Lookback
-    out_sample: Lookback
-    active_strategy_num: int
-    parallel_num: int
-    leverage: int
-    is_live: bool
+    config: ConfigService

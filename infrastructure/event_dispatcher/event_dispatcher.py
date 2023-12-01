@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional, Type
 from core.commands.base import Command
 from core.events.base import Event, EventEnded
 from core.queries.base import Query
+from infrastructure.config import Config
 
 from .event_handler import EventHandler
 from .worker_pool import WorkerPool
@@ -19,18 +20,22 @@ class SingletonMeta(type):
 
 
 class EventDispatcher(metaclass=SingletonMeta):
-    def __init__(self, num_workers: int = 3, multi: int = 1):
+    def __init__(self, config_service: Config):
         self.event_handler = EventHandler()
         self.cancel_event = asyncio.Event()
 
+        config = config_service.get('bus')
+        num_workers = config['num_workers']
+        piority_groups = config['piority_groups']
+
         self.command_worker_pool = WorkerPool(
-            num_workers, num_workers * multi, self.event_handler, self.cancel_event
+            num_workers, num_workers * piority_groups, self.event_handler, self.cancel_event
         )
         self.query_worker_pool = WorkerPool(
-            num_workers, num_workers * multi, self.event_handler, self.cancel_event
+            num_workers, num_workers * piority_groups, self.event_handler, self.cancel_event
         )
         self.event_worker_pool = WorkerPool(
-            num_workers, num_workers * multi, self.event_handler, self.cancel_event
+            num_workers, num_workers * piority_groups, self.event_handler, self.cancel_event
         )
 
     def register(
