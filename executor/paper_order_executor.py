@@ -20,7 +20,6 @@ from core.models.timeframe import Timeframe
 OrderEventType = Union[
     NewMarketDataReceived, PositionInitialized, PositionCloseRequested
 ]
-PositionEventType = Union[PositionInitialized, PositionCloseRequested]
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class PriceDirection(Enum):
 
 
 class PaperOrderExecutor(BaseActor):
-    _POSITION_EVENTS = [PositionInitialized, PositionCloseRequested]
+    _EVENTS = [NewMarketDataReceived, PositionInitialized, PositionCloseRequested]
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__(symbol, timeframe, strategy)
@@ -40,19 +39,13 @@ class PaperOrderExecutor(BaseActor):
     async def start(self):
         await super().start()
 
-        self._dispatcher.register(
-            NewMarketDataReceived, self.handle, self._filter_market_event
-        )
-
-        for event in self._POSITION_EVENTS:
-            self._dispatcher.register(event, self.handle, self._filter_position_event)
+        for event in self._EVENTS:
+            self._dispatcher.register(event, self.handle, self._filter_event)
 
     async def stop(self):
         await super().stop()
 
-        self._dispatcher.unregister(NewMarketDataReceived, self.handle)
-
-        for event in self._POSITION_EVENTS:
+        for event in self._EVENTS:
             self._dispatcher.unregister(event, self.handle)
 
     async def handle(self, event: OrderEventType):
@@ -67,12 +60,9 @@ class PaperOrderExecutor(BaseActor):
         if handler:
             await handler(event)
 
-    def _filter_market_event(self, event: NewMarketDataReceived):
+    def _filter_event(self, event: OrderEventType):
+        event = event.position.signal if hasattr(event, "position") else event
         return event.symbol == self._symbol and event.timeframe == self._timeframe
-
-    def _filter_position_event(self, event: PositionEventType):
-        signal = event.position.signal
-        return signal.symbol == self._symbol and signal.timeframe == self._timeframe
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
