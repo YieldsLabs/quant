@@ -1,3 +1,4 @@
+from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.interfaces.abstract_strategy_generator_factory import (
     AbstractStrategyGeneratorFactory,
@@ -10,12 +11,10 @@ from strategy.generator.trend_follow import TrendFollowStrategyGenerator
 
 class StrategyGeneratorFactory(AbstractStrategyGeneratorFactory):
     def __init__(
-        self, n_samples: int, symbols_blacklist: list[str], timeframes: list[Timeframe]
+        self, config_service: AbstractConfig,
     ):
         super().__init__()
-        self.n_samples = n_samples
-        self.symbols_blacklist = symbols_blacklist
-        self.timeframes = timeframes
+        self.config = config_service.get('generator')
 
     _generator_type = {StrategyType.TREND: TrendFollowStrategyGenerator}
 
@@ -28,7 +27,9 @@ class StrategyGeneratorFactory(AbstractStrategyGeneratorFactory):
         generator_class = self._generator_type.get(type)
 
         _symbols = [
-            symbol for symbol in symbols if symbol.name not in self.symbols_blacklist
+            symbol for symbol in symbols if symbol.name not in self.config['blacklist']
         ]
 
-        return generator_class(self.n_samples, _symbols, self.timeframes)
+        _timeframes = []
+
+        return generator_class(self.config['n_samples'], _symbols, _timeframes)

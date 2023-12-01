@@ -7,6 +7,7 @@ from core.events.account import PortfolioAccountUpdated
 from core.events.backtest import BacktestStarted
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
+from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.models.size import PositionSizeType
 from core.queries.portfolio import (
@@ -22,12 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 class Portfolio(AbstractEventManager):
-    def __init__(self, initial_account_size: float, risk_per_trade: int):
+    def __init__(self, config_service: AbstractConfig):
         super().__init__()
         self.state = PortfolioStorage()
         self.strategy = StrategyStorage()
-        self.account_size = initial_account_size
-        self.risk_per_trade = risk_per_trade
+        self.config = config_service.get('portfolio')
+        self.account_size = self.config['account_size']
 
     @command_handler(UpdateAccountSize)
     async def update_account_size(self, command: UpdateAccountSize):
@@ -45,7 +46,7 @@ class Portfolio(AbstractEventManager):
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
-        await self.state.next(event.position, self.account_size, self.risk_per_trade)
+        await self.state.next(event.position, self.account_size, self.config['risk_per_trade'])
 
         signal = event.position.signal
         symbol = signal.symbol
@@ -88,22 +89,23 @@ class Portfolio(AbstractEventManager):
         symbol = query.signal.symbol
         timeframe = query.signal.timeframe
         strategy = query.signal.strategy
+        risk_per_trade = self.config['risk_per_trade']
 
         equity = await self.state.get_equity(symbol, timeframe, strategy)
 
         if query.type == PositionSizeType.Fixed:
-            return equity * self.risk_per_trade
+            return equity * risk_per_trade
 
         elif query.type == PositionSizeType.Kelly:
             kelly = await self.state.get_kelly(symbol, timeframe, strategy)
-            return equity * kelly if kelly else self.risk_per_trade
+            return equity * kelly if kelly else risk_per_trade
 
         elif query.type == PositionSizeType.Optimalf:
             optimalf = await self.state.get_optimalf(symbol, timeframe, strategy)
-            return equity * optimalf if optimalf else self.risk_per_trade
+            return equity * optimalf if optimalf else risk_per_trade
 
         else:
-            return equity * self.risk_per_trade
+            return equity * risk_per_trade
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):
