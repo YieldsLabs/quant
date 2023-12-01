@@ -14,6 +14,8 @@ RiskEvent = Union[NewMarketDataReceived, PositionOpened, PositionClosed]
 
 
 class RiskActor(BaseActor):
+    _EVENTS = [NewMarketDataReceived, PositionOpened, PositionClosed]
+
     def __init__(
         self,
         symbol: Symbol,
@@ -28,17 +30,13 @@ class RiskActor(BaseActor):
     async def start(self):
         await super().start()
 
-        self._dispatcher.register(
-            NewMarketDataReceived, self.handle, self._market_event_filter
-        )
-
-        for event in [PositionOpened, PositionClosed]:
-            self._dispatcher.register(event, self.handle, self._position_event_filter)
+        for event in self._EVENTS:
+            self._dispatcher.register(event, self.handle, self._event_filter)
 
     async def stop(self):
         await super().stop()
 
-        for event in [NewMarketDataReceived, PositionOpened, PositionClosed]:
+        for event in self._EVENTS:
             self._dispatcher.unregister(event, self.handle)
 
     async def handle(self, event: RiskEvent):
@@ -60,6 +58,9 @@ class RiskActor(BaseActor):
         self._position = None
 
     async def _handle_risk(self, event: NewMarketDataReceived):
+        if not self._position:
+            return
+
         current_position = self._position
 
         next_position = current_position.next(event.ohlcv)
@@ -67,16 +68,9 @@ class RiskActor(BaseActor):
         if self._should_exit(next_position, event.ohlcv):
             await self._process_exit(current_position, event.ohlcv)
 
-    def _position_event_filter(self, event: PositionOpened):
-        signal = event.position.signal
-        return self._symbol == signal.symbol and self._timeframe == signal.timeframe
-
-    def _market_event_filter(self, event: NewMarketDataReceived):
-        return (
-            event.symbol == self._symbol
-            and event.timeframe == self._timeframe
-            and self._position
-        )
+    def _event_filter(self, event: RiskEvent):
+        event = event.position.signal if hasattr(event, "position") else event
+        return event.symbol == self._symbol and event.timeframe == self._timeframe
 
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)

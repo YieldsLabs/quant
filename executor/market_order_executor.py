@@ -51,8 +51,8 @@ class MarketOrderExecutor(BaseActor):
             await handler(event)
 
     def _filter_event(self, event: PositionEventType):
-        signal = event.position.signal
-        return signal.symbol == self._symbol and signal.timeframe == self._timeframe
+        event = event.position.signal if hasattr(event, "position") else event
+        return event.symbol == self._symbol and event.timeframe == self._timeframe
 
     async def _execute_order(self, event: PositionInitialized):
         position = event.position
