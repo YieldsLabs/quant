@@ -19,14 +19,14 @@ class SingletonMeta(type):
 
 class EventStore(metaclass=SingletonMeta):
     def __init__(self, config_service: AbstractConfig):
-        config = config_service.get('store')
-        
-        self.base_dir = config['base_dir']
-        
+        config = config_service.get("store")
+
+        self.base_dir = config["base_dir"]
+
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)
 
-        self.buffer_size = config['buffer_size']
+        self.buffer_size = config["buffer_size"]
         self.buffer = {}
 
     def append(self, event: Event):

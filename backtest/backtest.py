@@ -21,12 +21,12 @@ class Backtest(AbstractBacktest):
         self,
         datasource_factory: AbstractDataSourceFactory,
         exchange_factory: AbstractExchangeFactory,
-        config_service: AbstractConfig
+        config_service: AbstractConfig,
     ):
         super().__init__()
         self.datasource_factory = datasource_factory
         self.exchange_factory = exchange_factory
-        self.config = config_service.get('backtest')
+        self.config = config_service.get("backtest")
 
     @command_handler(BacktestRun)
     async def _run_backtest(self, command: BacktestRun):
@@ -47,7 +47,9 @@ class Backtest(AbstractBacktest):
 
         await self.dispatch(BacktestStarted(symbol, timeframe, strategy))
 
-        iterator = datasource.fetch(lookback, command.out_sample, self.config['batch_size'])
+        iterator = datasource.fetch(
+            lookback, command.out_sample, self.config["batch_size"]
+        )
 
         async for data in iterator:
             await self._process_historical_data(symbol, timeframe, data)

@@ -24,18 +24,27 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.event_handler = EventHandler()
         self.cancel_event = asyncio.Event()
 
-        config = config_service.get('bus')
-        num_workers = config['num_workers']
-        piority_groups = config['piority_groups']
+        config = config_service.get("bus")
+        num_workers = config["num_workers"]
+        piority_groups = config["piority_groups"]
 
         self.command_worker_pool = WorkerPool(
-            num_workers, num_workers * piority_groups, self.event_handler, self.cancel_event
+            num_workers,
+            num_workers * piority_groups,
+            self.event_handler,
+            self.cancel_event,
         )
         self.query_worker_pool = WorkerPool(
-            num_workers, num_workers * piority_groups, self.event_handler, self.cancel_event
+            num_workers,
+            num_workers * piority_groups,
+            self.event_handler,
+            self.cancel_event,
         )
         self.event_worker_pool = WorkerPool(
-            num_workers, num_workers * piority_groups, self.event_handler, self.cancel_event
+            num_workers,
+            num_workers * piority_groups,
+            self.event_handler,
+            self.cancel_event,
         )
 
     def register(

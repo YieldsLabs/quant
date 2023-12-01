@@ -8,8 +8,6 @@ from core.interfaces.abstract_squad_factory import AbstractSquadFactory
 from core.interfaces.abstract_strategy_generator_factory import (
     AbstractStrategyGeneratorFactory,
 )
-from core.models.exchange import ExchangeType
-from core.models.lookback import Lookback
 from core.models.strategy import StrategyType
 from infrastructure.config import ConfigService
 

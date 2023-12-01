@@ -9,6 +9,14 @@ class Timeframe(Enum):
     ONE_HOUR = "1h"
     FOUR_HOURS = "4h"
 
+    @classmethod
+    def from_raw(cls, value: str) -> "Timeframe":
+        for timeframe in cls:
+            if timeframe.value == value:
+                return timeframe
+
+        raise ValueError(f"No matching Timeframe for value: {value}")
+
     def __str__(self):
         return self.value
 

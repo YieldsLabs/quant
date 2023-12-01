@@ -27,8 +27,8 @@ class Portfolio(AbstractEventManager):
         super().__init__()
         self.state = PortfolioStorage()
         self.strategy = StrategyStorage()
-        self.config = config_service.get('portfolio')
-        self.account_size = self.config['account_size']
+        self.config = config_service.get("portfolio")
+        self.account_size = self.config["account_size"]
 
     @command_handler(UpdateAccountSize)
     async def update_account_size(self, command: UpdateAccountSize):
@@ -46,7 +46,9 @@ class Portfolio(AbstractEventManager):
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
-        await self.state.next(event.position, self.account_size, self.config['risk_per_trade'])
+        await self.state.next(
+            event.position, self.account_size, self.config["risk_per_trade"]
+        )
 
         signal = event.position.signal
         symbol = signal.symbol
@@ -89,7 +91,7 @@ class Portfolio(AbstractEventManager):
         symbol = query.signal.symbol
         timeframe = query.signal.timeframe
         strategy = query.signal.strategy
-        risk_per_trade = self.config['risk_per_trade']
+        risk_per_trade = self.config["risk_per_trade"]
 
         equity = await self.state.get_equity(symbol, timeframe, strategy)
 

@@ -10,13 +10,14 @@ from strategy.generator.trend_follow import TrendFollowStrategyGenerator
 
 
 class StrategyGeneratorFactory(AbstractStrategyGeneratorFactory):
+    _generator_type = {StrategyType.TREND: TrendFollowStrategyGenerator}
+
     def __init__(
-        self, config_service: AbstractConfig,
+        self,
+        config_service: AbstractConfig,
     ):
         super().__init__()
-        self.config = config_service.get('generator')
-
-    _generator_type = {StrategyType.TREND: TrendFollowStrategyGenerator}
+        self.config = config_service.get("generator")
 
     def create(
         self, type: StrategyType, symbols: list[Symbol]
@@ -27,9 +28,11 @@ class StrategyGeneratorFactory(AbstractStrategyGeneratorFactory):
         generator_class = self._generator_type.get(type)
 
         _symbols = [
-            symbol for symbol in symbols if symbol.name not in self.config['blacklist']
+            symbol for symbol in symbols if symbol.name not in self.config["blacklist"]
         ]
 
-        _timeframes = []
+        _timeframes = [
+            Timeframe.from_raw(timeframe) for timeframe in self.config["timeframes"]
+        ]
 
-        return generator_class(self.config['n_samples'], _symbols, _timeframes)
+        return generator_class(self.config["n_samples"], _symbols, _timeframes)

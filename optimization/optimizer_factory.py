@@ -9,13 +9,10 @@ from optimization.strategy_genetic import GeneticStrategyOptimization
 class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
     _optimizer_type = {Optimizer.GENETIC: GeneticStrategyOptimization}
 
-    def __init__(
-        self,
-        config_service: AbstractConfig
-    ):
+    def __init__(self, config_service: AbstractConfig):
         super().__init__()
-        self.config = config_service.get('optimizer')
-    
+        self.config = config_service.get("optimizer")
+
     def create(
         self, type: Optimizer, generator: AbstractStrategyGenerator
     ) -> AbstractStrategyOptimization:
@@ -26,11 +23,11 @@ class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
 
         return optimizer(
             generator,
-            self.config['max_generations'],
-            self.config['elite_count'],
-            self.config['crossover_rate'],
-            self.config['mutation_rate'],
-            self.config['tournament_size'],
-            self.config['reset_percentage'],
-            self.config['stability_percentage'],
+            self.config["max_generations"],
+            self.config["elite_count"],
+            self.config["crossover_rate"],
+            self.config["mutation_rate"],
+            self.config["tournament_size"],
+            self.config["reset_percentage"],
+            self.config["stability_percentage"],
         )

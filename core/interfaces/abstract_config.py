@@ -3,6 +3,7 @@ from typing import Dict, Union
 
 ConfigType = Dict[str, Union[str, float]]
 
+
 class AbstractConfig(ABC):
     @abstractmethod
     def load(self, path: str) -> None:

@@ -2,7 +2,6 @@ import asyncio
 import logging
 import os
 import signal
-from infrastructure.config import ConfigService
 
 import uvloop
 from dotenv import load_dotenv
@@ -16,6 +15,7 @@ from datasource.bybit_ws import BybitWSHandler
 from datasource.datasource_factory import DataSourceFactory
 from exchange.exchange_factory import ExchangeFactory
 from executor.order_executor_actor_factory import OrderExecutorActorFactory
+from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.event_store.event_store import EventStore
 from infrastructure.logger import configure_logging
@@ -43,7 +43,6 @@ load_dotenv()
 
 
 BYBIT_WSS = os.getenv("BYBIT_WSS")
-IS_LIVE_MODE = os.getenv("LIVE_MODE") == "1"
 LOG_DIR = os.getenv("LOG_DIR")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 WASM_FOLDER = os.getenv("WASM_FOLDER")
@@ -62,24 +61,17 @@ async def main():
     logging.info("Initializing...")
 
     config_service = ConfigService()
-    config_service.load(config_path='config.ini')
+    config_service.load(config_path="config.ini")
+    config = {
+        "bus": {"num_workers": os.cpu_count(), "base_dir": LOG_DIR},
+        "generator": {
+            "timeframes": [str(Timeframe.ONE_MINUTE)],
+            "blacklist": ["USDCUSDT"],
+        },
+        
+    }
 
-    config_service.update({
-        'bus': { 
-            'num_workers': os.cpu_count(),
-            'base_dir': LOG_DIR
-        },
-        'backtest': {
-            'in_sample': Lookback.THREE_MONTH,
-            'out_sample': Lookback.ONE_MONTH,
-        },
-        'generator': {
-            'timeframes': [
-                Timeframe.ONE_MINUTE
-            ],
-            'blacklist': ["USDCUSDT"]
-        }
-    })
+    config_service.update(config)
 
     event_store = EventStore(config_service)
     event_bus = EventDispatcher(config_service)
@@ -116,7 +108,7 @@ async def main():
         strategy_generator_factory,
         strategy_optimization_factory,
         strategy_type=StrategyType.TREND,
-        config=config_service
+        config=config_service,
     )
 
     trend_system = System(trend_context)

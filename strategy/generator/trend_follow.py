@@ -7,7 +7,7 @@ import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
+from core.models.parameter import CategoricalParameter, RandomParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.timeframe import Timeframe
 from strategy.baseline.ma import MaBaseLine
@@ -184,7 +184,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 MaBaseLine(
                     smoothing=CategoricalParameter(MovingAverageType),
                     period=RandomParameter(60.0, 90.0, 5.0),
-                )
+                ),
             ]
         )
         stop_loss = np.random.choice(
