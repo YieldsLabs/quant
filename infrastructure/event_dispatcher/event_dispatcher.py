@@ -55,14 +55,18 @@ class EventDispatcher(metaclass=SingletonMeta):
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)
 
     async def wait(self) -> None:
-        await self.event_worker_pool.wait()
-        await self.query_worker_pool.wait()
-        await self.command_worker_pool.wait()
+        await asyncio.gather(
+            self.event_worker_pool.wait(),
+            self.query_worker_pool.wait(),
+            self.command_worker_pool.wait(),
+        )
 
     async def stop(self) -> None:
-        await self._dispatch_to_poll(EventEnded(), self.event_worker_pool)
-        await self._dispatch_to_poll(EventEnded(), self.query_worker_pool)
-        await self._dispatch_to_poll(EventEnded(), self.command_worker_pool)
+        await asyncio.gather(
+            self._dispatch_to_poll(EventEnded(), self.event_worker_pool),
+            self._dispatch_to_poll(EventEnded(), self.query_worker_pool),
+            self._dispatch_to_poll(EventEnded(), self.command_worker_pool),
+        )
 
     async def _dispatch_to_poll(
         self, event: Type[Event], worker_pool: WorkerPool, *args, **kwargs

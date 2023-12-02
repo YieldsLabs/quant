@@ -53,7 +53,7 @@ class EventHandler:
         except Exception as e:
             self._dead_letter_queue.append((event, e))
             logger.error(
-                f"Exception encountered: {e}. Event added to dead letter queue."
+                f"Exception encountered in handler {handler.__name__}: {e}. Event added to dead letter queue."
             )
 
     async def _create_handler(

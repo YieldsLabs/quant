@@ -24,12 +24,7 @@ class WorkerPool:
         )
 
     def _create_priority_map(self, num_workers, num_priority_group):
-        priority_map = {}
-
-        for i in range(num_priority_group):
-            priority_map[i] = i % num_workers
-
-        return priority_map
+        return {i: i % num_workers for i in range(num_priority_group)}
 
     async def dispatch_to_worker(self, event: Event, *args, **kwargs) -> None:
         priority_group = self.load_balancer.determine_priority_group(
@@ -40,5 +35,4 @@ class WorkerPool:
         self.load_balancer.register_event(priority_group)
 
     async def wait(self) -> None:
-        for worker in self.workers:
-            await worker.wait()
+        await asyncio.gather(*(worker.wait() for worker in self.workers))
