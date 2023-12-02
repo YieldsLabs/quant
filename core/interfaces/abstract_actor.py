@@ -1,8 +1,16 @@
 from abc import abstractmethod
 from typing import Union
 
+from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
-from core.events.position import PositionCloseRequested, PositionInitialized
+from core.events.position import (
+    BrokerPositionClosed,
+    BrokerPositionOpened,
+    PositionClosed,
+    PositionCloseRequested,
+    PositionInitialized,
+    PositionOpened,
+)
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import (
     ExitLongSignalReceived,
@@ -19,6 +27,11 @@ from .abstract_event_manager import AbstractEventManager
 ActorEvent = Union[
     NewMarketDataReceived,
     PositionInitialized,
+    PositionOpened,
+    PositionClosed,
+    BrokerPositionOpened,
+    BrokerPositionClosed,
+    BacktestEnded,
     PositionCloseRequested,
     GoLongSignalReceived,
     GoShortSignalReceived,

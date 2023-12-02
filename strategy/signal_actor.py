@@ -5,6 +5,7 @@ from core.actors.base import BaseActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
+from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
 if TYPE_CHECKING:
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 class SignalActor(BaseActor):
     def __init__(
         self,
-        symbol: str,
+        symbol: Symbol,
         timeframe: Timeframe,
         strategy: Strategy,
         service: AbstractSignalService,
@@ -46,12 +47,12 @@ class SignalActor(BaseActor):
         if not await self.running:
             return
 
-        event = self.strategy_ref.next(
+        signal_event = self.strategy_ref.next(
             self._symbol, self._timeframe, self._strategy, event.ohlcv
         )
 
-        if event:
-            await self.dispatch(event)
+        if signal_event:
+            await self.dispatch(signal_event)
 
     def _register_strategy(self):
         self.strategy_ref = self.service.register(self._strategy)
