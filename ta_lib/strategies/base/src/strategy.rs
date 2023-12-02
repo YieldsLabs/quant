@@ -9,8 +9,8 @@ const DEFAULT_STOP_LEVEL: f32 = -1.0;
 pub enum TradeAction {
     GoLong(f32),
     GoShort(f32),
-    ExitLong,
-    ExitShort,
+    ExitLong(f32),
+    ExitShort(f32),
     DoNothing,
 }
 
@@ -93,8 +93,8 @@ impl Strategy for BaseStrategy {
         match self.trade_signals(&series) {
             (true, _, _, _) => TradeAction::GoLong(self.suggested_entry(&series)),
             (_, true, _, _) => TradeAction::GoShort(self.suggested_entry(&series)),
-            (_, _, true, _) => TradeAction::ExitLong,
-            (_, _, _, true) => TradeAction::ExitShort,
+            (_, _, true, _) => TradeAction::ExitLong(data.close),
+            (_, _, _, true) => TradeAction::ExitShort(data.close),
             _ => TradeAction::DoNothing,
         }
     }

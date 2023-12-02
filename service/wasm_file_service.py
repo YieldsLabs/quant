@@ -5,7 +5,7 @@ from core.models.strategy import StrategyType
 
 
 class WasmFileService(AbstractWasmService):
-    _path_map = {StrategyType.TREND: "trend_follow.wasm"}
+    _type = {StrategyType.TREND: "trend_follow.wasm"}
 
     def __init__(self, dir="wasm"):
         super().__init__()
@@ -15,6 +15,6 @@ class WasmFileService(AbstractWasmService):
         if type not in StrategyType:
             raise ValueError(f"Unknown Strategy: {type}")
 
-        wasm_path = f"./{self.dir}/{self._path_map.get(type)}"
+        wasm_path = f"./{self.dir}/{self._type.get(type)}"
 
         return Module.from_file(engine, wasm_path)

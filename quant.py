@@ -28,6 +28,7 @@ from position.size.optimal_f import PositionOptinalFSizeStrategy
 from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
 from risk.risk_actor_factory import RiskActorFactory
 from service.environment_secret_service import EnvironmentSecretService
+from service.signal_service import SignalService
 from service.wasm_file_service import WasmFileService
 from strategy.generator.strategy_generator_factory import StrategyGeneratorFactory
 from strategy.signal_actor_factory import SignalActorFactory
@@ -90,7 +91,7 @@ async def main():
     )
 
     squad_factory = SquadFactory(
-        SignalActorFactory(WasmFileService(WASM_FOLDER)),
+        SignalActorFactory(SignalService(WasmFileService(WASM_FOLDER))),
         PositionActorFactory(position_factory),
         RiskActorFactory(config_service),
     )

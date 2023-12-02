@@ -1,0 +1,95 @@
+from dataclasses import dataclass
+from typing import Optional, Union
+
+from wasmtime import Instance, Store
+
+from core.events.signal import (
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+    GoLongSignalReceived,
+    GoShortSignalReceived,
+)
+from core.models.action import Action
+from core.models.ohlcv import OHLCV
+from core.models.signal import Signal, SignalSide
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
+
+SignalEvent = Union[
+    GoLongSignalReceived,
+    GoShortSignalReceived,
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+]
+
+
+@dataclass(frozen=True)
+class StrategyRef:
+    id: int
+    instance_ref: Instance
+    store_ref: Store
+
+    def unregister(self):
+        exports = self.instance_ref.exports(self.store_ref)
+        exports["unregister_strategy"](self.store_ref, self.id)
+        self.store_ref.gc()
+
+    def next(
+        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, ohlcv: OHLCV
+    ) -> Optional[SignalEvent]:
+        exports = self.instance_ref.exports(self.store_ref)
+        [raw_action, price] = exports["strategy_next"](
+            self.store_ref,
+            self.id,
+            ohlcv.open,
+            ohlcv.high,
+            ohlcv.low,
+            ohlcv.close,
+            ohlcv.volume,
+        )
+
+        action = Action.from_raw(raw_action)
+
+        long_stop_loss, short_stop_loss = 0.0, 0.0
+
+        if action in (Action.GO_LONG, Action.GO_SHORT):
+            [long_stop_loss, short_stop_loss] = exports["strategy_stop_loss"](
+                self.store_ref, self.id
+            )
+
+        signal = Signal(
+            symbol,
+            timeframe,
+            strategy,
+            SignalSide.BUY
+            if action in (Action.GO_LONG, Action.EXIT_LONG)
+            else SignalSide.SELL,
+        )
+
+        action_event_map = {
+            Action.GO_LONG: GoLongSignalReceived(
+                signal=signal,
+                ohlcv=ohlcv,
+                entry_price=price,
+                stop_loss=long_stop_loss,
+            ),
+            Action.GO_SHORT: GoShortSignalReceived(
+                signal=signal,
+                ohlcv=ohlcv,
+                entry_price=price,
+                stop_loss=short_stop_loss,
+            ),
+            Action.EXIT_LONG: ExitLongSignalReceived(
+                signal=signal,
+                ohlcv=ohlcv,
+                exit_price=price,
+            ),
+            Action.EXIT_SHORT: ExitShortSignalReceived(
+                signal=signal,
+                ohlcv=ohlcv,
+                exit_price=price,
+            ),
+        }
+
+        return action_event_map.get(action)

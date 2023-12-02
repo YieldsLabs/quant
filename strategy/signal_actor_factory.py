@@ -1,27 +1,13 @@
-from wasmtime import Linker, Store, WasiConfig
-
 from core.interfaces.abstract_signal_actor_factory import AbstractSignalActorFactory
-from core.interfaces.abstract_wasm_service import AbstractWasmService
+from core.interfaces.abstract_signal_service import AbstractSignalService
 
 from .signal_actor import SignalActor
 
 
 class SignalActorFactory(AbstractSignalActorFactory):
-    def __init__(self, service: AbstractWasmService):
+    def __init__(self, service: AbstractSignalService):
         super().__init__()
-        self.wasm_service = service
+        self.signal_service = service
 
     def create_actor(self, symbol, timeframe, strategy):
-        store = Store()
-        engine = store.engine
-        wasi_config = WasiConfig()
-        wasi_config.wasm_multi_value = True
-        linker = Linker(engine)
-        store.set_wasi(wasi_config)
-        linker.define_wasi()
-
-        module = self.wasm_service.get_module(strategy.type, engine)
-        instance = linker.instantiate(store, module)
-        exports = instance.exports(store)
-
-        return SignalActor(symbol, timeframe, strategy, store, exports)
+        return SignalActor(symbol, timeframe, strategy, self.signal_service)

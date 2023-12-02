@@ -61,10 +61,10 @@ pub fn strategy_next(
         let result = strategy.next(ohlcv);
 
         match result {
-            TradeAction::GoLong(price) => (1.0, price),
-            TradeAction::GoShort(price) => (2.0, price),
-            TradeAction::ExitLong => (3.0, 0.0),
-            TradeAction::ExitShort => (4.0, 0.0),
+            TradeAction::GoLong(entry_price) => (1.0, entry_price),
+            TradeAction::GoShort(entry_price) => (2.0, entry_price),
+            TradeAction::ExitLong(exit_price) => (3.0, exit_price),
+            TradeAction::ExitShort(exit_price) => (4.0, exit_price),
             TradeAction::DoNothing => (0.0, 0.0),
         }
     } else {
