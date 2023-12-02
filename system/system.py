@@ -279,6 +279,4 @@ class System(AbstractSystem):
             )
 
         await self._refresh_account()
-        await self.execute(
-            Subscribe([(strategy[0], strategy[1]) for strategy in strategies])
-        )
+        await self.execute(Subscribe(strategies))

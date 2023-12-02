@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List
 
 from core.models.broker import MarginMode, PositionMode
 from core.models.position import Position
+from core.models.strategy import Strategy
 from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
 
 from .base import Command
 
@@ -29,4 +29,4 @@ class ClosePosition(Command):
 
 @dataclass(frozen=True)
 class Subscribe(Command):
-    symbols_and_timeframes: List[Tuple[Symbol, Timeframe]]
+    strategies: List[Strategy]

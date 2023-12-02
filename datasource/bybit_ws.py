@@ -39,7 +39,7 @@ class BybitWSHandler(AbstractWS):
         super().__init__()
         self.url = url
         self.ws = None
-        self.last_pairs = None
+        self.strategies = None
 
     async def connect_to_websocket(self, interval=5):
         await self.close()
@@ -97,7 +97,7 @@ class BybitWSHandler(AbstractWS):
             ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
             message_processing_task = asyncio.create_task(self.process_messages())
 
-            if self.last_pairs:
+            if self.strategies:
                 await self._subscribe()
 
             done, pending = await asyncio.wait(
@@ -133,13 +133,17 @@ class BybitWSHandler(AbstractWS):
             logger.error("WebSocket is not connected or open.")
             return
 
-        self.last_pairs = command.symbols_and_timeframes
+        self.strategies = command.strategies
         await self._subscribe()
 
     async def _subscribe(self):
+        symbols_timeframes = [
+            (strategy[0], strategy[1]) for strategy in self.strategies
+        ]
+
         channels = [
             f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol}"
-            for symbol, timeframe in self.last_pairs
+            for symbol, timeframe in symbols_timeframes
         ]
 
         subscribe_message = json.dumps(
