@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class SignalActor(BaseActor):
+    _EVENTS = [NewMarketDataReceived]
+
     def __init__(
         self,
         symbol: Symbol,
@@ -32,16 +34,16 @@ class SignalActor(BaseActor):
 
         self._register_strategy()
 
-        self._dispatcher.register(
-            NewMarketDataReceived, self.handle, self._filter_events
-        )
+        for event in self._EVENTS:
+            self._dispatcher.register(event, self.handle, self._filter_events)
 
     async def stop(self):
         await super().stop()
 
         self._unregister_strategy()
 
-        self._dispatcher.unregister(NewMarketDataReceived, self.handle)
+        for event in self._EVENTS:
+            self._dispatcher.unregister(event, self.handle)
 
     async def handle(self, event: NewMarketDataReceived):
         if not await self.running:

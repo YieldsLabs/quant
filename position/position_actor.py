@@ -27,7 +27,7 @@ from .position_state_machine import PositionStateMachine
 from .position_storage import PositionStorage
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
-PositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
+BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
 ExitSignal = Union[
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -35,15 +35,20 @@ ExitSignal = Union[
     BacktestEnded,
 ]
 
+PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent]
+
 
 class PositionActor(BaseActor):
-    SIGNAL_EVENTS = (GoLongSignalReceived, GoShortSignalReceived)
-    EXIT_EVENTS = (ExitLongSignalReceived, ExitShortSignalReceived, BacktestEnded)
-    POSITION_EVENTS = (
+    _EVENTS = [
+        GoLongSignalReceived,
+        GoShortSignalReceived,
+        ExitLongSignalReceived,
+        ExitShortSignalReceived,
+        BacktestEnded,
         BrokerPositionOpened,
         BrokerPositionClosed,
         RiskThresholdBreached,
-    )
+    ]
 
     def __init__(
         self,
@@ -61,28 +66,26 @@ class PositionActor(BaseActor):
     async def start(self):
         await super().start()
 
-        for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
+        for event in self._EVENTS:
             self._dispatcher.register(event, self.handle, self._event_filter)
 
     async def stop(self):
         await super().stop()
 
-        for event in self.SIGNAL_EVENTS + self.EXIT_EVENTS + self.POSITION_EVENTS:
+        for event in self._EVENTS:
             self._dispatcher.unregister(event, self.handle)
 
     async def handle(self, event):
         (symbol, timeframe) = self._get_event_key(event)
 
         if (
-            isinstance(event, self.SIGNAL_EVENTS)
+            isinstance(event, (GoLongSignalReceived, GoShortSignalReceived))
             and not await self.state.position_exists(symbol, timeframe)
             or not await self._is_event_stale(symbol, timeframe, event)
         ):
             await self.sm.process_event(symbol, event)
 
-    def _event_filter(
-        self, event: Union[SignalEvent, ExitSignal, PositionEvent]
-    ) -> bool:
+    def _event_filter(self, event: PositionEvent) -> bool:
         (symbol, timeframe) = self._get_event_key(event)
 
         return self._symbol == symbol and self._timeframe == timeframe
@@ -152,7 +155,7 @@ class PositionActor(BaseActor):
         return False
 
     @staticmethod
-    def _get_event_key(event: Union[SignalEvent, ExitSignal, PositionEvent]):
+    def _get_event_key(event: PositionEvent):
         signal = (
             event.signal
             if hasattr(event, "signal")
