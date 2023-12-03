@@ -27,19 +27,11 @@ class MarketOrderExecutor(Actor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__(symbol, timeframe, strategy)
 
-    async def start(self):
-        await super().start()
+    def pre_receive(self, event: PositionEventType):
+        event = event.position.signal if hasattr(event, "position") else event
+        return event.symbol == self._symbol and event.timeframe == self._timeframe
 
-        for event in self._EVENTS:
-            self._dispatcher.register(event, self.handle, self._filter_event)
-
-    async def stop(self):
-        await super().stop()
-
-        for event in self._EVENTS:
-            self._dispatcher.unregister(event, self.handle)
-
-    async def handle(self, event: PositionEventType):
+    async def on_receive(self, event: PositionEventType):
         handlers = {
             PositionInitialized: self._execute_order,
             PositionCloseRequested: self._close_position,
@@ -50,19 +42,15 @@ class MarketOrderExecutor(Actor):
         if handler:
             await handler(event)
 
-    def _filter_event(self, event: PositionEventType):
-        event = event.position.signal if hasattr(event, "position") else event
-        return event.symbol == self._symbol and event.timeframe == self._timeframe
-
     async def _execute_order(self, event: PositionInitialized):
         position = event.position
         size = position.size
 
         logger.info(f"New Position: {position}")
 
-        await self.execute(OpenPosition(position))
+        await self.ask(OpenPosition(position))
 
-        broker_position = await self.query(GetOpenPosition(position))
+        broker_position = await self.ask(GetOpenPosition(position))
 
         if not broker_position:
             order = Order(status=OrderStatus.FAILED, price=0, size=0)
@@ -82,12 +70,12 @@ class MarketOrderExecutor(Actor):
 
         logger.info(f"Opened Position: {next_position}")
 
-        await self.dispatch(BrokerPositionOpened(next_position))
+        await self.tell(BrokerPositionOpened(next_position))
 
     async def _close_position(self, event: PositionCloseRequested):
         position = event.position
 
-        await self.execute(ClosePosition(position))
+        await self.ask(ClosePosition(position))
 
         order = Order(
             status=OrderStatus.CLOSED,
@@ -99,4 +87,4 @@ class MarketOrderExecutor(Actor):
 
         logger.info(f"Closed Position: {next_position}")
 
-        await self.dispatch(BrokerPositionClosed(next_position))
+        await self.tell(BrokerPositionClosed(next_position))

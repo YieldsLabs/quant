@@ -1,19 +1,21 @@
-import asyncio
-
-from core.interfaces.abstract_actor import AbstractActor
+from core.interfaces.abstract_actor import AbstractActor, Ask, Message
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.base import Query
+from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
 
 class Actor(AbstractActor):
+    _EVENTS = []
+
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__()
         self._symbol = symbol
         self._timeframe = timeframe
         self._strategy = strategy
-        self._lock = asyncio.Lock()
         self._running = False
+        self._mailbox = EventDispatcher()
 
     @property
     def id(self):
@@ -32,16 +34,46 @@ class Actor(AbstractActor):
         return self._strategy
 
     @property
-    async def running(self):
-        async with self._lock:
-            return self._running
+    def running(self):
+        return self._running
+
+    def on_start(self):
+        pass
+
+    def on_stop(self):
+        pass
+
+    def pre_receive(self, _msg: Message) -> bool:
+        return True
+
+    def on_receive(self, _msg: Message):
+        pass
 
     async def start(self):
-        if await self.running:
+        if self.running:
             raise RuntimeError(f"Start: {self.__class__.__name__} is running")
+
+        for event in self._EVENTS:
+            self._mailbox.register(event, self.on_receive, self.pre_receive)
+
+        self.on_start()
         self._running = True
 
     async def stop(self):
-        if not await self.running:
+        if not self.running:
             raise RuntimeError(f"Stop: {self.__class__.__name__} is not started")
+
+        for event in self._EVENTS:
+            self._mailbox.unregister(event, self.on_receive)
+
+        self.on_stop()
         self._running = False
+
+    async def tell(self, msg: Message):
+        await self._mailbox.dispatch(msg)
+
+    async def ask(self, msg: Ask):
+        if isinstance(msg, Query):
+            return await self._mailbox.query(msg)
+
+        await self._mailbox.execute(msg)

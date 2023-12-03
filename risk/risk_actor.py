@@ -27,19 +27,11 @@ class RiskActor(Actor):
         self._position = None
         self.risk_buffer = risk_buffer
 
-    async def start(self):
-        await super().start()
+    def pre_receive(self, event: RiskEvent):
+        event = event.position.signal if hasattr(event, "position") else event
+        return event.symbol == self._symbol and event.timeframe == self._timeframe
 
-        for event in self._EVENTS:
-            self._dispatcher.register(event, self.handle, self._event_filter)
-
-    async def stop(self):
-        await super().stop()
-
-        for event in self._EVENTS:
-            self._dispatcher.unregister(event, self.handle)
-
-    async def handle(self, event: RiskEvent):
+    async def on_receive(self, event: RiskEvent):
         handlers = {
             NewMarketDataReceived: self._handle_risk,
             PositionOpened: self._update_position,
@@ -68,14 +60,10 @@ class RiskActor(Actor):
         if self._should_exit(next_position, event.ohlcv):
             await self._process_exit(current_position, event.ohlcv)
 
-    def _event_filter(self, event: RiskEvent):
-        event = event.position.signal if hasattr(event, "position") else event
-        return event.symbol == self._symbol and event.timeframe == self._timeframe
-
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)
 
-        await self.dispatch(RiskThresholdBreached(position, ohlcv, exit_price))
+        await self.tell(RiskThresholdBreached(position, ohlcv, exit_price))
 
     def _should_exit(self, next_position: Position, ohlcv: OHLCV):
         if next_position.side == PositionSide.LONG:

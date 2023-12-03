@@ -36,19 +36,11 @@ class PaperOrderExecutor(Actor):
         super().__init__(symbol, timeframe, strategy)
         self.last_tick = None
 
-    async def start(self):
-        await super().start()
+    def pre_receive(self, event: OrderEventType):
+        event = event.position.signal if hasattr(event, "position") else event
+        return event.symbol == self._symbol and event.timeframe == self._timeframe
 
-        for event in self._EVENTS:
-            self._dispatcher.register(event, self.handle, self._filter_event)
-
-    async def stop(self):
-        await super().stop()
-
-        for event in self._EVENTS:
-            self._dispatcher.unregister(event, self.handle)
-
-    async def handle(self, event: OrderEventType):
+    async def on_receive(self, event: OrderEventType):
         handlers = {
             PositionInitialized: self._execute_order,
             PositionCloseRequested: self._close_position,
@@ -59,10 +51,6 @@ class PaperOrderExecutor(Actor):
 
         if handler:
             await handler(event)
-
-    def _filter_event(self, event: OrderEventType):
-        event = event.position.signal if hasattr(event, "position") else event
-        return event.symbol == self._symbol and event.timeframe == self._timeframe
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
@@ -78,7 +66,7 @@ class PaperOrderExecutor(Actor):
 
         logger.debug(f"Opened Position: {next_position}")
 
-        await self.dispatch(BrokerPositionOpened(next_position))
+        await self.tell(BrokerPositionOpened(next_position))
 
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
@@ -94,7 +82,7 @@ class PaperOrderExecutor(Actor):
 
         logger.debug(f"Closed Position: {next_position}")
 
-        await self.dispatch(BrokerPositionClosed(next_position))
+        await self.tell(BrokerPositionClosed(next_position))
 
     async def _update_tick(self, event: NewMarketDataReceived):
         self.last_tick = event.ohlcv

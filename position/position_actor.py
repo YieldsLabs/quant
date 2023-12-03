@@ -63,19 +63,12 @@ class PositionActor(Actor):
         self.sm = PositionStateMachine(self)
         self.state = PositionStorage()
 
-    async def start(self):
-        await super().start()
+    def pre_receive(self, event: PositionEvent) -> bool:
+        (symbol, timeframe) = self._get_event_key(event)
 
-        for event in self._EVENTS:
-            self._dispatcher.register(event, self.handle, self._event_filter)
+        return self._symbol == symbol and self._timeframe == timeframe
 
-    async def stop(self):
-        await super().stop()
-
-        for event in self._EVENTS:
-            self._dispatcher.unregister(event, self.handle)
-
-    async def handle(self, event):
+    async def on_receive(self, event):
         (symbol, timeframe) = self._get_event_key(event)
 
         if (
@@ -84,11 +77,6 @@ class PositionActor(Actor):
             or not await self._is_event_stale(symbol, timeframe, event)
         ):
             await self.sm.process_event(symbol, event)
-
-    def _event_filter(self, event: PositionEvent) -> bool:
-        (symbol, timeframe) = self._get_event_key(event)
-
-        return self._symbol == symbol and self._timeframe == timeframe
 
     async def _is_event_stale(self, symbol, timeframe, event) -> bool:
         position = await self.state.retrieve_position(symbol, timeframe)
@@ -102,21 +90,21 @@ class PositionActor(Actor):
 
         await self.state.store_position(position)
 
-        await self.dispatch(PositionInitialized(position))
+        await self.tell(PositionInitialized(position))
 
         return True
 
     async def handle_position_opened(self, event: BrokerPositionOpened) -> bool:
         await self.state.update_stored_position(event.position)
 
-        await self.dispatch(PositionOpened(event.position))
+        await self.tell(PositionOpened(event.position))
 
         return True
 
     async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
         await self.state.close_stored_position(event.position)
 
-        await self.dispatch(PositionClosed(event.position))
+        await self.tell(PositionClosed(event.position))
 
         return True
 
@@ -126,7 +114,7 @@ class PositionActor(Actor):
         position = await self.state.retrieve_position(symbol, timeframe)
 
         if position and self.can_close_position(event, position):
-            await self.dispatch(PositionCloseRequested(position, event.exit_price))
+            await self.tell(PositionCloseRequested(position, event.exit_price))
             return True
 
         return False

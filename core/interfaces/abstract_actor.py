@@ -1,6 +1,7 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Union
 
+from core.commands.base import Command
 from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
@@ -21,10 +22,9 @@ from core.events.signal import (
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.base import Query
 
-from .abstract_event_manager import AbstractEventManager
-
-ActorEvent = Union[
+Message = Union[
     NewMarketDataReceived,
     PositionInitialized,
     PositionOpened,
@@ -40,8 +40,10 @@ ActorEvent = Union[
     RiskThresholdBreached,
 ]
 
+Ask = Union[Command, Query]
 
-class AbstractActor(AbstractEventManager):
+
+class AbstractActor(ABC):
     @property
     @abstractmethod
     def id(self) -> str:
@@ -68,6 +70,14 @@ class AbstractActor(AbstractEventManager):
         pass
 
     @abstractmethod
+    def on_start(self):
+        pass
+
+    @abstractmethod
+    def on_stop(self):
+        pass
+
+    @abstractmethod
     def start(self):
         pass
 
@@ -76,5 +86,17 @@ class AbstractActor(AbstractEventManager):
         pass
 
     @abstractmethod
-    def handle(self, event: ActorEvent):
+    def pre_receive(self, msg: Message) -> bool:
+        pass
+
+    @abstractmethod
+    def on_receive(self, msg: Message):
+        pass
+
+    @abstractmethod
+    def tell(self, msg: Message):
+        pass
+
+    @abstractmethod
+    def ask(self, ask: Ask):
         pass

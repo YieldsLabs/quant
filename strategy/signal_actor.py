@@ -29,43 +29,24 @@ class SignalActor(Actor):
         self.strategy_ref: Optional[StrategyRef] = None
         self.service = service
 
-    async def start(self):
-        await super().start()
-
-        self._register_strategy()
-
-        for event in self._EVENTS:
-            self._dispatcher.register(event, self.handle, self._filter_events)
-
-    async def stop(self):
-        await super().stop()
-
-        self._unregister_strategy()
-
-        for event in self._EVENTS:
-            self._dispatcher.unregister(event, self.handle)
-
-    async def handle(self, event: NewMarketDataReceived):
-        if not await self.running:
-            return
-
-        signal_event = self.strategy_ref.next(
-            self._symbol, self._timeframe, self._strategy, event.ohlcv
-        )
-
-        if signal_event:
-            await self.dispatch(signal_event)
-
-    def _register_strategy(self):
+    def on_start(self):
         self.strategy_ref = self.service.register(self._strategy)
 
-    def _unregister_strategy(self):
+    def on_stop(self):
         self.strategy_ref.unregister()
         self.strategy_ref = None
 
-    def _filter_events(self, event: NewMarketDataReceived):
+    def pre_receive(self, event: NewMarketDataReceived):
         return (
             event.symbol == self._symbol
             and event.timeframe == self._timeframe
             and event.closed
         )
+
+    async def on_receive(self, event: NewMarketDataReceived):
+        signal_event = self.strategy_ref.next(
+            self._symbol, self._timeframe, self._strategy, event.ohlcv
+        )
+
+        if signal_event:
+            await self.tell(signal_event)
