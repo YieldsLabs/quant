@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from core.actors.base import BaseActor
+from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class SignalActor(BaseActor):
+class SignalActor(Actor):
     _EVENTS = [NewMarketDataReceived]
 
     def __init__(

@@ -1,6 +1,6 @@
 from typing import Union
 
-from core.actors.base import BaseActor
+from core.actors import Actor
 from core.events.backtest import BacktestEnded
 from core.events.position import (
     BrokerPositionClosed,
@@ -38,7 +38,7 @@ ExitSignal = Union[
 PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent]
 
 
-class PositionActor(BaseActor):
+class PositionActor(Actor):
     _EVENTS = [
         GoLongSignalReceived,
         GoShortSignalReceived,

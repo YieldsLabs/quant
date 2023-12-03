@@ -6,7 +6,7 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
 
-class BaseActor(AbstractActor):
+class Actor(AbstractActor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__()
         self._symbol = symbol

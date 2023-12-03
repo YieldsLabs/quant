@@ -2,7 +2,7 @@ import logging
 from enum import Enum, auto
 from typing import Union
 
-from core.actors.base import BaseActor
+from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     BrokerPositionClosed,
@@ -29,7 +29,7 @@ class PriceDirection(Enum):
     OLHC = auto()
 
 
-class PaperOrderExecutor(BaseActor):
+class PaperOrderExecutor(Actor):
     _EVENTS = [NewMarketDataReceived, PositionInitialized, PositionCloseRequested]
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
@@ -66,7 +66,7 @@ class PaperOrderExecutor(BaseActor):
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
-        fill_price = self._determine_fill_price(current_position.side)
+        fill_price = self._determine_fill_price(self.last_tick, current_position.side)
 
         order = Order(
             status=OrderStatus.EXECUTED,
@@ -82,7 +82,7 @@ class PaperOrderExecutor(BaseActor):
 
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
-        fill_price = self._determine_fill_price(current_position.side)
+        fill_price = self._determine_fill_price(self.last_tick, current_position.side)
 
         order = Order(
             status=OrderStatus.CLOSED,
@@ -107,12 +107,12 @@ class PaperOrderExecutor(BaseActor):
             else PriceDirection.OLHC
         )
 
-    def _determine_fill_price(self, side: PositionSide) -> float:
-        direction = self._intrabar_price_movement(self.last_tick)
+    def _determine_fill_price(self, bar: OHLCV, side: PositionSide) -> float:
+        direction = self._intrabar_price_movement(bar)
 
         if side == PositionSide.LONG and direction == PriceDirection.OHLC:
-            return self.last_tick.high
+            return bar.high
         elif side == PositionSide.SHORT and direction == PriceDirection.OLHC:
-            return self.last_tick.low
+            return bar.low
         else:
-            return self.last_tick.close
+            return bar.close

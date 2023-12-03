@@ -1,7 +1,7 @@
 import logging
 from typing import Union
 
-from core.actors.base import BaseActor
+from core.actors import Actor
 from core.commands.broker import ClosePosition, OpenPosition
 from core.events.position import (
     BrokerPositionClosed,
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 PositionEventType = Union[PositionInitialized, PositionCloseRequested]
 
 
-class MarketOrderExecutor(BaseActor):
+class MarketOrderExecutor(Actor):
     _EVENTS = [PositionInitialized, PositionCloseRequested]
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):

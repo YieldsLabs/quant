@@ -1,6 +1,6 @@
 from typing import Union
 
-from core.actors.base import BaseActor
+from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import PositionClosed, PositionOpened
 from core.events.risk import RiskThresholdBreached
@@ -13,7 +13,7 @@ from core.models.timeframe import Timeframe
 RiskEvent = Union[NewMarketDataReceived, PositionOpened, PositionClosed]
 
 
-class RiskActor(BaseActor):
+class RiskActor(Actor):
     _EVENTS = [NewMarketDataReceived, PositionOpened, PositionClosed]
 
     def __init__(
