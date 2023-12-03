@@ -8,7 +8,6 @@ from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_backtest import AbstractBacktest
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_datasource_factory import AbstractDataSourceFactory
-from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -20,12 +19,10 @@ class Backtest(AbstractBacktest):
     def __init__(
         self,
         datasource_factory: AbstractDataSourceFactory,
-        exchange_factory: AbstractExchangeFactory,
         config_service: AbstractConfig,
     ):
         super().__init__()
         self.datasource_factory = datasource_factory
-        self.exchange_factory = exchange_factory
         self.config = config_service.get("backtest")
 
     @command_handler(BacktestRun)
@@ -35,10 +32,10 @@ class Backtest(AbstractBacktest):
         strategy = command.strategy
         datasource = self.datasource_factory.create(
             command.datasource,
-            self.exchange_factory.create(command.exchange),
             symbol,
             timeframe,
         )
+
         lookback = command.in_sample
 
         logger.info(

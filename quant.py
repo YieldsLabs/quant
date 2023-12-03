@@ -78,7 +78,7 @@ async def main():
 
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
 
-    Backtest(DataSourceFactory(), exchange_factory, config_service)
+    Backtest(DataSourceFactory(exchange_factory), config_service)
     Portfolio(config_service)
 
     ws_handler = BybitWSHandler(BYBIT_WSS)

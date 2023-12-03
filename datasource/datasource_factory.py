@@ -1,21 +1,18 @@
 from core.interfaces.abstract_datasource import AbstractDataSource
 from core.interfaces.abstract_datasource_factory import AbstractDataSourceFactory
-from core.models.datasource import DataSourceType
+from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
+from core.models.exchange import ExchangeType
 from datasource.exchange_datasource import ExchangeDataSource
 
 
 class DataSourceFactory(AbstractDataSourceFactory):
-    _datasource_type = {
-        DataSourceType.EXCHANGE: ExchangeDataSource,
-    }
-
-    def __init__(self):
+    def __init__(self, exchange_factory: AbstractExchangeFactory):
         super().__init__()
+        self.exchange_factory = exchange_factory
 
-    def create(self, type: DataSourceType, *args, **kwargs) -> AbstractDataSource:
-        if type not in self._datasource_type:
-            raise ValueError(f"Unknown DataSource: {type}")
+    def create(self, type: ExchangeType, *args, **kwargs) -> AbstractDataSource:
+        if not isinstance(type, ExchangeType):
+            raise ValueError("Invalid datasource type provided")
 
-        datasource_class = self._datasource_type.get(type)
-
-        return datasource_class(*args, **kwargs)
+        exchange = self.exchange_factory.create(type)
+        return ExchangeDataSource(exchange, *args, **kwargs)

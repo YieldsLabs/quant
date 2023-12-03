@@ -10,7 +10,6 @@ from core.commands.portfolio import PortfolioReset
 from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.broker import BrokerType, MarginMode, PositionMode
-from core.models.datasource import DataSourceType
 from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
@@ -181,7 +180,6 @@ class System(AbstractSystem):
 
         await self.execute(
             BacktestRun(
-                DataSourceType.EXCHANGE,
                 self.exchange,
                 squad.symbol,
                 squad.timeframe,
@@ -203,7 +201,6 @@ class System(AbstractSystem):
 
         await self.execute(
             BacktestRun(
-                DataSourceType.EXCHANGE,
                 self.exchange,
                 squad.symbol,
                 squad.timeframe,
