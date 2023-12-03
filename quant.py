@@ -7,7 +7,7 @@ import uvloop
 from dotenv import load_dotenv
 
 from backtest.backtest import Backtest
-from broker.broker_factory import BrokerFactory
+from core.models.exchange import ExchangeType
 from core.models.strategy import StrategyType
 from core.models.timeframe import Timeframe
 from datasource.bybit_ws import BybitWSHandler
@@ -30,6 +30,7 @@ from risk.risk_actor_factory import RiskActorFactory
 from service.environment_secret_service import EnvironmentSecretService
 from service.signal_service import SignalService
 from service.wasm_file_service import WasmFileService
+from sor import SmartRouter
 from strategy.generator.strategy_generator_factory import StrategyGeneratorFactory
 from strategy.signal_actor_factory import SignalActorFactory
 from system.context import SystemContext
@@ -78,11 +79,12 @@ async def main():
 
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
 
-    Backtest(DataSourceFactory(exchange_factory), config_service)
     Portfolio(config_service)
+    SmartRouter(exchange_factory)
+
+    Backtest(DataSourceFactory(exchange_factory), config_service)
 
     ws_handler = BybitWSHandler(BYBIT_WSS)
-    broker_factory = BrokerFactory()
 
     position_factory = PositionFactory(
         PositionOptinalFSizeStrategy(),
@@ -101,14 +103,13 @@ async def main():
     strategy_generator_factory = StrategyGeneratorFactory(config_service)
 
     trend_context = SystemContext(
-        broker_factory,
-        exchange_factory,
         squad_factory,
         executor_factory,
         strategy_generator_factory,
         strategy_optimization_factory,
         strategy_type=StrategyType.TREND,
-        config=config_service,
+        exchange_type=ExchangeType.BYBIT,
+        config_service=config_service,
     )
 
     trend_system = System(trend_context)

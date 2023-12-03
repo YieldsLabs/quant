@@ -9,7 +9,7 @@ from core.commands.broker import Subscribe, UpdateSettings
 from core.commands.portfolio import PortfolioReset
 from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_system import AbstractSystem
-from core.models.broker import BrokerType, MarginMode, PositionMode
+from core.models.broker import MarginMode, PositionMode
 from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
@@ -60,7 +60,7 @@ class System(AbstractSystem):
         self.strategy: tuple[Symbol, Timeframe, Strategy] = []
         self.optimizer = None
         self.exchange = ExchangeType.BYBIT
-        self.config = self.context.config.get("system")
+        self.config = self.context.config_service.get("system")
 
     async def start(self):
         transitions = {
@@ -87,20 +87,16 @@ class System(AbstractSystem):
             },
         }
 
-        async with self.context.broker_factory.create(
-            BrokerType.FUTURES,
-            self.context.exchange_factory.create(ExchangeType.BYBIT),
-        ):
-            await self.event_queue.put(Event.REGENERATE)
+        await self.event_queue.put(Event.REGENERATE)
 
-            while True:
-                event = await self.event_queue.get()
+        while True:
+            event = await self.event_queue.get()
 
-                if self.state == SystemState.STOPPED:
-                    return
+            if self.state == SystemState.STOPPED:
+                return
 
-                self.state = transitions[self.state].get(event, self.state)
-                await self._handle_state()
+            self.state = transitions[self.state].get(event, self.state)
+            await self._handle_state()
 
     async def _handle_state(self):
         if self.state == SystemState.GENERATE:
@@ -176,7 +172,9 @@ class System(AbstractSystem):
             *[squad.start(), self._refresh_account(), order_executor.start()]
         )
 
-        backtest_config = self.context.config.get("backtest")
+        backtest_config = self.context.config_service.get("backtest")
+        in_sample = Lookback.from_raw(backtest_config["in_sample"])
+        out_sample = Lookback.from_raw(backtest_config["out_sample"])
 
         await self.execute(
             BacktestRun(
@@ -184,10 +182,11 @@ class System(AbstractSystem):
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
-                Lookback.from_raw(backtest_config["in_sample"]),
-                Lookback.from_raw(backtest_config["out_sample"]),
+                in_sample,
+                out_sample,
             )
         )
+
         await asyncio.gather(*[squad.stop(), order_executor.stop()])
 
     async def _process_pretrading(self, actors: tuple[Squad, AbstractActor]):
@@ -197,7 +196,9 @@ class System(AbstractSystem):
             *[squad.start(), self._refresh_account(), order_executor.start()]
         )
 
-        backtest_config = self.context.config.get("backtest")
+        backtest_config = self.context.config_service.get("backtest")
+        in_sample = Lookback.from_raw(backtest_config["out_sample"])
+        out_sample = None
 
         await self.execute(
             BacktestRun(
@@ -205,8 +206,8 @@ class System(AbstractSystem):
                 squad.symbol,
                 squad.timeframe,
                 squad.strategy,
-                Lookback.from_raw(backtest_config["out_sample"]),
-                None,
+                in_sample,
+                out_sample,
             )
         )
 
