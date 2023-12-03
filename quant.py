@@ -10,10 +10,10 @@ from backtest.backtest import Backtest
 from core.models.exchange import ExchangeType
 from core.models.strategy import StrategyType
 from core.models.timeframe import Timeframe
-from datasource.bybit_ws import BybitWSHandler
 from datasource.datasource_factory import DataSourceFactory
 from exchange.exchange_factory import ExchangeFactory
 from executor.order_executor_actor_factory import OrderExecutorActorFactory
+from feed.feed import Feed
 from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.event_store.event_store import EventStore
@@ -43,7 +43,6 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 load_dotenv()
 
 
-BYBIT_WSS = os.getenv("BYBIT_WSS")
 LOG_DIR = os.getenv("LOG_DIR")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 WASM_FOLDER = os.getenv("WASM_FOLDER")
@@ -83,8 +82,7 @@ async def main():
     SmartRouter(exchange_factory)
 
     Backtest(DataSourceFactory(exchange_factory), config_service)
-
-    ws_handler = BybitWSHandler(BYBIT_WSS)
+    feed = Feed(EnvironmentSecretService())
 
     position_factory = PositionFactory(
         PositionOptinalFSizeStrategy(),
@@ -115,19 +113,19 @@ async def main():
     trend_system = System(trend_context)
 
     trend_system_task = asyncio.create_task(trend_system.start())
-    ws_handler_task = asyncio.create_task(ws_handler.run())
+    feed_task = asyncio.create_task(feed.run())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
         logging.info("Started")
-        await asyncio.gather(*[trend_system_task, ws_handler_task, shutdown_task])
+        await asyncio.gather(*[trend_system_task, shutdown_task])
     finally:
         logging.info("Closing...")
         shutdown_task.cancel()
         trend_system_task.cancel()
-        ws_handler_task.cancel()
+        feed_task.cancel()
 
-        await ws_handler.close()
+        await feed.close()
 
         trend_system.stop()
 

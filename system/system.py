@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
-from core.commands.broker import Subscribe, UpdateSettings
+from core.commands.broker import UpdateSettings
+from core.commands.feed import FeedRun
 from core.commands.portfolio import PortfolioReset
 from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_system import AbstractSystem
@@ -255,26 +256,31 @@ class System(AbstractSystem):
                 await self._process_pretrading(actors)
                 trading_actors.append(actors)
 
+        await self._refresh_account()
+
         for squad, _ in trading_actors:
+            symbol = squad.symbol
+            timeframe = squad.timeframe
+            strategy = squad.strategy
+
             order_executor = self.context.executor_factory.create_actor(
                 OrderType.MARKET if self.config["mode"] == 1 else OrderType.PAPER,
-                squad.symbol,
-                squad.timeframe,
-                squad.strategy,
+                symbol,
+                timeframe,
+                strategy,
             )
+
             await asyncio.gather(
                 *[
                     self.execute(
                         UpdateSettings(
-                            squad.symbol,
+                            symbol,
                             self.config["leverage"],
                             PositionMode.ONE_WAY,
                             MarginMode.ISOLATED,
                         )
                     ),
+                    self.execute(FeedRun(symbol, timeframe, strategy)),
                     order_executor.start(),
                 ]
             )
-
-        await self._refresh_account()
-        await self.execute(Subscribe(strategies))

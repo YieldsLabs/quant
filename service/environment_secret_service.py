@@ -12,3 +12,6 @@ class EnvironmentSecretService(AbstractSecretService):
 
     def get_secret(self, identifier: str) -> str:
         return os.environ.get(identifier + "_API_SECRET")
+
+    def get_wss(self, identifier: str) -> str:
+        return os.environ.get(identifier + "_WSS")

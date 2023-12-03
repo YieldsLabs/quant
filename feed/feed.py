@@ -5,10 +5,12 @@ import logging
 import websockets
 from websockets.exceptions import ConnectionClosedError
 
-from core.commands.broker import Subscribe
+from core.commands.feed import FeedRun
 from core.event_decorators import command_handler
 from core.events.ohlcv import NewMarketDataReceived
+from core.interfaces.abstract_secret_service import AbstractSecretService
 from core.interfaces.abstract_ws import AbstractWS
+from core.models.exchange import ExchangeType
 from core.models.ohlcv import OHLCV
 from core.models.timeframe import Timeframe
 from core.queries.broker import GetSymbol
@@ -17,7 +19,7 @@ from infrastructure.retry import retry
 logger = logging.getLogger(__name__)
 
 
-class BybitWSHandler(AbstractWS):
+class Feed(AbstractWS):
     INTERVALS = {
         Timeframe.ONE_MINUTE: 1,
         Timeframe.THREE_MINUTES: 3,
@@ -35,15 +37,15 @@ class BybitWSHandler(AbstractWS):
     DATA_KEY = "data"
     CONFIRM_KEY = "confirm"
 
-    def __init__(self, url):
+    def __init__(self, secret: AbstractSecretService):
         super().__init__()
-        self.url = url
         self.ws = None
-        self.strategies = None
+        self.secret = secret
+        self.strategies = []
 
     async def connect_to_websocket(self, interval=5):
         await self.close()
-        self.ws = await websockets.connect(self.url)
+        self.ws = await websockets.connect(self.secret.get_wss(ExchangeType.BYBIT.name))
         await asyncio.sleep(interval)
 
         if not self.ws.open:
@@ -127,13 +129,13 @@ class BybitWSHandler(AbstractWS):
             symbol, self.TIMEFRAMES[interval], ohlcv, data[self.CONFIRM_KEY]
         )
 
-    @command_handler(Subscribe)
-    async def subscribe(self, command: Subscribe):
+    @command_handler(FeedRun)
+    async def subscribe(self, command: FeedRun):
         if not self.ws or not self.ws.open:
             logger.error("WebSocket is not connected or open.")
             return
 
-        self.strategies = command.strategies
+        self.strategies.append((command.symbol, command.timeframe, command.strategy))
         await self._subscribe()
 
     async def _subscribe(self):

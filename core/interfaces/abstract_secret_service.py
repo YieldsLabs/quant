@@ -9,3 +9,7 @@ class AbstractSecretService(ABC):
     @abstractmethod
     def get_secret(self, identifier: str) -> str:
         pass
+
+    @abstractmethod
+    def get_wss(self, identifier: str) -> str:
+        pass
