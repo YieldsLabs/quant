@@ -2,6 +2,7 @@ from enum import Enum, auto
 
 import numpy as np
 
+from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.interfaces.abstract_strategy_optimization import AbstractStrategyOptimization
 from core.models.individual import Individual
@@ -24,23 +25,11 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
     def __init__(
         self,
         strategy_generator: AbstractStrategyGenerator,
-        max_generations: int,
-        elite_count: int,
-        crossover_rate: float,
-        mutation_rate: float,
-        tournament_size: int,
-        reset_percentage: float,
-        stability_percentage: float,
+        config_service: AbstractConfig,
     ):
         super().__init__()
-        self.max_generations = max_generations
-        self.elite_count = elite_count
-        self.crossover_rate = crossover_rate
-        self.mutation_rate = mutation_rate
-        self.tournament_size = tournament_size
-        self.reset_percentage = reset_percentage
-        self.stability_percentage = stability_percentage
         self.strategy_generator = strategy_generator
+        self.config = config_service.get("optimization")
         self._population: list[Individual] = []
         self.generation = 0
 
@@ -53,7 +42,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
     @property
     def done(self):
-        return self.generation >= self.max_generations - 1
+        return self.generation >= self.config["max_generations"] - 1
 
     def init(self):
         self._population = []
@@ -88,20 +77,22 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         sorted_population = sorted(
             self._population, key=lambda individual: individual.fitness, reverse=True
         )
-        elite = sorted_population[: self.elite_count]
+        elite = sorted_population[: self.config["elite_count"]]
 
         total_size = len(sorted_population)
-        reset_size = int(self.reset_percentage * total_size)
-        stability_size = int(self.stability_percentage * total_size)
+        reset_size = int(self.config["reset_percentage"] * total_size)
+        stability_size = int(self.config["stability_percentage"] * total_size)
 
         reset_parents = self._tournament_selection(
-            sorted_population[self.elite_count : self.elite_count + reset_size]
+            sorted_population[
+                self.config["elite_count"] : self.config["elite_count"] + reset_size
+            ]
         )
 
         stability_parents = self._tournament_selection(
             sorted_population[
-                self.elite_count
-                + reset_size : self.elite_count
+                self.config["elite_count"]
+                + reset_size : self.config["elite_count"]
                 + reset_size
                 + stability_size
             ]
@@ -115,7 +106,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
         while len(parents) < len(candidates):
             contenders = np.random.choice(
-                candidates, size=self.tournament_size, replace=True
+                candidates, size=self.config["tournament_size"], replace=True
             )
             winner = max(contenders, key=lambda individual: individual.fitness)
             parents.append(winner)
@@ -124,14 +115,14 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
     async def _mutate_parents(self, parents: list[Individual]) -> None:
         for idx, parent in enumerate(parents):
-            if np.random.rand() < self.mutation_rate:
+            if np.random.rand() < self.config["mutation_rate"]:
                 parents[idx] = await self._mutate(parent)
 
     def _crossover_parents(self, parents: list[Individual]) -> list[Individual]:
         children = []
 
         for i in range(0, len(parents) - 1, 2):
-            if np.random.rand() < self.crossover_rate:
+            if np.random.rand() < self.config["crossover_rate"]:
                 child1, child2 = self._crossover(parents[i], parents[i + 1])
                 children.extend([child1, child2])
             else:

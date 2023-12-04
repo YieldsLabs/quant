@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from enum import Enum, auto
 from typing import Union
@@ -34,6 +35,7 @@ class PaperOrderExecutor(Actor):
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__(symbol, timeframe, strategy)
+        self.lock = asyncio.Lock()
         self.last_tick = None
 
     def pre_receive(self, event: OrderEventType):
@@ -54,7 +56,7 @@ class PaperOrderExecutor(Actor):
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
-        fill_price = self._determine_fill_price(self.last_tick, current_position.side)
+        fill_price = self._determine_fill_price(current_position.side)
 
         order = Order(
             status=OrderStatus.EXECUTED,
@@ -70,7 +72,7 @@ class PaperOrderExecutor(Actor):
 
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
-        fill_price = self._determine_fill_price(self.last_tick, current_position.side)
+        fill_price = self._determine_fill_price(current_position.side)
 
         order = Order(
             status=OrderStatus.CLOSED,
@@ -85,7 +87,8 @@ class PaperOrderExecutor(Actor):
         await self.tell(BrokerPositionClosed(next_position))
 
     async def _update_tick(self, event: NewMarketDataReceived):
-        self.last_tick = event.ohlcv
+        async with self.lock:
+            self.last_tick = event.ohlcv
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:
@@ -95,12 +98,12 @@ class PaperOrderExecutor(Actor):
             else PriceDirection.OLHC
         )
 
-    def _determine_fill_price(self, bar: OHLCV, side: PositionSide) -> float:
-        direction = self._intrabar_price_movement(bar)
+    def _determine_fill_price(self, side: PositionSide) -> float:
+        direction = self._intrabar_price_movement(self.last_tick)
 
         if side == PositionSide.LONG and direction == PriceDirection.OHLC:
-            return bar.high
+            return self.last_tick.high
         elif side == PositionSide.SHORT and direction == PriceDirection.OLHC:
-            return bar.low
+            return self.last_tick.low
         else:
-            return bar.close
+            return self.last_tick.close

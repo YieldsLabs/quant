@@ -1,9 +1,11 @@
+from core.commands.base import Command
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.base import Query
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
+from infrastructure.event_store.event_store import EventStore
 
 
 class Actor(AbstractActor):
@@ -16,6 +18,7 @@ class Actor(AbstractActor):
         self._strategy = strategy
         self._running = False
         self._mailbox = EventDispatcher()
+        self._store = EventStore()
 
     @property
     def id(self):
@@ -71,9 +74,10 @@ class Actor(AbstractActor):
 
     async def tell(self, msg: Message):
         await self._mailbox.dispatch(msg)
+        self._store.append(msg)
 
     async def ask(self, msg: Ask):
         if isinstance(msg, Query):
             return await self._mailbox.query(msg)
-
-        await self._mailbox.execute(msg)
+        if isinstance(msg, Command):
+            await self._mailbox.execute(msg)

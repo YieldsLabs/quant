@@ -11,7 +11,7 @@ class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
 
     def __init__(self, config_service: AbstractConfig):
         super().__init__()
-        self.config = config_service.get("optimization")
+        self.config_service = config_service
 
     def create(
         self, type: Optimizer, generator: AbstractStrategyGenerator
@@ -23,11 +23,5 @@ class StrategyOptimizerFactory(AbstractStrategyOptimizerFactory):
 
         return optimizer(
             generator,
-            self.config["max_generations"],
-            self.config["elite_count"],
-            self.config["crossover_rate"],
-            self.config["mutation_rate"],
-            self.config["tournament_size"],
-            self.config["reset_percentage"],
-            self.config["stability_percentage"],
+            self.config_service,
         )
