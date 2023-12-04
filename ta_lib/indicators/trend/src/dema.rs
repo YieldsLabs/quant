@@ -1,10 +1,9 @@
 use core::Series;
 
 pub fn dema(source: &Series<f32>, period: usize) -> Series<f32> {
-    let ema1 = source.ema(period);
-    let ema2 = ema1.ema(period);
+    let ema = source.ema(period);
 
-    2.0 * ema1 - ema2
+    2.0 * &ema - ema.ema(period)
 }
 
 #[cfg(test)]
