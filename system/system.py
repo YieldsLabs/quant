@@ -280,7 +280,13 @@ class System(AbstractSystem):
                             MarginMode.ISOLATED,
                         )
                     ),
-                    self.execute(FeedRun(symbol, timeframe, strategy)),
                     order_executor.start(),
                 ]
             )
+
+        await asyncio.gather(
+            *[
+                self.execute(FeedRun(actor.symbol, actor.timeframe, actor.strategy))
+                for actor, _ in trading_actors
+            ]
+        )

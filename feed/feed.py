@@ -135,21 +135,17 @@ class Feed(AbstractWS):
             logger.error("WebSocket is not connected or open.")
             return
 
-        self.strategies.append((command.symbol, command.timeframe, command.strategy))
+        new_strategy = (command.symbol, command.timeframe, command.strategy)
+        self.strategies = list(set(self.strategies + [new_strategy]))
+
         await self._subscribe()
 
     async def _subscribe(self):
-        symbols_timeframes = [
-            (strategy[0], strategy[1]) for strategy in self.strategies
-        ]
+        for symbol, timeframe in ((s[0], s[1]) for s in self.strategies):
+            channel = f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol}"
+            subscribe_message = {"op": self.SUBSCRIBE_OPERATION, "args": [channel]}
 
-        channels = [
-            f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol}"
-            for symbol, timeframe in symbols_timeframes
-        ]
-
-        subscribe_message = json.dumps(
-            {"op": self.SUBSCRIBE_OPERATION, "args": channels}
-        )
-
-        await self.ws.send(subscribe_message)
+            try:
+                await self.ws.send(json.dumps(subscribe_message))
+            except Exception as e:
+                logger.error(f"Subscribe error {channel}")
