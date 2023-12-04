@@ -147,5 +147,5 @@ class Feed(AbstractWS):
 
             try:
                 await self.ws.send(json.dumps(subscribe_message))
-            except Exception as e:
+            except Exception:
                 logger.error(f"Subscribe error {channel}")
