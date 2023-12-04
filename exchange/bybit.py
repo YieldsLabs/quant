@@ -40,15 +40,20 @@ class Bybit(AbstractExchange):
         leverage: int,
     ):
         is_hedged = position_mode != PositionMode.ONE_WAY
-        try:
-            self.connector.set_leverage(leverage, symbol.name)
-            self.connector.set_position_mode(is_hedged, symbol.name)
-            self.connector.set_margin_mode(
-                margin_mode.value, symbol.name, {"leverage": leverage}
-            )
-        except Exception as e:
-            logger.error(e)
-            pass
+        operations = [
+            (self.connector.set_leverage, (leverage, symbol.name)),
+            (self.connector.set_position_mode, (is_hedged, symbol.name)),
+            (
+                self.connector.set_margin_mode,
+                (margin_mode.value, symbol.name, {"leverage": leverage}),
+            ),
+        ]
+
+        for operation, args in operations:
+            try:
+                operation(*args)
+            except Exception as e:
+                logger.error(e)
 
     def open_market_position(self, symbol: Symbol, side: PositionSide, size: float):
         position = self.fetch_position(symbol)
@@ -95,7 +100,7 @@ class Bybit(AbstractExchange):
         balance = self.connector.fetch_balance()
         return float(balance["total"][currency])
 
-    @cached(TTLCache(maxsize=10, ttl=120))
+    @cached(TTLCache(maxsize=300, ttl=120))
     def fetch_symbols(self):
         markets = self._fetch_futures_market()
         symbols = [self._create_symbol(market) for market in markets]
