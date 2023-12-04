@@ -157,9 +157,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         ]:
             child1_strategy = Strategy(
                 parent1.strategy.type,
-                parent2.strategy.entry_signal
+                parent2.strategy.entry
                 if chosen_attr == GeneticAttributes.SIGNAL
-                else parent1.strategy.entry_signal,
+                else parent1.strategy.entry,
                 parent1.strategy.filter
                 if chosen_attr == GeneticAttributes.FILTER
                 else parent2.strategy.filter,
@@ -172,15 +172,15 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent1.strategy.stop_loss
                 if chosen_attr == GeneticAttributes.STOP_LOSS
                 else parent2.strategy.stop_loss,
-                parent1.strategy.exit_signal
+                parent1.strategy.exit
                 if chosen_attr == GeneticAttributes.EXIT
-                else parent2.strategy.exit_signal,
+                else parent2.strategy.exit,
             )
             child2_strategy = Strategy(
                 parent2.strategy.type,
-                parent1.strategy.entry_signal
+                parent1.strategy.entry
                 if chosen_attr == GeneticAttributes.SIGNAL
-                else parent2.strategy.entry_signal,
+                else parent2.strategy.entry,
                 parent2.strategy.filter
                 if chosen_attr == GeneticAttributes.FILTER
                 else parent1.strategy.filter,
@@ -193,9 +193,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent2.strategy.stop_loss
                 if chosen_attr == GeneticAttributes.STOP_LOSS
                 else parent1.strategy.stop_loss,
-                parent2.strategy.exit_signal
+                parent2.strategy.exit
                 if chosen_attr == GeneticAttributes.EXIT
-                else parent1.strategy.exit_signal,
+                else parent1.strategy.exit,
             )
 
             return Individual(

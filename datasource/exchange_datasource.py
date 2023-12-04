@@ -3,6 +3,7 @@ import asyncio
 from core.interfaces.abstract_datasource import AbstractDataSource
 from core.interfaces.abstract_exchange import AbstractExchange
 from core.models.lookback import Lookback
+from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -55,7 +56,7 @@ class AsyncHistoricalData:
 
     def _next_item_or_end(self):
         try:
-            return next(self.iterator)
+            return OHLCV.from_list(next(self.iterator))
         except StopIteration:
             return self.sentinel
 
