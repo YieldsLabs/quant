@@ -61,7 +61,9 @@ class MarketOrderExecutor(Actor):
 
         await self.ask(ClosePosition(current_position))
 
-        current_position = await self.ask(GetClosePosition(current_position))
+        current_position = await self.ask(
+            GetClosePosition(current_position, event.exit_price)
+        )
 
         logger.info(f"Closed Position: {current_position}")
 
