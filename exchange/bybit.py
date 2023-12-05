@@ -55,14 +55,29 @@ class Bybit(AbstractExchange):
             except Exception as e:
                 logger.error(e)
 
-    def open_market_position(self, symbol: Symbol, side: PositionSide, size: float):
-        position = self.fetch_position(symbol)
+    def fetch_order(self, order_id: str):
+        return self.connector.fetch_order(order_id)
 
-        if position:
-            return None
+    def fetch_order_book(self, symbol: Symbol):
+        return self.connector.fetch_order_book(symbol.name)
 
+    def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
         res = self._create_order(
             "market", "buy" if side == PositionSide.LONG else "sell", symbol.name, size
+        )
+
+        return res["info"]["orderId"]
+
+    def create_limit_order(
+        self, symbol: Symbol, side: PositionSide, size: float, price: float
+    ):
+        res = self._create_order(
+            "limit",
+            "buy" if side == PositionSide.LONG else "sell",
+            symbol.name,
+            size,
+            price,
+            self._create_order_extra_params(),
         )
 
         return res["info"]["orderId"]
@@ -101,7 +116,7 @@ class Bybit(AbstractExchange):
         return float(balance["total"][currency])
 
     @cached(TTLCache(maxsize=300, ttl=120))
-    def fetch_symbols(self):
+    def fetch_future_symbols(self):
         markets = self._fetch_futures_market()
         symbols = [self._create_symbol(market) for market in markets]
         return symbols
@@ -244,6 +259,6 @@ class Bybit(AbstractExchange):
             extra_params["takeProfit"] = str(take_profit_price)
 
         if extra_params:
-            extra_params["timeInForce"] = "PostOnly"
+            extra_params["timeInForce"] = "ImmediateOrCancel"
 
         return extra_params if extra_params else None

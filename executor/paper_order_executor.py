@@ -57,11 +57,12 @@ class PaperOrderExecutor(Actor):
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
         fill_price = self._determine_fill_price(current_position.side)
+        size = current_position.size
 
         order = Order(
             status=OrderStatus.EXECUTED,
             price=fill_price,
-            size=current_position.size,
+            size=size,
         )
 
         next_position = current_position.add_order(order)
@@ -73,11 +74,12 @@ class PaperOrderExecutor(Actor):
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
         fill_price = self._determine_fill_price(current_position.side)
+        size = current_position.size
 
         order = Order(
             status=OrderStatus.CLOSED,
             price=fill_price,
-            size=current_position.size,
+            size=size,
         )
 
         next_position = current_position.add_order(order)

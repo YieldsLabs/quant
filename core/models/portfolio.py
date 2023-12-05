@@ -132,11 +132,13 @@ class Performance:
 
         initial_value = self._account_size
         final_value = self.equity[-1]
-        compound_factor = final_value / initial_value
+        growth_factor = final_value / initial_value
 
-        f = abs(max_loss) / abs(initial_value)
+        drawdown_fraction = abs(max_loss) / abs(initial_value)
 
-        return f * np.sqrt(compound_factor)
+        geometric_mean = np.sqrt(growth_factor)
+
+        return drawdown_fraction * geometric_mean
 
     @property
     def kelly(self) -> float:

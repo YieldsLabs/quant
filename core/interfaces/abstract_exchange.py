@@ -23,7 +23,7 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def fetch_symbols(self):
+    def fetch_future_symbols(self):
         pass
 
     @abstractmethod
@@ -42,7 +42,21 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def open_market_position(self, symbol: Symbol, side: PositionSide, size: float):
+    def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
+        pass
+
+    @abstractmethod
+    def create_limit_order(
+        symbol: Symbol, side: PositionSide, size: float, price: float
+    ):
+        pass
+
+    @abstractmethod
+    def fetch_order(self, order_id: str):
+        pass
+
+    @abstractmethod
+    def fetch_order_book(self, symbol: Symbol):
         pass
 
     @abstractmethod

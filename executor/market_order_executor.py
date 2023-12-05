@@ -9,11 +9,10 @@ from core.events.position import (
     PositionCloseRequested,
     PositionInitialized,
 )
-from core.models.order import Order, OrderStatus
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.position import GetOpenPosition
+from core.queries.position import GetClosePosition, GetOpenPosition
 
 logger = logging.getLogger(__name__)
 
@@ -43,48 +42,27 @@ class MarketOrderExecutor(Actor):
             await handler(event)
 
     async def _execute_order(self, event: PositionInitialized):
-        position = event.position
-        size = position.size
+        current_position = event.position
 
-        logger.info(f"New Position: {position}")
+        logger.info(f"New Position: {current_position}")
 
-        await self.ask(OpenPosition(position))
+        await self.ask(OpenPosition(current_position))
 
-        broker_position = await self.ask(GetOpenPosition(position))
+        current_position = await self.ask(GetOpenPosition(current_position))
 
-        if not broker_position:
-            order = Order(status=OrderStatus.FAILED, price=0, size=0)
-        else:
-            filled_size = broker_position["position_size"]
+        logger.info(f"Opened Position: {current_position}")
 
-            if size != filled_size:
-                logger.info(f"Partially filled Position: {filled_size}")
-
-            order = Order(
-                status=OrderStatus.EXECUTED,
-                size=broker_position["position_size"],
-                price=broker_position["entry_price"],
-            )
-
-        next_position = position.add_order(order)
-
-        logger.info(f"Opened Position: {next_position}")
-
-        await self.tell(BrokerPositionOpened(next_position))
+        await self.tell(BrokerPositionOpened(current_position))
 
     async def _close_position(self, event: PositionCloseRequested):
-        position = event.position
+        current_position = event.position
 
-        await self.ask(ClosePosition(position))
+        logger.info(f"To Close Position: {current_position}")
 
-        order = Order(
-            status=OrderStatus.CLOSED,
-            price=event.exit_price,
-            size=position.size,
-        )
+        await self.ask(ClosePosition(current_position))
 
-        next_position = position.add_order(order)
+        current_position = await self.ask(GetClosePosition(current_position))
 
-        logger.info(f"Closed Position: {next_position}")
+        logger.info(f"Closed Position: {current_position}")
 
-        await self.tell(BrokerPositionClosed(next_position))
+        await self.tell(BrokerPositionClosed(current_position))
