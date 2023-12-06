@@ -8,7 +8,6 @@ from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.exchange import ExchangeType
 from core.models.order import Order, OrderStatus
-from core.models.position import PositionSide
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbol, GetSymbols
 from core.queries.position import GetClosePosition, GetOpenPosition
@@ -46,7 +45,7 @@ class SmartRouter(AbstractEventManager):
     @query_handler(GetClosePosition)
     def get_close_position(self, query: GetClosePosition):
         position = query.position
-        
+
         symbol = position.signal.symbol
 
         trade = self.exchange.fetch_trade(symbol)
@@ -87,15 +86,22 @@ class SmartRouter(AbstractEventManager):
         symbol = position.signal.symbol
         position_side = position.side
         position_size = position.size
+        stop_loss = position.stop_loss_price
+        distance_to_stop_loss = abs(position.entry_price - stop_loss)
 
         min_size = symbol.min_position_size
         max_order_slice = self.config["max_order_slice"]
+        entry_timeout = self.config["entry_timeout"]
+        stop_loss_threshold = self.config["stop_loss_threshold"]
 
         num_orders = min(max(1, int(position_size / min_size)), max_order_slice)
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
 
         for price in self.entry_price.calculate(symbol, self.exchange):
+            if distance_to_stop_loss > stop_loss_threshold * abs(stop_loss - price):
+                break
+
             order_id = self.exchange.create_limit_order(
                 symbol, position_side, size, price
             )
@@ -108,7 +114,7 @@ class SmartRouter(AbstractEventManager):
             if order_counter >= num_orders:
                 break
 
-            await asyncio.sleep(self.config["entry_timeout"])
+            await asyncio.sleep(entry_timeout)
 
     @command_handler(ClosePosition)
     def close_position(self, command: ClosePosition):

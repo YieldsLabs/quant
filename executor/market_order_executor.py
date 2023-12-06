@@ -63,9 +63,7 @@ class MarketOrderExecutor(Actor):
 
         await self.ask(ClosePosition(current_position))
 
-        order = await self.ask(
-            GetClosePosition(current_position)
-        )
+        order = await self.ask(GetClosePosition(current_position))
 
         current_position = current_position.add_order(order)
 

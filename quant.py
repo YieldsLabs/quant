@@ -66,7 +66,7 @@ async def main():
         "bus": {"num_workers": os.cpu_count()},
         "store": {"base_dir": LOG_DIR},
         "generator": {
-            "timeframes": [str(Timeframe.FIVE_MINUTES)],
+            "timeframes": [str(Timeframe.ONE_MINUTE)],
             "blacklist": ["USDCUSDT"],
         },
     }
@@ -79,7 +79,7 @@ async def main():
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
 
     Portfolio(config_service)
-    SmartRouter(exchange_factory)
+    SmartRouter(exchange_factory, config_service)
 
     Backtest(DataSourceFactory(exchange_factory), config_service)
     feed = Feed(EnvironmentSecretService())
