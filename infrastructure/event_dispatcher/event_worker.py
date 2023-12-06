@@ -7,12 +7,17 @@ from .event_handler import EventHandler
 
 
 class EventWorker:
-    def __init__(self, event_handler: EventHandler, cancel_event: asyncio.Event):
+    def __init__(
+        self,
+        event_handler: EventHandler,
+        cancel_event: asyncio.Event,
+        events_in_queue: set,
+    ):
         self.event_handler = event_handler
         self.cancel_event = cancel_event
-        self.events_in_queue = set()
-        self.queue = asyncio.Queue()
+        self.events_in_queue = events_in_queue
 
+        self.queue = asyncio.Queue()
         self.tasks = asyncio.create_task(self._process_events())
 
     async def _process_events(self):
@@ -36,9 +41,8 @@ class EventWorker:
         if event_key in self.events_in_queue:
             return
 
-        await self.queue.put((event, args, kwargs))
-
         self.events_in_queue.add(event_key)
+        await self.queue.put((event, args, kwargs))
 
     async def wait(self) -> None:
         await self.queue.join()

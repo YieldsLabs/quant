@@ -15,8 +15,10 @@ class WorkerPool:
         event_handler: EventHandler,
         cancel_event: asyncio.Event,
     ):
+        self.events_in_queue = set()
         self.workers = [
-            EventWorker(event_handler, cancel_event) for _ in range(num_workers)
+            EventWorker(event_handler, cancel_event, self.events_in_queue)
+            for _ in range(num_workers)
         ]
         self.load_balancer = LoadBalancer(num_priority_group)
         self.priority_to_worker_map = self._create_priority_map(
