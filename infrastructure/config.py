@@ -25,23 +25,27 @@ class ConfigService(AbstractConfig):
                     if line.startswith("[") and line.endswith("]"):
                         current_section = line[1:-1]
                         self._config[current_section] = {}
+
                     elif current_section is not None and "=" in line:
                         key, value = map(str.strip, line.split("=", 1))
-                        if "." in value:
-                            try:
-                                float_value = float(value)
-                                self._config[current_section][key] = (
-                                    int(float_value)
-                                    if float_value.is_integer()
-                                    else float_value
-                                )
-                            except ValueError:
-                                self._config[current_section][key] = value
+
+                        if "[" in value and "]" in value:
+                            array_values = self._parse_array_value(value)
+                            self._config[current_section][key] = array_values
                         else:
                             try:
-                                self._config[current_section][key] = int(value)
+                                self._config[current_section][
+                                    key
+                                ] = self._parse_single_value(value)
                             except ValueError:
-                                self._config[current_section][key] = value
+                                array_values = value.split(",")
+
+                                if len(array_values) > 1:
+                                    self._config[current_section][key] = [
+                                        self._parse_array_value(v) for v in array_values
+                                    ]
+                                else:
+                                    self._config[current_section][key] = value
         except FileNotFoundError:
             pass
 
@@ -60,3 +64,19 @@ class ConfigService(AbstractConfig):
                 target[key] = value
 
         return target
+
+    def _parse_array_value(self, value: str):
+        array_values = value[value.find("[") + 1 : value.rfind("]")].split(",")
+        return [self._parse_single_value(v) for v in array_values]
+
+    def _parse_single_value(self, value: str):
+        if "." in value or "e" in value.lower():
+            try:
+                return float(value)
+            except ValueError:
+                return value
+        else:
+            try:
+                return int(value)
+            except ValueError:
+                return value

@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from backtest.backtest import Backtest
 from core.models.exchange import ExchangeType
 from core.models.strategy import StrategyType
-from core.models.timeframe import Timeframe
 from datasource.datasource_factory import DataSourceFactory
 from exchange.exchange_factory import ExchangeFactory
 from executor.order_executor_actor_factory import OrderExecutorActorFactory
@@ -62,14 +61,7 @@ async def main():
 
     config_service = ConfigService()
     config_service.load(config_path="config.ini")
-    config = {
-        "bus": {"num_workers": os.cpu_count()},
-        "store": {"base_dir": LOG_DIR},
-        "generator": {
-            "timeframes": [str(Timeframe.ONE_MINUTE)],
-            "blacklist": ["USDCUSDT"],
-        },
-    }
+    config = {"bus": {"num_workers": os.cpu_count()}, "store": {"base_dir": LOG_DIR}}
 
     config_service.update(config)
 
