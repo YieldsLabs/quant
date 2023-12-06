@@ -42,6 +42,10 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
+    def fetch_trade(self, symbol: Symbol):
+        pass
+
+    @abstractmethod
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
         pass
 

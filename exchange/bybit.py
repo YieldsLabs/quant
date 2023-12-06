@@ -58,8 +58,12 @@ class Bybit(AbstractExchange):
     def fetch_order(self, order_id: str):
         return self.connector.fetch_order(order_id)
 
+    def fetch_trade(self, symbol: Symbol):
+        return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
+
     def fetch_order_book(self, symbol: Symbol):
-        return self.connector.fetch_order_book(symbol.name)
+        book = self.connector.fetch_order_book(symbol.name, limit=150)
+        return book["bids"], book["asks"]
 
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
         res = self._create_order(
@@ -77,7 +81,9 @@ class Bybit(AbstractExchange):
             symbol.name,
             size,
             price,
-            self._create_order_extra_params(),
+            self._create_order_extra_params(
+                stop_loss_price=None, take_profit_price=None
+            ),
         )
 
         return res["info"]["orderId"]

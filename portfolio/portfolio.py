@@ -30,19 +30,9 @@ class Portfolio(AbstractEventManager):
         self.config = config_service.get("portfolio")
         self.account_size = self.config["account_size"]
 
-    @command_handler(UpdateAccountSize)
-    async def update_account_size(self, command: UpdateAccountSize):
-        self.account_size = command.amount
-
-        await self.dispatch(PortfolioAccountUpdated(self.account_size))
-
     @event_handler(BacktestStarted)
     async def handle_backtest_started(self, event: BacktestStarted):
         await self.state.reset(event.symbol, event.timeframe, event.strategy)
-
-    @command_handler(PortfolioReset)
-    async def portfolio_reset(self, _event: PortfolioReset):
-        await self.state.reset_all()
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
@@ -57,28 +47,30 @@ class Portfolio(AbstractEventManager):
 
         performance = await self.state.get(event.position)
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, cagr={round(performance.cagr * 100, 2)}%, pnl={round(performance.total_pnl, 2)}"
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, cagr={round(performance.cagr * 100, 2)}%, pnl={round(performance.total_pnl, 3)}"
         )
 
         await self.dispatch(
             PortfolioPerformanceUpdated(symbol, timeframe, strategy, performance)
         )
 
+        performance_metrics = [
+            performance.calmar_ratio,
+            performance.cvar,
+            performance.ulcer_index,
+            performance.max_drawdown,
+            performance.annualized_return,
+            performance.sterling_ratio,
+            performance.sortino_ratio,
+            performance.burke_ratio,
+            performance.average_pnl,
+        ]
+
         await self.strategy.next(
             symbol,
             timeframe,
             strategy,
-            [
-                performance.calmar_ratio,
-                performance.cvar,
-                performance.ulcer_index,
-                performance.max_drawdown,
-                performance.annualized_return,
-                performance.sterling_ratio,
-                performance.sortino_ratio,
-                performance.burke_ratio,
-                performance.average_pnl,
-            ],
+            performance_metrics,
         )
 
     @query_handler(GetTopStrategy)
@@ -114,3 +106,13 @@ class Portfolio(AbstractEventManager):
         return await self.state.get_fitness(
             query.symbol, query.timeframe, query.strategy
         )
+
+    @command_handler(UpdateAccountSize)
+    async def update_account_size(self, command: UpdateAccountSize):
+        self.account_size = command.amount
+
+        await self.dispatch(PortfolioAccountUpdated(self.account_size))
+
+    @command_handler(PortfolioReset)
+    async def portfolio_reset(self, _event: PortfolioReset):
+        await self.state.reset_all()
