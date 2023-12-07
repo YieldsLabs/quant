@@ -32,8 +32,7 @@ class TWAP:
     def _fetch_book(self, symbol: Symbol, exchange: AbstractExchange):
         bids, asks = exchange.fetch_order_book(symbol)
 
-        bids = np.array([[price, size] for price, size in bids])
-        asks = np.array([[price, size] for price, size in asks])
+        bids, asks = np.array(bids), np.array(asks)
 
         return np.vstack([bids, asks])
 

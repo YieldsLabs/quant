@@ -52,7 +52,7 @@ class Actor(AbstractActor):
     def on_receive(self, _msg: Message):
         pass
 
-    async def start(self):
+    def start(self):
         if self.running:
             raise RuntimeError(f"Start: {self.__class__.__name__} is running")
 
@@ -62,7 +62,7 @@ class Actor(AbstractActor):
         self.on_start()
         self._running = True
 
-    async def stop(self):
+    def stop(self):
         if not self.running:
             raise RuntimeError(f"Stop: {self.__class__.__name__} is not started")
 

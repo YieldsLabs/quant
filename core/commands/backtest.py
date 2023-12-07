@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from core.models.exchange import ExchangeType
+from core.interfaces.abstract_datasource_factory import DataSourceType
 from core.models.lookback import Lookback
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
@@ -11,7 +11,7 @@ from .base import Command
 
 @dataclass(frozen=True)
 class BacktestRun(Command):
-    datasource: ExchangeType
+    datasource: DataSourceType
     symbol: Symbol
     timeframe: Timeframe
     strategy: Strategy

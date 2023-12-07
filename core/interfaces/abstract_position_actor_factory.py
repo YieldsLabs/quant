@@ -10,6 +10,6 @@ from .abstract_actor import AbstractActor
 class AbstractPositionActorFactory(ABC):
     @abstractmethod
     def create_actor(
-        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, is_trading: bool
+        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
     ) -> AbstractActor:
         pass

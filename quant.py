@@ -6,34 +6,30 @@ import signal
 import uvloop
 from dotenv import load_dotenv
 
-from backtest.backtest import Backtest
+from backtest import Backtest
 from core.models.exchange import ExchangeType
 from core.models.strategy import StrategyType
-from datasource.datasource_factory import DataSourceFactory
-from exchange.exchange_factory import ExchangeFactory
-from executor.order_executor_actor_factory import OrderExecutorActorFactory
-from feed.feed import Feed
+from datasource import DataSourceFactory
+from exchange import ExchangeFactory, WSFactory
+from executor import OrderExecutorActorFactory
+from feed import Feed
 from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.event_store.event_store import EventStore
 from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
-from optimization.optimizer_factory import StrategyOptimizerFactory
-from portfolio.portfolio import Portfolio
-from position.position_actor_factory import PositionActorFactory
-from position.position_factory import PositionFactory
+from optimization import StrategyOptimizerFactory
+from portfolio import Portfolio
+from position import PositionActorFactory, PositionFactory
 from position.risk.simple import PositionRiskSimpleStrategy
 from position.size.optimal_f import PositionOptinalFSizeStrategy
 from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
-from risk.risk_actor_factory import RiskActorFactory
-from service.environment_secret_service import EnvironmentSecretService
-from service.signal_service import SignalService
-from service.wasm_file_service import WasmFileService
+from risk import RiskActorFactory
+from service import EnvironmentSecretService, SignalService, WasmFileService
 from sor import SmartRouter
-from strategy.generator.strategy_generator_factory import StrategyGeneratorFactory
-from strategy.signal_actor_factory import SignalActorFactory
+from strategy import SignalActorFactory
+from strategy.generator import StrategyGeneratorFactory
 from system.context import SystemContext
-from system.squad_factory import SquadFactory
 from system.system import System
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -69,12 +65,10 @@ async def main():
     event_bus = EventDispatcher(config_service)
 
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
+    ws_factory = WSFactory(EnvironmentSecretService())
 
     Portfolio(config_service)
     SmartRouter(exchange_factory, config_service)
-
-    Backtest(DataSourceFactory(exchange_factory), config_service)
-    feed = Feed(EnvironmentSecretService())
 
     position_factory = PositionFactory(
         PositionOptinalFSizeStrategy(),
@@ -82,21 +76,34 @@ async def main():
         PositionRiskRewardTakeProfitStrategy(config_service),
     )
 
-    squad_factory = SquadFactory(
-        SignalActorFactory(SignalService(WasmFileService(WASM_FOLDER))),
-        PositionActorFactory(position_factory),
-        RiskActorFactory(config_service),
+    signal_actor_factory = SignalActorFactory(
+        SignalService(WasmFileService(WASM_FOLDER))
+    )
+    position_actor_factory = PositionActorFactory(position_factory)
+    risk_actor_factory = RiskActorFactory(config_service)
+    executor_actor_factory = OrderExecutorActorFactory()
+    datasource_factory = DataSourceFactory(exchange_factory, ws_factory)
+
+    Backtest(
+        signal_actor_factory,
+        position_actor_factory,
+        risk_actor_factory,
+        executor_actor_factory,
+        datasource_factory,
+        config_service,
+    )
+    Feed(
+        signal_actor_factory,
+        position_actor_factory,
+        risk_actor_factory,
+        executor_actor_factory,
+        datasource_factory,
+        config_service,
     )
 
-    executor_factory = OrderExecutorActorFactory()
-    strategy_optimization_factory = StrategyOptimizerFactory(config_service)
-    strategy_generator_factory = StrategyGeneratorFactory(config_service)
-
     trend_context = SystemContext(
-        squad_factory,
-        executor_factory,
-        strategy_generator_factory,
-        strategy_optimization_factory,
+        StrategyGeneratorFactory(config_service),
+        StrategyOptimizerFactory(config_service),
         strategy_type=StrategyType.TREND,
         exchange_type=ExchangeType.BYBIT,
         config_service=config_service,
@@ -105,7 +112,6 @@ async def main():
     trend_system = System(trend_context)
 
     trend_system_task = asyncio.create_task(trend_system.start())
-    feed_task = asyncio.create_task(feed.run())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
@@ -115,9 +121,6 @@ async def main():
         logging.info("Closing...")
         shutdown_task.cancel()
         trend_system_task.cancel()
-        feed_task.cancel()
-
-        await feed.close()
 
         trend_system.stop()
 

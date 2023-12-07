@@ -1,32 +1,24 @@
 import asyncio
 import logging
 from enum import Enum, auto
-from typing import TYPE_CHECKING
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
-from core.commands.broker import UpdateSettings
 from core.commands.feed import FeedRun
-from core.commands.portfolio import PortfolioReset
-from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_system import AbstractSystem
-from core.models.broker import MarginMode, PositionMode
 from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
-from core.models.order import OrderType
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
+from core.models.ws import WSType
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
 
 from .context import SystemContext
-from .squad import Squad
-
-if TYPE_CHECKING:
-    from core.models.strategy import Strategy
-    from core.models.symbol import Symbol
-    from core.models.timeframe import Timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +28,7 @@ class SystemState(Enum):
     GENERATE = auto()
     BACKTEST = auto()
     OPTIMIZATION = auto()
+    VERIFICATION = auto()
     TRADING = auto()
     STOPPED = auto()
 
@@ -46,6 +39,7 @@ class Event(Enum):
     REGENERATE = auto()
     BACKTEST_COMPLETE = auto()
     OPTIMIZATION_COMPLETE = auto()
+    VERIFICATION_COMPLETE = auto()
     TRADING_STOPPED = auto()
     SYSTEM_STOP = auto()
 
@@ -61,6 +55,7 @@ class System(AbstractSystem):
         self.strategy: tuple[Symbol, Timeframe, Strategy] = []
         self.optimizer = None
         self.exchange = ExchangeType.BYBIT
+        self.ws = WSType.BYBIT
         self.config = self.context.config_service.get("system")
 
     async def start(self):
@@ -78,12 +73,18 @@ class System(AbstractSystem):
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
             SystemState.OPTIMIZATION: {
-                Event.OPTIMIZATION_COMPLETE: SystemState.TRADING,
+                Event.OPTIMIZATION_COMPLETE: SystemState.VERIFICATION,
                 Event.REGENERATE: SystemState.GENERATE,
                 Event.RUN_BACKTEST: SystemState.BACKTEST,
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
+            SystemState.VERIFICATION: {
+                Event.VERIFICATION_COMPLETE: SystemState.TRADING,
+                Event.REGENERATE: SystemState.GENERATE,
+                Event.SYSTEM_STOP: SystemState.STOPPED,
+            },
             SystemState.TRADING: {
+                Event.REGENERATE: SystemState.GENERATE,
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
         }
@@ -106,6 +107,8 @@ class System(AbstractSystem):
             await self._run_backtest()
         elif self.state == SystemState.OPTIMIZATION:
             await self._run_optimization()
+        elif self.state == SystemState.VERIFICATION:
+            await self._run_verification()
         elif self.state == SystemState.TRADING:
             await self._run_trading()
 
@@ -137,88 +140,22 @@ class System(AbstractSystem):
 
         estimator = Estimator(total_steps // self.config["parallel_num"])
 
-        async for batch_actors in self._generate_batch_actors(population):
-            tasks = [self._process_backtest(actors) for actors in batch_actors]
-            await asyncio.gather(*tasks)
+        async for batch in self._generate_batch(population):
+            await asyncio.gather(*[self._process_backtest(data) for data in batch])
+
             logger.info(f"Remaining time: {estimator.remaining_time():.2f}sec")
 
         await self.event_queue.put(Event.BACKTEST_COMPLETE)
-
-    async def _generate_batch_actors(self, data):
-        actors_batch = []
-
-        for symbol, timeframe, strategy in data:
-            squad = self.context.squad_factory.create_squad(symbol, timeframe, strategy)
-            order_executor = self.context.executor_factory.create_actor(
-                OrderType.PAPER, symbol, timeframe, strategy
-            )
-
-            actors_batch.append((squad, order_executor))
-
-            if len(actors_batch) == self.config["parallel_num"]:
-                yield actors_batch
-                actors_batch = []
-
-        if actors_batch:
-            yield actors_batch
-
-    async def _refresh_account(self):
-        account_size = await self.query(GetBalance())
-        await self.execute(UpdateAccountSize(account_size))
-
-    async def _process_backtest(self, actors: tuple[Squad, AbstractActor]):
-        squad, order_executor = actors
-
-        await asyncio.gather(
-            *[squad.start(), self._refresh_account(), order_executor.start()]
-        )
-
-        backtest_config = self.context.config_service.get("backtest")
-        in_sample = Lookback.from_raw(backtest_config["in_sample"])
-        out_sample = Lookback.from_raw(backtest_config["out_sample"])
-
-        await self.execute(
-            BacktestRun(
-                self.exchange,
-                squad.symbol,
-                squad.timeframe,
-                squad.strategy,
-                in_sample,
-                out_sample,
-            )
-        )
-
-        await asyncio.gather(*[squad.stop(), order_executor.stop()])
-
-    async def _process_pretrading(self, actors: tuple[Squad, AbstractActor]):
-        squad, order_executor = actors
-
-        await asyncio.gather(
-            *[squad.start(), self._refresh_account(), order_executor.start()]
-        )
-
-        backtest_config = self.context.config_service.get("backtest")
-        in_sample = Lookback.from_raw(backtest_config["out_sample"])
-        out_sample = None
-
-        await self.execute(
-            BacktestRun(
-                self.exchange,
-                squad.symbol,
-                squad.timeframe,
-                squad.strategy,
-                in_sample,
-                out_sample,
-            )
-        )
-
-        await asyncio.gather(*[self.execute(PortfolioReset()), order_executor.stop()])
 
     async def _run_optimization(self):
         logger.info("Run optimization")
 
         strategies = await self.query(
             GetTopStrategy(num=self.config["active_strategy_num"])
+        )
+
+        logger.info(
+            [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in strategies]
         )
 
         if not len(strategies):
@@ -235,6 +172,25 @@ class System(AbstractSystem):
 
         await self.event_queue.put(Event.RUN_BACKTEST)
 
+    async def _run_verification(self):
+        logger.info("Run verification")
+
+        strategies = await self.query(
+            GetTopStrategy(num=self.config["active_strategy_num"])
+        )
+
+        if not len(strategies):
+            logger.info("Regenerate population")
+            await self.event_queue.put(Event.REGENERATE)
+            return
+
+        async for batch in self._generate_batch(strategies):
+            await asyncio.gather(
+                *[self._process_backtest(data, True) for data in batch]
+            )
+
+        await self.event_queue.put(Event.VERIFICATION_COMPLETE)
+
     async def _run_trading(self):
         logger.info("Run trading")
 
@@ -243,50 +199,52 @@ class System(AbstractSystem):
         )
 
         logger.info(
-            [
-                f"{str(strategy[0])}_{str(strategy[1])}{str(strategy[2])}"
-                for strategy in strategies
-            ]
+            [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in strategies]
         )
 
-        trading_actors = []
+        if not len(strategies):
+            logger.info("Regenerate population")
+            await self.event_queue.put(Event.REGENERATE)
+            return
 
-        async for batch_actors in self._generate_batch_actors(strategies):
-            for actors in batch_actors:
-                await self._process_pretrading(actors)
-                trading_actors.append(actors)
+        account_size = await self.query(GetBalance())
+        await self.execute(UpdateAccountSize(account_size))
 
-        await self._refresh_account()
+        await self.execute(FeedRun(self.ws))
 
-        for squad, _ in trading_actors:
-            symbol = squad.symbol
-            timeframe = squad.timeframe
-            strategy = squad.strategy
+    async def _generate_batch(self, data):
+        batch = []
 
-            order_executor = self.context.executor_factory.create_actor(
-                OrderType.MARKET if self.config["mode"] == 1 else OrderType.PAPER,
+        for symbol, timeframe, strategy in data:
+            batch.append((symbol, timeframe, strategy))
+
+            if len(batch) == self.config["parallel_num"]:
+                yield batch
+                batch = []
+
+        if batch:
+            yield batch
+
+    async def _process_backtest(
+        self, data: tuple[Symbol, Timeframe, Strategy], verify=False
+    ):
+        symbol, timeframe, strategy = data
+        backtest_config = self.context.config_service.get("backtest")
+        in_sample = Lookback.from_raw(backtest_config["in_sample"])
+        out_sample = (
+            None if verify else Lookback.from_raw(backtest_config["out_sample"])
+        )
+
+        account_size = await self.query(GetBalance())
+        await self.execute(UpdateAccountSize(account_size))
+
+        await self.execute(
+            BacktestRun(
+                self.exchange,
                 symbol,
                 timeframe,
                 strategy,
+                in_sample,
+                out_sample,
             )
-
-            await asyncio.gather(
-                *[
-                    self.execute(
-                        UpdateSettings(
-                            symbol,
-                            self.config["leverage"],
-                            PositionMode.ONE_WAY,
-                            MarginMode.ISOLATED,
-                        )
-                    ),
-                    order_executor.start(),
-                ]
-            )
-
-        await asyncio.gather(
-            *[
-                self.execute(FeedRun(actor.symbol, actor.timeframe, actor.strategy))
-                for actor, _ in trading_actors
-            ]
         )
