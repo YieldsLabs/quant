@@ -108,11 +108,9 @@ class Feed(AbstractEventManager):
         )
 
         async for bar in datasource.fetch():
-            if not bar:
-                return
+            if bar:
+                logger.info(f"Tick: {symbol}_{timeframe}{strategy}:{bar}")
 
-            logger.info(f"Tick: {symbol}_{timeframe}{strategy}:{bar}")
-
-            await self.dispatch(
-                NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
-            )
+                await self.dispatch(
+                    NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
+                )

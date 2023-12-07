@@ -30,15 +30,7 @@ class BybitWS(AbstractWS):
     DATA_KEY = "data"
     CONFIRM_KEY = "confirm"
 
-    _instance = None
-
-    def __new__(cls, wss: str):
-        if not cls._instance:
-            cls._instance = super(BybitWS, cls).__new__(cls)
-            cls._instance._initialize(wss)
-        return cls._instance
-
-    def _initialize(self, wss: str):
+    def __init__(self, wss: str):
         self.ws = None
         self.wss = wss
         self._channels = []
@@ -72,28 +64,11 @@ class BybitWS(AbstractWS):
         handled_exceptions=(ConnectionError, RuntimeError, ConnectionClosedError),
     )
     async def run(self, ping_interval=15):
-        try:
-            await self.connect_to_websocket()
-            await self._subscribe()
+        await self.connect_to_websocket()
+        await self._subscribe()
 
-            ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
-
-            done, pending = await asyncio.wait(
-                [ping_task],
-                return_when=asyncio.FIRST_EXCEPTION,
-            )
-
-            for task in pending:
-                task.cancel()
-
-            for task in done:
-                if task.exception():
-                    raise task.exception()
-
-        except Exception as e:
-            logger.error(e)
-        finally:
-            raise RuntimeError("WS Message Error")
+        ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
+        await ping_task
 
     async def close(self):
         if self.ws and self.ws.open:
