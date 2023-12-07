@@ -4,8 +4,10 @@ from enum import Enum, auto
 
 from core.commands.account import UpdateAccountSize
 from core.commands.backtest import BacktestRun
+from core.commands.broker import UpdateSettings
 from core.commands.feed import FeedRun
 from core.interfaces.abstract_system import AbstractSystem
+from core.models.broker import MarginMode, PositionMode
 from core.models.exchange import ExchangeType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
@@ -141,6 +143,9 @@ class System(AbstractSystem):
         estimator = Estimator(total_steps // self.config["parallel_num"])
 
         async for batch in self._generate_batch(population):
+            account_size = await self.query(GetBalance())
+            await self.execute(UpdateAccountSize(account_size))
+
             await asyncio.gather(*[self._process_backtest(data) for data in batch])
 
             logger.info(f"Remaining time: {estimator.remaining_time():.2f}sec")
@@ -185,6 +190,9 @@ class System(AbstractSystem):
             return
 
         async for batch in self._generate_batch(strategies):
+            account_size = await self.query(GetBalance())
+            await self.execute(UpdateAccountSize(account_size))
+
             await asyncio.gather(
                 *[self._process_backtest(data, True) for data in batch]
             )
@@ -210,6 +218,20 @@ class System(AbstractSystem):
         account_size = await self.query(GetBalance())
         await self.execute(UpdateAccountSize(account_size))
 
+        await asyncio.gather(
+            *[
+                self.execute(
+                    UpdateSettings(
+                        symbol,
+                        self.config["leverage"],
+                        PositionMode.ONE_WAY,
+                        MarginMode.ISOLATED,
+                    )
+                )
+                for symbol, _, _ in strategies
+            ]
+        )
+
         await self.execute(FeedRun(self.ws))
 
     async def _generate_batch(self, data):
@@ -234,9 +256,6 @@ class System(AbstractSystem):
         out_sample = (
             None if verify else Lookback.from_raw(backtest_config["out_sample"])
         )
-
-        account_size = await self.query(GetBalance())
-        await self.execute(UpdateAccountSize(account_size))
 
         await self.execute(
             BacktestRun(

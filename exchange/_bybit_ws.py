@@ -1,11 +1,11 @@
 import asyncio
 import json
 import logging
+import time
 
 import websockets
 from websockets.exceptions import ConnectionClosedError
 
-from core.interfaces.abstract_ws import AbstractWS
 from core.models.bar import Bar
 from core.models.ohlcv import OHLCV
 from core.models.timeframe import Timeframe
@@ -14,8 +14,30 @@ from infrastructure.retry import retry
 logger = logging.getLogger(__name__)
 
 
-class BybitWS(AbstractWS):
+def debounce(period):
+    def decorator(f):
+        async def wrapped(*args, **kwargs):
+            now = time.time()
+            delay = 0.0
+            if wrapped.last_call_time is not None:
+                timedelta = now - wrapped.last_call_time
+                if 0 <= timedelta <= period:
+                    delay = abs(period - timedelta)
+            await asyncio.sleep(delay)
+            wrapped.last_call_time = time.time()
+            await f(*args, **kwargs)
+
+        wrapped.last_call_time = None
+        return wrapped
+
+    return decorator
+
+
+class BybitWS:
+    _instance = None
+
     SUBSCRIBE_OPERATION = "subscribe"
+    UNSUBSCRIBE_OPERATION = "unsubscribe"
     INTERVALS = {
         Timeframe.ONE_MINUTE: 1,
         Timeframe.THREE_MINUTES: 3,
@@ -30,13 +52,21 @@ class BybitWS(AbstractWS):
     DATA_KEY = "data"
     CONFIRM_KEY = "confirm"
 
-    def __init__(self, wss: str):
-        self.ws = None
-        self.wss = wss
-        self._channels = []
+    def __new__(cls, wss: str):
+        if cls._instance is None:
+            cls._instance = super(BybitWS, cls).__new__(cls)
+            cls._instance.ws = None
+            cls._instance.wss = wss
+            cls._instance._channels = set()
+            cls._instance._receive_semaphore = asyncio.Semaphore(1)
+            cls._instance._lock = asyncio.Lock()
+            cls._instance.ping_task = None
 
-    async def connect_to_websocket(self, interval=15):
-        await self.close()
+        return cls._instance
+
+    async def connect_to_websocket(self, interval=5):
+        if self.ws and self.ws.open:
+            return
 
         self.ws = await websockets.connect(self.wss)
 
@@ -45,14 +75,13 @@ class BybitWS(AbstractWS):
         if not self.ws.open:
             raise RuntimeError("Reconnect WS")
 
+        await self._resubscribe()
+
     async def send_ping(self, interval):
         while True:
             await asyncio.sleep(interval)
 
-            if not self.ws:
-                continue
-
-            if not self.ws.open:
+            if not self.ws or not self.ws.open:
                 continue
 
             pong = await self.ws.ping()
@@ -65,42 +94,51 @@ class BybitWS(AbstractWS):
     )
     async def run(self, ping_interval=15):
         await self.connect_to_websocket()
-        await self._subscribe()
 
-        ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
-        await ping_task
+        if not self.ping_task:
+            self.ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
 
     async def close(self):
         if self.ws and self.ws.open:
             await self.ws.close()
 
-    async def receive(self):
-        if not self.ws or not self.ws.open:
-            return
+        self.ping_task.cancel()
+        self.ping_task = None
 
-        message = await self.ws.recv()
-        data = json.loads(message)
+    async def receive(self, interval=5):
+        async with self._receive_semaphore:
+            if not self.ws or not self.ws.open:
+                await asyncio.sleep(interval)
+                return
 
-        if self.TOPIC_KEY not in data:
-            return
+            async for message in self.ws:
+                data = json.loads(message)
 
-        ohlcv = data[self.DATA_KEY][0]
+                if self.TOPIC_KEY in data:
+                    ohlcv = data[self.DATA_KEY][0]
 
-        return Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY])
+                    return Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY])
 
     async def subscribe(self, symbol, timeframe):
-        channel = f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol.name}"
-        self._channels = list(set(self._channels + [channel]))
-        await self._subscribe()
+        async with self._lock:
+            if (symbol, timeframe) not in self._channels:
+                self._channels.add((symbol, timeframe))
+                await self._subscribe(symbol, timeframe)
 
-    async def _subscribe(self):
+    @debounce(5)
+    async def _subscribe(self, symbol, timeframe):
         if not self.ws or not self.ws.open:
             return
 
-        for channel in self._channels:
-            subscribe_message = {"op": self.SUBSCRIBE_OPERATION, "args": [channel]}
+        channel = f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol.name}"
+        subscribe_message = {"op": self.SUBSCRIBE_OPERATION, "args": [channel]}
 
-            try:
-                await self.ws.send(json.dumps(subscribe_message))
-            except Exception as e:
-                logger.error(e)
+        try:
+            await self.ws.send(json.dumps(subscribe_message))
+        except Exception as e:
+            logger.error(e)
+
+    async def _resubscribe(self):
+        async with self._lock:
+            for symbol, timeframe in self._channels:
+                await self._subscribe(symbol, timeframe)

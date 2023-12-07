@@ -53,7 +53,8 @@ class Bybit(AbstractExchange):
             try:
                 operation(*args)
             except Exception as e:
-                logger.error(e)
+                logger.error(f"{symbol}: {e}")
+                return
 
     def fetch_order(self, order_id: str):
         return self.connector.fetch_order(order_id)

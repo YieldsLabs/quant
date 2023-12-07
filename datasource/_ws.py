@@ -18,28 +18,23 @@ class AsyncRealTimeData:
         self.timeframe = timeframe
         self.iterator = None
 
-    async def _init_iterator(self) -> None:
-        if self.iterator is None:
-            asyncio.create_task(self.ws.run())
-            await self.ws.subscribe(self.symbol, self.timeframe)
+        self.task = asyncio.create_task(self._initialize())
 
-            self.iterator = self.ws
-
-    async def __aenter__(self):
-        await self._init_iterator()
+    async def _initialize(self):
+        await self.ws.run()
+        await self.ws.subscribe(self.symbol, self.timeframe)
 
     async def __aexit__(self, exc_type, exc_value, traceback):
+        self.task.cancel()
         await self.ws.close()
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
-        await self._init_iterator()
-
         try:
-            bar = await self.iterator.receive()
-            return bar
+            data = await self.ws.receive()
+            return data
         except StopAsyncIteration:
             await self.ws.close()
             raise
