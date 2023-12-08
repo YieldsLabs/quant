@@ -93,6 +93,7 @@ class BybitWS:
         handled_exceptions=(ConnectionError, RuntimeError, ConnectionClosedError),
     )
     async def run(self, ping_interval=15):
+        await self.close()
         await self.connect_to_websocket()
 
         if not self.ping_task:

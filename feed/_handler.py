@@ -55,7 +55,7 @@ class Feed(AbstractEventManager):
     async def _run_trading(self, ws, symbol, timeframe, strategy):
         logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
 
-        self.signal_factory.create_actor(symbol, timeframe, strategy),
+        self.signal_factory.create_actor(symbol, timeframe, strategy)
 
         datasource = self.datasource_factory.create(
             ExchangeType.BYBIT,
@@ -72,8 +72,8 @@ class Feed(AbstractEventManager):
 
         logger.info(f"Start trading: {symbol}_{timeframe}{strategy}")
 
-        self.position_factory.create_actor(symbol, timeframe, strategy),
-        self.risk_factory.create_actor(symbol, timeframe, strategy),
+        self.position_factory.create_actor(symbol, timeframe, strategy)
+        self.risk_factory.create_actor(symbol, timeframe, strategy)
         self.executor_factory.create_actor(
             OrderType.MARKET
             if self.config_service.get("system")["mode"] == 1
