@@ -134,7 +134,7 @@ class BybitWS:
         subscribe_message = {"op": self.SUBSCRIBE_OPERATION, "args": [channel]}
 
         try:
-            logger.info("Subsctibe to: {subscribe_message}")
+            logger.info(f"Subsctibe to: {subscribe_message}")
             await self.ws.send(json.dumps(subscribe_message))
         except Exception as e:
             logger.error(e)
