@@ -93,7 +93,6 @@ class BybitWS:
         handled_exceptions=(ConnectionError, RuntimeError, ConnectionClosedError),
     )
     async def run(self, ping_interval=15):
-        await self.close()
         await self.connect_to_websocket()
 
         if not self.ping_task:
@@ -126,7 +125,7 @@ class BybitWS:
                 self._channels.add((symbol, timeframe))
                 await self._subscribe(symbol, timeframe)
 
-    @debounce(5)
+    @debounce(3)
     async def _subscribe(self, symbol, timeframe):
         if not self.ws or not self.ws.open:
             return
@@ -135,6 +134,7 @@ class BybitWS:
         subscribe_message = {"op": self.SUBSCRIBE_OPERATION, "args": [channel]}
 
         try:
+            logger.info("Subsctibe to: {subscribe_message}")
             await self.ws.send(json.dumps(subscribe_message))
         except Exception as e:
             logger.error(e)
