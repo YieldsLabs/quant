@@ -37,7 +37,7 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 load_dotenv()
 
-
+REGIME = os.getenv("REGIME")
 LOG_DIR = os.getenv("LOG_DIR")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 WASM_FOLDER = os.getenv("WASM_FOLDER")
@@ -56,7 +56,7 @@ async def main():
     logging.info("Initializing...")
 
     config_service = ConfigService()
-    config_service.load(config_path="config.ini")
+    config_service.load(config_path=f"config.{REGIME}.ini")
     config = {"bus": {"num_workers": os.cpu_count()}, "store": {"base_dir": LOG_DIR}}
 
     config_service.update(config)
