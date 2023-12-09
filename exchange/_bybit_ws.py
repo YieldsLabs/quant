@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import time
+from asyncio.exceptions import CancelledError
 
 import websockets
 from websockets.exceptions import ConnectionClosedError
@@ -79,37 +80,54 @@ class BybitWS:
 
     async def send_ping(self, interval):
         while True:
-            await asyncio.sleep(interval)
+            try:
+                await asyncio.sleep(interval)
 
-            if not self.ws or not self.ws.open:
-                continue
+                if not self.ws or not self.ws.open:
+                    continue
 
-            pong = await self.ws.ping()
-            await pong
+                pong = await self.ws.ping()
+                await asyncio.wait_for(pong, timeout=interval)
+            except Exception as e:
+                logger.error(e)
+                self.ping_task = None
+                raise e
 
     @retry(
-        max_retries=8,
-        initial_retry_delay=1,
-        handled_exceptions=(ConnectionError, RuntimeError, ConnectionClosedError),
+        max_retries=13,
+        initial_retry_delay=3,
+        handled_exceptions=(
+            ConnectionError,
+            RuntimeError,
+            ConnectionClosedError,
+            CancelledError,
+        ),
     )
-    async def run(self, ping_interval=15):
+    async def run(self, ping_interval=5):
         await self.connect_to_websocket()
 
         if not self.ping_task:
             self.ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
+            await self.ping_task
 
     async def close(self):
         if self.ws and self.ws.open:
             await self.ws.close()
 
-        self.ping_task.cancel()
+        if self.ping_task:
+            self.ping_task.cancel()
+
         self.ping_task = None
 
-    async def receive(self, interval=5):
+    @retry(
+        max_retries=13,
+        initial_retry_delay=5,
+        handled_exceptions=(RuntimeError, ConnectionClosedError),
+    )
+    async def receive(self):
         async with self._receive_semaphore:
             if not self.ws or not self.ws.open:
-                await asyncio.sleep(interval)
-                return
+                await self.connect_to_websocket()
 
             async for message in self.ws:
                 data = json.loads(message)
@@ -134,7 +152,7 @@ class BybitWS:
         subscribe_message = {"op": self.SUBSCRIBE_OPERATION, "args": [channel]}
 
         try:
-            logger.info(f"Subsctibe to: {subscribe_message}")
+            logger.info(f"Subscribe to: {subscribe_message}")
             await self.ws.send(json.dumps(subscribe_message))
         except Exception as e:
             logger.error(e)
