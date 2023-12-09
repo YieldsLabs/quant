@@ -101,6 +101,7 @@ def command_handler(command_type: Type[Command]) -> Callable[[Callable], Callabl
             def async_wrapped_handler(self, command: Command):
                 handler(self, command)
                 command.executed()
+                return
 
         async_wrapped_handler.event = command_type
         async_wrapped_handler = wraps(handler)(async_wrapped_handler)

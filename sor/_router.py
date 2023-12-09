@@ -87,7 +87,9 @@ class SmartRouter(AbstractEventManager):
         position_side = position.side
         position_size = position.size
         stop_loss = position.stop_loss_price
-        distance_to_stop_loss = abs(position.entry_price - stop_loss)
+        entry_price = position.entry_price
+
+        distance_to_stop_loss = abs(entry_price - stop_loss)
 
         min_size = symbol.min_position_size
         max_order_slice = self.config["max_order_slice"]
@@ -98,20 +100,25 @@ class SmartRouter(AbstractEventManager):
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
 
+        logging.info(f"Theo price: {entry_price}")
+
         for price in self.entry_price.calculate(symbol, self.exchange):
+            logging.info(f"Algo price: {price}")
+
             if distance_to_stop_loss > stop_loss_threshold * abs(stop_loss - price):
+                logging.info(f"Order risk breached: {distance_to_stop_loss}")
                 break
 
             order_id = self.exchange.create_limit_order(
                 symbol, position_side, size, price
             )
 
-            logging.info(f"Order ID: {order_id}")
-
             if order_id:
                 order_counter += 1
+                logging.info(f"Order ID: {order_id}")
 
             if order_counter >= num_orders:
+                logging.info(f"All orders filled: {order_counter}")
                 break
 
             await asyncio.sleep(entry_timeout)
