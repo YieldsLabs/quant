@@ -4,7 +4,9 @@ from collections import defaultdict, deque
 from functools import partial
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple, Type, Union
 
+from core.commands.base import Command
 from core.events.base import Event
+from core.queries.base import Query
 
 HandlerType = Union[partial, Callable[..., Any]]
 
@@ -48,18 +50,33 @@ class EventHandler:
         self, handler: HandlerType, event: Event, *args, **kwargs
     ) -> None:
         try:
-            await self._create_handler(handler, event, *args, **kwargs)
-            logger.debug(event)
+            await self._execute_handler(handler, event, *args, **kwargs)
         except Exception as e:
-            self._dead_letter_queue.append((event, e))
-            logger.error(
-                f"Exception encountered in handler {handler.__name__}: {e}. Event added to dead letter queue."
-            )
+            self._handle_exception(handler, event, e)
 
-    async def _create_handler(
+    async def _execute_handler(
         self, handler: HandlerType, event: Event, *args, **kwargs
     ) -> None:
         if asyncio.iscoroutinefunction(handler):
-            await handler(event, *args, **kwargs)
+            response = await handler(event, *args, **kwargs)
         else:
-            await asyncio.to_thread(handler, event, *args, **kwargs)
+            response = await asyncio.to_thread(handler, event, *args, **kwargs)
+
+        if isinstance(event, Query):
+            event.set_response(response)
+        elif isinstance(event, Command):
+            event.executed()
+
+    def _handle_exception(
+        self, handler: HandlerType, event: Event, exception: Exception
+    ) -> None:
+        logger.error(
+            f"Exception encountered in event {event}: {exception}. Event added to dead letter queue."
+        )
+
+        if isinstance(event, Command):
+            event.executed()
+        elif isinstance(event, Query):
+            event.set_response(None)
+
+        self._dead_letter_queue.append((event, exception))

@@ -92,16 +92,12 @@ def command_handler(command_type: Type[Command]) -> Callable[[Callable], Callabl
         if asyncio.iscoroutinefunction(handler):
 
             async def async_wrapped_handler(self, command: Command):
-                await handler(self, command)
-                command.executed()
-                return
+                return await handler(self, command)
 
         else:
 
             def async_wrapped_handler(self, command: Command):
-                handler(self, command)
-                command.executed()
-                return
+                return handler(self, command)
 
         async_wrapped_handler.event = command_type
         async_wrapped_handler = wraps(handler)(async_wrapped_handler)
@@ -116,16 +112,12 @@ def query_handler(query_type: Type[Query]) -> Callable[[Callable], Callable]:
         if asyncio.iscoroutinefunction(handler):
 
             async def async_wrapped_handler(self, query: Query):
-                response = await handler(self, query)
-                query.set_response(response)
-                return
+                return await handler(self, query)
 
         else:
 
             def async_wrapped_handler(self, query: Query):
-                response = handler(self, query)
-                query.set_response(response)
-                return
+                return handler(self, query)
 
         async_wrapped_handler.event = query_type
         async_wrapped_handler = wraps(handler)(async_wrapped_handler)
