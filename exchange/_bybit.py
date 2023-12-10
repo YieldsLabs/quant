@@ -255,9 +255,7 @@ class Bybit(AbstractExchange):
         }
 
     def _create_order_extra_params(self, stop_loss_price=None, take_profit_price=None):
-        extra_params = {
-            "timeInForce": "ImmediateOrCancel"
-        }
+        extra_params = {"timeInForce": "ImmediateOrCancel"}
 
         if stop_loss_price:
             extra_params["stopLoss"] = str(stop_loss_price)

@@ -67,9 +67,7 @@ class EventHandler:
         elif isinstance(event, Command):
             event.executed()
 
-    def _handle_exception(
-        self, event: Event, exception: Exception
-    ) -> None:
+    def _handle_exception(self, event: Event, exception: Exception) -> None:
         logger.error(
             f"Exception encountered in event {event}: {exception}. Event added to dead letter queue."
         )

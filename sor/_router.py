@@ -139,8 +139,8 @@ class SmartRouter(AbstractEventManager):
     async def wait_for_order_fill(self, order_id, symbol):
         while True:
             order = self.exchange.fetch_order(order_id, symbol)
-        
-            if order['status'] == 'open':
+
+            if order["status"] == "open":
                 break
-            
+
             await asyncio.sleep(3)

@@ -48,7 +48,7 @@ class MarketOrderActor(Actor):
 
         await self.ask(OpenPosition(current_position))
 
-        logger.info(f"Get Open Position")
+        logger.info("Get Open Position")
 
         order = await self.ask(GetOpenPosition(current_position))
 
