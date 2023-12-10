@@ -3,6 +3,7 @@ import logging
 
 from core.commands.feed import FeedRun
 from core.event_decorators import command_handler
+from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_datasource_factory import AbstractDataSourceFactory
@@ -55,7 +56,17 @@ class Feed(AbstractEventManager):
     async def _run_trading(self, ws, symbol, timeframe, strategy):
         logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
 
-        self.signal_factory.create_actor(symbol, timeframe, strategy)
+        actors = [
+            self.signal_factory.create_actor(symbol, timeframe, strategy),
+            self.position_factory.create_actor(symbol, timeframe, strategy),
+            self.risk_factory.create_actor(symbol, timeframe, strategy),
+            self.executor_factory.create_actor(
+                OrderType.PAPER,
+                symbol,
+                timeframe,
+                strategy,
+            ),
+        ]
 
         datasource = self.datasource_factory.create(
             ExchangeType.BYBIT,
@@ -63,18 +74,27 @@ class Feed(AbstractEventManager):
             timeframe,
         )
 
-        async for bar in datasource.fetch(
+        iterator = datasource.fetch(
             Lookback.ONE_MONTH, None, self.config_service.get("backtest")["batch_size"]
-        ):
+        )
+
+        async for bar in iterator:
             await self.dispatch(
                 NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
             )
 
+        last_bar = iterator.get_last_bar()
+
+        if last_bar:
+            await self.dispatch(
+                BacktestEnded(symbol, timeframe, strategy, last_bar.ohlcv.close)
+            )
+
+        actors[-1].stop()
+
         logger.info(f"Start trading: {symbol}_{timeframe}{strategy}")
 
-        self.position_factory.create_actor(symbol, timeframe, strategy)
-        self.risk_factory.create_actor(symbol, timeframe, strategy)
-        self.executor_factory.create_actor(
+        actors[-1] = self.executor_factory.create_actor(
             OrderType.MARKET
             if self.config_service.get("system")["mode"] == 1
             else OrderType.PAPER,
