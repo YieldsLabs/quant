@@ -93,12 +93,14 @@ class SmartRouter(AbstractEventManager):
 
         min_size = symbol.min_position_size
         max_order_slice = self.config["max_order_slice"]
+        max_order_breach = self.config["max_order_breach"]
         entry_timeout = self.config["entry_timeout"]
         stop_loss_threshold = self.config["stop_loss_threshold"]
 
         num_orders = min(max(1, int(position_size / min_size)), max_order_slice)
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
+        num_order_breach = 0
 
         logging.info(f"Theo price: {entry_price}")
 
@@ -108,7 +110,12 @@ class SmartRouter(AbstractEventManager):
             if distance_to_stop_loss > stop_loss_threshold * abs(stop_loss - price):
                 logging.info(f"Order risk breached: {distance_to_stop_loss}")
 
-                asyncio.sleep(3)
+                num_order_breach += 1
+
+                if num_order_breach >= max_order_breach:
+                    break
+
+                await asyncio.sleep(3)
 
                 continue
 
