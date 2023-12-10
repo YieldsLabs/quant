@@ -48,13 +48,18 @@ class MarketOrderActor(Actor):
 
         await self.ask(OpenPosition(current_position))
 
+        logger.info(f"Get Open Position")
+
         order = await self.ask(GetOpenPosition(current_position))
 
         current_position = current_position.add_order(order)
 
-        logger.info(f"Opened Position: {current_position}")
+        logger.info(f"Position to Open: {current_position}")
 
-        await self.tell(BrokerPositionOpened(current_position))
+        if current_position.closed:
+            await self.tell(BrokerPositionClosed(current_position))
+        else:
+            await self.tell(BrokerPositionOpened(current_position))
 
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position

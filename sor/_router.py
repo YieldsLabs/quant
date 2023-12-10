@@ -80,9 +80,6 @@ class SmartRouter(AbstractEventManager):
     async def open_position(self, command: OpenPosition):
         position = command.position
 
-        if position.closed:
-            return
-
         symbol = position.signal.symbol
         position_side = position.side
         position_size = position.size
@@ -123,12 +120,12 @@ class SmartRouter(AbstractEventManager):
                 symbol, position_side, size, price
             )
 
-            if order_id:
+            if order_id and await self.wait_for_order_fill(order_id, symbol):
                 order_counter += 1
                 logging.info(f"Order ID: {order_id}")
 
             if order_counter >= num_orders:
-                logging.info(f"All orders filled: {order_counter}")
+                logging.info(f"All orders are filled: {order_counter}")
                 break
 
             await asyncio.sleep(entry_timeout)
@@ -138,3 +135,12 @@ class SmartRouter(AbstractEventManager):
         symbol = command.position.signal.symbol
 
         self.exchange.close_position(symbol)
+
+    async def wait_for_order_fill(self, order_id, symbol):
+        while True:
+            order = self.exchange.fetch_order(order_id, symbol)
+        
+            if order['status'] == 'open':
+                break
+            
+            await asyncio.sleep(3)

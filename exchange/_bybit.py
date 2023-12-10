@@ -56,14 +56,14 @@ class Bybit(AbstractExchange):
                 logger.error(f"{symbol}: {e}")
                 return
 
-    def fetch_order(self, order_id: str):
-        return self.connector.fetch_order(order_id)
+    def fetch_order(self, order_id: str, symbol: Symbol):
+        return self.connector.fetch_order(order_id, symbol.name)
 
     def fetch_trade(self, symbol: Symbol):
         return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
 
     def fetch_order_book(self, symbol: Symbol):
-        book = self.connector.fetch_order_book(symbol.name, limit=150)
+        book = self.connector.fetch_order_book(symbol.name, limit=50)
         return book["bids"], book["asks"]
 
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
@@ -82,9 +82,7 @@ class Bybit(AbstractExchange):
             symbol.name,
             size,
             price,
-            self._create_order_extra_params(
-                stop_loss_price=None, take_profit_price=None
-            ),
+            self._create_order_extra_params(),
         )
 
         return res["info"]["orderId"]
@@ -256,16 +254,15 @@ class Bybit(AbstractExchange):
             "extra_params": None,
         }
 
-    def _create_order_extra_params(self, stop_loss_price, take_profit_price):
-        extra_params = {}
+    def _create_order_extra_params(self, stop_loss_price=None, take_profit_price=None):
+        extra_params = {
+            "timeInForce": "ImmediateOrCancel"
+        }
 
         if stop_loss_price:
             extra_params["stopLoss"] = str(stop_loss_price)
 
         if take_profit_price:
             extra_params["takeProfit"] = str(take_profit_price)
-
-        if extra_params:
-            extra_params["timeInForce"] = "ImmediateOrCancel"
 
         return extra_params if extra_params else None

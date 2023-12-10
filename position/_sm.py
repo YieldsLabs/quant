@@ -52,6 +52,10 @@ class PositionStateMachine:
             PositionState.OPENED,
             "handle_position_opened",
         ),
+        (PositionState.WAITING_BROKER_CONFIRMATION, BrokerPositionClosed): (
+            PositionState.CLOSE,
+            "handle_position_closed",
+        ),
         (PositionState.WAITING_BROKER_CONFIRMATION, BacktestEnded): (
             PositionState.CLOSE,
             "handle_exit_received",

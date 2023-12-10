@@ -91,8 +91,8 @@ impl Strategy for BaseStrategy {
         let series = self.ohlcv_series();
 
         match self.trade_signals(&series) {
-            (true, _, _, _) => TradeAction::GoLong(self.suggested_entry(&series)),
-            (_, true, _, _) => TradeAction::GoShort(self.suggested_entry(&series)),
+            (true, _, _, _) => TradeAction::GoLong(data.close),
+            (_, true, _, _) => TradeAction::GoShort(data.close),
             (_, _, true, _) => TradeAction::ExitLong(data.close),
             (_, _, _, true) => TradeAction::ExitShort(data.close),
             _ => TradeAction::DoNothing,

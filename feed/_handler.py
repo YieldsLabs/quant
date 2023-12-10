@@ -5,6 +5,7 @@ from core.commands.feed import FeedRun
 from core.event_decorators import command_handler
 from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
+from core.events.trade import TradeStarted
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_datasource_factory import AbstractDataSourceFactory
 from core.interfaces.abstract_event_manager import AbstractEventManager
@@ -102,6 +103,8 @@ class Feed(AbstractEventManager):
             timeframe,
             strategy,
         )
+
+        await self.dispatch(TradeStarted(symbol, timeframe, strategy))
 
         ws_datasource = self.datasource_factory.create(
             ws,

@@ -7,6 +7,7 @@ from core.events.account import PortfolioAccountUpdated
 from core.events.backtest import BacktestStarted
 from core.events.portfolio import PortfolioPerformanceUpdated
 from core.events.position import PositionClosed
+from core.events.trade import TradeStarted
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.models.size import PositionSizeType
@@ -32,6 +33,10 @@ class Portfolio(AbstractEventManager):
 
     @event_handler(BacktestStarted)
     async def handle_backtest_started(self, event: BacktestStarted):
+        await self.state.reset(event.symbol, event.timeframe, event.strategy)
+
+    @event_handler(TradeStarted)
+    async def trade_started(self, event: TradeStarted):
         await self.state.reset(event.symbol, event.timeframe, event.strategy)
 
     @event_handler(PositionClosed)

@@ -56,7 +56,7 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def fetch_order(self, order_id: str):
+    def fetch_order(self, order_id: str, symbol: Symbol):
         pass
 
     @abstractmethod
