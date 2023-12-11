@@ -3,13 +3,15 @@ use crate::{
 };
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::sync::RwLock;
+use std::sync::{Mutex, MutexGuard, RwLock};
 
 static STRATEGY_ID_TO_INSTANCE: Lazy<
     RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>,
 > = Lazy::new(|| RwLock::new(HashMap::new()));
 
 static STRATEGY_ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
+
+static ALLOC_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 pub fn register_strategy(
     signal: Box<dyn Signal>,
@@ -86,6 +88,8 @@ pub fn strategy_stop_loss(strategy_id: i32) -> (f32, f32) {
 
 #[no_mangle]
 pub fn allocate(size: usize) -> *mut u8 {
+    let _guard: MutexGuard<_> = ALLOC_MUTEX.lock().unwrap();
+
     let mut buf = Vec::with_capacity(size);
     let ptr = buf.as_mut_ptr();
     std::mem::forget(buf);
