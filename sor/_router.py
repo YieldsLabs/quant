@@ -108,7 +108,9 @@ class SmartRouter(AbstractEventManager):
             logging.info(f"Algo price: {price}")
 
             if distance_to_stop_loss > stop_loss_threshold * abs(stop_loss - price):
-                logging.info(f"Order risk breached: {distance_to_stop_loss}")
+                logging.info(
+                    f"Order risk breached: ENTR: {entry_price}, STPLS: {stop_loss}, DSTNC: {distance_to_stop_loss}"
+                )
 
                 num_order_breach += 1
 
