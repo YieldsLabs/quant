@@ -26,9 +26,27 @@ class EventDispatcher(metaclass=SingletonMeta):
 
         self.config = config_service.get("bus")
 
-        self.command_worker_pool = self._create_worker_pool()
-        self.query_worker_pool = self._create_worker_pool()
-        self.event_worker_pool = self._create_worker_pool()
+        self._command_worker_pool = None
+        self._query_worker_pool = None
+        self._event_worker_pool = None
+
+    @property
+    def command_worker_pool(self):
+        if self._command_worker_pool is None:
+            self._command_worker_pool = self._create_worker_pool()
+        return self._command_worker_pool
+
+    @property
+    def query_worker_pool(self):
+        if self._query_worker_pool is None:
+            self._query_worker_pool = self._create_worker_pool()
+        return self._query_worker_pool
+
+    @property
+    def event_worker_pool(self):
+        if self._event_worker_pool is None:
+            self._event_worker_pool = self._create_worker_pool()
+        return self._event_worker_pool
 
     def register(
         self,

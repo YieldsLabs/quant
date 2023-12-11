@@ -52,12 +52,12 @@ class SmartRouter(AbstractEventManager):
 
         logging.info(f"Trade: {trade}")
 
-        if trade:
-            return Order(
-                status=OrderStatus.CLOSED, size=trade["amount"], price=trade["price"]
-            )
-        else:
+        if not trade:
             return Order(status=OrderStatus.FAILED, price=0, size=0)
+
+        return Order(
+            status=OrderStatus.CLOSED, size=trade["amount"], price=trade["price"]
+        )
 
     @query_handler(GetSymbols)
     def get_symbols(self, _query: GetSymbols):
