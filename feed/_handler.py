@@ -3,7 +3,6 @@ import logging
 
 from core.commands.feed import FeedRun
 from core.event_decorators import command_handler
-from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.trade import TradeStarted
 from core.interfaces.abstract_config import AbstractConfig
@@ -57,17 +56,7 @@ class Feed(AbstractEventManager):
     async def _run_trading(self, ws, symbol, timeframe, strategy):
         logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
 
-        actors = [
-            self.signal_factory.create_actor(symbol, timeframe, strategy),
-            self.position_factory.create_actor(symbol, timeframe, strategy),
-            self.risk_factory.create_actor(symbol, timeframe, strategy),
-            self.executor_factory.create_actor(
-                OrderType.PAPER,
-                symbol,
-                timeframe,
-                strategy,
-            ),
-        ]
+        signal_actor = self.signal_factory.create_actor(symbol, timeframe, strategy)
 
         datasource = self.datasource_factory.create(
             ExchangeType.BYBIT,
@@ -75,34 +64,28 @@ class Feed(AbstractEventManager):
             timeframe,
         )
 
-        iterator = datasource.fetch(
+        async for bar in datasource.fetch(
             Lookback.ONE_MONTH, None, self.config_service.get("backtest")["batch_size"]
-        )
-
-        async for bar in iterator:
+        ):
             await self.dispatch(
                 NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
             )
 
-        last_bar = iterator.get_last_bar()
-
-        if last_bar:
-            await self.dispatch(
-                BacktestEnded(symbol, timeframe, strategy, last_bar.ohlcv.close)
-            )
-
-        actors[-1].stop()
-
         logger.info(f"Start trading: {symbol}_{timeframe}{strategy}")
 
-        actors[-1] = self.executor_factory.create_actor(
-            OrderType.MARKET
-            if self.config_service.get("system")["mode"] == 1
-            else OrderType.PAPER,
-            symbol,
-            timeframe,
-            strategy,
-        )
+        [
+            signal_actor,
+            self.position_factory.create_actor(symbol, timeframe, strategy),
+            self.risk_factory.create_actor(symbol, timeframe, strategy),
+            self.executor_factory.create_actor(
+                OrderType.MARKET
+                if self.config_service.get("system")["mode"] == 1
+                else OrderType.PAPER,
+                symbol,
+                timeframe,
+                strategy,
+            ),
+        ]
 
         await self.dispatch(TradeStarted(symbol, timeframe, strategy))
 
