@@ -21,15 +21,13 @@ class WorkerPool:
             for _ in range(num_workers)
         ]
         self.load_balancer = LoadBalancer(num_priority_groups)
-        self.priority_to_worker_map = {
-            i: i % num_workers for i in range(num_priority_groups)
-        }
 
     async def dispatch_to_worker(self, event: Event, *args, **kwargs) -> None:
         priority_group = self.load_balancer.determine_priority_group(
             event.meta.priority
         )
-        worker_index = self.priority_to_worker_map[priority_group]
+
+        worker_index = priority_group % len(self.workers)
 
         await self.workers[worker_index].dispatch(event, *args, **kwargs)
         self.load_balancer.register_event(priority_group)

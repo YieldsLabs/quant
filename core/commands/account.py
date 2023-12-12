@@ -1,8 +1,18 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from .base import Command
+from core.events.base import EventMeta
+
+from .base import Command, CommandGroup
 
 
 @dataclass(frozen=True)
-class UpdateAccountSize(Command):
+class AccountCommand(Command):
+    meta: EventMeta = field(
+        default_factory=lambda: EventMeta(priority=2, group=CommandGroup.account),
+        init=False,
+    )
+
+
+@dataclass(frozen=True)
+class UpdateAccountSize(AccountCommand):
     amount: float

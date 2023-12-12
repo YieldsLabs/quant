@@ -98,7 +98,7 @@ class EventDispatcher(metaclass=SingletonMeta):
     def _create_worker_pool(self) -> WorkerPool:
         return WorkerPool(
             self.config["num_workers"],
-            self.config["num_workers"] * self.config["piority_groups"],
+            self.config["piority_groups"],
             self.event_handler,
             self.cancel_event,
         )

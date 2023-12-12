@@ -1,10 +1,21 @@
 import asyncio
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Generic, TypeVar
 
 from core.events.base import Event, EventMeta
 
 T = TypeVar("T")
+
+
+class QueryGroup(Enum):
+    account = "account"
+    broker = "broker"
+    position = "position"
+    portfolio = "portfolio"
+
+    def __str__(self):
+        return self.value
 
 
 @dataclass(frozen=True)

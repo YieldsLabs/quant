@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Optional, Union
 
@@ -23,6 +24,8 @@ SignalEvent = Union[
     ExitShortSignalReceived,
 ]
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class StrategyRef:
@@ -39,6 +42,7 @@ class StrategyRef:
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, ohlcv: OHLCV
     ) -> Optional[SignalEvent]:
         exports = self.instance_ref.exports(self.store_ref)
+
         [raw_action, price] = exports["strategy_next"](
             self.store_ref,
             self.id,

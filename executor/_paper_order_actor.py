@@ -56,6 +56,9 @@ class PaperOrderActor(Actor):
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
+
+        logger.debug(f"New Position: {current_position}")
+
         fill_price = self._determine_fill_price(current_position.side)
         size = current_position.size
 
@@ -73,6 +76,9 @@ class PaperOrderActor(Actor):
 
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
+
+        logger.debug(f"To Close Position: {current_position}")
+
         fill_price = self._determine_fill_price(current_position.side)
         size = current_position.size
 

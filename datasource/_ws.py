@@ -33,7 +33,7 @@ class AsyncRealTimeData:
 
     async def __anext__(self):
         try:
-            data = await self.ws.receive()
+            data = await self.ws.receive(self.symbol, self.timeframe)
             return data
         except StopAsyncIteration:
             await self.ws.close()

@@ -88,11 +88,11 @@ impl Strategy for BaseStrategy {
             return TradeAction::DoNothing;
         }
 
-        let series = self.ohlcv_series();
+        let theo_price = self.suggested_entry();
 
-        match self.trade_signals(&series) {
-            (true, _, _, _) => TradeAction::GoLong(data.close),
-            (_, true, _, _) => TradeAction::GoShort(data.close),
+        match self.trade_signals() {
+            (true, _, _, _) => TradeAction::GoLong(theo_price),
+            (_, true, _, _) => TradeAction::GoShort(theo_price),
             (_, _, true, _) => TradeAction::ExitLong(data.close),
             (_, _, _, true) => TradeAction::ExitShort(data.close),
             _ => TradeAction::DoNothing,
@@ -107,8 +107,7 @@ impl Strategy for BaseStrategy {
             };
         }
 
-        let series = self.ohlcv_series();
-        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&series);
+        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels();
 
         StopLossLevels {
             long: stop_loss_long,
@@ -118,17 +117,19 @@ impl Strategy for BaseStrategy {
 }
 
 impl BaseStrategy {
-    fn trade_signals(&self, series: &OHLCVSeries) -> (bool, bool, bool, bool) {
-        let (go_long_trigger, go_short_trigger) = self.signal.generate(series);
-        let (go_long_confirm, go_short_confirm) = self.filter.confirm(series);
-        let (go_long_momentum, go_short_momentum) = self.pulse.assess(series);
-        let (go_long_filter, go_short_filter) = self.base_line.filter(series);
+    fn trade_signals(&self) -> (bool, bool, bool, bool) {
+        let series = self.ohlcv_series();
+
+        let (go_long_trigger, go_short_trigger) = self.signal.generate(&series);
+        let (go_long_confirm, go_short_confirm) = self.filter.confirm(&series);
+        let (go_long_momentum, go_short_momentum) = self.pulse.assess(&series);
+        let (go_long_filter, go_short_filter) = self.base_line.filter(&series);
 
         let go_long_signal = go_long_trigger & go_long_confirm & go_long_momentum & go_long_filter;
         let go_short_signal =
             go_short_trigger & go_short_confirm & go_short_momentum & go_short_filter;
 
-        let (exit_long_eval, exit_short_eval) = self.exit.evaluate(series);
+        let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
 
         let go_long = go_long_signal.last().unwrap_or_default();
         let go_short = go_short_signal.last().unwrap_or_default();
@@ -138,12 +139,14 @@ impl BaseStrategy {
         (go_long, go_short, exit_long, exit_short)
     }
 
-    fn suggested_entry(&self, series: &OHLCVSeries) -> f32 {
-        series.hlc3().last().unwrap_or(std::f32::NAN)
+    fn suggested_entry(&self) -> f32 {
+        self.ohlcv_series().hlc3().last().unwrap_or(std::f32::NAN)
     }
 
-    fn stop_loss_levels(&self, series: &OHLCVSeries) -> (f32, f32) {
-        let (sl_long_find, sl_short_find) = self.stop_loss.find(series);
+    fn stop_loss_levels(&self) -> (f32, f32) {
+        let series = self.ohlcv_series();
+
+        let (sl_long_find, sl_short_find) = self.stop_loss.find(&series);
 
         let stop_loss_long = sl_long_find.last().unwrap_or_default();
         let stop_loss_short = sl_short_find.last().unwrap_or_default();

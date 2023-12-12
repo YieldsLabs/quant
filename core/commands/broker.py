@@ -1,14 +1,23 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from core.events.base import EventMeta
 from core.models.broker import MarginMode, PositionMode
 from core.models.position import Position
 from core.models.symbol import Symbol
 
-from .base import Command
+from .base import Command, CommandGroup
 
 
 @dataclass(frozen=True)
-class UpdateSettings(Command):
+class BrokerCommand(Command):
+    meta: EventMeta = field(
+        default_factory=lambda: EventMeta(priority=1, group=CommandGroup.broker),
+        init=False,
+    )
+
+
+@dataclass(frozen=True)
+class UpdateSettings(BrokerCommand):
     symbol: Symbol
     leverage: int
     position_mode: PositionMode
@@ -16,10 +25,10 @@ class UpdateSettings(Command):
 
 
 @dataclass(frozen=True)
-class OpenPosition(Command):
+class OpenPosition(BrokerCommand):
     position: Position
 
 
 @dataclass(frozen=True)
-class ClosePosition(Command):
+class ClosePosition(BrokerCommand):
     position: Position

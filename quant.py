@@ -6,13 +6,11 @@ import signal
 import uvloop
 from dotenv import load_dotenv
 
-from backtest import Backtest
 from core.models.exchange import ExchangeType
 from core.models.strategy import StrategyType
 from datasource import DataSourceFactory
 from exchange import ExchangeFactory, WSFactory
 from executor import OrderExecutorActorFactory
-from feed import Feed
 from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.event_store.event_store import EventStore
@@ -84,24 +82,12 @@ async def main():
     executor_actor_factory = OrderExecutorActorFactory()
     datasource_factory = DataSourceFactory(exchange_factory, ws_factory)
 
-    Backtest(
-        signal_actor_factory,
-        position_actor_factory,
-        risk_actor_factory,
-        executor_actor_factory,
-        datasource_factory,
-        config_service,
-    )
-    Feed(
-        signal_actor_factory,
-        position_actor_factory,
-        risk_actor_factory,
-        executor_actor_factory,
-        datasource_factory,
-        config_service,
-    )
-
     trend_context = SystemContext(
+        signal_actor_factory,
+        position_actor_factory,
+        risk_actor_factory,
+        executor_actor_factory,
+        datasource_factory,
         StrategyGeneratorFactory(config_service),
         StrategyOptimizerFactory(config_service),
         strategy_type=StrategyType.TREND,
