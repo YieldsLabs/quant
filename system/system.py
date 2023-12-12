@@ -103,16 +103,15 @@ class System(AbstractSystem):
             await self._handle_state()
 
     async def _handle_state(self):
-        if self.state == SystemState.GENERATE:
-            await self._generate()
-        elif self.state == SystemState.BACKTEST:
-            await self._run_backtest()
-        elif self.state == SystemState.OPTIMIZATION:
-            await self._run_optimization()
-        elif self.state == SystemState.VERIFICATION:
-            await self._run_verification()
-        elif self.state == SystemState.TRADING:
-            await self._run_trading()
+        state_handlers = {
+            SystemState.GENERATE: self._generate,
+            SystemState.BACKTEST: self._run_backtest,
+            SystemState.OPTIMIZATION: self._run_optimization,
+            SystemState.VERIFICATION: self._run_verification,
+            SystemState.TRADING: self._run_trading,
+        }
+
+        await state_handlers[self.state]()
 
     def stop(self):
         self.event_queue.put_nowait(Event.SYSTEM_STOP)
