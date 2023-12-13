@@ -111,9 +111,14 @@ class SmartRouter(AbstractEventManager):
         for price in self.entry_price.calculate(symbol, self.exchange):
             logging.info(f"Algo price: {price}")
 
-            if distance_to_stop_loss > stop_loss_threshold * abs(stop_loss - price):
+            current_distance_to_stop_loss = abs(stop_loss - price)
+
+            if (
+                stop_loss_threshold * distance_to_stop_loss
+                > current_distance_to_stop_loss
+            ):
                 logging.info(
-                    f"Order risk breached: ENTR: {entry_price}, STPLS: {stop_loss}, DSTNC: {distance_to_stop_loss}"
+                    f"Order risk breached: ENTR: {entry_price}, STPLS: {stop_loss}, THEO_DSTNC: {distance_to_stop_loss}, ALG_DSTNC: {current_distance_to_stop_loss}"
                 )
 
                 num_order_breach += 1
