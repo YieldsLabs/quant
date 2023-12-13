@@ -11,6 +11,7 @@ class CommandGroup(Enum):
     account = "account"
     broker = "broker"
     portfolio = "portfolio"
+    feed = "feed"
 
     def __str__(self):
         return self.value

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from core.interfaces.abstract_datasource_factory import AbstractDataSourceFactory
 from core.interfaces.abstract_executor_actor_factory import AbstractExecutorActorFactory
+from core.interfaces.abstract_feed_actor_factory import AbstractFeedActorFactory
 from core.interfaces.abstract_optimizer_factory import AbstractStrategyOptimizerFactory
 from core.interfaces.abstract_position_actor_factory import AbstractPositionActorFactory
 from core.interfaces.abstract_risk_actor_factory import AbstractRiskActorFactory
@@ -20,7 +20,7 @@ class SystemContext:
     position_factory: AbstractPositionActorFactory
     risk_factory: AbstractRiskActorFactory
     executor_factory: AbstractExecutorActorFactory
-    datasource_factory: AbstractDataSourceFactory
+    feed_factory: AbstractFeedActorFactory
     strategy_generator_factory: AbstractStrategyGeneratorFactory
     strategy_optimizer_factory: AbstractStrategyOptimizerFactory
     exchange_type: ExchangeType

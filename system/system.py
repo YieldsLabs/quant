@@ -4,19 +4,18 @@ from enum import Enum, auto
 
 from core.commands.account import UpdateAccountSize
 from core.commands.broker import UpdateSettings
+from core.commands.feed import StartHistoricalFeed, StartRealtimeFeed
 from core.events.backtest import BacktestEnded, BacktestStarted
-from core.events.ohlcv import NewMarketDataReceived
 from core.events.trade import TradeStarted
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.broker import MarginMode, PositionMode
-from core.models.exchange import ExchangeType
+from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.models.ws import WSType
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
@@ -58,8 +57,6 @@ class System(AbstractSystem):
         self.active_strategy: list[tuple[Symbol, Timeframe, Strategy]] = []
         self.strategy: tuple[Symbol, Timeframe, Strategy] = []
         self.optimizer = None
-        self.exchange = ExchangeType.BYBIT
-        self.ws = WSType.BYBIT
         self.config = self.context.config_service.get("system")
 
     async def start(self):
@@ -244,21 +241,17 @@ class System(AbstractSystem):
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False
     ):
         symbol, timeframe, strategy = data
-        backtest_config = self.context.config_service.get("backtest")
-        in_sample = Lookback.from_raw(backtest_config["in_sample"])
-        out_sample = (
-            None if verify else Lookback.from_raw(backtest_config["out_sample"])
-        )
-
-        datasource = self.context.datasource_factory.create(
-            self.exchange,
-            symbol,
-            timeframe,
-        )
 
         await self.dispatch(BacktestStarted(symbol, timeframe, strategy))
 
         actors = [
+            self.context.feed_factory.create_actor(
+                FeedType.HISTORICAL,
+                symbol,
+                timeframe,
+                strategy,
+                self.context.exchange_type,
+            ),
             self.context.signal_factory.create_actor(symbol, timeframe, strategy),
             self.context.position_factory.create_actor(symbol, timeframe, strategy),
             self.context.risk_factory.create_actor(symbol, timeframe, strategy),
@@ -267,35 +260,34 @@ class System(AbstractSystem):
             ),
         ]
 
+        backtest_config = self.context.config_service.get("backtest")
+        in_sample = Lookback.from_raw(backtest_config["in_sample"])
+        out_sample = (
+            None if verify else Lookback.from_raw(backtest_config["out_sample"])
+        )
+
         logger.info(
             f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={in_sample}"
         )
 
-        iterator = datasource.fetch(
-            in_sample,
-            out_sample,
-            backtest_config["batch_size"],
+        await self.execute(
+            StartHistoricalFeed(symbol, timeframe, in_sample, out_sample)
         )
 
-        async for bar in iterator:
+        if actors[0].last_bar:
             await self.dispatch(
-                NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
-            )
-
-        last_bar = iterator.get_last_bar()
-
-        if last_bar:
-            await self.dispatch(
-                BacktestEnded(symbol, timeframe, strategy, last_bar.ohlcv.close)
+                BacktestEnded(
+                    symbol, timeframe, strategy, actors[0].last_bar.ohlcv.close
+                )
             )
 
         for actor in actors:
             actor.stop()
 
-    async def _process_trading(
-        self, data: tuple[Symbol, Timeframe, Strategy], verify=False
-    ):
+    async def _process_trading(self, data: tuple[Symbol, Timeframe, Strategy]):
         symbol, timeframe, strategy = data
+
+        await self.dispatch(TradeStarted(symbol, timeframe, strategy))
 
         logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
 
@@ -303,24 +295,26 @@ class System(AbstractSystem):
             symbol, timeframe, strategy
         )
 
-        datasource = self.context.datasource_factory.create(
-            self.exchange,
-            symbol,
-            timeframe,
+        feed_actor = self.context.feed_factory.create_actor(
+            FeedType.HISTORICAL, symbol, timeframe, strategy, self.context.exchange_type
         )
 
-        async for bar in datasource.fetch(
-            Lookback.ONE_MONTH,
-            None,
-            self.context.config_service.get("backtest")["batch_size"],
-        ):
-            await self.dispatch(
-                NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
-            )
+        await self.execute(
+            StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
+        )
+
+        feed_actor.stop()
 
         logger.info(f"Start trading: {symbol}_{timeframe}{strategy}")
 
         [
+            self.context.feed_factory.create_actor(
+                FeedType.REALTIME,
+                symbol,
+                timeframe,
+                strategy,
+                self.context.exchange_type,
+            ),
             signal_actor,
             self.context.position_factory.create_actor(symbol, timeframe, strategy),
             self.context.risk_factory.create_actor(symbol, timeframe, strategy),
@@ -334,19 +328,4 @@ class System(AbstractSystem):
             ),
         ]
 
-        await self.dispatch(TradeStarted(symbol, timeframe, strategy))
-
-        ws_datasource = self.context.datasource_factory.create(
-            self.ws,
-            symbol,
-            timeframe,
-        )
-
-        async for bar in ws_datasource.fetch():
-            if bar:
-                await self.dispatch(
-                    NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
-                )
-
-            if bar and bar.closed:
-                logger.info(f"Tick: {symbol}_{timeframe}{strategy}:{bar}")
+        await self.execute(StartRealtimeFeed(symbol, timeframe))

@@ -1,10 +1,14 @@
 import asyncio
 
-from core.interfaces.abstract_datasource import AbstractDataSource
+from core.actors import Actor
+from core.commands.feed import StartHistoricalFeed
+from core.events.ohlcv import NewMarketDataReceived
+from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exchange import AbstractExchange
 from core.models.bar import Bar
 from core.models.lookback import Lookback
 from core.models.ohlcv import OHLCV
+from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -65,26 +69,40 @@ class AsyncHistoricalData:
         return self.last_row
 
 
-class ExchangeDataSource(AbstractDataSource):
-    def __init__(
-        self, exchange: AbstractExchange, symbol: Symbol, timeframe: Timeframe
-    ):
-        super().__init__()
-        self.exchange = exchange
-        self.symbol = symbol
-        self.timeframe = timeframe
+class HistoricalActor(Actor):
+    _EVENTS = [StartHistoricalFeed]
 
-    def fetch(
+    def __init__(
         self,
-        in_sample: Lookback,
-        out_sample: Lookback,
-        batch_size: int,
+        symbol: Symbol,
+        timeframe: Timeframe,
+        strategy: Strategy,
+        exchange: AbstractExchange,
+        config_service: AbstractConfig,
     ):
-        return AsyncHistoricalData(
+        super().__init__(symbol, timeframe, strategy)
+        self.exchange = exchange
+        self.config_service = config_service.get("backtest")
+        self.last_bar = None
+
+    def pre_receive(self, msg: StartHistoricalFeed):
+        return self._symbol == msg.symbol and self._timeframe == msg.timeframe
+
+    async def on_receive(self, msg: StartHistoricalFeed):
+        symbol, timeframe = msg.symbol, msg.timeframe
+
+        stream = AsyncHistoricalData(
             self.exchange,
-            self.symbol,
-            self.timeframe,
-            in_sample,
-            out_sample,
-            batch_size,
+            symbol,
+            timeframe,
+            msg.in_sample,
+            msg.out_sample,
+            self.config_service["batch_size"],
         )
+
+        async for bar in stream:
+            await self.tell(
+                NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
+            )
+
+        self.last_bar = stream.get_last_bar()
