@@ -72,12 +72,12 @@ class Actor(AbstractActor):
         self.on_stop()
         self._running = False
 
-    async def tell(self, msg: Message):
-        await self._mailbox.dispatch(msg)
+    async def tell(self, msg: Message, *args, **kwrgs):
+        await self._mailbox.dispatch(msg, *args, **kwrgs)
         self._store.append(msg)
 
-    async def ask(self, msg: Ask):
+    async def ask(self, msg: Ask, *args, **kwrgs):
         if isinstance(msg, Query):
-            return await self._mailbox.query(msg)
+            return await self._mailbox.query(msg, *args, **kwrgs)
         if isinstance(msg, Command):
-            await self._mailbox.execute(msg)
+            await self._mailbox.execute(msg, *args, **kwrgs)

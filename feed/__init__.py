@@ -1,3 +1,3 @@
-from ._handler import Feed
+from ._factory import FeedActorFactory
 
-__all__ = [Feed]
+__all__ = [FeedActorFactory]

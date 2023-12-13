@@ -3,18 +3,19 @@ import logging
 from enum import Enum, auto
 
 from core.commands.account import UpdateAccountSize
-from core.commands.backtest import BacktestRun
 from core.commands.broker import UpdateSettings
-from core.commands.feed import FeedRun
+from core.commands.feed import StartHistoricalFeed, StartRealtimeFeed
+from core.events.backtest import BacktestEnded, BacktestStarted
+from core.events.trade import TradeStarted
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.broker import MarginMode, PositionMode
-from core.models.exchange import ExchangeType
+from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
+from core.models.order import OrderType
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.models.ws import WSType
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
@@ -56,8 +57,6 @@ class System(AbstractSystem):
         self.active_strategy: list[tuple[Symbol, Timeframe, Strategy]] = []
         self.strategy: tuple[Symbol, Timeframe, Strategy] = []
         self.optimizer = None
-        self.exchange = ExchangeType.BYBIT
-        self.ws = WSType.BYBIT
         self.config = self.context.config_service.get("system")
 
     async def start(self):
@@ -163,14 +162,10 @@ class System(AbstractSystem):
         )
 
         if not len(strategies):
-            logger.info("Regenerate population")
-            await self.event_queue.put(Event.REGENERATE)
-            return
+            return await self.event_queue.put(Event.REGENERATE)
 
         if self.optimizer.done:
-            logger.info("Optimization complete")
-            await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
-            return
+            return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
 
         await self.optimizer.optimize()
 
@@ -184,9 +179,7 @@ class System(AbstractSystem):
         )
 
         if not len(strategies):
-            logger.info("Regenerate population")
-            await self.event_queue.put(Event.REGENERATE)
-            return
+            return await self.event_queue.put(Event.REGENERATE)
 
         async for batch in self._generate_batch(strategies):
             account_size = await self.query(GetBalance())
@@ -205,14 +198,12 @@ class System(AbstractSystem):
             GetTopStrategy(num=self.config["active_strategy_num"])
         )
 
+        if not len(strategies):
+            return await self.event_queue.put(Event.REGENERATE)
+
         logger.info(
             [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in strategies]
         )
-
-        if not len(strategies):
-            logger.info("Regenerate population")
-            await self.event_queue.put(Event.REGENERATE)
-            return
 
         account_size = await self.query(GetBalance())
         await self.execute(UpdateAccountSize(account_size))
@@ -231,7 +222,7 @@ class System(AbstractSystem):
             ]
         )
 
-        await self.execute(FeedRun(self.ws))
+        await asyncio.gather(*[self._process_trading(data) for data in strategies])
 
     async def _generate_batch(self, data):
         batch = []
@@ -250,19 +241,91 @@ class System(AbstractSystem):
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False
     ):
         symbol, timeframe, strategy = data
+
+        await self.dispatch(BacktestStarted(symbol, timeframe, strategy))
+
+        actors = [
+            self.context.feed_factory.create_actor(
+                FeedType.HISTORICAL,
+                symbol,
+                timeframe,
+                strategy,
+                self.context.exchange_type,
+            ),
+            self.context.signal_factory.create_actor(symbol, timeframe, strategy),
+            self.context.position_factory.create_actor(symbol, timeframe, strategy),
+            self.context.risk_factory.create_actor(symbol, timeframe, strategy),
+            self.context.executor_factory.create_actor(
+                OrderType.PAPER, symbol, timeframe, strategy
+            ),
+        ]
+
         backtest_config = self.context.config_service.get("backtest")
         in_sample = Lookback.from_raw(backtest_config["in_sample"])
         out_sample = (
             None if verify else Lookback.from_raw(backtest_config["out_sample"])
         )
 
+        logger.info(
+            f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={in_sample}"
+        )
+
         await self.execute(
-            BacktestRun(
-                self.exchange,
+            StartHistoricalFeed(symbol, timeframe, in_sample, out_sample)
+        )
+
+        if actors[0].last_bar:
+            await self.dispatch(
+                BacktestEnded(
+                    symbol, timeframe, strategy, actors[0].last_bar.ohlcv.close
+                )
+            )
+
+        for actor in actors:
+            actor.stop()
+
+    async def _process_trading(self, data: tuple[Symbol, Timeframe, Strategy]):
+        symbol, timeframe, strategy = data
+
+        await self.dispatch(TradeStarted(symbol, timeframe, strategy))
+
+        logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
+
+        signal_actor = self.context.signal_factory.create_actor(
+            symbol, timeframe, strategy
+        )
+
+        feed_actor = self.context.feed_factory.create_actor(
+            FeedType.HISTORICAL, symbol, timeframe, strategy, self.context.exchange_type
+        )
+
+        await self.execute(
+            StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
+        )
+
+        feed_actor.stop()
+
+        logger.info(f"Start trading: {symbol}_{timeframe}{strategy}")
+
+        [
+            self.context.feed_factory.create_actor(
+                FeedType.REALTIME,
                 symbol,
                 timeframe,
                 strategy,
-                in_sample,
-                out_sample,
-            )
-        )
+                self.context.exchange_type,
+            ),
+            signal_actor,
+            self.context.position_factory.create_actor(symbol, timeframe, strategy),
+            self.context.risk_factory.create_actor(symbol, timeframe, strategy),
+            self.context.executor_factory.create_actor(
+                OrderType.MARKET
+                if self.context.config_service.get("system")["mode"] == 1
+                else OrderType.PAPER,
+                symbol,
+                timeframe,
+                strategy,
+            ),
+        ]
+
+        await self.execute(StartRealtimeFeed(symbol, timeframe))

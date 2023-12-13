@@ -2,12 +2,12 @@ from core.interfaces.abstract_exchange import AbstractExchange
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.interfaces.abstract_secret_service import AbstractSecretService
 from core.models.exchange import ExchangeType
-from core.models.ws import WSType
-from exchange._bybit_ws import BybitWS
+
+from ._bybit_ws import BybitWS
 
 
 class WSFactory(AbstractExchangeFactory):
-    _type = {WSType.BYBIT: BybitWS}
+    _type = {ExchangeType.BYBIT: BybitWS}
 
     def __init__(self, secret: AbstractSecretService):
         super().__init__()
