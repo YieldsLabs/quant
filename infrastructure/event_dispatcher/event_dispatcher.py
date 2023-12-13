@@ -60,30 +60,38 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.event_handler.unregister(event_class, handler)
 
     async def execute(self, command: Command, *args, **kwargs) -> None:
-        await self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs)
-
-        await command.wait_for_execution()
+        await asyncio.gather(
+            self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs),
+            command.wait_for_execution(),
+        )
 
     async def query(self, query: Query, *args, **kwargs) -> Any:
-        await self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs)
+        _, result = await asyncio.gather(
+            self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs),
+            query.wait_for_response(),
+        )
 
-        return await query.wait_for_response()
+        return result
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)
 
     async def wait(self) -> None:
         await asyncio.gather(
-            self.event_worker_pool.wait(),
-            self.query_worker_pool.wait(),
-            self.command_worker_pool.wait(),
+            *[
+                self.event_worker_pool.wait(),
+                self.query_worker_pool.wait(),
+                self.command_worker_pool.wait(),
+            ]
         )
 
     async def stop(self) -> None:
         await asyncio.gather(
-            self._dispatch_to_poll(EventEnded(), self.event_worker_pool),
-            self._dispatch_to_poll(EventEnded(), self.query_worker_pool),
-            self._dispatch_to_poll(EventEnded(), self.command_worker_pool),
+            *[
+                self._dispatch_to_poll(EventEnded(), self.event_worker_pool),
+                self._dispatch_to_poll(EventEnded(), self.query_worker_pool),
+                self._dispatch_to_poll(EventEnded(), self.command_worker_pool),
+            ]
         )
 
     async def _dispatch_to_poll(

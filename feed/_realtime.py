@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from core.actors import Actor
 from core.commands.feed import StartRealtimeFeed
@@ -7,6 +8,8 @@ from core.interfaces.abstract_ws import AbstractWS
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncRealTimeData:
@@ -60,6 +63,9 @@ class RealtimeActor(Actor):
         return self._symbol == msg.symbol and self._timeframe == msg.timeframe
 
     async def on_receive(self, msg: StartRealtimeFeed):
+        asyncio.create_task(self._run_realtime_feed(msg))
+
+    async def _run_realtime_feed(self, msg: StartRealtimeFeed):
         symbol, timeframe = msg.symbol, msg.timeframe
 
         stream = AsyncRealTimeData(self.ws, symbol, timeframe)
@@ -69,3 +75,6 @@ class RealtimeActor(Actor):
                 await self.tell(
                     NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
                 )
+
+            if bar and bar.closed:
+                logger.info(f"Tick: {symbol}_{timeframe}:{bar}")
