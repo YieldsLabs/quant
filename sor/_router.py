@@ -88,7 +88,6 @@ class SmartRouter(AbstractEventManager):
         logger.info(f"Try to open position: {position}")
 
         symbol = position.signal.symbol
-        position_side = position.side
         position_size = position.size
         stop_loss = position.stop_loss_price
         entry_price = position.entry_price
@@ -96,12 +95,11 @@ class SmartRouter(AbstractEventManager):
         distance_to_stop_loss = abs(entry_price - stop_loss)
 
         min_size = symbol.min_position_size
-        max_order_slice = self.config["max_order_slice"]
-        max_order_breach = self.config["max_order_breach"]
         entry_timeout = self.config["entry_timeout"]
-        stop_loss_threshold = self.config["stop_loss_threshold"]
 
-        num_orders = min(max(1, int(position_size / min_size)), max_order_slice)
+        num_orders = min(
+            max(1, int(position_size / min_size)), self.config["max_order_slice"]
+        )
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
         num_order_breach = 0
@@ -114,7 +112,7 @@ class SmartRouter(AbstractEventManager):
             current_distance_to_stop_loss = abs(stop_loss - price)
 
             if (
-                stop_loss_threshold * distance_to_stop_loss
+                self.config["stop_loss_threshold"] * distance_to_stop_loss
                 > current_distance_to_stop_loss
             ):
                 logging.info(
@@ -123,7 +121,7 @@ class SmartRouter(AbstractEventManager):
 
                 num_order_breach += 1
 
-                if num_order_breach >= max_order_breach:
+                if num_order_breach >= self.config["max_order_breach"]:
                     break
 
                 await asyncio.sleep(3)
@@ -131,7 +129,7 @@ class SmartRouter(AbstractEventManager):
                 continue
 
             order_id = self.exchange.create_limit_order(
-                symbol, position_side, size, price
+                symbol, position.side, size, price
             )
 
             if order_id and await self.wait_for_order(order_id, symbol):
@@ -154,10 +152,13 @@ class SmartRouter(AbstractEventManager):
         while True:
             order = self.exchange.fetch_order(order_id, symbol)
 
+            if not order:
+                return False
+
             if order["status"] == "closed":
                 return True
 
-            elif order["status"] == "canceled":
+            if order["status"] == "canceled":
                 return False
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(0.01)

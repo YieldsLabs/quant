@@ -57,7 +57,11 @@ class Bybit(AbstractExchange):
                 return
 
     def fetch_order(self, order_id: str, symbol: Symbol):
-        return self.connector.fetch_order(order_id, symbol.name)
+        try:
+            return self.connector.fetch_order(order_id, symbol.name)
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
 
     def fetch_trade(self, symbol: Symbol):
         return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
