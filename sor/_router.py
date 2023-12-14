@@ -103,6 +103,7 @@ class SmartRouter(AbstractEventManager):
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
         num_order_breach = 0
+        num_open_order_attempts = 0
 
         logging.info(f"Theo price: {entry_price}")
 
@@ -134,10 +135,17 @@ class SmartRouter(AbstractEventManager):
 
             if order_id and self.exchange.has_order(order_id, symbol):
                 order_counter += 1
-                logging.info(f"Order ID: {order_id}")
+                num_open_order_attempts -= 1
+                num_open_order_attempts = max(0, num_open_order_attempts)
+                logging.info(f"Opened order: {order_id} with price: {price}")
+            else:
+                num_open_order_attempts += 1
 
             if order_counter >= num_orders:
                 logging.info(f"All orders are filled: {order_counter}")
+                break
+
+            if num_open_order_attempts >= self.config["max_open_order_attempts"]:
                 break
 
             await asyncio.sleep(entry_timeout)
