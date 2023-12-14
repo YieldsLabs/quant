@@ -63,7 +63,7 @@ class Bybit(AbstractExchange):
         return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
 
     def fetch_order_book(self, symbol: Symbol):
-        book = self.connector.fetch_order_book(symbol.name, limit=50)
+        book = self.connector.fetch_order_book(symbol.name, limit=30)
         return book["bids"], book["asks"]
 
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
@@ -255,7 +255,7 @@ class Bybit(AbstractExchange):
         }
 
     def _create_order_extra_params(self, stop_loss_price=None, take_profit_price=None):
-        extra_params = {"timeInForce": "ImmediateOrCancel"}
+        extra_params = {"timeInForce": "IOC"}
 
         if stop_loss_price:
             extra_params["stopLoss"] = str(stop_loss_price)

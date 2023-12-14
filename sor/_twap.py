@@ -17,10 +17,11 @@ class TWAP:
         twap_duration = self.config["twap_duration"]
 
         while current_time < twap_duration:
-            order_book = self._fetch_book(symbol, exchange)
-            timepoints.append(order_book)
+            bids, ask = self._fetch_book(symbol, exchange)
 
-            time_interval = twap_duration / len(order_book)
+            timepoints.append((bids[:, 0], ask[:, 0]))
+
+            time_interval = twap_duration / len(bids)
             current_time += time_interval
 
             time.sleep(time_interval)
@@ -31,10 +32,7 @@ class TWAP:
 
     def _fetch_book(self, symbol: Symbol, exchange: AbstractExchange):
         bids, asks = exchange.fetch_order_book(symbol)
-
-        bids, asks = np.array(bids), np.array(asks)
-
-        return np.vstack([bids, asks])
+        return np.array(bids), np.array(asks)
 
     @staticmethod
     def _twap(order_book):
