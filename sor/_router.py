@@ -149,16 +149,15 @@ class SmartRouter(AbstractEventManager):
         self.exchange.close_position(symbol)
 
     async def wait_for_order(self, order_id, symbol):
-        while True:
-            order = self.exchange.fetch_order(order_id, symbol)
+        order = self.exchange.fetch_order(order_id, symbol)
 
-            if not order:
-                return False
+        if not order:
+            return False
 
-            if order["status"] == "closed":
-                return True
+        if order["status"] == "closed":
+            return True
 
-            if order["status"] == "canceled":
-                return False
+        if order["status"] == "canceled":
+            return False
 
-            await asyncio.sleep(0.01)
+        await asyncio.sleep(0.01)
