@@ -21,7 +21,8 @@ class TWAP:
 
             timepoints.append((bids[:, 0], ask[:, 0]))
 
-            time_interval = twap_duration / len(bids)
+            volatility = self._volatility(timepoints)
+            time_interval = self._adaptive_time_interval(volatility)
             current_time += time_interval
 
             time.sleep(time_interval)
@@ -40,3 +41,15 @@ class TWAP:
         prices = timepoints[:, 0]
         total_timepoints = len(prices)
         return np.sum(prices) / total_timepoints
+
+    @staticmethod
+    def _volatility(timepoints):
+        prices = np.vstack(timepoints)[:, 0]
+        return np.std(prices)
+
+    @staticmethod
+    def _adaptive_time_interval(volatility):
+        base_interval = 1.0
+        volatility_factor = 0.1
+
+        return base_interval + volatility_factor * volatility
