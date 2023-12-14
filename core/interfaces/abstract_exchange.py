@@ -60,6 +60,10 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
+    def has_order(self, order_id: str, symbol: Symbol):
+        pass
+
+    @abstractmethod
     def fetch_order_book(self, symbol: Symbol):
         pass
 

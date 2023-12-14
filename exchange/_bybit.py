@@ -63,6 +63,17 @@ class Bybit(AbstractExchange):
             logger.error(f"{symbol}: {e}")
             return
 
+    def has_order(self, order_id: str, symbol: Symbol):
+        order = self.fetch_order(order_id, symbol)
+        if not order:
+            return False
+
+        if order["status"] == "closed":
+            return True
+
+        if order["status"] == "canceled":
+            return False
+
     def fetch_trade(self, symbol: Symbol):
         return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
 
