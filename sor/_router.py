@@ -112,10 +112,12 @@ class SmartRouter(AbstractEventManager):
 
             current_distance_to_stop_loss = abs(stop_loss - price)
 
-            if (
+            threshold_breach = (
                 self.config["stop_loss_threshold"] * distance_to_stop_loss
                 > current_distance_to_stop_loss
-            ):
+            )
+
+            if threshold_breach:
                 logging.info(
                     f"Order risk breached: ENTR: {entry_price}, STPLS: {stop_loss}, THEO_DSTNC: {distance_to_stop_loss}, ALG_DSTNC: {current_distance_to_stop_loss}"
                 )
@@ -135,14 +137,15 @@ class SmartRouter(AbstractEventManager):
 
             if order_id and self.exchange.has_order(order_id, symbol):
                 order_counter += 1
-                num_open_order_attempts -= 1
-                num_open_order_attempts = max(0, num_open_order_attempts)
+                num_open_order_attempts = max(0, num_open_order_attempts - 1)
+
                 logging.info(f"Opened order: {order_id} with price: {price}")
             else:
                 num_open_order_attempts += 1
 
             if order_counter >= num_orders:
                 logging.info(f"All orders are filled: {order_counter}")
+
                 break
 
             if num_open_order_attempts >= self.config["max_open_order_attempts"]:
