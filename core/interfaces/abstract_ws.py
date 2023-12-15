@@ -16,3 +16,7 @@ class AbstractWS(ABC):
     @abstractmethod
     def subscribe(self, symbol: Symbol, timeframe: Timeframe):
         pass
+
+    @abstractmethod
+    def unsubscribe(self, symbol: Symbol, timeframe: Timeframe):
+        pass

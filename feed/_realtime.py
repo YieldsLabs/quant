@@ -32,7 +32,7 @@ class AsyncRealTimeData:
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         self.task.cancel()
-        await self.ws.close()
+        await self.ws.unsubscribe(self.symbol, self.timeframe)
 
     def __aiter__(self):
         return self
@@ -42,7 +42,7 @@ class AsyncRealTimeData:
             data = await self.ws.receive(self.symbol, self.timeframe)
             return data
         except StopAsyncIteration:
-            await self.ws.close()
+            await self.ws.unsubscribe(self.symbol, self.timeframe)
             raise
 
 

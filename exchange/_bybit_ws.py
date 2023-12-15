@@ -6,6 +6,7 @@ from asyncio.exceptions import CancelledError
 import websockets
 from websockets.exceptions import ConnectionClosedError
 
+from core.interfaces.abstract_ws import AbstractWS
 from core.models.bar import Bar
 from core.models.ohlcv import OHLCV
 from core.models.timeframe import Timeframe
@@ -14,7 +15,7 @@ from infrastructure.retry import retry
 logger = logging.getLogger(__name__)
 
 
-class BybitWS:
+class BybitWS(AbstractWS):
     _instance = None
 
     SUBSCRIBE_OPERATION = "subscribe"
@@ -54,7 +55,7 @@ class BybitWS:
 
         return cls._instance
 
-    async def connect_to_websocket(self, interval=5):
+    async def _connect_to_websocket(self, interval=5):
         if self.ws and self.ws.open:
             return
 
@@ -67,7 +68,7 @@ class BybitWS:
 
         await self._resubscribe()
 
-    async def send_ping(self, interval):
+    async def _send_ping(self, interval):
         while True:
             try:
                 await asyncio.sleep(interval)
@@ -92,10 +93,12 @@ class BybitWS:
         ),
     )
     async def run(self, ping_interval=5):
-        await self.connect_to_websocket()
+        await self._connect_to_websocket()
 
         if not self.ping_task:
-            self.ping_task = asyncio.create_task(self.send_ping(interval=ping_interval))
+            self.ping_task = asyncio.create_task(
+                self._send_ping(interval=ping_interval)
+            )
 
     async def close(self):
         if self.ws and self.ws.open:
@@ -136,6 +139,12 @@ class BybitWS:
                 self._channels.add((symbol, timeframe))
                 await self._subscribe(symbol, timeframe)
 
+    async def unsubscribe(self, symbol, timeframe):
+        async with self._lock:
+            if (symbol, timeframe) in self._channels:
+                self._channels.remove((symbol, timeframe))
+                await self._unsubscribe(symbol, timeframe)
+
     async def _subscribe(self, symbol, timeframe):
         if not self.ws or not self.ws.open:
             return
@@ -146,6 +155,19 @@ class BybitWS:
         try:
             logger.info(f"Subscribe to: {subscribe_message}")
             await self.ws.send(json.dumps(subscribe_message))
+        except Exception as e:
+            logger.error(e)
+
+    async def _unsubscribe(self, symbol, timeframe):
+        if not self.ws or not self.ws.open:
+            return
+
+        channel = f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol.name}"
+        unsubscribe_message = {"op": self.UNSUBSCRIBE_OPERATION, "args": [channel]}
+
+        try:
+            logger.info(f"Unsubscribe from: {unsubscribe_message}")
+            await self.ws.send(json.dumps(unsubscribe_message))
         except Exception as e:
             logger.error(e)
 
