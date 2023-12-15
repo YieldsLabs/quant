@@ -117,7 +117,7 @@ class BybitWS(AbstractWS):
     async def receive(self, symbol, timeframe):
         async with self._receive_semaphore:
             if not self.ws or not self.ws.open:
-                await self.connect_to_websocket()
+                await self._connect_to_websocket()
 
             async for message in self.ws:
                 data = json.loads(message)
