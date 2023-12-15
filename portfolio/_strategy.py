@@ -42,17 +42,14 @@ class StrategyStorage:
             )
 
             selected_symbols = set()
-            top_strategies = []
+            top_strategies = [
+                key
+                for key in sorted_strategies
+                if (symbol := key[0]) not in selected_symbols
+                and not selected_symbols.add(symbol)
+            ]
 
-            for key in sorted_strategies:
-                symbol, _, _ = key
-                if symbol not in selected_symbols:
-                    top_strategies.append(key)
-                    selected_symbols.add(symbol)
-                    if len(top_strategies) == num:
-                        break
-
-            return top_strategies
+            return top_strategies[:num]
 
     def _update_clusters(self):
         data_matrix = np.array([item[0] for item in self.data.values()])
