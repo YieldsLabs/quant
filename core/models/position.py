@@ -49,12 +49,9 @@ class Position:
         if not self.closed:
             return pnl
 
-        if self.side == PositionSide.LONG:
-            pnl = (self.exit_price - self.entry_price) * self.size
-        elif self.side == PositionSide.SHORT:
-            pnl = (self.entry_price - self.exit_price) * self.size
+        factor = 1 if self.side == PositionSide.LONG else -1
 
-        return pnl
+        return factor * (self.exit_price - self.entry_price) * self.size
 
     def add_order(self, order: Order) -> "Position":
         if self.closed:
