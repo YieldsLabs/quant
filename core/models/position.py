@@ -58,16 +58,15 @@ class Position:
             return
 
         last_modified = datetime.now().timestamp()
+        orders = (*self.orders, order)
 
         if order.status == OrderStatus.PENDING:
-            return replace(
-                self, orders=(*self.orders, order), last_modified=last_modified
-            )
+            return replace(self, orders=orders, last_modified=last_modified)
 
         if order.status == OrderStatus.EXECUTED:
             return replace(
                 self,
-                orders=(*self.orders, order),
+                orders=orders,
                 entry_price=order.price,
                 size=order.size,
                 last_modified=last_modified,
@@ -77,7 +76,7 @@ class Position:
             return replace(
                 self,
                 closed=True,
-                orders=(*self.orders, order),
+                orders=orders,
                 exit_price=order.price,
                 closed_timestamp=last_modified,
                 last_modified=last_modified,
@@ -87,7 +86,7 @@ class Position:
             return replace(
                 self,
                 closed=True,
-                orders=(*self.orders, order),
+                orders=orders,
                 exit_price=self.entry_price,
                 closed_timestamp=last_modified,
                 last_modified=last_modified,
