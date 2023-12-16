@@ -13,4 +13,4 @@ class Estimator:
         average_time_per_step = elapsed_time / self.steps_processed
         remaining_steps = self.total_steps - self.steps_processed
         result = average_time_per_step * remaining_steps
-        return 0 if result < 0 else result
+        return max(0, result)
