@@ -37,7 +37,7 @@ class TWAP:
     @staticmethod
     def _twap(order_book):
         prices = np.vstack(order_book)[:, 0]
-        return np.sum(prices) / len(prices)
+        return np.mean(prices)
 
     @staticmethod
     def _volatility_time_interval(timepoints):
