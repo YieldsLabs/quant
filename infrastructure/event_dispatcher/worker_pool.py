@@ -27,9 +27,10 @@ class WorkerPool:
             event.meta.priority
         )
 
-        worker_index = priority_group % len(self.workers)
+        worker = self.workers[priority_group % len(self.workers)]
 
-        await self.workers[worker_index].dispatch(event, *args, **kwargs)
+        await worker.dispatch(event, *args, **kwargs)
+
         self.load_balancer.register_event(priority_group)
 
     async def wait(self) -> None:

@@ -3,12 +3,10 @@ import logging
 from enum import Enum, auto
 
 from core.commands.account import UpdateAccountSize
-from core.commands.broker import UpdateSettings
-from core.commands.feed import StartHistoricalFeed, StartRealtimeFeed
+from core.commands.feed import StartHistoricalFeed
 from core.events.backtest import BacktestEnded, BacktestStarted
-from core.events.trade import TradeStarted
+from core.events.system import UpdatedStrategy
 from core.interfaces.abstract_system import AbstractSystem
-from core.models.broker import MarginMode, PositionMode
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
@@ -43,21 +41,18 @@ class Event(Enum):
     BACKTEST_COMPLETE = auto()
     OPTIMIZATION_COMPLETE = auto()
     VERIFICATION_COMPLETE = auto()
-    TRADING_STOPPED = auto()
     SYSTEM_STOP = auto()
 
 
-class System(AbstractSystem):
+class BacktestSystem(AbstractSystem):
     def __init__(self, context: SystemContext):
         super().__init__()
         self.context = context
         self.state = SystemState.INIT
-
         self.event_queue = asyncio.Queue()
-        self.active_strategy: list[tuple[Symbol, Timeframe, Strategy]] = []
-        self.strategy: tuple[Symbol, Timeframe, Strategy] = []
         self.optimizer = None
         self.config = self.context.config_service.get("system")
+        self.active_strategy = set()
 
     async def start(self):
         transitions = {
@@ -107,7 +102,7 @@ class System(AbstractSystem):
             SystemState.BACKTEST: self._run_backtest,
             SystemState.OPTIMIZATION: self._run_optimization,
             SystemState.VERIFICATION: self._run_verification,
-            SystemState.TRADING: self._run_trading,
+            SystemState.TRADING: self._update_trading,
         }
 
         await state_handlers[self.state]()
@@ -144,7 +139,13 @@ class System(AbstractSystem):
             account_size = await self.query(GetBalance())
             await self.execute(UpdateAccountSize(account_size))
 
-            await asyncio.gather(*[self._process_backtest(data) for data in batch])
+            await asyncio.gather(
+                *[
+                    self._process_backtest(data)
+                    for data in batch
+                    if data not in self.active_strategy
+                ]
+            )
 
             logger.info(f"Remaining time: {estimator.remaining_time():.2f}sec")
 
@@ -153,19 +154,15 @@ class System(AbstractSystem):
     async def _run_optimization(self):
         logger.info("Run optimization")
 
+        if self.optimizer.done:
+            return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
+
         strategies = await self.query(
             GetTopStrategy(num=self.config["active_strategy_num"])
         )
 
-        logger.info(
-            [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in strategies]
-        )
-
         if not len(strategies):
             return await self.event_queue.put(Event.REGENERATE)
-
-        if self.optimizer.done:
-            return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
 
         await self.optimizer.optimize()
 
@@ -175,7 +172,7 @@ class System(AbstractSystem):
         logger.info("Run verification")
 
         strategies = await self.query(
-            GetTopStrategy(num=self.config["active_strategy_num"])
+            GetTopStrategy(num=self.config["verify_strategy_num"])
         )
 
         if not len(strategies):
@@ -186,43 +183,26 @@ class System(AbstractSystem):
             await self.execute(UpdateAccountSize(account_size))
 
             await asyncio.gather(
-                *[self._process_backtest(data, True) for data in batch]
+                *[
+                    self._process_backtest(data, True)
+                    for data in batch
+                    if data not in self.active_strategy
+                ]
             )
 
         await self.event_queue.put(Event.VERIFICATION_COMPLETE)
 
-    async def _run_trading(self):
-        logger.info("Run trading")
-
+    async def _update_trading(self):
+        logger.info("Deploy strategy for trading")
         strategies = await self.query(
             GetTopStrategy(num=self.config["active_strategy_num"])
         )
 
-        if not len(strategies):
-            return await self.event_queue.put(Event.REGENERATE)
+        self.active_strategy = set(strategies)
 
-        logger.info(
-            [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in strategies]
-        )
-
-        account_size = await self.query(GetBalance())
-        await self.execute(UpdateAccountSize(account_size))
-
-        await asyncio.gather(
-            *[
-                self.execute(
-                    UpdateSettings(
-                        symbol,
-                        self.config["leverage"],
-                        PositionMode.ONE_WAY,
-                        MarginMode.ISOLATED,
-                    )
-                )
-                for symbol, _, _ in strategies
-            ]
-        )
-
-        await asyncio.gather(*[self._process_trading(data) for data in strategies])
+        await self.dispatch(UpdatedStrategy(type=self.context.strategy_type))
+        await asyncio.sleep(self.config["reevaluate_timeout"])
+        await self.event_queue.put(Event.REGENERATE)
 
     async def _generate_batch(self, data):
         batch = []
@@ -283,49 +263,3 @@ class System(AbstractSystem):
 
         for actor in actors:
             actor.stop()
-
-    async def _process_trading(self, data: tuple[Symbol, Timeframe, Strategy]):
-        symbol, timeframe, strategy = data
-
-        await self.dispatch(TradeStarted(symbol, timeframe, strategy))
-
-        logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
-
-        signal_actor = self.context.signal_factory.create_actor(
-            symbol, timeframe, strategy
-        )
-
-        feed_actor = self.context.feed_factory.create_actor(
-            FeedType.HISTORICAL, symbol, timeframe, strategy, self.context.exchange_type
-        )
-
-        await self.execute(
-            StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
-        )
-
-        feed_actor.stop()
-
-        logger.info(f"Start trading: {symbol}_{timeframe}{strategy}")
-
-        [
-            self.context.feed_factory.create_actor(
-                FeedType.REALTIME,
-                symbol,
-                timeframe,
-                strategy,
-                self.context.exchange_type,
-            ),
-            signal_actor,
-            self.context.position_factory.create_actor(symbol, timeframe, strategy),
-            self.context.risk_factory.create_actor(symbol, timeframe, strategy),
-            self.context.executor_factory.create_actor(
-                OrderType.MARKET
-                if self.context.config_service.get("system")["mode"] == 1
-                else OrderType.PAPER,
-                symbol,
-                timeframe,
-                strategy,
-            ),
-        ]
-
-        await self.execute(StartRealtimeFeed(symbol, timeframe))

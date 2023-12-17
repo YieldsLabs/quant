@@ -13,6 +13,7 @@ class EventGroup(Enum):
     risk = "risk"
     service = "service"
     signal = "signal"
+    system = "system"
 
     def __str__(self):
         return self.value

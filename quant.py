@@ -27,8 +27,9 @@ from service import EnvironmentSecretService, SignalService, WasmFileService
 from sor import SmartRouter
 from strategy import SignalActorFactory
 from strategy.generator import StrategyGeneratorFactory
+from system.backtest import BacktestSystem
 from system.context import SystemContext
-from system.system import System
+from system.trading import TradingSystem
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -95,9 +96,19 @@ async def main():
         config_service=config_service,
     )
 
-    trend_system = System(trend_context)
+    trend_system = BacktestSystem(trend_context)
+    trading_system = TradingSystem(
+        signal_actor_factory,
+        position_actor_factory,
+        risk_actor_factory,
+        executor_actor_factory,
+        feed_actor_factory,
+        config_service,
+        exchange_type=ExchangeType.BYBIT,
+    )
 
     trend_system_task = asyncio.create_task(trend_system.start())
+    trading_system_task = asyncio.create_task(trading_system.start())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
@@ -107,8 +118,10 @@ async def main():
         logging.info("Closing...")
         shutdown_task.cancel()
         trend_system_task.cancel()
+        trading_system_task.cancel()
 
         trend_system.stop()
+        trading_system.stop()
 
         await event_bus.stop()
         await event_bus.wait()

@@ -58,12 +58,19 @@ class RealtimeActor(Actor):
     ):
         super().__init__(symbol, timeframe, strategy)
         self.ws = ws
+        self.task = None
 
     def pre_receive(self, msg: StartRealtimeFeed):
         return self._symbol == msg.symbol and self._timeframe == msg.timeframe
 
+    def on_stop(self):
+        if self.task:
+            self.task.cancel()
+
+        asyncio.create_task(self.ws.unsubscribe(self.symbol, self.timeframe))
+
     async def on_receive(self, msg: StartRealtimeFeed):
-        asyncio.create_task(self._run_realtime_feed(msg))
+        self.task = asyncio.create_task(self._run_realtime_feed(msg))
 
     async def _run_realtime_feed(self, msg: StartRealtimeFeed):
         symbol, timeframe = msg.symbol, msg.timeframe
