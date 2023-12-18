@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Cross, Series};
 use shared::{macd_indicator, MACDType};
 
 const ZERO_LINE: f32 = 0.0;
@@ -43,8 +43,8 @@ impl Signal for MACDFlipSignal {
         );
 
         (
-            macd_line.cross_over_line(ZERO_LINE),
-            macd_line.cross_under_line(ZERO_LINE),
+            macd_line.cross_over(ZERO_LINE),
+            macd_line.cross_under(ZERO_LINE),
         )
     }
 }

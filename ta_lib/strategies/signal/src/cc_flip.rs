@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Cross, Series};
 use momentum::cc;
 
 const ZERO_LINE: f32 = 0.0;
@@ -34,9 +34,6 @@ impl Signal for CCFlipSignal {
             self.smoothing_period,
         );
 
-        (
-            cc.cross_over_line(ZERO_LINE),
-            cc.cross_under_line(ZERO_LINE),
-        )
+        (cc.cross_over(ZERO_LINE), cc.cross_under(ZERO_LINE))
     }
 }

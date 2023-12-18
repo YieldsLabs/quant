@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Cross, Series};
 use trend::qstick;
 
 const ZERO_LINE: f32 = 0.0;
@@ -24,9 +24,6 @@ impl Signal for QSTICKFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let qstick = qstick(&data.open, &data.close, self.period);
 
-        (
-            qstick.cross_over_line(ZERO_LINE),
-            qstick.cross_under_line(ZERO_LINE),
-        )
+        (qstick.cross_over(ZERO_LINE), qstick.cross_under(ZERO_LINE))
     }
 }

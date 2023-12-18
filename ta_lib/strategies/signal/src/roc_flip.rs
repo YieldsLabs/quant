@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Cross, Series};
 use momentum::roc;
 
 const ROC_ZERO: f32 = 0.0;
@@ -24,9 +24,6 @@ impl Signal for ROCFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let roc = roc(&data.close, self.period);
 
-        (
-            roc.cross_over_line(ROC_ZERO),
-            roc.cross_under_line(ROC_ZERO),
-        )
+        (roc.cross_over(ROC_ZERO), roc.cross_under(ROC_ZERO))
     }
 }

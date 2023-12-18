@@ -1,28 +1,35 @@
 use crate::series::Series;
+use crate::traits::Cross;
 
-impl Series<f32> {
-    pub fn cross_over(&self, rhs: &Series<f32>) -> Series<bool> {
-        self.gt(rhs) & self.shift(1).lt(&rhs.shift(1))
-    }
+impl Cross<f32> for Series<f32> {
+    type Output = Series<bool>;
 
-    pub fn cross_under(&self, rhs: &Series<f32>) -> Series<bool> {
-        self.lt(rhs) & self.shift(1).gt(&rhs.shift(1))
-    }
-
-    pub fn cross(&self, rhs: &Series<f32>) -> Series<bool> {
-        self.cross_over(rhs) | self.cross_under(rhs)
-    }
-
-    pub fn cross_over_line(&self, line: f32) -> Series<bool> {
+    fn cross_over(&self, line: f32) -> Self::Output {
         self.sgt(line) & self.shift(1).slt(line)
     }
 
-    pub fn cross_under_line(&self, line: f32) -> Series<bool> {
+    fn cross_under(&self, line: f32) -> Self::Output {
         self.slt(line) & self.shift(1).sgt(line)
     }
 
-    pub fn cross_line(&self, line: f32) -> Series<bool> {
-        self.cross_over_line(line) | self.cross_under_line(line)
+    fn cross(&self, line: f32) -> Self::Output {
+        self.cross_over(line) | self.cross_under(line)
+    }
+}
+
+impl Cross<&Series<f32>> for Series<f32> {
+    type Output = Series<bool>;
+
+    fn cross_over(&self, rhs: &Series<f32>) -> Self::Output {
+        self.gt(rhs) & self.shift(1).lt(&rhs.shift(1))
+    }
+
+    fn cross_under(&self, rhs: &Series<f32>) -> Self::Output {
+        self.lt(rhs) & self.shift(1).gt(&rhs.shift(1))
+    }
+
+    fn cross(&self, rhs: &Series<f32>) -> Self::Output {
+        self.cross_over(rhs) | self.cross_under(rhs)
     }
 }
 

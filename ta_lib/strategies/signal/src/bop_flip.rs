@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Cross, Series};
 use momentum::bop;
 
 const BOP_ZERO: f32 = 0.0;
@@ -30,9 +30,6 @@ impl Signal for BOPFlipSignal {
             self.smoothing_period,
         );
 
-        (
-            bop.cross_over_line(BOP_ZERO),
-            bop.cross_under_line(BOP_ZERO),
-        )
+        (bop.cross_over(BOP_ZERO), bop.cross_under(BOP_ZERO))
     }
 }

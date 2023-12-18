@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries, Price};
-use core::Series;
+use core::{Cross, Series};
 use trend::ce;
 
 const CE_MIDDLE: f32 = 0.0;

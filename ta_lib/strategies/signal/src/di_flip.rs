@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Cross, Series};
 use momentum::di;
 
 const ZERO_LINE: f32 = 0.0;
@@ -24,9 +24,6 @@ impl Signal for DIFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let di = di(&data.close, self.period, None);
 
-        (
-            di.cross_over_line(ZERO_LINE),
-            di.cross_under_line(ZERO_LINE),
-        )
+        (di.cross_over(ZERO_LINE), di.cross_under(ZERO_LINE))
     }
 }

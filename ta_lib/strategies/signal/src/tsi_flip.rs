@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Cross, Series};
 use momentum::tsi;
 
 const TSI_ZERO: f32 = 0.0;
@@ -26,9 +26,6 @@ impl Signal for TSIFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tsi = tsi(&data.close, self.long_period, self.short_period);
 
-        (
-            tsi.cross_over_line(TSI_ZERO),
-            tsi.cross_under_line(TSI_ZERO),
-        )
+        (tsi.cross_over(TSI_ZERO), tsi.cross_under(TSI_ZERO))
     }
 }

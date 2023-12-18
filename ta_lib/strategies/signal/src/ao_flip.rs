@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::Series;
+use core::{Cross, Series};
 use momentum::ao;
 
 const AO_ZERO: f32 = 0.0;
@@ -27,8 +27,8 @@ impl Signal for AOFlipSignal {
         let ao = ao(&data.hl2(), self.short_period, self.long_period);
 
         (
-            ao.cross_over_line(AO_ZERO) & ao.shift(2).slt(AO_ZERO),
-            ao.cross_under_line(AO_ZERO) & ao.shift(2).sgt(AO_ZERO),
+            ao.cross_over(AO_ZERO) & ao.shift(2).slt(AO_ZERO),
+            ao.cross_under(AO_ZERO) & ao.shift(2).sgt(AO_ZERO),
         )
     }
 }

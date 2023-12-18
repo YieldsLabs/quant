@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::Series;
+use core::{Cross, Series};
 use trend::supertrend;
 
 pub struct SupertrendFlipSignal {

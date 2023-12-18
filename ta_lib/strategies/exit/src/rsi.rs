@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries};
-use core::Series;
+use core::{Cross, Series};
 use shared::{rsi_indicator, RSIType};
 
 const RSI_OVERBOUGHT: f32 = 70.0;
@@ -30,8 +30,8 @@ impl Exit for RSIExit {
         let rsi = rsi_indicator(&self.rsi_type, data, self.period);
 
         (
-            rsi.cross_over_line(RSI_OVERBOUGHT + self.threshold),
-            rsi.cross_under_line(RSI_OVERSOLD - self.threshold),
+            rsi.cross_over(RSI_OVERBOUGHT + self.threshold),
+            rsi.cross_under(RSI_OVERSOLD - self.threshold),
         )
     }
 }

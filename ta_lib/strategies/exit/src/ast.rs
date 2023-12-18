@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries, Price};
-use core::Series;
+use core::{Cross, Series};
 use trend::ast;
 
 pub struct AstExit {

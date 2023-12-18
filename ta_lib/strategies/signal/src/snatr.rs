@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::Series;
+use core::{Cross, Series};
 use volatility::snatr;
 
 const SNATR_UPPER_BARRIER: f32 = 0.8;
@@ -34,8 +34,8 @@ impl Signal for SNATRSignal {
         );
 
         (
-            snatr.cross_under_line(SNATR_UPPER_BARRIER - self.threshold),
-            snatr.cross_over_line(SNATR_LOWER_BARRIER + self.threshold),
+            snatr.cross_under(SNATR_UPPER_BARRIER - self.threshold),
+            snatr.cross_over(SNATR_LOWER_BARRIER + self.threshold),
         )
     }
 }
