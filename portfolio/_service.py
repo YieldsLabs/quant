@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from core.commands.account import UpdateAccountSize
@@ -37,7 +38,12 @@ class Portfolio(AbstractEventManager):
 
     @event_handler(TradeStarted)
     async def trade_started(self, event: TradeStarted):
-        await self.state.reset(event.symbol, event.timeframe, event.strategy)
+        await asyncio.gather(
+            [
+                self.state.reset(event.symbol, event.timeframe, event.strategy),
+                self.strategy.reset(event.symbol, event.timeframe, event.strategy),
+            ]
+        )
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
