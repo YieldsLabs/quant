@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Extremum, Series};
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct TestingGroundSignal {

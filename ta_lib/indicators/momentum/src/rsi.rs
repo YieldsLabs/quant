@@ -1,11 +1,11 @@
-use core::{iff, Series};
+use core::{iff, Extremum, Series};
 
 pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
 
     let mom = source.change(1);
-    let up = mom.smax(0.0).smma(period);
-    let down = mom.smin(0.0).neg().smma(period);
+    let up = mom.max(0.0).smma(period);
+    let down = mom.min(0.0).neg().smma(period);
 
     let oneh = Series::fill(100.0, len);
 

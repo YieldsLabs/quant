@@ -1,4 +1,4 @@
-use core::Series;
+use core::{Extremum, Series};
 
 pub fn bullish(
     open: &Series<f32>,

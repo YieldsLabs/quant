@@ -92,6 +92,21 @@ impl<T> IndexMut<usize> for Series<T> {
     }
 }
 
+impl<T> IntoIterator for Series<T> {
+    type Item = Option<T>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
+    }
+}
+
+impl<T: PartialEq> PartialEq for Series<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
+
 impl Series<f32> {
     fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
     where
@@ -153,12 +168,9 @@ impl<T: AsRef<[f32]>> From<T> for Series<f32> {
     }
 }
 
-impl<T> IntoIterator for Series<T> {
-    type Item = Option<T>;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.data.into_iter()
+impl PartialEq<Vec<Option<f32>>> for Series<f32> {
+    fn eq(&self, other: &Vec<Option<f32>>) -> bool {
+        &self.data == other
     }
 }
 
@@ -177,18 +189,6 @@ impl From<Series<bool>> for Vec<bool> {
 impl From<Series<f32>> for Series<bool> {
     fn from(val: Series<f32>) -> Self {
         val.fmap(|opt| opt.and_then(|&f| if f.is_nan() { None } else { Some(f != 0.0) }))
-    }
-}
-
-impl PartialEq<Vec<Option<f32>>> for Series<f32> {
-    fn eq(&self, other: &Vec<Option<f32>>) -> bool {
-        &self.data == other
-    }
-}
-
-impl<T: PartialEq> PartialEq for Series<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
     }
 }
 

@@ -1,10 +1,10 @@
-use core::Series;
+use core::{Extremum, Series};
 
 pub fn tii(source: &Series<f32>, major_period: usize, minor_period: usize) -> Series<f32> {
     let price_diff = source - source.ma(major_period);
 
-    let positive_sum = price_diff.smax(0.0).ma(minor_period);
-    let negative_sum = price_diff.smin(0.0).abs().ma(minor_period);
+    let positive_sum = price_diff.max(0.0).ma(minor_period);
+    let negative_sum = price_diff.min(0.0).abs().ma(minor_period);
 
     100.0 * &positive_sum / (positive_sum + negative_sum)
 }

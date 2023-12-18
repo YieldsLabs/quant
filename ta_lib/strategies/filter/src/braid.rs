@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries, Price};
-use core::Series;
+use core::{Extremum, Series};
 
 pub struct BraidFilter {
     period_one: usize,
