@@ -12,8 +12,8 @@ check:
 	cargo fmt --all --check --manifest-path=$(TA_LIB_PATH)
 
 build:
-	RUSTFLAGS="-C target-feature=+multivalue" cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
-	mv $(TA_LIB_DIR)/target/wasm32-wasi/release/trend_follow.wasm $(WASM_DIR)/trend_follow.wasm
+	RUSTFLAGS="-C target-feature=+multivalue -C link-arg=-s" cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
+	cp $(TA_LIB_DIR)/target/wasm32-wasi/release/trend_follow.wasm $(WASM_DIR)/trend_follow.wasm
 
 run:
 	pipenv run python3 quant.py

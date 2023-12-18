@@ -1,4 +1,6 @@
 [workspace]
+resolver = "2"
+
 members = [
 "core",
 "indicators/momentum",
@@ -18,5 +20,6 @@ members = [
 ]
 
 [profile.release]
-opt-level = 3
+opt-level = 'z'
 lto = true
+panic = "abort"

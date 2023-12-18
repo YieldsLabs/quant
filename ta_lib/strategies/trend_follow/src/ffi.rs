@@ -6,11 +6,8 @@ use crate::signal_mapper::{map_to_signal, SignalConfig};
 use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
 use base::register_strategy;
 
-fn read_from_memory(ptr: *const u8, len: usize) -> Vec<u8> {
-    unsafe {
-        let slice = std::slice::from_raw_parts(ptr, len);
-        slice.to_vec()
-    }
+fn read_from_memory(ptr: *const u8, len: usize) -> &'static [u8] {
+    unsafe { std::slice::from_raw_parts(ptr, len) }
 }
 
 #[no_mangle]
@@ -35,12 +32,12 @@ pub fn register(
     let stop_loss_buffer = read_from_memory(stop_loss_ptr, stop_loss_len);
     let exit_buffer = read_from_memory(exit_ptr, exit_len);
 
-    let signal: SignalConfig = serde_json::from_slice(&signal_buffer).unwrap();
-    let filter: FilterConfig = serde_json::from_slice(&filter_buffer).unwrap();
-    let pulse: PulseConfig = serde_json::from_slice(&pulse_buffer).unwrap();
-    let baseline: BaseLineConfig = serde_json::from_slice(&baseline_buffer).unwrap();
-    let stop_loss: StopLossConfig = serde_json::from_slice(&stop_loss_buffer).unwrap();
-    let exit: ExitConfig = serde_json::from_slice(&exit_buffer).unwrap();
+    let signal: SignalConfig = serde_json::from_slice(signal_buffer).unwrap();
+    let filter: FilterConfig = serde_json::from_slice(filter_buffer).unwrap();
+    let pulse: PulseConfig = serde_json::from_slice(pulse_buffer).unwrap();
+    let baseline: BaseLineConfig = serde_json::from_slice(baseline_buffer).unwrap();
+    let stop_loss: StopLossConfig = serde_json::from_slice(stop_loss_buffer).unwrap();
+    let exit: ExitConfig = serde_json::from_slice(exit_buffer).unwrap();
 
     let mapped_signal = map_to_signal(signal);
     let mapped_filter = map_to_filter(filter);
