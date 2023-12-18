@@ -13,5 +13,5 @@ class SystemEvent(Event):
 
 
 @dataclass(frozen=True)
-class UpdatedStrategy(SystemEvent):
+class DeployStrategy(SystemEvent):
     type: StrategyType
