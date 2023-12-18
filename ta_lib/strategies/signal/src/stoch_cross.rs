@@ -2,6 +2,9 @@ use base::{OHLCVSeries, Signal};
 use core::Series;
 use shared::{stoch_indicator, StochType};
 
+const LOWER_LINE: f32 = 20.0;
+const UPPER_LINE: f32 = 80.0;
+
 pub struct StochCrossSignal {
     stoch_type: StochType,
     period: usize,
@@ -35,6 +38,9 @@ impl Signal for StochCrossSignal {
             self.d_period,
         );
 
-        (k.cross_over(&d), k.cross_under(&d))
+        (
+            k.cross_over(&d) & d.slt(LOWER_LINE),
+            k.cross_under(&d) & d.sgt(UPPER_LINE),
+        )
     }
 }
