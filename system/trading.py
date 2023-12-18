@@ -5,7 +5,7 @@ from enum import Enum, auto
 from core.commands.broker import UpdateSettings
 from core.commands.feed import StartHistoricalFeed, StartRealtimeFeed
 from core.event_decorators import event_handler
-from core.events.system import UpdatedStrategy
+from core.events.system import DeployStrategy
 from core.events.trade import TradeStarted
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_executor_actor_factory import AbstractExecutorActorFactory
@@ -61,8 +61,8 @@ class TradingSystem(AbstractSystem):
         self.feed_factory = feed_factory
         self.exchange_type = exchange_type
 
-    @event_handler(UpdatedStrategy)
-    async def _updated_strategy(self, _event: UpdatedStrategy):
+    @event_handler(DeployStrategy)
+    async def _deploy_strategy(self, _event: DeployStrategy):
         logger.info("Add a fresh strategy")
 
         strategies = await self.query(

@@ -5,7 +5,7 @@ from enum import Enum, auto
 from core.commands.account import UpdateAccountSize
 from core.commands.feed import StartHistoricalFeed
 from core.events.backtest import BacktestEnded, BacktestStarted
-from core.events.system import UpdatedStrategy
+from core.events.system import DeployStrategy
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
@@ -200,7 +200,7 @@ class BacktestSystem(AbstractSystem):
 
         self.active_strategy = set(strategies)
 
-        await self.dispatch(UpdatedStrategy(type=self.context.strategy_type))
+        await self.dispatch(DeployStrategy(type=self.context.strategy_type))
         await asyncio.sleep(self.config["reevaluate_timeout"])
         await self.event_queue.put(Event.REGENERATE)
 
