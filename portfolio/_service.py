@@ -39,7 +39,7 @@ class Portfolio(AbstractEventManager):
     @event_handler(TradeStarted)
     async def trade_started(self, event: TradeStarted):
         await asyncio.gather(
-            [
+            *[
                 self.state.reset(event.symbol, event.timeframe, event.strategy),
                 self.strategy.reset(event.symbol, event.timeframe, event.strategy),
             ]
