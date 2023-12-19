@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::{Comparator, Cross, Series};
 use shared::{stoch_indicator, StochType};
 
 const LOWER_LINE: f32 = 20.0;
@@ -39,8 +39,8 @@ impl Signal for StochCrossSignal {
         );
 
         (
-            k.cross_over(&d) & d.slt(LOWER_LINE),
-            k.cross_under(&d) & d.sgt(UPPER_LINE),
+            k.cross_over(&d) & d.slt(&LOWER_LINE),
+            k.cross_under(&d) & d.sgt(&UPPER_LINE),
         )
     }
 }

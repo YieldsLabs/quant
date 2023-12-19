@@ -24,7 +24,7 @@ mod tests {
         let smothing = Some("SMMA");
         let atr = atr(&high, &low, &close, atr_period, smothing);
         let period = 2;
-        let expected = vec![0.0, 45.571022, 0.0, 26.31491, 40.33963, 58.496246];
+        let expected = [0.0, 45.571022, 0.0, 26.31491, 40.33963, 58.496246];
         let epsilon = 0.0001;
 
         let result: Vec<f32> = chop(&high, &low, &atr, period).into();

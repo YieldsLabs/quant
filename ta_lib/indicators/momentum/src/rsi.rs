@@ -1,4 +1,4 @@
-use core::{iff, Extremum, Series};
+use core::{iff, Comparator, Extremum, Series};
 
 pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
@@ -9,7 +9,7 @@ pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
 
     let oneh = Series::fill(100.0, len);
 
-    iff!(down.seq(0.0), oneh, 100.0 - (100.0 / (1.0 + up / down)))
+    iff!(down.seq(&0.0), oneh, 100.0 - (100.0 / (1.0 + up / down)))
 }
 
 #[cfg(test)]

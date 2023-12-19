@@ -1,11 +1,11 @@
-use core::{iff, Series};
+use core::{iff, Comparator, Series};
 
 pub fn cmo(close: &Series<f32>, period: usize) -> Series<f32> {
     let mom = close.change(1);
     let zero = Series::zero(close.len());
 
-    let hcls = iff!(mom.sgte(0.0), mom, zero);
-    let lcls = iff!(mom.slte(0.0), mom.neg(), zero);
+    let hcls = iff!(mom.sge(&0.0), mom, zero);
+    let lcls = iff!(mom.sle(&0.0), mom.neg(), zero);
 
     let hsum = hcls.sum(period);
     let lsum = lcls.sum(period);

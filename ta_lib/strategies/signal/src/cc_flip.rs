@@ -34,6 +34,6 @@ impl Signal for CCFlipSignal {
             self.smoothing_period,
         );
 
-        (cc.cross_over(ZERO_LINE), cc.cross_under(ZERO_LINE))
+        (cc.cross_over(&ZERO_LINE), cc.cross_under(&ZERO_LINE))
     }
 }

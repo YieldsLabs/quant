@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{stoch_indicator, StochType};
 
 pub struct StochFilter {
@@ -35,6 +35,6 @@ impl Filter for StochFilter {
             self.d_period,
         );
 
-        (k.gt(&d), k.lt(&d))
+        (k.sgt(&d), k.slt(&d))
     }
 }

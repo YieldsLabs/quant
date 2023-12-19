@@ -43,8 +43,8 @@ impl Signal for MACDFlipSignal {
         );
 
         (
-            macd_line.cross_over(ZERO_LINE),
-            macd_line.cross_under(ZERO_LINE),
+            macd_line.cross_over(&ZERO_LINE),
+            macd_line.cross_under(&ZERO_LINE),
         )
     }
 }

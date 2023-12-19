@@ -1,17 +1,17 @@
-use core::Series;
+use core::{Comparator, Series};
 
 pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
-    open.lt(&close.shift(1))
-        & close.gt(open)
-        & close.shift(1).lt(&open.shift(1))
-        & close.eq(&close.shift(1))
+    open.slt(&close.shift(1))
+        & close.sgt(open)
+        & close.shift(1).slt(&open.shift(1))
+        & close.seq(&close.shift(1))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
-    open.gt(&close.shift(1))
-        & close.lt(open)
-        & close.shift(1).gt(&open.shift(1))
-        & close.eq(&close.shift(1))
+    open.sgt(&close.shift(1))
+        & close.slt(open)
+        & close.shift(1).sgt(&open.shift(1))
+        & close.seq(&close.shift(1))
 }
 
 #[cfg(test)]

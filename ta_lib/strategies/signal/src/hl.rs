@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Comparator, Series};
 
 pub struct HighLowSignal {
     period: usize,
@@ -20,8 +20,8 @@ impl Signal for HighLowSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
-            data.low.eq(&data.low.shift(1)),
-            data.high.eq(&data.high.shift(1)),
+            data.low.seq(&data.low.shift(1)),
+            data.high.seq(&data.high.shift(1)),
         )
     }
 }

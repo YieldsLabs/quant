@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use momentum::tii;
 
 const TII_NEUTRALITY: f32 = 50.0;
@@ -29,8 +29,8 @@ impl Filter for TIIFilter {
         let tii = tii(&data.close, self.major_period, self.minor_period);
 
         (
-            tii.sgte(TII_NEUTRALITY + self.threshold),
-            tii.slte(TII_NEUTRALITY - self.threshold),
+            tii.sge(&(TII_NEUTRALITY + self.threshold)),
+            tii.sle(&(TII_NEUTRALITY - self.threshold)),
         )
     }
 }

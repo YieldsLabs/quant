@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{macd_indicator, MACDType};
 
 const ZERO_LINE: f32 = 0.0;
@@ -43,12 +43,12 @@ impl Signal for MACDColorSwitchSignal {
         );
 
         (
-            histogram.sgt(ZERO_LINE)
-                & histogram.gt(&histogram.shift(1))
-                & histogram.shift(1).lt(&histogram.shift(2)),
-            histogram.slt(ZERO_LINE)
-                & histogram.lt(&histogram.shift(1))
-                & histogram.shift(1).gt(&histogram.shift(2)),
+            histogram.sgt(&ZERO_LINE)
+                & histogram.sgt(&histogram.shift(1))
+                & histogram.shift(1).slt(&histogram.shift(2)),
+            histogram.slt(&ZERO_LINE)
+                & histogram.slt(&histogram.shift(1))
+                & histogram.shift(1).sgt(&histogram.shift(2)),
         )
     }
 }

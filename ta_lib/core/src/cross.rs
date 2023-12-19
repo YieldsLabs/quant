@@ -1,18 +1,18 @@
 use crate::series::Series;
-use crate::traits::Cross;
+use crate::traits::{Comparator, Cross};
 
-impl Cross<f32> for Series<f32> {
+impl Cross<&f32> for Series<f32> {
     type Output = Series<bool>;
 
-    fn cross_over(&self, line: f32) -> Self::Output {
+    fn cross_over(&self, line: &f32) -> Self::Output {
         self.sgt(line) & self.shift(1).slt(line)
     }
 
-    fn cross_under(&self, line: f32) -> Self::Output {
+    fn cross_under(&self, line: &f32) -> Self::Output {
         self.slt(line) & self.shift(1).sgt(line)
     }
 
-    fn cross(&self, line: f32) -> Self::Output {
+    fn cross(&self, line: &f32) -> Self::Output {
         self.cross_over(line) | self.cross_under(line)
     }
 }
@@ -21,11 +21,11 @@ impl Cross<&Series<f32>> for Series<f32> {
     type Output = Series<bool>;
 
     fn cross_over(&self, rhs: &Series<f32>) -> Self::Output {
-        self.gt(rhs) & self.shift(1).lt(&rhs.shift(1))
+        self.sgt(rhs) & self.shift(1).slt(&rhs.shift(1))
     }
 
     fn cross_under(&self, rhs: &Series<f32>) -> Self::Output {
-        self.lt(rhs) & self.shift(1).gt(&rhs.shift(1))
+        self.slt(rhs) & self.shift(1).sgt(&rhs.shift(1))
     }
 
     fn cross(&self, rhs: &Series<f32>) -> Self::Output {

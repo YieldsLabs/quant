@@ -1,4 +1,4 @@
-use core::{iff, Extremum, Series};
+use core::{iff, Comparator, Extremum, Series};
 
 pub fn supertrend(
     hl2: &Series<f32>,
@@ -21,8 +21,8 @@ pub fn supertrend(
         prev_up = iff!(prev_up.na(), up, prev_up);
         prev_dn = iff!(prev_dn.na(), dn, prev_dn);
 
-        up = iff!(prev_close.gt(&prev_up), up.max(&prev_up), up);
-        dn = iff!(prev_close.lt(&prev_dn), dn.min(&prev_dn), dn);
+        up = iff!(prev_close.sgt(&prev_up), up.max(&prev_up), up);
+        dn = iff!(prev_close.slt(&prev_dn), dn.min(&prev_dn), dn);
     }
 
     let mut direction = Series::empty(len);
@@ -36,11 +36,11 @@ pub fn supertrend(
         let prev_direction = direction.shift(1);
 
         direction = iff!(prev_direction.na(), trend_up, prev_direction);
-        direction = iff!(close.lt(&prev_up), trend_dn, direction);
-        direction = iff!(close.gt(&prev_dn), trend_up, direction);
+        direction = iff!(close.slt(&prev_up), trend_dn, direction);
+        direction = iff!(close.sgt(&prev_dn), trend_up, direction);
     }
 
-    let supertrend = iff!(direction.seq(1.0), up, dn);
+    let supertrend = iff!(direction.seq(&1.0), up, dn);
 
     (direction, supertrend)
 }

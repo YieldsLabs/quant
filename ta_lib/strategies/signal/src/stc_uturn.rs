@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::{Comparator, Cross, Series};
 use momentum::stc;
 
 const LOWER_LINE: f32 = 25.0;
@@ -50,8 +50,8 @@ impl Signal for STCUturnSignal {
         );
 
         (
-            stc.cross_over(LOWER_LINE) & stc.cross_over(&stc.shift(2)),
-            stc.cross_under(UPPER_LINE) & stc.cross_under(&stc.shift(2)),
+            stc.cross_over(&LOWER_LINE) & stc.cross_over(&stc.shift(2)),
+            stc.cross_under(&UPPER_LINE) & stc.cross_under(&stc.shift(2)),
         )
     }
 }

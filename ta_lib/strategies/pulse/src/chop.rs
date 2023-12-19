@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Pulse};
-use core::Series;
+use core::{Comparator, Series};
 use trend::chop;
 
 const CHOP_TREND: f32 = 50.0;
@@ -32,10 +32,8 @@ impl Pulse for CHOPPulse {
             &data.atr(self.atr_period),
             self.period,
         );
+        let lower_chop = CHOP_TREND - self.threshold;
 
-        (
-            chop.slt(CHOP_TREND - self.threshold),
-            chop.slt(CHOP_TREND - self.threshold),
-        )
+        (chop.slt(&lower_chop), chop.slt(&lower_chop))
     }
 }

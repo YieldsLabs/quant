@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{rsi_indicator, RSIType};
 
 const RSI_NEUTRALITY: f32 = 50.0;
@@ -28,17 +28,17 @@ impl Signal for RSINeutralityPullbackSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
 
-        let long = rsi.shift(1).sgt(RSI_NEUTRALITY)
-            & rsi.shift(1).slt(RSI_NEUTRALITY + self.threshold)
-            & rsi.shift(1).lt(&rsi.shift(2))
-            & rsi.shift(2).sgt(RSI_NEUTRALITY)
-            & rsi.shift(3).slt(RSI_NEUTRALITY);
+        let long = rsi.shift(1).sgt(&RSI_NEUTRALITY)
+            & rsi.shift(1).slt(&(RSI_NEUTRALITY + self.threshold))
+            & rsi.shift(1).slt(&rsi.shift(2))
+            & rsi.shift(2).sgt(&RSI_NEUTRALITY)
+            & rsi.shift(3).slt(&RSI_NEUTRALITY);
 
-        let short = rsi.shift(1).slt(RSI_NEUTRALITY)
-            & rsi.shift(1).sgt(RSI_NEUTRALITY - self.threshold)
-            & rsi.shift(1).gt(&rsi.shift(2))
-            & rsi.shift(2).slt(RSI_NEUTRALITY)
-            & rsi.shift(3).sgt(RSI_NEUTRALITY);
+        let short = rsi.shift(1).slt(&RSI_NEUTRALITY)
+            & rsi.shift(1).sgt(&(RSI_NEUTRALITY - self.threshold))
+            & rsi.shift(1).sgt(&rsi.shift(2))
+            & rsi.shift(2).slt(&RSI_NEUTRALITY)
+            & rsi.shift(3).sgt(&RSI_NEUTRALITY);
 
         (long, short)
     }

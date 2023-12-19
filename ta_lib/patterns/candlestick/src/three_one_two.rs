@@ -1,4 +1,4 @@
-use core::Series;
+use core::{Comparator, Series};
 
 pub fn bullish(
     open: &Series<f32>,
@@ -6,12 +6,12 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    high.shift(2).gt(&high.shift(3))
-        & low.shift(2).lt(&low.shift(3))
-        & close.shift(2).lt(&open.shift(2))
-        & high.shift(1).lt(&high.shift(2))
-        & low.shift(1).gt(&low.shift(2))
-        & high.gt(&high.shift(1))
+    high.shift(2).sgt(&high.shift(3))
+        & low.shift(2).slt(&low.shift(3))
+        & close.shift(2).slt(&open.shift(2))
+        & high.shift(1).slt(&high.shift(2))
+        & low.shift(1).sgt(&low.shift(2))
+        & high.sgt(&high.shift(1))
 }
 
 pub fn bearish(
@@ -20,12 +20,12 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    high.shift(2).gt(&high.shift(3))
-        & low.shift(2).lt(&low.shift(3))
-        & close.shift(2).lt(&open.shift(2))
-        & high.shift(1).lt(&high.shift(2))
-        & low.shift(1).gt(&low.shift(2))
-        & low.lt(&low.shift(1))
+    high.shift(2).sgt(&high.shift(3))
+        & low.shift(2).slt(&low.shift(3))
+        & close.shift(2).slt(&open.shift(2))
+        & high.shift(1).slt(&high.shift(2))
+        & low.shift(1).sgt(&low.shift(2))
+        & low.slt(&low.shift(1))
 }
 
 #[cfg(test)]

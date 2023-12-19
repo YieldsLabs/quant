@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{rsi_indicator, RSIType};
 
 const RSI_NEUTRALITY: f32 = 50.0;
@@ -31,17 +31,17 @@ impl Signal for RSIMaPullbackSignal {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
         let rsi_ma = rsi.ma(self.smoothing_period);
 
-        let long = rsi.gt(&rsi_ma)
-            & rsi.slt(RSI_NEUTRALITY + self.threshold)
-            & rsi.shift(1).eq(&rsi_ma.shift(1))
-            & rsi.shift(2).gt(&rsi.shift(1))
-            & rsi.shift(3).lt(&rsi_ma.shift(3));
+        let long = rsi.sgt(&rsi_ma)
+            & rsi.slt(&(RSI_NEUTRALITY + self.threshold))
+            & rsi.shift(1).seq(&rsi_ma.shift(1))
+            & rsi.shift(2).sgt(&rsi.shift(1))
+            & rsi.shift(3).slt(&rsi_ma.shift(3));
 
-        let short = rsi.lt(&rsi_ma)
-            & rsi.sgt(RSI_NEUTRALITY - self.threshold)
-            & rsi.shift(1).eq(&rsi_ma.shift(1))
-            & rsi.shift(2).lt(&rsi.shift(1))
-            & rsi.shift(3).gt(&rsi_ma.shift(3));
+        let short = rsi.slt(&rsi_ma)
+            & rsi.sgt(&(RSI_NEUTRALITY - self.threshold))
+            & rsi.shift(1).seq(&rsi_ma.shift(1))
+            & rsi.shift(2).slt(&rsi.shift(1))
+            & rsi.shift(3).sgt(&rsi_ma.shift(3));
 
         (long, short)
     }

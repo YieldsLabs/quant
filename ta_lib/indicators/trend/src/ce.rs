@@ -1,4 +1,4 @@
-use core::{iff, Extremum, Series};
+use core::{iff, Comparator, Extremum, Series};
 
 pub fn ce(
     high: &Series<f32>,
@@ -20,14 +20,14 @@ pub fn ce(
     for _ in 0..len {
         let prev_short = short.shift(1);
         short = iff!(
-            close.gt(&prev_short),
+            close.sgt(&prev_short),
             short_stop,
             short_stop.min(&prev_short)
         );
         short = iff!(prev_short.na(), short_stop, short);
 
         let prev_long = long.shift(1);
-        long = iff!(close.lt(&prev_long), long_stop, long.max(&prev_long));
+        long = iff!(close.slt(&prev_long), long_stop, long.max(&prev_long));
         long = iff!(prev_long.na(), long_stop, long);
     }
 
@@ -38,20 +38,20 @@ pub fn ce(
     let prev_close = close.shift(1);
 
     let long_switch = iff!(
-        close.gte(&short.shift(1)) & prev_close.lt(&short.shift(1)),
+        close.sge(&short.shift(1)) & prev_close.slt(&short.shift(1)),
         trend_up,
         trend_middle
     );
     let short_switch = iff!(
-        close.lte(&long.shift(1)) & prev_close.gt(&long.shift(1)),
+        close.sle(&long.shift(1)) & prev_close.sgt(&long.shift(1)),
         trend_up,
         trend_middle
     );
 
     for _ in 0..len {
         let prev_direction = direction.shift(1);
-        let cond_one = prev_direction.lte(&trend_middle) & long_switch.clone().into();
-        let cond_two = prev_direction.gte(&trend_middle) & short_switch.clone().into();
+        let cond_one = prev_direction.sle(&trend_middle) & long_switch.clone().into();
+        let cond_two = prev_direction.sge(&trend_middle) & short_switch.clone().into();
 
         direction = iff!(
             prev_direction.na(),
@@ -60,7 +60,7 @@ pub fn ce(
         );
     }
 
-    let trend = iff!(direction.gt(&trend_middle), long, short);
+    let trend = iff!(direction.sgt(&trend_middle), long, short);
 
     (direction, trend)
 }

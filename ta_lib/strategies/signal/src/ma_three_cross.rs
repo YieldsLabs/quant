@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::{Comparator, Cross, Series};
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct MA3CrossSignal {
@@ -37,8 +37,8 @@ impl Signal for MA3CrossSignal {
         let long_ma = ma_indicator(&self.smoothing, data, self.long_period);
 
         (
-            short_ma.cross_over(&medium_ma) & medium_ma.gt(&long_ma),
-            short_ma.cross_under(&medium_ma) & medium_ma.lt(&long_ma),
+            short_ma.cross_over(&medium_ma) & medium_ma.sgt(&long_ma),
+            short_ma.cross_under(&medium_ma) & medium_ma.slt(&long_ma),
         )
     }
 }

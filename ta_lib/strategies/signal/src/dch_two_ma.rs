@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{ma_indicator, MovingAverageType};
 use volatility::dch;
 
@@ -38,8 +38,8 @@ impl Signal for DCH2MASignal {
         let ma_long = ma_indicator(&self.smoothing, data, self.long_period);
 
         (
-            data.close.gt(&upper_band.shift(1)) & ma_short.gt(&ma_long),
-            data.close.lt(&lower_band.shift(1)) & ma_short.lt(&ma_long),
+            data.close.sgt(&upper_band.shift(1)) & ma_short.sgt(&ma_long),
+            data.close.slt(&lower_band.shift(1)) & ma_short.slt(&ma_long),
         )
     }
 }

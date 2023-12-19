@@ -30,8 +30,8 @@ impl Exit for RSIExit {
         let rsi = rsi_indicator(&self.rsi_type, data, self.period);
 
         (
-            rsi.cross_over(RSI_OVERBOUGHT + self.threshold),
-            rsi.cross_under(RSI_OVERSOLD - self.threshold),
+            rsi.cross_over(&(RSI_OVERBOUGHT + self.threshold)),
+            rsi.cross_under(&(RSI_OVERSOLD - self.threshold)),
         )
     }
 }

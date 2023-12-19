@@ -1,4 +1,4 @@
-use core::Series;
+use core::{Comparator, Series};
 
 pub fn bullish(
     open: &Series<f32>,
@@ -6,17 +6,17 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).gt(&open.shift(1))
-        & close.shift(4).lt(&open.shift(4))
-        & low.shift(1).gte(&low.shift(4))
-        & low.shift(1).lte(&close.shift(4))
-        & close.shift(1).gt(&high.shift(4))
-        & low.shift(2).gte(&low.shift(4))
-        & low.shift(2).lte(&close.shift(4))
-        & low.shift(3).gte(&low.shift(4))
-        & low.shift(3).lte(&close.shift(4))
-        & high.shift(2).lt(&high.shift(4))
-        & high.shift(3).lt(&high.shift(4))
+    close.shift(1).sgt(&open.shift(1))
+        & close.shift(4).slt(&open.shift(4))
+        & low.shift(1).sge(&low.shift(4))
+        & low.shift(1).sle(&close.shift(4))
+        & close.shift(1).sgt(&high.shift(4))
+        & low.shift(2).sge(&low.shift(4))
+        & low.shift(2).sle(&close.shift(4))
+        & low.shift(3).sge(&low.shift(4))
+        & low.shift(3).sle(&close.shift(4))
+        & high.shift(2).slt(&high.shift(4))
+        & high.shift(3).slt(&high.shift(4))
 }
 
 pub fn bearish(
@@ -25,17 +25,17 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).lt(&open.shift(1))
-        & close.shift(4).gt(&open.shift(4))
-        & high.shift(1).lte(&high.shift(4))
-        & high.shift(1).gte(&close.shift(4))
-        & close.shift(1).lt(&low.shift(4))
-        & high.shift(2).lte(&high.shift(4))
-        & high.shift(2).gte(&close.shift(4))
-        & high.shift(3).lte(&high.shift(4))
-        & high.shift(3).gte(&close.shift(4))
-        & low.shift(2).gt(&low.shift(4))
-        & low.shift(3).gt(&low.shift(4))
+    close.shift(1).slt(&open.shift(1))
+        & close.shift(4).sgt(&open.shift(4))
+        & high.shift(1).sle(&high.shift(4))
+        & high.shift(1).sge(&close.shift(4))
+        & close.shift(1).slt(&low.shift(4))
+        & high.shift(2).sle(&high.shift(4))
+        & high.shift(2).sge(&close.shift(4))
+        & high.shift(3).sle(&high.shift(4))
+        & high.shift(3).sge(&close.shift(4))
+        & low.shift(2).sgt(&low.shift(4))
+        & low.shift(3).sgt(&low.shift(4))
 }
 
 #[cfg(test)]

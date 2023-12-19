@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Pulse};
-use core::Series;
+use core::{Comparator, Series};
 use volume::vo;
 
 const VO_THRESHOLD: f32 = 0.0;
@@ -24,9 +24,8 @@ impl Pulse for VoPulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (
-            vo(&data.volume, self.short_period, self.long_period).sgt(VO_THRESHOLD),
-            vo(&data.volume, self.short_period, self.long_period).sgt(VO_THRESHOLD),
-        )
+        let vo = vo(&data.volume, self.short_period, self.long_period);
+
+        (vo.sgt(&VO_THRESHOLD), vo.sgt(&VO_THRESHOLD))
     }
 }

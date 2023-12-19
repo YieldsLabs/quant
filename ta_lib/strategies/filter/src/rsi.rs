@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{rsi_indicator, RSIType};
 
 const RSI_NEUTRALITY: f32 = 50.0;
@@ -29,18 +29,20 @@ impl Filter for RSIFilter {
 
     fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.period);
+        let lower_neutrality = RSI_NEUTRALITY - self.threshold;
+        let upper_neutrality = RSI_NEUTRALITY + self.threshold;
 
         (
-            rsi.sgte(RSI_NEUTRALITY)
-                & rsi.slte(RSI_UPPER_BOUND)
-                & rsi.shift(1).sgte(RSI_NEUTRALITY - self.threshold)
-                & rsi.shift(2).sgte(RSI_NEUTRALITY - self.threshold)
-                & rsi.shift(3).sgte(RSI_NEUTRALITY - self.threshold),
-            rsi.slte(RSI_NEUTRALITY)
-                & rsi.sgte(RSI_LOWER_BOUND)
-                & rsi.shift(1).slte(RSI_NEUTRALITY + self.threshold)
-                & rsi.shift(2).slte(RSI_NEUTRALITY + self.threshold)
-                & rsi.shift(3).slte(RSI_NEUTRALITY + self.threshold),
+            rsi.sge(&RSI_NEUTRALITY)
+                & rsi.sle(&RSI_UPPER_BOUND)
+                & rsi.shift(1).sge(&lower_neutrality)
+                & rsi.shift(2).sge(&lower_neutrality)
+                & rsi.shift(3).sge(&lower_neutrality),
+            rsi.sle(&RSI_NEUTRALITY)
+                & rsi.sge(&RSI_LOWER_BOUND)
+                & rsi.shift(1).sle(&upper_neutrality)
+                & rsi.shift(2).sle(&upper_neutrality)
+                & rsi.shift(3).sle(&upper_neutrality),
         )
     }
 }

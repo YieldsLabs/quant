@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries, Price};
-use core::{Cross, Series};
+use core::{Comparator, Cross, Series};
 use trend::ce;
 
 const CE_MIDDLE: f32 = 0.0;
@@ -36,8 +36,8 @@ impl Exit for CeExit {
         );
 
         (
-            data.close.cross_under(&trend) & direction.slt(CE_MIDDLE),
-            data.close.cross_over(&trend) & direction.sgt(CE_MIDDLE),
+            data.close.cross_under(&trend) & direction.slt(&CE_MIDDLE),
+            data.close.cross_over(&trend) & direction.sgt(&CE_MIDDLE),
         )
     }
 }

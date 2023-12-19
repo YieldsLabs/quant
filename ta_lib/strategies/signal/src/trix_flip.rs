@@ -24,6 +24,6 @@ impl Signal for TRIXFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let trix = trix(&data.close, self.period);
 
-        (trix.cross_over(TRIX_ZERO), trix.cross_under(TRIX_ZERO))
+        (trix.cross_over(&TRIX_ZERO), trix.cross_under(&TRIX_ZERO))
     }
 }

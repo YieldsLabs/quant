@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use trend::supertrend;
 
 pub struct SupertrendPullBackSignal {
@@ -29,20 +29,20 @@ impl Signal for SupertrendPullBackSignal {
             self.factor,
         );
 
-        let above = data.close.gt(&trendline);
-        let below = data.close.lt(&trendline);
+        let above = data.close.sgt(&trendline);
+        let below = data.close.slt(&trendline);
 
         (
-            data.low.lte(&trendline)
-                & data.close.gt(&trendline)
+            data.low.sle(&trendline)
+                & data.close.sgt(&trendline)
                 & below.shift(1)
                 & below.shift(2)
-                & direction.seq(1.0),
-            data.high.gte(&trendline)
-                & data.close.lt(&trendline)
+                & direction.seq(&1.0),
+            data.high.sge(&trendline)
+                & data.close.slt(&trendline)
                 & above.shift(1)
                 & above.shift(2)
-                & direction.seq(-1.0),
+                & direction.seq(&-1.0),
         )
     }
 }

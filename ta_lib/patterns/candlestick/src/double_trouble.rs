@@ -1,4 +1,4 @@
-use core::Series;
+use core::{Comparator, Series};
 use volatility::atr;
 
 pub fn bullish(
@@ -9,10 +9,10 @@ pub fn bullish(
 ) -> Series<bool> {
     let atr = atr(high, low, close, 10, None);
 
-    close.gt(open)
-        & close.shift(1).gt(&open.shift(1))
-        & close.gt(&close.shift(1))
-        & (close - open).gt(&(2.0 * atr.shift(1)))
+    close.sgt(open)
+        & close.shift(1).sgt(&open.shift(1))
+        & close.sgt(&close.shift(1))
+        & (close - open).sgt(&(2.0 * atr.shift(1)))
 }
 
 pub fn bearish(
@@ -23,10 +23,10 @@ pub fn bearish(
 ) -> Series<bool> {
     let atr = atr(high, low, close, 10, None);
 
-    close.lt(open)
-        & close.shift(1).lt(&open.shift(1))
-        & close.lt(&close.shift(1))
-        & (open - close).gt(&(2.0 * atr.shift(1)))
+    close.slt(open)
+        & close.shift(1).slt(&open.shift(1))
+        & close.slt(&close.shift(1))
+        & (open - close).sgt(&(2.0 * atr.shift(1)))
 }
 
 #[cfg(test)]

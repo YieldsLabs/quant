@@ -34,8 +34,8 @@ impl Signal for SNATRSignal {
         );
 
         (
-            snatr.cross_under(SNATR_UPPER_BARRIER - self.threshold),
-            snatr.cross_over(SNATR_LOWER_BARRIER + self.threshold),
+            snatr.cross_under(&(SNATR_UPPER_BARRIER - self.threshold)),
+            snatr.cross_over(&(SNATR_LOWER_BARRIER + self.threshold)),
         )
     }
 }

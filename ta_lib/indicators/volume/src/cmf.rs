@@ -1,4 +1,4 @@
-use core::{iff, Series};
+use core::{iff, Comparator, Series};
 
 pub fn cmf(
     high: &Series<f32>,
@@ -8,7 +8,7 @@ pub fn cmf(
     period: usize,
 ) -> Series<f32> {
     let mfv = iff!(
-        (close.eq(high) & close.eq(low)) | high.eq(low),
+        (close.seq(high) & close.seq(low)) | high.seq(low),
         Series::zero(close.len()),
         ((2.0 * close - low - high) / (high - low)) * volume
     );

@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{macd_indicator, MACDType};
 
 pub struct EISFilter {
@@ -46,8 +46,8 @@ impl Filter for EISFilter {
         let signal = data.close.ema(self.signal_period);
 
         (
-            signal.gt(&signal.shift(1)) & histogram.gt(&histogram.shift(1)),
-            signal.lt(&signal.shift(1)) & histogram.lt(&histogram.shift(1)),
+            signal.sgt(&signal.shift(1)) & histogram.sgt(&histogram.shift(1)),
+            signal.slt(&signal.shift(1)) & histogram.slt(&histogram.shift(1)),
         )
     }
 }

@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 
 pub struct HighLowExit {
     period: usize,
@@ -20,8 +20,8 @@ impl Exit for HighLowExit {
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
-            data.close.gt(&data.high.shift(self.period)),
-            data.close.lt(&data.low.shift(self.period)),
+            data.close.sgt(&data.high.shift(self.period)),
+            data.close.slt(&data.low.shift(self.period)),
         )
     }
 }

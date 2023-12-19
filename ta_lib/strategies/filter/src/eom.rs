@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries, Price};
-use core::Series;
+use core::{Comparator, Series};
 use volume::eom;
 
 const EOM_FILTER: f32 = 0.0;
@@ -33,6 +33,6 @@ impl Filter for EOMFilter {
             self.divisor,
         );
 
-        (eom.sgt(EOM_FILTER), eom.slt(EOM_FILTER))
+        (eom.sgt(&EOM_FILTER), eom.slt(&EOM_FILTER))
     }
 }

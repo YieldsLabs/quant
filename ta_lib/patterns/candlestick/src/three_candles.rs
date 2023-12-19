@@ -1,25 +1,25 @@
-use core::Series;
+use core::{Comparator, Series};
 
 pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
-    close.gt(&close.shift(1))
-        & close.shift(1).gt(&close.shift(2))
-        & close.shift(2).gt(&close.shift(3))
-        & body.gte(&body.highest(5))
-        & body.shift(1).gte(&body.shift(1).highest(5))
-        & body.shift(2).gte(&body.shift(2).highest(5))
+    close.sgt(&close.shift(1))
+        & close.shift(1).sgt(&close.shift(2))
+        & close.shift(2).sgt(&close.shift(3))
+        & body.sge(&body.highest(5))
+        & body.shift(1).sge(&body.shift(1).highest(5))
+        & body.shift(2).sge(&body.shift(2).highest(5))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
-    close.lt(&close.shift(1))
-        & close.shift(1).lt(&close.shift(2))
-        & close.shift(2).lt(&close.shift(3))
-        & body.gte(&body.highest(5))
-        & body.shift(1).gte(&body.shift(1).highest(5))
-        & body.shift(2).gte(&body.shift(2).highest(5))
+    close.slt(&close.shift(1))
+        & close.shift(1).slt(&close.shift(2))
+        & close.shift(2).slt(&close.shift(3))
+        & body.sge(&body.highest(5))
+        & body.shift(1).sge(&body.shift(1).highest(5))
+        & body.shift(2).sge(&body.shift(2).highest(5))
 }
 
 #[cfg(test)]

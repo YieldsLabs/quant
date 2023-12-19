@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries, Price};
-use core::{Extremum, Series};
+use core::{Comparator, Extremum, Series};
 
 pub struct BraidFilter {
     period_one: usize,
@@ -45,8 +45,8 @@ impl Filter for BraidFilter {
         let diff = max - min;
 
         (
-            ma_one.gt(&ma_two) & diff.gt(&filter),
-            ma_two.gt(&ma_one) & diff.gt(&filter),
+            ma_one.sgt(&ma_two) & diff.sgt(&filter),
+            ma_two.sgt(&ma_one) & diff.sgt(&filter),
         )
     }
 }

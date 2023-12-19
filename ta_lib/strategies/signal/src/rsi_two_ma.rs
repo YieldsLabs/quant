@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::{Comparator, Cross, Series};
 use shared::{ma_indicator, rsi_indicator, MovingAverageType, RSIType};
 
 const RSI_UPPER_BARRIER: f32 = 85.0;
@@ -45,15 +45,15 @@ impl Signal for RSI2MASignal {
         let ma_short = ma_indicator(&self.smoothing, data, self.short_period);
         let ma_long = ma_indicator(&self.smoothing, data, self.long_period);
 
-        let long_signal = data.close.gt(&ma_short)
-            & data.close.gt(&ma_long)
-            & ma_short.gt(&ma_long)
-            & rsi.cross_under(RSI_LOWER_BARRIER + self.threshold);
+        let long_signal = data.close.sgt(&ma_short)
+            & data.close.sgt(&ma_long)
+            & ma_short.sgt(&ma_long)
+            & rsi.cross_under(&(RSI_LOWER_BARRIER + self.threshold));
 
-        let short_signal = data.close.lt(&ma_short)
-            & data.close.lt(&ma_long)
-            & ma_short.lt(&ma_long)
-            & rsi.cross_over(RSI_UPPER_BARRIER - self.threshold);
+        let short_signal = data.close.slt(&ma_short)
+            & data.close.slt(&ma_long)
+            & ma_short.slt(&ma_long)
+            & rsi.cross_over(&(RSI_UPPER_BARRIER - self.threshold));
 
         (long_signal, short_signal)
     }

@@ -1,4 +1,4 @@
-use core::Series;
+use core::{Comparator, Series};
 
 pub fn bullish(
     open: &Series<f32>,
@@ -6,9 +6,9 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).gt(&open.shift(1))
-        & high.shift(1).eq(&close.shift(1))
-        & low.shift(1).eq(&open.shift(1))
+    close.shift(1).sgt(&open.shift(1))
+        & high.shift(1).seq(&close.shift(1))
+        & low.shift(1).seq(&open.shift(1))
 }
 
 pub fn bearish(
@@ -17,9 +17,9 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).lt(&open.shift(1))
-        & high.shift(1).eq(&open.shift(1))
-        & low.shift(1).eq(&close.shift(1))
+    close.shift(1).slt(&open.shift(1))
+        & high.shift(1).seq(&open.shift(1))
+        & low.shift(1).seq(&close.shift(1))
 }
 
 #[cfg(test)]

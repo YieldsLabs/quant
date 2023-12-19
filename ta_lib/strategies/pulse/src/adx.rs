@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Pulse};
-use core::Series;
+use core::{Comparator, Series};
 use momentum::dmi;
 
 const ADX_TREND: f32 = 25.0;
@@ -33,10 +33,11 @@ impl Pulse for ADXPulse {
             self.adx_period,
             self.di_period,
         );
+        let upper_adx_trend = ADX_TREND + self.threshold;
 
         (
-            adx.sgt(ADX_TREND + self.threshold) & adx.gt(&adx.shift(1)),
-            adx.sgt(ADX_TREND + self.threshold) & adx.gt(&adx.shift(1)),
+            adx.sgt(&upper_adx_trend) & adx.sgt(&adx.shift(1)),
+            adx.sgt(&upper_adx_trend) & adx.sgt(&adx.shift(1)),
         )
     }
 }

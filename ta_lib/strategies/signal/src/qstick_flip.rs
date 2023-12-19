@@ -24,6 +24,9 @@ impl Signal for QSTICKFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let qstick = qstick(&data.open, &data.close, self.period);
 
-        (qstick.cross_over(ZERO_LINE), qstick.cross_under(ZERO_LINE))
+        (
+            qstick.cross_over(&ZERO_LINE),
+            qstick.cross_under(&ZERO_LINE),
+        )
     }
 }

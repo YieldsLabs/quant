@@ -26,6 +26,6 @@ impl Signal for APOFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ao = apo(&data.close, self.short_period, self.long_period);
 
-        (ao.cross_over(APO_ZERO), ao.cross_under(APO_ZERO))
+        (ao.cross_over(&APO_ZERO), ao.cross_under(&APO_ZERO))
     }
 }

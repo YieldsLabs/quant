@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use momentum::ao;
 
 const AO_ZERO: f32 = 0.0;
@@ -26,16 +26,16 @@ impl Signal for AOSaucerSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ao = ao(&data.hl2(), self.short_period, self.long_period);
         (
-            ao.sgt(AO_ZERO)
-                & ao.shift(1).gt(&ao)
-                & ao.shift(2).gt(&ao.shift(1))
-                & ao.shift(3).gt(&ao.shift(2))
-                & ao.shift(4).lt(&ao.shift(3)),
-            ao.slt(AO_ZERO)
-                & ao.shift(1).lt(&ao)
-                & ao.shift(2).lt(&ao.shift(1))
-                & ao.shift(3).lt(&ao.shift(2))
-                & ao.shift(4).gt(&ao.shift(3)),
+            ao.sgt(&AO_ZERO)
+                & ao.shift(1).sgt(&ao)
+                & ao.shift(2).sgt(&ao.shift(1))
+                & ao.shift(3).sgt(&ao.shift(2))
+                & ao.shift(4).slt(&ao.shift(3)),
+            ao.slt(&AO_ZERO)
+                & ao.shift(1).slt(&ao)
+                & ao.shift(2).slt(&ao.shift(1))
+                & ao.shift(3).slt(&ao.shift(2))
+                & ao.shift(4).sgt(&ao.shift(3)),
         )
     }
 }

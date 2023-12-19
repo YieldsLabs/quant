@@ -1,4 +1,4 @@
-use core::{iff, Series};
+use core::{iff, Comparator, Series};
 
 pub fn dmi(
     high: &Series<f32>,
@@ -12,8 +12,8 @@ pub fn dmi(
 
     let zero = Series::zero(high.len());
 
-    let dm_plus = iff!(up.gt(&down) & up.sgt(0.0), up, zero);
-    let dm_minus = iff!(down.gt(&up) & down.sgt(0.0), down, zero);
+    let dm_plus = iff!(up.sgt(&down) & up.sgt(&0.0), up, zero);
+    let dm_minus = iff!(down.sgt(&up) & down.sgt(&0.0), down, zero);
 
     let di_plus = 100.0 * dm_plus.smma(di_period) / atr;
     let di_minus = 100.0 * dm_minus.smma(di_period) / atr;
@@ -22,7 +22,7 @@ pub fn dmi(
     let one = Series::fill(1.0, high.len());
 
     let adx =
-        100.0 * ((&di_plus - &di_minus).abs() / iff!(sum.seq(0.0), one, sum)).smma(adx_period);
+        100.0 * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&0.0), one, sum)).smma(adx_period);
 
     (adx, di_plus, di_minus)
 }

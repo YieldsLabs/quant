@@ -1,41 +1,41 @@
-use core::Series;
+use core::{Comparator, Series};
 
 pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
-    close.gt(open)
-        & close.gt(&close.shift(1))
-        & body.lt(&body.shift(1))
-        & close.shift(1).gt(&open.shift(1))
-        & close.shift(1).gt(&close.shift(2))
-        & body.shift(1).lt(&body.shift(2))
-        & close.shift(2).gt(&open.shift(2))
-        & close.shift(2).gt(&close.shift(3))
-        & body.shift(2).lt(&body.shift(3))
-        & close.shift(3).gt(&open.shift(3))
-        & close.shift(3).gt(&close.shift(4))
-        & body.shift(3).lt(&body.shift(4))
-        & close.shift(4).gt(&open.shift(4))
-        & body.shift(4).lt(&body.shift(5))
+    close.sgt(open)
+        & close.sgt(&close.shift(1))
+        & body.slt(&body.shift(1))
+        & close.shift(1).sgt(&open.shift(1))
+        & close.shift(1).sgt(&close.shift(2))
+        & body.shift(1).slt(&body.shift(2))
+        & close.shift(2).sgt(&open.shift(2))
+        & close.shift(2).sgt(&close.shift(3))
+        & body.shift(2).slt(&body.shift(3))
+        & close.shift(3).sgt(&open.shift(3))
+        & close.shift(3).sgt(&close.shift(4))
+        & body.shift(3).slt(&body.shift(4))
+        & close.shift(4).sgt(&open.shift(4))
+        & body.shift(4).slt(&body.shift(5))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
-    close.lt(open)
-        & close.lt(&close.shift(1))
-        & body.lt(&body.shift(1))
-        & close.shift(1).lt(&open.shift(1))
-        & close.shift(1).lt(&close.shift(2))
-        & body.shift(1).lt(&body.shift(2))
-        & close.shift(2).lt(&open.shift(2))
-        & close.shift(2).lt(&close.shift(3))
-        & body.shift(2).lt(&body.shift(3))
-        & close.shift(3).lt(&open.shift(3))
-        & close.shift(3).lt(&close.shift(4))
-        & body.shift(3).lt(&body.shift(4))
-        & close.shift(4).lt(&open.shift(4))
-        & body.shift(4).lt(&body.shift(5))
+    close.slt(open)
+        & close.slt(&close.shift(1))
+        & body.slt(&body.shift(1))
+        & close.shift(1).slt(&open.shift(1))
+        & close.shift(1).slt(&close.shift(2))
+        & body.shift(1).slt(&body.shift(2))
+        & close.shift(2).slt(&open.shift(2))
+        & close.shift(2).slt(&close.shift(3))
+        & body.shift(2).slt(&body.shift(3))
+        & close.shift(3).slt(&open.shift(3))
+        & close.shift(3).slt(&close.shift(4))
+        & body.shift(3).slt(&body.shift(4))
+        & close.shift(4).slt(&open.shift(4))
+        & body.shift(4).slt(&body.shift(5))
 }
 
 #[cfg(test)]

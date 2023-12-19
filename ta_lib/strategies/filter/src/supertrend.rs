@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries, Price};
-use core::Series;
+use core::{Comparator, Series};
 use trend::supertrend;
 
 const SUP_ZERO: f32 = 0.0;
@@ -32,8 +32,8 @@ impl Filter for SupertrendFilter {
         );
 
         (
-            data.close.gt(&trendline) & direction.sgt(SUP_ZERO),
-            data.close.lt(&trendline) & direction.slt(SUP_ZERO),
+            data.close.sgt(&trendline) & direction.sgt(&SUP_ZERO),
+            data.close.slt(&trendline) & direction.slt(&SUP_ZERO),
         )
     }
 }

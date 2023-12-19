@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use momentum::bop;
 
 const BOP_FILTER: f32 = 0.0;
@@ -30,6 +30,6 @@ impl Filter for BOPFilter {
             self.smoothing_period,
         );
 
-        (bop.sgt(BOP_FILTER), bop.slt(BOP_FILTER))
+        (bop.sgt(&BOP_FILTER), bop.slt(&BOP_FILTER))
     }
 }

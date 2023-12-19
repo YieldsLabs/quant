@@ -1,4 +1,4 @@
-use core::{iff, Extremum, Series};
+use core::{iff, Comparator, Extremum, Series};
 
 pub fn ast(close: &Series<f32>, atr: &Series<f32>, factor: f32) -> (Series<f32>, Series<f32>) {
     let atr_multi = atr * factor;
@@ -13,14 +13,14 @@ pub fn ast(close: &Series<f32>, atr: &Series<f32>, factor: f32) -> (Series<f32>,
     for _ in 0..len {
         let prev_trend = trend.shift(1);
 
-        trend = iff!(close.gt(&prev_trend), up, dn);
+        trend = iff!(close.sgt(&prev_trend), up, dn);
         trend = iff!(
-            close.lt(&prev_trend) & prev_close.lt(&prev_trend),
+            close.slt(&prev_trend) & prev_close.slt(&prev_trend),
             prev_trend.min(&dn),
             trend
         );
         trend = iff!(
-            close.gt(&prev_trend) & prev_close.gt(&prev_trend),
+            close.sgt(&prev_trend) & prev_close.sgt(&prev_trend),
             prev_trend.max(&up),
             trend
         );
@@ -34,12 +34,12 @@ pub fn ast(close: &Series<f32>, atr: &Series<f32>, factor: f32) -> (Series<f32>,
         let prev_direction = direction.shift(1);
         let prev_trend = trend.shift(1);
         direction = iff!(
-            prev_close.gt(&prev_trend) & close.lt(&prev_trend),
+            prev_close.sgt(&prev_trend) & close.slt(&prev_trend),
             trend_dn,
             prev_direction
         );
         direction = iff!(
-            prev_close.lt(&prev_trend) & close.gt(&prev_trend),
+            prev_close.slt(&prev_trend) & close.sgt(&prev_trend),
             trend_up,
             direction
         )

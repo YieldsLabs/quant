@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use momentum::tii;
 
 const TII_ZERO: f32 = 0.0;
@@ -28,9 +28,9 @@ impl Signal for TIIVSignal {
         let tii = tii(&data.close, self.major_period, self.minor_period);
 
         let long_signal =
-            tii.sgt(TII_ZERO) & tii.shift(1).seq(TII_ZERO) & tii.shift(2).sgt(TII_ZERO);
+            tii.sgt(&TII_ZERO) & tii.shift(1).seq(&TII_ZERO) & tii.shift(2).sgt(&TII_ZERO);
         let short_signal =
-            tii.slt(TII_ONEH) & tii.shift(1).seq(TII_ONEH) & tii.shift(2).slt(TII_ONEH);
+            tii.slt(&TII_ONEH) & tii.shift(1).seq(&TII_ONEH) & tii.shift(2).slt(&TII_ONEH);
 
         (long_signal, short_signal)
     }

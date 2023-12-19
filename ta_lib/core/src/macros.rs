@@ -17,7 +17,7 @@ macro_rules! iff {
 
 #[cfg(test)]
 mod tests {
-    use crate::Series;
+    use crate::{Comparator, Series};
 
     #[test]
     fn test_iff() {
@@ -25,7 +25,7 @@ mod tests {
         let b = Series::from([1.0, 0.5, 5.0, 2.0, 8.0]);
         let one = Series::fill(1.0, a.len());
         let minus_one = Series::fill(-1.0, a.len());
-        let cond = a.gt(&b);
+        let cond = a.sgt(&b);
 
         let expected = Series::from([1.0, 1.0, -1.0, 1.0, -1.0]);
 

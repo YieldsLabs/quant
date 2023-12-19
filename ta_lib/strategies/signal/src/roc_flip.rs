@@ -24,6 +24,6 @@ impl Signal for ROCFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let roc = roc(&data.close, self.period);
 
-        (roc.cross_over(ROC_ZERO), roc.cross_under(ROC_ZERO))
+        (roc.cross_over(&ROC_ZERO), roc.cross_under(&ROC_ZERO))
     }
 }

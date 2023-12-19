@@ -1,4 +1,4 @@
-use core::Series;
+use core::{Comparator, Series};
 
 pub fn bullish(
     open: &Series<f32>,
@@ -6,17 +6,17 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.gt(&high.shift(3))
-        & close.gt(&close.shift(4))
-        & low.shift(1).lt(open)
-        & close.shift(1).lt(close)
-        & high.shift(1).lte(&high.shift(3))
-        & low.shift(2).lt(open)
-        & close.shift(2).lt(close)
-        & high.shift(2).lte(&high.shift(3))
-        & high.shift(3).lt(&high.shift(4))
-        & low.shift(3).gt(&low.shift(4))
-        & close.shift(4).gt(&open.shift(4))
+    close.sgt(&high.shift(3))
+        & close.sgt(&close.shift(4))
+        & low.shift(1).slt(open)
+        & close.shift(1).slt(close)
+        & high.shift(1).sle(&high.shift(3))
+        & low.shift(2).slt(open)
+        & close.shift(2).slt(close)
+        & high.shift(2).sle(&high.shift(3))
+        & high.shift(3).slt(&high.shift(4))
+        & low.shift(3).sgt(&low.shift(4))
+        & close.shift(4).sgt(&open.shift(4))
 }
 
 pub fn bearish(
@@ -25,17 +25,17 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.lt(&low.shift(3))
-        & close.lt(&close.shift(4))
-        & high.shift(1).gt(open)
-        & close.shift(1).gt(close)
-        & low.shift(1).gte(&low.shift(3))
-        & high.shift(2).gt(open)
-        & close.shift(2).gt(close)
-        & low.shift(2).gte(&low.shift(3))
-        & low.shift(3).gt(&low.shift(4))
-        & high.shift(3).lt(&high.shift(4))
-        & close.shift(4).lt(&open.shift(4))
+    close.slt(&low.shift(3))
+        & close.slt(&close.shift(4))
+        & high.shift(1).sgt(open)
+        & close.shift(1).sgt(close)
+        & low.shift(1).sge(&low.shift(3))
+        & high.shift(2).sgt(open)
+        & close.shift(2).sgt(close)
+        & low.shift(2).sge(&low.shift(3))
+        & low.shift(3).sgt(&low.shift(4))
+        & high.shift(3).slt(&high.shift(4))
+        & close.shift(4).slt(&open.shift(4))
 }
 
 #[cfg(test)]

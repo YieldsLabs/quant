@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{rsi_indicator, RSIType};
 
 const RSI_UPPER_BARRIER: f32 = 80.0;
@@ -29,12 +29,12 @@ impl Signal for RSIVSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
 
-        let long_signal = rsi.sgt(RSI_LOWER_BARRIER + self.threshold)
-            & rsi.shift(1).slt(RSI_LOWER_BARRIER)
-            & rsi.shift(2).sgt(RSI_LOWER_BARRIER);
-        let short_signal = rsi.slt(RSI_UPPER_BARRIER - self.threshold)
-            & rsi.shift(1).sgt(RSI_UPPER_BARRIER)
-            & rsi.shift(2).slt(RSI_UPPER_BARRIER);
+        let long_signal = rsi.sgt(&(RSI_LOWER_BARRIER + self.threshold))
+            & rsi.shift(1).slt(&RSI_LOWER_BARRIER)
+            & rsi.shift(2).sgt(&RSI_LOWER_BARRIER);
+        let short_signal = rsi.slt(&(RSI_UPPER_BARRIER - self.threshold))
+            & rsi.shift(1).sgt(&RSI_UPPER_BARRIER)
+            & rsi.shift(2).slt(&RSI_UPPER_BARRIER);
 
         (long_signal, short_signal)
     }

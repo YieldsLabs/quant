@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct RibbonFilter {
@@ -42,8 +42,8 @@ impl Filter for RibbonFilter {
         let ma_fourth = ma_indicator(&self.smoothing, data, self.fourth_period);
 
         (
-            ma_first.gt(&ma_second) & ma_second.gt(&ma_third) & ma_third.gt(&ma_fourth),
-            ma_first.lt(&ma_second) & ma_second.lt(&ma_third) & ma_third.lt(&ma_fourth),
+            ma_first.sgt(&ma_second) & ma_second.sgt(&ma_third) & ma_third.sgt(&ma_fourth),
+            ma_first.slt(&ma_second) & ma_second.slt(&ma_third) & ma_third.slt(&ma_fourth),
         )
     }
 }

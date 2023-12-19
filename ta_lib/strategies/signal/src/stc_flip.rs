@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::{Comparator, Cross, Series};
 use momentum::stc;
 
 const LOWER_LINE: f32 = 25.0;
@@ -49,6 +49,6 @@ impl Signal for STCFlipSignal {
             self.d_second,
         );
 
-        (stc.cross_over(LOWER_LINE), stc.cross_under(UPPER_LINE))
+        (stc.cross_over(&LOWER_LINE), stc.cross_under(&UPPER_LINE))
     }
 }

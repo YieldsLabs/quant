@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{macd_indicator, MACDType};
 
 const MACD_ZERO: f32 = 0.0;
@@ -42,6 +42,6 @@ impl Filter for MACDFilter {
             self.signal_smoothing,
         );
 
-        (histogram.sgt(MACD_ZERO), histogram.slt(MACD_ZERO))
+        (histogram.sgt(&MACD_ZERO), histogram.slt(&MACD_ZERO))
     }
 }

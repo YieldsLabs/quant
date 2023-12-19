@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use momentum::kst;
 
 pub struct KstFilter {
@@ -66,6 +66,6 @@ impl Filter for KstFilter {
         );
         let signal_line = kst.ma(self.signal_period);
 
-        (kst.gt(&signal_line), kst.lt(&signal_line))
+        (kst.sgt(&signal_line), kst.slt(&signal_line))
     }
 }

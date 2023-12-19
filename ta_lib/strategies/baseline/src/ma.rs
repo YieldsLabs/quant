@@ -1,5 +1,5 @@
 use base::{BaseLine, OHLCVSeries};
-use core::Series;
+use core::{Comparator, Series};
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct MABaseLine {
@@ -24,6 +24,6 @@ impl BaseLine for MABaseLine {
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.smoothing, data, self.period);
 
-        (data.close.gt(&ma), data.close.lt(&ma))
+        (data.close.sgt(&ma), data.close.slt(&ma))
     }
 }

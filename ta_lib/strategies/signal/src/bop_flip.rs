@@ -30,6 +30,6 @@ impl Signal for BOPFlipSignal {
             self.smoothing_period,
         );
 
-        (bop.cross_over(BOP_ZERO), bop.cross_under(BOP_ZERO))
+        (bop.cross_over(&BOP_ZERO), bop.cross_under(&BOP_ZERO))
     }
 }
