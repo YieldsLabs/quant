@@ -111,28 +111,28 @@ macro_rules! impl_series_ops {
     ($trait_name:ident, $trait_method:ident, $method:ident) => {
         impl $trait_name<Series<f32>> for &Series<f32> {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: Series<f32>) -> Self::Output {
                 self.$method(&rhs)
             }
         }
 
         impl $trait_name<&Series<f32>> for Series<f32> {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: &Series<f32>) -> Self::Output {
                 self.$method(rhs)
             }
         }
 
         impl $trait_name<&Series<f32>> for &Series<f32> {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: &Series<f32>) -> Self::Output {
                 self.$method(rhs)
             }
         }
 
         impl $trait_name<Series<f32>> for Series<f32> {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: Series<f32>) -> Self::Output {
                 self.$method(&rhs)
             }
         }
@@ -148,28 +148,28 @@ macro_rules! impl_scalar_ops {
     ($trait_name:ident, $trait_method:ident, $method:ident) => {
         impl $trait_name<&Series<f32>> for f32 {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: &Series<f32>) -> Self::Output {
                 rhs.$method(self)
             }
         }
 
         impl $trait_name<Series<f32>> for f32 {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: Series<f32>) -> Self::Output {
                 rhs.$method(self)
             }
         }
 
         impl $trait_name<f32> for &Series<f32> {
             type Output = Series<f32>;
-            fn $trait_method(self, scalar: f32) -> Series<f32> {
+            fn $trait_method(self, scalar: f32) -> Self::Output {
                 self.$method(scalar)
             }
         }
 
         impl $trait_name<f32> for Series<f32> {
             type Output = Series<f32>;
-            fn $trait_method(self, scalar: f32) -> Series<f32> {
+            fn $trait_method(self, scalar: f32) -> Self::Output {
                 self.$method(scalar)
             }
         }
@@ -179,7 +179,7 @@ macro_rules! impl_scalar_ops {
 impl Div<f32> for &Series<f32> {
     type Output = Series<f32>;
 
-    fn div(self, scalar: f32) -> Series<f32> {
+    fn div(self, scalar: f32) -> Self::Output {
         self.div_scalar(scalar)
     }
 }
@@ -187,7 +187,7 @@ impl Div<f32> for &Series<f32> {
 impl Div<f32> for Series<f32> {
     type Output = Series<f32>;
 
-    fn div(self, scalar: f32) -> Series<f32> {
+    fn div(self, scalar: f32) -> Self::Output {
         self.div_scalar(scalar)
     }
 }
@@ -195,7 +195,7 @@ impl Div<f32> for Series<f32> {
 impl Div<&Series<f32>> for f32 {
     type Output = Series<f32>;
 
-    fn div(self, rhs: &Series<f32>) -> Series<f32> {
+    fn div(self, rhs: &Series<f32>) -> Self::Output {
         Series::fill(self, rhs.len()).div_series(rhs)
     }
 }
@@ -203,7 +203,7 @@ impl Div<&Series<f32>> for f32 {
 impl Div<Series<f32>> for f32 {
     type Output = Series<f32>;
 
-    fn div(self, rhs: Series<f32>) -> Series<f32> {
+    fn div(self, rhs: Series<f32>) -> Self::Output {
         Series::fill(self, rhs.len()).div_series(&rhs)
     }
 }
@@ -211,7 +211,7 @@ impl Div<Series<f32>> for f32 {
 impl Sub<f32> for &Series<f32> {
     type Output = Series<f32>;
 
-    fn sub(self, scalar: f32) -> Series<f32> {
+    fn sub(self, scalar: f32) -> Self::Output {
         self.sub_scalar(scalar)
     }
 }
@@ -219,7 +219,7 @@ impl Sub<f32> for &Series<f32> {
 impl Sub<f32> for Series<f32> {
     type Output = Series<f32>;
 
-    fn sub(self, scalar: f32) -> Series<f32> {
+    fn sub(self, scalar: f32) -> Self::Output {
         self.sub_scalar(scalar)
     }
 }
@@ -227,7 +227,7 @@ impl Sub<f32> for Series<f32> {
 impl Sub<&Series<f32>> for f32 {
     type Output = Series<f32>;
 
-    fn sub(self, rhs: &Series<f32>) -> Series<f32> {
+    fn sub(self, rhs: &Series<f32>) -> Self::Output {
         rhs.neg().sub_scalar(-self)
     }
 }
@@ -235,7 +235,7 @@ impl Sub<&Series<f32>> for f32 {
 impl Sub<Series<f32>> for f32 {
     type Output = Series<f32>;
 
-    fn sub(self, rhs: Series<f32>) -> Series<f32> {
+    fn sub(self, rhs: Series<f32>) -> Self::Output {
         rhs.neg().sub_scalar(-self)
     }
 }
@@ -247,14 +247,14 @@ macro_rules! impl_bool_ops {
     ($trait_name:ident, $trait_method:ident, $method:ident) => {
         impl $trait_name<&Series<f32>> for &Series<bool> {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: &Series<f32>) -> Self::Output {
                 self.$method(&rhs)
             }
         }
 
         impl $trait_name<&Series<f32>> for Series<bool> {
             type Output = Series<f32>;
-            fn $trait_method(self, rhs: &Series<f32>) -> Series<f32> {
+            fn $trait_method(self, rhs: &Series<f32>) -> Self::Output {
                 self.$method(rhs)
             }
         }
