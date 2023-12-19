@@ -44,17 +44,18 @@ impl Signal for RSI2MASignal {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
         let ma_short = ma_indicator(&self.smoothing, data, self.short_period);
         let ma_long = ma_indicator(&self.smoothing, data, self.long_period);
+        let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
+        let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
 
-        let long_signal = data.close.sgt(&ma_short)
-            & data.close.sgt(&ma_long)
-            & ma_short.sgt(&ma_long)
-            & rsi.cross_under(&(RSI_LOWER_BARRIER + self.threshold));
-
-        let short_signal = data.close.slt(&ma_short)
-            & data.close.slt(&ma_long)
-            & ma_short.slt(&ma_long)
-            & rsi.cross_over(&(RSI_UPPER_BARRIER - self.threshold));
-
-        (long_signal, short_signal)
+        (
+            data.close.sgt(&ma_short)
+                & data.close.sgt(&ma_long)
+                & ma_short.sgt(&ma_long)
+                & rsi.cross_under(&lower_barrier),
+            data.close.slt(&ma_short)
+                & data.close.slt(&ma_long)
+                & ma_short.slt(&ma_long)
+                & rsi.cross_over(&upper_barrier),
+        )
     }
 }

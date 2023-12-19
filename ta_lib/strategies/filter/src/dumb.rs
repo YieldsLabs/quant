@@ -20,8 +20,8 @@ impl Filter for DumbFilter {
 
     fn confirm(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
-            Series::fill(1.0, self.period).into(),
-            Series::fill(1.0, self.period).into(),
+            Series::one(self.period).into(),
+            Series::one(self.period).into(),
         )
     }
 }

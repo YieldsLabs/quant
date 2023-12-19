@@ -32,10 +32,12 @@ impl Signal for SNATRSignal {
             self.atr_period,
             self.atr_smoothing_period,
         );
+        let upper_barrier = SNATR_UPPER_BARRIER - self.threshold;
+        let lower_barrier = SNATR_LOWER_BARRIER + self.threshold;
 
         (
-            snatr.cross_under(&(SNATR_UPPER_BARRIER - self.threshold)),
-            snatr.cross_over(&(SNATR_LOWER_BARRIER + self.threshold)),
+            snatr.cross_under(&upper_barrier),
+            snatr.cross_over(&lower_barrier),
         )
     }
 }

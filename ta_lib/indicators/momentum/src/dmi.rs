@@ -1,5 +1,8 @@
 use core::{iff, Comparator, Series};
 
+const ZERO: f32 = 0.0;
+const ONEH: f32 = 100.0;
+
 pub fn dmi(
     high: &Series<f32>,
     low: &Series<f32>,
@@ -12,17 +15,17 @@ pub fn dmi(
 
     let zero = Series::zero(high.len());
 
-    let dm_plus = iff!(up.sgt(&down) & up.sgt(&0.0), up, zero);
-    let dm_minus = iff!(down.sgt(&up) & down.sgt(&0.0), down, zero);
+    let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
+    let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
 
-    let di_plus = 100.0 * dm_plus.smma(di_period) / atr;
-    let di_minus = 100.0 * dm_minus.smma(di_period) / atr;
+    let di_plus = ONEH * dm_plus.smma(di_period) / atr;
+    let di_minus = ONEH * dm_minus.smma(di_period) / atr;
 
     let sum = &di_plus + &di_minus;
     let one = Series::fill(1.0, high.len());
 
     let adx =
-        100.0 * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&0.0), one, sum)).smma(adx_period);
+        ONEH * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum)).smma(adx_period);
 
     (adx, di_plus, di_minus)
 }

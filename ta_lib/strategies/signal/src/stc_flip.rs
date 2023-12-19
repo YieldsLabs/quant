@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Comparator, Cross, Series};
+use core::{Cross, Series};
 use momentum::stc;
 
 const LOWER_LINE: f32 = 25.0;

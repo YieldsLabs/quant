@@ -1,12 +1,14 @@
 use core::{Comparator, Series};
 
+const ZERO: f32 = 0.0;
+
 pub fn mfi(hlc3: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f32> {
     let changes = hlc3.change(1);
 
     let volume_hlc3 = volume * hlc3;
 
-    let positive_volume = changes.sgt(&0.0) * &volume_hlc3;
-    let negative_volume = changes.slt(&0.0) * &volume_hlc3;
+    let positive_volume = changes.sgt(&ZERO) * &volume_hlc3;
+    let negative_volume = changes.slt(&ZERO) * &volume_hlc3;
 
     let upper = positive_volume.sum(period);
     let lower = negative_volume.sum(period);

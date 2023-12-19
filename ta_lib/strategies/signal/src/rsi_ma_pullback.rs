@@ -30,19 +30,20 @@ impl Signal for RSIMaPullbackSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
         let rsi_ma = rsi.ma(self.smoothing_period);
+        let upper_neutrality = RSI_NEUTRALITY + self.threshold;
+        let lower_neutrality = RSI_NEUTRALITY - self.threshold;
 
-        let long = rsi.sgt(&rsi_ma)
-            & rsi.slt(&(RSI_NEUTRALITY + self.threshold))
-            & rsi.shift(1).seq(&rsi_ma.shift(1))
-            & rsi.shift(2).sgt(&rsi.shift(1))
-            & rsi.shift(3).slt(&rsi_ma.shift(3));
-
-        let short = rsi.slt(&rsi_ma)
-            & rsi.sgt(&(RSI_NEUTRALITY - self.threshold))
-            & rsi.shift(1).seq(&rsi_ma.shift(1))
-            & rsi.shift(2).slt(&rsi.shift(1))
-            & rsi.shift(3).sgt(&rsi_ma.shift(3));
-
-        (long, short)
+        (
+            rsi.sgt(&rsi_ma)
+                & rsi.slt(&upper_neutrality)
+                & rsi.shift(1).seq(&rsi_ma.shift(1))
+                & rsi.shift(2).sgt(&rsi.shift(1))
+                & rsi.shift(3).slt(&rsi_ma.shift(3)),
+            rsi.slt(&rsi_ma)
+                & rsi.sgt(&lower_neutrality)
+                & rsi.shift(1).seq(&rsi_ma.shift(1))
+                & rsi.shift(2).slt(&rsi.shift(1))
+                & rsi.shift(3).sgt(&rsi_ma.shift(3)),
+        )
     }
 }

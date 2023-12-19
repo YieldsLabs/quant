@@ -27,11 +27,9 @@ impl Signal for TIIVSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tii = tii(&data.close, self.major_period, self.minor_period);
 
-        let long_signal =
-            tii.sgt(&TII_ZERO) & tii.shift(1).seq(&TII_ZERO) & tii.shift(2).sgt(&TII_ZERO);
-        let short_signal =
-            tii.slt(&TII_ONEH) & tii.shift(1).seq(&TII_ONEH) & tii.shift(2).slt(&TII_ONEH);
-
-        (long_signal, short_signal)
+        (
+            tii.sgt(&TII_ZERO) & tii.shift(1).seq(&TII_ZERO) & tii.shift(2).sgt(&TII_ZERO),
+            tii.slt(&TII_ONEH) & tii.shift(1).seq(&TII_ONEH) & tii.shift(2).slt(&TII_ONEH),
+        )
     }
 }

@@ -1,15 +1,18 @@
 use core::{iff, Comparator, Extremum, Series};
 
+const ZERO: f32 = 0.0;
+const ONEH: f32 = 100.0;
+
 pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
 
     let mom = source.change(1);
-    let up = mom.max(0.0).smma(period);
-    let down = mom.min(0.0).neg().smma(period);
+    let up = mom.max(ZERO).smma(period);
+    let down = mom.min(ZERO).neg().smma(period);
 
-    let oneh = Series::fill(100.0, len);
+    let oneh = Series::fill(ONEH, len);
 
-    iff!(down.seq(&0.0), oneh, 100.0 - (100.0 / (1.0 + up / down)))
+    iff!(down.seq(&ZERO), oneh, ONEH - (ONEH / (1.0 + up / down)))
 }
 
 #[cfg(test)]

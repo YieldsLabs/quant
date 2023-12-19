@@ -27,10 +27,9 @@ impl Filter for TIIFilter {
 
     fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tii = tii(&data.close, self.major_period, self.minor_period);
+        let upper_neutrality = TII_NEUTRALITY + self.threshold;
+        let lower_neutrality = TII_NEUTRALITY - self.threshold;
 
-        (
-            tii.sge(&(TII_NEUTRALITY + self.threshold)),
-            tii.sle(&(TII_NEUTRALITY - self.threshold)),
-        )
+        (tii.sge(&upper_neutrality), tii.sle(&lower_neutrality))
     }
 }

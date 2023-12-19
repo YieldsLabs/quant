@@ -140,7 +140,11 @@ impl Series<f32> {
     }
 
     pub fn zero(len: usize) -> Series<f32> {
-        Series::empty(len).nz(Some(0.0))
+        Series::fill(0.0, len)
+    }
+
+    pub fn one(len: usize) -> Series<f32> {
+        Series::fill(1.0, len)
     }
 
     pub fn change(&self, length: usize) -> Self {

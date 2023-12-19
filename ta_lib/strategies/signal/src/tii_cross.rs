@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Comparator, Cross, Series};
+use core::{Cross, Series};
 use momentum::tii;
 
 const TII_UPPER_BARRIER: f32 = 60.0;
@@ -28,10 +28,12 @@ impl Signal for TIICrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tii = tii(&data.close, self.major_period, self.minor_period);
+        let upper_barrier = TII_UPPER_BARRIER + self.threshold;
+        let lower_barrier = TII_LOWER_BARRIER - self.threshold;
 
         (
-            tii.cross_over(&(TII_UPPER_BARRIER + self.threshold)),
-            tii.cross_under(&(TII_LOWER_BARRIER - self.threshold)),
+            tii.cross_over(&upper_barrier),
+            tii.cross_under(&lower_barrier),
         )
     }
 }

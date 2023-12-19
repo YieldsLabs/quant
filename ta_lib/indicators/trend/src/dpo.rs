@@ -2,6 +2,7 @@ use core::Series;
 
 pub fn dpo(source: &Series<f32>, period: usize) -> Series<f32> {
     let k = (period as f32 / 2.0 + 1.0) as usize;
+
     source - source.ma(period).shift(k)
 }
 
