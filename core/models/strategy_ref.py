@@ -67,7 +67,7 @@ class StrategyRef:
             timeframe,
             strategy,
             SignalSide.BUY
-            if action in (Action.GO_LONG, Action.EXIT_LONG)
+            if action in (Action.GO_LONG, Action.EXIT_SHORT)
             else SignalSide.SELL,
         )
 
