@@ -6,17 +6,11 @@ impl Series<f32> {
     }
 
     pub fn log(&self) -> Self {
-        self.fmap(|val| match val {
-            Some(v) if *v > 0.0 => Some(v.ln()),
-            _ => None,
-        })
+        self.fmap(|val| val.filter(|&v| v > &0.0).map(|v| v.ln()))
     }
 
     pub fn log10(&self) -> Self {
-        self.fmap(|val| match val {
-            Some(v) if *v > 0.0 => Some(v.log10()),
-            _ => None,
-        })
+        self.fmap(|val| val.filter(|&v| v > &0.0).map(|v| v.log10()))
     }
 
     pub fn exp(&self) -> Self {
@@ -32,11 +26,11 @@ impl Series<f32> {
     }
 
     pub fn sqrt(&self) -> Self {
-        self.fmap(|val| val.filter(|&v| *v >= 0.0).map(|v| v.sqrt()))
+        self.fmap(|val| val.filter(|&v| v >= &0.0).map(|v| v.sqrt()))
     }
 
     pub fn round(&self, places: usize) -> Self {
-        let multiplier = 10f32.powi(places as i32);
+        let multiplier = 10.0_f32.powi(places as i32);
         self.fmap(|val| val.map(|v| (v * multiplier).round() / multiplier))
     }
 
