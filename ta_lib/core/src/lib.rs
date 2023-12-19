@@ -1,4 +1,4 @@
-mod bool;
+mod cmp;
 mod cross;
 mod extremum;
 mod macros;

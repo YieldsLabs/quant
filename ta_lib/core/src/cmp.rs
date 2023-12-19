@@ -1,6 +1,5 @@
 use crate::series::Series;
 use crate::traits::Comparator;
-use std::ops::{BitAnd, BitOr};
 
 impl Comparator<f32> for Series<f32> {
     type Output = Series<bool>;
@@ -77,34 +76,6 @@ impl Comparator<Series<f32>> for Series<f32> {
 
     fn sle(&self, rhs: &Series<f32>) -> Self::Output {
         self.compare(rhs, |a, b| a <= b)
-    }
-}
-
-impl Series<bool> {
-    fn logical_op<F>(&self, rhs: &Series<bool>, operation: F) -> Series<bool>
-    where
-        F: Fn(bool, bool) -> bool,
-    {
-        self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(operation(*a_val, *b_val)),
-            _ => None,
-        })
-    }
-}
-
-impl BitAnd for Series<bool> {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        self.logical_op(&rhs, |a, b| a & b)
-    }
-}
-
-impl BitOr for Series<bool> {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        self.logical_op(&rhs, |a, b| a | b)
     }
 }
 
