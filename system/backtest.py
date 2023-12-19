@@ -201,8 +201,6 @@ class BacktestSystem(AbstractSystem):
         self.active_strategy = set(strategies)
 
         await self.dispatch(DeployStrategy(type=self.context.strategy_type))
-        await asyncio.sleep(self.config["reevaluate_timeout"])
-        await self.event_queue.put(Event.REGENERATE)
 
     async def _generate_batch(self, data):
         batch = []
