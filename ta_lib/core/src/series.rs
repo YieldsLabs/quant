@@ -24,7 +24,7 @@ impl<T: Clone> Series<T> {
         let data = self
             .data
             .iter()
-            .zip(&other.data)
+            .zip(other.data.iter())
             .map(|(x, y)| f(x.as_ref(), y.as_ref()))
             .collect();
 
