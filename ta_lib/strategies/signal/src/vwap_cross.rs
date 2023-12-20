@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use volume::vwap;
 
 pub struct VWAPCrossSignal {
