@@ -1,6 +1,6 @@
 use crate::OHLCVSeries;
 use core::prelude::*;
-use price::{average_price, median_price, typical_price, wcl};
+use price::prelude::*;
 use volatility::atr;
 
 pub trait Price {

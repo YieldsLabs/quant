@@ -3,7 +3,11 @@ mod median;
 mod typical;
 mod wcl;
 
-pub use average::average_price;
-pub use median::median_price;
-pub use typical::typical_price;
-pub use wcl::wcl;
+pub mod prelude {
+    pub use crate::average::average_price;
+    pub use crate::median::median_price;
+    pub use crate::typical::typical_price;
+    pub use crate::wcl::wcl;
+}
+
+pub use prelude::*;

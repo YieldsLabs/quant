@@ -48,7 +48,7 @@ pub fn supertrend(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use price::median_price;
+    use price::prelude::*;
     use volatility::atr;
 
     #[test]

@@ -7,7 +7,7 @@ pub fn ao(hl2: &Series<f32>, short_period: usize, long_period: usize) -> Series<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use price::median_price;
+    use price::prelude::*;
 
     #[test]
     fn test_ao() {

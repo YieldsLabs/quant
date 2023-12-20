@@ -14,7 +14,7 @@ pub fn eom(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use price::median_price;
+    use price::prelude::*;
 
     #[test]
     fn test_eom() {

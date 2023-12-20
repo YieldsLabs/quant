@@ -19,7 +19,7 @@ pub fn kch(
 mod tests {
     use super::*;
     use crate::atr;
-    use price::typical_price;
+    use price::prelude::*;
 
     #[test]
     fn test_kch() {

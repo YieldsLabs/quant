@@ -7,7 +7,7 @@ pub fn cci(hlc3: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use price::typical_price;
+    use price::prelude::*;
 
     #[test]
     fn test_cci() {
