@@ -17,6 +17,7 @@ path = "indicators.rs"
 [dependencies]
 core = { path = "../core" }
 momentum = { path = "../indicators/momentum" }
+price = { path = "../price" }
 
 [dev-dependencies]
 criterion = { version = "0.5" }
