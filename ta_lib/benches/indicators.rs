@@ -1,6 +1,6 @@
 use core::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
-use momentum::{ao, apo, rsi, stc};
+use momentum::{ao, apo, rsi, stc, trix};
 use price::prelude::*;
 
 fn momentum(c: &mut Criterion) {
@@ -96,6 +96,22 @@ fn momentum(c: &mut Criterion) {
                     *d_second,
                 )
             },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("trix", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from([
+                    6.6430, 6.8595, 6.8680, 6.8650, 6.8445, 6.8560, 6.8565, 6.8590, 6.8530, 6.8575,
+                    6.855, 6.858, 6.86, 6.8480, 6.8575, 6.864, 6.8565, 6.8455, 6.8450, 6.8365,
+                    6.8310, 6.8355, 6.8360, 6.8345, 6.8285, 6.8395,
+                ]);
+                let period = 18;
+                (source, period)
+            },
+            |(source, period)| trix(source, *period),
             criterion::BatchSize::SmallInput,
         )
     });

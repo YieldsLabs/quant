@@ -186,7 +186,7 @@ impl From<Series<f32>> for Vec<f32> {
 
 impl From<Series<bool>> for Vec<bool> {
     fn from(val: Series<bool>) -> Self {
-        val.data.into_iter().map(|x| x.unwrap_or(false)).collect()
+        val.into_iter().map(|x| x.unwrap_or(false)).collect()
     }
 }
 
