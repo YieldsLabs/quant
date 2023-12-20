@@ -108,7 +108,12 @@ class Position:
             object.__setattr__(
                 self,
                 "take_profit_price",
-                self.take_profit_strategy.next(self.entry_price, self.stop_loss_price),
+                round(
+                    self.take_profit_strategy.next(
+                        self.entry_price, self.stop_loss_price
+                    ),
+                    self.signal.symbol.price_precision,
+                ),
             )
 
     def to_dict(self):
