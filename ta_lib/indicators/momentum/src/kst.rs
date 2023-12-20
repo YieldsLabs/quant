@@ -1,5 +1,5 @@
 use crate::roc;
-use core::Series;
+use core::prelude::*;
 
 pub fn kst(
     source: &Series<f32>,

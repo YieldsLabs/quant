@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use volatility::snatr;
 
 const SNATR_UPPER_BARRIER: f32 = 0.8;

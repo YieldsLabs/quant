@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Comparator, Series};
+use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct QuadrupleSignal {

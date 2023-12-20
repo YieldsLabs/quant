@@ -1,5 +1,5 @@
 use base::OHLCVSeries;
-use core::Series;
+use core::prelude::*;
 use momentum::rsi;
 
 pub enum RSIType {

@@ -8,5 +8,10 @@ mod series;
 mod smoothing;
 mod traits;
 
-pub use series::Series;
-pub use traits::*;
+pub mod prelude {
+    pub use crate::iff;
+    pub use crate::series::Series;
+    pub use crate::traits::*;
+}
+
+pub use prelude::*;

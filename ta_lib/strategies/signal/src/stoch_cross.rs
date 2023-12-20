@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Comparator, Cross, Series};
+use core::prelude::*;
 use shared::{stoch_indicator, StochType};
 
 const LOWER_LINE: f32 = 20.0;

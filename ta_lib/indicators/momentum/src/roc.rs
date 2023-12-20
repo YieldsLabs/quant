@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn roc(source: &Series<f32>, period: usize) -> Series<f32> {
     100.0 * source.change(period) / source.shift(period)

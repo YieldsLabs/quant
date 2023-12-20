@@ -1,4 +1,4 @@
-use core::{iff, Comparator, Series};
+use core::prelude::*;
 
 pub fn cmf(
     high: &Series<f32>,

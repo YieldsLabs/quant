@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn vo(source: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
     let vo_short = source.ema(short_period);

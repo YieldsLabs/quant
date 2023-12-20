@@ -1,12 +1,11 @@
-use core::Series;
-use std::f32::consts::PI;
+use core::prelude::*;
 
 pub fn sinwma(source: &Series<f32>, period: usize) -> Series<f32> {
     let mut sum = Series::zero(source.len());
     let mut norm = 0.0;
 
     for i in 0..period {
-        let weight = ((i + 1) as f32 / period as f32 * (PI / 2.0)).sin();
+        let weight = ((i + 1) as f32 / period as f32 * (std::f32::consts::PI / 2.0)).sin();
 
         norm += weight;
         sum = sum + source.shift(period - i - 1) * weight;

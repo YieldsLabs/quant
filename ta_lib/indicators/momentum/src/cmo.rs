@@ -1,4 +1,4 @@
-use core::{iff, Comparator, Series};
+use core::prelude::*;
 
 pub fn cmo(close: &Series<f32>, period: usize) -> Series<f32> {
     let mom = close.change(1);

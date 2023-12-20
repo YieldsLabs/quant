@@ -1,4 +1,4 @@
-use core::{iff, Comparator, Extremum, Series};
+use core::prelude::*;
 
 pub fn ce(
     high: &Series<f32>,

@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries, Price};
-use core::{Comparator, Series};
+use core::prelude::*;
 use trend::supertrend;
 
 const SUP_ZERO: f32 = 0.0;

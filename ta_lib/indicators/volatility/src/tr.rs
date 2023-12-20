@@ -1,4 +1,4 @@
-use core::{iff, Extremum, Series};
+use core::prelude::*;
 
 pub fn tr(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
     let prev_close = close.shift(1);

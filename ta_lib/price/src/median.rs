@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn median_price(high: &Series<f32>, low: &Series<f32>) -> Series<f32> {
     (high + low) / 2.0

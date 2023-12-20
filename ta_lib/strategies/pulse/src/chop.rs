@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Pulse};
-use core::{Comparator, Series};
+use core::prelude::*;
 use trend::chop;
 
 const CHOP_TREND: f32 = 50.0;

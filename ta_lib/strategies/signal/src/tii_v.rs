@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Comparator, Series};
+use core::prelude::*;
 use momentum::tii;
 
 const TII_ZERO: f32 = 0.0;

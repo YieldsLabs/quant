@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use momentum::tsi;
 
 pub struct TSICrossSignal {

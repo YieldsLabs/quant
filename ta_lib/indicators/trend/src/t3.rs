@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn t3(source: &Series<f32>, period: usize) -> Series<f32> {
     let alpha = 0.618;

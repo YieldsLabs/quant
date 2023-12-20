@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries};
-use core::{Cross, Series};
+use core::prelude::*;
 use shared::{rsi_indicator, RSIType};
 
 const RSI_OVERBOUGHT: f32 = 70.0;

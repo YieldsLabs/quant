@@ -1,5 +1,5 @@
 use crate::OHLCVSeries;
-use core::Series;
+use core::prelude::*;
 use price::{average_price, median_price, typical_price, wcl};
 use volatility::atr;
 

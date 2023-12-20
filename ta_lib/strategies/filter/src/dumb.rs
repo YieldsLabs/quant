@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::Series;
+use core::prelude::*;
 
 pub struct DumbFilter {
     period: usize,

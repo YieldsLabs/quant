@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::Series;
+use core::prelude::*;
 use shared::{trend_candle_indicator, TrendCandleType};
 
 const DEFAULT_LOOKBACK: usize = 13;

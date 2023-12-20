@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use trend::qstick;
 
 const ZERO_LINE: f32 = 0.0;

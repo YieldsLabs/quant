@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn alma(source: &Series<f32>, period: usize, offset: f32, sigma: f32) -> Series<f32> {
     let m = offset * (period as f32 - 1.0);

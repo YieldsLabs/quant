@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn tema(source: &Series<f32>, period: usize) -> Series<f32> {
     let ema1 = source.ema(period);

@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Comparator, Cross, Series};
+use core::prelude::*;
 use shared::{ma_indicator, rsi_indicator, MovingAverageType, RSIType};
 
 const RSI_UPPER_BARRIER: f32 = 85.0;

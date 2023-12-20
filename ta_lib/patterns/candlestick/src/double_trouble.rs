@@ -1,4 +1,4 @@
-use core::{Comparator, Series};
+use core::prelude::*;
 use volatility::atr;
 
 pub fn bullish(

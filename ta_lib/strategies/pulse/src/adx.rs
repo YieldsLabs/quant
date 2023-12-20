@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Pulse};
-use core::{Comparator, Series};
+use core::prelude::*;
 use momentum::dmi;
 
 const ADX_TREND: f32 = 25.0;

@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries};
-use core::{Comparator, Series};
+use core::prelude::*;
 
 pub struct HighLowExit {
     period: usize,

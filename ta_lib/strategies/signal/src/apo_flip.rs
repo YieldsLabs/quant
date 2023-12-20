@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use momentum::apo;
 
 const APO_ZERO: f32 = 0.0;

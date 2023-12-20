@@ -1,4 +1,4 @@
-use core::{iff, Comparator, Extremum, Series};
+use core::prelude::*;
 
 const ZERO: f32 = 0.0;
 const ONEH: f32 = 100.0;

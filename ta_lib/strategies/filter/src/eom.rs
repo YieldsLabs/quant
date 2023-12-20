@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries, Price};
-use core::{Comparator, Series};
+use core::prelude::*;
 use volume::eom;
 
 const EOM_FILTER: f32 = 0.0;

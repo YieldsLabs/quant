@@ -1,4 +1,4 @@
-use core::{Comparator, Extremum, Series};
+use core::prelude::*;
 
 pub fn bullish(
     open: &Series<f32>,

@@ -1,5 +1,5 @@
 use base::{BaseLine, OHLCVSeries};
-use core::{Comparator, Series};
+use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct MABaseLine {

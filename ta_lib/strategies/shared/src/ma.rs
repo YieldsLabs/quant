@@ -1,5 +1,5 @@
 use base::OHLCVSeries;
-use core::Series;
+use core::prelude::*;
 use trend::{
     alma, dema, ema, frama, gma, hma, kama, kijun, lsma, md, rmsma, sinwma, sma, smma, t3, tema,
     tma, vwma, wma, zlema, zlsma,

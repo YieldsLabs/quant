@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries};
-use core::Series;
+use core::prelude::*;
 
 pub struct DumbExit {}
 

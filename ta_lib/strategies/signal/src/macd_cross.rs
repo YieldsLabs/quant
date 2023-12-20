@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use shared::{macd_indicator, MACDType};
 
 pub struct MACDCrossSignal {

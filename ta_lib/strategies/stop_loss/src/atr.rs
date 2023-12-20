@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, StopLoss};
-use core::Series;
+use core::prelude::*;
 
 pub struct ATRStopLoss {
     pub period: usize,

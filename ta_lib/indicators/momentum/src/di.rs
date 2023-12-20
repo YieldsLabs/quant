@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn di(source: &Series<f32>, period: usize, smoothing: Option<&str>) -> Series<f32> {
     let ma = match smoothing {

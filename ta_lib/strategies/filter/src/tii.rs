@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::{Comparator, Series};
+use core::prelude::*;
 use momentum::tii;
 
 const TII_NEUTRALITY: f32 = 50.0;

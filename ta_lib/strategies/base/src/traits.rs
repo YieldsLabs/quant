@@ -1,5 +1,5 @@
 use crate::{OHLCVSeries, StopLossLevels, TradeAction, OHLCV};
-use core::Series;
+use core::prelude::*;
 
 pub trait Signal: Send + Sync {
     fn lookback(&self) -> usize;

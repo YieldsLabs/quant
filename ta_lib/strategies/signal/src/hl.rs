@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Comparator, Series};
+use core::prelude::*;
 
 pub struct HighLowSignal {
     period: usize,

@@ -1,5 +1,4 @@
-use core::iff;
-use core::Series;
+use core::prelude::*;
 
 pub fn kama(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();

@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Price, Signal};
-use core::{Comparator, Series};
+use core::prelude::*;
 use momentum::ao;
 
 const AO_ZERO: f32 = 0.0;

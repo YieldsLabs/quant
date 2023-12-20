@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::{Comparator, Series};
+use core::prelude::*;
 use shared::{macd_indicator, MACDType};
 
 const MACD_ZERO: f32 = 0.0;

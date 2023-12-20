@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 use std::collections::VecDeque;
 
 #[derive(Debug, Copy, Clone)]

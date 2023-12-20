@@ -1,4 +1,4 @@
-use core::{Comparator, Series};
+use core::prelude::*;
 
 const ZERO: f32 = 0.0;
 

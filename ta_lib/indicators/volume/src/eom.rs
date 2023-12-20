@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn eom(
     hl2: &Series<f32>,

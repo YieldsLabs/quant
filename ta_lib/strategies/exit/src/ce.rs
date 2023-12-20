@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries, Price};
-use core::{Comparator, Cross, Series};
+use core::prelude::*;
 use trend::ce;
 
 const CE_MIDDLE: f32 = 0.0;

@@ -1,6 +1,6 @@
 use base::{Exit, OHLCVSeries};
 use candlestick::{doji, engulfing};
-use core::Series;
+use core::prelude::*;
 
 pub struct PatternExit {
     period: usize,

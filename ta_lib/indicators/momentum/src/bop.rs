@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn bop(
     open: &Series<f32>,

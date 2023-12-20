@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use shared::{macd_indicator, MACDType};
 
 const ZERO_LINE: f32 = 0.0;

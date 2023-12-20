@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn wma(source: &Series<f32>, period: usize) -> Series<f32> {
     source.wma(period)

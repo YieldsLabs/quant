@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn vwma(source: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f32> {
     (source * volume).ma(period) / volume.ma(period)

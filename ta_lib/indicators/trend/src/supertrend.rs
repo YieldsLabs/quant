@@ -1,4 +1,4 @@
-use core::{iff, Comparator, Extremum, Series};
+use core::prelude::*;
 
 pub fn supertrend(
     hl2: &Series<f32>,

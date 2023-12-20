@@ -1,4 +1,4 @@
-use core::{Extremum, Series};
+use core::prelude::*;
 
 const ZERO: f32 = 0.0;
 

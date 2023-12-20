@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn tsi(source: &Series<f32>, long_period: usize, short_period: usize) -> Series<f32> {
     let pc = source.change(1);

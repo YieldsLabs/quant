@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Signal};
-use core::{Cross, Series};
+use core::prelude::*;
 use momentum::tii;
 
 const TII_UPPER_BARRIER: f32 = 60.0;

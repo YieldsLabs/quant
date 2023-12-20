@@ -1,4 +1,4 @@
-use core::{iff, Series};
+use core::prelude::*;
 
 pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();

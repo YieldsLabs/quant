@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn dch(
     high: &Series<f32>,

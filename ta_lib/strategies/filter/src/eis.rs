@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::{Comparator, Series};
+use core::prelude::*;
 use shared::{macd_indicator, MACDType};
 
 pub struct EISFilter {

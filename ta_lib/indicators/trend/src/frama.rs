@@ -1,4 +1,4 @@
-use core::{iff, Extremum, Series};
+use core::prelude::*;
 
 pub fn frama(
     high: &Series<f32>,

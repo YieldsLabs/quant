@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn wcl(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
     (high + low + (close * 2.0)) / 4.0

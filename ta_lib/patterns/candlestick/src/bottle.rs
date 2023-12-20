@@ -1,4 +1,4 @@
-use core::{Comparator, Series};
+use core::prelude::*;
 
 pub fn bullish(open: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     close.shift(2).sgt(&open.shift(2))

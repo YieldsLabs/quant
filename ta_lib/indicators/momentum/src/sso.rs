@@ -1,5 +1,5 @@
 use crate::stoch;
-use core::Series;
+use core::prelude::*;
 
 pub fn sso(
     high: &Series<f32>,

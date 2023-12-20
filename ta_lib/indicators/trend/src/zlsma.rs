@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn zlsma(source: &Series<f32>, period: usize) -> Series<f32> {
     let lsma1 = source.linreg(period);

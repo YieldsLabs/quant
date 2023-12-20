@@ -1,5 +1,5 @@
 use base::{Filter, OHLCVSeries};
-use core::{Comparator, Series};
+use core::prelude::*;
 use trend::dpo;
 
 const DPO_FILTER: f32 = 0.0;

@@ -1,5 +1,5 @@
 use base::{OHLCVSeries, Pulse};
-use core::{Comparator, Series};
+use core::prelude::*;
 use volume::vo;
 
 const VO_THRESHOLD: f32 = 0.0;

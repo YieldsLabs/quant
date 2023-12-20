@@ -1,5 +1,5 @@
 use base::{Exit, OHLCVSeries};
-use core::{Cross, Series};
+use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct MAExit {

@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn zlema(source: &Series<f32>, period: usize) -> Series<f32> {
     let lag = ((period as f32 - 1.0) / 2.0).round() as usize;

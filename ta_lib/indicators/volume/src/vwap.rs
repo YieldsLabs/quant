@@ -1,9 +1,7 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn vwap(hlc3: &Series<f32>, volume: &Series<f32>) -> Series<f32> {
-    let product = hlc3 * volume;
-
-    product.cumsum() / volume.cumsum()
+    (hlc3 * volume).cumsum() / volume.cumsum()
 }
 
 #[cfg(test)]

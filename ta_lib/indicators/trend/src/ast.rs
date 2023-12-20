@@ -1,4 +1,4 @@
-use core::{iff, Comparator, Extremum, Series};
+use core::prelude::*;
 
 pub fn ast(close: &Series<f32>, atr: &Series<f32>, factor: f32) -> (Series<f32>, Series<f32>) {
     let atr_multi = atr * factor;

@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn gma(source: &Series<f32>, period: usize) -> Series<f32> {
     source.log().ma(period).exp()

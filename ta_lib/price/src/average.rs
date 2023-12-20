@@ -1,4 +1,4 @@
-use core::Series;
+use core::prelude::*;
 
 pub fn average_price(
     open: &Series<f32>,
