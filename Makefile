@@ -7,12 +7,15 @@ TA_LIB_PATH := $(TA_LIB_DIR)/Cargo.toml
 test:
 	cargo test --manifest-path=$(TA_LIB_PATH)
 
+bench:
+	cargo bench --manifest-path=$(TA_LIB_PATH) --package benches
+
 check:
 	cargo clippy --all-features --all-targets --workspace --manifest-path=$(TA_LIB_PATH)
 	cargo fmt --all --check --manifest-path=$(TA_LIB_PATH)
 
 build:
-	RUSTFLAGS="-C target-feature=+multivalue -C link-arg=-s" cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
+	RUSTFLAGS="-C target-feature=+multivalue,+simd128 -C link-arg=-s" cargo build --release --manifest-path=$(TA_LIB_PATH) --package trend_follow --target wasm32-wasi
 	cp $(TA_LIB_DIR)/target/wasm32-wasi/release/trend_follow.wasm $(WASM_DIR)/trend_follow.wasm
 
 run:

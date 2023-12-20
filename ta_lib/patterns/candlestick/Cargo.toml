@@ -1,7 +1,13 @@
 [package]
 name = "candlestick"
-version = "0.1.0"
-edition = "2021"
+resolver = "2"
+
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dependencies]
 core = { path = "../../core" }

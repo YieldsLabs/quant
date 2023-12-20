@@ -1,5 +1,5 @@
 [package]
-name = "price"
+name = "benches"
 resolver = "2"
 
 authors.workspace = true
@@ -9,5 +9,14 @@ license.workspace = true
 readme.workspace = true
 repository.workspace = true
 
+[[bench]]
+name = "indicators"
+harness = false
+path = "indicators.rs"
+
 [dependencies]
 core = { path = "../core" }
+momentum = { path = "../indicators/momentum" }
+
+[dev-dependencies]
+criterion = { version = "0.5" }

@@ -2,6 +2,7 @@
 resolver = "2"
 
 members = [
+"benches",
 "core",
 "indicators/momentum",
 "indicators/trend",
@@ -16,8 +17,16 @@ members = [
 "strategies/filter",
 "strategies/shared",
 "strategies/pulse",
-"strategies/baseline"
+"strategies/baseline",
 ]
+
+[workspace.package]
+authors = ["Melnik <siarhei_melnik@proton.me>"]
+edition = "2021"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/anoma/namada"
+version = "0.1.0"
 
 [profile.release]
 opt-level = 'z'
