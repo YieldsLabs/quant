@@ -2,9 +2,9 @@ use core::prelude::*;
 
 const ZERO: f32 = 0.0;
 
-pub fn cmo(close: &Series<f32>, period: usize) -> Series<f32> {
-    let mom = close.change(1);
-    let zero = Series::zero(close.len());
+pub fn cmo(source: &Series<f32>, period: usize) -> Series<f32> {
+    let mom = source.change(1);
+    let zero = Series::zero(source.len());
 
     let hcls = iff!(mom.sge(&ZERO), mom, zero);
     let lcls = iff!(mom.sle(&ZERO), mom.neg(), zero);
