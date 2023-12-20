@@ -1,4 +1,4 @@
-use base::Pulse;
+use base::prelude::*;
 use pulse::*;
 use serde::Deserialize;
 
