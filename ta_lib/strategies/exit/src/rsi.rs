@@ -1,4 +1,4 @@
-use base::{Exit, OHLCVSeries};
+use base::prelude::*;
 use core::prelude::*;
 use shared::{rsi_indicator, RSIType};
 

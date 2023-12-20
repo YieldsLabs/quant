@@ -1,4 +1,4 @@
-use base::{OHLCVSeries, Price, Pulse};
+use base::prelude::*;
 use core::prelude::*;
 use trend::chop;
 

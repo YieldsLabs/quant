@@ -2,7 +2,7 @@ use crate::ma_mapper::map_to_ma;
 use crate::macd_mapper::map_to_macd;
 use crate::rsi_mapper::map_to_rsi;
 use crate::stoch_mapper::map_to_stoch;
-use base::Filter;
+use base::prelude::*;
 use filter::*;
 use serde::Deserialize;
 

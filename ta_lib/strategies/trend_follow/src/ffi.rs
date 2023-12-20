@@ -4,7 +4,7 @@ use crate::filter_mapper::{map_to_filter, FilterConfig};
 use crate::pulse_mapper::{map_to_pulse, PulseConfig};
 use crate::signal_mapper::{map_to_signal, SignalConfig};
 use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
-use base::register_strategy;
+use base::prelude::*;
 
 fn read_from_memory(ptr: *const u8, len: usize) -> &'static [u8] {
     unsafe { std::slice::from_raw_parts(ptr, len) }

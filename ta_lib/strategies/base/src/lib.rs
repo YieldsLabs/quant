@@ -6,8 +6,12 @@ mod price;
 mod strategy;
 mod traits;
 
-pub use ffi::*;
-pub use model::{OHLCVSeries, OHLCV};
-pub use price::*;
-pub use strategy::{BaseStrategy, StopLossLevels, TradeAction};
-pub use traits::*;
+pub mod prelude {
+    pub use crate::ffi::*;
+    pub use crate::model::{OHLCVSeries, OHLCV};
+    pub use crate::price::*;
+    pub use crate::strategy::{BaseStrategy, StopLossLevels, TradeAction};
+    pub use crate::traits::*;
+}
+
+pub use prelude::*;

@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries, Price};
+use base::prelude::*;
 use core::prelude::*;
 use volume::eom;
 

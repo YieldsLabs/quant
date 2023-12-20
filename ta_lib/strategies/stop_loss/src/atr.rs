@@ -1,4 +1,4 @@
-use base::{OHLCVSeries, Price, StopLoss};
+use base::prelude::*;
 use core::prelude::*;
 
 pub struct ATRStopLoss {

@@ -1,5 +1,5 @@
 use crate::ma_mapper::map_to_ma;
-use base::BaseLine;
+use base::prelude::*;
 use baseline::*;
 use serde::Deserialize;
 

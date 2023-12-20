@@ -1,4 +1,4 @@
-use base::{Exit, OHLCVSeries, Price};
+use base::prelude::*;
 use core::prelude::*;
 use trend::ce;
 

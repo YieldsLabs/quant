@@ -1,4 +1,4 @@
-use base::{OHLCVSeries, Price, Signal};
+use base::prelude::*;
 use core::prelude::*;
 use momentum::dmi;
 

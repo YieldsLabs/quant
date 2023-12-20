@@ -1,4 +1,4 @@
-use base::{OHLCVSeries, Pulse};
+use base::prelude::*;
 use core::prelude::*;
 use volume::vo;
 

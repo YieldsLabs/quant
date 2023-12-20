@@ -1,4 +1,4 @@
-use base::{Filter, OHLCVSeries};
+use base::prelude::*;
 use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 

@@ -1,6 +1,6 @@
 use crate::ma_mapper::map_to_ma;
 use crate::rsi_mapper::map_to_rsi;
-use base::Exit;
+use base::prelude::*;
 use exit::*;
 use serde::Deserialize;
 

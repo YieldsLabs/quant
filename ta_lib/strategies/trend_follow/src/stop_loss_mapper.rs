@@ -1,4 +1,4 @@
-use base::StopLoss;
+use base::prelude::*;
 use serde::Deserialize;
 use stop_loss::ATRStopLoss;
 

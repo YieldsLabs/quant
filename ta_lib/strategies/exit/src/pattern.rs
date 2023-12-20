@@ -1,4 +1,4 @@
-use base::{Exit, OHLCVSeries};
+use base::prelude::*;
 use candlestick::{doji, engulfing};
 use core::prelude::*;
 

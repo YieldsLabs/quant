@@ -1,5 +1,5 @@
-use base::{OHLCVSeries, Pulse};
-use core::Series;
+use base::prelude::*;
+use core::prelude::*;
 
 pub struct DumbPulse {
     period: usize,
