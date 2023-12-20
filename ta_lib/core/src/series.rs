@@ -1,9 +1,37 @@
-use std::iter::repeat;
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone)]
 pub struct Series<T> {
     data: Vec<Option<T>>,
+}
+
+impl<T> IntoIterator for Series<T> {
+    type Item = Option<T>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
+    }
+}
+
+impl<T: PartialEq> PartialEq for Series<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
+
+impl<T> Index<usize> for Series<T> {
+    type Output = Option<T>;
+
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.data[idx]
+    }
+}
+
+impl<T> IndexMut<usize> for Series<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
+    }
 }
 
 impl<T: Clone> Series<T> {
@@ -65,7 +93,7 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn shift(&self, n: usize) -> Self {
-        let data = repeat(None)
+        let data = std::iter::repeat(None)
             .take(n)
             .chain(self.data.iter().take(self.len() - n).cloned())
             .collect();
@@ -78,35 +106,6 @@ impl<T: Clone> Series<T> {
     }
 }
 
-impl<T> Index<usize> for Series<T> {
-    type Output = Option<T>;
-
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.data[idx]
-    }
-}
-
-impl<T> IndexMut<usize> for Series<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.data[index]
-    }
-}
-
-impl<T> IntoIterator for Series<T> {
-    type Item = Option<T>;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.data.into_iter()
-    }
-}
-
-impl<T: PartialEq> PartialEq for Series<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
-    }
-}
-
 impl Series<f32> {
     fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
     where
@@ -115,8 +114,7 @@ impl Series<f32> {
         self.sliding_map(period, |window, _, _| {
             window.iter().flatten().fold(None, |acc, x| match acc {
                 Some(acc_val) if comparison(x, &acc_val) => Some(*x),
-                Some(_) => acc,
-                None => Some(*x),
+                _ => acc,
             })
         })
     }
