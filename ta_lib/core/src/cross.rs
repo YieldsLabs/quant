@@ -1,7 +1,7 @@
 use crate::series::Series;
 use crate::traits::{Comparator, Cross};
 
-impl Cross<&f32> for Series<f32> {
+impl Cross<f32> for Series<f32> {
     type Output = Series<bool>;
 
     fn cross_over(&self, line: &f32) -> Self::Output {
@@ -17,7 +17,7 @@ impl Cross<&f32> for Series<f32> {
     }
 }
 
-impl Cross<&Series<f32>> for Series<f32> {
+impl Cross<Series<f32>> for Series<f32> {
     type Output = Series<bool>;
 
     fn cross_over(&self, rhs: &Series<f32>) -> Self::Output {
