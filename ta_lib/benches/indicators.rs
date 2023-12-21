@@ -1,10 +1,18 @@
 use core::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
-use momentum::{ao, apo, cc, cfo, rsi, stc, tii, trix, tsi};
+use momentum::{ao, apo, bop, cc, cci, cfo, cmo, di, macd, roc, rsi, stc, tii, trix, tsi};
 use price::prelude::*;
 
 fn momentum(c: &mut Criterion) {
     let mut group = c.benchmark_group("momentum");
+    let open: Vec<f32> = vec![
+        6.8430, 6.8660, 6.8635, 6.8610, 6.865, 6.8595, 6.8565, 6.852, 6.859, 6.86, 6.8580, 6.8605,
+        6.8620, 6.867, 6.859, 6.8670, 6.8640, 6.8575, 6.8485, 6.8350, 7.1195, 7.136, 7.1405, 7.112,
+        7.1095, 7.1520, 7.1310, 7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495, 7.1515, 7.1415,
+        7.1445, 7.1525, 7.1440, 7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135, 7.1280, 7.1220,
+        7.1330, 7.1225, 7.1180, 7.1250,
+    ];
+
     let high: Vec<f32> = vec![
         6.8430, 6.8660, 6.8685, 6.8690, 6.865, 6.8595, 6.8565, 6.862, 6.859, 6.86, 6.8580, 6.8605,
         6.8620, 6.86, 6.859, 6.8670, 6.8640, 6.8575, 6.8485, 6.8450, 7.1195, 7.136, 7.1405, 7.112,
@@ -59,6 +67,23 @@ fn momentum(c: &mut Criterion) {
         )
     });
 
+    group.bench_function("bop", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let smoothing_period = 14;
+                (open, high, low, close, smoothing_period)
+            },
+            |(open, high, low, close, smoothing_period)| {
+                bop(open, high, low, close, *smoothing_period)
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
     group.bench_function("cc", |b| {
         b.iter_batched_ref(
             || {
@@ -75,6 +100,22 @@ fn momentum(c: &mut Criterion) {
         )
     });
 
+    group.bench_function("cci", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let hlc3 = typical_price(&high, &low, &close);
+                let period = 14;
+                let factor = 0.015;
+                (hlc3, period, factor)
+            },
+            |(hlc3, period, factor)| cci(hlc3, *period, *factor),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
     group.bench_function("cfo", |b| {
         b.iter_batched_ref(
             || {
@@ -83,6 +124,59 @@ fn momentum(c: &mut Criterion) {
                 (source, period)
             },
             |(source, period)| cfo(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("cmo", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 14;
+                (source, period)
+            },
+            |(source, period)| cmo(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("di", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 14;
+                let smoothing = None;
+                (source, period, smoothing)
+            },
+            |(source, period, smoothing)| di(source, *period, *smoothing),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("macd", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let fast_period = 15;
+                let slow_period = 26;
+                let signal_period = 9;
+                (source, fast_period, slow_period, signal_period)
+            },
+            |(source, fast_period, slow_period, signal_period)| {
+                macd(source, *fast_period, *slow_period, *signal_period)
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("roc", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 9;
+                (source, period)
+            },
+            |(source, period)| roc(source, *period),
             criterion::BatchSize::SmallInput,
         )
     });
