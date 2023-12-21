@@ -10,10 +10,12 @@ pub fn dmi(
     adx_period: usize,
     di_period: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
+    let len = high.len();
     let up = high.change(1);
     let down = low.change(1).neg();
 
-    let zero = Series::zero(high.len());
+    let zero = Series::zero(len);
+    let one = Series::one(len);
 
     let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
     let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
@@ -22,7 +24,6 @@ pub fn dmi(
     let di_minus = ONEH * dm_minus.smma(di_period) / atr;
 
     let sum = &di_plus + &di_minus;
-    let one = Series::fill(1.0, high.len());
 
     let adx =
         ONEH * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum)).smma(adx_period);

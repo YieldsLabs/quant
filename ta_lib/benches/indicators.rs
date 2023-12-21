@@ -1,7 +1,8 @@
 use core::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
-use momentum::{ao, apo, bop, cc, cci, cfo, cmo, di, macd, roc, rsi, stc, tii, trix, tsi};
+use momentum::*;
 use price::prelude::*;
+use volatility::atr;
 
 fn momentum(c: &mut Criterion) {
     let mut group = c.benchmark_group("momentum");
@@ -153,6 +154,74 @@ fn momentum(c: &mut Criterion) {
         )
     });
 
+    group.bench_function("dmi", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let adx_period = 14;
+                let di_period = 14;
+                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                (high, low, atr, adx_period, di_period)
+            },
+            |(high, low, atr, adx_period, di_period)| dmi(high, low, atr, *adx_period, *di_period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("kst", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let roc_period_first = 10;
+                let roc_period_second = 15;
+                let roc_period_third = 20;
+                let roc_period_fouth = 30;
+                let period_first = 10;
+                let period_second = 10;
+                let period_third = 10;
+                let period_fouth = 15;
+
+                (
+                    source,
+                    roc_period_first,
+                    roc_period_second,
+                    roc_period_third,
+                    roc_period_fouth,
+                    period_first,
+                    period_second,
+                    period_third,
+                    period_fouth,
+                )
+            },
+            |(
+                source,
+                roc_period_first,
+                roc_period_second,
+                roc_period_third,
+                roc_period_fouth,
+                period_first,
+                period_second,
+                period_third,
+                period_fouth,
+            )| {
+                kst(
+                    source,
+                    *roc_period_first,
+                    *roc_period_second,
+                    *roc_period_third,
+                    *roc_period_fouth,
+                    *period_first,
+                    *period_second,
+                    *period_third,
+                    *period_fouth,
+                )
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
     group.bench_function("macd", |b| {
         b.iter_batched_ref(
             || {
@@ -213,6 +282,24 @@ fn momentum(c: &mut Criterion) {
                     *d_first,
                     *d_second,
                 )
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("stochosc", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let period = 14;
+                let k_period = 5;
+                let d_period = 5;
+                (high, low, close, period, k_period, d_period)
+            },
+            |(high, low, close, period, k_period, d_period)| {
+                stochosc(high, low, close, *period, *k_period, *d_period)
             },
             criterion::BatchSize::SmallInput,
         )

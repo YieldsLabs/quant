@@ -57,6 +57,7 @@ dependencies = [
  "criterion",
  "momentum",
  "price",
+ "volatility",
 ]
 
 [[package]]
