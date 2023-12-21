@@ -4,16 +4,16 @@ use crate::traits::Extremum;
 impl Extremum<f32> for Series<f32> {
     type Output = Series<f32>;
 
-    fn max(&self, scalar: f32) -> Self::Output {
-        self.fmap(|val| val.map(|v| v.max(scalar)).or(Some(scalar)))
+    fn max(&self, scalar: &f32) -> Self::Output {
+        self.fmap(|val| val.map(|v| v.max(*scalar)).or(Some(*scalar)))
     }
 
-    fn min(&self, scalar: f32) -> Self::Output {
-        self.fmap(|val| val.map(|v| v.min(scalar)).or(Some(scalar)))
+    fn min(&self, scalar: &f32) -> Self::Output {
+        self.fmap(|val| val.map(|v| v.min(*scalar)).or(Some(*scalar)))
     }
 }
 
-impl Extremum<&Series<f32>> for Series<f32> {
+impl Extremum<Series<f32>> for Series<f32> {
     type Output = Series<f32>;
 
     fn max(&self, rhs: &Series<f32>) -> Self::Output {
@@ -59,7 +59,7 @@ mod tests {
         ];
         let series = Series::from(&source);
 
-        let result = series.change(length).max(0.0);
+        let result = series.change(length).max(&0.0);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {
@@ -130,7 +130,7 @@ mod tests {
         ];
         let series = Series::from(&source);
 
-        let result = series.change(length).min(0.0);
+        let result = series.change(length).min(&0.0);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {
