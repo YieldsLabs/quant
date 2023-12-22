@@ -24,6 +24,11 @@ name = "patterns"
 harness = false
 path = "patterns.rs"
 
+[[bench]]
+name = "strategy"
+harness = false
+path = "strategy.rs"
+
 [dependencies]
 core = { path = "../core" }
 candlestick = { path = "../patterns/candlestick" }
@@ -32,6 +37,7 @@ price = { path = "../price" }
 trend = { path = "../indicators/trend" }
 volatility = { path = "../indicators/volatility" }
 volume = { path = "../indicators/volume" }
+base = { path = "../strategies/base" }
 
 [dev-dependencies]
 criterion = { version = "0.5" }
