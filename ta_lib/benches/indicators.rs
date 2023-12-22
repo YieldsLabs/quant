@@ -380,6 +380,15 @@ fn trend(c: &mut Criterion) {
         7.1230, 7.1225, 7.1180, 7.1250,
     ];
 
+    let volume: Vec<f32> = vec![
+        60.855, 600.858, 60.86, 600.848, 60.8575, 60.864, 600.8565, 60.8455, 600.845, 600.8365,
+        60.8310, 60.8355, 600.836, 60.8345, 600.8285, 60.8395, 700.1135, 70.088, 700.112, 70.1205,
+        700.1195, 70.136, 70.1405, 70.112, 700.1095, 70.1220, 70.1310, 700.155, 70.1480, 70.1435,
+        700.1405, 70.1440, 70.1495, 70.1515, 70.1415, 700.1445, 70.1525, 700.144, 70.1370,
+        700.1305, 70.1375, 700.125, 700.119, 70.1135, 70.128, 700.122, 70.123, 700.1225, 70.118,
+        70.125,
+    ];
+
     group.bench_function("alma", |b| {
         b.iter_batched_ref(
             || {
@@ -391,6 +400,282 @@ fn trend(c: &mut Criterion) {
                 (source, period, offset, sigma)
             },
             |(source, period, offset, sigma)| alma(source, *period, *offset, *sigma),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("dema", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| dema(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("dpo", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| dpo(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("ema", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| ema(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("gma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| gma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("hma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| hma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("kama", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| kama(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("kijun", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let period = 20;
+
+                (high, low, period)
+            },
+            |(high, low, period)| kijun(high, low, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("lsma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| lsma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("md", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| md(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("qstick", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+                let period = 20;
+
+                (open, close, period)
+            },
+            |(open, close, period)| qstick(open, close, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("rmsma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| rmsma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("sinwma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| sinwma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("sma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| sma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("smma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| smma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("t3", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| t3(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("tema", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| tema(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("tma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| tma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("vwma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let volume = Series::from(&volume);
+                let period = 20;
+
+                (source, volume, period)
+            },
+            |(source, volume, period)| vwma(source, volume, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("wma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| wma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("zlema", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| zlema(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("zlsma", |b| {
+        b.iter_batched_ref(
+            || {
+                let source = Series::from(&close);
+                let period = 20;
+
+                (source, period)
+            },
+            |(source, period)| zlsma(source, *period),
             criterion::BatchSize::SmallInput,
         )
     });
