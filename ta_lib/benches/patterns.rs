@@ -64,6 +64,116 @@ fn candlestick(c: &mut Criterion) {
         )
     });
 
+    group.bench_function("blockade_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, high, low, close)
+            },
+            |(open, high, low, close)| blockade::bullish(open, high, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("blockade_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, high, low, close)
+            },
+            |(open, high, low, close)| blockade::bearish(open, high, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("bottle_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, low, close)
+            },
+            |(open, low, close)| bottle::bullish(open, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("bottle_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, low, close)
+            },
+            |(open, low, close)| bottle::bearish(open, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("breakaway_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| breakaway::bullish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("breakaway_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| breakaway::bearish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("counterattack_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| counterattack::bullish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("counterattack_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| counterattack::bearish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
     group.finish();
 }
 
