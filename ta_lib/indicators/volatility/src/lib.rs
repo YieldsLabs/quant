@@ -14,4 +14,4 @@ pub use kb::kb;
 pub use kch::kch;
 pub use ppb::ppb;
 pub use snatr::snatr;
-use tr::tr;
+pub use tr::tr;

@@ -20,6 +20,7 @@ momentum = { path = "../indicators/momentum" }
 price = { path = "../price" }
 trend = { path = "../indicators/trend" }
 volatility = { path = "../indicators/volatility" }
+volume = { path = "../indicators/volume" }
 
 [dev-dependencies]
 criterion = { version = "0.5" }

@@ -3,7 +3,8 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use momentum::*;
 use price::prelude::*;
 use trend::*;
-use volatility::atr;
+use volatility::*;
+use volume::*;
 
 fn momentum(c: &mut Criterion) {
     let mut group = c.benchmark_group("momentum");
@@ -410,8 +411,8 @@ fn trend(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
-                let di_period = 14;
-                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let atr_period = 14;
+                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
                 let factor = 3.0;
 
                 (close, atr, factor)
@@ -427,8 +428,8 @@ fn trend(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
-                let di_period = 14;
-                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let atr_period = 14;
+                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
                 let factor = 3.0;
                 let period = 20;
 
@@ -445,8 +446,8 @@ fn trend(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
-                let di_period = 14;
-                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let atr_period = 14;
+                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
                 let period = 20;
 
                 (high, low, atr, period)
@@ -662,8 +663,8 @@ fn trend(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let hl2 = median_price(&high, &low);
-                let di_period = 14;
-                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let atr_period = 14;
+                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
                 let factor = 3.0;
 
                 (hl2, close, atr, factor)
@@ -768,5 +769,293 @@ fn trend(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(indicators, momentum, trend);
+fn volatility(c: &mut Criterion) {
+    let mut group = c.benchmark_group("volatility");
+
+    let high: Vec<f32> = vec![
+        6.8430, 6.8660, 6.8685, 6.8690, 6.865, 6.8595, 6.8565, 6.862, 6.859, 6.86, 6.8580, 6.8605,
+        6.8620, 6.86, 6.859, 6.8670, 6.8640, 6.8575, 6.8485, 6.8450, 7.1195, 7.136, 7.1405, 7.112,
+        7.1095, 7.1220, 7.1310, 7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495, 7.1515, 7.1415,
+        7.1445, 7.1525, 7.1440, 7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135, 7.1280, 7.1220,
+        7.1230, 7.1225, 7.1180, 7.1250,
+    ];
+
+    let low: Vec<f32> = vec![
+        6.8380, 6.8430, 6.8595, 6.8640, 6.8435, 6.8445, 6.8510, 6.8560, 6.8520, 6.8530, 6.8550,
+        6.8550, 6.8565, 6.8475, 6.8480, 6.8535, 6.8565, 6.8455, 6.8445, 6.8365, 7.1195, 7.136,
+        7.1405, 7.112, 7.1095, 7.1220, 7.1310, 7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495,
+        7.1515, 7.1415, 7.1445, 7.1525, 7.1440, 7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135,
+        7.1280, 7.1220, 7.1230, 7.1225, 7.1180, 7.1250,
+    ];
+
+    let close: Vec<f32> = vec![
+        6.855, 6.858, 6.86, 6.8480, 6.8575, 6.864, 6.8565, 6.8455, 6.8450, 6.8365, 6.8310, 6.8355,
+        6.8360, 6.8345, 6.8285, 6.8395, 7.1135, 7.088, 7.112, 7.1205, 7.1195, 7.136, 7.1405, 7.112,
+        7.1095, 7.1220, 7.1310, 7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495, 7.1515, 7.1415,
+        7.1445, 7.1525, 7.1440, 7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135, 7.1280, 7.1220,
+        7.1230, 7.1225, 7.1180, 7.1250,
+    ];
+
+    group.bench_function("atr", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let period = 14;
+                let smoothing = None;
+
+                (high, low, close, period, smoothing)
+            },
+            |(high, low, close, period, smoothing)| atr(high, low, close, *period, *smoothing),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("bb", |b| {
+        b.iter_batched_ref(
+            || {
+                let close = Series::from(&close);
+                let period = 14;
+                let factor = 3.0;
+
+                (close, period, factor)
+            },
+            |(close, period, factor)| bb(close, *period, *factor),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("dch", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let period = 14;
+
+                (high, low, period)
+            },
+            |(high, low, period)| dch(high, low, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("kb", |b| {
+        b.iter_batched_ref(
+            || {
+                let close = Series::from(&close);
+                let period = 14;
+                let factor = 3.0;
+
+                (close, period, factor)
+            },
+            |(close, period, factor)| kb(close, *period, *factor),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("kch", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let hlc3 = typical_price(&high, &low, &close);
+                let atr_period = 14;
+                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let period = 14;
+                let factor = 3.0;
+
+                (hlc3, atr, period, factor)
+            },
+            |(hlc3, atr, period, factor)| kch(hlc3, atr, *period, *factor),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("ppb", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let period = 14;
+                let factor = 3.0;
+
+                (high, low, close, period, factor)
+            },
+            |(high, low, close, period, factor)| ppb(high, low, close, *period, *factor),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("snatr", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let atr_period = 14;
+                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let smoothing_period = 3;
+
+                (atr, atr_period, smoothing_period)
+            },
+            |(atr, atr_period, smoothing_period)| snatr(atr, *atr_period, *smoothing_period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("tr", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (high, low, close)
+            },
+            |(high, low, close)| tr(high, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn volume(c: &mut Criterion) {
+    let mut group = c.benchmark_group("volume");
+
+    let high: Vec<f32> = vec![
+        6.8430, 6.8660, 6.8685, 6.8690, 6.865, 6.8595, 6.8565, 6.862, 6.859, 6.86, 6.8580, 6.8605,
+        6.8620, 6.86, 6.859, 6.8670, 6.8640, 6.8575, 6.8485, 6.8450, 7.1195, 7.136, 7.1405, 7.112,
+        7.1095, 7.1220, 7.1310, 7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495, 7.1515, 7.1415,
+        7.1445, 7.1525, 7.1440, 7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135, 7.1280, 7.1220,
+        7.1230, 7.1225, 7.1180, 7.1250,
+    ];
+
+    let low: Vec<f32> = vec![
+        6.8380, 6.8430, 6.8595, 6.8640, 6.8435, 6.8445, 6.8510, 6.8560, 6.8520, 6.8530, 6.8550,
+        6.8550, 6.8565, 6.8475, 6.8480, 6.8535, 6.8565, 6.8455, 6.8445, 6.8365, 7.1195, 7.136,
+        7.1405, 7.112, 7.1095, 7.1220, 7.1310, 7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495,
+        7.1515, 7.1415, 7.1445, 7.1525, 7.1440, 7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135,
+        7.1280, 7.1220, 7.1230, 7.1225, 7.1180, 7.1250,
+    ];
+
+    let close: Vec<f32> = vec![
+        6.855, 6.858, 6.86, 6.8480, 6.8575, 6.864, 6.8565, 6.8455, 6.8450, 6.8365, 6.8310, 6.8355,
+        6.8360, 6.8345, 6.8285, 6.8395, 7.1135, 7.088, 7.112, 7.1205, 7.1195, 7.136, 7.1405, 7.112,
+        7.1095, 7.1220, 7.1310, 7.1550, 7.1480, 7.1435, 7.1405, 7.1440, 7.1495, 7.1515, 7.1415,
+        7.1445, 7.1525, 7.1440, 7.1370, 7.1305, 7.1375, 7.1250, 7.1190, 7.1135, 7.1280, 7.1220,
+        7.1230, 7.1225, 7.1180, 7.1250,
+    ];
+
+    let volume: Vec<f32> = vec![
+        60.855, 600.858, 60.86, 600.848, 60.8575, 60.864, 600.8565, 60.8455, 600.845, 600.8365,
+        60.8310, 60.8355, 600.836, 60.8345, 600.8285, 60.8395, 700.1135, 70.088, 700.112, 70.1205,
+        700.1195, 70.136, 70.1405, 70.112, 700.1095, 70.1220, 70.1310, 700.155, 70.1480, 70.1435,
+        700.1405, 70.1440, 70.1495, 70.1515, 70.1415, 700.1445, 70.1525, 700.144, 70.1370,
+        700.1305, 70.1375, 700.125, 700.119, 70.1135, 70.128, 700.122, 70.123, 700.1225, 70.118,
+        70.125,
+    ];
+
+    group.bench_function("cmf", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let volume = Series::from(&volume);
+                let period = 14;
+
+                (high, low, close, volume, period)
+            },
+            |(high, low, close, volume, period)| cmf(high, low, close, volume, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("eom", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let volume = Series::from(&volume);
+                let hl2 = median_price(&high, &low);
+                let period = 14;
+                let divisor = 10000.0;
+
+                (hl2, high, low, volume, period, divisor)
+            },
+            |(hl2, high, low, volume, period, divisor)| {
+                eom(hl2, high, low, volume, *period, *divisor)
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("mfi", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let volume = Series::from(&volume);
+                let hlc3 = typical_price(&high, &low, &close);
+                let period = 14;
+
+                (hlc3, volume, period)
+            },
+            |(hlc3, volume, period)| mfi(hlc3, volume, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("obv", |b| {
+        b.iter_batched_ref(
+            || {
+                let close = Series::from(&close);
+                let volume = Series::from(&volume);
+
+                (close, volume)
+            },
+            |(close, volume)| obv(close, volume),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("vo", |b| {
+        b.iter_batched_ref(
+            || {
+                let volume = Series::from(&volume);
+                let short_period = 5;
+                let long_period = 10;
+
+                (volume, short_period, long_period)
+            },
+            |(volume, short_period, long_period)| vo(volume, *short_period, *long_period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("vwap", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let volume = Series::from(&volume);
+                let hlc3 = typical_price(&high, &low, &close);
+
+                (hlc3, volume)
+            },
+            |(hlc3, volume)| vwap(hlc3, volume),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+criterion_group!(indicators, momentum, trend, volatility, volume);
 criterion_main!(indicators);

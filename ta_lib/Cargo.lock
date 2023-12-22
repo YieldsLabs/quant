@@ -59,6 +59,7 @@ dependencies = [
  "price",
  "trend",
  "volatility",
+ "volume",
 ]
 
 [[package]]
