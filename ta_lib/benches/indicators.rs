@@ -404,6 +404,58 @@ fn trend(c: &mut Criterion) {
         )
     });
 
+    group.bench_function("ast", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let di_period = 14;
+                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let factor = 3.0;
+
+                (close, atr, factor)
+            },
+            |(close, atr, factor)| ast(close, atr, *factor),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("ce", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let di_period = 14;
+                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let factor = 3.0;
+                let period = 20;
+
+                (high, low, close, atr, period, factor)
+            },
+            |(high, low, close, atr, period, factor)| ce(high, low, close, atr, *period, *factor),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("chop", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let di_period = 14;
+                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let period = 20;
+
+                (high, low, atr, period)
+            },
+            |(high, low, atr, period)| chop(high, low, atr, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
     group.bench_function("dema", |b| {
         b.iter_batched_ref(
             || {
@@ -439,6 +491,21 @@ fn trend(c: &mut Criterion) {
                 (source, period)
             },
             |(source, period)| ema(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("frama", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let period = 20;
+
+                (high, low, close, period)
+            },
+            |(high, low, close, period)| frama(high, low, close, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -584,6 +651,24 @@ fn trend(c: &mut Criterion) {
                 (source, period)
             },
             |(source, period)| smma(source, *period),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("supertrend", |b| {
+        b.iter_batched_ref(
+            || {
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+                let hl2 = median_price(&high, &low);
+                let di_period = 14;
+                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let factor = 3.0;
+
+                (hl2, close, atr, factor)
+            },
+            |(hl2, close, atr, factor)| supertrend(hl2, close, atr, *factor),
             criterion::BatchSize::SmallInput,
         )
     });
