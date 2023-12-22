@@ -174,6 +174,118 @@ fn candlestick(c: &mut Criterion) {
         )
     });
 
+    group.bench_function("doji_double_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| doji_double::bullish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("doji_double_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| doji_double::bearish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("doji_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| doji::bullish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("doji_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let close = Series::from(&close);
+
+                (open, close)
+            },
+            |(open, close)| doji::bearish(open, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("doppelganger_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, high, low, close)
+            },
+            |(open, high, low, close)| doppelganger::bullish(open, high, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("doppelganger_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, high, low, close)
+            },
+            |(open, high, low, close)| doppelganger::bearish(open, high, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("double_trouble_bullish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, high, low, close)
+            },
+            |(open, high, low, close)| double_trouble::bullish(open, high, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("double_trouble_bearish", |b| {
+        b.iter_batched_ref(
+            || {
+                let open = Series::from(&open);
+                let high = Series::from(&high);
+                let low = Series::from(&low);
+                let close = Series::from(&close);
+
+                (open, high, low, close)
+            },
+            |(open, high, low, close)| double_trouble::bearish(open, high, low, close),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
     group.finish();
 }
 
