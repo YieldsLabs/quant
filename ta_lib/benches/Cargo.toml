@@ -14,6 +14,11 @@ name = "indicators"
 harness = false
 path = "indicators.rs"
 
+[[bench]]
+name = "prices"
+harness = false
+path = "prices.rs"
+
 [dependencies]
 core = { path = "../core" }
 momentum = { path = "../indicators/momentum" }
