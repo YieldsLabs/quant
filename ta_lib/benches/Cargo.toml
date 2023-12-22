@@ -18,6 +18,7 @@ path = "indicators.rs"
 core = { path = "../core" }
 momentum = { path = "../indicators/momentum" }
 price = { path = "../price" }
+trend = { path = "../indicators/trend" }
 volatility = { path = "../indicators/volatility" }
 
 [dev-dependencies]
