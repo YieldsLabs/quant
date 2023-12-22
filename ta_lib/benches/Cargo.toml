@@ -19,8 +19,14 @@ name = "prices"
 harness = false
 path = "prices.rs"
 
+[[bench]]
+name = "patterns"
+harness = false
+path = "patterns.rs"
+
 [dependencies]
 core = { path = "../core" }
+candlestick = { path = "../patterns/candlestick" }
 momentum = { path = "../indicators/momentum" }
 price = { path = "../price" }
 trend = { path = "../indicators/trend" }
