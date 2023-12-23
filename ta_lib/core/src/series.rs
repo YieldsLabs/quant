@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Series<T> {
     data: Vec<Option<T>>,
 }
@@ -164,18 +164,6 @@ impl Series<f32> {
     }
 }
 
-impl<T: PartialEq> PartialEq for Series<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
-    }
-}
-
-impl PartialEq<Vec<Option<f32>>> for Series<f32> {
-    fn eq(&self, other: &Vec<Option<f32>>) -> bool {
-        &self.data == other
-    }
-}
-
 impl From<Series<f32>> for Vec<f32> {
     fn from(val: Series<f32>) -> Self {
         val.into_iter().map(|x| x.unwrap_or(0.0)).collect()
@@ -200,28 +188,26 @@ mod tests {
 
     #[test]
     fn test_len() {
-        let source = vec![4.0, 3.0, 2.0, 1.0];
+        let source = Series::from([4.0, 3.0, 2.0, 1.0]);
         let expected = 4;
 
-        let result = Series::from(&source);
-
-        assert_eq!(result.len(), expected);
-    }
-
-    #[test]
-    fn test_from() {
-        let source = vec![f32::NAN, 1.0, 2.0, 3.0];
-        let expected = vec![None, Some(1.0), Some(2.0), Some(3.0)];
-
-        let result = Series::from(&source);
+        let result = source.len();
 
         assert_eq!(result, expected);
     }
 
     #[test]
+    fn test_from() {
+        let source = Series::from([f32::NAN, 1.0, 2.0, 3.0]);
+        let expected = Series::from([f32::NAN, 1.0, 2.0, 3.0]);
+
+        assert_eq!(source, expected);
+    }
+
+    #[test]
     fn test_empty() {
         let len = 4;
-        let expected = vec![None, None, None, None];
+        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, f32::NAN]);
 
         let result = Series::empty(len);
 
@@ -230,56 +216,55 @@ mod tests {
 
     #[test]
     fn test_shift() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([f32::NAN, f32::NAN, 1.0, 2.0, 3.0]);
         let n = 2;
-        let expected = vec![None, None, Some(1.0), Some(2.0), Some(3.0)];
 
-        let result = Series::from(&source).shift(n);
+        let result = source.shift(n);
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_last() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = Some(5.0);
 
-        let result = Series::from(&source).last();
+        let result = source.last();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_last_none() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, f32::NAN];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, f32::NAN]);
         let expected = None;
 
-        let result = Series::from(&source).last();
+        let result = source.last();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_change() {
-        let source = vec![
+        let source = Series::from([
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
-        ];
+        ]);
         let length = 1;
         let epsilon = 0.001;
-        let expected = [
-            None,
-            Some(-0.25),
-            Some(0.0599),
-            Some(-0.540),
-            Some(0.7199),
-            Some(0.5),
-            Some(0.2700),
-            Some(0.3200),
-            Some(0.4200),
-        ];
-        let series = Series::from(&source);
+        let expected = Series::from([
+            f32::NAN,
+            -0.25,
+            0.0599,
+            -0.540,
+            0.7199,
+            0.5,
+            0.2700,
+            0.3200,
+            0.4200,
+        ]);
 
-        let result = series.change(length);
+        let result = source.change(length);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {
@@ -294,24 +279,22 @@ mod tests {
 
     #[test]
     fn test_highest() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let period = 3;
-        let expected = vec![Some(1.0), Some(2.0), Some(3.0), Some(4.0), Some(5.0)];
-        let series = Series::from(&source);
 
-        let result = series.highest(period);
+        let result = source.highest(period);
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_lowest() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 1.0, 1.0, 2.0, 3.0]);
         let period = 3;
-        let expected = vec![Some(1.0), Some(1.0), Some(1.0), Some(2.0), Some(3.0)];
-        let series = Series::from(&source);
 
-        let result = series.lowest(period);
+        let result = source.lowest(period);
 
         assert_eq!(result, expected);
     }

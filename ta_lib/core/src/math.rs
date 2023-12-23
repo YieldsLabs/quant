@@ -82,89 +82,72 @@ mod tests {
 
     #[test]
     fn test_abs() {
-        let source = vec![-1.0, 2.0, -3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(2.0), Some(3.0), Some(4.0), Some(5.0)];
-        let series = Series::from(&source);
+        let source = Series::from([-1.0, 2.0, -3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
 
-        let result = series.abs();
+        let result = source.abs();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_sqrt() {
-        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![
-            None,
-            Some(std::f32::consts::SQRT_2),
-            Some(1.7320508),
-            Some(2.0),
-            Some(2.236068),
-        ];
-        let series = Series::from(&source);
+        let source = Series::from([-1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([f32::NAN, std::f32::consts::SQRT_2, 1.7320508, 2.0, 2.236068]);
 
-        let result = series.sqrt();
+        let result = source.sqrt();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_log() {
-        let source = vec![-1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![
-            None,
-            Some(std::f32::consts::LN_2),
-            Some(1.0986123),
-            Some(1.3862944),
-            Some(1.609438),
-        ];
-        let series = Series::from(&source);
+        let source = Series::from([-1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([
+            f32::NAN,
+            std::f32::consts::LN_2,
+            1.0986123,
+            1.3862944,
+            1.609438,
+        ]);
 
-        let result = series.log();
+        let result = source.log();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_log10() {
-        let source = vec![-1.0, 2.0, 0.0, 4.0, 5.0];
-        let expected = vec![
-            None,
-            Some(std::f32::consts::LOG10_2),
-            None,
-            Some(0.60206),
-            Some(0.69897),
-        ];
-        let series = Series::from(&source);
-        let result = series.log10();
+        let source = Series::from([-1.0, 2.0, 0.0, 4.0, 5.0]);
+        let expected = Series::from([
+            f32::NAN,
+            std::f32::consts::LOG10_2,
+            f32::NAN,
+            0.60206,
+            0.69897,
+        ]);
+        let result = source.log10();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_exp() {
-        let source = vec![-1.0, 2.0, -3.0, 4.0, 5.0];
-        let expected = vec![
-            Some(0.36787945),
-            Some(7.389056),
-            Some(0.049787067),
-            Some(54.59815),
-            Some(148.41316),
-        ];
-        let series = Series::from(&source);
+        let source = Series::from([-1.0, 2.0, -3.0, 4.0, 5.0]);
+        let expected = Series::from([0.36787945, 7.389056, 0.049787067, 54.59815, 148.41316]);
 
-        let result = series.exp();
+        let result = source.exp();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_pow() {
-        let source = vec![-1.0, 2.0, -3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(4.0), Some(9.0), Some(16.0), Some(25.0)];
-        let series = Series::from(&source);
+        let source = Series::from([-1.0, 2.0, -3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 4.0, 9.0, 16.0, 25.0]);
+        let n = 2;
 
-        let result = series.pow(2);
+        let result = source.pow(n);
 
         assert_eq!(result, expected);
     }
@@ -183,55 +166,44 @@ mod tests {
     fn test_round() {
         let source = Series::from([-1.2211, 2.2456, -3.5677, 4.0, 5.3334]);
         let expected = Series::from([-1.0, 2.0, -4.0, 4.0, 5.0]);
+        let n = 0;
 
-        let result = source.round(0);
+        let result = source.round(n);
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_cumsum() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(3.0), Some(6.0), Some(10.0), Some(15.0)];
-        let series = Series::from(&source);
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 3.0, 6.0, 10.0, 15.0]);
 
-        let result = series.cumsum();
+        let result = source.cumsum();
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_sum() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(3.0), Some(6.0), Some(9.0), Some(12.0)];
-        let series = Series::from(&source);
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 3.0, 6.0, 9.0, 12.0]);
+        let n = 3;
 
-        let result = series.sum(3);
+        let result = source.sum(n);
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_std() {
-        let source = vec![2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0];
-        let series = Series::from(&source);
+        let source = Series::from([2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0]);
+        let expected = Series::from([
+            0.0, 1.0, 1.6329, 1.6329, 1.6329, 0.8164, 0.8164, 0.8164, 0.8164, 0.8164, 0.8164,
+        ]);
         let period = 3;
         let epsilon = 0.001;
-        let expected = [
-            Some(0.0),
-            Some(1.0),
-            Some(1.6329),
-            Some(1.6329),
-            Some(1.6329),
-            Some(0.8164),
-            Some(0.8164),
-            Some(0.8164),
-            Some(0.8164),
-            Some(0.8164),
-            Some(0.8164),
-        ];
 
-        let result = series.std(period);
+        let result = source.std(period);
 
         for i in 0..result.len() {
             match (result[i], expected[i]) {
@@ -246,17 +218,11 @@ mod tests {
 
     #[test]
     fn test_md() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![
-            Some(0.0),
-            Some(0.5),
-            Some(0.6666667),
-            Some(0.6666667),
-            Some(0.6666667),
-        ];
-        let series = Series::from(&source);
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 0.5, 0.6666667, 0.6666667, 0.6666667]);
+        let n = 3;
 
-        let result = series.md(3);
+        let result = source.md(n);
 
         assert_eq!(result, expected);
     }

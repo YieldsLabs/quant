@@ -101,11 +101,10 @@ mod tests {
 
     #[test]
     fn test_ema() {
-        let source = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let expected = vec![Some(1.0), Some(1.5), Some(2.25), Some(3.125), Some(4.0625)];
-        let series = Series::from(&source);
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 1.5, 2.25, 3.125, 4.0625]);
 
-        let result = series.ema(3);
+        let result = source.ema(3);
 
         assert_eq!(result, expected);
     }
@@ -113,13 +112,7 @@ mod tests {
     #[test]
     fn test_smma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = vec![
-            Some(1.0),
-            Some(1.3333333),
-            Some(1.8888888),
-            Some(2.5925925),
-            Some(3.3950615),
-        ];
+        let expected = Series::from([1.0, 1.3333333, 1.8888888, 2.5925925, 3.3950615]);
 
         let result = source.smma(3);
 
@@ -129,13 +122,7 @@ mod tests {
     #[test]
     fn test_wma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = vec![
-            None,
-            None,
-            Some(2.3333333),
-            Some(3.3333333),
-            Some(4.3333335),
-        ];
+        let expected = Series::from([f32::NAN, f32::NAN, 2.3333333, 3.3333333, 4.3333335]);
 
         let result = source.wma(3);
 
@@ -145,7 +132,7 @@ mod tests {
     #[test]
     fn test_swma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = vec![None, None, None, Some(2.5), Some(3.5)];
+        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 2.5, 3.5]);
 
         let result = source.swma();
 
@@ -162,53 +149,53 @@ mod tests {
             7.1560,
         ]);
 
-        let expected = vec![
-            None,
-            Some(7.088),
-            Some(7.10375),
-            Some(7.1230836),
-            Some(7.1210837),
-            Some(7.133084),
-            Some(7.1425),
-            Some(7.117501),
-            Some(7.1051655),
-            Some(7.1194954),
-            Some(7.1315904),
-            Some(7.152491),
-            Some(7.1531696),
-            Some(7.1430774),
-            Some(7.140269),
-            Some(7.1429076),
-            Some(7.1491756),
-            Some(7.1520867),
-            Some(7.1434836),
-            Some(7.1423316),
-            Some(7.15166),
-            Some(7.146748),
-            Some(7.136764),
-            Some(7.1304145),
-            Some(7.1352515),
-            Some(7.1282535),
-            Some(7.117897),
-            Some(7.113399),
-            Some(7.124653),
-            Some(7.125424),
-            Some(7.121861),
-            Some(7.122751),
-            Some(7.118672),
-            Some(7.1230693),
-            Some(7.124495),
-            Some(7.114359),
-            Some(7.118015),
-            Some(7.129894),
-            Some(7.1348333),
-            Some(7.133007),
-            Some(7.1183147),
-            Some(7.1196218),
-            Some(7.15893),
-            Some(7.164693),
-            Some(7.1547427),
-        ];
+        let expected = Series::from([
+            f32::NAN,
+            7.088,
+            7.10375,
+            7.1230836,
+            7.1210837,
+            7.133084,
+            7.1425,
+            7.117501,
+            7.1051655,
+            7.1194954,
+            7.1315904,
+            7.152491,
+            7.1531696,
+            7.1430774,
+            7.140269,
+            7.1429076,
+            7.1491756,
+            7.1520867,
+            7.1434836,
+            7.1423316,
+            7.15166,
+            7.146748,
+            7.136764,
+            7.1304145,
+            7.1352515,
+            7.1282535,
+            7.117897,
+            7.113399,
+            7.124653,
+            7.125424,
+            7.121861,
+            7.122751,
+            7.118672,
+            7.1230693,
+            7.124495,
+            7.114359,
+            7.118015,
+            7.129894,
+            7.1348333,
+            7.133007,
+            7.1183147,
+            7.1196218,
+            7.15893,
+            7.164693,
+            7.1547427,
+        ]);
 
         let result = source.linreg(3);
 
