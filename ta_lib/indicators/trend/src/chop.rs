@@ -1,12 +1,14 @@
 use core::prelude::*;
 
+const PERCENTAGE_SCALE: f32 = 100.;
+
 pub fn chop(
     high: &Series<f32>,
     low: &Series<f32>,
     atr: &Series<f32>,
     period: usize,
 ) -> Series<f32> {
-    100.0 * (atr.sum(period) / (high.highest(period) - low.lowest(period))).log10()
+    PERCENTAGE_SCALE * (atr.sum(period) / (high.highest(period) - low.lowest(period))).log10()
         / (period as f32).log10()
 }
 

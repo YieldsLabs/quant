@@ -1,7 +1,9 @@
 use core::prelude::*;
 
+const PERCENTAGE_SCALE: f32 = 100.;
+
 pub fn roc(source: &Series<f32>, period: usize) -> Series<f32> {
-    100.0 * source.change(period) / source.shift(period)
+    PERCENTAGE_SCALE * source.change(period) / source.shift(period)
 }
 
 #[cfg(test)]

@@ -5,7 +5,7 @@ pub fn tema(source: &Series<f32>, period: usize) -> Series<f32> {
     let ema2 = ema1.ema(period);
     let ema3 = ema2.ema(period);
 
-    3.0 * (ema1 - ema2) + ema3
+    3. * (ema1 - ema2) + ema3
 }
 
 #[cfg(test)]

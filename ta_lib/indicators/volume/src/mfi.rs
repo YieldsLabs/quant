@@ -1,6 +1,7 @@
 use core::prelude::*;
 
 const ZERO: f32 = 0.0;
+const PERCENTAGE_SCALE: f32 = 100.;
 
 pub fn mfi(hlc3: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f32> {
     let changes = hlc3.change(1);
@@ -15,9 +16,9 @@ pub fn mfi(hlc3: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f3
 
     let money_ratio = upper / lower;
 
-    let mfi = 100.0 - 100.0 / (1.0 + money_ratio);
+    let mfi = PERCENTAGE_SCALE - PERCENTAGE_SCALE / (1. + money_ratio);
 
-    mfi.nz(Some(50.0))
+    mfi.nz(Some(50.))
 }
 
 #[cfg(test)]

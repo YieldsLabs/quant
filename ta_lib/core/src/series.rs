@@ -148,11 +148,11 @@ impl Series<f32> {
     }
 
     pub fn zero(len: usize) -> Series<f32> {
-        Series::fill(0.0, len)
+        Series::fill(0., len)
     }
 
     pub fn one(len: usize) -> Series<f32> {
-        Series::fill(1.0, len)
+        Series::fill(1., len)
     }
 
     pub fn change(&self, length: usize) -> Self {
@@ -182,7 +182,7 @@ impl From<Series<bool>> for Vec<bool> {
 
 impl From<Series<f32>> for Series<bool> {
     fn from(val: Series<f32>) -> Self {
-        val.fmap(|opt| opt.map(|f| f.is_finite() && *f != 0.0))
+        val.fmap(|opt| opt.map(|f| f.is_finite() && *f != 0.))
     }
 }
 

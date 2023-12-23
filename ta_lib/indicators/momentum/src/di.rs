@@ -1,5 +1,7 @@
 use core::prelude::*;
 
+const PERCENTAGE_SCALE: f32 = 100.;
+
 pub fn di(source: &Series<f32>, period: usize, smoothing: Option<&str>) -> Series<f32> {
     let ma = match smoothing {
         Some("SMMA") => source.smma(period),
@@ -9,7 +11,7 @@ pub fn di(source: &Series<f32>, period: usize, smoothing: Option<&str>) -> Serie
         _ => source.wma(period),
     };
 
-    100.0 * (source - &ma) / ma
+    PERCENTAGE_SCALE * (source - &ma) / ma
 }
 
 #[cfg(test)]

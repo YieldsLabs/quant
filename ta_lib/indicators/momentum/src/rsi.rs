@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 const ZERO: f32 = 0.0;
-const ONEH: f32 = 100.0;
+const PERCENTAGE_SCALE: f32 = 100.0;
 
 pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
@@ -10,9 +10,13 @@ pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let up = mom.max(&ZERO).smma(period);
     let down = mom.min(&ZERO).neg().smma(period);
 
-    let oneh = Series::fill(ONEH, len);
+    let oneh = Series::fill(PERCENTAGE_SCALE, len);
 
-    iff!(down.seq(&ZERO), oneh, ONEH - (ONEH / (1.0 + up / down)))
+    iff!(
+        down.seq(&ZERO),
+        oneh,
+        PERCENTAGE_SCALE - (PERCENTAGE_SCALE / (1. + up / down))
+    )
 }
 
 #[cfg(test)]

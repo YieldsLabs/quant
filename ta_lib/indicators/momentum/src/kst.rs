@@ -13,9 +13,9 @@ pub fn kst(
     period_fouth: usize,
 ) -> Series<f32> {
     roc(source, roc_period_first).ma(period_first)
-        + (2.0 * roc(source, roc_period_second).ma(period_second))
-        + (3.0 * roc(source, roc_period_third).ma(period_third))
-        + (4.0 * roc(source, roc_period_fouth).ma(period_fouth))
+        + (2. * roc(source, roc_period_second).ma(period_second))
+        + (3. * roc(source, roc_period_third).ma(period_third))
+        + (4. * roc(source, roc_period_fouth).ma(period_fouth))
 }
 
 #[cfg(test)]

@@ -1,10 +1,12 @@
 use core::prelude::*;
 
+const PERCENTAGE_SCALE: f32 = 100.;
+
 pub fn vo(source: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
     let vo_short = source.ema(short_period);
     let vo_long = source.ema(long_period);
 
-    100.0 * (vo_short - &vo_long) / vo_long
+    PERCENTAGE_SCALE * (vo_short - &vo_long) / vo_long
 }
 
 #[cfg(test)]

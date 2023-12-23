@@ -9,7 +9,7 @@ pub fn kama(source: &Series<f32>, period: usize) -> Series<f32> {
 
     let alpha = iff!(
         er.na(),
-        Series::fill(2.0 / (period as f32 + 1.0), len),
+        Series::fill(2. / (period as f32 + 1.), len),
         (er * 0.666_666_7).sqrt()
     );
 

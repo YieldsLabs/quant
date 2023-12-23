@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-const ZERO: f32 = 0.0;
-const ONEH: f32 = 100.0;
+const ZERO: f32 = 0.;
+const PERCENTAGE_SCALE: f32 = 100.;
 
 pub fn dmi(
     high: &Series<f32>,
@@ -20,13 +20,13 @@ pub fn dmi(
     let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
     let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
 
-    let di_plus = ONEH * dm_plus.smma(di_period) / atr;
-    let di_minus = ONEH * dm_minus.smma(di_period) / atr;
+    let di_plus = PERCENTAGE_SCALE * dm_plus.smma(di_period) / atr;
+    let di_minus = PERCENTAGE_SCALE * dm_minus.smma(di_period) / atr;
 
     let sum = &di_plus + &di_minus;
 
-    let adx =
-        ONEH * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum)).smma(adx_period);
+    let adx = PERCENTAGE_SCALE
+        * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum)).smma(adx_period);
 
     (adx, di_plus, di_minus)
 }

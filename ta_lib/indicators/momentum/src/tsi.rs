@@ -1,12 +1,14 @@
 use core::prelude::*;
 
+const PERCENTAGE_SCALE: f32 = 100.;
+
 pub fn tsi(source: &Series<f32>, long_period: usize, short_period: usize) -> Series<f32> {
     let pc = source.change(1);
 
     let pcds = pc.ema(long_period).ema(short_period);
     let apcds = pc.abs().ema(long_period).ema(short_period);
 
-    100.0 * pcds / apcds
+    PERCENTAGE_SCALE * pcds / apcds
 }
 
 #[cfg(test)]

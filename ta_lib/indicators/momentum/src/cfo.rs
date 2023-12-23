@@ -1,7 +1,9 @@
 use core::prelude::*;
 
+const PERCENTAGE_SCALE: f32 = 100.;
+
 pub fn cfo(source: &Series<f32>, period: usize) -> Series<f32> {
-    100.0 * (source - source.linreg(period)) / source
+    PERCENTAGE_SCALE * (source - source.linreg(period)) / source
 }
 
 #[cfg(test)]

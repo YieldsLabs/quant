@@ -3,7 +3,7 @@ use core::prelude::*;
 pub fn trix(source: &Series<f32>, period: usize) -> Series<f32> {
     let ema3 = source.ema(period).ema(period).ema(period);
 
-    10000.0 * (&ema3 / ema3.shift(1) - 1.0)
+    10000. * (&ema3 / ema3.shift(1) - 1.)
 }
 
 #[cfg(test)]

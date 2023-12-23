@@ -10,7 +10,7 @@ pub fn cmf(
     let mfv = iff!(
         (close.seq(high) & close.seq(low)) | high.seq(low),
         Series::zero(close.len()),
-        ((2.0 * close - low - high) / (high - low)) * volume
+        ((2. * close - low - high) / (high - low)) * volume
     );
 
     mfv.sum(period) / volume.sum(period)

@@ -1,9 +1,9 @@
 use core::prelude::*;
 
 pub fn zlema(source: &Series<f32>, period: usize) -> Series<f32> {
-    let lag = ((period as f32 - 1.0) / 2.0).round() as usize;
+    let lag = ((period as f32 - 1.) / 2.).round() as usize;
 
-    let d = (2.0 * source) - source.shift(lag);
+    let d = (2. * source) - source.shift(lag);
 
     d.ema(period)
 }

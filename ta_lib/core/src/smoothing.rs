@@ -11,7 +11,7 @@ impl Series<f32> {
             sum = iff!(
                 prev.na(),
                 seed,
-                alpha * self + (1.0 - alpha) * prev.nz(Some(0.0))
+                alpha * self + (1. - alpha) * prev.nz(Some(0.))
             )
         }
 
@@ -25,20 +25,20 @@ impl Series<f32> {
     }
 
     pub fn ema(&self, period: usize) -> Self {
-        let alpha = Series::fill(2.0 / (period as f32 + 1.0), self.len());
+        let alpha = Series::fill(2. / (period as f32 + 1.), self.len());
 
         self.ew(&alpha, self)
     }
 
     pub fn smma(&self, period: usize) -> Self {
-        let alpha = Series::fill(1.0 / (period as f32), self.len());
+        let alpha = Series::fill(1. / (period as f32), self.len());
 
         self.ew(&alpha, &self.ma(period))
     }
 
     pub fn wma(&self, period: usize) -> Self {
         let mut sum = Series::zero(self.len());
-        let mut norm = 0.0;
+        let mut norm = 0.;
 
         for i in 0..period {
             let weight = (period - i) as f32;
@@ -55,14 +55,14 @@ impl Series<f32> {
         let x2 = self.shift(2);
         let x3 = self.shift(3);
 
-        x3 * 1.0 / 6.0 + x2 * 2.0 / 6.0 + x1 * 2.0 / 6.0 + self * 1.0 / 6.0
+        x3 * 1. / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * 1. / 6.
     }
 
     pub fn hma(&self, period: usize) -> Self {
-        let lag = (period as f32 / 2.0).round() as usize;
+        let lag = (period as f32 / 2.).round() as usize;
         let sqrt_period = (period as f32).sqrt() as usize;
 
-        (2.0 * self.wma(lag) - self.wma(period)).wma(sqrt_period)
+        (2. * self.wma(lag) - self.wma(period)).wma(sqrt_period)
     }
 
     pub fn linreg(&self, period: usize) -> Self {

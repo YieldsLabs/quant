@@ -23,7 +23,7 @@ pub fn sso(
 
     let k = stoch(&high_smooth, &low_smooth, &close_smooth, period);
 
-    k.nz(Some(50.0))
+    k.nz(Some(50.))
 }
 
 #[cfg(test)]

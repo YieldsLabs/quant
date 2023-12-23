@@ -40,7 +40,7 @@ pub fn supertrend(
         direction = iff!(close.sgt(&prev_dn), trend_up, direction);
     }
 
-    let supertrend = iff!(direction.seq(&1.0), up, dn);
+    let supertrend = iff!(direction.seq(&1.), up, dn);
 
     (direction, supertrend)
 }

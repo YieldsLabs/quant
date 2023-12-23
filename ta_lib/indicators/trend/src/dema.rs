@@ -3,7 +3,7 @@ use core::prelude::*;
 pub fn dema(source: &Series<f32>, period: usize) -> Series<f32> {
     let ema = source.ema(period);
 
-    2.0 * &ema - ema.ema(period)
+    2. * &ema - ema.ema(period)
 }
 
 #[cfg(test)]

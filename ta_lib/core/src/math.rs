@@ -1,6 +1,6 @@
 use crate::series::Series;
 
-const ZERO: f32 = 0.0;
+const ZERO: f32 = 0.;
 
 impl Series<f32> {
     pub fn abs(&self) -> Self {

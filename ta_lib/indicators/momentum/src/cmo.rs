@@ -1,6 +1,7 @@
 use core::prelude::*;
 
-const ZERO: f32 = 0.0;
+const ZERO: f32 = 0.;
+const PERCENTAGE_SCALE: f32 = 100.;
 
 pub fn cmo(source: &Series<f32>, period: usize) -> Series<f32> {
     let mom = source.change(1);
@@ -12,7 +13,7 @@ pub fn cmo(source: &Series<f32>, period: usize) -> Series<f32> {
     let hsum = hcls.sum(period);
     let lsum = lcls.sum(period);
 
-    100.0 * (&hsum - &lsum) / (&hsum + &lsum)
+    PERCENTAGE_SCALE * (&hsum - &lsum) / (&hsum + &lsum)
 }
 
 #[cfg(test)]

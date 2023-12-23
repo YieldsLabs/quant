@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn typical_price(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
-    (high + low + close) / 3.0
+    (high + low + close) / 3.
 }
 
 #[cfg(test)]

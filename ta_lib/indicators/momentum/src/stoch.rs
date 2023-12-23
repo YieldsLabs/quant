@@ -1,5 +1,7 @@
 use core::prelude::*;
 
+const PERCENTAGE_SCALE: f32 = 100.;
+
 pub fn stoch(
     high: &Series<f32>,
     low: &Series<f32>,
@@ -9,7 +11,7 @@ pub fn stoch(
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
-    100.0 * (close - &ll) / (hh - ll)
+    PERCENTAGE_SCALE * (close - &ll) / (hh - ll)
 }
 
 #[cfg(test)]

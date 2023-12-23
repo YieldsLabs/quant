@@ -6,7 +6,7 @@ pub fn average_price(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<f32> {
-    (open + high + low + close) / 4.0
+    (open + high + low + close) / 4.
 }
 
 #[cfg(test)]
