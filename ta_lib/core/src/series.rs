@@ -83,9 +83,7 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn empty(length: usize) -> Self {
-        Self {
-            data: vec![None; length],
-        }
+        std::iter::repeat(None).take(length).collect()
     }
 
     pub fn len(&self) -> usize {
@@ -100,7 +98,7 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn last(&self) -> Option<T> {
-        self.data.last().cloned().flatten()
+        self.iter().last().cloned().flatten()
     }
 }
 
