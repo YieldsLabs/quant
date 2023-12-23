@@ -1,16 +1,18 @@
 use crate::series::Series;
 
+const ZERO: f32 = 0.0;
+
 impl Series<f32> {
     pub fn abs(&self) -> Self {
         self.fmap(|val| val.map(|v| v.abs()))
     }
 
     pub fn log(&self) -> Self {
-        self.fmap(|val| val.filter(|&v| v > &0.0).map(|v| v.ln()))
+        self.fmap(|val| val.filter(|&v| v > &ZERO).map(|v| v.ln()))
     }
 
     pub fn log10(&self) -> Self {
-        self.fmap(|val| val.filter(|&v| v > &0.0).map(|v| v.log10()))
+        self.fmap(|val| val.filter(|&v| v > &ZERO).map(|v| v.log10()))
     }
 
     pub fn exp(&self) -> Self {
@@ -26,7 +28,7 @@ impl Series<f32> {
     }
 
     pub fn sqrt(&self) -> Self {
-        self.fmap(|val| val.filter(|&v| v >= &0.0).map(|v| v.sqrt()))
+        self.fmap(|val| val.filter(|&v| v >= &ZERO).map(|v| v.sqrt()))
     }
 
     pub fn round(&self, places: usize) -> Self {
@@ -35,7 +37,7 @@ impl Series<f32> {
     }
 
     pub fn cumsum(&self) -> Self {
-        let mut sum = 0.0;
+        let mut sum = ZERO;
 
         self.fmap(|val| {
             val.map(|v| {

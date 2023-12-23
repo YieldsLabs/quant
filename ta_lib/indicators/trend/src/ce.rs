@@ -33,7 +33,7 @@ pub fn ce(
 
     let mut direction = Series::empty(len);
     let trend_up = Series::one(len);
-    let trend_dn = -1.0 * &trend_up;
+    let trend_dn = trend_up.neg();
     let trend_middle = Series::zero(len);
     let prev_close = close.shift(1);
 

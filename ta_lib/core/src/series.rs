@@ -14,9 +14,11 @@ impl<T> IntoIterator for Series<T> {
     }
 }
 
-impl<T: PartialEq> PartialEq for Series<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
+impl<T> FromIterator<Option<T>> for Series<T> {
+    fn from_iter<I: IntoIterator<Item = Option<T>>>(iter: I) -> Self {
+        Series {
+            data: iter.into_iter().collect(),
+        }
     }
 }
 
@@ -35,13 +37,15 @@ impl<T> IndexMut<usize> for Series<T> {
 }
 
 impl<T: Clone> Series<T> {
+    pub fn iter(&self) -> std::slice::Iter<'_, Option<T>> {
+        self.data.iter()
+    }
+
     pub fn fmap<U, F>(&self, mut f: F) -> Series<U>
     where
         F: FnMut(Option<&T>) -> Option<U>,
     {
-        Series {
-            data: self.data.iter().map(|x| f(x.as_ref())).collect(),
-        }
+        self.iter().map(|x| f(x.as_ref())).collect()
     }
 
     pub fn zip_with<U, V, F>(&self, other: &Series<U>, mut f: F) -> Series<V>
@@ -49,14 +53,10 @@ impl<T: Clone> Series<T> {
         F: FnMut(Option<&T>, Option<&U>) -> Option<V>,
         U: Clone,
     {
-        let data = self
-            .data
-            .iter()
-            .zip(other.data.iter())
+        self.iter()
+            .zip(other.iter())
             .map(|(x, y)| f(x.as_ref(), y.as_ref()))
-            .collect();
-
-        Series { data }
+            .collect()
     }
 
     pub fn sliding_map<U, F>(&self, period: usize, mut f: F) -> Series<U>
@@ -93,16 +93,26 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn shift(&self, n: usize) -> Self {
-        let data = std::iter::repeat(None)
+        std::iter::repeat(None)
             .take(n)
-            .chain(self.data.iter().take(self.len() - n).cloned())
-            .collect();
-
-        Self { data }
+            .chain(self.iter().take(self.len() - n).cloned())
+            .collect()
     }
 
     pub fn last(&self) -> Option<T> {
         self.data.last().cloned().flatten()
+    }
+}
+
+impl<T: AsRef<[f32]>> From<T> for Series<f32> {
+    fn from(item: T) -> Self {
+        Self {
+            data: item
+                .as_ref()
+                .iter()
+                .map(|&x| if x.is_nan() { None } else { Some(x) })
+                .collect(),
+        }
     }
 }
 
@@ -156,15 +166,9 @@ impl Series<f32> {
     }
 }
 
-impl<T: AsRef<[f32]>> From<T> for Series<f32> {
-    fn from(item: T) -> Self {
-        Self {
-            data: item
-                .as_ref()
-                .iter()
-                .map(|&x| if x.is_nan() { None } else { Some(x) })
-                .collect(),
-        }
+impl<T: PartialEq> PartialEq for Series<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
     }
 }
 
