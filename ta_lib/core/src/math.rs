@@ -61,8 +61,9 @@ impl Series<f32> {
         self.var(period).sqrt()
     }
 
-    pub fn md(&self, period: usize) -> Self {
+    pub fn mad(&self, period: usize) -> Self {
         let ma: Vec<f32> = self.ma(period).into();
+
         self.sliding_map(period, |window, size, i| {
             Some(
                 window
@@ -217,12 +218,12 @@ mod tests {
     }
 
     #[test]
-    fn test_md() {
+    fn test_mad() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = Series::from([0.0, 0.5, 0.6666667, 0.6666667, 0.6666667]);
         let n = 3;
 
-        let result = source.md(n);
+        let result = source.mad(n);
 
         assert_eq!(result, expected);
     }
