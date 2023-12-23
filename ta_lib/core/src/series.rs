@@ -37,7 +37,7 @@ impl<T> IndexMut<usize> for Series<T> {
 }
 
 impl<T: Clone> Series<T> {
-    pub fn iter(&self) -> std::slice::Iter<'_, Option<T>> {
+    pub fn iter(&self) -> impl Iterator<Item = &Option<T>> {
         self.data.iter()
     }
 
@@ -64,17 +64,16 @@ impl<T: Clone> Series<T> {
         F: FnMut(&[Option<T>], f32, usize) -> Option<U>,
         U: Clone,
     {
-        let len = self.len();
-        let mut data = vec![None; len];
+        let mut data = vec![None; self.len()];
         let mut window = vec![None; period];
         let mut pos = 0;
 
-        for i in 0..len {
-            window[pos] = self.data[i].clone();
+        for (i, item) in self.iter().enumerate() {
+            window[pos] = item.clone();
 
             let size = (i + 1).min(period);
 
-            data[i] = f(&window[0..size], size as f32, i);
+            data[i] = f(&window[..size], size as f32, i);
 
             pos = (pos + 1) % period;
         }
