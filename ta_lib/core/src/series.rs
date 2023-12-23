@@ -103,13 +103,18 @@ impl<T: Clone> Series<T> {
 
 impl<T: AsRef<[f32]>> From<T> for Series<f32> {
     fn from(item: T) -> Self {
-        Self {
-            data: item
-                .as_ref()
-                .iter()
-                .map(|&x| if x.is_nan() { None } else { Some(x) })
-                .collect(),
-        }
+        item.as_ref()
+            .iter()
+            .map(|&x| if x.is_nan() { None } else { Some(x) })
+            .collect()
+    }
+}
+
+impl FromIterator<f32> for Series<f32> {
+    fn from_iter<I: IntoIterator<Item = f32>>(iter: I) -> Self {
+        iter.into_iter()
+            .map(|x| if x.is_nan() { None } else { Some(x) })
+            .collect()
     }
 }
 

@@ -1,10 +1,9 @@
 use core::prelude::*;
 
 pub fn zlsma(source: &Series<f32>, period: usize) -> Series<f32> {
-    let lsma1 = source.linreg(period);
-    let lsma2 = lsma1.linreg(period);
+    let lsma = source.linreg(period);
 
-    2.0 * lsma1 - lsma2
+    2.0 * lsma - lsma.linreg(period)
 }
 
 #[cfg(test)]

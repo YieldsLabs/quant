@@ -66,7 +66,7 @@ impl Series<f32> {
     }
 
     pub fn linreg(&self, period: usize) -> Self {
-        let x = Series::from((0..self.len()).map(|i| i as f32).collect::<Vec<f32>>());
+        let x = (0..self.len()).map(|i| i as f32).collect::<Series<_>>();
 
         let x_mean = x.ma(period);
         let y_mean = self.ma(period);
