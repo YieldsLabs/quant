@@ -112,10 +112,10 @@ impl Series<f32> {
         F: Fn(&f32, &f32) -> bool,
     {
         self.sliding_map(period, |window, _, _| {
-            window.iter().flatten().fold(None, |acc, x| match acc {
-                Some(acc_val) if comparison(x, &acc_val) => Some(*x),
+            window.iter().flatten().fold(None, |acc, &x| match acc {
+                Some(acc_val) if comparison(&x, &acc_val) => Some(x),
                 Some(_) => acc,
-                None => Some(*x),
+                None => Some(x),
             })
         })
     }
@@ -128,10 +128,7 @@ impl Series<f32> {
     }
 
     pub fn na(&self) -> Series<bool> {
-        self.fmap(|val| match val {
-            Some(_) => Some(false),
-            None => Some(true),
-        })
+        self.fmap(|val| Some(val.is_none()))
     }
 
     pub fn fill(scalar: f32, len: usize) -> Series<f32> {
@@ -191,7 +188,7 @@ impl From<Series<bool>> for Vec<bool> {
 
 impl From<Series<f32>> for Series<bool> {
     fn from(val: Series<f32>) -> Self {
-        val.fmap(|opt| opt.and_then(|&f| if f.is_nan() { None } else { Some(f != 0.0) }))
+        val.fmap(|opt| opt.map(|f| f.is_finite() && *f != 0.0))
     }
 }
 

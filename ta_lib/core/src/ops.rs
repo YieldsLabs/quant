@@ -33,19 +33,7 @@ impl Series<f32> {
 
     pub fn div_series(&self, rhs: &Series<f32>) -> Series<f32> {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => {
-                if *b_val == 0.0 {
-                    if *a_val > 0.0 {
-                        Some(std::f32::INFINITY)
-                    } else if *a_val < 0.0 {
-                        Some(std::f32::NEG_INFINITY)
-                    } else {
-                        None
-                    }
-                } else {
-                    Some(a_val / b_val)
-                }
-            }
+            (Some(a_val), Some(b_val)) if *b_val != 0.0 => Some(a_val / b_val),
             _ => None,
         })
     }
@@ -63,19 +51,7 @@ impl Series<f32> {
     }
 
     pub fn div_scalar(&self, scalar: f32) -> Series<f32> {
-        self.unary_op_scalar(scalar, |v, s| {
-            if s == 0.0 {
-                if *v > 0.0 {
-                    std::f32::INFINITY
-                } else if *v < 0.0 {
-                    std::f32::NEG_INFINITY
-                } else {
-                    0.0
-                }
-            } else {
-                v / s
-            }
-        })
+        self.unary_op_scalar(scalar, |v, s| if s != 0.0 { v / s } else { 0.0 })
     }
 
     pub fn sub_scalar(&self, scalar: f32) -> Series<f32> {
