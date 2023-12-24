@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-const ZERO: f32 = 0.0;
+const ZERO: f32 = 0.;
 const PERCENTAGE_SCALE: f32 = 100.;
 
 pub fn tii(source: &Series<f32>, major_period: usize, minor_period: usize) -> Series<f32> {

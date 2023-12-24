@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-const ZERO: f32 = 0.0;
-const PERCENTAGE_SCALE: f32 = 100.0;
+const ZERO: f32 = 0.;
+const PERCENTAGE_SCALE: f32 = 100.;
 
 pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();

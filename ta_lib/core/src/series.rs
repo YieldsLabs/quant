@@ -160,11 +160,11 @@ impl Series<f32> {
     }
 
     pub fn highest(&self, period: usize) -> Self {
-        self.extreme_value(period, |a, b| a >= b)
+        self.extreme_value(period, |a, b| a > b)
     }
 
     pub fn lowest(&self, period: usize) -> Self {
-        self.extreme_value(period, |a, b| a <= b)
+        self.extreme_value(period, |a, b| a < b)
     }
 }
 
