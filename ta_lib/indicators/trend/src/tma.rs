@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn tma(source: &Series<f32>, period: usize) -> Series<f32> {
-    let n = (period + 1) / 2;
+    let n = (period as f32 / 2. + 1.) as usize;
 
     source.ma(n).ma(n)
 }

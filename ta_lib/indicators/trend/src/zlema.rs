@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn zlema(source: &Series<f32>, period: usize) -> Series<f32> {
-    let lag = (period - 1) / 2;
+    let lag = ((period as f32 - 1.) / 2.) as usize;
 
     let d = (2. * source) - source.shift(lag);
 
