@@ -3,7 +3,7 @@ use core::prelude::*;
 pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
 
-    let mut mg = Series::zero(len);
+    let mut mg = Series::empty(len);
     let seed = source.ema(period);
 
     for _ in 0..len {

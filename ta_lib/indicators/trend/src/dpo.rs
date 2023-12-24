@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn dpo(source: &Series<f32>, period: usize) -> Series<f32> {
-    let k = (period as f32 / 2. + 1.) as usize;
+    let k = (period + 1) / 2;
 
     source - source.ma(period).shift(k)
 }

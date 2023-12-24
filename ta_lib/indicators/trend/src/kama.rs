@@ -13,7 +13,7 @@ pub fn kama(source: &Series<f32>, period: usize) -> Series<f32> {
         (er * 0.666_666_7).sqrt()
     );
 
-    let mut kama = Series::zero(len);
+    let mut kama = Series::empty(len);
 
     for _ in 0..len {
         let prev_kama = kama.shift(1);
