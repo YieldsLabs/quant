@@ -85,6 +85,7 @@ impl<T: Clone> Series<T> {
         std::iter::repeat(None).take(length).collect()
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.data.len()
     }

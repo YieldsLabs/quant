@@ -38,13 +38,11 @@ impl Series<f32> {
 
     pub fn wma(&self, period: usize) -> Self {
         let mut sum = Series::zero(self.len());
-        let mut norm = 0.;
+        let weights = (0..period).map(|i| (period - i) as f32).collect::<Vec<_>>();
+        let norm = weights.iter().sum::<f32>();
 
         for i in 0..period {
-            let weight = (period - i) as f32;
-
-            norm += weight;
-            sum = sum + self.shift(i) * weight;
+            sum = sum + self.shift(i) * weights[i];
         }
 
         sum / norm
