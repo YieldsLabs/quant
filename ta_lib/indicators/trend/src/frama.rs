@@ -16,13 +16,13 @@ pub fn frama(
 
     let hh3 = hh1.max(&hh2);
     let ll3 = ll1.min(&ll2);
-    let n3 = (hh3 - ll3) / (2 * period) as f32;
+    let n3 = (hh3 - ll3) / (2. * period as f32);
 
     let d = ((n1 + n2).log() - n3.log()) / 2.0_f32.ln();
 
     let alpha = iff!(
         d.na(),
-        Series::fill(2. / (period + 1) as f32, close.len()),
+        Series::fill(2. / (period as f32+ 1.), close.len()),
         (-4.6 * (d - 1.)).exp()
     );
 
