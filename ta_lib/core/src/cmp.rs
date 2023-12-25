@@ -215,26 +215,4 @@ mod tests {
 
         assert_eq!(result, expected);
     }
-
-    #[test]
-    fn test_bitand() {
-        let a = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
-        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 0.0, 0.0]).into();
-
-        let result = a.sgt(&b) & a.slt(&b);
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_bitor() {
-        let a = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let b = Series::from([1.0, 1.0, 1.0, 1.0, 1.0]);
-        let expected: Series<bool> = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
-
-        let result = a.sgt(&b) | a.slt(&b);
-
-        assert_eq!(result, expected);
-    }
 }

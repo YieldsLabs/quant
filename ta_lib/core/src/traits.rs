@@ -27,3 +27,14 @@ pub trait Comparator<T> {
     fn slt(&self, rhs: &T) -> Self::Output;
     fn sle(&self, rhs: &T) -> Self::Output;
 }
+
+pub trait Bitwise<T> {
+    type Output;
+
+    fn op<F>(&self, rhs: &T, op: F) -> Self::Output
+    where
+        F: Fn(bool, bool) -> bool;
+
+    fn sand(&self, rhs: &T) -> Self::Output;
+    fn sor(&self, rhs: &T) -> Self::Output;
+}

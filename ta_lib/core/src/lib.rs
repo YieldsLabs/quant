@@ -1,3 +1,4 @@
+mod bitwise;
 mod cmp;
 mod cross;
 mod extremum;

@@ -1,5 +1,5 @@
 use crate::series::Series;
-use std::ops::{Add, BitAnd, BitOr, Div, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 impl Series<f32> {
     fn binary_op_series<F>(&self, rhs: &Series<f32>, op: F) -> Series<f32>
@@ -238,31 +238,3 @@ macro_rules! impl_bool_ops {
 }
 
 impl_bool_ops!(Mul, mul, mul_series);
-
-impl Series<bool> {
-    fn logical_op<F>(&self, rhs: &Series<bool>, operation: F) -> Series<bool>
-    where
-        F: Fn(bool, bool) -> bool,
-    {
-        self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(operation(*a_val, *b_val)),
-            _ => None,
-        })
-    }
-}
-
-impl BitAnd for Series<bool> {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        self.logical_op(&rhs, |a, b| a & b)
-    }
-}
-
-impl BitOr for Series<bool> {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        self.logical_op(&rhs, |a, b| a | b)
-    }
-}
