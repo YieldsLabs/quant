@@ -23,7 +23,7 @@ mod tests {
         let source = Series::from([
             0.01707, 0.01706, 0.01707, 0.01705, 0.01710, 0.01705, 0.01704, 0.01709,
         ]);
-        let expected = vec![
+        let expected = [
             0.0,
             0.0,
             0.017065858,
