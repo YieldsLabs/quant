@@ -8,9 +8,10 @@ impl Comparator<f32> for Series<f32> {
     where
         F: Fn(f32, f32) -> bool,
     {
-        self.fmap(|x| match x {
-            Some(val) => Some(comparator(*val, *scalar)),
-            None => Some(comparator(f32::NAN, *scalar)),
+        self.fmap(|x| {
+            x.map_or(Some(comparator(f32::NAN, *scalar)), |val| {
+                Some(comparator(*val, *scalar))
+            })
         })
     }
 
