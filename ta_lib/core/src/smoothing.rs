@@ -41,8 +41,8 @@ impl Series<f32> {
         let weights = (0..period).map(|i| (period - i) as f32).collect::<Vec<_>>();
         let norm = weights.iter().sum::<f32>();
 
-        for i in 0..period {
-            sum = sum + self.shift(i) * weights[i];
+        for (i, &weight) in weights.iter().enumerate() {
+            sum = sum + self.shift(i) * weight;
         }
 
         sum / norm

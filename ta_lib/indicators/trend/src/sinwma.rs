@@ -7,8 +7,8 @@ pub fn sinwma(source: &Series<f32>, period: usize) -> Series<f32> {
         .collect::<Vec<_>>();
     let norm = weights.iter().sum::<f32>();
 
-    for i in 0..period {
-        sum = sum + source.shift(i) * weights[i];
+    for (i, &weight) in weights.iter().enumerate() {
+        sum = sum + source.shift(i) * weight;
     }
 
     sum / norm
