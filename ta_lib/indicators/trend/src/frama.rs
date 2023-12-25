@@ -22,7 +22,7 @@ pub fn frama(
 
     let alpha = iff!(
         d.na(),
-        Series::fill(2. / (period as f32+ 1.), close.len()),
+        Series::fill(2. / (period as f32 + 1.), close.len()),
         (-4.6 * (d - 1.)).exp()
     );
 

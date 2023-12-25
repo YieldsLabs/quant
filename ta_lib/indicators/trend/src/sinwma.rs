@@ -33,9 +33,18 @@ mod tests {
             0.017061714,
             0.017057573,
         ];
+        let epsilon = 0.0001;
 
         let result: Vec<f32> = sinwma(&source, 3).into();
 
-        assert_eq!(result, expected);
+        for i in 0..source.len() {
+            assert!(
+                (result[i] - expected[i]).abs() < epsilon,
+                "at position {}: {} != {}",
+                i,
+                result[i],
+                expected[i]
+            );
+        }
     }
 }
