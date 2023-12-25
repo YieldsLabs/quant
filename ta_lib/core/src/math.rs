@@ -1,4 +1,5 @@
 use crate::series::Series;
+use std::ops::Neg;
 
 const ZERO: f32 = 0.;
 
@@ -25,6 +26,10 @@ impl Series<f32> {
 
     pub fn sign(&self) -> Self {
         self.fmap(|val| val.map(|v| v.signum()))
+    }
+
+    pub fn sneg(&self) -> Self {
+        self.fmap(|val| val.map(|v| v.neg()))
     }
 
     pub fn sqrt(&self) -> Self {

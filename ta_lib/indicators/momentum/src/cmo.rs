@@ -8,7 +8,7 @@ pub fn cmo(source: &Series<f32>, period: usize) -> Series<f32> {
     let zero = Series::zero(source.len());
 
     let hcls = iff!(mom.sge(&ZERO), mom, zero);
-    let lcls = iff!(mom.sle(&ZERO), mom.neg(), zero);
+    let lcls = iff!(mom.sle(&ZERO), mom.sneg(), zero);
 
     let hsum = hcls.sum(period);
     let lsum = lcls.sum(period);

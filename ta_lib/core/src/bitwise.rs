@@ -7,10 +7,10 @@ impl Bitwise<Series<bool>> for Series<bool> {
 
     fn op<F>(&self, rhs: &Series<bool>, operation: F) -> Self::Output
     where
-        F: Fn(bool, bool) -> bool,
+        F: Fn(&bool, &bool) -> bool,
     {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(operation(*a_val, *b_val)),
+            (Some(a_val), Some(b_val)) => Some(operation(a_val, b_val)),
             _ => None,
         })
     }

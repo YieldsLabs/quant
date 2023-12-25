@@ -12,7 +12,7 @@ pub fn dmi(
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let len = high.len();
     let up = high.change(1);
-    let down = low.change(1).neg();
+    let down = low.change(1).sneg();
 
     let zero = Series::zero(len);
     let one = Series::one(len);
