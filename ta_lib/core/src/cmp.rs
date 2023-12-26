@@ -6,11 +6,11 @@ impl Comparator<f32> for Series<f32> {
 
     fn compare<F>(&self, scalar: &f32, comparator: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> bool,
+        F: Fn(&f32, &f32) -> bool,
     {
         self.fmap(|x| {
-            x.map_or(Some(comparator(f32::NAN, *scalar)), |val| {
-                Some(comparator(*val, *scalar))
+            x.map_or(Some(comparator(&f32::NAN, scalar)), |val| {
+                Some(comparator(val, scalar))
             })
         })
     }
@@ -45,12 +45,12 @@ impl Comparator<Series<f32>> for Series<f32> {
 
     fn compare<F>(&self, rhs: &Series<f32>, comparator: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> bool,
+        F: Fn(&f32, &f32) -> bool,
     {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(comparator(*a_val, *b_val)),
-            (None, Some(b_val)) => Some(comparator(f32::NAN, *b_val)),
-            (Some(a_val), None) => Some(comparator(*a_val, f32::NAN)),
+            (Some(a_val), Some(b_val)) => Some(comparator(a_val, b_val)),
+            (None, Some(b_val)) => Some(comparator(&f32::NAN, b_val)),
+            (Some(a_val), None) => Some(comparator(a_val, &f32::NAN)),
             _ => None,
         })
     }

@@ -27,7 +27,7 @@ pub fn supertrend(
 
     let mut direction = Series::empty(len);
     let trend_up = Series::one(len);
-    let trend_dn = trend_up.neg();
+    let trend_dn = trend_up.sneg();
 
     let prev_up = up.shift(1);
     let prev_dn = dn.shift(1);
