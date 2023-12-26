@@ -2,7 +2,7 @@ use crate::series::Series;
 use crate::traits::Operation;
 use std::ops::{Add, Div, Mul, Sub};
 
-impl Operation<f32, f32> for Series<f32> {
+impl Operation<f32, f32, f32> for Series<f32> {
     type Output = Series<f32>;
 
     fn ops<F>(&self, scalar: &f32, op: F) -> Self::Output
@@ -29,7 +29,7 @@ impl Operation<f32, f32> for Series<f32> {
     }
 }
 
-impl Operation<Series<f32>, f32> for Series<f32> {
+impl Operation<Series<f32>, f32, f32> for Series<f32> {
     type Output = Series<f32>;
 
     fn ops<F>(&self, rhs: &Series<f32>, op: F) -> Self::Output
@@ -61,7 +61,7 @@ impl Operation<Series<f32>, f32> for Series<f32> {
     }
 }
 
-impl Operation<Series<f32>, bool> for Series<bool> {
+impl Operation<Series<f32>, bool, f32> for Series<bool> {
     type Output = Series<f32>;
 
     fn ops<F>(&self, rhs: &Series<f32>, op: F) -> Series<f32>

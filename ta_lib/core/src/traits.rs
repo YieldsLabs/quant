@@ -28,12 +28,12 @@ pub trait Comparator<T> {
     fn sle(&self, rhs: &T) -> Self::Output;
 }
 
-pub trait Operation<T, V> {
+pub trait Operation<T, U, V> {
     type Output;
 
     fn ops<F>(&self, rhs: &T, op: F) -> Self::Output
     where
-        F: Fn(&V, &f32) -> f32;
+        F: Fn(&U, &V) -> f32;
 
     fn sadd(&self, rhs: &T) -> Self::Output;
     fn ssub(&self, rhs: &T) -> Self::Output;
