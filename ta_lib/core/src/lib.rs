@@ -2,6 +2,7 @@ mod bitwise;
 mod cmp;
 mod cross;
 mod extremum;
+mod from;
 mod macros;
 mod math;
 mod ops;
