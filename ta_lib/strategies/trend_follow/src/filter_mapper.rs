@@ -16,13 +16,6 @@ pub enum FilterConfig {
     Bop {
         signal_smoothing: f32,
     },
-    Braid {
-        period_one: f32,
-        period_two: f32,
-        period_three: f32,
-        strength: f32,
-        atr_period: f32,
-    },
     Dpo {
         period: f32,
     },
@@ -158,19 +151,6 @@ pub fn map_to_filter(config: FilterConfig) -> Box<dyn Filter> {
         FilterConfig::Supertrend { atr_period, factor } => {
             Box::new(SupertrendFilter::new(atr_period, factor))
         }
-        FilterConfig::Braid {
-            period_one,
-            period_two,
-            period_three,
-            strength,
-            atr_period,
-        } => Box::new(BraidFilter::new(
-            period_one,
-            period_two,
-            period_three,
-            strength,
-            atr_period,
-        )),
         FilterConfig::Tii {
             major_period,
             minor_period,

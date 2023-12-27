@@ -10,6 +10,13 @@ pub enum PulseConfig {
         di_period: f32,
         threshold: f32,
     },
+    Braid {
+        period_one: f32,
+        period_two: f32,
+        period_three: f32,
+        strength: f32,
+        atr_period: f32,
+    },
     Dumb {
         period: f32,
     },
@@ -31,6 +38,19 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             di_period,
             threshold,
         } => Box::new(ADXPulse::new(adx_period, di_period, threshold)),
+        PulseConfig::Braid {
+            period_one,
+            period_two,
+            period_three,
+            strength,
+            atr_period,
+        } => Box::new(BraidPulse::new(
+            period_one,
+            period_two,
+            period_three,
+            strength,
+            atr_period,
+        )),
         PulseConfig::Chop {
             atr_period,
             period,

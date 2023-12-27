@@ -21,7 +21,6 @@ from .exit.pattern import PatternExit
 from .exit.rsi import RsiExit
 from .filter.apo import ApoFilter
 from .filter.bop import BopFilter
-from .filter.braid import BraidFilter
 from .filter.dpo import DpoFilter
 from .filter.eis import EisFilter
 from .filter.eom import EomFilter
@@ -34,6 +33,7 @@ from .filter.stoch import StochFilter
 from .filter.supertrend import SupertrendFilter
 from .filter.tii import TiiFilter
 from .pulse.adx import AdxPulse
+from .pulse.braid import BraidPulse
 from .pulse.chop import ChopPulse
 from .pulse.dumb import DumbPulse
 from .pulse.vo import VoPulse
@@ -163,7 +163,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 RibbonFilter(),
                 FibFilter(),
                 EisFilter(),
-                BraidFilter(),
                 ApoFilter(),
                 BopFilter(),
                 DpoFilter(),
@@ -171,7 +170,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 EomFilter(),
             ]
         )
-        pulse = np.random.choice([DumbPulse(), AdxPulse(), ChopPulse(), VoPulse()])
+        pulse = np.random.choice(
+            [DumbPulse(), AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()]
+        )
         baseline = np.random.choice(
             [
                 MaBaseLine(

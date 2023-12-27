@@ -1,7 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 
-pub struct BraidFilter {
+pub struct BraidPulse {
     period_one: usize,
     period_two: usize,
     period_three: usize,
@@ -9,7 +9,7 @@ pub struct BraidFilter {
     atr_period: usize,
 }
 
-impl BraidFilter {
+impl BraidPulse {
     pub fn new(
         period_one: f32,
         period_two: f32,
@@ -27,13 +27,13 @@ impl BraidFilter {
     }
 }
 
-impl Filter for BraidFilter {
+impl Pulse for BraidPulse {
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.period_one, self.period_two);
         std::cmp::max(adj_lookback, self.period_three)
     }
 
-    fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma_one = data.close.ema(self.period_one);
         let ma_two = data.open.ema(self.period_two);
         let ma_three = data.close.ema(self.period_three);

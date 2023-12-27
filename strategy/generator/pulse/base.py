@@ -6,6 +6,7 @@ from core.models.indicator import Indicator
 
 class PulseType(Enum):
     Adx = "Adx"
+    Braid = "Braid"
     Dumb = "Dumb"
     Chop = "Chop"
     Vo = "Vo"

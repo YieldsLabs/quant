@@ -5,12 +5,12 @@ from core.models.parameter import (
     StaticParameter,
 )
 
-from .base import Filter, FilterType
+from .base import Pulse, PulseType
 
 
 @dataclass(frozen=True)
-class BraidFilter(Filter):
-    type: FilterType = FilterType.Braid
+class BraidPulse(Pulse):
+    type: PulseType = PulseType.Braid
     period_one: Parameter = StaticParameter(3.0)
     period_two: Parameter = StaticParameter(7.0)
     period_three: Parameter = StaticParameter(14.0)

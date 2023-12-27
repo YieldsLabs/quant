@@ -7,7 +7,6 @@ from core.models.indicator import Indicator
 class FilterType(Enum):
     Apo = "Apo"
     Bop = "Bop"
-    Braid = "Braid"
     Dumb = "Dumb"
     Dpo = "Dpo"
     Fib = "Fib"
