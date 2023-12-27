@@ -28,7 +28,7 @@ impl Series<f32> {
         self.fmap(|val| val.map(|v| v.signum()))
     }
 
-    pub fn sneg(&self) -> Self {
+    pub fn negate(&self) -> Self {
         self.fmap(|val| val.map(|v| v.neg()))
     }
 

@@ -28,7 +28,7 @@ pub fn ast(close: &Series<f32>, atr: &Series<f32>, factor: f32) -> (Series<f32>,
 
     let mut direction = Series::zero(len);
     let trend_up = Series::one(len);
-    let trend_dn = trend_up.sneg();
+    let trend_dn = trend_up.negate();
 
     for _ in 0..len {
         let prev_direction = direction.shift(1);

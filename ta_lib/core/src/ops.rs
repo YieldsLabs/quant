@@ -215,7 +215,7 @@ impl Sub<&Series<f32>> for f32 {
     type Output = Series<f32>;
 
     fn sub(self, rhs: &Series<f32>) -> Self::Output {
-        rhs.sneg().ssub(&-self)
+        rhs.negate().ssub(&-self)
     }
 }
 
@@ -223,7 +223,7 @@ impl Sub<Series<f32>> for f32 {
     type Output = Series<f32>;
 
     fn sub(self, rhs: Series<f32>) -> Self::Output {
-        rhs.sneg().ssub(&-self)
+        rhs.negate().ssub(&-self)
     }
 }
 
