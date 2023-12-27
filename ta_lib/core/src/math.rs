@@ -56,7 +56,7 @@ impl Series<f32> {
 impl Series<f32> {
     pub fn sum(&self, period: usize) -> Self {
         self.window(period)
-            .map(|w| w.into_iter().flatten().sum::<f32>())
+            .map(|w| w.iter().flatten().sum::<f32>())
             .collect()
     }
 
@@ -72,10 +72,13 @@ impl Series<f32> {
         self.window(period)
             .map(|w| {
                 let len = w.len() as f32;
-                let window = w.into_iter().flatten();
-                let mean = window.clone().sum::<f32>() / len;
+                let mean = w.iter().flatten().sum::<f32>() / len;
 
-                window.map(|value| (value - mean).abs()).sum::<f32>() / len
+                w.iter()
+                    .flatten()
+                    .map(|value| (value - mean).abs())
+                    .sum::<f32>()
+                    / len
             })
             .collect()
     }

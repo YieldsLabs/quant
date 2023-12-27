@@ -20,7 +20,7 @@ impl Series<f32> {
 
     pub fn ma(&self, period: usize) -> Self {
         self.window(period)
-            .map(|w| w.iter().flatten().cloned().sum::<f32>() / w.len() as f32)
+            .map(|w| w.iter().flatten().sum::<f32>() / w.len() as f32)
             .collect()
     }
 

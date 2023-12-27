@@ -41,8 +41,8 @@ impl<T: Clone> Series<T> {
         self.data.iter()
     }
 
-    pub fn window(&self, period: usize) -> impl Iterator<Item = Vec<Option<T>>> + '_ {
-        (0..self.len()).map(move |i| self.data[i.saturating_sub(period - 1)..=i].to_vec())
+    pub fn window(&self, period: usize) -> impl Iterator<Item = &[Option<T>]> + '_ {
+        (0..self.len()).map(move |i| &self.data[i.saturating_sub(period - 1)..=i])
     }
 
     pub fn fmap<U, F>(&self, mut f: F) -> Series<U>
@@ -138,7 +138,7 @@ impl Series<f32> {
     pub fn highest(&self, period: usize) -> Self {
         self.window(period)
             .map(|w| {
-                w.into_iter()
+                w.iter()
                     .flatten()
                     .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
             })
@@ -148,7 +148,7 @@ impl Series<f32> {
     pub fn lowest(&self, period: usize) -> Self {
         self.window(period)
             .map(|w| {
-                w.into_iter()
+                w.iter()
                     .flatten()
                     .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
             })
