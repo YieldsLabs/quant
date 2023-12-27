@@ -9,6 +9,10 @@ pub trait Cross<T> {
 pub trait Extremum<T> {
     type Output;
 
+    fn extremum<F>(&self, rhs: &T, f: F) -> Self::Output
+    where
+        F: Fn(f32, f32) -> f32;
+
     fn max(&self, rhs: &T) -> Self::Output;
     fn min(&self, rhs: &T) -> Self::Output;
 }

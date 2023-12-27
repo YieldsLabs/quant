@@ -4,34 +4,42 @@ use crate::traits::Extremum;
 impl Extremum<f32> for Series<f32> {
     type Output = Series<f32>;
 
+    fn extremum<F>(&self, scalar: &f32, f: F) -> Self::Output
+    where
+        F: Fn(f32, f32) -> f32,
+    {
+        self.fmap(|val| val.map(|v| f(*v, *scalar)).or_else(|| Some(*scalar)))
+    }
+
     fn max(&self, scalar: &f32) -> Self::Output {
-        self.fmap(|val| val.map(|v| v.max(*scalar)).or(Some(*scalar)))
+        self.extremum(scalar, f32::max)
     }
 
     fn min(&self, scalar: &f32) -> Self::Output {
-        self.fmap(|val| val.map(|v| v.min(*scalar)).or(Some(*scalar)))
+        self.extremum(scalar, f32::min)
     }
 }
 
 impl Extremum<Series<f32>> for Series<f32> {
     type Output = Series<f32>;
 
-    fn max(&self, rhs: &Series<f32>) -> Self::Output {
+    fn extremum<F>(&self, rhs: &Series<f32>, f: F) -> Self::Output
+    where
+        F: Fn(f32, f32) -> f32,
+    {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(a_val.max(*b_val)),
-            (Some(a_val), None) => Some(*a_val),
-            (None, Some(b_val)) => Some(*b_val),
+            (Some(a_val), Some(b_val)) => Some(f(*a_val, *b_val)),
+            (Some(a_val), None) | (None, Some(a_val)) => Some(*a_val),
             _ => None,
         })
     }
 
+    fn max(&self, rhs: &Series<f32>) -> Self::Output {
+        self.extremum(rhs, f32::max)
+    }
+
     fn min(&self, rhs: &Series<f32>) -> Self::Output {
-        self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) => Some(a_val.min(*b_val)),
-            (Some(a_val), None) => Some(*a_val),
-            (None, Some(b_val)) => Some(*b_val),
-            _ => None,
-        })
+        self.extremum(rhs, f32::min)
     }
 }
 
