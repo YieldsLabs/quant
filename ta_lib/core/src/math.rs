@@ -55,7 +55,9 @@ impl Series<f32> {
 
 impl Series<f32> {
     pub fn sum(&self, period: usize) -> Self {
-        self.sliding_map(period, |window, _, _| Some(window.iter().flatten().sum()))
+        self.window(period)
+            .map(|w| w.iter().flatten().sum::<f32>())
+            .collect()
     }
 
     pub fn var(&self, period: usize) -> Self {
@@ -67,18 +69,18 @@ impl Series<f32> {
     }
 
     pub fn mad(&self, period: usize) -> Self {
-        let ma: Vec<f32> = self.ma(period).into();
+        self.window(period)
+            .map(|w| {
+                let len = w.len() as f32;
+                let mean = w.iter().flatten().sum::<f32>() / len;
 
-        self.sliding_map(period, |window, size, i| {
-            Some(
-                window
-                    .iter()
+                w.iter()
                     .flatten()
-                    .map(|v| (v - ma[i]).abs())
+                    .map(|value| (value - mean).abs())
                     .sum::<f32>()
-                    / size,
-            )
-        })
+                    / len
+            })
+            .collect()
     }
 }
 
@@ -191,8 +193,8 @@ mod tests {
 
     #[test]
     fn test_sum() {
-        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([1.0, 3.0, 6.0, 9.0, 12.0]);
+        let source = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 2.0, 5.0, 9.0, 12.0]);
         let n = 3;
 
         let result = source.sum(n);

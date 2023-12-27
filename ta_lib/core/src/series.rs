@@ -41,6 +41,10 @@ impl<T: Clone> Series<T> {
         self.data.iter()
     }
 
+    pub fn window(&self, period: usize) -> impl Iterator<Item = &[Option<T>]> + '_ {
+        (0..self.len()).map(move |i| &self.data[i.saturating_sub(period - 1)..=i])
+    }
+
     pub fn fmap<U, F>(&self, mut f: F) -> Series<U>
     where
         F: FnMut(Option<&T>) -> Option<U>,
@@ -57,28 +61,6 @@ impl<T: Clone> Series<T> {
             .zip(other.iter())
             .map(|(x, y)| f(x.as_ref(), y.as_ref()))
             .collect()
-    }
-
-    pub fn sliding_map<U, F>(&self, period: usize, mut f: F) -> Series<U>
-    where
-        F: FnMut(&[Option<T>], f32, usize) -> Option<U>,
-        U: Clone,
-    {
-        let mut data = vec![None; self.len()];
-        let mut window = vec![None; period];
-        let mut pos = 0;
-
-        for (i, item) in self.iter().enumerate() {
-            window[pos] = item.clone();
-
-            let size = (i + 1).min(period);
-
-            data[i] = f(&window[..size], size as f32, i);
-
-            pos = (pos + 1) % period;
-        }
-
-        Series { data }
     }
 
     pub fn empty(length: usize) -> Self {
@@ -111,6 +93,12 @@ impl<T: AsRef<[f32]>> From<T> for Series<f32> {
     }
 }
 
+impl<'a> FromIterator<Option<&'a f32>> for Series<f32> {
+    fn from_iter<I: IntoIterator<Item = Option<&'a f32>>>(iter: I) -> Self {
+        iter.into_iter().map(|opt| opt.map(|&x| x)).collect()
+    }
+}
+
 impl FromIterator<f32> for Series<f32> {
     fn from_iter<I: IntoIterator<Item = f32>>(iter: I) -> Self {
         iter.into_iter()
@@ -120,19 +108,6 @@ impl FromIterator<f32> for Series<f32> {
 }
 
 impl Series<f32> {
-    fn extreme_value<F>(&self, period: usize, comparison: F) -> Self
-    where
-        F: Fn(&f32, &f32) -> bool,
-    {
-        self.sliding_map(period, |window, _, _| {
-            window.iter().flatten().fold(None, |acc, &x| match acc {
-                Some(acc_val) if comparison(&x, &acc_val) => Some(x),
-                Some(_) => acc,
-                None => Some(x),
-            })
-        })
-    }
-
     pub fn nz(&self, replacement: Option<f32>) -> Self {
         self.fmap(|opt| match opt {
             Some(v) => Some(*v),
@@ -161,11 +136,23 @@ impl Series<f32> {
     }
 
     pub fn highest(&self, period: usize) -> Self {
-        self.extreme_value(period, |a, b| a > b)
+        self.window(period)
+            .map(|w| {
+                w.iter()
+                    .flatten()
+                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            })
+            .collect()
     }
 
     pub fn lowest(&self, period: usize) -> Self {
-        self.extreme_value(period, |a, b| a < b)
+        self.window(period)
+            .map(|w| {
+                w.iter()
+                    .flatten()
+                    .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            })
+            .collect()
     }
 }
 
