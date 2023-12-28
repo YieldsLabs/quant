@@ -8,7 +8,7 @@ impl Extremum<f32> for Series<f32> {
     where
         F: Fn(f32, f32) -> f32,
     {
-        self.fmap(|val| val.map(|v| f(*v, *scalar)).or_else(|| Some(*scalar)))
+        self.fmap(|val| val.map(|v| f(*v, *scalar)).or(Some(*scalar)))
     }
 
     fn max(&self, scalar: &f32) -> Self::Output {

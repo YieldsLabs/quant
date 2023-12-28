@@ -74,7 +74,7 @@ impl Operation<Series<f32>, bool, f32> for Series<bool> {
         })
     }
 
-    fn sadd(&self, rhs: &Series<f32>) -> Series<f32> {
+    fn sadd(&self, _rhs: &Series<f32>) -> Series<f32> {
         unimplemented!()
     }
 
@@ -82,11 +82,11 @@ impl Operation<Series<f32>, bool, f32> for Series<bool> {
         self.ops(rhs, |b, a| if *b { *a } else { 0.0 })
     }
 
-    fn sdiv(&self, rhs: &Series<f32>) -> Series<f32> {
+    fn sdiv(&self, _rhs: &Series<f32>) -> Series<f32> {
         unimplemented!()
     }
 
-    fn ssub(&self, rhs: &Series<f32>) -> Series<f32> {
+    fn ssub(&self, _rhs: &Series<f32>) -> Series<f32> {
         unimplemented!()
     }
 }

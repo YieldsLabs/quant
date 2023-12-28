@@ -11,7 +11,7 @@ impl<T: AsRef<[f32]>> From<T> for Series<f32> {
 
 impl<'a> FromIterator<Option<&'a f32>> for Series<f32> {
     fn from_iter<I: IntoIterator<Item = Option<&'a f32>>>(iter: I) -> Self {
-        iter.into_iter().map(|opt| opt.map(|&x| x)).collect()
+        iter.into_iter().map(|opt| opt.copied()).collect()
     }
 }
 
