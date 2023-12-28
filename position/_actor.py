@@ -124,12 +124,12 @@ class PositionActor(Actor):
         if position.side == PositionSide.LONG and isinstance(
             event, ExitLongSignalReceived
         ):
-            return True
+            return position.entry_price < event.exit_price
 
         if position.side == PositionSide.SHORT and isinstance(
             event, ExitShortSignalReceived
         ):
-            return True
+            return position.entry_price > event.exit_price
 
         if position.side == PositionSide.LONG and isinstance(
             event, GoShortSignalReceived
