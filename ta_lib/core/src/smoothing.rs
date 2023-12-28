@@ -3,9 +3,10 @@ use crate::series::Series;
 
 impl Series<f32> {
     pub fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
-        let mut sum = Series::empty(self.len());
+        let len = self.len();
+        let mut sum = Series::empty(len);
 
-        for _ in 0..self.len() {
+        for _ in 0..len {
             let prev = sum.shift(1);
 
             sum = iff!(
