@@ -10,9 +10,8 @@ class PositionRiskSimpleStrategy(AbstractPositionRiskStrategy):
     def next(
         self,
         _side: PositionSide,
-        _entry_price: float,
-        _take_profit_price: float,
+        take_profit_price: float,
         stop_loss_price: float,
         _ohlcv: OHLCV,
     ) -> float:
-        return stop_loss_price
+        return stop_loss_price, take_profit_price

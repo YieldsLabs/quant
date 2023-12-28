@@ -29,6 +29,8 @@ from ._state import PositionStorage
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
 BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
 ExitSignal = Union[
+    GoLongSignalReceived,
+    GoShortSignalReceived,
     ExitLongSignalReceived,
     ExitShortSignalReceived,
     RiskThresholdBreached,
@@ -69,21 +71,16 @@ class PositionActor(Actor):
         return self._symbol == symbol and self._timeframe == timeframe
 
     async def on_receive(self, event):
-        (symbol, timeframe) = self._get_event_key(event)
+        (symbol, _) = self._get_event_key(event)
 
-        if (
-            isinstance(event, (GoLongSignalReceived, GoShortSignalReceived))
-            and not await self.state.position_exists(symbol, timeframe)
-            or not await self._is_event_stale(symbol, timeframe, event)
-        ):
-            await self.sm.process_event(symbol, event)
-
-    async def _is_event_stale(self, symbol, timeframe, event) -> bool:
-        position = await self.state.retrieve_position(symbol, timeframe)
-
-        return position and position.last_modified > event.meta.timestamp
+        await self.sm.process_event(symbol, event)
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
+        if await self.state.position_exists(
+            event.signal.symbol, event.signal.timeframe
+        ):
+            return False
+
         position = await self.position_factory.create_position(
             event.signal, event.ohlcv, event.entry_price, event.stop_loss
         )
@@ -114,7 +111,10 @@ class PositionActor(Actor):
         position = await self.state.retrieve_position(symbol, timeframe)
 
         if position and self.can_close_position(event, position):
-            await self.tell(PositionCloseRequested(position, event.exit_price))
+            price = (
+                event.exit_price if hasattr(event, "exit_price") else event.entry_price
+            )
+            await self.tell(PositionCloseRequested(position, price))
             return True
 
         return False
@@ -124,12 +124,22 @@ class PositionActor(Actor):
         if position.side == PositionSide.LONG and isinstance(
             event, ExitLongSignalReceived
         ):
-            return position.entry_price < event.exit_price
+            return True
 
         if position.side == PositionSide.SHORT and isinstance(
             event, ExitShortSignalReceived
         ):
-            return position.entry_price > event.exit_price
+            return True
+
+        if position.side == PositionSide.LONG and isinstance(
+            event, GoShortSignalReceived
+        ):
+            return True
+
+        if position.side == PositionSide.SHORT and isinstance(
+            event, GoLongSignalReceived
+        ):
+            return True
 
         if (
             isinstance(event, RiskThresholdBreached)

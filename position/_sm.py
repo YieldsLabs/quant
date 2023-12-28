@@ -68,6 +68,14 @@ class PositionStateMachine:
             PositionState.CLOSE,
             "handle_exit_received",
         ),
+        (PositionState.OPENED, GoLongSignalReceived): (
+            PositionState.CLOSE,
+            "handle_exit_received",
+        ),
+        (PositionState.OPENED, GoShortSignalReceived): (
+            PositionState.CLOSE,
+            "handle_exit_received",
+        ),
         (PositionState.OPENED, RiskThresholdBreached): (
             PositionState.CLOSE,
             "handle_exit_received",

@@ -93,15 +93,20 @@ class Position:
             )
 
     def next(self, ohlcv: OHLCV) -> "Position":
-        next_stop_loss = self.risk_strategy.next(
+        (next_stop_loss, next_take_profit) = self.risk_strategy.next(
             self.side,
-            self.entry_price,
             self.take_profit_price,
             self.stop_loss_price,
             ohlcv,
         )
 
-        return replace(self, stop_loss_price=next_stop_loss)
+        return replace(
+            self,
+            stop_loss_price=round(next_stop_loss, self.signal.symbol.price_precision),
+            take_profit_price=round(
+                next_take_profit, self.signal.symbol.price_precision
+            ),
+        )
 
     def __post_init__(self):
         if self.stop_loss_price:

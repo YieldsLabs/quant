@@ -65,6 +65,8 @@ class RiskActor(Actor):
         if self._should_exit(next_position, event.ohlcv):
             await self._process_exit(current_position, event.ohlcv)
 
+        self._position = next_position
+
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)
 
