@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::ce;
 
-const CE_MIDDLE: f32 = 0.0;
-
 pub struct CeExit {
     period: usize,
     atr_period: usize,
@@ -26,7 +24,7 @@ impl Exit for CeExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (direction, trend) = ce(
+        let (_, trendline) = ce(
             &data.high,
             &data.low,
             &data.close,
@@ -36,8 +34,8 @@ impl Exit for CeExit {
         );
 
         (
-            data.close.cross_under(&trend) & direction.slt(&CE_MIDDLE),
-            data.close.cross_over(&trend) & direction.sgt(&CE_MIDDLE),
+            trendline.cross_over(&data.close),
+            trendline.cross_under(&data.close),
         )
     }
 }

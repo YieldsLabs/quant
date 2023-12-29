@@ -22,11 +22,11 @@ impl Exit for AstExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (_, trend) = ast(&data.close, &data.atr(self.atr_period), self.multi);
+        let (_, trendline) = ast(&data.close, &data.atr(self.atr_period), self.multi);
 
         (
-            data.close.cross_under(&trend),
-            data.close.cross_over(&trend),
+            trendline.cross_over(&data.close),
+            trendline.cross_under(&data.close),
         )
     }
 }

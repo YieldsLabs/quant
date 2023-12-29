@@ -66,13 +66,11 @@ class PositionActor(Actor):
         self.state = PositionStorage()
 
     def pre_receive(self, event: PositionEvent) -> bool:
-        (symbol, timeframe) = self._get_event_key(event)
-
+        symbol, timeframe = self._get_event_key(event)
         return self._symbol == symbol and self._timeframe == timeframe
 
     async def on_receive(self, event):
-        (symbol, _) = self._get_event_key(event)
-
+        symbol, _ = self._get_event_key(event)
         await self.sm.process_event(symbol, event)
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
@@ -86,27 +84,22 @@ class PositionActor(Actor):
         )
 
         await self.state.store_position(position)
-
         await self.tell(PositionInitialized(position))
 
         return True
 
     async def handle_position_opened(self, event: BrokerPositionOpened) -> bool:
         await self.state.update_stored_position(event.position)
-
         await self.tell(PositionOpened(event.position))
-
         return True
 
     async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
         await self.state.close_stored_position(event.position)
-
         await self.tell(PositionClosed(event.position))
-
         return True
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
-        (symbol, timeframe) = self._get_event_key(event)
+        symbol, timeframe = self._get_event_key(event)
 
         position = await self.state.retrieve_position(symbol, timeframe)
 
