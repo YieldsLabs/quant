@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from core.commands.account import UpdateAccountSize
-from core.commands.portfolio import PortfolioReset
+from core.commands.portfolio import PortfolioReset, StrategyReset
 from core.event_decorators import command_handler, event_handler, query_handler
 from core.events.account import PortfolioAccountUpdated
 from core.events.backtest import BacktestStarted
@@ -127,3 +127,7 @@ class Portfolio(AbstractEventManager):
     @command_handler(PortfolioReset)
     async def portfolio_reset(self, _event: PortfolioReset):
         await self.state.reset_all()
+
+    @command_handler(StrategyReset)
+    async def stategy_reset(self, _event: StrategyReset):
+        await self.strategy.reset_all()

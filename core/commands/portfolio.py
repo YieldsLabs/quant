@@ -15,3 +15,8 @@ class PortfolioCommand(Command):
 @dataclass(frozen=True)
 class PortfolioReset(PortfolioCommand):
     pass
+
+
+@dataclass(frozen=True)
+class StrategyReset(PortfolioCommand):
+    pass

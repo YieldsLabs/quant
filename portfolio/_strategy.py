@@ -35,6 +35,10 @@ class StrategyStorage:
         async with self.lock:
             self.data.pop((symbol, timeframe, strategy), None)
 
+    async def reset_all(self):
+        async with self.lock:
+            self.data = {}
+
     async def get_top(self, num: int = 10):
         async with self.lock:
             sorted_strategies = sorted(

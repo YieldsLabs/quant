@@ -4,6 +4,7 @@ from enum import Enum, auto
 
 from core.commands.account import UpdateAccountSize
 from core.commands.feed import StartHistoricalFeed
+from core.commands.portfolio import StrategyReset
 from core.events.backtest import BacktestEnded, BacktestStarted
 from core.events.system import DeployStrategy
 from core.interfaces.abstract_system import AbstractSystem
@@ -177,6 +178,8 @@ class BacktestSystem(AbstractSystem):
 
         if not len(strategies):
             return await self.event_queue.put(Event.REGENERATE)
+
+        await self.execute(StrategyReset())
 
         async for batch in self._generate_batch(strategies):
             account_size = await self.query(GetBalance())
