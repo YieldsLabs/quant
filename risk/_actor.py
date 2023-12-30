@@ -58,14 +58,15 @@ class RiskActor(Actor):
             self._position = None
 
     async def _handle_risk(self, event: NewMarketDataReceived):
-        current_position = self._position
+        async with self.lock:
+            current_position = self._position
 
-        next_position = current_position.next(event.ohlcv)
+            next_position = current_position.next(event.ohlcv)
 
-        if self._should_exit(next_position, event.ohlcv):
-            await self._process_exit(current_position, event.ohlcv)
+            if self._should_exit(next_position, event.ohlcv):
+                await self._process_exit(current_position, event.ohlcv)
 
-        self._position = next_position
+            self._position = next_position
 
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)
