@@ -23,10 +23,10 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         next_stop_loss = stop_loss_price
         next_take_profit = take_profit_price
 
-        if side == PositionSide.LONG and current_price >= distance:
+        if side == PositionSide.LONG:
             next_stop_loss = max(stop_loss_price, current_price - distance)
 
-        if side == PositionSide.SHORT and current_price >= distance:
+        if side == PositionSide.SHORT:
             next_stop_loss = min(stop_loss_price, current_price + distance)
 
         next_take_profit = (
