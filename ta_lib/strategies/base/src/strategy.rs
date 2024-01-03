@@ -126,13 +126,19 @@ impl BaseStrategy {
         let (go_long_filter, go_short_filter) = self.base_line.filter(&series);
 
         let go_long_signal = go_long_trigger & go_long_confirm & go_long_momentum & go_long_filter;
+        let prev_go_long_signal = go_long_signal.shift(1);
         let go_short_signal =
             go_short_trigger & go_short_confirm & go_short_momentum & go_short_filter;
+        let prev_go_short_signal = go_short_signal.shift(1);
 
         let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
 
-        let go_long = go_long_signal.last().unwrap_or_default();
-        let go_short = go_short_signal.last().unwrap_or_default();
+        let go_long = (go_long_signal | prev_go_long_signal)
+            .last()
+            .unwrap_or_default();
+        let go_short = (go_short_signal | prev_go_short_signal)
+            .last()
+            .unwrap_or_default();
         let exit_long = exit_long_eval.last().unwrap_or_default();
         let exit_short = exit_short_eval.last().unwrap_or_default();
 
