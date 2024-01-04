@@ -134,21 +134,16 @@ class BacktestSystem(AbstractSystem):
 
         logger.info(f"Run backtest for: {total_steps}")
 
-        estimator = Estimator(total_steps // self.config["parallel_num"])
+        estimator = Estimator(total_steps)
 
-        async for batch in self._generate_batch(population):
+        for data in population:
             account_size = await self.query(GetBalance())
             await self.execute(UpdateAccountSize(account_size))
 
-            await asyncio.gather(
-                *[
-                    self._process_backtest(data)
-                    for data in batch
-                    if data not in self.active_strategy
-                ]
-            )
+            if data not in self.active_strategy:
+                await self._process_backtest(data)
 
-            logger.info(f"Remaining time: {estimator.remaining_time():.2f}sec")
+            logger.info(f"Remaining backtest time: {estimator.remaining_time():.2f}sec")
 
         await self.event_queue.put(Event.BACKTEST_COMPLETE)
 
@@ -181,17 +176,12 @@ class BacktestSystem(AbstractSystem):
 
         await self.execute(StrategyReset())
 
-        async for batch in self._generate_batch(strategies):
+        for data in strategies:
             account_size = await self.query(GetBalance())
             await self.execute(UpdateAccountSize(account_size))
 
-            await asyncio.gather(
-                *[
-                    self._process_backtest(data, True)
-                    for data in batch
-                    if data not in self.active_strategy
-                ]
-            )
+            if data not in self.active_strategy:
+                await self._process_backtest(data, True)
 
         await self.event_queue.put(Event.VERIFICATION_COMPLETE)
 
@@ -204,19 +194,6 @@ class BacktestSystem(AbstractSystem):
         self.active_strategy = set(strategies)
 
         await self.dispatch(DeployStrategy(type=self.context.strategy_type))
-
-    async def _generate_batch(self, data):
-        batch = []
-
-        for symbol, timeframe, strategy in data:
-            batch.append((symbol, timeframe, strategy))
-
-            if len(batch) == self.config["parallel_num"]:
-                yield batch
-                batch = []
-
-        if batch:
-            yield batch
 
     async def _process_backtest(
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False
