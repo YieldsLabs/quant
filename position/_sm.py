@@ -53,7 +53,7 @@ class PositionStateMachine:
             "handle_position_opened",
         ),
         (PositionState.WAITING_BROKER_CONFIRMATION, BrokerPositionClosed): (
-            PositionState.CLOSE,
+            PositionState.IDLE,
             "handle_position_closed",
         ),
         (PositionState.WAITING_BROKER_CONFIRMATION, BacktestEnded): (
@@ -68,14 +68,6 @@ class PositionStateMachine:
             PositionState.CLOSE,
             "handle_exit_received",
         ),
-        (PositionState.OPENED, GoLongSignalReceived): (
-            PositionState.CLOSE,
-            "handle_exit_received",
-        ),
-        (PositionState.OPENED, GoShortSignalReceived): (
-            PositionState.CLOSE,
-            "handle_exit_received",
-        ),
         (PositionState.OPENED, RiskThresholdBreached): (
             PositionState.CLOSE,
             "handle_exit_received",
@@ -83,6 +75,14 @@ class PositionStateMachine:
         (PositionState.OPENED, BacktestEnded): (
             PositionState.CLOSE,
             "handle_exit_received",
+        ),
+        (PositionState.OPENED, GoLongSignalReceived): (
+            PositionState.WAITING_BROKER_CONFIRMATION,
+            "handle_reverse_position",
+        ),
+        (PositionState.OPENED, GoShortSignalReceived): (
+            PositionState.WAITING_BROKER_CONFIRMATION,
+            "handle_reverse_position",
         ),
         (PositionState.CLOSE, BrokerPositionClosed): (
             PositionState.IDLE,

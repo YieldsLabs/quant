@@ -166,7 +166,7 @@ class TradingSystem(AbstractSystem):
                 UpdateSettings(
                     symbol,
                     self.config["leverage"],
-                    PositionMode.HEDGED,
+                    PositionMode.ONE_WAY,
                     MarginMode.ISOLATED,
                 )
             )
