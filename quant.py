@@ -78,7 +78,7 @@ async def main():
     signal_actor_factory = SignalActorFactory(
         SignalService(WasmFileService(WASM_FOLDER))
     )
-    position_actor_factory = PositionActorFactory(position_factory)
+    position_actor_factory = PositionActorFactory(position_factory, config_service)
     risk_actor_factory = RiskActorFactory(config_service)
     executor_actor_factory = OrderExecutorActorFactory()
     feed_actor_factory = FeedActorFactory(exchange_factory, ws_factory, config_service)
@@ -97,6 +97,7 @@ async def main():
     )
 
     trend_system = BacktestSystem(trend_context)
+
     trading_system = TradingSystem(
         signal_actor_factory,
         position_actor_factory,
