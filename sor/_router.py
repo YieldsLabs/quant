@@ -31,7 +31,9 @@ class SmartRouter(AbstractEventManager):
     def get_open_position(self, query: GetOpenPosition):
         position = query.position
 
-        broker_position = self.exchange.fetch_position(position.signal.symbol)
+        broker_position = self.exchange.fetch_position(
+            position.signal.symbol, position.side
+        )
 
         logging.info(f"Broker position: {broker_position}")
 
@@ -155,6 +157,8 @@ class SmartRouter(AbstractEventManager):
 
     @command_handler(ClosePosition)
     def close_position(self, command: ClosePosition):
-        symbol = command.position.signal.symbol
+        position = command.position
+        symbol = position.signal.symbol
+        side = position.side
 
-        self.exchange.close_position(symbol)
+        self.exchange.close_position(symbol, side)

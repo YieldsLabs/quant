@@ -38,7 +38,7 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def fetch_position(self, symbol: Symbol):
+    def fetch_position(self, symbol: Symbol, side: PositionSide):
         pass
 
     @abstractmethod
@@ -68,5 +68,5 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def close_position(self, symbol: Symbol):
+    def close_position(self, symbol: Symbol, side: PositionSide):
         pass

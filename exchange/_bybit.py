@@ -83,7 +83,11 @@ class Bybit(AbstractExchange):
 
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
         res = self._create_order(
-            "market", "buy" if side == PositionSide.LONG else "sell", symbol.name, size
+            "market",
+            "buy" if side == PositionSide.LONG else "sell",
+            symbol.name,
+            size,
+            extra_params=self._create_order_extra_params(side),
         )
 
         return res["info"]["orderId"]
@@ -97,13 +101,13 @@ class Bybit(AbstractExchange):
             symbol.name,
             size,
             price,
-            self._create_order_extra_params(),
+            extra_params=self._create_order_extra_params(side),
         )
 
         return res["info"]["orderId"]
 
-    def close_position(self, symbol: Symbol):
-        position = self.fetch_position(symbol)
+    def close_position(self, symbol: Symbol, side: PositionSide):
+        position = self.fetch_position(symbol, side)
 
         if not position:
             return
@@ -113,19 +117,24 @@ class Bybit(AbstractExchange):
             "sell" if position["position_side"] == PositionSide.LONG else "buy",
             symbol.name,
             position["position_size"],
+            extra_params=self._create_order_extra_params(side),
         )
 
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
-    def fetch_position(self, symbol: Symbol):
-        positions = self.connector.fetch_position(symbol.name)
+    def fetch_position(self, symbol: Symbol, side: PositionSide):
+        positions = self.connector.fetch_positions([symbol.name])
+        position = next(
+            iter([position for position in positions if position["side"] == str(side)]),
+            None,
+        )
 
-        if positions["entryPrice"] is not None:
+        if position and position["entryPrice"] is not None:
             return {
                 "position_side": PositionSide.LONG
-                if positions["side"] == "long"
+                if position["side"] == "long"
                 else PositionSide.SHORT,
-                "entry_price": float(positions.get("entryPrice", 0)),
-                "position_size": float(positions.get("contracts", 0)),
+                "entry_price": float(position.get("entryPrice", 0)),
+                "position_size": float(position.get("contracts", 0)),
             }
 
         return None
@@ -269,8 +278,13 @@ class Bybit(AbstractExchange):
             "extra_params": None,
         }
 
-    def _create_order_extra_params(self, stop_loss_price=None, take_profit_price=None):
-        extra_params = {"timeInForce": "IOC"}
+    def _create_order_extra_params(
+        self, side: PositionSide, stop_loss_price=None, take_profit_price=None
+    ):
+        extra_params = {
+            "timeInForce": "IOC",
+            "positionIdx": 1 if side == PositionSide.LONG else 2,
+        }
 
         if stop_loss_price:
             extra_params["stopLoss"] = str(stop_loss_price)
@@ -278,4 +292,4 @@ class Bybit(AbstractExchange):
         if take_profit_price:
             extra_params["takeProfit"] = str(take_profit_price)
 
-        return extra_params if extra_params else None
+        return extra_params
