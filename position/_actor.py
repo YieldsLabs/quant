@@ -104,27 +104,48 @@ class PositionActor(Actor):
         return False
 
     async def handle_reverse_position(self, event: SignalEvent):
-        symbol, timeframe = self._get_event_key(event)
+        async def check_close(position: Position, price: float, sl_threshold: float):
+            take_profit_price = position.take_profit_price
+            stop_loss_price = position.stop_loss_price
 
+            if position.side == PositionSide.LONG and (
+                price >= take_profit_price or price <= stop_loss_price
+            ):
+                await self.tell(PositionCloseRequested(position, price))
+                return True
+
+            if position.side == PositionSide.SHORT and (
+                price <= take_profit_price or price >= stop_loss_price
+            ):
+                await self.tell(PositionCloseRequested(position, price))
+                return True
+
+            diff_to_stop_loss = abs((price - stop_loss_price) / stop_loss_price) * 100
+
+            if diff_to_stop_loss < sl_threshold:
+                await self.tell(PositionCloseRequested(position, price))
+                return True
+
+            return False
+
+        symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
             symbol, timeframe
         )
 
-        if (
-            long_position
-            and isinstance(event, GoShortSignalReceived)
-            and long_position.entry_price < event.entry_price
-        ):
-            await self.tell(PositionCloseRequested(long_position, event.entry_price))
-            return True
+        if long_position and isinstance(event, GoShortSignalReceived):
+            return await check_close(
+                long_position,
+                event.entry_price,
+                self.config["sl_threshold"],
+            )
 
-        if (
-            short_position
-            and isinstance(event, GoLongSignalReceived)
-            and short_position.entry_price > event.entry_price
-        ):
-            await self.tell(PositionCloseRequested(short_position, event.entry_price))
-            return True
+        if short_position and isinstance(event, GoLongSignalReceived):
+            return await check_close(
+                short_position,
+                event.entry_price,
+                self.config["sl_threshold"],
+            )
 
         return False
 
@@ -170,13 +191,31 @@ class PositionActor(Actor):
             position.side == PositionSide.SHORT
             and isinstance(event, ExitShortSignalReceived)
         ):
-            close_to_tp = abs(event.exit_price - position.take_profit_price)
-            close_to_sl = abs(position.stop_loss_price - event.exit_price)
+            exit_price = event.exit_price
+            take_profit_price = position.take_profit_price
+            stop_loss_price = position.stop_loss_price
 
-            return (
-                close_to_tp >= self.config["tp_threshold"]
-                or close_to_sl <= self.config["sl_threshold"]
+            if position.side == PositionSide.LONG and (
+                exit_price >= take_profit_price or exit_price <= stop_loss_price
+            ):
+                return False
+
+            if position.side == PositionSide.SHORT and (
+                exit_price <= take_profit_price or exit_price >= stop_loss_price
+            ):
+                return False
+
+            diff_to_take_profit = (
+                abs((exit_price - take_profit_price) / take_profit_price) * 100
             )
+            diff_to_stop_loss = (
+                abs((exit_price - stop_loss_price) / stop_loss_price) * 100
+            )
+
+            close_to_tp = diff_to_take_profit <= self.config["tp_threshold"]
+            close_to_sl = diff_to_stop_loss <= self.config["sl_threshold"]
+
+            return close_to_tp or close_to_sl
 
         if (
             isinstance(event, RiskThresholdBreached)
