@@ -80,9 +80,7 @@ class PositionActor(Actor):
         await self.sm.process_event(symbol, event)
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-
-        if not await self.state.position_exists(symbol, timeframe):
+        async def create_and_store_position(event: SignalEvent):
             position = await self.position_factory.create_position(
                 event.signal, event.ohlcv, event.entry_price, event.stop_loss
             )
@@ -91,23 +89,41 @@ class PositionActor(Actor):
             await self.tell(PositionInitialized(position))
             return True
 
+        symbol, timeframe = self._get_event_key(event)
+
+        long_position, short_position = await self.state.retrieve_position(
+            symbol, timeframe
+        )
+
+        if not long_position and isinstance(event, GoLongSignalReceived):
+            return await create_and_store_position(event)
+
+        if not short_position and isinstance(event, GoShortSignalReceived):
+            return await create_and_store_position(event)
+
         return False
 
     async def handle_reverse_position(self, event: SignalEvent):
         symbol, timeframe = self._get_event_key(event)
-        position = await self.state.retrieve_position(symbol, timeframe)
 
-        if not position or position.last_modified > event.meta.timestamp:
-            return False
+        long_position, short_position = await self.state.retrieve_position(
+            symbol, timeframe
+        )
 
         if (
-            position.side == PositionSide.LONG
+            long_position
             and isinstance(event, GoShortSignalReceived)
-        ) or (
-            position.side == PositionSide.SHORT
-            and isinstance(event, GoLongSignalReceived)
+            and long_position.entry_price < event.entry_price
         ):
-            await self.tell(PositionCloseRequested(position, event.entry_price))
+            await self.tell(PositionCloseRequested(long_position, event.entry_price))
+            return True
+
+        if (
+            short_position
+            and isinstance(event, GoLongSignalReceived)
+            and short_position.entry_price > event.entry_price
+        ):
+            await self.tell(PositionCloseRequested(short_position, event.entry_price))
             return True
 
         return False
@@ -124,45 +140,43 @@ class PositionActor(Actor):
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
         symbol, timeframe = self._get_event_key(event)
-        position = await self.state.retrieve_position(symbol, timeframe)
 
-        if not position or position.last_modified > event.meta.timestamp:
+        async def try_close_position(position: Position) -> bool:
+            if (
+                position
+                and position.last_modified < event.meta.timestamp
+                and self.can_close_position(event, position)
+            ):
+                await self.tell(PositionCloseRequested(position, event.exit_price))
+                return True
             return False
 
-        if self.can_close_position(event, position):
-            await self.tell(PositionCloseRequested(position, event.exit_price))
+        long_position, short_position = await self.state.retrieve_position(
+            symbol, timeframe
+        )
+
+        if await try_close_position(long_position) or await try_close_position(
+            short_position
+        ):
             return True
 
         return False
 
     def can_close_position(self, event, position: Position) -> bool:
-        if position.side == PositionSide.LONG and isinstance(
-            event, ExitLongSignalReceived
+        if (
+            position.side == PositionSide.LONG
+            and isinstance(event, ExitLongSignalReceived)
+        ) or (
+            position.side == PositionSide.SHORT
+            and isinstance(event, ExitShortSignalReceived)
         ):
-            close_to_take_profit = (
-                abs(event.exit_price - position.take_profit_price)
-                >= self.config["tp_threshold"]
-            )
-            close_to_stop_loss = (
-                abs(position.stop_loss_price - event.exit_price)
-                <= self.config["sl_threshold"]
-            )
+            close_to_tp = abs(event.exit_price - position.take_profit_price)
+            close_to_sl = abs(position.stop_loss_price - event.exit_price)
 
-            return close_to_take_profit or close_to_stop_loss
-
-        if position.side == PositionSide.SHORT and isinstance(
-            event, ExitShortSignalReceived
-        ):
-            close_to_take_profit = (
-                abs(event.exit_price - position.take_profit_price)
-                >= self.config["tp_threshold"]
+            return (
+                close_to_tp >= self.config["tp_threshold"]
+                or close_to_sl <= self.config["sl_threshold"]
             )
-            close_to_stop_loss = (
-                abs(position.stop_loss_price - event.exit_price)
-                <= self.config["sl_threshold"]
-            )
-
-            return close_to_take_profit or close_to_stop_loss
 
         if (
             isinstance(event, RiskThresholdBreached)

@@ -27,11 +27,16 @@ class RiskActor(Actor):
     ):
         super().__init__(symbol, timeframe, strategy)
         self.lock = asyncio.Lock()
-        self._position = None
+        self._position = (None, None)
+
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
-        if isinstance(event, NewMarketDataReceived) and not self._position:
+        long_position, short_position = self._position
+
+        if isinstance(event, NewMarketDataReceived) and (
+            not long_position and not short_position
+        ):
             return False
 
         event = event.position.signal if hasattr(event, "position") else event
@@ -51,22 +56,45 @@ class RiskActor(Actor):
 
     async def _update_position(self, event: PositionOpened):
         async with self.lock:
-            self._position = event.position
+            long_position, short_position = self._position
 
-    async def _close_position(self, _event: PositionClosed):
+            self._position = (
+                event.position
+                if event.position.side == PositionSide.LONG
+                else long_position,
+                event.position
+                if event.position.side == PositionSide.SHORT
+                else short_position,
+            )
+
+    async def _close_position(self, event: PositionClosed):
         async with self.lock:
-            self._position = None
+            long_position, short_position = self._position
+
+            self._position = (
+                None if event.position.side == PositionSide.LONG else long_position,
+                None if event.position.side == PositionSide.SHORT else short_position,
+            )
 
     async def _handle_risk(self, event: NewMarketDataReceived):
         async with self.lock:
-            current_position = self._position
+            current_long_position, current_short_position = self._position
+            next_long_position = current_long_position
+            next_short_position = current_short_position
 
-            next_position = current_position.next(event.ohlcv)
+            if current_long_position:
+                next_long_position = current_long_position.next(event.ohlcv)
 
-            if self._should_exit(next_position, event.ohlcv):
-                await self._process_exit(current_position, event.ohlcv)
+                if self._should_exit(next_long_position, event.ohlcv):
+                    await self._process_exit(current_long_position, event.ohlcv)
 
-            self._position = next_position
+            if current_short_position:
+                next_short_position = current_short_position.next(event.ohlcv)
+
+                if self._should_exit(next_short_position, event.ohlcv):
+                    await self._process_exit(current_short_position, event.ohlcv)
+
+            self._position = (next_long_position, next_short_position)
 
     async def _process_exit(self, position, ohlcv):
         exit_price = self._calculate_exit_price(position, ohlcv)
@@ -74,16 +102,24 @@ class RiskActor(Actor):
         await self.tell(RiskThresholdBreached(position, ohlcv, exit_price))
 
     def _should_exit(self, next_position: Position, ohlcv: OHLCV):
+        expiration = (
+            next_position.open_timestamp + self.config["trade_duration"] * 1000
+        ) - ohlcv.timestamp
+
         if next_position.side == PositionSide.LONG:
-            should_exit = self._long_exit_conditions(
-                next_position.stop_loss_price,
-                next_position.take_profit_price,
-                ohlcv.low,
-                ohlcv.high,
-                self.config["risk_buffer"],
-            )
+            return self._check_long_exit(next_position, expiration, ohlcv)
         elif next_position.side == PositionSide.SHORT:
-            should_exit = self._short_exit_conditions(
+            return self._check_short_exit(next_position, expiration, ohlcv)
+
+        return False
+
+    def _check_long_exit(
+        self, next_position: Position, expiration: int, ohlcv: OHLCV
+    ) -> bool:
+        if expiration <= 0:
+            return next_position.entry_price < min(ohlcv.close, ohlcv.low)
+        else:
+            return self._long_exit_conditions(
                 next_position.stop_loss_price,
                 next_position.take_profit_price,
                 ohlcv.low,
@@ -91,7 +127,19 @@ class RiskActor(Actor):
                 self.config["risk_buffer"],
             )
 
-        return should_exit
+    def _check_short_exit(
+        self, next_position: Position, expiration: int, ohlcv: OHLCV
+    ) -> bool:
+        if expiration <= 0:
+            return next_position.entry_price > max(ohlcv.close, ohlcv.high)
+        else:
+            return self._short_exit_conditions(
+                next_position.stop_loss_price,
+                next_position.take_profit_price,
+                ohlcv.low,
+                ohlcv.high,
+                self.config["risk_buffer"],
+            )
 
     @staticmethod
     def _calculate_exit_price(position: Position, ohlcv: OHLCV):

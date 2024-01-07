@@ -54,7 +54,6 @@ class Bybit(AbstractExchange):
                 operation(*args)
             except Exception as e:
                 logger.error(f"{symbol}: {e}")
-                return
 
     def fetch_order(self, order_id: str, symbol: Symbol):
         try:
@@ -77,8 +76,8 @@ class Bybit(AbstractExchange):
     def fetch_trade(self, symbol: Symbol):
         return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
 
-    def fetch_order_book(self, symbol: Symbol):
-        book = self.connector.fetch_order_book(symbol.name, limit=30)
+    def fetch_order_book(self, symbol: Symbol, depth=30):
+        book = self.connector.fetch_order_book(symbol.name, limit=depth)
         return book["bids"], book["asks"]
 
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):

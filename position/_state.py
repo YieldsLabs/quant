@@ -1,8 +1,8 @@
 import asyncio
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import List, Optional, Tuple
 
-from core.models.position import Position
+from core.models.position import Position, PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -22,51 +22,50 @@ class PositionStorage:
 
     async def store_position(self, position: Position):
         async with self._locked_data() as data:
-            data[
-                self._get_key(position.signal.symbol, position.signal.timeframe)
-            ] = position
+            key = self._get_key(position.signal.symbol, position.signal.timeframe)
+            long, short = data.get(key, (None, None))
+
+            data[key] = (
+                position if position.side == PositionSide.LONG else long,
+                position if position.side == PositionSide.SHORT else short,
+            )
 
     async def delete_position(self, position: Position):
         async with self._locked_data() as data:
-            data.pop(
-                self._get_key(position.signal.symbol, position.signal.timeframe), None
+            key = self._get_key(position.signal.symbol, position.signal.timeframe)
+            long, short = data.get(key, (None, None))
+
+            data[key] = (
+                None if position.side == PositionSide.LONG else long,
+                None if position.side == PositionSide.SHORT else short,
             )
 
     async def position_exists(self, symbol: Symbol, timeframe: Timeframe) -> bool:
         async with self._locked_data() as data:
-            return self._get_key(symbol, timeframe) in data
+            key = self._get_key(symbol, timeframe)
+            long, short = data.get(key, (None, None))
 
-    async def retrieve_all_positions(self) -> list:
+            return any(position is not None for position in (long, short))
+
+    async def retrieve_all_positions(self) -> List[Position]:
         async with self._locked_data() as data:
-            return list(data.values())
+            return [
+                position
+                for positions in data.values()
+                for position in positions
+                if position is not None
+            ]
 
     async def retrieve_position(
         self, symbol: Symbol, timeframe: Timeframe
-    ) -> Optional[Position]:
+    ) -> Tuple[Optional[Position], Optional[Position]]:
         async with self._locked_data() as data:
-            return data.get(self._get_key(symbol, timeframe))
+            key = self._get_key(symbol, timeframe)
+
+            return data.get(key, (None, None))
 
     async def update_stored_position(self, position: Position):
-        symbol = position.signal.symbol
-        timeframe = position.signal.timeframe
-
-        existing_position = await self._extract_position(symbol, timeframe)
-
-        if existing_position:
-            await self.store_position(position)
+        await self.store_position(position)
 
     async def close_stored_position(self, position: Position):
-        symbol = position.signal.symbol
-        timeframe = position.signal.timeframe
-
-        await self._extract_position(symbol, timeframe)
-
-    async def _extract_position(
-        self, symbol: Symbol, timeframe: Timeframe
-    ) -> Optional[Position]:
-        position = await self.retrieve_position(symbol, timeframe)
-
-        if position:
-            await self.delete_position(position)
-
-        return position
+        await self.delete_position(position)
