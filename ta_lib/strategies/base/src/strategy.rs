@@ -71,6 +71,7 @@ impl BaseStrategy {
         self.data.push_back(data);
     }
 
+    #[inline]
     fn can_process(&self) -> bool {
         self.data.len() >= self.lookback_period
     }

@@ -104,7 +104,9 @@ class PositionActor(Actor):
         return False
 
     async def handle_reverse_position(self, event: SignalEvent):
-        async def check_close(position: Position, price: float, sl_threshold: float):
+        async def check_close(
+            position: Position, price: float, tp_threshold: float, sl_threshold: float
+        ):
             take_profit_price = position.take_profit_price
             stop_loss_price = position.stop_loss_price
 
@@ -121,8 +123,11 @@ class PositionActor(Actor):
                 return True
 
             diff_to_stop_loss = abs((price - stop_loss_price) / stop_loss_price) * 100
+            diff_to_take_profit = (
+                abs((price - take_profit_price) / take_profit_price) * 100
+            )
 
-            if diff_to_stop_loss < sl_threshold:
+            if diff_to_take_profit <= tp_threshold or diff_to_stop_loss <= sl_threshold:
                 await self.tell(PositionCloseRequested(position, price))
                 return True
 
@@ -137,6 +142,7 @@ class PositionActor(Actor):
             return await check_close(
                 long_position,
                 event.entry_price,
+                self.config["tp_threshold"],
                 self.config["sl_threshold"],
             )
 
@@ -144,6 +150,7 @@ class PositionActor(Actor):
             return await check_close(
                 short_position,
                 event.entry_price,
+                self.config["tp_threshold"],
                 self.config["sl_threshold"],
             )
 
@@ -212,10 +219,10 @@ class PositionActor(Actor):
                 abs((exit_price - stop_loss_price) / stop_loss_price) * 100
             )
 
-            close_to_tp = diff_to_take_profit <= self.config["tp_threshold"]
-            close_to_sl = diff_to_stop_loss <= self.config["sl_threshold"]
-
-            return close_to_tp or close_to_sl
+            return (
+                diff_to_take_profit <= self.config["tp_threshold"]
+                or diff_to_stop_loss <= self.config["sl_threshold"]
+            )
 
         if (
             isinstance(event, RiskThresholdBreached)

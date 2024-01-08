@@ -116,8 +116,8 @@ class RiskActor(Actor):
     def _check_long_exit(
         self, next_position: Position, expiration: int, ohlcv: OHLCV
     ) -> bool:
-        if expiration <= 0:
-            return next_position.entry_price < min(ohlcv.close, ohlcv.low)
+        if expiration <= 0 and next_position.entry_price < min(ohlcv.close, ohlcv.low):
+            return True
         else:
             return self._long_exit_conditions(
                 next_position.stop_loss_price,
@@ -130,8 +130,8 @@ class RiskActor(Actor):
     def _check_short_exit(
         self, next_position: Position, expiration: int, ohlcv: OHLCV
     ) -> bool:
-        if expiration <= 0:
-            return next_position.entry_price > max(ohlcv.close, ohlcv.high)
+        if expiration <= 0 and next_position.entry_price > max(ohlcv.close, ohlcv.high):
+            return True
         else:
             return self._short_exit_conditions(
                 next_position.stop_loss_price,
