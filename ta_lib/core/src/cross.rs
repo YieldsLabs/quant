@@ -41,7 +41,7 @@ mod tests {
     fn test_cross_over() {
         let a = Series::from([5.5, 5.0, 4.5, 3.0, 2.5]);
         let b = Series::from([4.5, 2.0, 3.0, 3.5, 2.0]);
-        let expected: Series<bool> = Series::from([f32::NAN, 0.0, 0.0, 0.0, 1.0]).into();
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 0.0, 1.0]).into();
 
         let result = a.cross_over(&b);
 
@@ -52,7 +52,7 @@ mod tests {
     fn test_cross_under() {
         let a = Series::from([5.5, 5.0, 4.5, 3.0, 2.5]);
         let b = Series::from([4.5, 2.0, 3.0, 3.5, 2.0]);
-        let expected: Series<bool> = Series::from([f32::NAN, 0.0, 0.0, 1.0, 0.0]).into();
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 1.0, 0.0]).into();
 
         let result = a.cross_under(&b);
 
@@ -63,7 +63,7 @@ mod tests {
     fn test_cross() {
         let a = Series::from([5.5, 5.0, 4.5, 3.0, 2.5]);
         let b = Series::from([4.5, 2.0, 3.0, 3.5, 2.0]);
-        let expected: Series<bool> = Series::from([f32::NAN, 0.0, 0.0, 1.0, 1.0]).into();
+        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 1.0, 1.0]).into();
 
         let result = a.cross(&b);
 

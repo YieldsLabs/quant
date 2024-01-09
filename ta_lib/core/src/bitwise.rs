@@ -11,7 +11,7 @@ impl Bitwise<Series<bool>> for Series<bool> {
     {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(operation(a_val, b_val)),
-            _ => None,
+            (Some(_), None) | (None, Some(_)) | (None, None) => Some(false),
         })
     }
 

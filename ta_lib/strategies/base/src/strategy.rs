@@ -49,7 +49,7 @@ impl BaseStrategy {
             exit.lookback(),
             DEFAULT_LOOKBACK,
         ];
-        let adjusted_lookback = lookbacks.iter().cloned().max().unwrap_or(DEFAULT_LOOKBACK);
+        let adjusted_lookback = lookbacks.into_iter().max().unwrap_or(DEFAULT_LOOKBACK);
 
         Self {
             data: VecDeque::with_capacity(adjusted_lookback),
@@ -125,23 +125,26 @@ impl BaseStrategy {
         let (go_long_confirm, go_short_confirm) = self.filter.confirm(&series);
         let (go_long_momentum, go_short_momentum) = self.pulse.assess(&series);
         let (go_long_filter, go_short_filter) = self.base_line.filter(&series);
-
-        let go_long_signal = go_long_trigger & go_long_confirm & go_long_momentum & go_long_filter;
-        let prev_go_long_signal = go_long_signal.shift(1);
-        let go_short_signal =
-            go_short_trigger & go_short_confirm & go_short_momentum & go_short_filter;
-        let prev_go_short_signal = go_short_signal.shift(1);
-
         let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
 
-        let go_long = (go_long_signal | prev_go_long_signal)
-            .last()
-            .unwrap_or_default();
-        let go_short = (go_short_signal | prev_go_short_signal)
-            .last()
-            .unwrap_or_default();
-        let exit_long = exit_long_eval.last().unwrap_or_default();
-        let exit_short = exit_short_eval.last().unwrap_or_default();
+        let prev_go_long_trigger = go_long_trigger.shift(1);
+        let prev_go_short_trigger = go_short_trigger.shift(1);
+
+        let go_long_signal = (prev_go_long_trigger | go_long_trigger)
+            & go_long_confirm
+            & go_long_momentum
+            & go_long_filter;
+
+        let go_short_signal = (prev_go_short_trigger | go_short_trigger)
+            & go_short_confirm
+            & go_short_momentum
+            & go_short_filter;
+
+        let go_long = go_long_signal.last().unwrap_or(false);
+        let go_short = go_short_signal.last().unwrap_or(false);
+
+        let exit_long = exit_long_eval.last().unwrap_or(false);
+        let exit_short = exit_short_eval.last().unwrap_or(false);
 
         (go_long, go_short, exit_long, exit_short)
     }
@@ -155,8 +158,8 @@ impl BaseStrategy {
 
         let (sl_long_find, sl_short_find) = self.stop_loss.find(&series);
 
-        let stop_loss_long = sl_long_find.last().unwrap_or_default();
-        let stop_loss_short = sl_short_find.last().unwrap_or_default();
+        let stop_loss_long = sl_long_find.last().unwrap_or(std::f32::NAN);
+        let stop_loss_short = sl_short_find.last().unwrap_or(std::f32::NAN);
 
         (stop_loss_long, stop_loss_short)
     }
@@ -166,7 +169,8 @@ impl BaseStrategy {
 mod tests {
     use crate::price::Price;
     use crate::{
-        BaseLine, BaseStrategy, Exit, Filter, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV,
+        BaseLine, BaseStrategy, Exit, Filter, OHLCVSeries, Pulse, Signal, StopLoss, Strategy,
+        TradeAction, OHLCV,
     };
     use core::Series;
 
@@ -179,8 +183,9 @@ mod tests {
             self.short_period
         }
 
-        fn generate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (Series::empty(1), Series::empty(1))
+        fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            let len = data.close.len();
+            (Series::one(len).into(), Series::zero(len).into())
         }
     }
 
@@ -193,11 +198,9 @@ mod tests {
             self.period
         }
 
-        fn confirm(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (
-                Series::empty(1).nz(Some(0.0)).into(),
-                Series::empty(1).nz(Some(0.0)).into(),
-            )
+        fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            let len = data.close.len();
+            (Series::one(len).into(), Series::zero(len).into())
         }
     }
 
@@ -210,11 +213,9 @@ mod tests {
             self.period
         }
 
-        fn assess(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (
-                Series::empty(1).nz(Some(0.0)).into(),
-                Series::empty(1).nz(Some(0.0)).into(),
-            )
+        fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            let len = data.close.len();
+            (Series::one(len).into(), Series::one(len).into())
         }
     }
 
@@ -227,11 +228,9 @@ mod tests {
             self.period
         }
 
-        fn filter(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (
-                Series::empty(1).nz(Some(0.0)).into(),
-                Series::empty(1).nz(Some(0.0)).into(),
-            )
+        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            let len = data.close.len();
+            (Series::one(len).into(), Series::zero(len).into())
         }
     }
 
@@ -245,10 +244,11 @@ mod tests {
             self.period
         }
 
-        fn find(&self, _data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
+        fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
+            let len = data.close.len();
             (
-                Series::from([5.0]) * self.multi,
-                Series::from([6.0]) * self.multi,
+                Series::from(vec![5.0; len]) * self.multi,
+                Series::from(vec![6.0; len]) * self.multi,
             )
         }
     }
@@ -260,8 +260,9 @@ mod tests {
             0
         }
 
-        fn evaluate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            (Series::empty(1), Series::empty(1))
+        fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            let len = data.close.len();
+            (Series::one(len).into(), Series::zero(len).into())
         }
     }
 
@@ -294,6 +295,8 @@ mod tests {
             }),
             Box::new(MockExit {}),
         );
+        let lookback = 55;
+
         let ohlcvs = vec![
             OHLCV {
                 open: 1.0,
@@ -301,58 +304,27 @@ mod tests {
                 low: 0.5,
                 close: 1.5,
                 volume: 100.0,
-            },
-            OHLCV {
-                open: 2.0,
-                high: 3.0,
-                low: 1.5,
-                close: 2.5,
-                volume: 200.0,
-            },
-            OHLCV {
-                open: 3.0,
-                high: 4.0,
-                low: 2.5,
-                close: 3.5,
-                volume: 300.0,
-            },
-            OHLCV {
-                open: 4.0,
-                high: 5.0,
-                low: 3.5,
-                close: 4.5,
-                volume: 400.0,
-            },
+            };
+            lookback
         ];
 
+        let mut action = TradeAction::DoNothing;
+
         for ohlcv in ohlcvs {
-            strategy.next(ohlcv);
+            action = strategy.next(ohlcv);
         }
 
         let series = OHLCVSeries::from_data(&strategy.data);
-        let open: Vec<f32> = series.open.clone().into();
-        let high: Vec<f32> = series.high.clone().into();
-        let low: Vec<f32> = series.low.clone().into();
-        let close: Vec<f32> = series.close.clone().into();
-        let volume: Vec<f32> = series.volume.clone().into();
 
         let hl2: Vec<f32> = series.hl2().into();
         let hlc3: Vec<f32> = series.hlc3().into();
         let hlcc4: Vec<f32> = series.hlcc4().into();
         let ohlc4: Vec<f32> = series.ohlc4().into();
 
-        assert_eq!(open, vec![1.0, 2.0, 3.0, 4.0]);
-        assert_eq!(high, vec![2.0, 3.0, 4.0, 5.0]);
-        assert_eq!(low, vec![0.5, 1.5, 2.5, 3.5]);
-        assert_eq!(close, vec![1.5, 2.5, 3.5, 4.5]);
-        assert_eq!(volume, vec![100.0, 200.0, 300.0, 400.0]);
-
-        assert_eq!(hl2, vec![1.25, 2.25, 3.25, 4.25]);
-        assert_eq!(
-            hlc3,
-            vec![1.333_333_4, 2.333_333_3, 3.333_333_3, 4.333_333_5]
-        );
-        assert_eq!(hlcc4, vec![1.375, 2.375, 3.375, 4.375]);
-        assert_eq!(ohlc4, vec![1.25, 2.25, 3.25, 4.25]);
+        assert_eq!(hl2, vec![1.25; lookback]);
+        assert_eq!(hlc3, vec![1.333_333_4; lookback]);
+        assert_eq!(hlcc4, vec![1.375; lookback]);
+        assert_eq!(ohlc4, vec![1.25; lookback]);
+        assert_eq!(action, TradeAction::GoLong(1.333_333_4));
     }
 }

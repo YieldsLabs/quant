@@ -8,7 +8,9 @@ impl Exit for DumbExit {
         0
     }
 
-    fn evaluate(&self, _data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        (Series::empty(1), Series::empty(1))
+    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let len = data.close.len();
+        
+        (Series::zero(len).into(), Series::zero(len).into())
     }
 }
