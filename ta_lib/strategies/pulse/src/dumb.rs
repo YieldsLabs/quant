@@ -20,7 +20,7 @@ impl Pulse for DumbPulse {
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let len = data.close.len();
-        
+
         (Series::one(len).into(), Series::one(len).into())
     }
 }

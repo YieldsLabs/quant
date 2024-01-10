@@ -2,6 +2,8 @@ import asyncio
 import logging
 import os
 import signal
+from position.risk.simple import PositionRiskSimpleStrategy
+from position.size.fixed import PositionFixedSizeStrategy
 
 import uvloop
 from dotenv import load_dotenv
@@ -71,6 +73,8 @@ async def main():
 
     position_factory = PositionFactory(
         PositionOptinalFSizeStrategy(),
+        # PositionFixedSizeStrategy(),
+        # PositionRiskSimpleStrategy(),
         PositionRiskBreakEvenStrategy(config_service),
         PositionRiskRewardTakeProfitStrategy(config_service),
     )
@@ -96,7 +100,8 @@ async def main():
         config_service=config_service,
     )
 
-    trend_system = BacktestSystem(trend_context)
+    trend_system_a = BacktestSystem(trend_context)
+    trend_system_b = BacktestSystem(trend_context)
 
     trading_system = TradingSystem(
         signal_actor_factory,
@@ -108,20 +113,25 @@ async def main():
         exchange_type=ExchangeType.BYBIT,
     )
 
-    trend_system_task = asyncio.create_task(trend_system.start())
+    trend_system_a_task = asyncio.create_task(trend_system_a.start())
+    # trend_system_b_task = asyncio.create_task(trend_system_b.start())
     trading_system_task = asyncio.create_task(trading_system.start())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
         logging.info("Started")
-        await asyncio.gather(*[trend_system_task, shutdown_task])
+        await asyncio.gather(*[trend_system_a_task, shutdown_task])
     finally:
         logging.info("Closing...")
         shutdown_task.cancel()
-        trend_system_task.cancel()
+        trend_system_a_task.cancel()
+        # trend_system_b_task.cancel()
+        
         trading_system_task.cancel()
 
-        trend_system.stop()
+        trend_system_a_task.stop()
+        # trend_system_b_task.stop()
+        
         trading_system.stop()
 
         await event_bus.stop()

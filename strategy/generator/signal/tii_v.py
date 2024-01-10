@@ -8,5 +8,5 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class TiiVSignal(Signal):
     type: SignalType = SignalType.TiiV
-    major_period: Parameter = StaticParameter(5.0)
+    major_period: Parameter = StaticParameter(8.0)
     minor_period: Parameter = StaticParameter(2.0)

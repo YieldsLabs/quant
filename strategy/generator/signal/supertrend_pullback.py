@@ -9,4 +9,4 @@ from .base import Signal, SignalType
 class SupertrendPullBackSignal(Signal):
     type: SignalType = SignalType.SupPullBack
     atr_period: Parameter = StaticParameter(10.0)
-    factor: Parameter = StaticParameter(3.0)
+    factor: Parameter = StaticParameter(2.0)

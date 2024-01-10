@@ -42,6 +42,6 @@ impl Filter for MACDFilter {
             self.signal_smoothing,
         );
 
-        (histogram.sgt(&MACD_ZERO), histogram.slt(&MACD_ZERO))
+        (histogram.slt(&MACD_ZERO), histogram.sgt(&MACD_ZERO))
     }
 }

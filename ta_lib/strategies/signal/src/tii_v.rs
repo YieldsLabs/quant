@@ -2,8 +2,8 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::tii;
 
-const TII_ZERO: f32 = 0.0;
-const TII_ONEH: f32 = 100.0;
+const TII_UPPER_BARRIER: f32 = 80.0;
+const TII_LOWER_BARRIER: f32 = 20.0;
 
 pub struct TIIVSignal {
     major_period: usize,
@@ -28,8 +28,12 @@ impl Signal for TIIVSignal {
         let tii = tii(&data.close, self.major_period, self.minor_period);
 
         (
-            tii.sgt(&TII_ZERO) & tii.shift(1).seq(&TII_ZERO) & tii.shift(2).sgt(&TII_ZERO),
-            tii.slt(&TII_ONEH) & tii.shift(1).seq(&TII_ONEH) & tii.shift(2).slt(&TII_ONEH),
+            tii.sgt(&TII_LOWER_BARRIER)
+                & tii.shift(1).slt(&TII_LOWER_BARRIER)
+                & tii.shift(2).sgt(&TII_LOWER_BARRIER),
+            tii.slt(&TII_UPPER_BARRIER)
+                & tii.shift(1).sgt(&TII_UPPER_BARRIER)
+                & tii.shift(2).slt(&TII_UPPER_BARRIER),
         )
     }
 }

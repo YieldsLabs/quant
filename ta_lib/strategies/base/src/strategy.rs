@@ -49,17 +49,17 @@ impl BaseStrategy {
             exit.lookback(),
             DEFAULT_LOOKBACK,
         ];
-        let adjusted_lookback = lookbacks.into_iter().max().unwrap_or(DEFAULT_LOOKBACK);
+        let lookback_period = lookbacks.into_iter().max().unwrap_or(DEFAULT_LOOKBACK);
 
         Self {
-            data: VecDeque::with_capacity(adjusted_lookback),
-            lookback_period: adjusted_lookback,
+            data: VecDeque::with_capacity(lookback_period),
             signal,
             filter,
             pulse,
             base_line,
             stop_loss,
             exit,
+            lookback_period,
         }
     }
 
@@ -124,24 +124,19 @@ impl BaseStrategy {
         let (go_long_trigger, go_short_trigger) = self.signal.generate(&series);
         let (go_long_confirm, go_short_confirm) = self.filter.confirm(&series);
         let (go_long_momentum, go_short_momentum) = self.pulse.assess(&series);
-        let (go_long_filter, go_short_filter) = self.base_line.filter(&series);
+        let (go_long_baseline, go_short_baseline) = self.base_line.filter(&series);
         let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
 
         let prev_go_long_trigger = go_long_trigger.shift(1);
         let prev_go_short_trigger = go_short_trigger.shift(1);
+        // let prev_go_long_confirm = go_long_confirm.shift(1);
+        // let prev_go_short_confirm = go_short_confirm.shift(1);
 
-        let go_long_signal = (prev_go_long_trigger | go_long_trigger)
-            & go_long_confirm
-            & go_long_momentum
-            & go_long_filter;
+        let go_long_signal = go_long_trigger | prev_go_long_trigger;
+        let go_short_signal = go_short_trigger | prev_go_short_trigger;
 
-        let go_short_signal = (prev_go_short_trigger | go_short_trigger)
-            & go_short_confirm
-            & go_short_momentum
-            & go_short_filter;
-
-        let go_long = go_long_signal.last().unwrap_or(false);
-        let go_short = go_short_signal.last().unwrap_or(false);
+        let go_long = (go_long_signal & go_long_momentum & go_long_baseline).last().unwrap_or(false);
+        let go_short = (go_short_signal & go_short_momentum & go_short_baseline).last().unwrap_or(false);
 
         let exit_long = exit_long_eval.last().unwrap_or(false);
         let exit_short = exit_short_eval.last().unwrap_or(false);

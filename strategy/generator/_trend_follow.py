@@ -6,7 +6,7 @@ import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import CategoricalParameter, RandomParameter
+from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -85,7 +85,6 @@ class TrendSignalType(Enum):
     CROSS = auto()
     FLIP = auto()
     V = auto()
-    UTurn = auto()
     TWO_MA = auto()
     CUSTOM = auto()
     PULLBACK = auto()
@@ -155,38 +154,59 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
         filter = np.random.choice(
             [
-                RsiFilter(),
-                TiiFilter(),
-                StochFilter(),
-                SupertrendFilter(),
-                MacdFilter(),
-                RibbonFilter(),
-                FibFilter(),
-                EisFilter(),
-                ApoFilter(),
-                BopFilter(),
-                DpoFilter(),
-                KstFilter(),
+                # RsiFilter(),
+                # TiiFilter(),
+                # StochFilter(),
+                # SupertrendFilter(),
+                # MacdFilter(),
+                # RibbonFilter(),
+                # FibFilter(),
+                # EisFilter(),
+                # ApoFilter(),
+                # BopFilter(),
+                # DpoFilter(),
+                # KstFilter(),
                 EomFilter(),
             ]
         )
         pulse = np.random.choice(
-            [DumbPulse(), AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()]
+            [
+                AdxPulse(),
+                BraidPulse(),
+                ChopPulse(),
+                VoPulse()
+            ]
         )
         baseline = np.random.choice(
             [
                 MaBaseLine(
-                    smoothing=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(100.0, 150.0, 10.0),
+                    smoothing=StaticParameter(MovingAverageType.EMA),
+                    period=StaticParameter(200.0),
                 ),
                 MaBaseLine(
-                    smoothing=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(30.0, 50.0, 5.0),
+                    smoothing=StaticParameter(MovingAverageType.SMA),
+                    period=StaticParameter(100.0),
                 ),
                 MaBaseLine(
-                    smoothing=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(60.0, 90.0, 5.0),
+                    smoothing=StaticParameter(MovingAverageType.HMA),
+                    period=StaticParameter(80.0),
                 ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.KIJUN),
+                    period=StaticParameter(26.0),
+                ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.T3),
+                    period=StaticParameter(66.0),
+                ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.KAMA),
+                    period=StaticParameter(20.0),
+                ),
+                # MaBaseLine(
+                #     smoothing=CategoricalParameter(MovingAverageType),
+                #     period=RandomParameter(80.0, 200.0, 10.0),
+                # ),
             ]
         )
         stop_loss = np.random.choice(
@@ -196,7 +216,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 AstExit(),
                 CeExit(),
-                DumbExit(),
+                # DumbExit(),
                 PatternExit(),
                 HighLowExit(),
                 MaExit(),
@@ -228,45 +248,42 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.FLIP:
             return np.random.choice(
                 [
-                    AoFlipSignal(),
-                    MacdFlipSignal(),
+                    # AoFlipSignal(),
+                    # MacdFlipSignal(),
                     SupertrendFlipSignal(),
-                    RocFlipSignal(),
+                    # RocFlipSignal(),
                     TrixFlipSignal(),
-                    TsiFlipSignal(),
-                    DiFlipSignal(),
+                    # TsiFlipSignal(),
+                    # DiFlipSignal(),
                     QstickFlipSignal(),
-                    CcFlipSignal(),
-                    StcFlipSignal(),
-                    ApoFlipSignal(),
-                    BopFlipSignal(),
-                    CfoFlipSignal(),
+                    # CcFlipSignal(),
+                    # StcFlipSignal(),
+                    # ApoFlipSignal(),
+                    # BopFlipSignal(),
+                    # CfoFlipSignal(),
                 ]
             )
         if signal == TrendSignalType.V:
             return np.random.choice([TiiVSignal(), RsiVSignal()])
 
-        if signal == TrendSignalType.UTurn:
-            return np.random.choice([StcUTurnSignal()])
-
         if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
-                    Ma3CrossSignal(
-                        short_period=ma_short_period,
-                        medium_period=ma_medium_period,
-                        long_period=ma_long_period,
-                    ),
+                #     Ma3CrossSignal(
+                #         short_period=ma_short_period,
+                #         medium_period=ma_medium_period,
+                #         long_period=ma_long_period,
+                #     ),
                     MacdCrossSignal(),
-                    TiiCrossSignal(),
+                    # TiiCrossSignal(),
                     RsiNautralityCrossSignal(),
                     TsiCrossSignal(),
                     DiCrossSignal(),
                     QstickCrossSignal(),
                     VwapCrossSignal(),
                     DmiCrossSignal(),
-                    StochCrossSignal(),
-                    KstCrossSignal(),
+                    # StochCrossSignal(),
+                    # KstCrossSignal(),
                     TrixCrossSignal(),
                 ]
             )
@@ -274,27 +291,27 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     Rsi2MaSignal(),
-                    Dch2MaSignal(),
+                    # Dch2MaSignal(),
                 ]
             )
         if signal == TrendSignalType.PULLBACK:
             return np.random.choice(
                 [
-                    SupertrendPullBackSignal(),
+                    # SupertrendPullBackSignal(),
                     RsiNautralityPullbackSignal(),
-                    RsiMaPullbackSignal(),
+                    # RsiMaPullbackSignal(),
                 ]
             )
 
         return np.random.choice(
             [
-                AoSaucerSignal(),
+                # AoSaucerSignal(),
                 MacdColorSwitchSignal(),
                 TrendCandleSignal(),
-                SnatrSignal(),
-                RsiNautralityRejectionSignal(),
-                TestingGroundSignal(period=ma_long_period),
-                QuadrupleSignal(),
-                HighLowSignal(),
+                # SnatrSignal(),
+                # RsiNautralityRejectionSignal(),
+                # TestingGroundSignal(period=ma_long_period),
+                # QuadrupleSignal(),
+                # HighLowSignal(),
             ]
         )

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Tuple
 
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.interfaces.abstract_position_take_profit_strategy import (
@@ -31,8 +31,8 @@ class Position:
     take_profit_strategy: AbstractPositionTakeProfitStrategy
     orders: Tuple[Order] = ()
     closed: bool = False
-    stop_loss_price: Optional[float] = None
-    take_profit_price: Optional[float] = None
+    stop_loss_price: float = 0.0000001
+    take_profit_price: float = 0.0000001
     open_timestamp: float = field(default_factory=lambda: 0)
     closed_timestamp: float = field(default_factory=lambda: 0)
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
@@ -55,7 +55,7 @@ class Position:
 
     def add_order(self, order: Order) -> "Position":
         if self.closed:
-            return
+            return self
 
         last_modified = datetime.now().timestamp()
         orders = (*self.orders, order)
@@ -93,33 +93,26 @@ class Position:
             )
 
     def next(self, ohlcv: OHLCV) -> "Position":
-        (next_stop_loss, next_take_profit) = self.risk_strategy.next(
+        next_stop_loss_price, next_take_profit_price = self.risk_strategy.next(
             self.side,
             self.take_profit_price,
             self.stop_loss_price,
             ohlcv,
         )
 
-        return replace(
-            self,
-            stop_loss_price=round(next_stop_loss, self.signal.symbol.price_precision),
-            take_profit_price=round(
-                next_take_profit, self.signal.symbol.price_precision
-            ),
-        )
+        obj = replace(self, stop_loss_price=next_stop_loss_price)
+
+        object.__setattr__(obj, "take_profit_price", next_take_profit_price)
+
+        return obj
 
     def __post_init__(self):
         if self.stop_loss_price:
-            object.__setattr__(
-                self,
-                "take_profit_price",
-                round(
-                    self.take_profit_strategy.next(
-                        self.entry_price, self.stop_loss_price
-                    ),
-                    self.signal.symbol.price_precision,
-                ),
+            take_profit_price = self.take_profit_strategy.next(
+                self.entry_price, self.stop_loss_price
             )
+
+            object.__setattr__(self, "take_profit_price", take_profit_price)
 
     def to_dict(self):
         return {

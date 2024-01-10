@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.models.ohlcv import OHLCV
@@ -19,32 +17,31 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         ohlcv: OHLCV,
     ) -> float:
         current_price = self._weighted_typical_price(ohlcv)
+        rrr = self.config["risk_reward_ratio"]
+        factor = self.config["tsl_distance"]
 
-        next_stop_loss = stop_loss_price
-        next_take_profit = take_profit_price
 
         if side == PositionSide.LONG and current_price >= take_profit_price:
-            next_stop_loss, next_take_profit = self._calculate_prices(
-                take_profit_price, ohlcv.close
+            print('May be next long ?')
+            next_stop_loss = max(stop_loss_price, current_price * factor)
+            next_take_profit = max(
+                take_profit_price,
+                rrr * (current_price - next_stop_loss) + current_price,
             )
+
+            return next_stop_loss, next_take_profit
 
         if side == PositionSide.SHORT and current_price <= take_profit_price:
-            next_stop_loss, next_take_profit = self._calculate_prices(
-                take_profit_price, ohlcv.close
+            print('May be next short ?')
+            next_stop_loss = min(stop_loss_price, current_price * factor)
+            next_take_profit = min(
+                take_profit_price,
+                rrr * (current_price - next_stop_loss) + current_price,
             )
 
-        return next_stop_loss, next_take_profit
+            return next_stop_loss, next_take_profit
 
-    def _calculate_prices(
-        self, take_profit_price: float, close_price: float
-    ) -> Tuple[float, float]:
-        next_stop_loss = take_profit_price * self.config["tsl_distance"]
-        next_take_profit = (
-            self.config["risk_reward_ratio"] * (close_price - next_stop_loss)
-            + close_price
-        )
-
-        return next_stop_loss, next_take_profit
+        return stop_loss_price, take_profit_price
 
     @staticmethod
     def _weighted_typical_price(ohlcv: OHLCV) -> float:

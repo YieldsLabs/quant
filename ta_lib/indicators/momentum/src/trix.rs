@@ -1,11 +1,12 @@
+use crate::roc;
 use core::prelude::*;
 
-const PERCENTAGE_SCALE: f32 = 100.;
+const SCALE: f32 = 1.;
 
 pub fn trix(source: &Series<f32>, period: usize) -> Series<f32> {
     let ema3 = source.ema(period).ema(period).ema(period);
 
-    PERCENTAGE_SCALE.powf(2.0) * (&ema3 / ema3.shift(1) - 1.)
+    SCALE * roc(&ema3, 1)
 }
 
 #[cfg(test)]
@@ -20,8 +21,21 @@ mod tests {
         ]);
         let period = 3;
         let expected = vec![
-            0.0, 0.36478043, -1.6403198, -1.0019541, 0.9572506, 0.61511993, -1.92523, -3.3217669,
-            -5.0127506, -6.273389, -5.246997, -3.7002563, -2.6726723, -2.9873848, -0.9274483,
+            0.0,
+            0.0036433754,
+            -0.016401544,
+            -0.010020561,
+            0.009569516,
+            0.0061472696,
+            -0.019254234,
+            -0.0332163,
+            -0.050126247,
+            -0.06273622,
+            -0.05246739,
+            -0.0370036,
+            -0.026727742,
+            -0.029872786,
+            -0.009277002,
         ];
 
         let result: Vec<f32> = trix(&source, period).into();

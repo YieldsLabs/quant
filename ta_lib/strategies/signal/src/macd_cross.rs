@@ -2,6 +2,8 @@ use base::prelude::*;
 use core::prelude::*;
 use shared::{macd_indicator, MACDType};
 
+const MACD_ZERO_LINE: f32 = 0.0;
+
 pub struct MACDCrossSignal {
     macd_type: MACDType,
     fast_period: usize,
@@ -39,7 +41,7 @@ impl Signal for MACDCrossSignal {
             self.slow_period,
             self.signal_period,
         );
-
+ 
         (
             macd_line.cross_over(&signal_line),
             macd_line.cross_under(&signal_line),

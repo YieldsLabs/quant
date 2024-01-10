@@ -2,8 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::stc;
 
-const LOWER_LINE: f32 = 25.0;
-const UPPER_LINE: f32 = 75.0;
+const MIDDLE_LINE: f32 = 50.0;
 
 pub struct STCUturnSignal {
     fast_period: usize,
@@ -50,8 +49,13 @@ impl Signal for STCUturnSignal {
         );
 
         (
-            stc.cross_over(&LOWER_LINE) & stc.cross_over(&stc.shift(2)),
-            stc.cross_under(&UPPER_LINE) & stc.cross_under(&stc.shift(2)),
+            stc.sgt(&stc.shift(1)) & stc.shift(1).seq(&stc.shift(2)) & stc.shift(2).slt(&stc.shift(3)) & stc.sgt(&MIDDLE_LINE),
+            stc.slt(&stc.shift(1)) & stc.shift(1).seq(&stc.shift(2)) & stc.shift(2).sgt(&stc.shift(3)) & stc.slt(&MIDDLE_LINE),
         )
+
+        // (
+        //     stc.cross_over(&LOWER_LINE) & stc.cross_over(&stc.shift(2)),
+        //     stc.cross_under(&UPPER_LINE) & stc.cross_under(&stc.shift(2)),
+        // )
     }
 }

@@ -1,4 +1,5 @@
 import asyncio
+from collections import deque
 import logging
 from enum import Enum, auto
 from typing import Union
@@ -13,7 +14,7 @@ from core.events.position import (
 )
 from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus
-from core.models.position import PositionSide
+from core.models.position import Position, PositionSide
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -36,7 +37,7 @@ class PaperOrderActor(Actor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__(symbol, timeframe, strategy)
         self.lock = asyncio.Lock()
-        self.last_tick = None
+        self.tick_buffer = deque(maxlen=5)
 
     def pre_receive(self, event: OrderEventType):
         event = event.position.signal if hasattr(event, "position") else event
@@ -59,7 +60,8 @@ class PaperOrderActor(Actor):
 
         logger.debug(f"New Position: {current_position}")
 
-        fill_price = self._determine_fill_price(current_position.side)
+        fill_price = await self._determine_fill_price(current_position.side)
+
         size = current_position.size
 
         order = Order(
@@ -79,13 +81,16 @@ class PaperOrderActor(Actor):
 
         logger.debug(f"To Close Position: {current_position}")
 
-        fill_price = self._determine_fill_price(current_position.side)
-        size = current_position.size
+        fill_price = await self._determine_fill_price(current_position.side)
+
+        logger.debug(f"Price: {fill_price}")
+        
+        price = self._calculate_closing_price(current_position, fill_price)
 
         order = Order(
             status=OrderStatus.CLOSED,
-            price=fill_price,
-            size=size,
+            price=price,
+            size=current_position.size,
         )
 
         next_position = current_position.add_order(order)
@@ -96,7 +101,20 @@ class PaperOrderActor(Actor):
 
     async def _update_tick(self, event: NewMarketDataReceived):
         async with self.lock:
-            self.last_tick = event.ohlcv
+            self.tick_buffer.append(event.ohlcv)
+
+    async def _determine_fill_price(self, side: PositionSide) -> float:
+        async with self.lock:
+            last_tick = self.tick_buffer[-1]
+
+            direction = self._intrabar_price_movement(last_tick)
+
+            if side == PositionSide.LONG and direction == PriceDirection.OHLC:
+                return last_tick.high
+            elif side == PositionSide.SHORT and direction == PriceDirection.OLHC:
+                return last_tick.low
+            else:
+                return last_tick.close
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:
@@ -106,12 +124,13 @@ class PaperOrderActor(Actor):
             else PriceDirection.OLHC
         )
 
-    def _determine_fill_price(self, side: PositionSide) -> float:
-        direction = self._intrabar_price_movement(self.last_tick)
-
-        if side == PositionSide.LONG and direction == PriceDirection.OHLC:
-            return self.last_tick.high
-        elif side == PositionSide.SHORT and direction == PriceDirection.OLHC:
-            return self.last_tick.low
+    @staticmethod
+    def _calculate_closing_price(position: Position, fill_price: float) -> float:
+        if position.side == PositionSide.LONG:
+            return max(
+                min(fill_price, position.take_profit_price), position.stop_loss_price
+            )
         else:
-            return self.last_tick.close
+            return min(
+                max(fill_price, position.take_profit_price), position.stop_loss_price
+            )

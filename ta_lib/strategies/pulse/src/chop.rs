@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::chop;
 
-const CHOP_TREND: f32 = 50.0;
+const CHOP_MIDDLE_LINE: f32 = 50.0;
 
 pub struct CHOPPulse {
     period: usize,
@@ -32,7 +32,7 @@ impl Pulse for CHOPPulse {
             &data.atr(self.atr_period),
             self.period,
         );
-        let lower_chop = CHOP_TREND - self.threshold;
+        let lower_chop = CHOP_MIDDLE_LINE - self.threshold;
 
         (chop.slt(&lower_chop), chop.slt(&lower_chop))
     }

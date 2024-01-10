@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::supertrend;
 
-const SUP_ZERO: f32 = 0.0;
-
 pub struct SupertrendFilter {
     atr_period: usize,
     factor: f32,
@@ -24,7 +22,7 @@ impl Filter for SupertrendFilter {
     }
 
     fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (direction, trendline) = supertrend(
+        let (_, trendline) = supertrend(
             &data.hl2(),
             &data.close,
             &data.atr(self.atr_period),
@@ -32,8 +30,8 @@ impl Filter for SupertrendFilter {
         );
 
         (
-            data.close.sgt(&trendline) & direction.sgt(&SUP_ZERO),
-            data.close.slt(&trendline) & direction.slt(&SUP_ZERO),
+            trendline.cross_under(&data.close),
+            trendline.cross_over(&data.close),
         )
     }
 }
