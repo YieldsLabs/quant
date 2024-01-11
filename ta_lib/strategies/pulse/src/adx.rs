@@ -2,7 +2,8 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::dmi;
 
-const ADX_TREND: f32 = 25.0;
+const ADX_UPPER_BARRIER: f32 = 50.0;
+const ADX_LOWER_BARRIER: f32 = 20.0;
 
 pub struct ADXPulse {
     adx_period: usize,
@@ -33,11 +34,12 @@ impl Pulse for ADXPulse {
             self.adx_period,
             self.di_period,
         );
-        let upper_adx_trend = ADX_TREND + self.threshold;
+        let adx_lower = ADX_LOWER_BARRIER + self.threshold;
+        let adx_upper = ADX_UPPER_BARRIER - self.threshold;
 
         (
-            adx.sgt(&upper_adx_trend) & adx.sgt(&adx.shift(1)),
-            adx.sgt(&upper_adx_trend) & adx.sgt(&adx.shift(1)),
+            adx.sgt(&adx_lower) & adx.sgt(&adx.shift(1)) & adx.slt(&adx_upper),
+            adx.sgt(&adx_lower) & adx.sgt(&adx.shift(1)) & adx.slt(&adx_upper),
         )
     }
 }

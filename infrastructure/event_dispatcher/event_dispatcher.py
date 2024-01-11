@@ -5,6 +5,7 @@ from core.commands.base import Command
 from core.events.base import Event, EventEnded
 from core.interfaces.abstract_config import AbstractConfig
 from core.queries.base import Query
+from infrastructure.event_store.event_store import EventStore
 
 from .event_handler import EventHandler
 from .worker_pool import WorkerPool
@@ -25,6 +26,7 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.cancel_event = asyncio.Event()
 
         self.config = config_service.get("bus")
+        self._store = EventStore(config_service)
 
         self._command_worker_pool = None
         self._query_worker_pool = None
@@ -75,6 +77,7 @@ class EventDispatcher(metaclass=SingletonMeta):
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)
+        self._store.append(event)
 
     async def wait(self) -> None:
         await asyncio.gather(
@@ -93,6 +96,7 @@ class EventDispatcher(metaclass=SingletonMeta):
                 self._dispatch_to_poll(EventEnded(), self.command_worker_pool),
             ]
         )
+        self._store.close()
 
     async def _dispatch_to_poll(
         self, event: Type[Event], worker_pool: WorkerPool, *args, **kwargs

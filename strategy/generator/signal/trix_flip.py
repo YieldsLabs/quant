@@ -11,4 +11,4 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class TrixFlipSignal(Signal):
     type: SignalType = SignalType.TrixFlip
-    period: Parameter = StaticParameter(18.0)
+    period: Parameter = StaticParameter(7.0)

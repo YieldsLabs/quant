@@ -19,7 +19,7 @@ class StrategyOptimizationType(Enum):
 class Strategy:
     type: StrategyType
     entry: Indicator
-    filter: Indicator
+    confirmation: Indicator
     pulse: Indicator
     baseline: Indicator
     stop_loss: Indicator
@@ -28,7 +28,7 @@ class Strategy:
     @property
     def parameters(self):
         signal_data = json.dumps(self.entry.to_dict())
-        filter_data = json.dumps(self.filter.to_dict())
+        confirmation_data = json.dumps(self.confirmation.to_dict())
         pulse_data = json.dumps(self.pulse.to_dict())
         baseline_data = json.dumps(self.baseline.to_dict())
         stoploss_data = json.dumps(self.stop_loss.to_dict())
@@ -36,7 +36,7 @@ class Strategy:
 
         return (
             signal_data,
-            filter_data,
+            confirmation_data,
             pulse_data,
             baseline_data,
             stoploss_data,
@@ -60,7 +60,7 @@ class Strategy:
 
     def __str__(self) -> str:
         entry_ = f"_SGNL{self.entry.type}:{self._format_parameters(self.entry)}"
-        filter_ = f"_FLTR{self.filter.type}:{self._format_parameters(self.filter)}"
+        confirmation_ = f"_CNFRM{self.confirmation.type}:{self._format_parameters(self.confirmation)}"
         pulse_ = f"_PLS{self.pulse.type}:{self._format_parameters(self.pulse)}"
         baseline_ = (
             f"_BSLN{self.baseline.type}:{self._format_parameters(self.baseline)}"
@@ -70,4 +70,4 @@ class Strategy:
         )
         exit_ = f"_EXT{self.exit.type}:{self._format_parameters(self.exit)}"
 
-        return entry_ + filter_ + pulse_ + baseline_ + stop_loss + exit_
+        return entry_ + confirmation_ + pulse_ + baseline_ + stop_loss + exit_

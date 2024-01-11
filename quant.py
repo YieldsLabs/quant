@@ -13,7 +13,6 @@ from executor import OrderExecutorActorFactory
 from feed import FeedActorFactory
 from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
-from infrastructure.event_store.event_store import EventStore
 from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
 from optimization import StrategyOptimizerFactory
@@ -60,7 +59,6 @@ async def main():
 
     config_service.update(config)
 
-    event_store = EventStore(config_service)
     event_bus = EventDispatcher(config_service)
 
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
@@ -71,6 +69,8 @@ async def main():
 
     position_factory = PositionFactory(
         PositionOptinalFSizeStrategy(),
+        # PositionFixedSizeStrategy(),
+        # PositionRiskSimpleStrategy(),
         PositionRiskBreakEvenStrategy(config_service),
         PositionRiskRewardTakeProfitStrategy(config_service),
     )
@@ -96,7 +96,8 @@ async def main():
         config_service=config_service,
     )
 
-    trend_system = BacktestSystem(trend_context)
+    trend_system_a = BacktestSystem(trend_context)
+    trend_system_b = BacktestSystem(trend_context)
 
     trading_system = TradingSystem(
         signal_actor_factory,
@@ -108,26 +109,26 @@ async def main():
         exchange_type=ExchangeType.BYBIT,
     )
 
-    trend_system_task = asyncio.create_task(trend_system.start())
+    trend_system_a_task = asyncio.create_task(trend_system_a.start())
+    # trend_system_b_task = asyncio.create_task(trend_system_b.start())
     trading_system_task = asyncio.create_task(trading_system.start())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
         logging.info("Started")
-        await asyncio.gather(*[trend_system_task, shutdown_task])
+        await asyncio.gather(*[trend_system_a_task, shutdown_task])
     finally:
         logging.info("Closing...")
         shutdown_task.cancel()
-        trend_system_task.cancel()
+        trend_system_a_task.cancel()
+        # trend_system_b_task.cancel()
+
         trading_system_task.cancel()
 
-        trend_system.stop()
         trading_system.stop()
 
         await event_bus.stop()
         await event_bus.wait()
-
-        event_store.close()
 
         logging.info("Finished.")
 

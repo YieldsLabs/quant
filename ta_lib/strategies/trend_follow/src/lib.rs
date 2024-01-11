@@ -1,8 +1,8 @@
 mod baseline_mapper;
 mod candle_mapper;
+mod confirm_mapper;
 mod exit_mapper;
 mod ffi;
-mod filter_mapper;
 mod ma_mapper;
 mod macd_mapper;
 mod pulse_mapper;

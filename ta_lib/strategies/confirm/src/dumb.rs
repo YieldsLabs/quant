@@ -1,11 +1,11 @@
 use base::prelude::*;
 use core::prelude::*;
 
-pub struct DumbPulse {
+pub struct DumbConfirm {
     period: usize,
 }
 
-impl DumbPulse {
+impl DumbConfirm {
     pub fn new(period: f32) -> Self {
         Self {
             period: period as usize,
@@ -13,12 +13,12 @@ impl DumbPulse {
     }
 }
 
-impl Pulse for DumbPulse {
+impl Confirm for DumbConfirm {
     fn lookback(&self) -> usize {
         self.period
     }
 
-    fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let len = data.close.len();
 
         (Series::one(len).into(), Series::one(len).into())

@@ -149,6 +149,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "702fc72eb24e5a1e48ce58027a675bc24edd52096d5397d4aea7c6dd9eca0bd1"
 
 [[package]]
+name = "confirm"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "core",
+ "momentum",
+ "shared",
+ "trend",
+ "volume",
+]
+
+[[package]]
 name = "core"
 version = "0.1.0"
 
@@ -245,18 +257,6 @@ dependencies = [
  "core",
  "shared",
  "trend",
-]
-
-[[package]]
-name = "filter"
-version = "0.1.0"
-dependencies = [
- "base",
- "core",
- "momentum",
- "shared",
- "trend",
- "volume",
 ]
 
 [[package]]
@@ -610,9 +610,9 @@ version = "0.1.0"
 dependencies = [
  "base",
  "baseline",
+ "confirm",
  "core",
  "exit",
- "filter",
  "pulse",
  "serde",
  "serde_json",

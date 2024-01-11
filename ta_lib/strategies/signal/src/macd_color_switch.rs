@@ -43,12 +43,14 @@ impl Signal for MACDColorSwitchSignal {
         );
 
         (
-            histogram.sgt(&ZERO_LINE)
-                & histogram.sgt(&histogram.shift(1))
-                & histogram.shift(1).slt(&histogram.shift(2)),
             histogram.slt(&ZERO_LINE)
+                & histogram.sgt(&histogram.shift(1))
+                & histogram.shift(1).slt(&histogram.shift(2))
+                & histogram.shift(2).slt(&histogram.shift(3)),
+            histogram.sgt(&ZERO_LINE)
                 & histogram.slt(&histogram.shift(1))
-                & histogram.shift(1).sgt(&histogram.shift(2)),
+                & histogram.shift(1).sgt(&histogram.shift(2))
+                & histogram.shift(2).sgt(&histogram.shift(3)),
         )
     }
 }

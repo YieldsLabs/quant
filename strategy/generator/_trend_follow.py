@@ -6,36 +6,23 @@ import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import CategoricalParameter, RandomParameter
+from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
 from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
 from .baseline.ma import MaBaseLine
+from .confirm.dpo import DpoConfirm
+from .confirm.eom import EomConfirm
 from .exit.ast import AstExit
 from .exit.ce import CeExit
-from .exit.dumb import DumbExit
 from .exit.highlow import HighLowExit
 from .exit.ma import MaExit
 from .exit.pattern import PatternExit
 from .exit.rsi import RsiExit
-from .filter.apo import ApoFilter
-from .filter.bop import BopFilter
-from .filter.dpo import DpoFilter
-from .filter.eis import EisFilter
-from .filter.eom import EomFilter
-from .filter.fib import FibFilter
-from .filter.kst import KstFilter
-from .filter.macd import MacdFilter
-from .filter.ribbon import RibbonFilter
-from .filter.rsi import RsiFilter
-from .filter.stoch import StochFilter
-from .filter.supertrend import SupertrendFilter
-from .filter.tii import TiiFilter
 from .pulse.adx import AdxPulse
 from .pulse.braid import BraidPulse
 from .pulse.chop import ChopPulse
-from .pulse.dumb import DumbPulse
 from .pulse.vo import VoPulse
 from .signal.ao_flip import AoFlipSignal
 from .signal.ao_saucer import AoSaucerSignal
@@ -65,10 +52,8 @@ from .signal.rsi_two_ma import Rsi2MaSignal
 from .signal.rsi_v import RsiVSignal
 from .signal.snatr import SnatrSignal
 from .signal.stc_flip import StcFlipSignal
-from .signal.stc_uturn import StcUTurnSignal
 from .signal.stoch_cross import StochCrossSignal
 from .signal.supertrend_flip import SupertrendFlipSignal
-from .signal.supertrend_pullback import SupertrendPullBackSignal
 from .signal.testing_ground import TestingGroundSignal
 from .signal.tii_cross import TiiCrossSignal
 from .signal.tii_v import TiiVSignal
@@ -85,7 +70,6 @@ class TrendSignalType(Enum):
     CROSS = auto()
     FLIP = auto()
     V = auto()
-    UTurn = auto()
     TWO_MA = auto()
     CUSTOM = auto()
     PULLBACK = auto()
@@ -153,39 +137,42 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
     def _generate_strategy(self):
         signal_groups = list(TrendSignalType)
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
-        filter = np.random.choice(
+        confirm = np.random.choice(
             [
-                RsiFilter(),
-                TiiFilter(),
-                StochFilter(),
-                SupertrendFilter(),
-                MacdFilter(),
-                RibbonFilter(),
-                FibFilter(),
-                EisFilter(),
-                ApoFilter(),
-                BopFilter(),
-                DpoFilter(),
-                KstFilter(),
-                EomFilter(),
+                DpoConfirm(),
+                EomConfirm(),
             ]
         )
-        pulse = np.random.choice(
-            [DumbPulse(), AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()]
-        )
+        pulse = np.random.choice([AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()])
         baseline = np.random.choice(
             [
                 MaBaseLine(
-                    smoothing=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(100.0, 150.0, 10.0),
+                    smoothing=StaticParameter(MovingAverageType.EMA),
+                    period=StaticParameter(200.0),
+                ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.SMA),
+                    period=StaticParameter(100.0),
+                ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.HMA),
+                    period=StaticParameter(80.0),
+                ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.KIJUN),
+                    period=StaticParameter(26.0),
+                ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.T3),
+                    period=StaticParameter(66.0),
+                ),
+                MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.KAMA),
+                    period=StaticParameter(20.0),
                 ),
                 MaBaseLine(
                     smoothing=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(30.0, 50.0, 5.0),
-                ),
-                MaBaseLine(
-                    smoothing=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(60.0, 90.0, 5.0),
+                    period=RandomParameter(80.0, 200.0, 10.0),
                 ),
             ]
         )
@@ -196,7 +183,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 AstExit(),
                 CeExit(),
-                DumbExit(),
                 PatternExit(),
                 HighLowExit(),
                 MaExit(),
@@ -208,7 +194,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             *(
                 StrategyType.TREND,
                 entry_signal,
-                filter,
+                confirm,
                 pulse,
                 baseline,
                 stop_loss,
@@ -246,9 +232,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.V:
             return np.random.choice([TiiVSignal(), RsiVSignal()])
 
-        if signal == TrendSignalType.UTurn:
-            return np.random.choice([StcUTurnSignal()])
-
         if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
@@ -280,7 +263,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.PULLBACK:
             return np.random.choice(
                 [
-                    SupertrendPullBackSignal(),
                     RsiNautralityPullbackSignal(),
                     RsiMaPullbackSignal(),
                 ]

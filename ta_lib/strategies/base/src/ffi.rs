@@ -1,5 +1,5 @@
 use crate::{
-    BaseLine, BaseStrategy, Exit, Filter, Pulse, Signal, StopLoss, Strategy, TradeAction, OHLCV,
+    BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss, Strategy, TradeAction, OHLCV,
 };
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ static ALLOC_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 pub fn register_strategy(
     signal: Box<dyn Signal>,
-    filter: Box<dyn Filter>,
+    confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
@@ -28,7 +28,7 @@ pub fn register_strategy(
     STRATEGY_ID_TO_INSTANCE.write().unwrap().insert(
         current_id,
         Box::new(BaseStrategy::new(
-            signal, filter, pulse, base_line, stop_loss, exit,
+            signal, confirm, pulse, base_line, stop_loss, exit,
         )),
     );
 
