@@ -140,7 +140,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
         if chosen_attr in [
             GeneticAttributes.SIGNAL,
-            GeneticAttributes.FILTER,
+            GeneticAttributes.CONFIRM,
             GeneticAttributes.PULSE,
             GeneticAttributes.BASELINE,
             GeneticAttributes.STOP_LOSS,
