@@ -2,8 +2,6 @@ import asyncio
 import logging
 import os
 import signal
-from position.risk.simple import PositionRiskSimpleStrategy
-from position.size.fixed import PositionFixedSizeStrategy
 
 import uvloop
 from dotenv import load_dotenv
@@ -15,7 +13,6 @@ from executor import OrderExecutorActorFactory
 from feed import FeedActorFactory
 from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
-from infrastructure.event_store.event_store import EventStore
 from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
 from optimization import StrategyOptimizerFactory
@@ -62,7 +59,6 @@ async def main():
 
     config_service.update(config)
 
-    event_store = EventStore(config_service)
     event_bus = EventDispatcher(config_service)
 
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
@@ -126,18 +122,13 @@ async def main():
         shutdown_task.cancel()
         trend_system_a_task.cancel()
         # trend_system_b_task.cancel()
-        
+
         trading_system_task.cancel()
 
-        trend_system_a_task.stop()
-        # trend_system_b_task.stop()
-        
         trading_system.stop()
 
         await event_bus.stop()
         await event_bus.wait()
-
-        event_store.close()
 
         logging.info("Finished.")
 

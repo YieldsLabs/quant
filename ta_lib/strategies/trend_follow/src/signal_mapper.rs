@@ -151,13 +151,6 @@ pub enum SignalConfig {
         d_first: f32,
         d_second: f32,
     },
-    StcUturn {
-        fast_period: f32,
-        slow_period: f32,
-        cycle: f32,
-        d_first: f32,
-        d_second: f32,
-    },
     StochCross {
         stoch_type: f32,
         period: f32,
@@ -386,19 +379,6 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             d_first,
             d_second,
         } => Box::new(STCFlipSignal::new(
-            fast_period,
-            slow_period,
-            cycle,
-            d_first,
-            d_second,
-        )),
-        SignalConfig::StcUturn {
-            fast_period,
-            slow_period,
-            cycle,
-            d_first,
-            d_second,
-        } => Box::new(STCUturnSignal::new(
             fast_period,
             slow_period,
             cycle,

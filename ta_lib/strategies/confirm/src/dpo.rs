@@ -4,11 +4,11 @@ use trend::dpo;
 
 const DPO_FILTER: f32 = 0.0;
 
-pub struct DPOFilter {
+pub struct DPOConfirm {
     period: usize,
 }
 
-impl DPOFilter {
+impl DPOConfirm {
     pub fn new(period: f32) -> Self {
         Self {
             period: period as usize,
@@ -16,12 +16,12 @@ impl DPOFilter {
     }
 }
 
-impl Filter for DPOFilter {
+impl Confirm for DPOConfirm {
     fn lookback(&self) -> usize {
         self.period
     }
 
-    fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let dpo = dpo(&data.close, self.period);
 
         (dpo.sgt(&DPO_FILTER), dpo.slt(&DPO_FILTER))

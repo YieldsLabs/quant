@@ -14,7 +14,7 @@ core = { path = "../../core" }
 base = { path = "../base" }
 stop_loss = { path = "../stop_loss" }
 signal = { path = "../signal" }
-filter = { path = "../filter" }
+confirm = { path = "../confirm" }
 pulse = { path = "../pulse" }
 baseline = { path = "../baseline" }
 shared = { path = "../shared" }

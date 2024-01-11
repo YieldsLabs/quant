@@ -6,9 +6,9 @@ pub trait Signal: Send + Sync {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
-pub trait Filter: Send + Sync {
+pub trait Confirm: Send + Sync {
     fn lookback(&self) -> usize;
-    fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait Pulse: Send + Sync {

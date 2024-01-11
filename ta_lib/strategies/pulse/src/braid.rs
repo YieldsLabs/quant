@@ -45,7 +45,7 @@ impl Pulse for BraidPulse {
         let diff = max - min;
 
         let len = data.close.len();
-        
+
         let regime = iff!(
             ma_one.sgt(&ma_two),
             Series::one(len),

@@ -4,12 +4,12 @@ use volume::eom;
 
 const EOM_FILTER: f32 = 0.0;
 
-pub struct EOMFilter {
+pub struct EOMConfirm {
     period: usize,
     divisor: f32,
 }
 
-impl EOMFilter {
+impl EOMConfirm {
     pub fn new(period: f32, divisor: f32) -> Self {
         Self {
             period: period as usize,
@@ -18,12 +18,12 @@ impl EOMFilter {
     }
 }
 
-impl Filter for EOMFilter {
+impl Confirm for EOMConfirm {
     fn lookback(&self) -> usize {
         self.period
     }
 
-    fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let eom = eom(
             &data.hl2(),
             &data.high,

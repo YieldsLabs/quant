@@ -298,7 +298,6 @@ class RiskActor(Actor):
         ) or (side == PositionSide.SHORT and price >= stop_loss_price)
 
         if price_exceeds_take_profit or price_exceeds_stop_loss:
-            print("XXXXX")
             await self.tell(RiskThresholdBreached(position, price))
             return None
 
@@ -306,7 +305,6 @@ class RiskActor(Actor):
         diff_to_take_profit = abs((price - take_profit_price) / take_profit_price) * 100
 
         if diff_to_take_profit <= tp_threshold or diff_to_stop_loss <= sl_threshold:
-            print("Closssssseee")
             await self.tell(RiskThresholdBreached(position, price))
             return None
 

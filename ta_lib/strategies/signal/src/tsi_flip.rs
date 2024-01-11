@@ -26,6 +26,9 @@ impl Signal for TSIFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tsi = tsi(&data.close, self.long_period, self.short_period);
 
-        (tsi.cross_over(&TSI_ZERO_LINE), tsi.cross_under(&TSI_ZERO_LINE))
+        (
+            tsi.cross_over(&TSI_ZERO_LINE),
+            tsi.cross_under(&TSI_ZERO_LINE),
+        )
     }
 }

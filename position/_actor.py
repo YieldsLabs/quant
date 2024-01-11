@@ -84,7 +84,6 @@ class PositionActor(Actor):
             symbol, timeframe
         )
 
-
         if not long_position and isinstance(event, GoLongSignalReceived):
             return await create_and_store_position(event)
 

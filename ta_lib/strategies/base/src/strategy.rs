@@ -1,5 +1,5 @@
 use crate::price::Price;
-use crate::{BaseLine, Exit, Filter, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
+use crate::{BaseLine, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
@@ -23,7 +23,7 @@ pub struct StopLossLevels {
 pub struct BaseStrategy {
     data: VecDeque<OHLCV>,
     signal: Box<dyn Signal>,
-    filter: Box<dyn Filter>,
+    confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
@@ -34,7 +34,7 @@ pub struct BaseStrategy {
 impl BaseStrategy {
     pub fn new(
         signal: Box<dyn Signal>,
-        filter: Box<dyn Filter>,
+        confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
         base_line: Box<dyn BaseLine>,
         stop_loss: Box<dyn StopLoss>,
@@ -42,7 +42,7 @@ impl BaseStrategy {
     ) -> Self {
         let lookbacks = [
             signal.lookback(),
-            filter.lookback(),
+            confirm.lookback(),
             pulse.lookback(),
             base_line.lookback(),
             stop_loss.lookback(),
@@ -54,7 +54,7 @@ impl BaseStrategy {
         Self {
             data: VecDeque::with_capacity(lookback_period),
             signal,
-            filter,
+            confirm,
             pulse,
             base_line,
             stop_loss,
@@ -122,21 +122,23 @@ impl BaseStrategy {
         let series = self.ohlcv_series();
 
         let (go_long_trigger, go_short_trigger) = self.signal.generate(&series);
-        let (go_long_confirm, go_short_confirm) = self.filter.confirm(&series);
+        let (go_long_confirm, go_short_confirm) = self.confirm.validate(&series);
         let (go_long_momentum, go_short_momentum) = self.pulse.assess(&series);
         let (go_long_baseline, go_short_baseline) = self.base_line.filter(&series);
         let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
 
         let prev_go_long_trigger = go_long_trigger.shift(1);
         let prev_go_short_trigger = go_short_trigger.shift(1);
-        // let prev_go_long_confirm = go_long_confirm.shift(1);
-        // let prev_go_short_confirm = go_short_confirm.shift(1);
 
         let go_long_signal = go_long_trigger | prev_go_long_trigger;
         let go_short_signal = go_short_trigger | prev_go_short_trigger;
 
-        let go_long = (go_long_signal & go_long_momentum & go_long_baseline).last().unwrap_or(false);
-        let go_short = (go_short_signal & go_short_momentum & go_short_baseline).last().unwrap_or(false);
+        let go_long = (go_long_signal & go_long_confirm & go_long_momentum & go_long_baseline)
+            .last()
+            .unwrap_or(false);
+        let go_short = (go_short_signal & go_short_confirm & go_short_momentum & go_short_baseline)
+            .last()
+            .unwrap_or(false);
 
         let exit_long = exit_long_eval.last().unwrap_or(false);
         let exit_short = exit_short_eval.last().unwrap_or(false);
@@ -164,7 +166,7 @@ impl BaseStrategy {
 mod tests {
     use crate::price::Price;
     use crate::{
-        BaseLine, BaseStrategy, Exit, Filter, OHLCVSeries, Pulse, Signal, StopLoss, Strategy,
+        BaseLine, BaseStrategy, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy,
         TradeAction, OHLCV,
     };
     use core::Series;
@@ -184,16 +186,16 @@ mod tests {
         }
     }
 
-    struct MockFilter {
+    struct MockConfirm {
         period: usize,
     }
 
-    impl Filter for MockFilter {
+    impl Confirm for MockConfirm {
         fn lookback(&self) -> usize {
             self.period
         }
 
-        fn confirm(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.close.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
@@ -265,7 +267,7 @@ mod tests {
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
             Box::new(MockSignal { short_period: 10 }),
-            Box::new(MockFilter { period: 1 }),
+            Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
             Box::new(MockStopLoss {
@@ -281,7 +283,7 @@ mod tests {
     fn test_strategy_data() {
         let mut strategy = BaseStrategy::new(
             Box::new(MockSignal { short_period: 10 }),
-            Box::new(MockFilter { period: 1 }),
+            Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
             Box::new(MockStopLoss {
