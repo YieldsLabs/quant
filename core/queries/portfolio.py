@@ -14,6 +14,7 @@ from .base import Query, QueryGroup
 @dataclass(frozen=True)
 class GetTopStrategy(Query[List[Strategy]]):
     num: int = 5
+    positive_pnl: bool = False
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=2, group=QueryGroup.broker),
         init=False,

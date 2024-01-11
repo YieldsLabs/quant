@@ -66,13 +66,12 @@ class Portfolio(AbstractEventManager):
         )
 
         performance_metrics = [
+            performance.sortino_ratio,
             performance.calmar_ratio,
             performance.cvar,
             performance.ulcer_index,
             performance.max_drawdown,
-            performance.annualized_return,
             performance.sterling_ratio,
-            performance.sortino_ratio,
             performance.burke_ratio,
             performance.average_pnl,
         ]
@@ -86,7 +85,7 @@ class Portfolio(AbstractEventManager):
 
     @query_handler(GetTopStrategy)
     async def top_strategies(self, query: GetTopStrategy):
-        strategies = await self.strategy.get_top(query.num)
+        strategies = await self.strategy.get_top(query.num, query.positive_pnl)
         return strategies
 
     @query_handler(GetPositionRisk)

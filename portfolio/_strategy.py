@@ -39,7 +39,7 @@ class StrategyStorage:
         async with self.lock:
             self.data = {}
 
-    async def get_top(self, num: int = 10):
+    async def get_top(self, num: int = 10, positive_pnl: bool = True):
         async with self.lock:
             sorted_strategies = sorted(
                 self.data.keys(), key=self._sorting_key, reverse=True
@@ -50,7 +50,11 @@ class StrategyStorage:
                 key
                 for key in sorted_strategies
                 if (symbol := key[0]) not in selected_symbols
-                and not selected_symbols.add(symbol)
+                and (
+                    not selected_symbols.add(symbol) and (self.data[key][0][-1] > 0)
+                    if positive_pnl
+                    else True
+                )
             ]
 
             return top_strategies[:num]
@@ -69,4 +73,6 @@ class StrategyStorage:
             )
 
     def _sorting_key(self, key):
+        print(self.data[key][0])
+
         return self.data[key][1], self.data[key][0][0]

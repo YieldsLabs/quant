@@ -60,7 +60,9 @@ class Strategy:
 
     def __str__(self) -> str:
         entry_ = f"_SGNL{self.entry.type}:{self._format_parameters(self.entry)}"
-        confirmation_ = f"_CNFRM{self.confirm.type}:{self._format_parameters(self.confirm)}"
+        confirmation_ = (
+            f"_CNFRM{self.confirm.type}:{self._format_parameters(self.confirm)}"
+        )
         pulse_ = f"_PLS{self.pulse.type}:{self._format_parameters(self.pulse)}"
         baseline_ = (
             f"_BSLN{self.baseline.type}:{self._format_parameters(self.baseline)}"

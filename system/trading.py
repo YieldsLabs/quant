@@ -66,7 +66,7 @@ class TradingSystem(AbstractSystem):
         logger.info("Add a fresh strategy")
 
         strategies = await self.query(
-            GetTopStrategy(num=self.config["active_strategy_num"])
+            GetTopStrategy(num=self.config["active_strategy_num"], positive_pnl=True)
         )
 
         logger.info(
