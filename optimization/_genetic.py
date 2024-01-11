@@ -14,7 +14,7 @@ class GeneticAttributes(Enum):
     SYMBOL = auto()
     TIMEFRAME = auto()
     SIGNAL = auto()
-    FILTER = auto()
+    CONFIRM = auto()
     PULSE = auto()
     BASELINE = auto()
     STOP_LOSS = auto()
@@ -151,9 +151,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent2.strategy.entry
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent1.strategy.entry,
-                parent1.strategy.filter
-                if chosen_attr == GeneticAttributes.FILTER
-                else parent2.strategy.filter,
+                parent1.strategy.confirm
+                if chosen_attr == GeneticAttributes.CONFIRM
+                else parent2.strategy.confirm,
                 parent1.strategy.pulse
                 if chosen_attr == GeneticAttributes.PULSE
                 else parent2.strategy.pulse,
@@ -172,9 +172,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent1.strategy.entry
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent2.strategy.entry,
-                parent2.strategy.filter
-                if chosen_attr == GeneticAttributes.FILTER
-                else parent1.strategy.filter,
+                parent2.strategy.confirm
+                if chosen_attr == GeneticAttributes.CONFIRM
+                else parent1.strategy.confirm,
                 parent2.strategy.pulse
                 if chosen_attr == GeneticAttributes.PULSE
                 else parent1.strategy.pulse,
@@ -210,7 +210,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
         if mutation_choice in [
             GeneticAttributes.SIGNAL,
-            GeneticAttributes.FILTER,
+            GeneticAttributes.CONFIRM,
             GeneticAttributes.PULSE,
             GeneticAttributes.BASELINE,
             GeneticAttributes.STOP_LOSS,
