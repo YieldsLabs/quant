@@ -13,6 +13,7 @@ from core.models.timeframe import Timeframe
 
 from .baseline.ma import MaBaseLine
 from .confirm.dpo import DpoConfirm
+from .confirm.dumb import DumbConfirm
 from .confirm.eom import EomConfirm
 from .exit.ast import AstExit
 from .exit.ce import CeExit
@@ -23,6 +24,7 @@ from .exit.rsi import RsiExit
 from .pulse.adx import AdxPulse
 from .pulse.braid import BraidPulse
 from .pulse.chop import ChopPulse
+from .pulse.dumb import DumbPulse
 from .pulse.vo import VoPulse
 from .signal.ao_flip import AoFlipSignal
 from .signal.ao_saucer import AoSaucerSignal
@@ -139,11 +141,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
         confirm = np.random.choice(
             [
+                DumbConfirm(),
                 DpoConfirm(),
                 EomConfirm(),
             ]
         )
-        pulse = np.random.choice([AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()])
+        pulse = np.random.choice(
+            [DumbPulse(), AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()]
+        )
         baseline = np.random.choice(
             [
                 MaBaseLine(
@@ -156,7 +161,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.HMA),
-                    period=StaticParameter(80.0),
+                    period=StaticParameter(85.0),
                 ),
                 MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.KIJUN),
@@ -172,7 +177,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MaBaseLine(
                     smoothing=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(80.0, 200.0, 10.0),
+                    period=RandomParameter(20.0, 200.0, 10.0),
                 ),
             ]
         )

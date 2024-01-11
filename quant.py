@@ -97,7 +97,6 @@ async def main():
     )
 
     trend_system_a = BacktestSystem(trend_context)
-    trend_system_b = BacktestSystem(trend_context)
 
     trading_system = TradingSystem(
         signal_actor_factory,
@@ -110,7 +109,6 @@ async def main():
     )
 
     trend_system_a_task = asyncio.create_task(trend_system_a.start())
-    # trend_system_b_task = asyncio.create_task(trend_system_b.start())
     trading_system_task = asyncio.create_task(trading_system.start())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
@@ -121,7 +119,6 @@ async def main():
         logging.info("Closing...")
         shutdown_task.cancel()
         trend_system_a_task.cancel()
-        # trend_system_b_task.cancel()
 
         trading_system_task.cancel()
 

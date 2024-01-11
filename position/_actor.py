@@ -112,10 +112,7 @@ class PositionActor(Actor):
             if (
                 event.position.side == PositionSide.LONG
                 and long_position.last_modified > event.meta.timestamp
-            ):
-                return False
-
-            if (
+            ) or (
                 event.position.side == PositionSide.SHORT
                 and short_position.last_modified > event.meta.timestamp
             ):
@@ -125,10 +122,7 @@ class PositionActor(Actor):
             await self.tell(PositionCloseRequested(event.position, event.exit_price))
             return True
 
-        if isinstance(event, BacktestEnded):
-            if not any([long_position, short_position]):
-                return False
-
+        if isinstance(event, BacktestEnded) and any([long_position, short_position]):
             if long_position:
                 await self.tell(PositionCloseRequested(long_position, event.exit_price))
 
