@@ -19,7 +19,7 @@ class StrategyOptimizationType(Enum):
 class Strategy:
     type: StrategyType
     entry: Indicator
-    confirmation: Indicator
+    confirm: Indicator
     pulse: Indicator
     baseline: Indicator
     stop_loss: Indicator
@@ -28,7 +28,7 @@ class Strategy:
     @property
     def parameters(self):
         signal_data = json.dumps(self.entry.to_dict())
-        confirmation_data = json.dumps(self.confirmation.to_dict())
+        confirmation_data = json.dumps(self.confirm.to_dict())
         pulse_data = json.dumps(self.pulse.to_dict())
         baseline_data = json.dumps(self.baseline.to_dict())
         stoploss_data = json.dumps(self.stop_loss.to_dict())
@@ -60,7 +60,7 @@ class Strategy:
 
     def __str__(self) -> str:
         entry_ = f"_SGNL{self.entry.type}:{self._format_parameters(self.entry)}"
-        confirmation_ = f"_CNFRM{self.confirmation.type}:{self._format_parameters(self.confirmation)}"
+        confirmation_ = f"_CNFRM{self.confirm.type}:{self._format_parameters(self.confirm)}"
         pulse_ = f"_PLS{self.pulse.type}:{self._format_parameters(self.pulse)}"
         baseline_ = (
             f"_BSLN{self.baseline.type}:{self._format_parameters(self.baseline)}"
