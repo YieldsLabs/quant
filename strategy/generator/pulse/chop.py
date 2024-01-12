@@ -10,4 +10,4 @@ class ChopPulse(Pulse):
     type: PulseType = PulseType.Chop
     atr_period: Parameter = StaticParameter(1.0)
     period: Parameter = StaticParameter(14.0)
-    threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)
+    threshold: Parameter = RandomParameter(0.0, 5.0, 1.0)

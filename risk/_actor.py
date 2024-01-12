@@ -67,7 +67,7 @@ class RiskActor(Actor):
     async def on_receive(self, event: RiskEvent):
         handlers = {
             NewMarketDataReceived: self._handle_market_risk,
-            PositionOpened: self._update_position,
+            PositionOpened: self._open_position,
             PositionClosed: self._close_position,
             GoLongSignalReceived: self._handle_reverse_exit,
             GoShortSignalReceived: self._handle_reverse_exit,
@@ -80,7 +80,7 @@ class RiskActor(Actor):
         if handler:
             await handler(event)
 
-    async def _update_position(self, event: PositionOpened):
+    async def _open_position(self, event: PositionOpened):
         async with self.lock:
             long_position, short_position = self._position
 
@@ -168,7 +168,7 @@ class RiskActor(Actor):
             next_position = position.next(ohlcv)
 
             if self._should_exit(next_position, ohlcv):
-                await self._process_exit(position, ohlcv)
+                await self._process_exit(next_position, ohlcv)
                 return None
 
         return next_position
@@ -193,7 +193,10 @@ class RiskActor(Actor):
     def _check_long_exit(
         self, next_position: Position, expiration: int, ohlcv: OHLCV
     ) -> bool:
-        if expiration <= 0 and next_position.entry_price < min(ohlcv.close, ohlcv.low):
+        if (
+            expiration <= 0
+            and next_position.entry_price < min(ohlcv.close, ohlcv.low) * 1.05
+        ):
             return True
         else:
             return self._long_exit_conditions(
@@ -207,7 +210,10 @@ class RiskActor(Actor):
     def _check_short_exit(
         self, next_position: Position, expiration: int, ohlcv: OHLCV
     ) -> bool:
-        if expiration <= 0 and next_position.entry_price > max(ohlcv.close, ohlcv.high):
+        if (
+            expiration <= 0
+            and next_position.entry_price > max(ohlcv.close, ohlcv.high) * 1.05
+        ):
             return True
         else:
             return self._short_exit_conditions(

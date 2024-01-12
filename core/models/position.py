@@ -4,9 +4,6 @@ from enum import Enum
 from typing import Tuple
 
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
-from core.interfaces.abstract_position_take_profit_strategy import (
-    AbstractPositionTakeProfitStrategy,
-)
 
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
@@ -28,7 +25,6 @@ class Position:
     size: float
     entry_price: float
     risk_strategy: AbstractPositionRiskStrategy
-    take_profit_strategy: AbstractPositionTakeProfitStrategy
     orders: Tuple[Order] = ()
     closed: bool = False
     stop_loss_price: float = 0.0000001
@@ -100,19 +96,11 @@ class Position:
             ohlcv,
         )
 
-        obj = replace(self, stop_loss_price=next_stop_loss_price)
-
-        object.__setattr__(obj, "take_profit_price", next_take_profit_price)
-
-        return obj
-
-    def __post_init__(self):
-        if self.stop_loss_price:
-            take_profit_price = self.take_profit_strategy.next(
-                self.entry_price, self.stop_loss_price
-            )
-
-            object.__setattr__(self, "take_profit_price", take_profit_price)
+        return replace(
+            self,
+            stop_loss_price=next_stop_loss_price,
+            take_profit_price=next_take_profit_price,
+        )
 
     def to_dict(self):
         return {

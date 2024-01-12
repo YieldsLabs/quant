@@ -18,27 +18,37 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
     ) -> float:
         current_price = self._weighted_typical_price(ohlcv)
         rrr = self.config["risk_reward_ratio"]
-        factor = self.config["tsl_distance"]
+
+        next_stop_loss = stop_loss_price
+        next_take_profit = take_profit_price
 
         if side == PositionSide.LONG and current_price >= take_profit_price:
-            next_stop_loss = max(stop_loss_price, current_price * factor)
+            next_stop_loss = max(
+                stop_loss_price, current_price - (take_profit_price - stop_loss_price)
+            )
             next_take_profit = max(
                 take_profit_price,
                 rrr * (current_price - next_stop_loss) + current_price,
             )
-
-            return next_stop_loss, next_take_profit
+            next_stop_loss = max(
+                next_stop_loss,
+                next_take_profit - (rrr * abs(next_stop_loss - current_price)),
+            )
 
         if side == PositionSide.SHORT and current_price <= take_profit_price:
-            next_stop_loss = min(stop_loss_price, current_price * factor)
+            next_stop_loss = min(
+                stop_loss_price, current_price + (stop_loss_price - take_profit_price)
+            )
             next_take_profit = min(
                 take_profit_price,
                 rrr * (current_price - next_stop_loss) + current_price,
             )
+            next_stop_loss = min(
+                next_stop_loss,
+                next_take_profit - (rrr * abs(next_stop_loss - current_price)),
+            )
 
-            return next_stop_loss, next_take_profit
-
-        return stop_loss_price, take_profit_price
+        return next_stop_loss, next_take_profit
 
     @staticmethod
     def _weighted_typical_price(ohlcv: OHLCV) -> float:

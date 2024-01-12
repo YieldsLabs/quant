@@ -73,6 +73,4 @@ class StrategyStorage:
             )
 
     def _sorting_key(self, key):
-        print(self.data[key][0])
-
         return self.data[key][1], self.data[key][0][0]

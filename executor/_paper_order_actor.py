@@ -82,9 +82,6 @@ class PaperOrderActor(Actor):
         logger.debug(f"To Close Position: {current_position}")
 
         fill_price = await self._determine_fill_price(current_position.side)
-
-        logger.debug(f"Price: {fill_price}")
-
         price = self._calculate_closing_price(current_position, fill_price)
 
         order = Order(

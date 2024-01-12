@@ -187,7 +187,7 @@ class BacktestSystem(AbstractSystem):
 
     async def _update_trading(self):
         logger.info("Deploy strategy for trading")
-        
+
         strategies = await self.query(
             GetTopStrategy(num=self.config["active_strategy_num"], positive_pnl=True)
         )
