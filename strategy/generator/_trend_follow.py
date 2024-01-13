@@ -180,6 +180,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     period=StaticParameter(20.0),
                 ),
                 MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.ZLSMA),
+                    period=StaticParameter(75.0),
+                ),
+                MaBaseLine(
                     smoothing=CategoricalParameter(MovingAverageType),
                     period=RandomParameter(20.0, 200.0, 10.0),
                 ),

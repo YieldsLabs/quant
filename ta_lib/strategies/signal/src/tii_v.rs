@@ -2,8 +2,8 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::tii;
 
-const TII_UPPER_BARRIER: f32 = 80.0;
-const TII_LOWER_BARRIER: f32 = 20.0;
+const TII_UPPER_BARRIER: f32 = 60.0;
+const TII_LOWER_BARRIER: f32 = 40.0;
 
 pub struct TIIVSignal {
     major_period: usize,
