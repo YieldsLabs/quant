@@ -76,7 +76,7 @@ class Bybit(AbstractExchange):
     def fetch_trade(self, symbol: Symbol):
         return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
 
-    def fetch_order_book(self, symbol: Symbol, depth=30):
+    def fetch_order_book(self, symbol: Symbol, depth: int = 30):
         book = self.connector.fetch_order_book(symbol.name, limit=depth)
         return book["bids"], book["asks"]
 

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from core.commands.broker import ClosePosition, OpenPosition, UpdateSettings
@@ -97,15 +96,12 @@ class SmartRouter(AbstractEventManager):
         distance_to_stop_loss = abs(entry_price - stop_loss)
 
         min_size = symbol.min_position_size
-        entry_timeout = self.config["entry_timeout"]
-
         num_orders = min(
             max(1, int(position_size / min_size)), self.config["max_order_slice"]
         )
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
         num_order_breach = 0
-        num_open_order_attempts = 0
 
         logging.info(f"Theo price: {entry_price}")
 
@@ -129,31 +125,17 @@ class SmartRouter(AbstractEventManager):
                 if num_order_breach >= self.config["max_order_breach"]:
                     break
 
-                await asyncio.sleep(3)
-
-                continue
-
             order_id = self.exchange.create_limit_order(
                 symbol, position.side, size, price
             )
 
             if order_id and self.exchange.has_order(order_id, symbol):
                 order_counter += 1
-                num_open_order_attempts = max(0, num_open_order_attempts - 1)
-
                 logging.info(f"Opened order: {order_id} with price: {price}")
-            else:
-                num_open_order_attempts += 1
 
             if order_counter >= num_orders:
                 logging.info(f"All orders are filled: {order_counter}")
-
                 break
-
-            if num_open_order_attempts >= self.config["max_open_order_attempts"]:
-                break
-
-            await asyncio.sleep(entry_timeout)
 
     @command_handler(ClosePosition)
     def close_position(self, command: ClosePosition):

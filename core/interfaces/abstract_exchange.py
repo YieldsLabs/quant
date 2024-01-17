@@ -64,7 +64,7 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def fetch_order_book(self, symbol: Symbol):
+    def fetch_order_book(self, symbol: Symbol, depth: int):
         pass
 
     @abstractmethod

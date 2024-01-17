@@ -50,17 +50,9 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe, strategy)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
-        long_position, short_position = self._position
-
-        if isinstance(event, NewMarketDataReceived) and (
-            not long_position and not short_position
-        ):
-            return False
-
         symbol, timeframe = self._get_event_key(event)
         return self._symbol == symbol and self._timeframe == timeframe
 
