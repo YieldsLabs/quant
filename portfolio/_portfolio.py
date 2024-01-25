@@ -80,7 +80,10 @@ class PortfolioStorage:
             key = self._get_key(symbol, timeframe, strategy)
             performance = self.data.get(key)
 
-            return performance.sharpe_ratio if performance else 0
+            if not performance:
+                return 0
+
+            return performance.sharpe_ratio
 
     def _get_key(self, symbol, timeframe, strategy):
-        return f"{symbol}_{timeframe}{strategy}"
+        return (symbol, timeframe, strategy)

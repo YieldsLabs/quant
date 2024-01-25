@@ -73,6 +73,13 @@ class Bybit(AbstractExchange):
         if order["status"] == "canceled":
             return False
 
+    def cancel_order(self, order_id: str, symbol: Symbol):
+        try:
+            self.connector.cancel_order(order_id, symbol.name)
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
+
     def fetch_trade(self, symbol: Symbol):
         return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
 
@@ -105,7 +112,21 @@ class Bybit(AbstractExchange):
 
         return res["info"]["orderId"]
 
-    def close_position(self, symbol: Symbol, side: PositionSide):
+    def create_reduce_order(
+        self, symbol: Symbol, side: PositionSide, size: float, price: float
+    ):
+        res = self._create_order(
+            "limit",
+            "sell" if side == PositionSide.LONG else "buy",
+            symbol.name,
+            size,
+            price,
+            extra_params=self._create_order_extra_params(side, reduce=True),
+        )
+
+        return res["info"]["orderId"]
+
+    def close_full_position(self, symbol: Symbol, side: PositionSide):
         position = self.fetch_position(symbol, side)
 
         if not position:
@@ -116,6 +137,20 @@ class Bybit(AbstractExchange):
             "sell" if position["position_side"] == PositionSide.LONG else "buy",
             symbol.name,
             position["position_size"],
+            extra_params=self._create_order_extra_params(side),
+        )
+
+    def close_half_position(self, symbol: Symbol, side: PositionSide):
+        position = self.fetch_position(symbol, side)
+
+        if not position:
+            return
+
+        self._create_order(
+            "market",
+            "sell" if position["position_side"] == PositionSide.LONG else "buy",
+            symbol.name,
+            position["position_size"] // 2,
             extra_params=self._create_order_extra_params(side),
         )
 
@@ -278,12 +313,18 @@ class Bybit(AbstractExchange):
         }
 
     def _create_order_extra_params(
-        self, side: PositionSide, stop_loss_price=None, take_profit_price=None
+        self,
+        side: PositionSide,
+        reduce=False,
+        stop_loss_price=None,
+        take_profit_price=None,
     ):
-        extra_params = {
-            "timeInForce": "IOC",
-            "positionIdx": 1 if side == PositionSide.LONG else 2,
-        }
+        extra_params = {"timeInForce": "GTC"}
+
+        extra_params["positionIdx"] = 1 if side == PositionSide.LONG else 2
+
+        if reduce:
+            extra_params["reduceOnly"] = True
 
         if stop_loss_price:
             extra_params["stopLoss"] = str(stop_loss_price)

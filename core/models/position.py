@@ -4,6 +4,9 @@ from enum import Enum
 from typing import Tuple
 
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
+from core.interfaces.abstract_position_take_profit_strategy import (
+    AbstractPositionTakeProfitStrategy,
+)
 
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
@@ -25,6 +28,7 @@ class Position:
     size: float
     entry_price: float
     risk_strategy: AbstractPositionRiskStrategy
+    take_profit_strategy: AbstractPositionTakeProfitStrategy
     orders: Tuple[Order] = ()
     closed: bool = False
     stop_loss_price: float = 0.0000001
@@ -66,6 +70,9 @@ class Position:
                 entry_price=order.price,
                 size=order.size,
                 last_modified=last_modified,
+                take_profit_price=self.take_profit_strategy.next(
+                    order.price, self.stop_loss_price
+                ),
             )
 
         if order.status == OrderStatus.CLOSED:

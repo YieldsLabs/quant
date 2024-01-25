@@ -56,6 +56,12 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
+    def create_reduce_order(
+        symbol: Symbol, side: PositionSide, size: float, price: float
+    ):
+        pass
+
+    @abstractmethod
     def fetch_order(self, order_id: str, symbol: Symbol):
         pass
 
@@ -64,9 +70,17 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
+    def cancel_order(self, order_id: str, symbol: Symbol):
+        pass
+
+    @abstractmethod
     def fetch_order_book(self, symbol: Symbol, depth: int):
         pass
 
     @abstractmethod
-    def close_position(self, symbol: Symbol, side: PositionSide):
+    def close_full_position(self, symbol: Symbol, side: PositionSide):
+        pass
+
+    @abstractmethod
+    def close_half_position(self, symbol: Symbol, side: PositionSide):
         pass

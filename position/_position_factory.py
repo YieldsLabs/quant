@@ -35,7 +35,9 @@ class PositionFactory(AbstractPositionFactory):
         )
         entry_price = round(entry_price, symbol.price_precision)
 
-        take_profit_price = self.take_profit_strategy.next(entry_price, stop_loss_price)
+        position_side = (
+            PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
+        )
 
         position_size = await self.position_size_strategy.calculate(
             signal, entry_price, stop_loss_price
@@ -44,17 +46,13 @@ class PositionFactory(AbstractPositionFactory):
         adjusted_position_size = max(position_size, symbol.min_position_size)
         rounded_position_size = round(adjusted_position_size, symbol.position_precision)
 
-        position_side = (
-            PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
-        )
-
         return Position(
             signal,
             position_side,
             rounded_position_size,
             entry_price,
             self.risk_strategy,
+            self.take_profit_strategy,
             open_timestamp=ohlcv.timestamp,
-            take_profit_price=take_profit_price,
             stop_loss_price=stop_loss_price,
         )

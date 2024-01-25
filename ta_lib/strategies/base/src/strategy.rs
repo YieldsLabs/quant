@@ -147,7 +147,7 @@ impl BaseStrategy {
     }
 
     fn suggested_entry(&self) -> f32 {
-        self.ohlcv_series().hlc3().last().unwrap_or(std::f32::NAN)
+        self.ohlcv_series().close.last().unwrap_or(std::f32::NAN)
     }
 
     fn stop_loss_levels(&self) -> (f32, f32) {

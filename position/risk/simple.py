@@ -1,3 +1,5 @@
+from typing import List
+
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.models.ohlcv import OHLCV
 from core.models.position import PositionSide
@@ -12,6 +14,6 @@ class PositionRiskSimpleStrategy(AbstractPositionRiskStrategy):
         _side: PositionSide,
         take_profit_price: float,
         stop_loss_price: float,
-        _ohlcv: OHLCV,
+        _ohlcvs: List[OHLCV],
     ) -> float:
         return stop_loss_price, take_profit_price

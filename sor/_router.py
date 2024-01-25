@@ -1,4 +1,5 @@
 import logging
+import time
 
 from core.commands.broker import ClosePosition, OpenPosition, UpdateSettings
 from core.event_decorators import command_handler, query_handler
@@ -23,7 +24,7 @@ class SmartRouter(AbstractEventManager):
         super().__init__()
         self.exchange_factory = exchange_factory
         self.exchange = self.exchange_factory.create(ExchangeType.BYBIT)
-        self.entry_price = TWAP(config_service)
+        self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 
     @query_handler(GetOpenPosition)
@@ -102,11 +103,15 @@ class SmartRouter(AbstractEventManager):
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
         num_order_breach = 0
+        orders = []
+        order_timestamps = {}
 
-        logging.info(f"Theo price: {entry_price}")
+        for price in self.algo_price.calculate(symbol, self.exchange):
+            logging.info(f"Trying to open order: {price}")
 
-        for price in self.entry_price.calculate(symbol, self.exchange):
-            logging.info(f"Algo price: {price}")
+            if order_counter >= num_orders:
+                logging.info(f"All orders are filled: {order_counter}")
+                break
 
             current_distance_to_stop_loss = abs(stop_loss - price)
 
@@ -125,22 +130,37 @@ class SmartRouter(AbstractEventManager):
                 if num_order_breach >= self.config["max_order_breach"]:
                     break
 
-            order_id = self.exchange.create_limit_order(
-                symbol, position.side, size, price
-            )
+            curr_time = time.time()
+            expired_orders = [
+                order_id
+                for order_id, timestamp in order_timestamps.items()
+                if curr_time - timestamp > self.config["order_expiration_time"]
+            ]
 
-            if order_id and self.exchange.has_order(order_id, symbol):
-                order_counter += 1
-                logging.info(f"Opened order: {order_id} with price: {price}")
+            for expired_order_id in expired_orders:
+                self.exchange.cancel_order(expired_order_id, symbol)
+                orders.remove(expired_order_id)
+                order_timestamps.pop(expired_order_id)
 
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
-                break
+            if len(orders) != num_orders:
+                order_id = self.exchange.create_limit_order(
+                    symbol, position.side, size, price
+                )
+                orders.append(order_id)
+                order_timestamps[order_id] = time.time()
+
+            for order_id in orders.copy():
+                if self.exchange.has_order(order_id, symbol):
+                    order_counter += 1
+                    orders.remove(order_id)
+                    order_timestamps.pop(order_id)
+
+        for order_id, _ in order_timestamps.items():
+            self.exchange.cancel_order(order_id, symbol)
 
     @command_handler(ClosePosition)
     def close_position(self, command: ClosePosition):
         position = command.position
         symbol = position.signal.symbol
-        side = position.side
 
-        self.exchange.close_position(symbol, side)
+        self.exchange.close_full_position(symbol, position.side)
