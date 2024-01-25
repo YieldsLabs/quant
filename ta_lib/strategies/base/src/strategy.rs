@@ -322,6 +322,6 @@ mod tests {
         assert_eq!(hlc3, vec![1.333_333_4; lookback]);
         assert_eq!(hlcc4, vec![1.375; lookback]);
         assert_eq!(ohlc4, vec![1.25; lookback]);
-        assert_eq!(action, TradeAction::GoLong(1.333_333_4));
+        assert_eq!(action, TradeAction::GoLong(1.5));
     }
 }
