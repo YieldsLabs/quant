@@ -20,20 +20,16 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         stop_loss_price: float,
         ohlcvs: List[OHLCV],
     ) -> float:
-        ohlcv = ohlcvs[-1]
-
-        current_price = self._weighted_typical_price(ohlcv)
-
-        rrr = self.config["risk_reward_ratio"]
-
-        atr_value = self.atr(ohlcvs, 14) * self.config["risk_atr_multi"]
-
         lookback_window = 8
         recent_low = min(ohlcv.low for ohlcv in ohlcvs[-lookback_window:])
         recent_high = max(ohlcv.high for ohlcv in ohlcvs[-lookback_window:])
 
         next_stop_loss = stop_loss_price
         next_take_profit = take_profit_price
+        ohlcv = ohlcvs[-1]
+
+        current_price = self._weighted_typical_price(ohlcv)
+        atr_value = self.atr(ohlcvs, 14) * self.config["risk_atr_multi"]
 
         if side == PositionSide.LONG:
             next_stop_loss = max(stop_loss_price, recent_low - atr_value)
@@ -44,7 +40,8 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
             ):
                 next_take_profit = max(
                     take_profit_price,
-                    rrr * (current_price - next_stop_loss) + current_price,
+                    self.config["risk_reward_ratio"] * (current_price - next_stop_loss)
+                    + current_price,
                 )
 
         elif side == PositionSide.SHORT:
@@ -56,7 +53,8 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
             ):
                 next_take_profit = min(
                     take_profit_price,
-                    rrr * (current_price - next_stop_loss) + current_price,
+                    self.config["risk_reward_ratio"] * (current_price - next_stop_loss)
+                    + current_price,
                 )
 
         return next_stop_loss, next_take_profit
