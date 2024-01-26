@@ -125,10 +125,6 @@ class SmartRouter(AbstractEventManager):
                 if num_order_breach >= self.config["max_order_breach"]:
                     break
 
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
-                break
-
             for order_id in list(order_timestamps.keys()):
                 if self.exchange.has_order(order_id, symbol):
                     order_timestamps.pop(order_id)
@@ -144,6 +140,10 @@ class SmartRouter(AbstractEventManager):
             for order_id in expired_orders:
                 self.exchange.cancel_order(order_id, symbol)
                 order_timestamps.pop(order_id)
+
+            if order_counter >= num_orders:
+                logging.info(f"All orders are filled: {order_counter}")
+                break
 
             if len(order_timestamps.keys()) < 1:
                 order_id = self.exchange.create_limit_order(
