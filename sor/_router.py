@@ -103,15 +103,10 @@ class SmartRouter(AbstractEventManager):
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
         num_order_breach = 0
-        orders = []
         order_timestamps = {}
 
         for price in self.algo_price.calculate(symbol, self.exchange):
             logging.info(f"Trying to open order: {price}")
-
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
-                break
 
             current_distance_to_stop_loss = abs(stop_loss - price)
 
@@ -130,6 +125,15 @@ class SmartRouter(AbstractEventManager):
                 if num_order_breach >= self.config["max_order_breach"]:
                     break
 
+            if order_counter >= num_orders:
+                logging.info(f"All orders are filled: {order_counter}")
+                break
+
+            for order_id in list(order_timestamps.keys()):
+                if self.exchange.has_order(order_id, symbol):
+                    order_timestamps.pop(order_id)
+                    order_counter += 1
+
             curr_time = time.time()
             expired_orders = [
                 order_id
@@ -137,25 +141,17 @@ class SmartRouter(AbstractEventManager):
                 if curr_time - timestamp > self.config["order_expiration_time"]
             ]
 
-            for expired_order_id in expired_orders:
-                self.exchange.cancel_order(expired_order_id, symbol)
-                orders.remove(expired_order_id)
-                order_timestamps.pop(expired_order_id)
+            for order_id in expired_orders:
+                self.exchange.cancel_order(order_id, symbol)
+                order_timestamps.pop(order_id)
 
-            if len(orders) != num_orders:
+            if len(order_timestamps.keys()) < 1:
                 order_id = self.exchange.create_limit_order(
                     symbol, position.side, size, price
                 )
-                orders.append(order_id)
                 order_timestamps[order_id] = time.time()
 
-            for order_id in orders.copy():
-                if self.exchange.has_order(order_id, symbol):
-                    order_counter += 1
-                    orders.remove(order_id)
-                    order_timestamps.pop(order_id)
-
-        for order_id, _ in order_timestamps.items():
+        for order_id in list(order_timestamps.keys()):
             self.exchange.cancel_order(order_id, symbol)
 
     @command_handler(ClosePosition)

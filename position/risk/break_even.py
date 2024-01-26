@@ -29,15 +29,14 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         ohlcv = ohlcvs[-1]
 
         current_price = self._weighted_typical_price(ohlcv)
-        atr_value = self.atr(ohlcvs, 14) * self.config["risk_atr_multi"]
+        atr = self.atr(ohlcvs, 14)
+        risk_value = atr * self.config["risk_atr_multi"]
+        tp_threshold = atr * self.config["tp_threshold"]
 
         if side == PositionSide.LONG:
-            next_stop_loss = max(stop_loss_price, recent_low - atr_value)
+            next_stop_loss = max(stop_loss_price, recent_low - risk_value)
 
-            if (
-                ohlcv.high
-                >= take_profit_price - take_profit_price * self.config["tp_threshold"]
-            ):
+            if ohlcv.high >= take_profit_price - tp_threshold:
                 next_take_profit = max(
                     take_profit_price,
                     self.config["risk_reward_ratio"] * (current_price - next_stop_loss)
@@ -45,12 +44,9 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
                 )
 
         elif side == PositionSide.SHORT:
-            next_stop_loss = min(stop_loss_price, recent_high + atr_value)
+            next_stop_loss = min(stop_loss_price, recent_high + risk_value)
 
-            if (
-                ohlcv.low
-                <= take_profit_price + take_profit_price * self.config["tp_threshold"]
-            ):
+            if ohlcv.low <= take_profit_price + tp_threshold:
                 next_take_profit = min(
                     take_profit_price,
                     self.config["risk_reward_ratio"] * (current_price - next_stop_loss)
