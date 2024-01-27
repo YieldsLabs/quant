@@ -158,5 +158,46 @@ class SmartRouter(AbstractEventManager):
     def close_position(self, command: ClosePosition):
         position = command.position
         symbol = position.signal.symbol
+        position_size = position.size
+
+        min_size = symbol.min_position_size
+        num_orders = min(
+            max(1, int(position_size / min_size)), self.config["max_order_slice"]
+        )
+        size = round(position_size / num_orders, symbol.position_precision)
+        order_counter = 0
+        order_timestamps = {}
+
+        for price in self.algo_price.calculate(symbol, self.exchange):
+            logging.info(f"Trying to reduce order: {price}")
+
+            for order_id in list(order_timestamps.keys()):
+                if self.exchange.has_order(order_id, symbol):
+                    order_timestamps.pop(order_id)
+                    order_counter += 1
+
+            curr_time = time.time()
+            expired_orders = [
+                order_id
+                for order_id, timestamp in order_timestamps.items()
+                if curr_time - timestamp > self.config["order_expiration_time"]
+            ]
+
+            for order_id in expired_orders:
+                self.exchange.cancel_order(order_id, symbol)
+                order_timestamps.pop(order_id)
+
+            if order_counter >= num_orders:
+                logging.info(f"All orders are filled: {order_counter}")
+                break
+
+            if len(order_timestamps.keys()) < 2:
+                order_id = self.exchange.create_reduce_order(
+                    symbol, position.side, size, price
+                )
+                order_timestamps[order_id] = time.time()
+
+        for order_id in list(order_timestamps.keys()):
+            self.exchange.cancel_order(order_id, symbol)
 
         self.exchange.close_full_position(symbol, position.side)
