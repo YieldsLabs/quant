@@ -2,6 +2,7 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 
+TOTAL_TRADES_THRESHOLD = 8
 
 @dataclass(frozen=True)
 class Performance:
@@ -102,7 +103,7 @@ class Performance:
 
     @property
     def cagr(self) -> float:
-        if self.total_trades < 2:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         periods = self.total_trades
@@ -122,7 +123,7 @@ class Performance:
 
     @property
     def optimal_f(self) -> float:
-        if self.total_trades < 2:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return self._risk_per_trade
 
         max_loss = np.min(self.drawdown)
@@ -142,7 +143,7 @@ class Performance:
 
     @property
     def kelly(self) -> float:
-        if self.total_trades < 2:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return self._risk_per_trade
 
         win_trades = self._pnl[self._pnl > 0]
@@ -172,7 +173,7 @@ class Performance:
 
     @property
     def annualized_volatility(self) -> float:
-        if self.total_trades < 2:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         daily_returns = self._pnl / self._account_size
@@ -213,7 +214,7 @@ class Performance:
 
     @property
     def skewness(self) -> float:
-        if self.total_trades < 3:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         mean_pnl = np.mean(self._pnl)
@@ -226,7 +227,7 @@ class Performance:
 
     @property
     def kurtosis(self) -> float:
-        if self.total_trades < 4:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         mean_pnl = np.mean(self._pnl)
@@ -255,7 +256,7 @@ class Performance:
 
     @property
     def ulcer_index(self) -> float:
-        if self.total_trades == 0:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         account_size = self._account_size
@@ -283,9 +284,7 @@ class Performance:
     def burke_ratio(self) -> float:
         account_size = self._account_size + self._pnl.cumsum()
 
-        periods = self.total_trades
-
-        if periods < 2 or self._account_size <= 0 or account_size[-1] <= 0:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD or self._account_size <= 0 or account_size[-1] <= 0:
             return 0
 
         ratio = account_size[-1] / self._account_size
@@ -293,7 +292,7 @@ class Performance:
         if ratio <= 0:
             return 0
 
-        cagr = ratio ** (self._periods_per_year / periods) - 1
+        cagr = ratio ** (self._periods_per_year / self.total_trades) - 1
 
         downside_deviation = np.std(np.minimum(self._pnl, 0), ddof=1)
 
@@ -304,7 +303,7 @@ class Performance:
 
     @property
     def rachev_ratio(self) -> float:
-        if self.total_trades < 3:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         pnl_sorted = np.sort(self._pnl)[::-1]
@@ -325,7 +324,7 @@ class Performance:
 
     @property
     def sterling_ratio(self) -> float:
-        if self.total_trades < 3:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         gains = self._pnl[self._pnl > 0]
@@ -344,7 +343,7 @@ class Performance:
 
     @property
     def tail_ratio(self) -> float:
-        if self.total_trades < 3:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         var_95 = np.percentile(self._pnl, 95)
@@ -366,7 +365,7 @@ class Performance:
 
     @property
     def omega_ratio(self) -> float:
-        if self.total_trades < 3:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         gains = self._pnl[self._pnl > 0]
