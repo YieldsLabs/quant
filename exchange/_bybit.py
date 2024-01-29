@@ -1,5 +1,7 @@
 import logging
 import math
+from collections import defaultdict
+from datetime import datetime
 
 import ccxt
 from cachetools import TTLCache, cached
@@ -80,8 +82,36 @@ class Bybit(AbstractExchange):
             logger.error(f"{symbol}: {e}")
             return
 
-    def fetch_trade(self, symbol: Symbol):
-        return next(iter(self.connector.fetch_my_trades(symbol.name, limit=1)), None)
+    def fetch_trade(self, symbol: Symbol, limit: int):
+        trades = sorted(
+            self.connector.fetch_my_trades(symbol.name, limit=limit * 3),
+            key=lambda trade: trade["timestamp"],
+            reverse=True,
+        )
+
+        def round_down_to_minute(timestamp):
+            return datetime.utcfromtimestamp(timestamp // 1000).replace(
+                second=0, microsecond=0
+            )
+
+        aggregated_trades = defaultdict(lambda: {"amount": 0, "price": 0})
+
+        for trade in trades:
+            if trade["side"] == "sell":
+                timestamp = round_down_to_minute(trade["timestamp"])
+                aggregated_trades[timestamp]["amount"] += trade["amount"]
+                aggregated_trades[timestamp]["price"] += trade["price"]
+
+        for timestamp, trade_data in aggregated_trades.items():
+            count = sum(
+                1
+                for item in trades
+                if round_down_to_minute(item["timestamp"]) == timestamp
+            )
+            if count > 0:
+                trade_data["price"] /= count
+
+        return next(iter(aggregated_trades.values()), None)
 
     def fetch_order_book(self, symbol: Symbol, depth: int = 30):
         book = self.connector.fetch_order_book(symbol.name, limit=depth)

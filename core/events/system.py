@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
+from typing import List
 
 from core.events.base import Event, EventGroup, EventMeta
-from core.models.strategy import StrategyType
+from core.models.strategy import Strategy
 
 
 @dataclass(frozen=True)
@@ -14,4 +15,4 @@ class SystemEvent(Event):
 
 @dataclass(frozen=True)
 class DeployStrategy(SystemEvent):
-    type: StrategyType
+    strategy: List[Strategy]

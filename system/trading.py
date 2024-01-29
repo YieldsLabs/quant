@@ -19,7 +19,6 @@ from core.models.exchange import ExchangeType
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.order import OrderType
-from core.queries.portfolio import GetTopStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -62,18 +61,14 @@ class TradingSystem(AbstractSystem):
         self.exchange_type = exchange_type
 
     @event_handler(DeployStrategy)
-    async def _deploy_strategy(self, _event: DeployStrategy):
+    async def _deploy_strategy(self, event: DeployStrategy):
         logger.info("Add a fresh strategy")
 
-        strategies = await self.query(
-            GetTopStrategy(num=self.config["active_strategy_num"], positive_pnl=True)
-        )
-
         logger.info(
-            [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in strategies]
+            [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in event.strategy]
         )
 
-        self.next_strategy = strategies
+        self.next_strategy = event.strategy
 
         await self.event_queue.put(Event.CHANGE)
 

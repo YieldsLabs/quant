@@ -8,6 +8,7 @@ from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.exchange import ExchangeType
 from core.models.order import Order, OrderStatus
+from core.models.position import PositionSide
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbol, GetSymbols
 from core.queries.position import GetClosePosition, GetOpenPosition
@@ -49,12 +50,9 @@ class SmartRouter(AbstractEventManager):
     @query_handler(GetClosePosition)
     def get_close_position(self, query: GetClosePosition):
         position = query.position
-
         symbol = position.signal.symbol
 
-        trade = self.exchange.fetch_trade(symbol)
-
-        logging.info(f"Trade: {trade}")
+        trade = self.exchange.fetch_trade(symbol, self.config["max_order_slice"])
 
         if not trade:
             return Order(status=OrderStatus.FAILED, price=0, size=0)
@@ -159,6 +157,7 @@ class SmartRouter(AbstractEventManager):
         position = command.position
         symbol = position.signal.symbol
         position_size = position.size
+        exit_price = command.exit_price
 
         min_size = symbol.min_position_size
         num_orders = min(
@@ -169,7 +168,20 @@ class SmartRouter(AbstractEventManager):
         order_timestamps = {}
 
         for price in self.algo_price.calculate(symbol, self.exchange):
-            logging.info(f"Trying to reduce order: {price}")
+            spread = (
+                price - exit_price
+                if position.side == PositionSide.LONG
+                else exit_price - price
+            )
+            spread_percentage = (spread / exit_price) * 100
+
+            logging.info(
+                f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread_percentage} %"
+            )
+
+            if spread < 0:
+                self.exchange.close_full_position(symbol, position.side)
+                break
 
             for order_id in list(order_timestamps.keys()):
                 if self.exchange.has_order(order_id, symbol):
@@ -200,4 +212,5 @@ class SmartRouter(AbstractEventManager):
         for order_id in list(order_timestamps.keys()):
             self.exchange.cancel_order(order_id, symbol)
 
-        self.exchange.close_full_position(symbol, position.side)
+        if self.exchange.fetch_position(symbol, position.side):
+            self.exchange.close_full_position(symbol, position.side)

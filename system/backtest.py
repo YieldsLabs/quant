@@ -197,7 +197,7 @@ class BacktestSystem(AbstractSystem):
 
         self.active_strategy = set(strategies)
 
-        await self.dispatch(DeployStrategy(type=self.context.strategy_type))
+        await self.dispatch(DeployStrategy(strategy=strategies))
 
     async def _process_backtest(
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False

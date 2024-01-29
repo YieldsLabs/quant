@@ -66,7 +66,7 @@ class MarketOrderActor(Actor):
 
         logger.info(f"To Close Position: {current_position}")
 
-        await self.ask(ClosePosition(current_position))
+        await self.ask(ClosePosition(current_position, event.exit_price))
 
         order = await self.ask(GetClosePosition(current_position))
 

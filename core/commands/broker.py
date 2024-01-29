@@ -32,3 +32,4 @@ class OpenPosition(BrokerCommand):
 @dataclass(frozen=True)
 class ClosePosition(BrokerCommand):
     position: Position
+    exit_price: float

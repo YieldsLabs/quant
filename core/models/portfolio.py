@@ -4,6 +4,7 @@ import numpy as np
 
 TOTAL_TRADES_THRESHOLD = 8
 
+
 @dataclass(frozen=True)
 class Performance:
     _account_size: float
@@ -284,7 +285,11 @@ class Performance:
     def burke_ratio(self) -> float:
         account_size = self._account_size + self._pnl.cumsum()
 
-        if self.total_trades < TOTAL_TRADES_THRESHOLD or self._account_size <= 0 or account_size[-1] <= 0:
+        if (
+            self.total_trades < TOTAL_TRADES_THRESHOLD
+            or self._account_size <= 0
+            or account_size[-1] <= 0
+        ):
             return 0
 
         ratio = account_size[-1] / self._account_size

@@ -42,7 +42,7 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def fetch_trade(self, symbol: Symbol):
+    def fetch_trade(self, symbol: Symbol, limit: int):
         pass
 
     @abstractmethod
