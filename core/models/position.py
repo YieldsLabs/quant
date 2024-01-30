@@ -98,6 +98,7 @@ class Position:
     def next(self, ohlcv: OHLCV) -> "Position":
         next_stop_loss_price, next_take_profit_price = self.risk_strategy.next(
             self.side,
+            self.entry_price,
             self.take_profit_price,
             self.stop_loss_price,
             ohlcv,

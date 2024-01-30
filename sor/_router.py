@@ -179,14 +179,14 @@ class SmartRouter(AbstractEventManager):
                 f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread_percentage} %"
             )
 
-            if spread < 0:
-                self.exchange.close_full_position(symbol, position.side)
-                break
-
             for order_id in list(order_timestamps.keys()):
                 if self.exchange.has_order(order_id, symbol):
                     order_timestamps.pop(order_id)
                     order_counter += 1
+
+            if spread < 0:
+                self.exchange.close_full_position(symbol, position.side)
+                break
 
             curr_time = time.time()
             expired_orders = [

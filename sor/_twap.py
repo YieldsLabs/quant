@@ -26,7 +26,7 @@ class TWAP:
 
             twap_value = self._twap(timepoints)
 
-            yield round(twap_value, symbol.price_precision)
+            yield twap_value
 
             time.sleep(time_interval)
 
