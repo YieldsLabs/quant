@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 
 from core.models.parameter import (
-    CategoricalParameter,
     Parameter,
     RandomParameter,
 )
-from core.models.rsi import RSIType
 
 from .base import Signal, SignalType
 

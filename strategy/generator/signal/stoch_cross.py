@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
-from core.models.parameter import CategoricalParameter, Parameter, RandomParameter
-from core.models.stoch import StochType
+from core.models.parameter import Parameter, RandomParameter
 
 from .base import Signal, SignalType
 

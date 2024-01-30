@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-from core.models.macd import MACDType
 from core.models.parameter import (
-    CategoricalParameter,
     Parameter,
     StaticParameter,
 )

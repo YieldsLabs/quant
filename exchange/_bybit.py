@@ -97,10 +97,9 @@ class Bybit(AbstractExchange):
         aggregated_trades = defaultdict(lambda: {"amount": 0, "price": 0})
 
         for trade in trades:
-            if trade["side"] == "sell":
-                timestamp = round_down_to_minute(trade["timestamp"])
-                aggregated_trades[timestamp]["amount"] += trade["amount"]
-                aggregated_trades[timestamp]["price"] += trade["price"]
+            timestamp = round_down_to_minute(trade["timestamp"])
+            aggregated_trades[timestamp]["amount"] += trade["amount"]
+            aggregated_trades[timestamp]["price"] += trade["price"]
 
         for timestamp, trade_data in aggregated_trades.items():
             count = sum(
