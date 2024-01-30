@@ -255,6 +255,7 @@ dependencies = [
  "base",
  "candlestick",
  "core",
+ "momentum",
  "shared",
  "trend",
 ]

@@ -1,8 +1,5 @@
 use crate::candle_mapper::map_to_candle;
 use crate::ma_mapper::map_to_ma;
-use crate::macd_mapper::map_to_macd;
-use crate::rsi_mapper::map_to_rsi;
-use crate::stoch_mapper::map_to_stoch;
 use base::Signal;
 use serde::Deserialize;
 use signal::*;
@@ -58,43 +55,36 @@ pub enum SignalConfig {
         long_period: f32,
     },
     MacdFlip {
-        macd_type: f32,
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
     },
     MacdCross {
-        macd_type: f32,
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
     },
     MacdColorSwitch {
-        macd_type: f32,
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
     },
-    RsiNeutralityCross {
-        rsi_type: f32,
-        rsi_period: f32,
-        threshold: f32,
-    },
     RocFlip {
         period: f32,
     },
+    RsiNeutralityCross {
+        rsi_period: f32,
+        threshold: f32,
+    },
     RsiNeutralityPullback {
-        rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
     },
     RsiNeutralityRejection {
-        rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
     },
     Rsi2Ma {
-        rsi_type: f32,
         rsi_period: f32,
         threshold: f32,
         smoothing: f32,
@@ -102,9 +92,12 @@ pub enum SignalConfig {
         long_period: f32,
     },
     RsiMaPullback {
-        rsi_type: f32,
         rsi_period: f32,
         smoothing_period: f32,
+        threshold: f32,
+    },
+    RsiV {
+        rsi_period: f32,
         threshold: f32,
     },
     DiFlip {
@@ -119,11 +112,6 @@ pub enum SignalConfig {
         smoothing: f32,
         short_period: f32,
         long_period: f32,
-    },
-    RsiV {
-        rsi_type: f32,
-        rsi_period: f32,
-        threshold: f32,
     },
     TestGround {
         smoothing: f32,
@@ -152,7 +140,6 @@ pub enum SignalConfig {
         d_second: f32,
     },
     StochCross {
-        stoch_type: f32,
         period: f32,
         k_period: f32,
         d_period: f32,
@@ -242,74 +229,47 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             long_period,
         )),
         SignalConfig::MacdFlip {
-            macd_type,
             fast_period,
             slow_period,
             signal_period,
-        } => Box::new(MACDFlipSignal::new(
-            map_to_macd(macd_type as usize),
-            fast_period,
-            slow_period,
-            signal_period,
-        )),
+        } => Box::new(MACDFlipSignal::new(fast_period, slow_period, signal_period)),
         SignalConfig::MacdCross {
-            macd_type,
             fast_period,
             slow_period,
             signal_period,
         } => Box::new(MACDCrossSignal::new(
-            map_to_macd(macd_type as usize),
             fast_period,
             slow_period,
             signal_period,
         )),
         SignalConfig::MacdColorSwitch {
-            macd_type,
             fast_period,
             slow_period,
             signal_period,
         } => Box::new(MACDColorSwitchSignal::new(
-            map_to_macd(macd_type as usize),
             fast_period,
             slow_period,
             signal_period,
         )),
         SignalConfig::RsiNeutralityCross {
-            rsi_type,
             rsi_period,
             threshold,
-        } => Box::new(RSINeutralityCrossSignal::new(
-            map_to_rsi(rsi_type as usize),
-            rsi_period,
-            threshold,
-        )),
+        } => Box::new(RSINeutralityCrossSignal::new(rsi_period, threshold)),
         SignalConfig::RsiNeutralityPullback {
-            rsi_type,
             rsi_period,
             threshold,
-        } => Box::new(RSINeutralityPullbackSignal::new(
-            map_to_rsi(rsi_type as usize),
-            rsi_period,
-            threshold,
-        )),
+        } => Box::new(RSINeutralityPullbackSignal::new(rsi_period, threshold)),
         SignalConfig::RsiNeutralityRejection {
-            rsi_type,
             rsi_period,
             threshold,
-        } => Box::new(RSINeutralityRejectionSignal::new(
-            map_to_rsi(rsi_type as usize),
-            rsi_period,
-            threshold,
-        )),
+        } => Box::new(RSINeutralityRejectionSignal::new(rsi_period, threshold)),
         SignalConfig::Rsi2Ma {
-            rsi_type,
             rsi_period,
             threshold,
             smoothing,
             short_period,
             long_period,
         } => Box::new(RSI2MASignal::new(
-            map_to_rsi(rsi_type as usize),
             rsi_period,
             threshold,
             map_to_ma(smoothing as usize),
@@ -317,12 +277,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             long_period,
         )),
         SignalConfig::RsiMaPullback {
-            rsi_type,
             rsi_period,
             smoothing_period,
             threshold,
         } => Box::new(RSIMaPullbackSignal::new(
-            map_to_rsi(rsi_type as usize),
             rsi_period,
             smoothing_period,
             threshold,
@@ -386,16 +344,10 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             d_second,
         )),
         SignalConfig::StochCross {
-            stoch_type,
             period,
             k_period,
             d_period,
-        } => Box::new(StochCrossSignal::new(
-            map_to_stoch(stoch_type as usize),
-            period,
-            k_period,
-            d_period,
-        )),
+        } => Box::new(StochCrossSignal::new(period, k_period, d_period)),
         SignalConfig::TIICross {
             major_period,
             minor_period,
@@ -406,14 +358,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             minor_period,
         } => Box::new(TIIVSignal::new(major_period, minor_period)),
         SignalConfig::RsiV {
-            rsi_type,
             rsi_period,
             threshold,
-        } => Box::new(RSIVSignal::new(
-            map_to_rsi(rsi_type as usize),
-            rsi_period,
-            threshold,
-        )),
+        } => Box::new(RSIVSignal::new(rsi_period, threshold)),
         SignalConfig::TsiFlip {
             long_period,
             short_period,

@@ -1,21 +1,19 @@
 use base::prelude::*;
 use core::prelude::*;
-use shared::{stoch_indicator, StochType};
+use momentum::stochosc;
 
 const LOWER_LINE: f32 = 20.0;
 const UPPER_LINE: f32 = 80.0;
 
 pub struct StochCrossSignal {
-    stoch_type: StochType,
     period: usize,
     k_period: usize,
     d_period: usize,
 }
 
 impl StochCrossSignal {
-    pub fn new(stoch_type: StochType, period: f32, k_period: f32, d_period: f32) -> Self {
+    pub fn new(period: f32, k_period: f32, d_period: f32) -> Self {
         Self {
-            stoch_type,
             period: period as usize,
             k_period: k_period as usize,
             d_period: d_period as usize,
@@ -30,9 +28,10 @@ impl Signal for StochCrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (k, d) = stoch_indicator(
-            &self.stoch_type,
-            data,
+        let (k, d) = stochosc(
+            &data.high,
+            &data.low,
+            &data.close,
             self.period,
             self.k_period,
             self.d_period,

@@ -1,25 +1,18 @@
 use base::prelude::*;
 use core::prelude::*;
-use shared::{macd_indicator, MACDType};
+use momentum::macd;
 
 const ZERO_LINE: f32 = 0.0;
 
 pub struct MACDFlipSignal {
-    macd_type: MACDType,
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
 }
 
 impl MACDFlipSignal {
-    pub fn new(
-        macd_type: MACDType,
-        fast_period: f32,
-        slow_period: f32,
-        signal_period: f32,
-    ) -> Self {
+    pub fn new(fast_period: f32, slow_period: f32, signal_period: f32) -> Self {
         Self {
-            macd_type,
             fast_period: fast_period as usize,
             slow_period: slow_period as usize,
             signal_period: signal_period as usize,
@@ -34,9 +27,8 @@ impl Signal for MACDFlipSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (macd_line, _, _) = macd_indicator(
-            &self.macd_type,
-            data,
+        let (macd_line, _, _) = macd(
+            &data.close,
             self.fast_period,
             self.slow_period,
             self.signal_period,

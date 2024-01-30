@@ -15,7 +15,6 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class Rsi2MaSignal(Signal):
     type: SignalType = SignalType.Rsi2Ma
-    rsi_type: Parameter = CategoricalParameter(RSIType)
     rsi_period: Parameter = StaticParameter(2.0)
     threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)
     smoothing: Parameter = CategoricalParameter(MovingAverageType)

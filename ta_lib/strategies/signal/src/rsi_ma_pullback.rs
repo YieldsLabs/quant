@@ -1,20 +1,18 @@
 use base::prelude::*;
 use core::prelude::*;
-use shared::{rsi_indicator, RSIType};
+use momentum::rsi;
 
 const RSI_NEUTRALITY: f32 = 50.0;
 
 pub struct RSIMaPullbackSignal {
-    rsi_type: RSIType,
     rsi_period: usize,
     smoothing_period: usize,
     threshold: f32,
 }
 
 impl RSIMaPullbackSignal {
-    pub fn new(rsi_type: RSIType, rsi_period: f32, smoothing_period: f32, threshold: f32) -> Self {
+    pub fn new(rsi_period: f32, smoothing_period: f32, threshold: f32) -> Self {
         Self {
-            rsi_type,
             rsi_period: rsi_period as usize,
             smoothing_period: smoothing_period as usize,
             threshold,
@@ -28,7 +26,7 @@ impl Signal for RSIMaPullbackSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi_indicator(&self.rsi_type, data, self.rsi_period);
+        let rsi = rsi(&data.close, self.rsi_period);
         let rsi_ma = rsi.ma(self.smoothing_period);
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
         let lower_neutrality = RSI_NEUTRALITY - self.threshold;
