@@ -10,6 +10,7 @@ from core.models.parameter import CategoricalParameter, RandomParameter, StaticP
 from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from strategy.generator.confirm.rsi import RsiConfirm
 
 from .baseline.ma import MaBaseLine
 from .confirm.dpo import DpoConfirm
@@ -144,6 +145,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DumbConfirm(),
                 DpoConfirm(),
                 EomConfirm(),
+                RsiConfirm(),
             ]
         )
         pulse = np.random.choice(
@@ -168,12 +170,16 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     period=StaticParameter(26.0),
                 ),
                 MaBaseLine(
+                    smoothing=StaticParameter(MovingAverageType.KIJUN),
+                    period=StaticParameter(50.0),
+                ),
+                MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.T3),
                     period=StaticParameter(66.0),
                 ),
                 MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.GMA),
-                    period=StaticParameter(25.0),
+                    period=StaticParameter(10.0),
                 ),
                 MaBaseLine(
                     smoothing=StaticParameter(MovingAverageType.KAMA),
