@@ -11,6 +11,7 @@ from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from strategy.generator.confirm.rsi import RsiConfirm
+from strategy.generator.confirm.stc import StcConfirm
 
 from .baseline.ma import MaBaseLine
 from .confirm.dpo import DpoConfirm
@@ -146,6 +147,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DpoConfirm(),
                 EomConfirm(),
                 RsiConfirm(),
+                StcConfirm(),
             ]
         )
         pulse = np.random.choice(
