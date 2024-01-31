@@ -19,5 +19,10 @@ class AbstractStrategyOptimization(AbstractEventManager):
 
     @property
     @abstractmethod
+    def generation(self):
+        pass
+
+    @property
+    @abstractmethod
     def done(self) -> bool:
         pass

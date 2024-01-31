@@ -82,7 +82,7 @@ class Bybit(AbstractExchange):
             logger.error(f"{symbol}: {e}")
             return
 
-    def fetch_trade(self, symbol: Symbol, limit: int):
+    def fetch_trade(self, symbol: Symbol, side: PositionSide, limit: int):
         trades = sorted(
             self.connector.fetch_my_trades(symbol.name, limit=limit * 3),
             key=lambda trade: trade["timestamp"],
@@ -97,9 +97,10 @@ class Bybit(AbstractExchange):
         aggregated_trades = defaultdict(lambda: {"amount": 0, "price": 0})
 
         for trade in trades:
-            timestamp = round_down_to_minute(trade["timestamp"])
-            aggregated_trades[timestamp]["amount"] += trade["amount"]
-            aggregated_trades[timestamp]["price"] += trade["price"]
+            if trade["side"] == "buy" if side == PositionSide.SHORT else "sell":
+                timestamp = round_down_to_minute(trade["timestamp"])
+                aggregated_trades[timestamp]["amount"] += trade["amount"]
+                aggregated_trades[timestamp]["price"] += trade["price"]
 
         for timestamp, trade_data in aggregated_trades.items():
             count = sum(
@@ -117,43 +118,55 @@ class Bybit(AbstractExchange):
         return book["bids"], book["asks"]
 
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
-        res = self._create_order(
-            "market",
-            "buy" if side == PositionSide.LONG else "sell",
-            symbol.name,
-            size,
-            extra_params=self._create_order_extra_params(side),
-        )
+        try:
+            res = self._create_order(
+                "market",
+                "buy" if side == PositionSide.LONG else "sell",
+                symbol.name,
+                size,
+                extra_params=self._create_order_extra_params(side),
+            )
 
-        return res["info"]["orderId"]
+            return res["info"]["orderId"]
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
 
     def create_limit_order(
         self, symbol: Symbol, side: PositionSide, size: float, price: float
     ):
-        res = self._create_order(
-            "limit",
-            "buy" if side == PositionSide.LONG else "sell",
-            symbol.name,
-            size,
-            price,
-            extra_params=self._create_order_extra_params(side),
-        )
+        try:
+            res = self._create_order(
+                "limit",
+                "buy" if side == PositionSide.LONG else "sell",
+                symbol.name,
+                size,
+                price,
+                extra_params=self._create_order_extra_params(side),
+            )
 
-        return res["info"]["orderId"]
+            return res["info"]["orderId"]
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
 
     def create_reduce_order(
         self, symbol: Symbol, side: PositionSide, size: float, price: float
     ):
-        res = self._create_order(
-            "limit",
-            "sell" if side == PositionSide.LONG else "buy",
-            symbol.name,
-            size,
-            price,
-            extra_params=self._create_order_extra_params(side, reduce=True),
-        )
+        try:
+            res = self._create_order(
+                "limit",
+                "sell" if side == PositionSide.LONG else "buy",
+                symbol.name,
+                size,
+                price,
+                extra_params=self._create_order_extra_params(side, reduce=True),
+            )
 
-        return res["info"]["orderId"]
+            return res["info"]["orderId"]
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
 
     def close_full_position(self, symbol: Symbol, side: PositionSide):
         position = self.fetch_position(symbol, side)
@@ -161,13 +174,17 @@ class Bybit(AbstractExchange):
         if not position:
             return
 
-        self._create_order(
-            "market",
-            "sell" if position["position_side"] == PositionSide.LONG else "buy",
-            symbol.name,
-            position["position_size"],
-            extra_params=self._create_order_extra_params(side),
-        )
+        try:
+            self._create_order(
+                "market",
+                "sell" if position["position_side"] == PositionSide.LONG else "buy",
+                symbol.name,
+                position["position_size"],
+                extra_params=self._create_order_extra_params(side),
+            )
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
 
     def close_half_position(self, symbol: Symbol, side: PositionSide):
         position = self.fetch_position(symbol, side)
@@ -175,13 +192,17 @@ class Bybit(AbstractExchange):
         if not position:
             return
 
-        self._create_order(
-            "market",
-            "sell" if position["position_side"] == PositionSide.LONG else "buy",
-            symbol.name,
-            position["position_size"] // 2,
-            extra_params=self._create_order_extra_params(side),
-        )
+        try:
+            self._create_order(
+                "market",
+                "sell" if position["position_side"] == PositionSide.LONG else "buy",
+                symbol.name,
+                position["position_size"] // 2,
+                extra_params=self._create_order_extra_params(side),
+            )
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
 
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def fetch_position(self, symbol: Symbol, side: PositionSide):

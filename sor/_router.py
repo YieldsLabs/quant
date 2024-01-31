@@ -52,7 +52,9 @@ class SmartRouter(AbstractEventManager):
         position = query.position
         symbol = position.signal.symbol
 
-        trade = self.exchange.fetch_trade(symbol, self.config["max_order_slice"])
+        trade = self.exchange.fetch_trade(
+            symbol, position.side, self.config["max_order_slice"]
+        )
 
         if not trade:
             return Order(status=OrderStatus.FAILED, price=0, size=0)

@@ -131,17 +131,18 @@ class BacktestSystem(AbstractSystem):
     async def _run_backtest(self):
         population = self.optimizer.population
         total_steps = len(population)
+        generation = self.optimizer.generation
 
-        logger.info(f"Run backtest for: {total_steps}")
+        logger.info(f"Run backtest for: {total_steps}, generation: {generation + 1}")
 
         estimator = Estimator(total_steps)
 
-        for data in population:
+        for strategy in population:
             account_size = await self.query(GetBalance())
             await self.execute(UpdateAccountSize(account_size))
 
-            if data not in self.active_strategy:
-                await self._process_backtest(data)
+            if strategy not in self.active_strategy:
+                await self._process_backtest(strategy)
 
             logger.info(f"Remaining backtest time: {estimator.remaining_time():.2f}sec")
 
@@ -152,13 +153,6 @@ class BacktestSystem(AbstractSystem):
 
         if self.optimizer.done:
             return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
-
-        strategies = await self.query(
-            GetTopStrategy(num=self.config["active_strategy_num"])
-        )
-
-        if not len(strategies):
-            return await self.event_queue.put(Event.REGENERATE)
 
         await self.optimizer.optimize()
 
@@ -176,7 +170,9 @@ class BacktestSystem(AbstractSystem):
 
         await self.execute(StrategyReset())
 
-        for data in strategies:
+        all_strategy = set(strategies + self.optimizer.population)
+
+        for data in all_strategy:
             account_size = await self.query(GetBalance())
             await self.execute(UpdateAccountSize(account_size))
 
@@ -222,18 +218,25 @@ class BacktestSystem(AbstractSystem):
             ),
         ]
 
-        backtest_config = self.context.config_service.get("backtest")
-        in_sample = Lookback.from_raw(backtest_config["in_sample"])
-        out_sample = (
-            None if verify else Lookback.from_raw(backtest_config["out_sample"])
+        curr_gen = self.optimizer.generation
+        max_gen = self.context.config_service.get("optimization")["max_generations"]
+        window_size = self.context.config_service.get("backtest")["window_size"]
+
+        verify_sample = 1
+        in_sample = window_size
+        out_sample = max((max_gen - curr_gen) * window_size - in_sample, 0)
+
+        in_lookback = Lookback.from_raw(f"{verify_sample if verify else in_sample}M")
+        out_lookback = (
+            None if verify else Lookback.from_raw(f"{out_sample + verify_sample}M")
         )
 
         logger.info(
-            f"Backtest: strategy={symbol}_{timeframe}{strategy}, lookback={in_sample}"
+            f"Backtest: strategy={symbol}_{timeframe}{strategy}, in_lookback={in_lookback}, out_lookback={out_lookback}"
         )
 
         await self.execute(
-            StartHistoricalFeed(symbol, timeframe, in_sample, out_sample)
+            StartHistoricalFeed(symbol, timeframe, in_lookback, out_lookback)
         )
 
         if actors[0].last_bar:

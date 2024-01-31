@@ -31,7 +31,11 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         self.strategy_generator = strategy_generator
         self.config = config_service.get("optimization")
         self._population: list[Individual] = []
-        self.generation = 0
+        self._generation = 0
+
+    @property
+    def generation(self):
+        return self._generation
 
     @property
     def population(self):
@@ -42,11 +46,11 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
     @property
     def done(self):
-        return self.generation >= self.config["max_generations"] - 1
+        return self._generation >= self.config["max_generations"] - 1
 
     def init(self):
         self._population = []
-        self.generation = 0
+        self._generation = 0
 
         data = self.strategy_generator.generate()
         self._population = [
@@ -64,7 +68,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         children = self._crossover_parents(parents)
         self._update_population(elite, children)
 
-        self.generation += 1
+        self._generation += 1
 
     async def _evaluate_fitness(self) -> None:
         for individual in self._population:
