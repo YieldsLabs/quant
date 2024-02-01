@@ -91,6 +91,12 @@ pub enum SignalConfig {
         short_period: f32,
         long_period: f32,
     },
+    RsiSup {
+        rsi_period: f32,
+        threshold: f32,
+        atr_period: f32,
+        factor: f32,
+    },
     RsiMaPullback {
         rsi_period: f32,
         smoothing_period: f32,
@@ -275,6 +281,14 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             map_to_ma(smoothing as usize),
             short_period,
             long_period,
+        )),
+        SignalConfig::RsiSup {
+            rsi_period,
+            threshold,
+            atr_period,
+            factor,
+        } => Box::new(RSISupertrendSignal::new(
+            rsi_period, threshold, atr_period, factor,
         )),
         SignalConfig::RsiMaPullback {
             rsi_period,

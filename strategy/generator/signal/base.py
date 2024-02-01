@@ -22,6 +22,7 @@ class SignalType(Enum):
     RsiNeutralityCross = "RsiNeutralityCross"
     RsiNeutralityPullback = "RsiNeutralityPullback"
     RsiNeutralityRejection = "RsiNeutralityRejection"
+    RsiSup = "RsiSup"
     Rsi2Ma = "Rsi2Ma"
     RsiMaPullback = "RsiMaPullback"
     Dch2Ma = "Dch2Ma"
