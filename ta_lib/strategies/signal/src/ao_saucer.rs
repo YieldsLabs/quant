@@ -25,17 +25,19 @@ impl Signal for AOSaucerSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ao = ao(&data.hl2(), self.short_period, self.long_period);
+        let diff = &ao - ao.shift(1);
+
         (
             ao.sgt(&AO_ZERO)
-                & ao.shift(1).sgt(&ao)
-                & ao.shift(2).sgt(&ao.shift(1))
-                & ao.shift(3).sgt(&ao.shift(2))
-                & ao.shift(4).slt(&ao.shift(3)),
+                & diff.sgt(&AO_ZERO)
+                & diff.shift(1).slt(&AO_ZERO)
+                & diff.shift(2).slt(&AO_ZERO)
+                & diff.shift(1).slt(&diff.shift(2)),
             ao.slt(&AO_ZERO)
-                & ao.shift(1).slt(&ao)
-                & ao.shift(2).slt(&ao.shift(1))
-                & ao.shift(3).slt(&ao.shift(2))
-                & ao.shift(4).sgt(&ao.shift(3)),
+                & diff.slt(&AO_ZERO)
+                & diff.shift(1).sgt(&AO_ZERO)
+                & diff.shift(2).sgt(&AO_ZERO)
+                & diff.shift(1).slt(&diff.shift(2)),
         )
     }
 }

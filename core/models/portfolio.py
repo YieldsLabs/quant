@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 
-TOTAL_TRADES_THRESHOLD = 8
+TOTAL_TRADES_THRESHOLD = 5
 
 
 @dataclass(frozen=True)
@@ -283,28 +283,15 @@ class Performance:
 
     @property
     def burke_ratio(self) -> float:
-        account_size = self._account_size + self._pnl.cumsum()
-
-        if (
-            self.total_trades < TOTAL_TRADES_THRESHOLD
-            or self._account_size <= 0
-            or account_size[-1] <= 0
-        ):
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
-
-        ratio = account_size[-1] / self._account_size
-
-        if ratio <= 0:
-            return 0
-
-        cagr = ratio ** (self._periods_per_year / self.total_trades) - 1
 
         downside_deviation = np.std(np.minimum(self._pnl, 0), ddof=1)
 
         if downside_deviation == 0:
             return 0
 
-        return cagr / downside_deviation
+        return self.cagr / downside_deviation
 
     @property
     def rachev_ratio(self) -> float:

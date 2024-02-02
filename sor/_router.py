@@ -186,6 +186,9 @@ class SmartRouter(AbstractEventManager):
                     order_timestamps.pop(order_id)
                     order_counter += 1
 
+            if not self.exchange.fetch_position(symbol, position.side):
+                break
+
             if spread < 0:
                 self.exchange.close_full_position(symbol, position.side)
                 break
