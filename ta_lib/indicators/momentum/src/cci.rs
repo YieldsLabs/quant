@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn cci(hlc3: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
-    (hlc3 - hlc3.ma(period)) / (factor * hlc3.mad(period))
+    (hlc3 - hlc3.smooth(Smooth::SMA, period)) / (factor * hlc3.mad(period))
 }
 
 #[cfg(test)]

@@ -4,7 +4,7 @@ pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
 
     let mut mg = Series::empty(len);
-    let seed = source.ema(period);
+    let seed = source.smooth(Smooth::EMA, period);
 
     for _ in 0..len {
         let prev_mg = mg.shift(1);

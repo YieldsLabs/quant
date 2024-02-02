@@ -76,7 +76,7 @@ mod tests {
         ]);
         let hl2 = median_price(&high, &low);
         let atr_period = 2;
-        let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+        let atr = atr(&high, &low, &close, atr_period);
 
         let factor = 3.0;
         let expected_supertrend = vec![

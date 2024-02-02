@@ -147,10 +147,9 @@ fn momentum(c: &mut Criterion) {
             || {
                 let source = Series::from(&close);
                 let period = 14;
-                let smoothing = None;
-                (source, period, smoothing)
+                (source, period)
             },
-            |(source, period, smoothing)| di(source, *period, *smoothing),
+            |(source, period)| di(source, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -163,7 +162,7 @@ fn momentum(c: &mut Criterion) {
                 let close = Series::from(&close);
                 let adx_period = 14;
                 let di_period = 14;
-                let atr = atr(&high, &low, &close, di_period, Some("SMMA"));
+                let atr = atr(&high, &low, &close, di_period);
                 (high, low, atr, adx_period, di_period)
             },
             |(high, low, atr, adx_period, di_period)| dmi(high, low, atr, *adx_period, *di_period),
@@ -412,7 +411,7 @@ fn trend(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let atr = atr(&high, &low, &close, atr_period);
                 let factor = 3.0;
 
                 (close, atr, factor)
@@ -429,7 +428,7 @@ fn trend(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let atr = atr(&high, &low, &close, atr_period);
                 let factor = 3.0;
                 let period = 20;
 
@@ -447,7 +446,7 @@ fn trend(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let atr = atr(&high, &low, &close, atr_period);
                 let period = 20;
 
                 (high, low, atr, period)
@@ -664,7 +663,7 @@ fn trend(c: &mut Criterion) {
                 let close = Series::from(&close);
                 let hl2 = median_price(&high, &low);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let atr = atr(&high, &low, &close, atr_period);
                 let factor = 3.0;
 
                 (hl2, close, atr, factor)
@@ -803,11 +802,10 @@ fn volatility(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let period = 14;
-                let smoothing = None;
 
-                (high, low, close, period, smoothing)
+                (high, low, close, period)
             },
-            |(high, low, close, period, smoothing)| atr(high, low, close, *period, *smoothing),
+            |(high, low, close, period)| atr(high, low, close, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -862,7 +860,7 @@ fn volatility(c: &mut Criterion) {
                 let close = Series::from(&close);
                 let hlc3 = typical_price(&high, &low, &close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let atr = atr(&high, &low, &close, atr_period);
                 let period = 14;
                 let factor = 3.0;
 
@@ -896,7 +894,7 @@ fn volatility(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+                let atr = atr(&high, &low, &close, atr_period);
                 let smoothing_period = 3;
 
                 (atr, atr_period, smoothing_period)

@@ -1,4 +1,5 @@
 use crate::series::Series;
+use crate::smoothing::Smooth;
 use std::ops::Neg;
 
 const ZERO: f32 = 0.;
@@ -61,7 +62,7 @@ impl Series<f32> {
     }
 
     pub fn var(&self, period: usize) -> Self {
-        self.pow(2).ma(period) - self.ma(period).pow(2)
+        self.pow(2).smooth(Smooth::SMA, period) - self.smooth(Smooth::SMA, period).pow(2)
     }
 
     pub fn std(&self, period: usize) -> Self {

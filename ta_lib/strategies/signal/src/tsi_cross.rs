@@ -26,7 +26,7 @@ impl Signal for TSICrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tsi = tsi(&data.close, self.long_period, self.short_period);
-        let signal_line = tsi.ema(self.signal_period);
+        let signal_line = tsi.smooth(Smooth::EMA, self.signal_period);
 
         (tsi.cross_over(&signal_line), tsi.cross_under(&signal_line))
     }

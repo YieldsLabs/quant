@@ -4,7 +4,10 @@ use core::prelude::*;
 const SCALE: f32 = 1.;
 
 pub fn trix(source: &Series<f32>, period: usize) -> Series<f32> {
-    let ema3 = source.ema(period).ema(period).ema(period);
+    let ema3 = source
+        .smooth(Smooth::EMA, period)
+        .smooth(Smooth::EMA, period)
+        .smooth(Smooth::EMA, period);
 
     SCALE * roc(&ema3, 1)
 }

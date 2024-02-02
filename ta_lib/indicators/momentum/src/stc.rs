@@ -9,12 +9,12 @@ pub fn stc(
     d_first: usize,
     d_second: usize,
 ) -> Series<f32> {
-    let macd_line = close.ema(fast_period) - close.ema(slow_period);
+    let macd_line = close.smooth(Smooth::EMA, fast_period) - close.smooth(Smooth::EMA, slow_period);
     let k = stoch(&macd_line, &macd_line, &macd_line, cycle);
-    let d = k.ema(d_first);
+    let d = k.smooth(Smooth::EMA, d_first);
     let kd = stoch(&d, &d, &d, cycle);
 
-    kd.ema(d_second)
+    kd.smooth(Smooth::EMA, d_second)
 }
 
 #[cfg(test)]

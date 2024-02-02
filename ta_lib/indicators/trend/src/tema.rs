@@ -1,9 +1,9 @@
 use core::prelude::*;
 
 pub fn tema(source: &Series<f32>, period: usize) -> Series<f32> {
-    let ema1 = source.ema(period);
-    let ema2 = ema1.ema(period);
-    let ema3 = ema2.ema(period);
+    let ema1 = source.smooth(Smooth::EMA, period);
+    let ema2 = ema1.smooth(Smooth::EMA, period);
+    let ema3 = ema2.smooth(Smooth::EMA, period);
 
     3. * (ema1 - ema2) + ema3
 }

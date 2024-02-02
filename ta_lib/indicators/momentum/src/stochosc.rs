@@ -11,9 +11,9 @@ pub fn stochosc(
 ) -> (Series<f32>, Series<f32>) {
     let stoch = stoch(high, low, close, period);
 
-    let k = stoch.ma(k_period);
+    let k = stoch.smooth(Smooth::SMA, k_period);
 
-    let d = k.ma(d_period);
+    let d = k.smooth(Smooth::SMA, d_period);
 
     (k, d)
 }

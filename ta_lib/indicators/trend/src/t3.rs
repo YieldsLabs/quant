@@ -3,12 +3,12 @@ use core::prelude::*;
 pub fn t3(source: &Series<f32>, period: usize) -> Series<f32> {
     let alpha = 0.618;
 
-    let ema1 = source.ema(period);
-    let ema2 = ema1.ema(period);
-    let ema3 = ema2.ema(period);
-    let ema4 = ema3.ema(period);
-    let ema5 = ema4.ema(period);
-    let ema6 = ema5.ema(period);
+    let ema1 = source.smooth(Smooth::EMA, period);
+    let ema2 = ema1.smooth(Smooth::EMA, period);
+    let ema3 = ema2.smooth(Smooth::EMA, period);
+    let ema4 = ema3.smooth(Smooth::EMA, period);
+    let ema5 = ema4.smooth(Smooth::EMA, period);
+    let ema6 = ema5.smooth(Smooth::EMA, period);
 
     let form1 = -alpha * alpha * alpha;
     let form2 = 3. * alpha * alpha + 3. * alpha * alpha * alpha;

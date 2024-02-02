@@ -8,7 +8,7 @@ pub fn eom(
     period: usize,
     divisor: f32,
 ) -> Series<f32> {
-    (divisor * hl2.change(1) * (high - low) / volume).ma(period)
+    (divisor * hl2.change(1) * (high - low) / volume).smooth(Smooth::SMA, period)
 }
 
 #[cfg(test)]

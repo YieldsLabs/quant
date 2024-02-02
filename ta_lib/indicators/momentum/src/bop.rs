@@ -7,7 +7,7 @@ pub fn bop(
     close: &Series<f32>,
     smoothing_period: usize,
 ) -> Series<f32> {
-    ((close - open) / (high - low)).ma(smoothing_period)
+    ((close - open) / (high - low)).smooth(Smooth::SMA, smoothing_period)
 }
 
 #[cfg(test)]

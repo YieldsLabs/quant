@@ -23,7 +23,7 @@ impl Signal for QSTICKCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let qstick = qstick(&data.open, &data.close, self.period);
-        let signal_line = qstick.ema(self.signal_period);
+        let signal_line = qstick.smooth(Smooth::EMA, self.signal_period);
 
         (
             qstick.cross_over(&signal_line),

@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn lsma(source: &Series<f32>, period: usize) -> Series<f32> {
-    source.linreg(period)
+    source.smooth(Smooth::LSMA, period)
 }
 
 #[cfg(test)]

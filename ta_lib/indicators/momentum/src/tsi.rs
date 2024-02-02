@@ -5,8 +5,13 @@ const PERCENTAGE_SCALE: f32 = 100.;
 pub fn tsi(source: &Series<f32>, long_period: usize, short_period: usize) -> Series<f32> {
     let pc = source.change(1);
 
-    let pcds = pc.ema(long_period).ema(short_period);
-    let apcds = pc.abs().ema(long_period).ema(short_period);
+    let pcds = pc
+        .smooth(Smooth::EMA, long_period)
+        .smooth(Smooth::EMA, short_period);
+    let apcds = pc
+        .abs()
+        .smooth(Smooth::EMA, long_period)
+        .smooth(Smooth::EMA, short_period);
 
     PERCENTAGE_SCALE * pcds / apcds
 }

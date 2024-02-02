@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn sma(source: &Series<f32>, period: usize) -> Series<f32> {
-    source.ma(period)
+    source.smooth(Smooth::SMA, period)
 }
 
 #[cfg(test)]

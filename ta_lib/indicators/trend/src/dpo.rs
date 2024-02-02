@@ -3,7 +3,7 @@ use core::prelude::*;
 pub fn dpo(source: &Series<f32>, period: usize) -> Series<f32> {
     let k = period / 2 + 1;
 
-    source - source.ma(period).shift(k)
+    source - source.smooth(Smooth::SMA, period).shift(k)
 }
 
 #[cfg(test)]

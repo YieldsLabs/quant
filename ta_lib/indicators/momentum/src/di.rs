@@ -2,14 +2,8 @@ use core::prelude::*;
 
 const PERCENTAGE_SCALE: f32 = 100.;
 
-pub fn di(source: &Series<f32>, period: usize, smoothing: Option<&str>) -> Series<f32> {
-    let ma = match smoothing {
-        Some("SMMA") => source.smma(period),
-        Some("SMA") => source.ma(period),
-        Some("EMA") => source.ema(period),
-        Some("WMA") => source.wma(period),
-        _ => source.wma(period),
-    };
+pub fn di(source: &Series<f32>, period: usize) -> Series<f32> {
+    let ma = source.smooth(Smooth::WMA, period);
 
     PERCENTAGE_SCALE * (source - &ma) / ma
 }
@@ -42,7 +36,7 @@ mod tests {
             0.0658433,
         ];
 
-        let result: Vec<f32> = di(&source, 3, None).into();
+        let result: Vec<f32> = di(&source, 3).into();
 
         assert_eq!(result, expected);
     }

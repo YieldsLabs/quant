@@ -5,7 +5,7 @@ pub fn bb(
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = source.ma(period);
+    let middle_band = source.smooth(Smooth::SMA, period);
     let std_mul = source.std(period) * factor;
 
     let upper_band = &middle_band + &std_mul;

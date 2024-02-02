@@ -7,7 +7,7 @@ pub fn cc(
     long_period: usize,
     smoothing_period: usize,
 ) -> Series<f32> {
-    (roc(source, short_period) + roc(source, long_period)).wma(smoothing_period)
+    (roc(source, short_period) + roc(source, long_period)).smooth(Smooth::WMA, smoothing_period)
 }
 
 #[cfg(test)]

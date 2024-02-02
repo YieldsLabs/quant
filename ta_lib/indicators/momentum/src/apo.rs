@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn apo(source: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
-    source.ema(short_period) - source.ema(long_period)
+    source.smooth(Smooth::EMA, short_period) - source.smooth(Smooth::EMA, long_period)
 }
 
 #[cfg(test)]

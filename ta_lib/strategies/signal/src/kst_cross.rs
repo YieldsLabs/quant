@@ -64,7 +64,7 @@ impl Signal for KSTCrossSignal {
             self.period_third,
             self.period_fouth,
         );
-        let signal_line = kst.ma(self.signal_period);
+        let signal_line = kst.smooth(Smooth::SMA, self.signal_period);
 
         (kst.cross_over(&signal_line), kst.cross_under(&signal_line))
     }

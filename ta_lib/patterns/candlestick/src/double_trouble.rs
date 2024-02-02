@@ -7,7 +7,7 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    let atr = atr(high, low, close, 10, None);
+    let atr = atr(high, low, close, 10);
 
     close.sgt(open)
         & close.shift(1).sgt(&open.shift(1))
@@ -21,7 +21,7 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    let atr = atr(high, low, close, 10, None);
+    let atr = atr(high, low, close, 10);
 
     close.slt(open)
         & close.shift(1).slt(&open.shift(1))

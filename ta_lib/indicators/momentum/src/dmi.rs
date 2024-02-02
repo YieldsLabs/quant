@@ -20,13 +20,14 @@ pub fn dmi(
     let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
     let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
 
-    let di_plus = PERCENTAGE_SCALE * dm_plus.smma(di_period) / atr;
-    let di_minus = PERCENTAGE_SCALE * dm_minus.smma(di_period) / atr;
+    let di_plus = PERCENTAGE_SCALE * dm_plus.smooth(Smooth::SMMA, di_period) / atr;
+    let di_minus = PERCENTAGE_SCALE * dm_minus.smooth(Smooth::SMMA, di_period) / atr;
 
     let sum = &di_plus + &di_minus;
 
     let adx = PERCENTAGE_SCALE
-        * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum)).smma(adx_period);
+        * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum))
+            .smooth(Smooth::SMMA, adx_period);
 
     (adx, di_plus, di_minus)
 }
@@ -55,7 +56,7 @@ mod tests {
         ]);
         let adx_period = 3;
         let di_period = 3;
-        let atr = atr(&high, &low, &close, adx_period, Some("SMMA"));
+        let atr = atr(&high, &low, &close, adx_period);
 
         let expected_adx = [
             0.0, 33.333336, 55.555557, 70.37037, 61.10112, 54.921627, 50.801956, 38.320854,

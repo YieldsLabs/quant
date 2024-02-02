@@ -13,6 +13,7 @@ mod traits;
 pub mod prelude {
     pub use crate::iff;
     pub use crate::series::Series;
+    pub use crate::smoothing::Smooth;
     pub use crate::traits::*;
 }
 

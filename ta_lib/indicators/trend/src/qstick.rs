@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn qstick(open: &Series<f32>, close: &Series<f32>, period: usize) -> Series<f32> {
-    (close - open).ema(period)
+    (close - open).smooth(Smooth::EMA, period)
 }
 
 #[cfg(test)]

@@ -6,17 +6,8 @@ pub fn atr(
     low: &Series<f32>,
     close: &Series<f32>,
     period: usize,
-    smoothing: Option<&str>,
 ) -> Series<f32> {
-    let tr = tr(high, low, close);
-
-    match smoothing {
-        Some("WMA") => tr.wma(period),
-        Some("SMA") => tr.ma(period),
-        Some("EMA") => tr.ema(period),
-        Some("SMMA") => tr.smma(period),
-        _ => tr.smma(period),
-    }
+    tr(high, low, close).smooth(Smooth::SMMA, period)
 }
 
 #[cfg(test)]
@@ -41,7 +32,6 @@ mod tests {
             6.8360, 6.8345, 6.8285, 6.8395,
         ]);
         let period = 3;
-        let smothing = Some("SMMA");
         let expected = [
             0.0050001144,
             0.07766677,
@@ -71,7 +61,7 @@ mod tests {
             0.007778558,
         ];
 
-        let result: Vec<f32> = atr(&high, &low, &close, period, smothing).into();
+        let result: Vec<f32> = atr(&high, &low, &close, period).into();
 
         assert_eq!(result, expected);
     }

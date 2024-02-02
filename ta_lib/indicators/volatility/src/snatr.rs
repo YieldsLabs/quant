@@ -2,7 +2,7 @@ use core::prelude::*;
 
 pub fn snatr(atr: &Series<f32>, atr_period: usize, smoothing_period: usize) -> Series<f32> {
     ((atr - atr.lowest(atr_period)) / (atr.highest(atr_period) - atr.lowest(atr_period)))
-        .wma(smoothing_period)
+        .smooth(Smooth::WMA, smoothing_period)
 }
 
 #[test]
@@ -19,7 +19,7 @@ fn test_snatr() {
         19.102, 19.100, 19.146, 19.181, 19.155, 19.248, 19.309, 19.355, 19.439,
     ]);
     let atr_period = 3;
-    let atr = atr(&high, &low, &close, atr_period, None);
+    let atr = atr(&high, &low, &close, atr_period);
     let period = 3;
     let epsilon = 0.001;
     let expected = [

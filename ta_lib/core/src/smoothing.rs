@@ -1,6 +1,17 @@
 use crate::iff;
 use crate::series::Series;
 
+pub enum Smooth {
+    EMA,
+    SMA,
+    SMMA,
+    KAMA,
+    HMA,
+    WMA,
+    ZLEMA,
+    LSMA,
+}
+
 impl Series<f32> {
     pub fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
         let len = self.len();
@@ -19,25 +30,25 @@ impl Series<f32> {
         sum
     }
 
-    pub fn ma(&self, period: usize) -> Self {
+    fn ma(&self, period: usize) -> Self {
         self.window(period)
             .map(|w| w.iter().flatten().sum::<f32>() / w.len() as f32)
             .collect()
     }
 
-    pub fn ema(&self, period: usize) -> Self {
+    fn ema(&self, period: usize) -> Self {
         let alpha = Series::fill(2. / (period as f32 + 1.), self.len());
 
         self.ew(&alpha, self)
     }
 
-    pub fn smma(&self, period: usize) -> Self {
+    fn smma(&self, period: usize) -> Self {
         let alpha = Series::fill(1. / (period as f32), self.len());
 
         self.ew(&alpha, &self.ma(period))
     }
 
-    pub fn wma(&self, period: usize) -> Self {
+    fn wma(&self, period: usize) -> Self {
         let mut sum = Series::zero(self.len());
         let weights = (0..period).map(|i| (period - i) as f32).collect::<Vec<_>>();
         let norm = weights.iter().sum::<f32>();
@@ -49,7 +60,7 @@ impl Series<f32> {
         sum / norm
     }
 
-    pub fn swma(&self) -> Self {
+    fn swma(&self) -> Self {
         let x1 = self.shift(1);
         let x2 = self.shift(2);
         let x3 = self.shift(3);
@@ -57,14 +68,14 @@ impl Series<f32> {
         x3 * 1. / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * 1. / 6.
     }
 
-    pub fn hma(&self, period: usize) -> Self {
+    fn hma(&self, period: usize) -> Self {
         let lag = (period as f32 / 2.).round() as usize;
         let sqrt_period = (period as f32).sqrt() as usize;
 
         (2. * self.wma(lag) - self.wma(period)).wma(sqrt_period)
     }
 
-    pub fn linreg(&self, period: usize) -> Self {
+    fn linreg(&self, period: usize) -> Self {
         let x = (0..self.len()).map(|i| i as f32).collect::<Series<_>>();
 
         let x_mean = x.ma(period);
@@ -81,6 +92,55 @@ impl Series<f32> {
         let intercept = &y_mean - &slope * &x_mean;
 
         &intercept + &slope * &x
+    }
+
+    fn kama(&self, period: usize) -> Series<f32> {
+        let len = self.len();
+        let change = self.change(period).abs();
+        let volatility = self.change(1).abs().sum(period);
+
+        let er = change / volatility;
+
+        let alpha = iff!(
+            er.na(),
+            Series::fill(2. / (period as f32 + 1.), len),
+            (er * 0.666_666_7).sqrt()
+        );
+
+        let mut kama = Series::empty(len);
+
+        for _ in 0..len {
+            let prev_kama = kama.shift(1);
+
+            kama = iff!(
+                prev_kama.na(),
+                self,
+                &prev_kama + &alpha * (self - &prev_kama)
+            )
+        }
+
+        kama
+    }
+
+    fn zlema(&self, period: usize) -> Series<f32> {
+        let lag = ((period as f32 - 1.) / 2.) as usize;
+
+        let d = (2. * self) - self.shift(lag);
+
+        d.ema(period)
+    }
+
+    pub fn smooth(&self, smooth_type: Smooth, period: usize) -> Self {
+        match smooth_type {
+            Smooth::EMA => self.ema(period),
+            Smooth::SMA => self.ma(period),
+            Smooth::SMMA => self.smma(period),
+            Smooth::KAMA => self.kama(period),
+            Smooth::HMA => self.hma(period),
+            Smooth::WMA => self.wma(period),
+            Smooth::ZLEMA => self.zlema(period),
+            Smooth::LSMA => self.linreg(period),
+        }
     }
 }
 

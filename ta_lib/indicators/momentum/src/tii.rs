@@ -4,10 +4,13 @@ const ZERO: f32 = 0.;
 const PERCENTAGE_SCALE: f32 = 100.;
 
 pub fn tii(source: &Series<f32>, major_period: usize, minor_period: usize) -> Series<f32> {
-    let price_diff = source - source.ma(major_period);
+    let price_diff = source - source.smooth(Smooth::SMA, major_period);
 
-    let positive_sum = price_diff.max(&ZERO).ma(minor_period);
-    let negative_sum = price_diff.min(&ZERO).abs().ma(minor_period);
+    let positive_sum = price_diff.max(&ZERO).smooth(Smooth::SMA, minor_period);
+    let negative_sum = price_diff
+        .min(&ZERO)
+        .abs()
+        .smooth(Smooth::SMA, minor_period);
 
     PERCENTAGE_SCALE * &positive_sum / (positive_sum + negative_sum)
 }

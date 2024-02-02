@@ -34,9 +34,9 @@ impl Pulse for BraidPulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma_one = data.close.ema(self.period_one);
-        let ma_two = data.open.ema(self.period_two);
-        let ma_three = data.close.ema(self.period_three);
+        let ma_one = data.close.smooth(Smooth::EMA, self.period_one);
+        let ma_two = data.open.smooth(Smooth::EMA, self.period_two);
+        let ma_three = data.close.smooth(Smooth::EMA, self.period_three);
         let filter = data.atr(self.atr_period) * self.strength / 100.0;
 
         let max = ma_one.max(&ma_two).max(&ma_three);

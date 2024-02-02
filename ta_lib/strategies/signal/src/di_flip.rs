@@ -22,7 +22,7 @@ impl Signal for DIFlipSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let di = di(&data.close, self.period, None);
+        let di = di(&data.close, self.period);
 
         (di.cross_over(&ZERO_LINE), di.cross_under(&ZERO_LINE))
     }

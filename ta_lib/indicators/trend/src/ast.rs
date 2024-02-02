@@ -68,7 +68,7 @@ mod tests {
             2.0952, 2.0973, 2.0982, 2.0974, 2.0942, 2.0917, 2.0924, 2.0869,
         ]);
         let atr_period = 2;
-        let atr = atr(&high, &low, &close, atr_period, Some("SMMA"));
+        let atr = atr(&high, &low, &close, atr_period);
 
         let factor = 3.0;
         let expected_trend = vec![

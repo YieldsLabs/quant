@@ -27,7 +27,7 @@ impl Signal for RSIMaPullbackSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.close, self.rsi_period);
-        let rsi_ma = rsi.ma(self.smoothing_period);
+        let rsi_ma = rsi.smooth(Smooth::SMA, self.smoothing_period);
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
         let lower_neutrality = RSI_NEUTRALITY - self.threshold;
 

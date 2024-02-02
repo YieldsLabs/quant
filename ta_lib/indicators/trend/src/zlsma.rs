@@ -1,9 +1,9 @@
 use core::prelude::*;
 
 pub fn zlsma(source: &Series<f32>, period: usize) -> Series<f32> {
-    let lsma = source.linreg(period);
+    let lsma = source.smooth(Smooth::LSMA, period);
 
-    2. * &lsma - lsma.linreg(period)
+    2. * &lsma - lsma.smooth(Smooth::LSMA, period)
 }
 
 #[cfg(test)]

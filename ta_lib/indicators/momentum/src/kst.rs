@@ -12,10 +12,10 @@ pub fn kst(
     period_third: usize,
     period_fouth: usize,
 ) -> Series<f32> {
-    roc(source, roc_period_first).ma(period_first)
-        + (2. * roc(source, roc_period_second).ma(period_second))
-        + (3. * roc(source, roc_period_third).ma(period_third))
-        + (4. * roc(source, roc_period_fouth).ma(period_fouth))
+    roc(source, roc_period_first).smooth(Smooth::SMA, period_first)
+        + (2. * roc(source, roc_period_second).smooth(Smooth::SMA, period_second))
+        + (3. * roc(source, roc_period_third).smooth(Smooth::SMA, period_third))
+        + (4. * roc(source, roc_period_fouth).smooth(Smooth::SMA, period_fouth))
 }
 
 #[cfg(test)]

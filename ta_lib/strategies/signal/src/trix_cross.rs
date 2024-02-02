@@ -23,7 +23,7 @@ impl Signal for TRIXCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let trix = trix(&data.close, self.period);
-        let signal_line = trix.ma(self.signal_period);
+        let signal_line = trix.smooth(Smooth::SMA, self.signal_period);
 
         (
             trix.cross_over(&signal_line),

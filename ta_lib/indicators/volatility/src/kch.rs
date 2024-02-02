@@ -6,7 +6,7 @@ pub fn kch(
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = hlc3.ema(period);
+    let middle_band = hlc3.smooth(Smooth::EMA, period);
     let atr = atr * factor;
 
     let upper_band = &middle_band + &atr;
@@ -34,7 +34,7 @@ mod tests {
         ]);
         let period = 3;
         let atr_period = 3;
-        let atr = atr(&high, &low, &close, atr_period, None);
+        let atr = atr(&high, &low, &close, atr_period);
         let hlc3 = typical_price(&high, &low, &close);
         let factor = 2.0;
         let epsilon = 0.001;

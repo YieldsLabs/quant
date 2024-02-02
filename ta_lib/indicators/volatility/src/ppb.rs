@@ -10,7 +10,7 @@ pub fn ppb(
     let ppvih = high.std(period).highest(period) * factor;
     let ppvil = low.std(period).lowest(period) * factor;
 
-    let middle_band = close.ma(period);
+    let middle_band = close.smooth(Smooth::SMA, period);
 
     let upper_band = &middle_band + ppvih;
     let lower_band = &middle_band - ppvil;

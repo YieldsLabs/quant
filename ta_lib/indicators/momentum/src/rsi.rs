@@ -7,8 +7,8 @@ pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
     let len = source.len();
 
     let mom = source.change(1);
-    let up = mom.max(&ZERO).smma(period);
-    let down = mom.min(&ZERO).negate().smma(period);
+    let up = mom.max(&ZERO).smooth(Smooth::SMMA, period);
+    let down = mom.min(&ZERO).negate().smooth(Smooth::SMMA, period);
 
     let oneh = Series::fill(PERCENTAGE_SCALE, len);
 

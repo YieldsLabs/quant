@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn ao(hl2: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
-    hl2.ma(short_period) - hl2.ma(long_period)
+    hl2.smooth(Smooth::SMA, short_period) - hl2.smooth(Smooth::SMA, long_period)
 }
 
 #[cfg(test)]
