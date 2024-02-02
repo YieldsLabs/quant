@@ -30,11 +30,13 @@ impl Signal for AOSaucerSignal {
         (
             ao.sgt(&AO_ZERO)
                 & diff.sgt(&AO_ZERO)
+                & diff.sgt(&diff.shift(1))
                 & diff.shift(1).slt(&AO_ZERO)
                 & diff.shift(2).slt(&AO_ZERO)
                 & diff.shift(1).slt(&diff.shift(2)),
             ao.slt(&AO_ZERO)
                 & diff.slt(&AO_ZERO)
+                & diff.slt(&diff.shift(1))
                 & diff.shift(1).sgt(&AO_ZERO)
                 & diff.shift(2).sgt(&AO_ZERO)
                 & diff.shift(1).slt(&diff.shift(2)),
