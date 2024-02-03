@@ -34,9 +34,11 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
 
         risk_value = atr * self.config["risk_atr_multi"]
         tp_threshold = atr * self.config["tp_threshold"]
+        sl_threshold = atr * self.config["sl_threshold"]
 
         if side == PositionSide.LONG:
-            next_stop_loss = max(stop_loss_price, recent_low - risk_value)
+            if ohlcv.low >= entry_price + sl_threshold:
+                next_stop_loss = max(stop_loss_price, recent_low - risk_value)
 
             if ohlcv.high >= take_profit_price - tp_threshold:
                 next_take_profit = max(
@@ -46,7 +48,8 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
                 )
 
         elif side == PositionSide.SHORT:
-            next_stop_loss = min(stop_loss_price, recent_high + risk_value)
+            if ohlcv.high <= entry_price - sl_threshold:
+                next_stop_loss = min(stop_loss_price, recent_high + risk_value)
 
             if ohlcv.low <= take_profit_price + tp_threshold:
                 next_take_profit = min(
