@@ -199,7 +199,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
         stop_loss = np.random.choice(
-            [AtrStopLoss(multi=RandomParameter(0.85, 1.8, 0.15))]
+            [AtrStopLoss(multi=RandomParameter(1.2, 1.8, 0.15))]
         )
         exit_signal = np.random.choice(
             [
