@@ -49,7 +49,7 @@ pub enum SignalConfig {
         signal_period: f32,
     },
     Ma3Cross {
-        smoothing: f32,
+        ma: f32,
         short_period: f32,
         medium_period: f32,
         long_period: f32,
@@ -87,7 +87,7 @@ pub enum SignalConfig {
     Rsi2Ma {
         rsi_period: f32,
         threshold: f32,
-        smoothing: f32,
+        ma: f32,
         short_period: f32,
         long_period: f32,
     },
@@ -115,12 +115,12 @@ pub enum SignalConfig {
     },
     Dch2Ma {
         dch_period: f32,
-        smoothing: f32,
+        ma: f32,
         short_period: f32,
         long_period: f32,
     },
     TestGround {
-        smoothing: f32,
+        ma: f32,
         period: f32,
     },
     TrendCandle {
@@ -184,7 +184,7 @@ pub enum SignalConfig {
         signal_period: f32,
     },
     Quadruple {
-        smoothing: f32,
+        ma: f32,
         period: f32,
     },
     VwapCross {
@@ -224,12 +224,12 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             di_period,
         } => Box::new(DMICrossSignal::new(adx_period, di_period)),
         SignalConfig::Ma3Cross {
-            smoothing,
+            ma,
             short_period,
             medium_period,
             long_period,
         } => Box::new(MA3CrossSignal::new(
-            map_to_ma(smoothing as usize),
+            map_to_ma(ma as usize),
             short_period,
             medium_period,
             long_period,
@@ -272,13 +272,13 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::Rsi2Ma {
             rsi_period,
             threshold,
-            smoothing,
+            ma,
             short_period,
             long_period,
         } => Box::new(RSI2MASignal::new(
             rsi_period,
             threshold,
-            map_to_ma(smoothing as usize),
+            map_to_ma(ma as usize),
             short_period,
             long_period,
         )),
@@ -307,20 +307,19 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
         SignalConfig::Dch2Ma {
             dch_period,
-            smoothing,
+            ma,
             short_period,
             long_period,
         } => Box::new(DCH2MASignal::new(
             dch_period,
-            map_to_ma(smoothing as usize),
+            map_to_ma(ma as usize),
             short_period,
             long_period,
         )),
         SignalConfig::RocFlip { period } => Box::new(ROCFlipSignal::new(period)),
-        SignalConfig::TestGround { smoothing, period } => Box::new(TestingGroundSignal::new(
-            map_to_ma(smoothing as usize),
-            period,
-        )),
+        SignalConfig::TestGround { ma, period } => {
+            Box::new(TestingGroundSignal::new(map_to_ma(ma as usize), period))
+        }
         SignalConfig::TrendCandle { candle } => {
             Box::new(TrendCandleSignal::new(map_to_candle(candle as usize)))
         }
@@ -393,8 +392,8 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period,
             signal_period,
         } => Box::new(QSTICKCrossSignal::new(period, signal_period)),
-        SignalConfig::Quadruple { smoothing, period } => {
-            Box::new(QuadrupleSignal::new(map_to_ma(smoothing as usize), period))
+        SignalConfig::Quadruple { ma, period } => {
+            Box::new(QuadrupleSignal::new(map_to_ma(ma as usize), period))
         }
         SignalConfig::VwapCross { period } => Box::new(VWAPCrossSignal::new(period)),
         SignalConfig::KstCross {

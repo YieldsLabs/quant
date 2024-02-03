@@ -157,43 +157,43 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         baseline = np.random.choice(
             [
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.EMA),
+                    ma=StaticParameter(MovingAverageType.EMA),
                     period=StaticParameter(200.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.SMA),
+                    ma=StaticParameter(MovingAverageType.SMA),
                     period=StaticParameter(100.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.HMA),
+                    ma=StaticParameter(MovingAverageType.HMA),
                     period=StaticParameter(85.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.KIJUN),
+                    ma=StaticParameter(MovingAverageType.KIJUN),
                     period=StaticParameter(26.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.KIJUN),
+                    ma=StaticParameter(MovingAverageType.KIJUN),
                     period=StaticParameter(50.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.T3),
+                    ma=StaticParameter(MovingAverageType.T3),
                     period=StaticParameter(66.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.GMA),
+                    ma=StaticParameter(MovingAverageType.GMA),
                     period=StaticParameter(10.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.KAMA),
+                    ma=StaticParameter(MovingAverageType.KAMA),
                     period=StaticParameter(20.0),
                 ),
                 MaBaseLine(
-                    smoothing=StaticParameter(MovingAverageType.ZLSMA),
+                    ma=StaticParameter(MovingAverageType.ZLSMA),
                     period=StaticParameter(75.0),
                 ),
                 MaBaseLine(
-                    smoothing=CategoricalParameter(MovingAverageType),
+                    ma=CategoricalParameter(MovingAverageType),
                     period=RandomParameter(20.0, 200.0, 10.0),
                 ),
             ]

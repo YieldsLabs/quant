@@ -3,14 +3,14 @@ use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct TestingGroundSignal {
-    smoothing: MovingAverageType,
+    ma: MovingAverageType,
     period: usize,
 }
 
 impl TestingGroundSignal {
-    pub fn new(smoothing: MovingAverageType, period: f32) -> Self {
+    pub fn new(ma: MovingAverageType, period: f32) -> Self {
         Self {
-            smoothing,
+            ma,
             period: period as usize,
         }
     }
@@ -22,7 +22,7 @@ impl Signal for TestingGroundSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.smoothing, data, self.period);
+        let ma = ma_indicator(&self.ma, data, self.period);
         let long_signal = data.low.slt(&ma)
             & data.low.shift(1).slt(&ma.shift(1))
             & data.low.shift(2).slt(&ma.shift(2))

@@ -5,7 +5,7 @@ use volatility::dch;
 
 pub struct DCH2MASignal {
     dch_period: usize,
-    smoothing: MovingAverageType,
+    ma: MovingAverageType,
     short_period: usize,
     long_period: usize,
 }
@@ -13,13 +13,13 @@ pub struct DCH2MASignal {
 impl DCH2MASignal {
     pub fn new(
         dch_period: f32,
-        smoothing: MovingAverageType,
+        ma: MovingAverageType,
         short_period: f32,
         long_period: f32,
     ) -> Self {
         Self {
             dch_period: dch_period as usize,
-            smoothing,
+            ma,
             short_period: short_period as usize,
             long_period: long_period as usize,
         }
@@ -34,8 +34,8 @@ impl Signal for DCH2MASignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (upper_band, _, lower_band) = dch(&data.high, &data.low, self.dch_period);
-        let ma_short = ma_indicator(&self.smoothing, data, self.short_period);
-        let ma_long = ma_indicator(&self.smoothing, data, self.long_period);
+        let ma_short = ma_indicator(&self.ma, data, self.short_period);
+        let ma_long = ma_indicator(&self.ma, data, self.long_period);
 
         (
             data.close.sgt(&upper_band.shift(1)) & ma_short.sgt(&ma_long),

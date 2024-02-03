@@ -3,14 +3,14 @@ use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct MAExit {
-    smoothing: MovingAverageType,
+    ma: MovingAverageType,
     period: usize,
 }
 
 impl MAExit {
-    pub fn new(smoothing: MovingAverageType, period: f32) -> Self {
+    pub fn new(ma: MovingAverageType, period: f32) -> Self {
         Self {
-            smoothing,
+            ma,
             period: period as usize,
         }
     }
@@ -22,7 +22,7 @@ impl Exit for MAExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.smoothing, data, self.period);
+        let ma = ma_indicator(&self.ma, data, self.period);
 
         (ma.cross_over(&data.close), ma.cross_under(&data.close))
     }

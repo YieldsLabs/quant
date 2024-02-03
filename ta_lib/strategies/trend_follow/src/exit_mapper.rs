@@ -18,7 +18,7 @@ pub enum ExitConfig {
         period: f32,
     },
     Ma {
-        smoothing: f32,
+        ma: f32,
         period: f32,
     },
     Rsi {
@@ -43,9 +43,7 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
         ExitConfig::Dumb {} => Box::new(DumbExit {}),
         ExitConfig::Pattern { period } => Box::new(PatternExit::new(period)),
         ExitConfig::HighLow { period } => Box::new(HighLowExit::new(period)),
-        ExitConfig::Ma { smoothing, period } => {
-            Box::new(MAExit::new(map_to_ma(smoothing as usize), period))
-        }
+        ExitConfig::Ma { ma, period } => Box::new(MAExit::new(map_to_ma(ma as usize), period)),
         ExitConfig::Rsi { period, threshold } => Box::new(RSIExit::new(period, threshold)),
     }
 }

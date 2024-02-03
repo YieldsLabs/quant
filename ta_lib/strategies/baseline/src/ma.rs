@@ -3,14 +3,14 @@ use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
 pub struct MABaseLine {
-    smoothing: MovingAverageType,
+    ma: MovingAverageType,
     period: usize,
 }
 
 impl MABaseLine {
-    pub fn new(smoothing: MovingAverageType, period: f32) -> Self {
+    pub fn new(ma: MovingAverageType, period: f32) -> Self {
         Self {
-            smoothing,
+            ma,
             period: period as usize,
         }
     }
@@ -22,7 +22,7 @@ impl BaseLine for MABaseLine {
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.smoothing, data, self.period);
+        let ma = ma_indicator(&self.ma, data, self.period);
 
         (ma.slt(&data.close), ma.sgt(&data.close))
     }

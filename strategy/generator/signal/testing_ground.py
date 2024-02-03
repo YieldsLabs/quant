@@ -9,5 +9,5 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class TestingGroundSignal(Signal):
     type: SignalType = SignalType.TestGround
-    smoothing: Parameter = CategoricalParameter(MovingAverageType)
+    ma: Parameter = CategoricalParameter(MovingAverageType)
     period: Parameter = StaticParameter(100.0)
