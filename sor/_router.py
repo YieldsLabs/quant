@@ -106,8 +106,6 @@ class SmartRouter(AbstractEventManager):
         order_timestamps = {}
 
         for price in self.algo_price.calculate(symbol, self.exchange):
-            logging.info(f"Trying to open order: {price}")
-
             current_distance_to_stop_loss = abs(stop_loss - price)
 
             threshold_breach = (
@@ -125,10 +123,25 @@ class SmartRouter(AbstractEventManager):
                 if num_order_breach >= self.config["max_order_breach"]:
                     break
 
+            spread = (
+                price - entry_price
+                if position.side == PositionSide.LONG
+                else entry_price - price
+            )
+
+            spread_percentage = (spread / entry_price) * 100
+
+            logging.info(
+                f"Trying to open order -> algo price: {price}, theo price: {entry_price}, spread: {spread_percentage}%"
+            )
+
             for order_id in list(order_timestamps.keys()):
                 if self.exchange.has_order(order_id, symbol):
                     order_timestamps.pop(order_id)
                     order_counter += 1
+
+            if spread_percentage > 1.5:
+                break
 
             curr_time = time.time()
             expired_orders = [
@@ -178,7 +191,7 @@ class SmartRouter(AbstractEventManager):
             spread_percentage = (spread / exit_price) * 100
 
             logging.info(
-                f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread_percentage} %"
+                f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread_percentage}%"
             )
 
             for order_id in list(order_timestamps.keys()):
