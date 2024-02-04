@@ -7,6 +7,7 @@ import numpy as np
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
+from core.models.smooth import Smooth
 from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -237,7 +238,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     AoFlipSignal(),
-                    MacdFlipSignal(),
+                    MacdFlipSignal(smooth_type=StaticParameter(Smooth.EMA)),
+                    MacdFlipSignal(smooth_type=StaticParameter(Smooth.KAMA)),
+                    MacdFlipSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
                     SupertrendFlipSignal(),
                     RocFlipSignal(),
                     TrixFlipSignal(),
@@ -262,7 +265,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                         medium_period=ma_medium_period,
                         long_period=ma_long_period,
                     ),
-                    MacdCrossSignal(),
+                    MacdCrossSignal(smooth_type=StaticParameter(Smooth.EMA)),
+                    MacdCrossSignal(smooth_type=StaticParameter(Smooth.KAMA)),
+                    MacdCrossSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
                     TiiCrossSignal(),
                     RsiNautralityCrossSignal(),
                     TsiCrossSignal(),
@@ -293,7 +298,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return np.random.choice(
             [
                 AoSaucerSignal(),
-                MacdColorSwitchSignal(),
+                MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.EMA)),
+                MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
+                MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.KAMA)),
                 TrendCandleSignal(),
                 SnatrSignal(),
                 RsiNautralityRejectionSignal(),

@@ -1,6 +1,7 @@
 use crate::iff;
 use crate::series::Series;
 
+#[derive(Copy, Clone)]
 pub enum Smooth {
     EMA,
     SMA,

@@ -2,14 +2,15 @@ use core::prelude::*;
 
 pub fn macd(
     source: &Series<f32>,
+    smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let macd_line =
-        source.smooth(Smooth::EMA, fast_period) - source.smooth(Smooth::EMA, slow_period);
+        source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period);
 
-    let signal_line = macd_line.smooth(Smooth::EMA, signal_period);
+    let signal_line = macd_line.smooth(smooth_type, signal_period);
 
     let histogram = &macd_line - &signal_line;
 
@@ -38,8 +39,13 @@ mod tests {
             0.0, 0.1999, 0.3533, 0.4175, 0.4125, 0.068, -0.2222, -0.381, -0.4295, -0.4096,
         ];
 
-        let (macd_line, signal_line, histogram) =
-            macd(&source, fast_period, slow_period, signal_period);
+        let (macd_line, signal_line, histogram) = macd(
+            &source,
+            Smooth::EMA,
+            fast_period,
+            slow_period,
+            signal_period,
+        );
 
         let result_macd_line: Vec<f32> = macd_line.into();
         let result_signal_line: Vec<f32> = signal_line.into();

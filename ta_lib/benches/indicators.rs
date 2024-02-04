@@ -226,13 +226,14 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth = Smooth::EMA;
                 let fast_period = 15;
                 let slow_period = 26;
                 let signal_period = 9;
-                (source, fast_period, slow_period, signal_period)
+                (source, smooth, fast_period, slow_period, signal_period)
             },
-            |(source, fast_period, slow_period, signal_period)| {
-                macd(source, *fast_period, *slow_period, *signal_period)
+            |(source, smooth, fast_period, slow_period, signal_period)| {
+                macd(source, *smooth, *fast_period, *slow_period, *signal_period)
             },
             criterion::BatchSize::SmallInput,
         )

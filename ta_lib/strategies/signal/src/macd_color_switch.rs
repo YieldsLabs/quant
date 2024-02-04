@@ -5,14 +5,21 @@ use momentum::macd;
 const ZERO_LINE: f32 = 0.0;
 
 pub struct MACDColorSwitchSignal {
+    smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
 }
 
 impl MACDColorSwitchSignal {
-    pub fn new(fast_period: f32, slow_period: f32, signal_period: f32) -> Self {
+    pub fn new(
+        smooth_type: Smooth,
+        fast_period: f32,
+        slow_period: f32,
+        signal_period: f32,
+    ) -> Self {
         Self {
+            smooth_type,
             fast_period: fast_period as usize,
             slow_period: slow_period as usize,
             signal_period: signal_period as usize,
@@ -29,6 +36,7 @@ impl Signal for MACDColorSwitchSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (_, _, histogram) = macd(
             &data.close,
+            self.smooth_type,
             self.fast_period,
             self.slow_period,
             self.signal_period,

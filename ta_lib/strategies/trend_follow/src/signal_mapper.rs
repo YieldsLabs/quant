@@ -1,5 +1,6 @@
 use crate::candle_mapper::map_to_candle;
 use crate::ma_mapper::map_to_ma;
+use crate::smooth_mapper::map_to_smooth;
 use base::Signal;
 use serde::Deserialize;
 use signal::*;
@@ -55,16 +56,19 @@ pub enum SignalConfig {
         long_period: f32,
     },
     MacdFlip {
+        smooth_type: f32,
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
     },
     MacdCross {
+        smooth_type: f32,
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
     },
     MacdColorSwitch {
+        smooth_type: f32,
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
@@ -235,24 +239,34 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             long_period,
         )),
         SignalConfig::MacdFlip {
+            smooth_type,
             fast_period,
             slow_period,
             signal_period,
-        } => Box::new(MACDFlipSignal::new(fast_period, slow_period, signal_period)),
+        } => Box::new(MACDFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
+            fast_period,
+            slow_period,
+            signal_period,
+        )),
         SignalConfig::MacdCross {
+            smooth_type,
             fast_period,
             slow_period,
             signal_period,
         } => Box::new(MACDCrossSignal::new(
+            map_to_smooth(smooth_type as usize),
             fast_period,
             slow_period,
             signal_period,
         )),
         SignalConfig::MacdColorSwitch {
+            smooth_type,
             fast_period,
             slow_period,
             signal_period,
         } => Box::new(MACDColorSwitchSignal::new(
+            map_to_smooth(smooth_type as usize),
             fast_period,
             slow_period,
             signal_period,
