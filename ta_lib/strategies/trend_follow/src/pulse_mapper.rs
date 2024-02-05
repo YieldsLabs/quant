@@ -1,3 +1,4 @@
+use crate::smooth_mapper::map_to_smooth;
 use base::prelude::*;
 use pulse::*;
 use serde::Deserialize;
@@ -11,6 +12,7 @@ pub enum PulseConfig {
         threshold: f32,
     },
     Braid {
+        smooth_type: f32,
         period_one: f32,
         period_two: f32,
         period_three: f32,
@@ -39,12 +41,14 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             threshold,
         } => Box::new(ADXPulse::new(adx_period, di_period, threshold)),
         PulseConfig::Braid {
+            smooth_type,
             period_one,
             period_two,
             period_three,
             strength,
             atr_period,
         } => Box::new(BraidPulse::new(
+            map_to_smooth(smooth_type as usize),
             period_one,
             period_two,
             period_three,

@@ -1,7 +1,11 @@
 use base::prelude::*;
 use core::prelude::*;
 
+const ONE: f32 = 1.;
+const MINUS_ONE: f32 = -1.;
+
 pub struct BraidPulse {
+    smooth_type: Smooth,
     period_one: usize,
     period_two: usize,
     period_three: usize,
@@ -11,6 +15,7 @@ pub struct BraidPulse {
 
 impl BraidPulse {
     pub fn new(
+        smooth_type: Smooth,
         period_one: f32,
         period_two: f32,
         period_three: f32,
@@ -18,6 +23,7 @@ impl BraidPulse {
         atr_period: f32,
     ) -> Self {
         Self {
+            smooth_type,
             period_one: period_one as usize,
             period_two: period_two as usize,
             period_three: period_three as usize,
@@ -34,9 +40,9 @@ impl Pulse for BraidPulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma_one = data.close.smooth(Smooth::EMA, self.period_one);
-        let ma_two = data.open.smooth(Smooth::EMA, self.period_two);
-        let ma_three = data.close.smooth(Smooth::EMA, self.period_three);
+        let ma_one = data.close.smooth(self.smooth_type, self.period_one);
+        let ma_two = data.open.smooth(self.smooth_type, self.period_two);
+        let ma_three = data.close.smooth(self.smooth_type, self.period_three);
         let filter = data.atr(self.atr_period) * self.strength / 100.0;
 
         let max = ma_one.max(&ma_two).max(&ma_three);
@@ -51,7 +57,7 @@ impl Pulse for BraidPulse {
             Series::one(len),
             iff!(
                 ma_one.slt(&ma_two),
-                Series::fill(-1.0, len),
+                Series::fill(MINUS_ONE, len),
                 Series::zero(len)
             )
         );
@@ -59,8 +65,8 @@ impl Pulse for BraidPulse {
         let prev_regime = regime.shift(1);
 
         (
-            prev_regime.sne(&1.0) & regime.seq(&1.0) & diff.sgt(&filter),
-            prev_regime.sne(&-1.0) & regime.seq(&-1.0) & diff.sgt(&filter),
+            prev_regime.sne(&ONE) & regime.seq(&ONE) & diff.sgt(&filter),
+            prev_regime.sne(&MINUS_ONE) & regime.seq(&MINUS_ONE) & diff.sgt(&filter),
         )
     }
 }
