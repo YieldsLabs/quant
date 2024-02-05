@@ -13,6 +13,7 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from strategy.generator.confirm.rsi import RsiConfirm
 from strategy.generator.confirm.stc import StcConfirm
+from strategy.generator.signal.macd_bb import MacdBbSignal
 from strategy.generator.signal.rsi_supertrend import RsiSupertrendSignal
 
 from .baseline.ma import MaBaseLine
@@ -298,6 +299,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return np.random.choice(
             [
                 AoSaucerSignal(),
+                MacdBbSignal(),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.EMA)),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.KAMA)),

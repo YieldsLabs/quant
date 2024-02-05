@@ -73,6 +73,14 @@ pub enum SignalConfig {
         slow_period: f32,
         signal_period: f32,
     },
+    MacdBb {
+        smooth_type: f32,
+        fast_period: f32,
+        slow_period: f32,
+        signal_period: f32,
+        bb_period: f32,
+        factor: f32,
+    },
     RocFlip {
         period: f32,
     },
@@ -103,6 +111,7 @@ pub enum SignalConfig {
     },
     RsiMaPullback {
         rsi_period: f32,
+        smooth_type: f32,
         smoothing_period: f32,
         threshold: f32,
     },
@@ -271,6 +280,21 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             slow_period,
             signal_period,
         )),
+        SignalConfig::MacdBb {
+            smooth_type,
+            fast_period,
+            slow_period,
+            signal_period,
+            bb_period,
+            factor,
+        } => Box::new(MACDBBSignal::new(
+            map_to_smooth(smooth_type as usize),
+            fast_period,
+            slow_period,
+            signal_period,
+            bb_period,
+            factor,
+        )),
         SignalConfig::RsiNeutralityCross {
             rsi_period,
             threshold,
@@ -306,10 +330,12 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         )),
         SignalConfig::RsiMaPullback {
             rsi_period,
+            smooth_type,
             smoothing_period,
             threshold,
         } => Box::new(RSIMaPullbackSignal::new(
             rsi_period,
+            map_to_smooth(smooth_type as usize),
             smoothing_period,
             threshold,
         )),

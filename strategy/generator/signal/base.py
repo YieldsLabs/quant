@@ -17,6 +17,7 @@ class SignalType(Enum):
     HighLow = "HighLow"
     Ma3Cross = "Ma3Cross"
     MacdFlip = "MacdFlip"
+    MacdBb = "MacdBb"
     MacdCross = "MacdCross"
     MacdColorSwitch = "MacdColorSwitch"
     RsiNeutralityCross = "RsiNeutralityCross"
