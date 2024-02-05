@@ -109,11 +109,12 @@ fn momentum(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let hlc3 = typical_price(&high, &low, &close);
+                let smooth_type = Smooth::SMA;
                 let period = 14;
                 let factor = 0.015;
-                (hlc3, period, factor)
+                (hlc3, smooth_type, period, factor)
             },
-            |(hlc3, period, factor)| cci(hlc3, *period, *factor),
+            |(hlc3, smooth_type, period, factor)| cci(hlc3, *smooth_type, *period, *factor),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -815,12 +816,13 @@ fn volatility(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let close = Series::from(&close);
+                let smooth_type = Smooth::SMA;
                 let period = 14;
                 let factor = 3.0;
 
-                (close, period, factor)
+                (close, smooth_type, period, factor)
             },
-            |(close, period, factor)| bb(close, *period, *factor),
+            |(close, smooth_type, period, factor)| bb(close, *smooth_type, *period, *factor),
             criterion::BatchSize::SmallInput,
         )
     });

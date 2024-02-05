@@ -2,10 +2,11 @@ use core::prelude::*;
 
 pub fn bb(
     source: &Series<f32>,
+    smooth_type: Smooth,
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = source.smooth(Smooth::SMA, period);
+    let middle_band = source.smooth(smooth_type, period);
     let std_mul = source.std(period) * factor;
 
     let upper_band = &middle_band + &std_mul;
@@ -34,7 +35,7 @@ mod tests {
             4.367007,
         ];
 
-        let (upper_band, middle_band, lower_band) = bb(&source, period, factor);
+        let (upper_band, middle_band, lower_band) = bb(&source, Smooth::SMA, period, factor);
 
         let result_upper_band: Vec<f32> = upper_band.into();
         let result_middle_band: Vec<f32> = middle_band.into();
