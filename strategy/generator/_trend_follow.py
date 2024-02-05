@@ -239,6 +239,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     AoFlipSignal(),
+                    MacdFlipSignal(
+                        smooth_type=StaticParameter(Smooth.SMA),
+                        fast_period=StaticParameter(3.0),
+                        slow_period=StaticParameter(10.0),
+                        signal_period=StaticParameter(16.0),
+                    ),
                     MacdFlipSignal(smooth_type=StaticParameter(Smooth.EMA)),
                     MacdFlipSignal(smooth_type=StaticParameter(Smooth.KAMA)),
                     MacdFlipSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
@@ -265,6 +271,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                         short_period=ma_short_period,
                         medium_period=ma_medium_period,
                         long_period=ma_long_period,
+                    ),
+                    MacdCrossSignal(
+                        smooth_type=StaticParameter(Smooth.SMA),
+                        fast_period=StaticParameter(3.0),
+                        slow_period=StaticParameter(10.0),
+                        signal_period=StaticParameter(16.0),
                     ),
                     MacdCrossSignal(smooth_type=StaticParameter(Smooth.EMA)),
                     MacdCrossSignal(smooth_type=StaticParameter(Smooth.KAMA)),
@@ -300,6 +312,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 AoSaucerSignal(),
                 MacdBbSignal(),
+                MacdColorSwitchSignal(
+                    smooth_type=StaticParameter(Smooth.SMA),
+                    fast_period=StaticParameter(3.0),
+                    slow_period=StaticParameter(10.0),
+                    signal_period=StaticParameter(16.0),
+                ),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.EMA)),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.KAMA)),
