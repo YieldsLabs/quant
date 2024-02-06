@@ -6,14 +6,16 @@ const LOWER_LINE: f32 = 20.0;
 const UPPER_LINE: f32 = 80.0;
 
 pub struct StochCrossSignal {
+    smooth_type: Smooth,
     period: usize,
     k_period: usize,
     d_period: usize,
 }
 
 impl StochCrossSignal {
-    pub fn new(period: f32, k_period: f32, d_period: f32) -> Self {
+    pub fn new(smooth_type: Smooth, period: f32, k_period: f32, d_period: f32) -> Self {
         Self {
+            smooth_type,
             period: period as usize,
             k_period: k_period as usize,
             d_period: d_period as usize,
@@ -32,6 +34,7 @@ impl Signal for StochCrossSignal {
             &data.high,
             &data.low,
             &data.close,
+            self.smooth_type,
             self.period,
             self.k_period,
             self.d_period,

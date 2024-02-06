@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::kst;
 
 pub struct KSTCrossSignal {
+    smooth_type: Smooth,
     roc_period_first: usize,
     roc_period_second: usize,
     roc_period_third: usize,
@@ -16,6 +17,7 @@ pub struct KSTCrossSignal {
 
 impl KSTCrossSignal {
     pub fn new(
+        smooth_type: Smooth,
         roc_period_first: f32,
         roc_period_second: f32,
         roc_period_third: f32,
@@ -27,6 +29,7 @@ impl KSTCrossSignal {
         signal_period: f32,
     ) -> Self {
         Self {
+            smooth_type,
             roc_period_first: roc_period_first as usize,
             roc_period_second: roc_period_second as usize,
             roc_period_third: roc_period_third as usize,
@@ -55,6 +58,7 @@ impl Signal for KSTCrossSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let kst = kst(
             &data.close,
+            self.smooth_type,
             self.roc_period_first,
             self.roc_period_second,
             self.roc_period_third,

@@ -7,6 +7,7 @@ pub fn dmi(
     high: &Series<f32>,
     low: &Series<f32>,
     atr: &Series<f32>,
+    smooth_type: Smooth,
     adx_period: usize,
     di_period: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
@@ -20,14 +21,14 @@ pub fn dmi(
     let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
     let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
 
-    let di_plus = PERCENTAGE_SCALE * dm_plus.smooth(Smooth::SMMA, di_period) / atr;
-    let di_minus = PERCENTAGE_SCALE * dm_minus.smooth(Smooth::SMMA, di_period) / atr;
+    let di_plus = PERCENTAGE_SCALE * dm_plus.smooth(smooth_type, di_period) / atr;
+    let di_minus = PERCENTAGE_SCALE * dm_minus.smooth(smooth_type, di_period) / atr;
 
     let sum = &di_plus + &di_minus;
 
     let adx = PERCENTAGE_SCALE
         * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum))
-            .smooth(Smooth::SMMA, adx_period);
+            .smooth(smooth_type, adx_period);
 
     (adx, di_plus, di_minus)
 }
@@ -56,7 +57,7 @@ mod tests {
         ]);
         let adx_period = 3;
         let di_period = 3;
-        let atr = atr(&high, &low, &close, adx_period);
+        let atr = atr(&high, &low, &close, Smooth::SMMA, adx_period);
 
         let expected_adx = [
             0.0, 33.333336, 55.555557, 70.37037, 61.10112, 54.921627, 50.801956, 38.320854,
@@ -77,7 +78,7 @@ mod tests {
         ];
 
         let (result_adx, result_di_plus, result_di_minus) =
-            dmi(&high, &low, &atr, adx_period, di_period);
+            dmi(&high, &low, &atr, Smooth::SMMA, adx_period, di_period);
 
         let adx: Vec<f32> = result_adx.into();
         let di_plus: Vec<f32> = result_di_plus.into();

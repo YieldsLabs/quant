@@ -76,11 +76,12 @@ fn momentum(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
+                let smooth_type = Smooth::SMA;
                 let smoothing_period = 14;
-                (open, high, low, close, smoothing_period)
+                (open, high, low, close, smooth_type, smoothing_period)
             },
-            |(open, high, low, close, smoothing_period)| {
-                bop(open, high, low, close, *smoothing_period)
+            |(open, high, low, close, smooth_type, smoothing_period)| {
+                bop(open, high, low, close, *smooth_type, *smoothing_period)
             },
             criterion::BatchSize::SmallInput,
         )
@@ -90,13 +91,26 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::WMA;
                 let short_period = 20;
                 let long_period = 15;
                 let smoothing_period = 13;
-                (source, short_period, long_period, smoothing_period)
+                (
+                    source,
+                    smooth_type,
+                    short_period,
+                    long_period,
+                    smoothing_period,
+                )
             },
-            |(source, short_period, long_period, smoothing_period)| {
-                cc(source, *short_period, *long_period, *smoothing_period)
+            |(source, smooth_type, short_period, long_period, smoothing_period)| {
+                cc(
+                    source,
+                    *short_period,
+                    *long_period,
+                    *smooth_type,
+                    *smoothing_period,
+                )
             },
             criterion::BatchSize::SmallInput,
         )
@@ -147,10 +161,11 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::WMA;
                 let period = 14;
-                (source, period)
+                (source, smooth_type, period)
             },
-            |(source, period)| di(source, *period),
+            |(source, smooth_type, period)| di(source, *smooth_type, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -161,12 +176,15 @@ fn momentum(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
+                let smooth_type = Smooth::SMMA;
                 let adx_period = 14;
                 let di_period = 14;
-                let atr = atr(&high, &low, &close, di_period);
-                (high, low, atr, adx_period, di_period)
+                let atr = atr(&high, &low, &close, Smooth::SMMA, di_period);
+                (high, low, atr, smooth_type, adx_period, di_period)
             },
-            |(high, low, atr, adx_period, di_period)| dmi(high, low, atr, *adx_period, *di_period),
+            |(high, low, atr, smooth_type, adx_period, di_period)| {
+                dmi(high, low, atr, *smooth_type, *adx_period, *di_period)
+            },
             criterion::BatchSize::SmallInput,
         )
     });
@@ -175,6 +193,7 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::SMA;
                 let roc_period_first = 10;
                 let roc_period_second = 15;
                 let roc_period_third = 20;
@@ -186,6 +205,7 @@ fn momentum(c: &mut Criterion) {
 
                 (
                     source,
+                    smooth_type,
                     roc_period_first,
                     roc_period_second,
                     roc_period_third,
@@ -198,6 +218,7 @@ fn momentum(c: &mut Criterion) {
             },
             |(
                 source,
+                smooth_type,
                 roc_period_first,
                 roc_period_second,
                 roc_period_third,
@@ -209,6 +230,7 @@ fn momentum(c: &mut Criterion) {
             )| {
                 kst(
                     source,
+                    *smooth_type,
                     *roc_period_first,
                     *roc_period_second,
                     *roc_period_third,
@@ -256,10 +278,11 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::SMMA;
                 let period = 14;
-                (source, period)
+                (source, smooth_type, period)
             },
-            |(source, period)| rsi(source, *period),
+            |(source, smooth_type, period)| rsi(source, *smooth_type, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -268,16 +291,26 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::EMA;
                 let fast_period = 23;
                 let slow_period = 50;
                 let cycle = 10;
                 let d_first = 3;
                 let d_second = 3;
-                (source, fast_period, slow_period, cycle, d_first, d_second)
+                (
+                    source,
+                    smooth_type,
+                    fast_period,
+                    slow_period,
+                    cycle,
+                    d_first,
+                    d_second,
+                )
             },
-            |(source, fast_period, slow_period, cycle, d_first, d_second)| {
+            |(source, smooth_type, fast_period, slow_period, cycle, d_first, d_second)| {
                 stc(
                     source,
+                    *smooth_type,
                     *fast_period,
                     *slow_period,
                     *cycle,
@@ -295,13 +328,22 @@ fn momentum(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
+                let smooth_type = Smooth::SMA;
                 let period = 14;
                 let k_period = 5;
                 let d_period = 5;
-                (high, low, close, period, k_period, d_period)
+                (high, low, close, smooth_type, period, k_period, d_period)
             },
-            |(high, low, close, period, k_period, d_period)| {
-                stochosc(high, low, close, *period, *k_period, *d_period)
+            |(high, low, close, smooth_type, period, k_period, d_period)| {
+                stochosc(
+                    high,
+                    low,
+                    close,
+                    *smooth_type,
+                    *period,
+                    *k_period,
+                    *d_period,
+                )
             },
             criterion::BatchSize::SmallInput,
         )
@@ -311,11 +353,14 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::SMA;
                 let major_period = 30;
                 let minor_period = 10;
-                (source, major_period, minor_period)
+                (source, smooth_type, major_period, minor_period)
             },
-            |(source, major_period, minor_period)| tii(source, *major_period, *minor_period),
+            |(source, smooth_type, major_period, minor_period)| {
+                tii(source, *smooth_type, *major_period, *minor_period)
+            },
             criterion::BatchSize::SmallInput,
         )
     });
@@ -324,10 +369,11 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::EMA;
                 let period = 18;
-                (source, period)
+                (source, smooth_type, period)
             },
-            |(source, period)| trix(source, *period),
+            |(source, smooth_type, period)| trix(source, *smooth_type, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -336,11 +382,14 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::EMA;
                 let long_period = 25;
                 let short_period = 13;
-                (source, long_period, short_period)
+                (source, smooth_type, long_period, short_period)
             },
-            |(source, long_period, short_period)| tsi(source, *long_period, *short_period),
+            |(source, smooth_type, long_period, short_period)| {
+                tsi(source, *smooth_type, *long_period, *short_period)
+            },
             criterion::BatchSize::SmallInput,
         )
     });
@@ -413,7 +462,7 @@ fn trend(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period);
+                let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
                 let factor = 3.0;
 
                 (close, atr, factor)
@@ -430,7 +479,7 @@ fn trend(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period);
+                let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
                 let factor = 3.0;
                 let period = 20;
 
@@ -448,7 +497,7 @@ fn trend(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period);
+                let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
                 let period = 20;
 
                 (high, low, atr, period)
@@ -475,11 +524,12 @@ fn trend(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
+                let smooth_type = Smooth::SMA;
                 let period = 20;
 
-                (source, period)
+                (source, smooth_type, period)
             },
-            |(source, period)| dpo(source, *period),
+            |(source, smooth_type, period)| dpo(source, *smooth_type, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -596,11 +646,12 @@ fn trend(c: &mut Criterion) {
             || {
                 let open = Series::from(&open);
                 let close = Series::from(&close);
+                let smooth_type = Smooth::EMA;
                 let period = 20;
 
-                (open, close, period)
+                (open, close, smooth_type, period)
             },
-            |(open, close, period)| qstick(open, close, *period),
+            |(open, close, smooth_type, period)| qstick(open, close, *smooth_type, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -665,7 +716,7 @@ fn trend(c: &mut Criterion) {
                 let close = Series::from(&close);
                 let hl2 = median_price(&high, &low);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period);
+                let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
                 let factor = 3.0;
 
                 (hl2, close, atr, factor)
@@ -803,11 +854,12 @@ fn volatility(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
+                let smooth_type = Smooth::SMMA;
                 let period = 14;
 
-                (high, low, close, period)
+                (high, low, close, smooth_type, period)
             },
-            |(high, low, close, period)| atr(high, low, close, *period),
+            |(high, low, close, smooth_type, period)| atr(high, low, close, *smooth_type, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -863,13 +915,16 @@ fn volatility(c: &mut Criterion) {
                 let close = Series::from(&close);
                 let hlc3 = typical_price(&high, &low, &close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period);
+                let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
+                let smooth_type = Smooth::EMA;
                 let period = 14;
                 let factor = 3.0;
 
-                (hlc3, atr, period, factor)
+                (hlc3, atr, smooth_type, period, factor)
             },
-            |(hlc3, atr, period, factor)| kch(hlc3, atr, *period, *factor),
+            |(hlc3, atr, smooth_type, period, factor)| {
+                kch(hlc3, atr, *smooth_type, *period, *factor)
+            },
             criterion::BatchSize::SmallInput,
         )
     });
@@ -880,12 +935,15 @@ fn volatility(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let close = Series::from(&close);
+                let smooth_type = Smooth::SMA;
                 let period = 14;
                 let factor = 3.0;
 
-                (high, low, close, period, factor)
+                (high, low, close, smooth_type, period, factor)
             },
-            |(high, low, close, period, factor)| ppb(high, low, close, *period, *factor),
+            |(high, low, close, smooth_type, period, factor)| {
+                ppb(high, low, close, *smooth_type, *period, *factor)
+            },
             criterion::BatchSize::SmallInput,
         )
     });
@@ -897,12 +955,15 @@ fn volatility(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let atr_period = 14;
-                let atr = atr(&high, &low, &close, atr_period);
+                let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
+                let smooth_type = Smooth::WMA;
                 let smoothing_period = 3;
 
-                (atr, atr_period, smoothing_period)
+                (atr, atr_period, smooth_type, smoothing_period)
             },
-            |(atr, atr_period, smoothing_period)| snatr(atr, *atr_period, *smoothing_period),
+            |(atr, atr_period, smooth_type, smoothing_period)| {
+                snatr(atr, *atr_period, *smooth_type, *smoothing_period)
+            },
             criterion::BatchSize::SmallInput,
         )
     });
@@ -983,13 +1044,14 @@ fn volume(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let volume = Series::from(&volume);
                 let hl2 = median_price(&high, &low);
+                let smooth_type = Smooth::SMA;
                 let period = 14;
                 let divisor = 10000.0;
 
-                (hl2, high, low, volume, period, divisor)
+                (hl2, high, low, volume, smooth_type, period, divisor)
             },
-            |(hl2, high, low, volume, period, divisor)| {
-                eom(hl2, high, low, volume, *period, *divisor)
+            |(hl2, high, low, volume, smooth_type, period, divisor)| {
+                eom(hl2, high, low, volume, *smooth_type, *period, *divisor)
             },
             criterion::BatchSize::SmallInput,
         )
@@ -1031,10 +1093,13 @@ fn volume(c: &mut Criterion) {
                 let volume = Series::from(&volume);
                 let short_period = 5;
                 let long_period = 10;
+                let smooth_type = Smooth::EMA;
 
-                (volume, short_period, long_period)
+                (volume, smooth_type, short_period, long_period)
             },
-            |(volume, short_period, long_period)| vo(volume, *short_period, *long_period),
+            |(volume, smooth_type, short_period, long_period)| {
+                vo(volume, *smooth_type, *short_period, *long_period)
+            },
             criterion::BatchSize::SmallInput,
         )
     });

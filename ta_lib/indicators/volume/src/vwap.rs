@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-pub fn vwap(hlc3: &Series<f32>, volume: &Series<f32>) -> Series<f32> {
-    (hlc3 * volume).cumsum() / volume.cumsum()
+pub fn vwap(source: &Series<f32>, volume: &Series<f32>) -> Series<f32> {
+    (source * volume).cumsum() / volume.cumsum()
 }
 
 #[cfg(test)]

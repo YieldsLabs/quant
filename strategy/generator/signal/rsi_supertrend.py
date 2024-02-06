@@ -5,6 +5,7 @@ from core.models.parameter import (
     RandomParameter,
     StaticParameter,
 )
+from core.models.smooth import Smooth
 
 from .base import Signal, SignalType
 
@@ -12,6 +13,7 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class RsiSupertrendSignal(Signal):
     type: SignalType = SignalType.RsiSup
+    smooth_type: Parameter = StaticParameter(Smooth.SMMA)
     rsi_period: Parameter = StaticParameter(34.0)
     threshold: Parameter = RandomParameter(2.0, 4.0, 1.0)
     atr_period: Parameter = StaticParameter(10.0)

@@ -3,14 +3,19 @@ use core::prelude::*;
 const ZERO: f32 = 0.;
 const PERCENTAGE_SCALE: f32 = 100.;
 
-pub fn tii(source: &Series<f32>, major_period: usize, minor_period: usize) -> Series<f32> {
-    let price_diff = source - source.smooth(Smooth::SMA, major_period);
+pub fn tii(
+    source: &Series<f32>,
+    smooth_type: Smooth,
+    major_period: usize,
+    minor_period: usize,
+) -> Series<f32> {
+    let price_diff = source - source.smooth(smooth_type, major_period);
 
-    let positive_sum = price_diff.max(&ZERO).smooth(Smooth::SMA, minor_period);
+    let positive_sum = price_diff.max(&ZERO).smooth(smooth_type, minor_period);
     let negative_sum = price_diff
         .min(&ZERO)
         .abs()
-        .smooth(Smooth::SMA, minor_period);
+        .smooth(smooth_type, minor_period);
 
     PERCENTAGE_SCALE * &positive_sum / (positive_sum + negative_sum)
 }
@@ -32,7 +37,7 @@ mod tests {
             100.0, 4.648687, 48.748272,
         ];
 
-        let result: Vec<f32> = tii(&source, major_period, minor_period).into();
+        let result: Vec<f32> = tii(&source, Smooth::SMA, major_period, minor_period).into();
 
         assert_eq!(result, expected);
     }

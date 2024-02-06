@@ -3,12 +3,12 @@ use core::prelude::*;
 const ZERO: f32 = 0.;
 const PERCENTAGE_SCALE: f32 = 100.;
 
-pub fn rsi(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn rsi(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
     let len = source.len();
 
     let mom = source.change(1);
-    let up = mom.max(&ZERO).smooth(Smooth::SMMA, period);
-    let down = mom.min(&ZERO).negate().smooth(Smooth::SMMA, period);
+    let up = mom.max(&ZERO).smooth(smooth_type, period);
+    let down = mom.min(&ZERO).negate().smooth(smooth_type, period);
 
     let oneh = Series::fill(PERCENTAGE_SCALE, len);
 
@@ -36,7 +36,7 @@ mod test {
             33.926575, 36.707954, 30.863396, 15.785042, 64.06485,
         ];
 
-        let result: Vec<f32> = rsi(&source, period).into();
+        let result: Vec<f32> = rsi(&source, Smooth::SMMA, period).into();
 
         assert_eq!(result, expected);
     }

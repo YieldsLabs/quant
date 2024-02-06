@@ -4,13 +4,14 @@ pub fn ppb(
     high: &Series<f32>,
     low: &Series<f32>,
     close: &Series<f32>,
+    smooth_type: Smooth,
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let ppvih = high.std(period).highest(period) * factor;
     let ppvil = low.std(period).lowest(period) * factor;
 
-    let middle_band = close.smooth(Smooth::SMA, period);
+    let middle_band = close.smooth(smooth_type, period);
 
     let upper_band = &middle_band + ppvih;
     let lower_band = &middle_band - ppvil;
@@ -43,7 +44,8 @@ fn test_ppb() {
         19.102, 19.101, 19.116, 19.131283, 19.149616, 19.194666, 19.237333, 19.304, 19.299559,
     ];
 
-    let (upper_band, middle_band, lower_band) = ppb(&high, &low, &close, period, factor);
+    let (upper_band, middle_band, lower_band) =
+        ppb(&high, &low, &close, Smooth::SMA, period, factor);
 
     let result_upper_band: Vec<f32> = upper_band.into();
     let result_middle_band: Vec<f32> = middle_band.into();

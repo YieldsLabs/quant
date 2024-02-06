@@ -4,6 +4,7 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
+from core.models.smooth import Smooth
 
 from .base import Signal, SignalType
 
@@ -13,4 +14,5 @@ class CcFlipSignal(Signal):
     type: SignalType = SignalType.CcFlip
     short_period: Parameter = StaticParameter(20.0)
     long_period: Parameter = StaticParameter(15.0)
+    smooth_type: Parameter = StaticParameter(Smooth.WMA)
     smoothing_period: Parameter = StaticParameter(13.0)

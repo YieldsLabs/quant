@@ -6,13 +6,15 @@ const RSI_OVERBOUGHT: f32 = 70.0;
 const RSI_OVERSOLD: f32 = 30.0;
 
 pub struct RSIExit {
+    smooth_type: Smooth,
     period: usize,
     threshold: f32,
 }
 
 impl RSIExit {
-    pub fn new(period: f32, threshold: f32) -> Self {
+    pub fn new(smooth_type: Smooth, period: f32, threshold: f32) -> Self {
         Self {
+            smooth_type,
             period: period as usize,
             threshold,
         }
@@ -25,7 +27,7 @@ impl Exit for RSIExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close, self.period);
+        let rsi = rsi(&data.close, self.smooth_type, self.period);
         let upper_bound = RSI_OVERBOUGHT + self.threshold;
         let lower_bound = RSI_OVERSOLD - self.threshold;
 

@@ -7,6 +7,7 @@ const RSI_UPPER_BARRIER: f32 = 85.0;
 const RSI_LOWER_BARRIER: f32 = 15.0;
 
 pub struct RSI2MASignal {
+    smooth_type: Smooth,
     rsi_period: usize,
     threshold: f32,
     ma: MovingAverageType,
@@ -16,6 +17,7 @@ pub struct RSI2MASignal {
 
 impl RSI2MASignal {
     pub fn new(
+        smooth_type: Smooth,
         rsi_period: f32,
         threshold: f32,
         ma: MovingAverageType,
@@ -23,6 +25,7 @@ impl RSI2MASignal {
         long_period: f32,
     ) -> Self {
         Self {
+            smooth_type,
             rsi_period: rsi_period as usize,
             threshold,
             ma,
@@ -39,7 +42,7 @@ impl Signal for RSI2MASignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close, self.rsi_period);
+        let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
         let ma_short = ma_indicator(&self.ma, data, self.short_period);
         let ma_long = ma_indicator(&self.ma, data, self.long_period);
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;

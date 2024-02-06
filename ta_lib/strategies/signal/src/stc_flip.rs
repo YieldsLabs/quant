@@ -6,6 +6,7 @@ const LOWER_LINE: f32 = 25.0;
 const UPPER_LINE: f32 = 75.0;
 
 pub struct STCFlipSignal {
+    smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
     cycle: usize,
@@ -15,6 +16,7 @@ pub struct STCFlipSignal {
 
 impl STCFlipSignal {
     pub fn new(
+        smooth_type: Smooth,
         fast_period: f32,
         slow_period: f32,
         cycle: f32,
@@ -22,6 +24,7 @@ impl STCFlipSignal {
         d_second: f32,
     ) -> Self {
         Self {
+            smooth_type,
             fast_period: fast_period as usize,
             slow_period: slow_period as usize,
             cycle: cycle as usize,
@@ -42,6 +45,7 @@ impl Signal for STCFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let stc = stc(
             &data.close,
+            self.smooth_type,
             self.fast_period,
             self.slow_period,
             self.cycle,

@@ -6,14 +6,16 @@ const ADX_UPPER_BARRIER: f32 = 50.0;
 const ADX_LOWER_BARRIER: f32 = 20.0;
 
 pub struct ADXPulse {
+    smooth_type: Smooth,
     adx_period: usize,
     di_period: usize,
     threshold: f32,
 }
 
 impl ADXPulse {
-    pub fn new(adx_period: f32, di_period: f32, threshold: f32) -> Self {
+    pub fn new(smooth_type: Smooth, adx_period: f32, di_period: f32, threshold: f32) -> Self {
         Self {
+            smooth_type,
             adx_period: adx_period as usize,
             di_period: di_period as usize,
             threshold,
@@ -31,6 +33,7 @@ impl Pulse for ADXPulse {
             &data.high,
             &data.low,
             &data.atr(self.di_period),
+            self.smooth_type,
             self.adx_period,
             self.di_period,
         );

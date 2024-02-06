@@ -6,13 +6,15 @@ const TII_UPPER_BARRIER: f32 = 60.0;
 const TII_LOWER_BARRIER: f32 = 40.0;
 
 pub struct TIIVSignal {
+    smooth_type: Smooth,
     major_period: usize,
     minor_period: usize,
 }
 
 impl TIIVSignal {
-    pub fn new(major_period: f32, minor_period: f32) -> Self {
+    pub fn new(smooth_type: Smooth, major_period: f32, minor_period: f32) -> Self {
         Self {
+            smooth_type,
             major_period: major_period as usize,
             minor_period: minor_period as usize,
         }
@@ -25,7 +27,12 @@ impl Signal for TIIVSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let tii = tii(&data.close, self.major_period, self.minor_period);
+        let tii = tii(
+            &data.close,
+            self.smooth_type,
+            self.major_period,
+            self.minor_period,
+        );
 
         (
             tii.sgt(&TII_LOWER_BARRIER)

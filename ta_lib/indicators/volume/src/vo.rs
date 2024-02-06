@@ -2,9 +2,14 @@ use core::prelude::*;
 
 const PERCENTAGE_SCALE: f32 = 100.;
 
-pub fn vo(source: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
-    let vo_short = source.smooth(Smooth::EMA, short_period);
-    let vo_long = source.smooth(Smooth::EMA, long_period);
+pub fn vo(
+    source: &Series<f32>,
+    smooth_type: Smooth,
+    short_period: usize,
+    long_period: usize,
+) -> Series<f32> {
+    let vo_short = source.smooth(smooth_type, short_period);
+    let vo_long = source.smooth(smooth_type, long_period);
 
     PERCENTAGE_SCALE * (vo_short - &vo_long) / vo_long
 }
@@ -19,7 +24,7 @@ mod tests {
         let expected = [0.0, 11.1111, 13.5802, 2.83224, -10.71604];
         let epsilon = 0.001;
 
-        let result: Vec<f32> = vo(&source, 2, 3).into();
+        let result: Vec<f32> = vo(&source, Smooth::EMA, 2, 3).into();
 
         for i in 0..source.len() {
             assert!(

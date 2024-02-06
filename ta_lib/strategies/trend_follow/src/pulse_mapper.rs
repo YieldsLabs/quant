@@ -7,6 +7,7 @@ use serde::Deserialize;
 #[serde(tag = "type")]
 pub enum PulseConfig {
     Adx {
+        smooth_type: f32,
         adx_period: f32,
         di_period: f32,
         threshold: f32,
@@ -28,6 +29,7 @@ pub enum PulseConfig {
         threshold: f32,
     },
     Vo {
+        smooth_type: f32,
         short_period: f32,
         long_period: f32,
     },
@@ -36,10 +38,16 @@ pub enum PulseConfig {
 pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
     match config {
         PulseConfig::Adx {
+            smooth_type,
             adx_period,
             di_period,
             threshold,
-        } => Box::new(ADXPulse::new(adx_period, di_period, threshold)),
+        } => Box::new(ADXPulse::new(
+            map_to_smooth(smooth_type as usize),
+            adx_period,
+            di_period,
+            threshold,
+        )),
         PulseConfig::Braid {
             smooth_type,
             period_one,
@@ -62,8 +70,13 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
         } => Box::new(CHOPPulse::new(atr_period, period, threshold)),
         PulseConfig::Dumb { period } => Box::new(DumbPulse::new(period)),
         PulseConfig::Vo {
+            smooth_type,
             short_period,
             long_period,
-        } => Box::new(VoPulse::new(short_period, long_period)),
+        } => Box::new(VoPulse::new(
+            map_to_smooth(smooth_type as usize),
+            short_period,
+            long_period,
+        )),
     }
 }

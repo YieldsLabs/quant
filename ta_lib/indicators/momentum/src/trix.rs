@@ -3,11 +3,11 @@ use core::prelude::*;
 
 const SCALE: f32 = 1.;
 
-pub fn trix(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn trix(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
     let ema3 = source
-        .smooth(Smooth::EMA, period)
-        .smooth(Smooth::EMA, period)
-        .smooth(Smooth::EMA, period);
+        .smooth(smooth_type, period)
+        .smooth(smooth_type, period)
+        .smooth(smooth_type, period);
 
     SCALE * roc(&ema3, 1)
 }
@@ -41,7 +41,7 @@ mod tests {
             -0.009277002,
         ];
 
-        let result: Vec<f32> = trix(&source, period).into();
+        let result: Vec<f32> = trix(&source, Smooth::EMA, period).into();
 
         assert_eq!(result, expected);
     }

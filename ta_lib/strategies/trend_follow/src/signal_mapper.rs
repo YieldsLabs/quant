@@ -21,6 +21,7 @@ pub enum SignalConfig {
         long_period: f32,
     },
     BopFlip {
+        smooth_type: f32,
         smoothing_period: f32,
     },
     CfoFlip {
@@ -29,9 +30,11 @@ pub enum SignalConfig {
     CcFlip {
         short_period: f32,
         long_period: f32,
+        smooth_type: f32,
         smoothing_period: f32,
     },
     DmiCross {
+        smooth_type: f32,
         adx_period: f32,
         di_period: f32,
     },
@@ -39,6 +42,7 @@ pub enum SignalConfig {
         period: f32,
     },
     KstCross {
+        smooth_type: f32,
         roc_period_first: f32,
         roc_period_second: f32,
         roc_period_third: f32,
@@ -85,18 +89,22 @@ pub enum SignalConfig {
         period: f32,
     },
     RsiNeutralityCross {
+        smooth_type: f32,
         rsi_period: f32,
         threshold: f32,
     },
     RsiNeutralityPullback {
+        smooth_type: f32,
         rsi_period: f32,
         threshold: f32,
     },
     RsiNeutralityRejection {
+        smooth_type: f32,
         rsi_period: f32,
         threshold: f32,
     },
     Rsi2Ma {
+        smooth_type: f32,
         rsi_period: f32,
         threshold: f32,
         ma: f32,
@@ -104,25 +112,29 @@ pub enum SignalConfig {
         long_period: f32,
     },
     RsiSup {
+        smooth_type: f32,
         rsi_period: f32,
         threshold: f32,
         atr_period: f32,
         factor: f32,
     },
     RsiMaPullback {
-        rsi_period: f32,
         smooth_type: f32,
+        rsi_period: f32,
         smoothing_period: f32,
         threshold: f32,
     },
     RsiV {
+        smooth_type: f32,
         rsi_period: f32,
         threshold: f32,
     },
     DiFlip {
+        smooth_type: f32,
         period: f32,
     },
     DiCross {
+        smooth_type: f32,
         period: f32,
         signal_period: f32,
     },
@@ -140,18 +152,22 @@ pub enum SignalConfig {
         candle: f32,
     },
     TrixFlip {
+        smooth_type: f32,
         period: f32,
     },
     TrixCross {
+        smooth_type: f32,
         period: f32,
         signal_period: f32,
     },
     SnAtr {
+        smooth_type: f32,
         atr_period: f32,
         atr_smoothing_period: f32,
         threshold: f32,
     },
     StcFlip {
+        smooth_type: f32,
         fast_period: f32,
         slow_period: f32,
         cycle: f32,
@@ -159,6 +175,7 @@ pub enum SignalConfig {
         d_second: f32,
     },
     StochCross {
+        smooth_type: f32,
         period: f32,
         k_period: f32,
         d_period: f32,
@@ -172,27 +189,33 @@ pub enum SignalConfig {
         factor: f32,
     },
     TIICross {
+        smooth_type: f32,
         major_period: f32,
         minor_period: f32,
         threshold: f32,
     },
     TiiV {
+        smooth_type: f32,
         major_period: f32,
         minor_period: f32,
     },
     TsiFlip {
+        smooth_type: f32,
         long_period: f32,
         short_period: f32,
     },
     TsiCross {
+        smooth_type: f32,
         long_period: f32,
         short_period: f32,
         signal_period: f32,
     },
     QstickFlip {
+        smooth_type: f32,
         period: f32,
     },
     QstickCross {
+        smooth_type: f32,
         period: f32,
         signal_period: f32,
     },
@@ -219,23 +242,34 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             short_period,
             long_period,
         } => Box::new(APOFlipSignal::new(short_period, long_period)),
-        SignalConfig::BopFlip { smoothing_period } => {
-            Box::new(BOPFlipSignal::new(smoothing_period))
-        }
+        SignalConfig::BopFlip {
+            smooth_type,
+            smoothing_period,
+        } => Box::new(BOPFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
+            smoothing_period,
+        )),
         SignalConfig::CfoFlip { period } => Box::new(CFOFlipSignal::new(period)),
         SignalConfig::CcFlip {
             short_period,
             long_period,
+            smooth_type,
             smoothing_period,
         } => Box::new(CCFlipSignal::new(
             short_period,
             long_period,
+            map_to_smooth(smooth_type as usize),
             smoothing_period,
         )),
         SignalConfig::DmiCross {
+            smooth_type,
             adx_period,
             di_period,
-        } => Box::new(DMICrossSignal::new(adx_period, di_period)),
+        } => Box::new(DMICrossSignal::new(
+            map_to_smooth(smooth_type as usize),
+            adx_period,
+            di_period,
+        )),
         SignalConfig::Ma3Cross {
             ma,
             short_period,
@@ -296,24 +330,41 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             factor,
         )),
         SignalConfig::RsiNeutralityCross {
+            smooth_type,
             rsi_period,
             threshold,
-        } => Box::new(RSINeutralityCrossSignal::new(rsi_period, threshold)),
+        } => Box::new(RSINeutralityCrossSignal::new(
+            map_to_smooth(smooth_type as usize),
+            rsi_period,
+            threshold,
+        )),
         SignalConfig::RsiNeutralityPullback {
+            smooth_type,
             rsi_period,
             threshold,
-        } => Box::new(RSINeutralityPullbackSignal::new(rsi_period, threshold)),
+        } => Box::new(RSINeutralityPullbackSignal::new(
+            map_to_smooth(smooth_type as usize),
+            rsi_period,
+            threshold,
+        )),
         SignalConfig::RsiNeutralityRejection {
+            smooth_type,
             rsi_period,
             threshold,
-        } => Box::new(RSINeutralityRejectionSignal::new(rsi_period, threshold)),
+        } => Box::new(RSINeutralityRejectionSignal::new(
+            map_to_smooth(smooth_type as usize),
+            rsi_period,
+            threshold,
+        )),
         SignalConfig::Rsi2Ma {
+            smooth_type,
             rsi_period,
             threshold,
             ma,
             short_period,
             long_period,
         } => Box::new(RSI2MASignal::new(
+            map_to_smooth(smooth_type as usize),
             rsi_period,
             threshold,
             map_to_ma(ma as usize),
@@ -321,29 +372,45 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             long_period,
         )),
         SignalConfig::RsiSup {
+            smooth_type,
             rsi_period,
             threshold,
             atr_period,
             factor,
         } => Box::new(RSISupertrendSignal::new(
-            rsi_period, threshold, atr_period, factor,
+            map_to_smooth(smooth_type as usize),
+            rsi_period,
+            threshold,
+            atr_period,
+            factor,
         )),
         SignalConfig::RsiMaPullback {
-            rsi_period,
             smooth_type,
+            rsi_period,
             smoothing_period,
             threshold,
         } => Box::new(RSIMaPullbackSignal::new(
-            rsi_period,
             map_to_smooth(smooth_type as usize),
+            rsi_period,
             smoothing_period,
             threshold,
         )),
-        SignalConfig::DiFlip { period } => Box::new(DIFlipSignal::new(period)),
+        SignalConfig::DiFlip {
+            smooth_type,
+            period,
+        } => Box::new(DIFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+        )),
         SignalConfig::DiCross {
+            smooth_type,
             period,
             signal_period,
-        } => Box::new(DICrossSignal::new(period, signal_period)),
+        } => Box::new(DICrossSignal::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            signal_period,
+        )),
         SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
         SignalConfig::Dch2Ma {
             dch_period,
@@ -363,16 +430,29 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::TrendCandle { candle } => {
             Box::new(TrendCandleSignal::new(map_to_candle(candle as usize)))
         }
-        SignalConfig::TrixFlip { period } => Box::new(TRIXFlipSignal::new(period)),
+        SignalConfig::TrixFlip {
+            smooth_type,
+            period,
+        } => Box::new(TRIXFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+        )),
         SignalConfig::TrixCross {
+            smooth_type,
             period,
             signal_period,
-        } => Box::new(TRIXCrossSignal::new(period, signal_period)),
+        } => Box::new(TRIXCrossSignal::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            signal_period,
+        )),
         SignalConfig::SnAtr {
+            smooth_type,
             atr_period,
             atr_smoothing_period,
             threshold,
         } => Box::new(SNATRSignal::new(
+            map_to_smooth(smooth_type as usize),
             atr_period,
             atr_smoothing_period,
             threshold,
@@ -384,12 +464,14 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             Box::new(SupertrendPullBackSignal::new(atr_period, factor))
         }
         SignalConfig::StcFlip {
+            smooth_type,
             fast_period,
             slow_period,
             cycle,
             d_first,
             d_second,
         } => Box::new(STCFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
             fast_period,
             slow_period,
             cycle,
@@ -397,46 +479,87 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             d_second,
         )),
         SignalConfig::StochCross {
+            smooth_type,
             period,
             k_period,
             d_period,
-        } => Box::new(StochCrossSignal::new(period, k_period, d_period)),
+        } => Box::new(StochCrossSignal::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            k_period,
+            d_period,
+        )),
         SignalConfig::TIICross {
+            smooth_type,
             major_period,
             minor_period,
             threshold,
-        } => Box::new(TIICrossSignal::new(major_period, minor_period, threshold)),
-        SignalConfig::TiiV {
+        } => Box::new(TIICrossSignal::new(
+            map_to_smooth(smooth_type as usize),
             major_period,
             minor_period,
-        } => Box::new(TIIVSignal::new(major_period, minor_period)),
+            threshold,
+        )),
+        SignalConfig::TiiV {
+            smooth_type,
+            major_period,
+            minor_period,
+        } => Box::new(TIIVSignal::new(
+            map_to_smooth(smooth_type as usize),
+            major_period,
+            minor_period,
+        )),
         SignalConfig::RsiV {
+            smooth_type,
             rsi_period,
             threshold,
-        } => Box::new(RSIVSignal::new(rsi_period, threshold)),
+        } => Box::new(RSIVSignal::new(
+            map_to_smooth(smooth_type as usize),
+            rsi_period,
+            threshold,
+        )),
         SignalConfig::TsiFlip {
+            smooth_type,
             long_period,
             short_period,
-        } => Box::new(TSIFlipSignal::new(long_period, short_period)),
+        } => Box::new(TSIFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
+            long_period,
+            short_period,
+        )),
         SignalConfig::TsiCross {
+            smooth_type,
             long_period,
             short_period,
             signal_period,
         } => Box::new(TSICrossSignal::new(
+            map_to_smooth(smooth_type as usize),
             long_period,
             short_period,
             signal_period,
         )),
-        SignalConfig::QstickFlip { period } => Box::new(QSTICKFlipSignal::new(period)),
+        SignalConfig::QstickFlip {
+            smooth_type,
+            period,
+        } => Box::new(QSTICKFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+        )),
         SignalConfig::QstickCross {
+            smooth_type,
             period,
             signal_period,
-        } => Box::new(QSTICKCrossSignal::new(period, signal_period)),
+        } => Box::new(QSTICKCrossSignal::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            signal_period,
+        )),
         SignalConfig::Quadruple { ma, period } => {
             Box::new(QuadrupleSignal::new(map_to_ma(ma as usize), period))
         }
         SignalConfig::VwapCross { period } => Box::new(VWAPCrossSignal::new(period)),
         SignalConfig::KstCross {
+            smooth_type,
             roc_period_first,
             roc_period_second,
             roc_period_third,
@@ -447,6 +570,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period_fouth,
             signal_period,
         } => Box::new(KSTCrossSignal::new(
+            map_to_smooth(smooth_type as usize),
             roc_period_first,
             roc_period_second,
             roc_period_third,

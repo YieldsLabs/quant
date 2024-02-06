@@ -7,14 +7,21 @@ const ZERO_LINE: f32 = 0.0;
 pub struct CCFlipSignal {
     short_period: usize,
     long_period: usize,
+    smooth_type: Smooth,
     smoothing_period: usize,
 }
 
 impl CCFlipSignal {
-    pub fn new(short_period: f32, long_period: f32, smoothing_period: f32) -> Self {
+    pub fn new(
+        short_period: f32,
+        long_period: f32,
+        smooth_type: Smooth,
+        smoothing_period: f32,
+    ) -> Self {
         Self {
             short_period: short_period as usize,
             long_period: long_period as usize,
+            smooth_type,
             smoothing_period: smoothing_period as usize,
         }
     }
@@ -31,6 +38,7 @@ impl Signal for CCFlipSignal {
             &data.close,
             self.short_period,
             self.long_period,
+            self.smooth_type,
             self.smoothing_period,
         );
 

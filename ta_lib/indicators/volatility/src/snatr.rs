@@ -1,8 +1,13 @@
 use core::prelude::*;
 
-pub fn snatr(atr: &Series<f32>, atr_period: usize, smoothing_period: usize) -> Series<f32> {
+pub fn snatr(
+    atr: &Series<f32>,
+    atr_period: usize,
+    smooth_type: Smooth,
+    smoothing_period: usize,
+) -> Series<f32> {
     ((atr - atr.lowest(atr_period)) / (atr.highest(atr_period) - atr.lowest(atr_period)))
-        .smooth(Smooth::WMA, smoothing_period)
+        .smooth(smooth_type, smoothing_period)
 }
 
 #[test]
@@ -19,14 +24,14 @@ fn test_snatr() {
         19.102, 19.100, 19.146, 19.181, 19.155, 19.248, 19.309, 19.355, 19.439,
     ]);
     let atr_period = 3;
-    let atr = atr(&high, &low, &close, atr_period);
+    let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
     let period = 3;
     let epsilon = 0.001;
     let expected = [
         0.0, 0.0, 0.0, 0.8257546, 0.99494743, 0.9974737, 1.0, 0.9014031, 0.5520136,
     ];
 
-    let result: Vec<f32> = snatr(&atr, atr_period, period).into();
+    let result: Vec<f32> = snatr(&atr, atr_period, Smooth::WMA, period).into();
 
     for i in 0..high.len() {
         assert!(

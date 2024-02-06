@@ -1,12 +1,13 @@
 use core::prelude::*;
 
 pub fn kch(
-    hlc3: &Series<f32>,
+    source: &Series<f32>,
     atr: &Series<f32>,
+    smooth_type: Smooth,
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = hlc3.smooth(Smooth::EMA, period);
+    let middle_band = source.smooth(smooth_type, period);
     let atr = atr * factor;
 
     let upper_band = &middle_band + &atr;
@@ -34,7 +35,7 @@ mod tests {
         ]);
         let period = 3;
         let atr_period = 3;
-        let atr = atr(&high, &low, &close, atr_period);
+        let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
         let hlc3 = typical_price(&high, &low, &close);
         let factor = 2.0;
         let epsilon = 0.001;
@@ -51,7 +52,7 @@ mod tests {
             19.168068,
         ];
 
-        let (upper_band, middle_band, lower_band) = kch(&hlc3, &atr, period, factor);
+        let (upper_band, middle_band, lower_band) = kch(&hlc3, &atr, Smooth::EMA, period, factor);
 
         let result_upper_band: Vec<f32> = upper_band.into();
         let result_middle_band: Vec<f32> = middle_band.into();

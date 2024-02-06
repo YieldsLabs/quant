@@ -4,6 +4,7 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
+from core.models.smooth import Smooth
 
 from .base import Signal, SignalType
 
@@ -11,6 +12,7 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class KstCrossSignal(Signal):
     type: SignalType = SignalType.KstCross
+    smooth_type: Parameter = StaticParameter(Smooth.SMA)
     roc_period_first: Parameter = StaticParameter(10.0)
     roc_period_second: Parameter = StaticParameter(15.0)
     roc_period_third: Parameter = StaticParameter(20.0)

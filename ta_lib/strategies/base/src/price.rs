@@ -29,6 +29,6 @@ impl Price for OHLCVSeries {
     }
 
     fn atr(&self, period: usize) -> Series<f32> {
-        atr(&self.high, &self.low, &self.close, period)
+        atr(&self.high, &self.low, &self.close, Smooth::SMMA, period)
     }
 }

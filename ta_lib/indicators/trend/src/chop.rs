@@ -23,7 +23,7 @@ mod tests {
         let low = Series::from([2.0846, 2.0846, 2.0881, 2.0886, 2.0865, 2.0875]);
         let close = Series::from([2.0846, 2.0881, 2.0889, 2.0896, 2.0875, 2.0904]);
         let atr_period = 1;
-        let atr = atr(&high, &low, &close, atr_period);
+        let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
         let period = 2;
         let expected = [0.0, 45.571022, 0.0, 26.31491, 40.33963, 58.496246];
         let epsilon = 0.0001;

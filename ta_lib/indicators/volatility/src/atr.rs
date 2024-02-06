@@ -5,9 +5,10 @@ pub fn atr(
     high: &Series<f32>,
     low: &Series<f32>,
     close: &Series<f32>,
+    smooth_type: Smooth,
     period: usize,
 ) -> Series<f32> {
-    tr(high, low, close).smooth(Smooth::SMMA, period)
+    tr(high, low, close).smooth(smooth_type, period)
 }
 
 #[cfg(test)]
@@ -61,7 +62,7 @@ mod tests {
             0.007778558,
         ];
 
-        let result: Vec<f32> = atr(&high, &low, &close, period).into();
+        let result: Vec<f32> = atr(&high, &low, &close, Smooth::SMMA, period).into();
 
         assert_eq!(result, expected);
     }

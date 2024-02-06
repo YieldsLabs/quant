@@ -2,19 +2,21 @@ use crate::stoch;
 use core::prelude::*;
 
 pub fn stc(
-    close: &Series<f32>,
+    source: &Series<f32>,
+    smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
     cycle: usize,
     d_first: usize,
     d_second: usize,
 ) -> Series<f32> {
-    let macd_line = close.smooth(Smooth::EMA, fast_period) - close.smooth(Smooth::EMA, slow_period);
+    let macd_line =
+        source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period);
     let k = stoch(&macd_line, &macd_line, &macd_line, cycle);
-    let d = k.smooth(Smooth::EMA, d_first);
+    let d = k.smooth(smooth_type, d_first);
     let kd = stoch(&d, &d, &d, cycle);
 
-    kd.smooth(Smooth::EMA, d_second)
+    kd.smooth(smooth_type, d_second)
 }
 
 #[cfg(test)]
@@ -36,8 +38,16 @@ mod tests {
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 50.0, 25.0, 62.5, 31.25, 65.625, 82.8125,
         ];
 
-        let result: Vec<f32> =
-            stc(&source, fast_period, slow_period, cycle, d_first, d_second).into();
+        let result: Vec<f32> = stc(
+            &source,
+            Smooth::EMA,
+            fast_period,
+            slow_period,
+            cycle,
+            d_first,
+            d_second,
+        )
+        .into();
 
         assert_eq!(result, expected);
     }

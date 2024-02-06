@@ -1,4 +1,5 @@
 use crate::ma_mapper::map_to_ma;
+use crate::smooth_mapper::map_to_smooth;
 use base::prelude::*;
 use exit::*;
 use serde::Deserialize;
@@ -22,6 +23,7 @@ pub enum ExitConfig {
         period: f32,
     },
     Rsi {
+        smooth_type: f32,
         period: f32,
         threshold: f32,
     },
@@ -44,6 +46,14 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
         ExitConfig::Pattern { period } => Box::new(PatternExit::new(period)),
         ExitConfig::HighLow { period } => Box::new(HighLowExit::new(period)),
         ExitConfig::Ma { ma, period } => Box::new(MAExit::new(map_to_ma(ma as usize), period)),
-        ExitConfig::Rsi { period, threshold } => Box::new(RSIExit::new(period, threshold)),
+        ExitConfig::Rsi {
+            smooth_type,
+            period,
+            threshold,
+        } => Box::new(RSIExit::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            threshold,
+        )),
     }
 }

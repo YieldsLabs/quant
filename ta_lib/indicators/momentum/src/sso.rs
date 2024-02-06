@@ -5,11 +5,12 @@ pub fn sso(
     high: &Series<f32>,
     low: &Series<f32>,
     close: &Series<f32>,
+    smooth_type: Smooth,
     period: usize,
 ) -> Series<f32> {
-    let high_smooth = high.smooth(Smooth::WMA, period);
-    let low_smooth = low.smooth(Smooth::WMA, period);
-    let close_smooth = close.smooth(Smooth::WMA, period);
+    let high_smooth = high.smooth(smooth_type, period);
+    let low_smooth = low.smooth(smooth_type, period);
+    let close_smooth = close.smooth(smooth_type, period);
 
     let k = stoch(&high_smooth, &low_smooth, &close_smooth, period);
 
@@ -29,7 +30,7 @@ mod tests {
 
         let expected_k = vec![50.0, 50.0, 58.333336, 41.666668, 41.666668];
 
-        let k = sso(&high, &low, &close, period);
+        let k = sso(&high, &low, &close, Smooth::WMA, period);
 
         let result_k: Vec<f32> = k.into();
 

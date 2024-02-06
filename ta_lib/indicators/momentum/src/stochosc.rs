@@ -5,15 +5,16 @@ pub fn stochosc(
     high: &Series<f32>,
     low: &Series<f32>,
     close: &Series<f32>,
+    smooth_type: Smooth,
     period: usize,
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
     let stoch = stoch(high, low, close, period);
 
-    let k = stoch.smooth(Smooth::SMA, k_period);
+    let k = stoch.smooth(smooth_type, k_period);
 
-    let d = k.smooth(Smooth::SMA, d_period);
+    let d = k.smooth(smooth_type, d_period);
 
     (k, d)
 }
@@ -35,7 +36,7 @@ mod tests {
         let expected_k = [50.0, 62.5, 58.3333, 50.0, 41.6666];
         let expected_d = [50.0, 56.25, 56.9444, 56.9444, 50.0];
 
-        let (k, d) = stochosc(&high, &low, &close, period, k_period, d_period);
+        let (k, d) = stochosc(&high, &low, &close, Smooth::SMA, period, k_period, d_period);
 
         let result_k: Vec<f32> = k.into();
         let result_d: Vec<f32> = d.into();

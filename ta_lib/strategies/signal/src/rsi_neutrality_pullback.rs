@@ -5,13 +5,15 @@ use momentum::rsi;
 const RSI_NEUTRALITY: f32 = 50.0;
 
 pub struct RSINeutralityPullbackSignal {
+    smooth_type: Smooth,
     rsi_period: usize,
     threshold: f32,
 }
 
 impl RSINeutralityPullbackSignal {
-    pub fn new(rsi_period: f32, threshold: f32) -> Self {
+    pub fn new(smooth_type: Smooth, rsi_period: f32, threshold: f32) -> Self {
         Self {
+            smooth_type,
             rsi_period: rsi_period as usize,
             threshold,
         }
@@ -24,7 +26,7 @@ impl Signal for RSINeutralityPullbackSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close, self.rsi_period);
+        let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
         let lower_neutrality = RSI_NEUTRALITY - self.threshold;
 

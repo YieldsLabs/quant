@@ -246,7 +246,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                         signal_period=StaticParameter(16.0),
                     ),
                     MacdFlipSignal(smooth_type=StaticParameter(Smooth.EMA)),
-                    MacdFlipSignal(smooth_type=StaticParameter(Smooth.KAMA)),
                     MacdFlipSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
                     SupertrendFlipSignal(),
                     RocFlipSignal(),
@@ -279,7 +278,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                         signal_period=StaticParameter(16.0),
                     ),
                     MacdCrossSignal(smooth_type=StaticParameter(Smooth.EMA)),
-                    MacdCrossSignal(smooth_type=StaticParameter(Smooth.KAMA)),
                     MacdCrossSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
                     TiiCrossSignal(),
                     RsiNautralityCrossSignal(),
@@ -311,7 +309,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return np.random.choice(
             [
                 AoSaucerSignal(),
-                MacdBbSignal(),
+                MacdBbSignal(smooth_type=StaticParameter(Smooth.EMA)),
                 MacdColorSwitchSignal(
                     smooth_type=StaticParameter(Smooth.SMA),
                     fast_period=StaticParameter(3.0),
@@ -320,7 +318,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.EMA)),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
-                MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.KAMA)),
                 TrendCandleSignal(),
                 SnatrSignal(),
                 RsiNautralityRejectionSignal(),

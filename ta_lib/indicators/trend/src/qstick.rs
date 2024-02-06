@@ -1,7 +1,12 @@
 use core::prelude::*;
 
-pub fn qstick(open: &Series<f32>, close: &Series<f32>, period: usize) -> Series<f32> {
-    (close - open).smooth(Smooth::EMA, period)
+pub fn qstick(
+    open: &Series<f32>,
+    close: &Series<f32>,
+    smooth_type: Smooth,
+    period: usize,
+) -> Series<f32> {
+    (close - open).smooth(smooth_type, period)
 }
 
 #[cfg(test)]
@@ -15,7 +20,7 @@ mod tests {
         let period = 3;
         let expected = vec![-12.4655, -12.4627495, -12.4766245, -12.486312, -12.509655];
 
-        let result: Vec<f32> = qstick(&open, &close, period).into();
+        let result: Vec<f32> = qstick(&open, &close, Smooth::EMA, period).into();
 
         assert_eq!(result, expected);
     }

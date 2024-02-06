@@ -3,6 +3,7 @@ use core::prelude::*;
 
 pub fn kst(
     source: &Series<f32>,
+    smooth_type: Smooth,
     roc_period_first: usize,
     roc_period_second: usize,
     roc_period_third: usize,
@@ -12,10 +13,10 @@ pub fn kst(
     period_third: usize,
     period_fouth: usize,
 ) -> Series<f32> {
-    roc(source, roc_period_first).smooth(Smooth::SMA, period_first)
-        + (2. * roc(source, roc_period_second).smooth(Smooth::SMA, period_second))
-        + (3. * roc(source, roc_period_third).smooth(Smooth::SMA, period_third))
-        + (4. * roc(source, roc_period_fouth).smooth(Smooth::SMA, period_fouth))
+    roc(source, roc_period_first).smooth(smooth_type, period_first)
+        + (2. * roc(source, roc_period_second).smooth(smooth_type, period_second))
+        + (3. * roc(source, roc_period_third).smooth(smooth_type, period_third))
+        + (4. * roc(source, roc_period_fouth).smooth(smooth_type, period_fouth))
 }
 
 #[cfg(test)]
@@ -54,6 +55,7 @@ mod tests {
 
         let result: Vec<f32> = kst(
             &source,
+            Smooth::SMA,
             roc_period_one,
             roc_period_two,
             roc_period_three,

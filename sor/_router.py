@@ -181,6 +181,7 @@ class SmartRouter(AbstractEventManager):
         size = round(position_size / num_orders, symbol.position_precision)
         order_counter = 0
         order_timestamps = {}
+        max_spread = float("-inf")
 
         for price in self.algo_price.calculate(symbol, self.exchange):
             spread = (
@@ -188,10 +189,10 @@ class SmartRouter(AbstractEventManager):
                 if position.side == PositionSide.LONG
                 else exit_price - price
             )
-            spread_percentage = (spread / exit_price) * 100
+            max_spread = max(spread, max_spread)
 
             logging.info(
-                f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread_percentage}%"
+                f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread}, max spread: {max_spread}"
             )
 
             for order_id in list(order_timestamps.keys()):
@@ -221,7 +222,7 @@ class SmartRouter(AbstractEventManager):
                 logging.info(f"All orders are filled: {order_counter}")
                 break
 
-            if len(order_timestamps.keys()) < 2:
+            if len(order_timestamps.keys()) < 1 and spread <= max_spread:
                 order_id = self.exchange.create_reduce_order(
                     symbol, position.side, size, price
                 )

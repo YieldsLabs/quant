@@ -2,16 +2,21 @@ use core::prelude::*;
 
 const PERCENTAGE_SCALE: f32 = 100.;
 
-pub fn tsi(source: &Series<f32>, long_period: usize, short_period: usize) -> Series<f32> {
+pub fn tsi(
+    source: &Series<f32>,
+    smooth_type: Smooth,
+    long_period: usize,
+    short_period: usize,
+) -> Series<f32> {
     let pc = source.change(1);
 
     let pcds = pc
-        .smooth(Smooth::EMA, long_period)
-        .smooth(Smooth::EMA, short_period);
+        .smooth(smooth_type, long_period)
+        .smooth(smooth_type, short_period);
     let apcds = pc
         .abs()
-        .smooth(Smooth::EMA, long_period)
-        .smooth(Smooth::EMA, short_period);
+        .smooth(smooth_type, long_period)
+        .smooth(smooth_type, short_period);
 
     PERCENTAGE_SCALE * pcds / apcds
 }
@@ -46,7 +51,7 @@ mod tests {
             27.16367,
         ];
 
-        let result: Vec<f32> = tsi(&source, long_period, short_period).into();
+        let result: Vec<f32> = tsi(&source, Smooth::EMA, long_period, short_period).into();
 
         assert_eq!(result, expected);
     }
