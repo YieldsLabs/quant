@@ -121,6 +121,7 @@ pub enum SignalConfig {
     RsiMaPullback {
         smooth_type: f32,
         rsi_period: f32,
+        smooth_signal: f32,
         smoothing_period: f32,
         threshold: f32,
     },
@@ -387,11 +388,13 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::RsiMaPullback {
             smooth_type,
             rsi_period,
+            smooth_signal,
             smoothing_period,
             threshold,
         } => Box::new(RSIMaPullbackSignal::new(
             map_to_smooth(smooth_type as usize),
             rsi_period,
+            map_to_smooth(smooth_signal as usize),
             smoothing_period,
             threshold,
         )),
