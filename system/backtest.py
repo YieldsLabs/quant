@@ -226,10 +226,8 @@ class BacktestSystem(AbstractSystem):
         in_sample = window_size
         out_sample = max((max_gen - curr_gen) * window_size - in_sample, 0)
 
-        in_lookback = Lookback.from_raw(f"{verify_sample if verify else in_sample}M")
-        out_lookback = (
-            None if verify else Lookback.from_raw(f"{out_sample + verify_sample}M")
-        )
+        in_lookback = Lookback.from_raw(verify_sample if verify else in_sample)
+        out_lookback = None if verify else Lookback.from_raw(out_sample + verify_sample)
 
         logger.info(
             f"Backtest: strategy={symbol}_{timeframe}{strategy}, in_lookback={in_lookback}, out_lookback={out_lookback}"
