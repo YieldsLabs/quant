@@ -42,17 +42,19 @@ class Performance:
         pnl_positive = self._pnl > 0
         successful_trades = np.sum(pnl_positive)
 
-        return successful_trades / self.total_trades
+        return successful_trades / total_trades
 
     @property
     def sharpe_ratio(self) -> float:
-        avg_return = self.average_pnl
-        std_return = np.std(self._pnl)
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
+        std_return = np.std(self._pnl, ddof=1)
 
         if std_return == 0:
             return 0
 
-        return avg_return / std_return
+        return self.average_pnl / std_return
 
     @property
     def equity(self):
@@ -100,7 +102,7 @@ class Performance:
         if len(downside_returns) < 2:
             return 0
 
-        downside_std = np.std(downside_returns)
+        downside_std = np.std(downside_returns, ddof=1)
 
         if downside_std == 0:
             return 0
@@ -193,10 +195,13 @@ class Performance:
 
     @property
     def recovery_factor(self) -> float:
-        pnl_positive = self._pnl > 0
-        total_profit = np.sum(self._pnl[pnl_positive])
+        total_profit = np.sum(self._pnl[self._pnl > 0])
+        max_drawdown = self.max_drawdown
 
-        return total_profit / self.max_drawdown if self.max_drawdown != 0 else 0
+        if max_drawdown == 0:
+            return 0
+
+        return total_profit / max_drawdown
 
     @property
     def profit_factor(self) -> float:
