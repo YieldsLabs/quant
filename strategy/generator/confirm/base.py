@@ -8,8 +8,10 @@ class ConfirmType(Enum):
     Dumb = "Dumb"
     Dpo = "Dpo"
     Eom = "Eom"
+    Roc = "Roc"
     Rsi = "Rsi"
     Stc = "Stc"
+    Sup = "Sup"
 
     def __str__(self):
         return self.value.upper()

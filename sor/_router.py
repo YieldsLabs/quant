@@ -203,7 +203,7 @@ class SmartRouter(AbstractEventManager):
             if not self.exchange.fetch_position(symbol, position.side):
                 break
 
-            if spread < 0:
+            if spread < -0.218:
                 self.exchange.close_full_position(symbol, position.side)
                 break
 
@@ -222,7 +222,7 @@ class SmartRouter(AbstractEventManager):
                 logging.info(f"All orders are filled: {order_counter}")
                 break
 
-            if len(order_timestamps.keys()) < 1 and spread <= max_spread:
+            if len(order_timestamps.keys()) < 1 and spread < max_spread:
                 order_id = self.exchange.create_reduce_order(
                     symbol, position.side, size, price
                 )

@@ -3,7 +3,7 @@ use core::prelude::*;
 use momentum::dmi;
 
 const ADX_UPPER_BARRIER: f32 = 50.0;
-const ADX_LOWER_BARRIER: f32 = 20.0;
+const ADX_LOWER_BARRIER: f32 = 25.0;
 
 pub struct ADXPulse {
     smooth_type: Smooth,

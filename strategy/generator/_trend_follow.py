@@ -11,10 +11,13 @@ from core.models.smooth import Smooth
 from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from strategy.generator.confirm.roc import RocConfirm
 from strategy.generator.confirm.rsi import RsiConfirm
 from strategy.generator.confirm.stc import StcConfirm
+from strategy.generator.confirm.supertrend import SupertrendConfirm
 from strategy.generator.signal.macd_bb import MacdBbSignal
 from strategy.generator.signal.rsi_supertrend import RsiSupertrendSignal
+from strategy.generator.signal.vi_cross import ViCrossSignal
 
 from .baseline.ma import MaBaseLine
 from .confirm.dpo import DpoConfirm
@@ -149,8 +152,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DumbConfirm(),
                 DpoConfirm(),
                 EomConfirm(),
+                RocConfirm(),
                 RsiConfirm(),
                 StcConfirm(),
+                SupertrendConfirm(),
             ]
         )
         pulse = np.random.choice(
@@ -160,7 +165,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.EMA),
-                    period=StaticParameter(200.0),
+                    period=StaticParameter(55.0),
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.SMA),
@@ -180,7 +185,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.T3),
-                    period=StaticParameter(66.0),
+                    period=StaticParameter(7.0),
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.GMA),
@@ -188,15 +193,15 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.KAMA),
-                    period=StaticParameter(20.0),
+                    period=StaticParameter(21.0),
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.ZLSMA),
-                    period=StaticParameter(75.0),
+                    period=StaticParameter(32.0),
                 ),
                 MaBaseLine(
                     ma=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(20.0, 200.0, 10.0),
+                    period=RandomParameter(20.0, 150.0, 10.0),
                 ),
             ]
         )
@@ -289,6 +294,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     StochCrossSignal(),
                     KstCrossSignal(),
                     TrixCrossSignal(),
+                    ViCrossSignal(),
                 ]
             )
         if signal == TrendSignalType.TWO_MA:

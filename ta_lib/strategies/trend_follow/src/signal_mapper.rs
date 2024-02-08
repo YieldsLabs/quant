@@ -224,6 +224,10 @@ pub enum SignalConfig {
         ma: f32,
         period: f32,
     },
+    ViCross {
+        atr_period: f32,
+        period: f32,
+    },
     VwapCross {
         period: f32,
     },
@@ -559,6 +563,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         )),
         SignalConfig::Quadruple { ma, period } => {
             Box::new(QuadrupleSignal::new(map_to_ma(ma as usize), period))
+        }
+        SignalConfig::ViCross { period, atr_period } => {
+            Box::new(VICrossSignal::new(period, atr_period))
         }
         SignalConfig::VwapCross { period } => Box::new(VWAPCrossSignal::new(period)),
         SignalConfig::KstCross {
