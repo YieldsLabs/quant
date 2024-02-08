@@ -33,7 +33,6 @@ from .exit.rsi import RsiExit
 from .pulse.adx import AdxPulse
 from .pulse.braid import BraidPulse
 from .pulse.chop import ChopPulse
-from .pulse.dumb import DumbPulse
 from .pulse.vo import VoPulse
 from .signal.ao_flip import AoFlipSignal
 from .signal.ao_saucer import AoSaucerSignal
@@ -160,9 +159,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 SupertrendConfirm(),
             ]
         )
-        pulse = np.random.choice(
-            [DumbPulse(), AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()]
-        )
+        pulse = np.random.choice([AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()])
         baseline = np.random.choice(
             [
                 MaBaseLine(

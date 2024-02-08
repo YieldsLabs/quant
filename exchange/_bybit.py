@@ -254,6 +254,11 @@ class Bybit(AbstractExchange):
             - lookback * self.connector.parse_timeframe(timeframe.value) * 1000
         )
 
+        max_time = (
+            start_time
+            + in_sample * self.connector.parse_timeframe(timeframe.value) * 1000
+        )
+
         fetched_ohlcv = 0
 
         while fetched_ohlcv < in_sample:
@@ -275,6 +280,9 @@ class Bybit(AbstractExchange):
                 current_ohlcv[-1][0]
                 + self.connector.parse_timeframe(timeframe.value) * 1000
             )
+
+            if start_time >= max_time:
+                break
 
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def _fetch_ohlcv(self, symbol, timeframe, start_time, current_limit):
