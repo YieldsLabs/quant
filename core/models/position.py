@@ -33,6 +33,7 @@ class Position:
     closed: bool = False
     stop_loss_price: float = 0.0000001
     take_profit_price: float = 0.0000001
+    fee: float = 0.0
     open_timestamp: float = field(default_factory=lambda: 0)
     closed_timestamp: float = field(default_factory=lambda: 0)
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
@@ -51,7 +52,7 @@ class Position:
 
         factor = 1 if self.side == PositionSide.LONG else -1
 
-        return factor * (self.exit_price - self.entry_price) * self.size
+        return factor * (self.exit_price - self.entry_price) * self.size - self.fee
 
     def add_order(self, order: Order) -> "Position":
         if self.closed:
@@ -68,6 +69,7 @@ class Position:
                 self,
                 orders=orders,
                 entry_price=order.price,
+                fee=order.fee,
                 size=order.size,
                 last_modified=last_modified,
                 take_profit_price=self.take_profit_strategy.next(
@@ -80,6 +82,7 @@ class Position:
                 self,
                 closed=True,
                 orders=orders,
+                fee=self.fee + order.fee,
                 exit_price=order.price,
                 closed_timestamp=last_modified,
                 last_modified=last_modified,
@@ -103,6 +106,16 @@ class Position:
             self.stop_loss_price,
             ohlcv,
         )
+
+        if next_stop_loss_price != self.stop_loss_price:
+            print(
+                f"SL -> SIDE: {self.side}, NEXt: {next_stop_loss_price}, PREv: {self.stop_loss_price}"
+            )
+
+        if next_take_profit_price != self.take_profit_price:
+            print(
+                f"TP -> SIDE: {self.side}, NEXt: {next_take_profit_price}, PREv: {self.take_profit_price}"
+            )
 
         return replace(
             self,

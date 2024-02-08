@@ -11,10 +11,6 @@ class Symbol:
     position_precision: int
     price_precision: int
 
-    @property
-    def fee(self):
-        return self.maker_fee + self.taker_fee
-
     def __str__(self):
         return self.name
 

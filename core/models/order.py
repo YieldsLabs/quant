@@ -21,7 +21,8 @@ class Order:
     status: OrderStatus
     price: float
     size: float
-    order_type: OrderType = field(default=OrderType.MARKET)
+    fee: float = field(default_factory=lambda: 0.0)
+    type: OrderType = field(default=OrderType.MARKET)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: float = field(default_factory=lambda: int(datetime.now().timestamp()))
 

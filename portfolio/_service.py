@@ -51,14 +51,16 @@ class Portfolio(AbstractEventManager):
             event.position, self.account_size, self.config["risk_per_trade"]
         )
 
-        signal = event.position.signal
+        position = event.position
+        signal = position.signal
         symbol = signal.symbol
         timeframe = signal.timeframe
         strategy = signal.strategy
 
-        performance = await self.state.get(event.position)
+        performance = await self.state.get(position)
+
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, cagr={round(performance.cagr * 100, 2)}%, pnl={round(performance.total_pnl, 4)}"
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, cagr={round(performance.cagr * 100, 2)}%, pnl={round(performance.total_pnl, 4)}, fee={round(position.fee, 3)}"
         )
 
         await self.dispatch(
@@ -73,6 +75,7 @@ class Portfolio(AbstractEventManager):
             performance.max_drawdown,
             performance.sterling_ratio,
             performance.burke_ratio,
+            performance.hit_ratio,
             performance.average_pnl,
         ]
 

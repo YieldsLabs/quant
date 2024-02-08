@@ -13,7 +13,7 @@ from core.events.position import (
     PositionInitialized,
 )
 from core.models.ohlcv import OHLCV
-from core.models.order import Order, OrderStatus
+from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position, PositionSide
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
@@ -61,11 +61,12 @@ class PaperOrderActor(Actor):
         logger.debug(f"New Position: {current_position}")
 
         fill_price = await self._determine_fill_price(current_position.side)
-
         size = current_position.size
 
         order = Order(
             status=OrderStatus.EXECUTED,
+            type=OrderType.PAPER,
+            fee=fill_price * size * current_position.signal.symbol.taker_fee,
             price=fill_price,
             size=size,
         )
@@ -83,11 +84,14 @@ class PaperOrderActor(Actor):
 
         fill_price = await self._determine_fill_price(current_position.side)
         price = self._calculate_closing_price(current_position, fill_price)
+        size = current_position.size
 
         order = Order(
             status=OrderStatus.CLOSED,
+            type=OrderType.PAPER,
+            fee=fill_price * size * current_position.signal.symbol.taker_fee,
             price=price,
-            size=current_position.size,
+            size=size,
         )
 
         next_position = current_position.add_order(order)

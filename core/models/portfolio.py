@@ -34,6 +34,11 @@ class Performance:
 
     @property
     def hit_ratio(self) -> float:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         pnl_positive = self._pnl > 0
         successful_trades = np.sum(pnl_positive)
 
