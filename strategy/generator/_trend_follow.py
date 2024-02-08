@@ -164,6 +164,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         baseline = np.random.choice(
             [
                 MaBaseLine(
+                    ma=StaticParameter(MovingAverageType.ALMA),
+                    period=StaticParameter(13.0),
+                ),
+                MaBaseLine(
                     ma=StaticParameter(MovingAverageType.EMA),
                     period=StaticParameter(55.0),
                 ),
@@ -185,7 +189,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.T3),
-                    period=StaticParameter(7.0),
+                    period=StaticParameter(8.0),
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.GMA),
@@ -201,12 +205,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MaBaseLine(
                     ma=CategoricalParameter(MovingAverageType),
-                    period=RandomParameter(20.0, 150.0, 10.0),
+                    period=RandomParameter(5.0, 100.0, 2.5),
                 ),
             ]
         )
         stop_loss = np.random.choice(
-            [AtrStopLoss(multi=RandomParameter(1.3, 1.8, 0.15))]
+            [AtrStopLoss(multi=RandomParameter(1.2, 1.6, 0.15))]
         )
         exit_signal = np.random.choice(
             [

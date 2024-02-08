@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::dmi;
 
-const ADX_UPPER_BARRIER: f32 = 50.0;
+const ADX_UPPER_BARRIER: f32 = 60.0;
 const ADX_LOWER_BARRIER: f32 = 25.0;
 
 pub struct ADXPulse {

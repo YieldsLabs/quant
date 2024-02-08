@@ -18,11 +18,11 @@ class Performance:
 
     @property
     def total_pnl(self) -> float:
-        return self._pnl.sum()
+        return np.sum(self._pnl)
 
     @property
     def average_pnl(self) -> float:
-        return self._pnl.mean()
+        return np.mean(self._pnl)
 
     @property
     def max_consecutive_wins(self) -> int:
@@ -35,13 +35,13 @@ class Performance:
     @property
     def hit_ratio(self) -> float:
         pnl_positive = self._pnl > 0
-        successful_trades = pnl_positive.sum()
+        successful_trades = np.sum(pnl_positive)
 
         return successful_trades / self.total_trades
 
     @property
     def sharpe_ratio(self) -> float:
-        avg_return = np.mean(self._pnl)
+        avg_return = self.average_pnl
         std_return = np.std(self._pnl)
 
         if std_return == 0:
@@ -71,20 +71,22 @@ class Performance:
 
     @property
     def max_runup(self) -> float:
-        return self.runup.max()
+        return np.max(self.runup)
 
     @property
     def max_drawdown(self) -> float:
-        return self.drawdown.max()
+        return np.max(self.drawdown)
 
     @property
     def calmar_ratio(self) -> float:
-        if self.max_drawdown == 0:
+        max_drawdown = self.max_drawdown
+
+        if max_drawdown == 0:
             return 0
 
         rate_of_return = self._rate_of_return(self._account_size, self.total_pnl)
 
-        return rate_of_return / abs(self.max_drawdown)
+        return rate_of_return / np.abs(max_drawdown)
 
     @property
     def sortino_ratio(self) -> float:
@@ -98,16 +100,15 @@ class Performance:
         if downside_std == 0:
             return 0
 
-        avg_return = np.mean(self._pnl)
-
-        return avg_return / downside_std
+        return self.average_pnl / downside_std
 
     @property
     def cagr(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+        periods = self.total_trades
+
+        if periods < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        periods = self.total_trades
         final_value = self.equity[-1]
         initial_value = self._account_size
 
@@ -136,7 +137,7 @@ class Performance:
         final_value = self.equity[-1]
         growth_factor = final_value / initial_value
 
-        drawdown_fraction = abs(max_loss) / abs(initial_value)
+        drawdown_fraction = np.abs(max_loss) / np.abs(initial_value)
 
         geometric_mean = np.sqrt(growth_factor)
 
@@ -170,7 +171,10 @@ class Performance:
 
         holding_period_return = 1 + rate_of_return
 
-        return holding_period_return ** (self._periods_per_year / self.total_trades) - 1
+        return (
+            np.power(holding_period_return, self._periods_per_year / self.total_trades)
+            - 1
+        )
 
     @property
     def annualized_volatility(self) -> float:
@@ -184,15 +188,16 @@ class Performance:
 
     @property
     def recovery_factor(self) -> float:
-        total_profit = self._pnl[self._pnl > 0].sum()
+        pnl_positive = self._pnl > 0
+        total_profit = np.sum(self._pnl[pnl_positive])
 
         return total_profit / self.max_drawdown if self.max_drawdown != 0 else 0
 
     @property
     def profit_factor(self) -> float:
         pnl_positive = self._pnl > 0
-        gross_profit = self._pnl[pnl_positive].sum()
-        gross_loss = np.abs(self._pnl[~pnl_positive].sum())
+        gross_profit = np.sum(self._pnl[pnl_positive])
+        gross_loss = np.abs(np.sum(self._pnl[~pnl_positive]))
 
         if gross_loss == 0:
             return 0
@@ -218,26 +223,28 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        mean_pnl = np.mean(self._pnl)
+        average_pnl = self.average_pnl
         std_pnl = np.std(self._pnl, ddof=1)
 
         if std_pnl == 0:
             return 0
 
-        return np.sum(((self._pnl - mean_pnl) / std_pnl) ** 3) / self.total_trades
+        return np.sum(((self._pnl - average_pnl) / std_pnl) ** 3) / self.total_trades
 
     @property
     def kurtosis(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        mean_pnl = np.mean(self._pnl)
+        average_pnl = self.average_pnl
         std_pnl = np.std(self._pnl, ddof=1)
 
         if std_pnl == 0:
             return 0
 
-        return np.sum(((self._pnl - mean_pnl) / std_pnl) ** 4) / self.total_trades - 3
+        return (
+            np.sum(((self._pnl - average_pnl) / std_pnl) ** 4) / self.total_trades - 3
+        )
 
     @property
     def var(self, confidence_level=0.95) -> float:
