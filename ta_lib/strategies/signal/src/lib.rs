@@ -40,6 +40,7 @@ mod trix_flip;
 mod tsi_cross;
 mod tsi_flip;
 mod vi_cross;
+mod vwap_bb;
 mod vwap_cross;
 
 pub use ao_flip::AOFlipSignal;
@@ -84,4 +85,5 @@ pub use trix_flip::TRIXFlipSignal;
 pub use tsi_cross::TSICrossSignal;
 pub use tsi_flip::TSIFlipSignal;
 pub use vi_cross::VICrossSignal;
+pub use vwap_bb::VWAPBBSignal;
 pub use vwap_cross::VWAPCrossSignal;

@@ -18,6 +18,7 @@ from strategy.generator.confirm.supertrend import SupertrendConfirm
 from strategy.generator.signal.macd_bb import MacdBbSignal
 from strategy.generator.signal.rsi_supertrend import RsiSupertrendSignal
 from strategy.generator.signal.vi_cross import ViCrossSignal
+from strategy.generator.signal.vwap_bb import VwapBbSignal
 
 from .baseline.ma import MaBaseLine
 from .confirm.dpo import DpoConfirm
@@ -77,6 +78,7 @@ from .stop_loss.atr import AtrStopLoss
 
 
 class TrendSignalType(Enum):
+    BB = auto()
     CROSS = auto()
     FLIP = auto()
     V = auto()
@@ -210,7 +212,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
         stop_loss = np.random.choice(
-            [AtrStopLoss(multi=RandomParameter(1.2, 1.6, 0.15))]
+            [AtrStopLoss(multi=RandomParameter(1.4, 1.7, 0.15))]
         )
         exit_signal = np.random.choice(
             [
@@ -272,6 +274,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.V:
             return np.random.choice([TiiVSignal(), RsiVSignal()])
 
+        if signal == TrendSignalType.BB:
+            return np.random.choice(
+                [
+                    MacdBbSignal(smooth_type=StaticParameter(Smooth.EMA)),
+                    VwapBbSignal(smooth_type=StaticParameter(Smooth.EMA)),
+                ]
+            )
+
         if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
@@ -319,7 +329,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return np.random.choice(
             [
                 AoSaucerSignal(),
-                MacdBbSignal(smooth_type=StaticParameter(Smooth.EMA)),
                 MacdColorSwitchSignal(
                     smooth_type=StaticParameter(Smooth.SMA),
                     fast_period=StaticParameter(3.0),

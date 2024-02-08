@@ -231,6 +231,12 @@ pub enum SignalConfig {
     VwapCross {
         period: f32,
     },
+    VwapBb {
+        period: f32,
+        smooth_type: f32,
+        bb_period: f32,
+        factor: f32,
+    },
 }
 
 pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
@@ -568,6 +574,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             Box::new(VICrossSignal::new(period, atr_period))
         }
         SignalConfig::VwapCross { period } => Box::new(VWAPCrossSignal::new(period)),
+        SignalConfig::VwapBb {
+            period,
+            smooth_type,
+            bb_period,
+            factor,
+        } => Box::new(VWAPBBSignal::new(
+            period,
+            map_to_smooth(smooth_type as usize),
+            bb_period,
+            factor,
+        )),
         SignalConfig::KstCross {
             smooth_type,
             roc_period_first,

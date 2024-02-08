@@ -48,6 +48,7 @@ class SignalType(Enum):
     QstickCross = "QstickCross"
     Quadruple = "Quadruple"
     ViCross = "ViCross"
+    VwapBb = "VwapBb"
     VwapCross = "VwapCross"
 
     def __str__(self):
