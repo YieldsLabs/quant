@@ -601,7 +601,7 @@ fn trend(c: &mut Criterion) {
         )
     });
 
-    group.bench_function("kijun", |b| {
+    group.bench_function("kjs", |b| {
         b.iter_batched_ref(
             || {
                 let high = Series::from(&high);
@@ -610,7 +610,7 @@ fn trend(c: &mut Criterion) {
 
                 (high, low, period)
             },
-            |(high, low, period)| kijun(high, low, *period),
+            |(high, low, period)| kjs(high, low, *period),
             criterion::BatchSize::SmallInput,
         )
     });
