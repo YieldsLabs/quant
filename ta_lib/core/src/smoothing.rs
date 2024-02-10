@@ -126,9 +126,7 @@ impl Series<f32> {
     fn zlema(&self, period: usize) -> Series<f32> {
         let lag = ((period as f32 - 1.) / 2.) as usize;
 
-        let d = (2. * self) - self.shift(lag);
-
-        d.ema(period)
+        (self + (self - self.shift(lag))).ema(period)
     }
 
     pub fn smooth(&self, smooth_type: Smooth, period: usize) -> Self {

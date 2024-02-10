@@ -147,7 +147,7 @@ impl BaseStrategy {
     }
 
     fn suggested_entry(&self) -> f32 {
-        self.ohlcv_series().close.last().unwrap_or(std::f32::NAN)
+        self.ohlcv_series().hlc3().last().unwrap_or(std::f32::NAN)
     }
 
     fn stop_loss_levels(&self) -> (f32, f32) {
@@ -322,6 +322,6 @@ mod tests {
         assert_eq!(hlc3, vec![1.333_333_4; lookback]);
         assert_eq!(hlcc4, vec![1.375; lookback]);
         assert_eq!(ohlc4, vec![1.25; lookback]);
-        assert_eq!(action, TradeAction::GoLong(1.5));
+        assert_eq!(action, TradeAction::GoLong(1.333_333_4));
     }
 }
