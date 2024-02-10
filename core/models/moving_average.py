@@ -9,7 +9,7 @@ class MovingAverageType(Enum):
     GMA = 5
     HMA = 6
     KAMA = 7
-    KIJUN = 8
+    KJS = 8
     LSMA = 9
     MD = 10
     RMSMA = 11

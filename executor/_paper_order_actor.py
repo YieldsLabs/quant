@@ -14,7 +14,8 @@ from core.events.position import (
 )
 from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
-from core.models.position import Position, PositionSide
+from core.models.position import Position
+from core.models.position_side import PositionSide
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -62,20 +63,40 @@ class PaperOrderActor(Actor):
 
         fill_price = await self._determine_fill_price(current_position.side)
         size = current_position.size
+        side = current_position.side
 
-        order = Order(
-            status=OrderStatus.EXECUTED,
-            type=OrderType.PAPER,
-            fee=fill_price * size * current_position.signal.symbol.taker_fee,
-            price=fill_price,
-            size=size,
+        price = (
+            min(current_position.entry_price, fill_price)
+            if side == PositionSide.LONG
+            else max(current_position.entry_price, fill_price)
         )
 
-        next_position = current_position.add_order(order)
+        if (side == PositionSide.LONG and current_position.stop_loss_price > price) or (
+            side == PositionSide.SHORT and current_position.stop_loss_price < price
+        ):
+            order = Order(
+                status=OrderStatus.FAILED,
+                type=OrderType.PAPER,
+                price=price,
+                size=size,
+            )
+        else:
+            order = Order(
+                status=OrderStatus.EXECUTED,
+                type=OrderType.PAPER,
+                fee=price * size * current_position.signal.symbol.taker_fee,
+                price=price,
+                size=size,
+            )
 
-        logger.debug(f"Opened Position: {next_position}")
+        current_position = current_position.add_order(order)
 
-        await self.tell(BrokerPositionOpened(next_position))
+        logger.debug(f"Position to Open: {current_position}")
+
+        if current_position.closed:
+            await self.tell(BrokerPositionClosed(current_position))
+        else:
+            await self.tell(BrokerPositionOpened(current_position))
 
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
@@ -83,13 +104,15 @@ class PaperOrderActor(Actor):
         logger.debug(f"To Close Position: {current_position}")
 
         fill_price = await self._determine_fill_price(current_position.side)
-        price = self._calculate_closing_price(current_position, fill_price)
+        price = self._calculate_closing_price(
+            current_position, fill_price, event.exit_price
+        )
         size = current_position.size
 
         order = Order(
             status=OrderStatus.CLOSED,
             type=OrderType.PAPER,
-            fee=fill_price * size * current_position.signal.symbol.taker_fee,
+            fee=price * size * current_position.signal.symbol.taker_fee,
             price=price,
             size=size,
         )
@@ -106,7 +129,7 @@ class PaperOrderActor(Actor):
 
     async def _determine_fill_price(self, side: PositionSide) -> float:
         async with self.lock:
-            last_tick = self.tick_buffer[-1]
+            last_tick = self.tick_buffer.popleft()
 
             direction = self._intrabar_price_movement(last_tick)
 
@@ -126,12 +149,16 @@ class PaperOrderActor(Actor):
         )
 
     @staticmethod
-    def _calculate_closing_price(position: Position, fill_price: float) -> float:
+    def _calculate_closing_price(
+        position: Position, fill_price: float, exit_price: float
+    ) -> float:
         if position.side == PositionSide.LONG:
             return max(
-                min(fill_price, position.take_profit_price), position.stop_loss_price
+                min(fill_price, exit_price, position.take_profit_price),
+                position.stop_loss_price,
             )
         else:
             return min(
-                max(fill_price, position.take_profit_price), position.stop_loss_price
+                max(fill_price, exit_price, position.take_profit_price),
+                position.stop_loss_price,
             )

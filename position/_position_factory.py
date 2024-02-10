@@ -5,7 +5,8 @@ from core.interfaces.abstract_position_take_profit_strategy import (
     AbstractPositionTakeProfitStrategy,
 )
 from core.models.ohlcv import OHLCV
-from core.models.position import Position, PositionSide
+from core.models.position import Position
+from core.models.position_side import PositionSide
 from core.models.signal import Signal, SignalSide
 
 
@@ -30,9 +31,7 @@ class PositionFactory(AbstractPositionFactory):
     ) -> Position:
         symbol = signal.symbol
 
-        stop_loss_price = (
-            round(stop_loss_price, symbol.price_precision) if stop_loss_price else None
-        )
+        stop_loss_price = stop_loss_price if stop_loss_price else None
         entry_price = round(entry_price, symbol.price_precision)
 
         position_side = (

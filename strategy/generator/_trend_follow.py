@@ -179,16 +179,20 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     period=StaticParameter(85.0),
                 ),
                 MaBaseLine(
-                    ma=StaticParameter(MovingAverageType.KIJUN),
+                    ma=StaticParameter(MovingAverageType.KJS),
                     period=StaticParameter(26.0),
                 ),
                 MaBaseLine(
-                    ma=StaticParameter(MovingAverageType.KIJUN),
+                    ma=StaticParameter(MovingAverageType.KJS),
                     period=StaticParameter(50.0),
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.T3),
                     period=StaticParameter(8.0),
+                ),
+                MaBaseLine(
+                    ma=StaticParameter(MovingAverageType.TMA),
+                    period=StaticParameter(20.0),
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.GMA),

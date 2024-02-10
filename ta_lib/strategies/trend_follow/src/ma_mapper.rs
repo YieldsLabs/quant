@@ -9,7 +9,7 @@ pub fn map_to_ma(smoothing: usize) -> MovingAverageType {
         5 => MovingAverageType::GMA,
         6 => MovingAverageType::HMA,
         7 => MovingAverageType::KAMA,
-        8 => MovingAverageType::KIJUN,
+        8 => MovingAverageType::KJS,
         9 => MovingAverageType::LSMA,
         10 => MovingAverageType::MD,
         11 => MovingAverageType::RMSMA,

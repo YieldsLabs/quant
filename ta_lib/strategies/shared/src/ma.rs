@@ -1,7 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use trend::{
-    alma, dema, ema, frama, gma, hma, kama, kijun, lsma, md, rmsma, sinwma, sma, smma, t3, tema,
+    alma, dema, ema, frama, gma, hma, kama, kjs, lsma, md, rmsma, sinwma, sma, smma, t3, tema,
     tma, vwma, wma, zlema, zlsma,
 };
 
@@ -13,7 +13,7 @@ pub enum MovingAverageType {
     GMA,
     HMA,
     KAMA,
-    KIJUN,
+    KJS,
     LSMA,
     MD,
     RMSMA,
@@ -30,11 +30,11 @@ pub enum MovingAverageType {
 }
 
 pub fn ma_indicator(
-    smoothing: &MovingAverageType,
+    ma: &MovingAverageType,
     data: &OHLCVSeries,
     period: usize,
 ) -> Series<f32> {
-    match smoothing {
+    match ma {
         MovingAverageType::ALMA => alma(&data.close, period, 0.85, 6.0),
         MovingAverageType::DEMA => dema(&data.close, period),
         MovingAverageType::EMA => ema(&data.close, period),
@@ -42,7 +42,7 @@ pub fn ma_indicator(
         MovingAverageType::GMA => gma(&data.close, period),
         MovingAverageType::HMA => hma(&data.close, period),
         MovingAverageType::KAMA => kama(&data.close, period),
-        MovingAverageType::KIJUN => kijun(&data.high, &data.low, period),
+        MovingAverageType::KJS => kjs(&data.high, &data.low, period),
         MovingAverageType::LSMA => lsma(&data.close, period),
         MovingAverageType::MD => md(&data.close, period),
         MovingAverageType::RMSMA => rmsma(&data.close, period),

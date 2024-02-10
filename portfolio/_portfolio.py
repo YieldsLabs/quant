@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict
+from typing import Dict, Tuple
 
 from core.models.portfolio import Performance
 from core.models.position import Position
@@ -10,7 +10,7 @@ from core.models.timeframe import Timeframe
 
 class PortfolioStorage:
     def __init__(self):
-        self.data: Dict[Strategy, Performance] = {}
+        self.data: Dict[Tuple[Symbol, Timeframe, Strategy], Performance] = {}
         self._lock = asyncio.Lock()
 
     async def next(self, position: Position, account_size: int, risk_per_trade: float):
@@ -20,14 +20,16 @@ class PortfolioStorage:
                 position.signal.timeframe,
                 position.signal.strategy,
             )
-            performance = self.data.get(key)
 
-            if performance:
-                self.data[key] = performance.next(position.pnl)
-            else:
-                self.data[key] = Performance(account_size, risk_per_trade).next(
-                    position.pnl
-                )
+            performance = self.data.get(key, None)
+
+            if not performance:
+                performance = Performance(account_size, risk_per_trade)
+
+            if position.pnl != 0:
+                performance = performance.next(position.pnl)
+
+            self.data[key] = performance
 
     async def get(self, position: Position):
         async with self._lock:
@@ -55,7 +57,10 @@ class PortfolioStorage:
             key = self._get_key(symbol, timeframe, strategy)
             performance = self.data.get(key)
 
-            return performance.equity[-1] if performance else 0
+            if performance and len(performance.equity) > 2:
+                return performance.equity[-1]
+
+            return 0
 
     async def get_kelly(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         async with self._lock:

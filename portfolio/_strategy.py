@@ -14,7 +14,7 @@ class StrategyStorage:
     def __init__(self, n_clusters=3):
         self.kmeans = KMeans(n_clusters=n_clusters, n_init="auto")
         self.scaler = MinMaxScaler()
-        self.data: Dict[Tuple(Symbol, Timeframe, Strategy), Tuple[np.array, int]] = {}
+        self.data: Dict[Tuple[Symbol, Timeframe, Strategy], Tuple[np.array, int]] = {}
         self.lock = asyncio.Lock()
 
     async def next(

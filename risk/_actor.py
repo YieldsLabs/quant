@@ -1,6 +1,6 @@
 import asyncio
 from collections import deque
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
@@ -14,7 +14,8 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.models.ohlcv import OHLCV
-from core.models.position import Position, PositionSide
+from core.models.position import Position
+from core.models.position_side import PositionSide
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -51,7 +52,7 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe, strategy)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=30)
+        self._ohlcv = deque(maxlen=21)
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
@@ -102,10 +103,12 @@ class RiskActor(Actor):
 
             current_long_position, current_short_position = self._position
 
+            ohlcvs = list(self._ohlcv)
+
             self._position = await asyncio.gather(
                 *[
-                    self._process_position(current_long_position),
-                    self._process_position(current_short_position),
+                    self._process_position(current_long_position, ohlcvs),
+                    self._process_position(current_short_position, ohlcvs),
                 ]
             )
 
@@ -153,28 +156,28 @@ class RiskActor(Actor):
 
             self._position = (long_position, short_position)
 
-    async def _process_position(self, position: Optional[Position]):
+    async def _process_position(
+        self, position: Optional[Position], ohlcvs: List[OHLCV]
+    ):
         next_position = None
 
-        if position:
-            next_position = position.next(list(self._ohlcv))
+        if position and len(ohlcvs) > 1:
+            next_position = position.next(ohlcvs)
 
-            if self._should_exit(next_position):
-                await self._process_exit(next_position)
+            last_candle = ohlcvs[-1]
+
+            if self._should_exit(next_position, last_candle):
+                await self._process_exit(next_position, last_candle)
                 return None
 
         return next_position
 
-    async def _process_exit(self, position: Position):
-        ohlcv = self._ohlcv[-1]
-
+    async def _process_exit(self, position: Position, ohlcv: OHLCV):
         exit_price = self._calculate_exit_price(position, ohlcv)
 
         await self.tell(RiskThresholdBreached(position, exit_price))
 
-    def _should_exit(self, position: Position):
-        ohlcv = self._ohlcv[-1]
-
+    def _should_exit(self, position: Position, ohlcv: OHLCV):
         expiration = (
             position.open_timestamp + self.config["trade_duration"] * 1000
         ) - ohlcv.timestamp
@@ -189,9 +192,8 @@ class RiskActor(Actor):
     def _check_long_exit(
         self, next_position: Position, expiration: int, ohlcv: OHLCV
     ) -> bool:
-        if (
-            expiration <= 0
-            and next_position.entry_price < min(ohlcv.close, ohlcv.low) * 1.05
+        if expiration <= 0 and next_position.entry_price * 1.05 < min(
+            ohlcv.close, ohlcv.low
         ):
             return True
         else:

@@ -5,7 +5,7 @@ import numpy as np
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.models.ohlcv import OHLCV
-from core.models.position import PositionSide
+from core.models.position_side import PositionSide
 
 
 class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
@@ -21,7 +21,7 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         stop_loss_price: float,
         ohlcvs: List[OHLCV],
     ) -> float:
-        lookback_window = 14
+        lookback_window = 5
         recent_low = min(ohlcv.low for ohlcv in ohlcvs[-lookback_window:])
         recent_high = max(ohlcv.high for ohlcv in ohlcvs[-lookback_window:])
 
@@ -38,24 +38,32 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
 
         if side == PositionSide.LONG:
             if ohlcv.high >= entry_price + sl_threshold:
-                next_stop_loss = max(stop_loss_price, recent_low - risk_value)
+                next_stop_loss = max(next_stop_loss, recent_low - risk_value)
 
-            if ohlcv.high >= take_profit_price - tp_threshold:
+            if (
+                ohlcv.high >= take_profit_price - tp_threshold
+                and stop_loss_price >= entry_price
+            ):
                 next_take_profit = max(
-                    take_profit_price,
-                    self.config["risk_reward_ratio"] * (current_price - next_stop_loss)
-                    + current_price,
+                    next_take_profit,
+                    current_price
+                    + (current_price - next_stop_loss)
+                    * self.config["risk_reward_ratio"],
                 )
 
         elif side == PositionSide.SHORT:
             if ohlcv.low <= entry_price - sl_threshold:
-                next_stop_loss = min(stop_loss_price, recent_high + risk_value)
+                next_stop_loss = min(next_stop_loss, recent_high + risk_value)
 
-            if ohlcv.low <= take_profit_price + tp_threshold:
+            if (
+                ohlcv.low <= take_profit_price + tp_threshold
+                and stop_loss_price <= entry_price
+            ):
                 next_take_profit = min(
-                    take_profit_price,
-                    self.config["risk_reward_ratio"] * (current_price - next_stop_loss)
-                    + current_price,
+                    next_take_profit,
+                    current_price
+                    - (next_stop_loss - current_price)
+                    * self.config["risk_reward_ratio"],
                 )
 
         return next_stop_loss, next_take_profit

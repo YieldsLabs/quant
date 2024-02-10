@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 
-TOTAL_TRADES_THRESHOLD = 5
+TOTAL_TRADES_THRESHOLD = 3
 
 
 @dataclass(frozen=True)
@@ -22,6 +22,9 @@ class Performance:
 
     @property
     def average_pnl(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         return np.mean(self._pnl)
 
     @property
@@ -58,11 +61,18 @@ class Performance:
 
     @property
     def equity(self):
-        return self._account_size + self._pnl.cumsum()
+        return [self._account_size] + self._pnl.cumsum()
 
     @property
     def drawdown(self):
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return np.array([0, 0])
+
         equity_curve = self.equity
+
+        if len(equity_curve) < 2:
+            return np.array([0, 0])
+
         peak = np.maximum.accumulate(equity_curve)
         drawdowns = (peak - equity_curve) / peak
 
@@ -70,9 +80,16 @@ class Performance:
 
     @property
     def runup(self) -> float:
-        equity_curve = self.equity
-        trough = np.minimum.accumulate(equity_curve)
-        runups = (equity_curve - trough) / trough
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return np.array([0, 0])
+
+        equity = self.equity
+
+        if len(equity) < 2:
+            return np.array([0, 0])
+
+        trough = np.minimum.accumulate(equity)
+        runups = (equity - trough) / trough
 
         return runups
 
@@ -116,7 +133,12 @@ class Performance:
         if periods < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        final_value = self.equity[-1]
+        equity = self.equity
+
+        if len(equity) < 2:
+            return 0
+
+        final_value = equity[-1]
         initial_value = self._account_size
 
         if initial_value == 0:
@@ -140,8 +162,13 @@ class Performance:
         if max_loss == 0:
             return self._risk_per_trade
 
+        equity = self.equity
+
+        if len(equity) < 2:
+            return self._risk_per_trade
+
         initial_value = self._account_size
-        final_value = self.equity[-1]
+        final_value = equity[-1]
         growth_factor = final_value / initial_value
 
         drawdown_fraction = np.abs(max_loss) / np.abs(initial_value)
@@ -152,7 +179,9 @@ class Performance:
 
     @property
     def kelly(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
             return self._risk_per_trade
 
         win_trades = self._pnl[self._pnl > 0]
@@ -161,7 +190,7 @@ class Performance:
         if len(win_trades) == 0 or len(loss_trades) == 0:
             return self._risk_per_trade
 
-        win_probability = len(win_trades) / self.total_trades
+        win_probability = len(win_trades) / total_trades
         average_win_to_loss_ratio = np.mean(win_trades) / np.abs(np.mean(loss_trades))
 
         p = 1 / average_win_to_loss_ratio
@@ -170,21 +199,32 @@ class Performance:
         return (win_probability * p - q) / p
 
     @property
-    def annualized_return(self) -> float:
+    def ann_sharpe_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
+        return self.sharpe_ratio * np.sqrt(self._periods_per_year)
+
+    @property
+    def ann_return(self) -> float:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         rate_of_return = self._rate_of_return(self._account_size, self.total_pnl)
 
-        if rate_of_return < 0 and self._periods_per_year % self.total_trades != 0:
+        if rate_of_return < 0 and self._periods_per_year % total_trades != 0:
             return 0
 
         holding_period_return = 1 + rate_of_return
 
         return (
-            np.power(holding_period_return, self._periods_per_year / self.total_trades)
-            - 1
+            np.power(holding_period_return, self._periods_per_year / total_trades) - 1
         )
 
     @property
-    def annualized_volatility(self) -> float:
+    def ann_volatility(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
@@ -195,16 +235,20 @@ class Performance:
 
     @property
     def recovery_factor(self) -> float:
-        total_profit = np.sum(self._pnl[self._pnl > 0])
         max_drawdown = self.max_drawdown
 
         if max_drawdown == 0:
             return 0
 
+        total_profit = np.sum(self._pnl[self._pnl > 0])
+
         return total_profit / max_drawdown
 
     @property
     def profit_factor(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         pnl_positive = self._pnl > 0
         gross_profit = np.sum(self._pnl[pnl_positive])
         gross_loss = np.abs(np.sum(self._pnl[~pnl_positive]))
@@ -218,7 +262,7 @@ class Performance:
     def risk_of_ruin(self) -> float:
         win_rate = self.hit_ratio
 
-        if win_rate == 1 or win_rate == 0:
+        if win_rate < 2:
             return 0
 
         loss_rate = 1 - win_rate
@@ -230,40 +274,48 @@ class Performance:
 
     @property
     def skewness(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        average_pnl = self.average_pnl
         std_pnl = np.std(self._pnl, ddof=1)
 
         if std_pnl == 0:
             return 0
 
-        return np.sum(((self._pnl - average_pnl) / std_pnl) ** 3) / self.total_trades
+        return np.sum(((self._pnl - self.average_pnl) / std_pnl) ** 3) / total_trades
 
     @property
     def kurtosis(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        average_pnl = self.average_pnl
         std_pnl = np.std(self._pnl, ddof=1)
 
         if std_pnl == 0:
             return 0
 
         return (
-            np.sum(((self._pnl - average_pnl) / std_pnl) ** 4) / self.total_trades - 3
+            np.sum(((self._pnl - self.average_pnl) / std_pnl) ** 4) / total_trades - 3
         )
 
     @property
     def var(self, confidence_level=0.95) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         daily_returns = self._pnl / self._account_size
 
         return -np.percentile(daily_returns, (1 - confidence_level) * 100)
 
     @property
     def cvar(self, alpha=0.05) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         pnl_sorted = np.sort(self._pnl)
         n_losses = int(alpha * len(self._pnl))
 
@@ -291,9 +343,16 @@ class Performance:
 
     @property
     def lake_ratio(self) -> float:
-        account_size = self._account_size + self._pnl.cumsum()
-        peaks = np.maximum.accumulate(account_size)
-        drawdowns = (peaks - account_size) / peaks
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
+        equity = self.equity
+
+        if len(equity) < 2:
+            return 0
+
+        peaks = np.maximum.accumulate(equity)
+        drawdowns = (peaks - equity) / peaks
         underwater_time = np.sum(drawdowns < 0) / self._periods_per_year
 
         return 1 - underwater_time
@@ -392,6 +451,9 @@ class Performance:
 
     @property
     def kappa_three_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         gains = self._pnl[self._pnl > 0]
         losses = self._pnl[self._pnl < 0]
 
@@ -440,7 +502,7 @@ class Performance:
             + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, optimal_f={self.optimal_f}, "
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, sharpe_ratio={self.sharpe_ratio}, "
             + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, "
-            + f"cagr={self.cagr}, annualized_return={self.annualized_return}, annualized_volatility={self.annualized_volatility}, "
+            + f"cagr={self.cagr}, annualized_return={self.ann_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, "
             + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, kelly={self.kelly}, "
             + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, "
             + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, "
@@ -467,8 +529,9 @@ class Performance:
             "cagr": self.cagr,
             "optimal_f": self.optimal_f,
             "kelly": self.kelly,
-            "annualized_return": self.annualized_return,
-            "annualized_volatility": self.annualized_volatility,
+            "annualized_return": self.ann_return,
+            "annualized_volatility": self.ann_volatility,
+            "annualized_sharpe_ratio": self.ann_sharpe_ratio,
             "recovery_factor": self.recovery_factor,
             "profit_factor": self.profit_factor,
             "risk_of_ruin": self.risk_of_ruin,

@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field, replace
 from datetime import datetime
-from enum import Enum
 from typing import Tuple
 
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
@@ -10,15 +9,8 @@ from core.interfaces.abstract_position_take_profit_strategy import (
 
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
+from .position_side import PositionSide
 from .signal import Signal
-
-
-class PositionSide(Enum):
-    LONG = "long"
-    SHORT = "short"
-
-    def __str__(self):
-        return self.value
 
 
 @dataclass(frozen=True)
@@ -50,7 +42,7 @@ class Position:
         if not self.closed:
             return pnl
 
-        factor = 1 if self.side == PositionSide.LONG else -1
+        factor = -1 if self.side == PositionSide.SHORT else 1
 
         return factor * (self.exit_price - self.entry_price) * self.size - self.fee
 
@@ -73,7 +65,7 @@ class Position:
                 size=order.size,
                 last_modified=last_modified,
                 take_profit_price=self.take_profit_strategy.next(
-                    order.price, self.stop_loss_price
+                    self.side, order.price, self.stop_loss_price
                 ),
             )
 
@@ -106,16 +98,6 @@ class Position:
             self.stop_loss_price,
             ohlcv,
         )
-
-        if next_stop_loss_price != self.stop_loss_price:
-            print(
-                f"SL -> SIDE: {self.side}, NEXt: {next_stop_loss_price}, PREv: {self.stop_loss_price}"
-            )
-
-        if next_take_profit_price != self.take_profit_price:
-            print(
-                f"TP -> SIDE: {self.side}, NEXt: {next_take_profit_price}, PREv: {self.take_profit_price}"
-            )
 
         return replace(
             self,

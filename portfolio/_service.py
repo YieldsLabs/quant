@@ -60,7 +60,7 @@ class Portfolio(AbstractEventManager):
         performance = await self.state.get(position)
 
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, cagr={round(performance.cagr * 100, 2)}%, pnl={round(performance.total_pnl, 4)}, fee={round(position.fee, 3)}"
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, cagr={round(performance.cagr * 100, 2)}%, pnl={round(performance.total_pnl, 4)}, kurtosis={round(performance.kurtosis, 4)}, fee={round(position.fee, 4)}"
         )
 
         await self.dispatch(
@@ -100,19 +100,18 @@ class Portfolio(AbstractEventManager):
 
         equity = await self.state.get_equity(symbol, timeframe, strategy)
 
-        if query.type == PositionSizeType.Fixed:
-            return equity * risk_per_trade
+        if equity == 0:
+            return risk_per_trade
 
-        elif query.type == PositionSizeType.Kelly:
+        if query.type == PositionSizeType.Kelly:
             kelly = await self.state.get_kelly(symbol, timeframe, strategy)
             return equity * kelly if kelly else risk_per_trade
 
-        elif query.type == PositionSizeType.Optimalf:
+        if query.type == PositionSizeType.Optimalf:
             optimalf = await self.state.get_optimalf(symbol, timeframe, strategy)
             return equity * optimalf if optimalf else risk_per_trade
 
-        else:
-            return equity * risk_per_trade
+        return equity * risk_per_trade
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):

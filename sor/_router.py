@@ -8,7 +8,7 @@ from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.exchange import ExchangeType
 from core.models.order import Order, OrderStatus
-from core.models.position import PositionSide
+from core.models.position_side import PositionSide
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbol, GetSymbols
 from core.queries.position import GetClosePosition, GetOpenPosition
@@ -203,7 +203,7 @@ class SmartRouter(AbstractEventManager):
             if not self.exchange.fetch_position(symbol, position.side):
                 break
 
-            if spread < -0.218:
+            if spread < -0.02:
                 self.exchange.close_full_position(symbol, position.side)
                 break
 
