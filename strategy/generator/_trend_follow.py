@@ -78,6 +78,7 @@ from .stop_loss.atr import AtrStopLoss
 
 class TrendSignalType(Enum):
     BB = auto()
+    CANDLE = auto()
     CROSS = auto()
     FLIP = auto()
     V = auto()
@@ -283,6 +284,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ]
             )
 
+        if signal == TrendSignalType.CANDLE:
+            return np.random.choice(
+                [
+                    TrendCandleSignal(),
+                ]
+            )
+
         if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
@@ -338,7 +346,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.EMA)),
                 MacdColorSwitchSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
-                TrendCandleSignal(),
                 SnatrSignal(),
                 RsiNautralityRejectionSignal(),
                 RsiSupertrendSignal(),

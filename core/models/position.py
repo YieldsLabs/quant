@@ -44,7 +44,7 @@ class Position:
 
         factor = -1 if self.side == PositionSide.SHORT else 1
 
-        return factor * (self.exit_price - self.entry_price) * self.size - self.fee
+        return factor * (self.exit_price - self.entry_price) * self.size
 
     def add_order(self, order: Order) -> "Position":
         if self.closed:

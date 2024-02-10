@@ -11,6 +11,7 @@ class Performance:
     _risk_per_trade: float
     _periods_per_year: float = 252
     _pnl: np.array = field(default_factory=lambda: np.array([]))
+    _fee: np.array = field(default_factory=lambda: np.array([]))
 
     @property
     def total_trades(self) -> int:
@@ -19,6 +20,10 @@ class Performance:
     @property
     def total_pnl(self) -> float:
         return np.sum(self._pnl)
+
+    @property
+    def total_fee(self) -> float:
+        return np.sum(self._fee)
 
     @property
     def average_pnl(self) -> float:
@@ -470,10 +475,11 @@ class Performance:
 
         return (up_proportion**3 - down_proportion) / np.sqrt(np.mean(self._pnl**2))
 
-    def next(self, pnl: float) -> "Performance":
+    def next(self, pnl: float, fee: float) -> "Performance":
         _pnl = np.append(self._pnl, pnl)
+        _fee = np.append(self._fee, fee)
 
-        return replace(self, _pnl=_pnl)
+        return replace(self, _pnl=_pnl, _fee=_fee)
 
     @staticmethod
     def _max_streak(pnl, winning: bool) -> int:
@@ -500,7 +506,7 @@ class Performance:
             f"Performance(total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, "
             + f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
             + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, optimal_f={self.optimal_f}, "
-            + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, sharpe_ratio={self.sharpe_ratio}, "
+            + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, total_fee={self.total_fee}, sharpe_ratio={self.sharpe_ratio}, "
             + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, "
             + f"cagr={self.cagr}, annualized_return={self.ann_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, "
             + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, kelly={self.kelly}, "
@@ -514,6 +520,7 @@ class Performance:
             "account_size": self._account_size,
             "total_trades": self.total_trades,
             "total_pnl": self.total_pnl,
+            "total_fee": self.total_fee,
             "average_pnl": self.average_pnl,
             "max_consecutive_wins": self.max_consecutive_wins,
             "max_consecutive_losses": self.max_consecutive_losses,
