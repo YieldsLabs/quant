@@ -38,7 +38,7 @@ class PaperOrderActor(Actor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         super().__init__(symbol, timeframe, strategy)
         self.lock = asyncio.Lock()
-        self.tick_buffer = deque(maxlen=5)
+        self.tick_buffer = deque(maxlen=3)
 
     def pre_receive(self, event: OrderEventType):
         event = event.position.signal if hasattr(event, "position") else event
@@ -61,31 +61,29 @@ class PaperOrderActor(Actor):
 
         logger.debug(f"New Position: {current_position}")
 
-        fill_price = await self._determine_fill_price(current_position.side)
         size = current_position.size
         side = current_position.side
-
-        price = (
-            min(current_position.entry_price, fill_price)
-            if side == PositionSide.LONG
-            else max(current_position.entry_price, fill_price)
+        fill_price = await self._determine_fill_price(
+            side, current_position.entry_price
         )
 
-        if (side == PositionSide.LONG and current_position.stop_loss_price > price) or (
-            side == PositionSide.SHORT and current_position.stop_loss_price < price
+        if (
+            side == PositionSide.LONG and current_position.stop_loss_price > fill_price
+        ) or (
+            side == PositionSide.SHORT and current_position.stop_loss_price < fill_price
         ):
             order = Order(
                 status=OrderStatus.FAILED,
                 type=OrderType.PAPER,
-                price=price,
+                price=fill_price,
                 size=size,
             )
         else:
             order = Order(
                 status=OrderStatus.EXECUTED,
                 type=OrderType.PAPER,
-                fee=price * size * current_position.signal.symbol.taker_fee,
-                price=price,
+                fee=fill_price * size * current_position.signal.symbol.taker_fee,
+                price=fill_price,
                 size=size,
             )
 
@@ -103,10 +101,10 @@ class PaperOrderActor(Actor):
 
         logger.debug(f"To Close Position: {current_position}")
 
-        fill_price = await self._determine_fill_price(current_position.side)
-        price = self._calculate_closing_price(
-            current_position, fill_price, event.exit_price
+        fill_price = await self._determine_fill_price(
+            current_position.side, event.exit_price
         )
+        price = self._calculate_closing_price(current_position, fill_price)
         size = current_position.size
 
         order = Order(
@@ -127,16 +125,21 @@ class PaperOrderActor(Actor):
         async with self.lock:
             self.tick_buffer.append(event.ohlcv)
 
-    async def _determine_fill_price(self, side: PositionSide) -> float:
+    async def _determine_fill_price(
+        self, side: PositionSide, event_price: float
+    ) -> float:
         async with self.lock:
-            last_tick = self.tick_buffer.popleft()
+            last_tick = self.tick_buffer[-1]
 
             direction = self._intrabar_price_movement(last_tick)
+            high, low = last_tick.high, last_tick.low
+
+            in_bar = low <= event_price <= high
 
             if side == PositionSide.LONG and direction == PriceDirection.OHLC:
-                return last_tick.high
+                return event_price if in_bar else high
             elif side == PositionSide.SHORT and direction == PriceDirection.OLHC:
-                return last_tick.low
+                return event_price if in_bar else low
             else:
                 return last_tick.close
 
@@ -149,16 +152,14 @@ class PaperOrderActor(Actor):
         )
 
     @staticmethod
-    def _calculate_closing_price(
-        position: Position, fill_price: float, exit_price: float
-    ) -> float:
+    def _calculate_closing_price(position: Position, fill_price: float) -> float:
         if position.side == PositionSide.LONG:
             return max(
-                min(fill_price, exit_price, position.take_profit_price),
+                min(fill_price, position.take_profit_price),
                 position.stop_loss_price,
             )
         else:
             return min(
-                max(fill_price, exit_price, position.take_profit_price),
+                max(fill_price, position.take_profit_price),
                 position.stop_loss_price,
             )
