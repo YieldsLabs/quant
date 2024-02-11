@@ -21,8 +21,8 @@ from strategy.generator.signal.vi_cross import ViCrossSignal
 from strategy.generator.signal.vwap_bb import VwapBbSignal
 
 from .baseline.ma import MaBaseLine
+from .confirm.braid import BraidConfirm
 from .confirm.dpo import DpoConfirm
-from .confirm.dumb import DumbConfirm
 from .confirm.eom import EomConfirm
 from .exit.ast import AstExit
 from .exit.ce import CeExit
@@ -31,7 +31,6 @@ from .exit.ma import MaExit
 from .exit.pattern import PatternExit
 from .exit.rsi import RsiExit
 from .pulse.adx import AdxPulse
-from .pulse.braid import BraidPulse
 from .pulse.chop import ChopPulse
 from .pulse.vo import VoPulse
 from .signal.ao_flip import AoFlipSignal
@@ -151,7 +150,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
         confirm = np.random.choice(
             [
-                DumbConfirm(),
+                BraidConfirm(),
                 DpoConfirm(),
                 EomConfirm(),
                 RocConfirm(),
@@ -160,16 +159,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 SupertrendConfirm(),
             ]
         )
-        pulse = np.random.choice([AdxPulse(), BraidPulse(), ChopPulse(), VoPulse()])
+        pulse = np.random.choice([AdxPulse(), ChopPulse(), VoPulse()])
         baseline = np.random.choice(
             [
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.ALMA),
                     period=StaticParameter(13.0),
-                ),
-                MaBaseLine(
-                    ma=StaticParameter(MovingAverageType.EMA),
-                    period=StaticParameter(55.0),
                 ),
                 MaBaseLine(
                     ma=StaticParameter(MovingAverageType.SMA),
@@ -214,7 +209,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ]
         )
         stop_loss = np.random.choice(
-            [AtrStopLoss(multi=RandomParameter(1.4, 1.7, 0.15))]
+            [AtrStopLoss(multi=RandomParameter(1.5, 1.8, 0.15))]
         )
         exit_signal = np.random.choice(
             [

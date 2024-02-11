@@ -4,7 +4,7 @@ use core::prelude::*;
 const ONE: f32 = 1.;
 const MINUS_ONE: f32 = -1.;
 
-pub struct BraidPulse {
+pub struct BraidConfirm {
     smooth_type: Smooth,
     period_one: usize,
     period_two: usize,
@@ -13,7 +13,7 @@ pub struct BraidPulse {
     atr_period: usize,
 }
 
-impl BraidPulse {
+impl BraidConfirm {
     pub fn new(
         smooth_type: Smooth,
         period_one: f32,
@@ -33,13 +33,13 @@ impl BraidPulse {
     }
 }
 
-impl Pulse for BraidPulse {
+impl Confirm for BraidConfirm {
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.period_one, self.period_two);
         std::cmp::max(adj_lookback, self.period_three)
     }
 
-    fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma_one = data.close.smooth(self.smooth_type, self.period_one);
         let ma_two = data.open.smooth(self.smooth_type, self.period_two);
         let ma_three = data.close.smooth(self.smooth_type, self.period_three);
@@ -62,11 +62,9 @@ impl Pulse for BraidPulse {
             )
         );
 
-        let prev_regime = regime.shift(1);
-
         (
-            prev_regime.sne(&ONE) & regime.seq(&ONE) & diff.sgt(&filter),
-            prev_regime.sne(&MINUS_ONE) & regime.seq(&MINUS_ONE) & diff.sgt(&filter),
+            regime.seq(&ONE) & diff.sgt(&filter),
+            regime.seq(&MINUS_ONE) & diff.sgt(&filter),
         )
     }
 }

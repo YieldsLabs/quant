@@ -1,3 +1,4 @@
+mod braid;
 mod dpo;
 mod dumb;
 mod eom;
@@ -6,6 +7,7 @@ mod rsi;
 mod stc;
 mod supertrend;
 
+pub use braid::BraidConfirm;
 pub use dpo::DPOConfirm;
 pub use dumb::DumbConfirm;
 pub use eom::EOMConfirm;

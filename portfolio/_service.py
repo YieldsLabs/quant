@@ -77,7 +77,7 @@ class Portfolio(AbstractEventManager):
             performance.burke_ratio,
             performance.hit_ratio,
             performance.kurtosis,
-            performance.average_pnl,
+            performance.total_pnl - performance.total_fee,
         ]
 
         await self.strategy.next(

@@ -6,6 +6,14 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum ConfirmConfig {
+    Braid {
+        smooth_type: f32,
+        period_one: f32,
+        period_two: f32,
+        period_three: f32,
+        strength: f32,
+        atr_period: f32,
+    },
     Dpo {
         smooth_type: f32,
         period: f32,
@@ -42,6 +50,21 @@ pub enum ConfirmConfig {
 
 pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
     match config {
+        ConfirmConfig::Braid {
+            smooth_type,
+            period_one,
+            period_two,
+            period_three,
+            strength,
+            atr_period,
+        } => Box::new(BraidConfirm::new(
+            map_to_smooth(smooth_type as usize),
+            period_one,
+            period_two,
+            period_three,
+            strength,
+            atr_period,
+        )),
         ConfirmConfig::Dpo {
             smooth_type,
             period,

@@ -5,6 +5,7 @@ from core.models.indicator import Indicator
 
 
 class ConfirmType(Enum):
+    Braid = "Braid"
     Dumb = "Dumb"
     Dpo = "Dpo"
     Eom = "Eom"

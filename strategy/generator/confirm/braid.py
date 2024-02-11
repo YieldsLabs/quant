@@ -7,12 +7,12 @@ from core.models.parameter import (
 )
 from core.models.smooth import Smooth
 
-from .base import Pulse, PulseType
+from .base import Confirm, ConfirmType
 
 
 @dataclass(frozen=True)
-class BraidPulse(Pulse):
-    type: PulseType = PulseType.Braid
+class BraidConfirm(Confirm):
+    type: ConfirmType = ConfirmType.Braid
     smooth_type: Parameter = CategoricalParameter(Smooth)
     period_one: Parameter = StaticParameter(3.0)
     period_two: Parameter = StaticParameter(7.0)

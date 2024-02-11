@@ -162,7 +162,8 @@ class SmartRouter(AbstractEventManager):
                 order_id = self.exchange.create_limit_order(
                     symbol, position.side, size, price
                 )
-                order_timestamps[order_id] = time.time()
+                if order_id:
+                    order_timestamps[order_id] = time.time()
 
         for order_id in list(order_timestamps.keys()):
             self.exchange.cancel_order(order_id, symbol)
@@ -226,7 +227,8 @@ class SmartRouter(AbstractEventManager):
                 order_id = self.exchange.create_reduce_order(
                     symbol, position.side, size, price
                 )
-                order_timestamps[order_id] = time.time()
+                if order_id:
+                    order_timestamps[order_id] = time.time()
 
         for order_id in list(order_timestamps.keys()):
             self.exchange.cancel_order(order_id, symbol)
