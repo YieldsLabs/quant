@@ -69,8 +69,6 @@ async def main():
 
     position_factory = PositionFactory(
         PositionOptinalFSizeStrategy(),
-        # PositionFixedSizeStrategy(),
-        # PositionRiskSimpleStrategy(),
         PositionRiskBreakEvenStrategy(config_service),
         PositionRiskRewardTakeProfitStrategy(config_service),
     )

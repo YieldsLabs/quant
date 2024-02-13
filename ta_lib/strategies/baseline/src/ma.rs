@@ -23,7 +23,11 @@ impl BaseLine for MABaseLine {
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.period);
+        let prev_ma = ma.shift(1);
 
-        (ma.slt(&data.close), ma.sgt(&data.close))
+        (
+            ma.sgt(&prev_ma) & ma.slt(&data.close),
+            ma.slt(&prev_ma) & ma.sgt(&data.close),
+        )
     }
 }

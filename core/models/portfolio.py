@@ -219,8 +219,8 @@ class Performance:
 
         rate_of_return = self._rate_of_return(self._account_size, self.total_pnl)
 
-        if rate_of_return < 0 and self._periods_per_year % total_trades != 0:
-            return 0
+        if rate_of_return <= 0:
+            return -1
 
         holding_period_return = 1 + rate_of_return
 

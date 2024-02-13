@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field, replace
 from datetime import datetime
-from typing import Tuple
+from typing import List, Tuple
 
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.interfaces.abstract_position_take_profit_strategy import (
@@ -90,13 +90,13 @@ class Position:
                 last_modified=last_modified,
             )
 
-    def next(self, ohlcv: OHLCV) -> "Position":
+    def next(self, ohlcvs: List[OHLCV]) -> "Position":
         next_stop_loss_price, next_take_profit_price = self.risk_strategy.next(
             self.side,
             self.entry_price,
             self.take_profit_price,
             self.stop_loss_price,
-            ohlcv,
+            ohlcvs,
         )
 
         return replace(

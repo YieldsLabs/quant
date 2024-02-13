@@ -3,14 +3,14 @@ use core::prelude::*;
 
 pub struct ATRStopLoss {
     pub period: usize,
-    pub multi: f32,
+    pub factor: f32,
 }
 
 impl ATRStopLoss {
-    pub fn new(period: f32, multi: f32) -> Self {
+    pub fn new(period: f32, factor: f32) -> Self {
         Self {
             period: period as usize,
-            multi,
+            factor,
         }
     }
 }
@@ -21,7 +21,7 @@ impl StopLoss for ATRStopLoss {
     }
 
     fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-        let atr_multi = data.atr(self.period) * self.multi;
+        let atr_multi = data.atr(self.period) * self.factor;
 
         (&data.low - &atr_multi, &data.high + &atr_multi)
     }

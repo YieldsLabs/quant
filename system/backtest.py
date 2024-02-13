@@ -144,7 +144,7 @@ class BacktestSystem(AbstractSystem):
             if strategy not in self.active_strategy:
                 await self._process_backtest(strategy)
 
-            logger.info(f"Remaining backtest time: {estimator.remaining_time():.2f}sec")
+            logger.info(f"Remaining backtest time: {estimator.remaining_time()}")
 
         await self.event_queue.put(Event.BACKTEST_COMPLETE)
 

@@ -60,7 +60,7 @@ class Portfolio(AbstractEventManager):
         performance = await self.state.get(position)
 
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, cagr={round(performance.cagr * 100, 2)}%, kurtosis={round(performance.kurtosis, 4)}, pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}"
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, cagr={round(performance.cagr * 100, 2)}%, kurtosis={round(performance.kurtosis, 4)}, pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}, volatility={round(performance.ann_volatility * 100, 2)}"
         )
 
         await self.dispatch(
@@ -77,6 +77,7 @@ class Portfolio(AbstractEventManager):
             performance.burke_ratio,
             performance.hit_ratio,
             performance.kurtosis,
+            performance.ann_volatility,
             performance.total_pnl - performance.total_fee,
         ]
 

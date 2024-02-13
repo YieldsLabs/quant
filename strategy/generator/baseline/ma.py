@@ -10,4 +10,4 @@ from .base import BaseLine, BaseLineType
 class MaBaseLine(BaseLine):
     type: BaseLineType = BaseLineType.Ma
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = RandomParameter(15.0, 40.0, 5.0)
+    period: Parameter = RandomParameter(5.0, 40.0, 5.0)

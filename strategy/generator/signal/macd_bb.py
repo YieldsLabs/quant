@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from core.models.parameter import (
-    CategoricalParameter,
     Parameter,
     StaticParameter,
 )
@@ -13,7 +12,7 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class MacdBbSignal(Signal):
     type: SignalType = SignalType.MacdBb
-    smooth_type: Parameter = CategoricalParameter(Smooth)
+    smooth_type: Parameter = StaticParameter(Smooth.EMA)
     fast_period: Parameter = StaticParameter(8.0)
     slow_period: Parameter = StaticParameter(26.0)
     signal_period: Parameter = StaticParameter(9.0)

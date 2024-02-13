@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import PositionClosed, PositionOpened
-from core.events.risk import RiskThresholdBreached
+from core.events.risk import RiskThresholdBreached, RiskType
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -119,17 +119,15 @@ class RiskActor(Actor):
             long_position, short_position = self._position
 
             if long_position and isinstance(event, GoShortSignalReceived):
-                long_position = await self._process_close(
+                long_position = await self._process_signal_exit(
                     long_position,
                     event.entry_price,
-                    self.config["risk_reward_ratio"],
                 )
 
             if short_position and isinstance(event, GoLongSignalReceived):
-                short_position = await self._process_close(
+                short_position = await self._process_signal_exit(
                     short_position,
                     event.entry_price,
-                    self.config["risk_reward_ratio"],
                 )
 
             self._position = (long_position, short_position)
@@ -141,17 +139,15 @@ class RiskActor(Actor):
             long_position, short_position = self._position
 
             if long_position and isinstance(event, ExitLongSignalReceived):
-                long_position = await self._process_close(
+                long_position = await self._process_signal_exit(
                     long_position,
                     event.exit_price,
-                    self.config["risk_reward_ratio"],
                 )
 
             if short_position and isinstance(event, ExitShortSignalReceived):
-                short_position = await self._process_close(
+                short_position = await self._process_signal_exit(
                     short_position,
                     event.exit_price,
-                    self.config["risk_reward_ratio"],
                 )
 
             self._position = (long_position, short_position)
@@ -163,120 +159,53 @@ class RiskActor(Actor):
 
         if position and len(ohlcvs) > 1:
             next_position = position.next(ohlcvs)
-
             last_candle = ohlcvs[-1]
 
-            if self._should_exit(next_position, last_candle):
-                await self._process_exit(next_position, last_candle)
+            exit_event = self._create_exit_event(next_position, last_candle)
+
+            if exit_event:
+                await self.tell(exit_event)
                 return None
 
         return next_position
 
-    async def _process_exit(self, position: Position, ohlcv: OHLCV):
-        exit_price = self._calculate_exit_price(position, ohlcv)
-
-        await self.tell(RiskThresholdBreached(position, exit_price))
-
-    def _should_exit(self, position: Position, ohlcv: OHLCV):
+    def _create_exit_event(self, position: Position, ohlcv: OHLCV):
         expiration = (
             position.open_timestamp + self.config["trade_duration"] * 1000
         ) - ohlcv.timestamp
 
+        risk_type = None
+
         if position.side == PositionSide.LONG:
-            return self._check_long_exit(position, expiration, ohlcv)
+            if self._is_long_expires(position, expiration, ohlcv):
+                risk_type = RiskType.TIME
+            elif self._is_long_meets_tp(position, ohlcv):
+                risk_type = RiskType.TP
+            elif self._is_long_meets_sl(position, ohlcv):
+                risk_type = RiskType.SL
         elif position.side == PositionSide.SHORT:
-            return self._check_short_exit(position, expiration, ohlcv)
+            if self._is_short_expires(position, expiration, ohlcv):
+                risk_type = RiskType.TIME
+            elif self._is_short_meets_tp(position, ohlcv):
+                risk_type = RiskType.TP
+            elif self._is_short_meets_sl(position, ohlcv):
+                risk_type = RiskType.SL
 
-        return False
+        if risk_type:
+            exit_price = (
+                self._long_exit_price
+                if position.side == PositionSide.LONG
+                else self._short_exit_price
+            )(position, ohlcv)
 
-    def _check_long_exit(
-        self, next_position: Position, expiration: int, ohlcv: OHLCV
-    ) -> bool:
-        if expiration <= 0 and next_position.entry_price * 1.05 < min(
-            ohlcv.close, ohlcv.low
-        ):
-            return True
-        else:
-            return self._long_exit_conditions(
-                next_position.stop_loss_price,
-                next_position.take_profit_price,
-                ohlcv.low,
-                ohlcv.high,
-            )
+            return RiskThresholdBreached(position, exit_price, risk_type)
 
-    def _check_short_exit(
-        self, next_position: Position, expiration: int, ohlcv: OHLCV
-    ) -> bool:
-        if (
-            expiration <= 0
-            and next_position.entry_price > max(ohlcv.close, ohlcv.high) * 1.05
-        ):
-            return True
-        else:
-            return self._short_exit_conditions(
-                next_position.stop_loss_price,
-                next_position.take_profit_price,
-                ohlcv.low,
-                ohlcv.high,
-            )
+        return None
 
-    @staticmethod
-    def _calculate_exit_price(position: Position, ohlcv: OHLCV):
-        if position.side == PositionSide.LONG:
-            if (
-                position.stop_loss_price is not None
-                and ohlcv.low <= position.stop_loss_price
-            ):
-                return position.stop_loss_price
-            if (
-                position.take_profit_price is not None
-                and ohlcv.high >= position.take_profit_price
-            ):
-                return position.take_profit_price
-
-            return ohlcv.close
-
-        elif position.side == PositionSide.SHORT:
-            if (
-                position.stop_loss_price is not None
-                and ohlcv.high >= position.stop_loss_price
-            ):
-                return position.stop_loss_price
-            if (
-                position.take_profit_price is not None
-                and ohlcv.low <= position.take_profit_price
-            ):
-                return position.take_profit_price
-
-            return ohlcv.close
-
-    @staticmethod
-    def _long_exit_conditions(
-        stop_loss_price: float | None,
-        take_profit_price: float | None,
-        low: float,
-        high: float,
-    ):
-        return (stop_loss_price is not None and low <= stop_loss_price) or (
-            take_profit_price is not None and high >= take_profit_price
-        )
-
-    @staticmethod
-    def _short_exit_conditions(
-        stop_loss_price: float | None,
-        take_profit_price: float | None,
-        low: float,
-        high: float,
-    ):
-        return (stop_loss_price is not None and high >= stop_loss_price) or (
-            take_profit_price is not None and low <= take_profit_price
-        )
-
-    async def _process_close(
+    async def _process_signal_exit(
         self,
         position: Position,
         price: float,
-        risk_reward_ratio: float,
     ):
         side = position.side
         take_profit_price = position.take_profit_price
@@ -291,19 +220,109 @@ class RiskActor(Actor):
         ) or (side == PositionSide.SHORT and price >= stop_loss_price)
 
         if price_exceeds_take_profit or price_exceeds_stop_loss:
-            await self.tell(RiskThresholdBreached(position, price))
-            return None
+            return position
 
         potential_loss = abs((price - stop_loss_price) / stop_loss_price) * 100
         potential_profit = abs((price - take_profit_price) / take_profit_price) * 100
 
         rrr = potential_profit / potential_loss
 
-        if rrr <= risk_reward_ratio:
-            await self.tell(RiskThresholdBreached(position, price))
+        if rrr <= 0.819 or rrr > 13.82:
+            await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
             return None
 
         return position
+
+    @staticmethod
+    def _long_exit_price(position: Position, ohlcv: OHLCV):
+        if (
+            position.stop_loss_price is not None
+            and ohlcv.low <= position.stop_loss_price
+        ):
+            return ohlcv.low
+        if (
+            position.take_profit_price is not None
+            and ohlcv.high >= position.take_profit_price
+        ):
+            return ohlcv.high
+
+        return ohlcv.close
+
+    @staticmethod
+    def _is_long_expires(
+        position: Position,
+        expiration: int,
+        ohlcv: OHLCV,
+    ) -> bool:
+        return (
+            expiration <= 0
+            and position.entry_price > max(ohlcv.close, ohlcv.high) * 1.1
+        )
+
+    @staticmethod
+    def _is_long_meets_tp(
+        position: Position,
+        ohlcv: OHLCV,
+    ):
+        return (
+            position.take_profit_price is not None
+            and ohlcv.high > position.take_profit_price
+        )
+
+    @staticmethod
+    def _is_long_meets_sl(
+        position: Position,
+        ohlcv: OHLCV,
+    ):
+        return (
+            position.stop_loss_price is not None
+            and ohlcv.low < position.stop_loss_price
+        )
+
+    @staticmethod
+    def _short_exit_price(position: Position, ohlcv: OHLCV):
+        if (
+            position.stop_loss_price is not None
+            and ohlcv.high >= position.stop_loss_price
+        ):
+            return ohlcv.high
+        if (
+            position.take_profit_price is not None
+            and ohlcv.low <= position.take_profit_price
+        ):
+            return ohlcv.low
+
+        return ohlcv.close
+
+    @staticmethod
+    def _is_short_expires(
+        position: Position,
+        expiration: int,
+        ohlcv: OHLCV,
+    ) -> bool:
+        return expiration <= 0 and position.entry_price * 1.1 < min(
+            ohlcv.close, ohlcv.low
+        )
+
+    @staticmethod
+    def _is_short_meets_tp(
+        position: Position,
+        ohlcv: OHLCV,
+    ):
+        return (
+            position.take_profit_price is not None
+            and ohlcv.low < position.take_profit_price
+        )
+
+    @staticmethod
+    def _is_short_meets_sl(
+        position: Position,
+        ohlcv: OHLCV,
+    ):
+        return (
+            position.stop_loss_price is not None
+            and ohlcv.high > position.stop_loss_price
+        )
 
     @staticmethod
     def _get_event_key(event: RiskEvent):

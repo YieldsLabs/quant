@@ -7,7 +7,7 @@ from core.models.strategy import StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
-from ._trend_follow import TrendFollowStrategyGenerator
+from .bootstrap._trend_follow import TrendFollowStrategyGenerator
 
 
 class StrategyGeneratorFactory(AbstractStrategyGeneratorFactory):

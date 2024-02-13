@@ -9,4 +9,4 @@ from .base import StopLoss, StopLossType
 class AtrStopLoss(StopLoss):
     type: StopLossType = StopLossType.Atr
     period: Parameter = StaticParameter(3.0)
-    multi: Parameter = StaticParameter(1.2)
+    factor: Parameter = StaticParameter(1.618)
