@@ -31,10 +31,11 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
 
         current_price = self._hlc3(ohlcv)
         atr = self.atr(ohlcvs, lookback_window)
+        atr_val = atr[-1]
 
-        risk_value = atr * self.config["risk_atr_multi"]
-        tp_threshold = atr * self.config["tp_threshold"]
-        sl_threshold = atr * self.config["sl_threshold"]
+        risk_value = atr_val * self.config["risk_atr_multi"]
+        tp_threshold = atr_val * self.config["tp_threshold"]
+        sl_threshold = atr_val * self.config["sl_threshold"]
 
         if side == PositionSide.LONG:
             if (
@@ -87,9 +88,10 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
                 ]
             )
 
-        tr_list = np.array([true_range(ohlc) for ohlc in ohlcvs[-period:]])
+        tr_list = np.array([true_range(ohlc) for ohlc in ohlcvs])
+        tr_rolling = np.convolve(tr_list, np.ones(period), "valid") / period
 
-        return np.sum(tr_list) / period
+        return tr_rolling
 
     @staticmethod
     def _hlc3(ohlcv: OHLCV) -> float:

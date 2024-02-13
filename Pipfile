@@ -20,6 +20,7 @@ matplotlib = "*"
 seaborn = "*"
 cachetools = "*"
 orjson = "*"
+scipy = "*"
 
 [dev-packages]
 mypy = "*"
