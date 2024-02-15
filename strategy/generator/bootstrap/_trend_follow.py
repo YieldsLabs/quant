@@ -230,7 +230,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 return []
 
             return [
-                replace(strategy_part, ma=CategoricalParameter(TrendCandleSignal))
+                replace(strategy_part, candle=CategoricalParameter(TrendCandleSignal))
                 for _ in range(3)
             ]
 
