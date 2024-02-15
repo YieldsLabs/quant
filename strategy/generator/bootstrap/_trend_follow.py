@@ -225,6 +225,15 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 for smooth_signal in smooth_signals
             ]
 
+        def candle_invariants(strategy_part):
+            if not hasattr(strategy_part, "candle"):
+                return []
+
+            return [
+                replace(strategy_part, ma=CategoricalParameter(TrendCandleSignal))
+                for _ in range(3)
+            ]
+
         def ma_invariants(strategy_part):
             if not hasattr(strategy_part, "ma"):
                 return []
@@ -251,12 +260,16 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 for part in smoothed_parts:
                     result.append(replace(strategy, **{attr: part}))
 
-                factor_parts = factor_invariants(strategy_attr)
-                for part in factor_parts:
-                    result.append(replace(strategy, **{attr: part}))
-
                 ma_parts = ma_invariants(strategy_attr)
                 for part in ma_parts:
+                    result.append(replace(strategy, **{attr: part}))
+
+                candle_parts = candle_invariants(strategy_attr)
+                for part in candle_parts:
+                    result.append(replace(strategy, **{attr: part}))
+
+                factor_parts = factor_invariants(strategy_attr)
+                for part in factor_parts:
                     result.append(replace(strategy, **{attr: part}))
 
         return result

@@ -57,23 +57,21 @@ class Bybit(AbstractExchange):
             except Exception as e:
                 logger.error(f"{symbol}: {e}")
 
-    def fetch_order(self, order_id: str, symbol: Symbol):
+    def has_filled_order(self, order_id: str, symbol: Symbol):
         try:
-            return self.connector.fetch_order(order_id, symbol.name)
+            orders = self.connector.fetch_closed_orders(symbol.name)
+            return len([order for order in orders if order["id"] == order_id])
         except Exception as e:
             logger.error(f"{symbol}: {e}")
             return
 
-    def has_order(self, order_id: str, symbol: Symbol):
-        order = self.fetch_order(order_id, symbol)
-        if not order:
-            return False
-
-        if order["status"] == "closed":
-            return True
-
-        if order["status"] == "canceled":
-            return False
+    def has_open_orders(self, symbol: Symbol):
+        try:
+            orders = self.connector.fetch_open_orders(symbol.name)
+            return len(orders)
+        except Exception as e:
+            logger.error(f"{symbol}: {e}")
+            return
 
     def cancel_order(self, order_id: str, symbol: Symbol):
         try:
@@ -94,13 +92,14 @@ class Bybit(AbstractExchange):
                 second=0, microsecond=0
             )
 
-        aggregated_trades = defaultdict(lambda: {"amount": 0, "price": 0})
+        aggregated_trades = defaultdict(lambda: {"amount": 0, "price": 0, "fee": 0})
 
         for trade in trades:
             if trade["side"] == "buy" if side == PositionSide.SHORT else "sell":
                 timestamp = round_down_to_minute(trade["timestamp"])
                 aggregated_trades[timestamp]["amount"] += trade["amount"]
                 aggregated_trades[timestamp]["price"] += trade["price"]
+                aggregated_trades[timestamp]["fee"] += trade["fee"]["cost"]
 
         for timestamp, trade_data in aggregated_trades.items():
             count = sum(

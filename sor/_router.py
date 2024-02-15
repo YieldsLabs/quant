@@ -60,7 +60,10 @@ class SmartRouter(AbstractEventManager):
             return Order(status=OrderStatus.FAILED, price=0, size=0)
 
         return Order(
-            status=OrderStatus.CLOSED, size=trade["amount"], price=trade["price"]
+            status=OrderStatus.CLOSED,
+            size=trade["amount"],
+            price=trade["price"],
+            fee=trade["fee"],
         )
 
     @query_handler(GetSymbols)
@@ -135,11 +138,6 @@ class SmartRouter(AbstractEventManager):
                 f"Trying to open order -> algo price: {price}, theo price: {entry_price}, spread: {spread_percentage}%"
             )
 
-            for order_id in list(order_timestamps.keys()):
-                if self.exchange.has_order(order_id, symbol):
-                    order_timestamps.pop(order_id)
-                    order_counter += 1
-
             if spread_percentage > 1.5:
                 break
 
@@ -154,11 +152,18 @@ class SmartRouter(AbstractEventManager):
                 self.exchange.cancel_order(order_id, symbol)
                 order_timestamps.pop(order_id)
 
+            for order_id in list(order_timestamps.keys()):
+                if self.exchange.has_filled_order(order_id, symbol):
+                    order_timestamps.pop(order_id)
+                    order_counter += 1
+
             if order_counter >= num_orders:
                 logging.info(f"All orders are filled: {order_counter}")
                 break
 
-            if len(order_timestamps.keys()) < 1:
+            if not self.exchange.has_open_orders(symbol) and not len(
+                order_timestamps.keys()
+            ):
                 order_id = self.exchange.create_limit_order(
                     symbol, position.side, size, price
                 )
@@ -196,11 +201,6 @@ class SmartRouter(AbstractEventManager):
                 f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread}, max spread: {max_spread}"
             )
 
-            for order_id in list(order_timestamps.keys()):
-                if self.exchange.has_order(order_id, symbol):
-                    order_timestamps.pop(order_id)
-                    order_counter += 1
-
             if not self.exchange.fetch_position(symbol, position.side):
                 break
 
@@ -219,11 +219,20 @@ class SmartRouter(AbstractEventManager):
                 self.exchange.cancel_order(order_id, symbol)
                 order_timestamps.pop(order_id)
 
+            for order_id in list(order_timestamps.keys()):
+                if self.exchange.has_filled_order(order_id, symbol):
+                    order_timestamps.pop(order_id)
+                    order_counter += 1
+
             if order_counter >= num_orders:
                 logging.info(f"All orders are filled: {order_counter}")
                 break
 
-            if len(order_timestamps.keys()) < 1 and spread < max_spread:
+            if (
+                not self.exchange.has_open_orders(symbol)
+                and not len(order_timestamps.keys())
+                and spread < max_spread
+            ):
                 order_id = self.exchange.create_reduce_order(
                     symbol, position.side, size, price
                 )

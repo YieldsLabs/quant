@@ -88,7 +88,7 @@ class PortfolioStorage:
             if not performance:
                 return 0
 
-            return performance.sharpe_ratio
+            return performance.deflated_sharpe_ratio
 
     def _get_key(self, symbol, timeframe, strategy):
         return (symbol, timeframe, strategy)

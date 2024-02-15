@@ -62,11 +62,11 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def fetch_order(self, order_id: str, symbol: Symbol):
+    def has_filled_order(self, order_id: str, symbol: Symbol):
         pass
 
     @abstractmethod
-    def has_order(self, order_id: str, symbol: Symbol):
+    def has_open_orders(self, symbol: Symbol):
         pass
 
     @abstractmethod

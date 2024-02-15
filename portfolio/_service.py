@@ -60,7 +60,12 @@ class Portfolio(AbstractEventManager):
         performance = await self.state.get(position)
 
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, cagr={round(performance.cagr * 100, 2)}%, kurtosis={round(performance.kurtosis, 4)}, pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}, volatility={round(performance.ann_volatility * 100, 2)}"
+            f"Performance: strategy={symbol}_{timeframe}{strategy}, "
+            + f"trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, "
+            + f"cagr={round(performance.cagr * 100, 2)}%, return={round(performance.expected_return * 100, 2)}%, volatility={round(performance.ann_volatility * 100, 2)}%, "
+            + f"smart_sharpe={round(performance.smart_sharpe_ratio, 4)}, smart_sortino={round(performance.smart_sortino_ratio, 4)}, "
+            + f"pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}, "
+            + f"skewness={round(performance.skewness, 4)}, kurtosis={round(performance.kurtosis, 4)}, omega={round(performance.omega_ratio, 4)}"
         )
 
         await self.dispatch(
@@ -68,16 +73,13 @@ class Portfolio(AbstractEventManager):
         )
 
         performance_metrics = [
-            performance.sortino_ratio,
+            performance.smart_sortino_ratio,
             performance.calmar_ratio,
             performance.cvar,
             performance.ulcer_index,
-            performance.max_drawdown,
             performance.sterling_ratio,
             performance.burke_ratio,
             performance.hit_ratio,
-            performance.kurtosis,
-            performance.ann_volatility,
             performance.total_pnl - performance.total_fee,
         ]
 
@@ -94,7 +96,7 @@ class Portfolio(AbstractEventManager):
         return strategies
 
     @query_handler(GetPositionRisk)
-    async def equity(self, query: GetPositionRisk):
+    async def position_risk(self, query: GetPositionRisk):
         symbol = query.signal.symbol
         timeframe = query.signal.timeframe
         strategy = query.signal.strategy
