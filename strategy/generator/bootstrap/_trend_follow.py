@@ -92,6 +92,7 @@ class TrendSignalType(Enum):
     MA = auto()
     CUSTOM = auto()
     PULLBACK = auto()
+    VOLATILITY = auto()
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
@@ -353,9 +354,15 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 ]
             )
 
+        if signal == TrendSignalType.VOLATILITY:
+            return np.random.choice(
+                [
+                    SnatrSignal(),
+                ]
+            )
+
         return np.random.choice(
             [
-                SnatrSignal(),
                 RsiNautralityRejectionSignal(),
                 RsiSupertrendSignal(),
             ]

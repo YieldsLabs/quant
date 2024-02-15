@@ -116,11 +116,12 @@ class Performance:
             return 0
 
         std_return = np.std(self._pnl, ddof=1)
+        penalty = self._penalty(self._pnl)
 
-        if std_return == 0:
+        if std_return == 0 or penalty == 0:
             return 0
 
-        return self.average_pnl / std_return * self._penalty(self._pnl)
+        return self.average_pnl / std_return * penalty
 
     @property
     def deflated_sharpe_ratio(self) -> float:
@@ -173,11 +174,12 @@ class Performance:
             return 0
 
         downside_std = np.std(downside_returns, ddof=1)
+        penalty = self._penalty(self._pnl)
 
-        if downside_std == 0:
+        if downside_std == 0 or penalty == 0:
             return 0
 
-        return self.average_pnl / downside_std * self._penalty(self._pnl)
+        return self.average_pnl / downside_std * penalty
 
     @property
     def cagr(self) -> float:
