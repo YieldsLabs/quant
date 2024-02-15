@@ -7,6 +7,7 @@ from typing import List
 import numpy as np
 
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
+from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
 from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
 from core.models.smooth import Smooth
@@ -230,7 +231,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 return []
 
             return [
-                replace(strategy_part, candle=CategoricalParameter(TrendCandleSignal))
+                replace(strategy_part, candle=CategoricalParameter(TrendCandleType))
                 for _ in range(3)
             ]
 
