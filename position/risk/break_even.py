@@ -21,7 +21,7 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         stop_loss_price: float,
         ohlcvs: List[OHLCV],
     ) -> float:
-        lookback_window = 8
+        lookback_window = 3
         recent_low = min(ohlcv.low for ohlcv in ohlcvs[-lookback_window:])
         recent_high = max(ohlcv.high for ohlcv in ohlcvs[-lookback_window:])
 
@@ -29,24 +29,19 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         next_take_profit = take_profit_price
         ohlcv = ohlcvs[-1]
 
-        current_price = self._hlc3(ohlcv)
+        current_price = self._price(ohlcv)
         atr = self.atr(ohlcvs, lookback_window)
         atr_val = atr[-1]
 
-        risk_value = atr_val * self.config["risk_atr_multi"]
-        tp_threshold = atr_val * self.config["tp_threshold"]
-        sl_threshold = atr_val * self.config["sl_threshold"]
+        risk_value = atr_val * self.config["risk_factor"]
+        tp_threshold = atr_val * self.config["tp_factor"]
+        dist = abs(entry_price - next_take_profit) * self.config["sl_factor"]
 
         if side == PositionSide.LONG:
-            if (
-                ohlcv.high >= max(entry_price, take_profit_price - sl_threshold)
-                and next_stop_loss <= entry_price
-            ):
-                next_stop_loss = max(
-                    entry_price + risk_value, next_stop_loss, recent_low - risk_value
-                )
+            if ohlcv.high >= entry_price + dist and next_stop_loss <= entry_price:
+                next_stop_loss = max(next_stop_loss, entry_price + risk_value)
 
-            if ohlcv.high >= take_profit_price - tp_threshold:
+            if ohlcv.high >= next_take_profit - tp_threshold:
                 next_take_profit = max(
                     next_take_profit,
                     current_price
@@ -57,13 +52,8 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
                 next_stop_loss = max(next_stop_loss, recent_low - risk_value)
 
         elif side == PositionSide.SHORT:
-            if (
-                ohlcv.low <= min(entry_price, take_profit_price + sl_threshold)
-                and next_stop_loss >= entry_price
-            ):
-                next_stop_loss = min(
-                    entry_price - risk_value, next_stop_loss, recent_high + risk_value
-                )
+            if ohlcv.low <= entry_price - dist and next_stop_loss >= entry_price:
+                next_stop_loss = min(next_stop_loss, entry_price - risk_value)
 
             if ohlcv.low <= take_profit_price + tp_threshold:
                 next_take_profit = min(
@@ -79,20 +69,17 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
 
     @staticmethod
     def atr(ohlcvs: List[OHLCV], period: int) -> float:
-        def true_range(ohlc: OHLCV) -> float:
-            return np.max(
-                [
-                    ohlc.high - ohlc.low,
-                    np.abs(ohlc.high - ohlc.close),
-                    np.abs(ohlc.low - ohlc.close),
-                ]
-            )
+        highs = np.array([ohlc.high for ohlc in ohlcvs])
+        lows = np.array([ohlc.low for ohlc in ohlcvs])
+        closes = np.array([ohlc.close for ohlc in ohlcvs])
 
-        tr_list = np.array([true_range(ohlc) for ohlc in ohlcvs])
-        tr_rolling = np.convolve(tr_list, np.ones(period), "valid") / period
+        true_ranges = np.maximum(
+            highs - lows, np.abs(highs - closes), np.abs(lows - closes)
+        )
+        tr_rolling = np.convolve(true_ranges, np.ones(period), "valid") / period
 
         return tr_rolling
 
     @staticmethod
-    def _hlc3(ohlcv: OHLCV) -> float:
-        return (ohlcv.high + ohlcv.low + ohlcv.close) / 3.0
+    def _price(ohlcv: OHLCV) -> float:
+        return (ohlcv.high + ohlcv.low + 2 * ohlcv.close) / 4.0

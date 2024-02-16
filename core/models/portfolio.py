@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field, replace
 
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import kurtosis, norm, skew
 
 TOTAL_TRADES_THRESHOLD = 3
 
@@ -131,7 +131,7 @@ class Performance:
             return 0
 
         sharpe_ratio = self.sharpe_ratio
-        skewness = self.skewness
+        skewness = self.skew
         kurtosis = self.kurtosis
 
         gamma = 0.57721566
@@ -154,32 +154,42 @@ class Performance:
 
     @property
     def sortino_ratio(self) -> float:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         downside_returns = self._pnl[self._pnl < 0]
 
         if len(downside_returns) < 2:
             return 0
 
-        downside_std = np.std(downside_returns, ddof=1)
+        downside = np.sqrt(np.sum(downside_returns**2) / total_trades)
 
-        if downside_std == 0:
+        if downside == 0:
             return 0
 
-        return self.average_pnl / downside_std
+        return self.average_pnl / downside
 
     @property
     def smart_sortino_ratio(self) -> float:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
         downside_returns = self._pnl[self._pnl < 0]
 
         if len(downside_returns) < 2:
             return 0
 
-        downside_std = np.std(downside_returns, ddof=1)
+        downside = np.sqrt(np.sum(downside_returns**2) / total_trades)
         penalty = self._penalty(self._pnl)
 
-        if downside_std == 0 or penalty == 0:
+        if downside == 0 or penalty == 0:
             return 0
 
-        return self.average_pnl / downside_std * penalty
+        return self.average_pnl / downside * penalty
 
     @property
     def cagr(self) -> float:
@@ -267,7 +277,7 @@ class Performance:
         if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        pnl_product = np.product(1 + self._pnl)
+        pnl_product = np.prod(1 + self._pnl)
 
         if pnl_product <= 0:
             return 0
@@ -324,18 +334,13 @@ class Performance:
         ) * 100
 
     @property
-    def skewness(self) -> float:
+    def skew(self) -> float:
         total_trades = self.total_trades
 
         if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        std_pnl = np.std(self._pnl, ddof=1)
-
-        if std_pnl == 0:
-            return 0
-
-        return np.sum(((self._pnl - self.average_pnl) / std_pnl) ** 3) / total_trades
+        return skew(self._pnl, bias=False)
 
     @property
     def kurtosis(self) -> float:
@@ -344,14 +349,7 @@ class Performance:
         if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        std_pnl = np.std(self._pnl, ddof=1)
-
-        if std_pnl == 0:
-            return 0
-
-        return (
-            np.sum(((self._pnl - self.average_pnl) / std_pnl) ** 4) / total_trades - 3
-        )
+        return kurtosis(self._pnl, bias=False)
 
     @property
     def var(self, confidence_level=0.95) -> float:
@@ -555,7 +553,7 @@ class Performance:
             + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, kelly={self.kelly}, "
             + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, "
             + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, "
-            + f"skewness={self.skewness}, kurtosis={self.kurtosis})"
+            + f"skew={self.skew}, kurtosis={self.kurtosis})"
         )
 
     def to_dict(self):
@@ -588,7 +586,7 @@ class Performance:
             "recovery_factor": self.recovery_factor,
             "profit_factor": self.profit_factor,
             "risk_of_ruin": self.risk_of_ruin,
-            "skewness": self.skewness,
+            "skew": self.skew,
             "kurtosis": self.kurtosis,
             "var": self.var,
             "cvar": self.cvar,
