@@ -356,22 +356,23 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        daily_returns = self._pnl / self._account_size
+        mu = self.average_pnl
+        sigma = np.std(self._pnl, ddof=1)
 
-        return -np.percentile(daily_returns, (1 - confidence_level) * 100)
+        return norm.ppf(1 - confidence_level, mu, sigma)
 
     @property
-    def cvar(self, alpha=0.05) -> float:
+    def cvar(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        pnl_sorted = np.sort(self._pnl)
-        n_losses = int(alpha * len(self._pnl))
+        var = self.var
+        pnl = self._pnl[self._pnl < var]
 
-        if n_losses == 0:
-            return 0
+        if not len(pnl):
+            return var
 
-        return -pnl_sorted[:n_losses].mean()
+        return np.mean(pnl)
 
     @property
     def ulcer_index(self) -> float:
@@ -458,23 +459,13 @@ class Performance:
         return upside_potential / downside_risk
 
     @property
-    def tail_ratio(self) -> float:
+    def tail_ratio(self, cutoff=95) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        var_5, var_95 = np.percentile(self._pnl, 5), np.percentile(self._pnl, 95)
-
-        gains, losses = self._pnl[self._pnl > var_95], self._pnl[self._pnl < var_5]
-
-        if len(losses) == 0 or len(gains) == 0:
-            return 0
-
-        gain_tail, loss_tail = np.abs(np.mean(gains)), np.abs(np.mean(losses))
-
-        if gain_tail < loss_tail:
-            return 0
-
-        return gain_tail / loss_tail
+        return abs(
+            np.percentile(self._pnl, cutoff) / np.percentile(self._pnl, 100 - cutoff)
+        )
 
     @property
     def omega_ratio(self) -> float:
