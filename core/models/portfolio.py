@@ -34,6 +34,24 @@ class Performance:
         return np.mean(self._pnl)
 
     @property
+    def average_win(self) -> float:
+        win = self._pnl[self._pnl > 0]
+
+        if len(win) < 2:
+            return 0
+
+        return np.mean(win)
+
+    @property
+    def average_loss(self) -> float:
+        loss = self._pnl[self._pnl < 0]
+
+        if len(loss) < 2:
+            return 0
+
+        return np.mean(loss)
+
+    @property
     def max_consecutive_wins(self) -> int:
         return self._max_streak(self._pnl, True)
 
@@ -68,16 +86,13 @@ class Performance:
 
     @property
     def runup(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+        equity_curve = self.equity
+
+        if len(equity_curve) < 2:
             return np.array([0, 0])
 
-        equity = self.equity
-
-        if len(equity) < 2:
-            return np.array([0, 0])
-
-        trough = np.minimum.accumulate(equity)
-        runups = (equity - trough) / trough
+        trough = np.minimum.accumulate(equity_curve)
+        runups = (equity_curve - trough) / trough
 
         return runups
 
@@ -192,6 +207,18 @@ class Performance:
         return self.average_pnl / downside * penalty
 
     @property
+    def payoff_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
+        denom = abs(self.average_loss)
+
+        if denom == 0:
+            return 0
+
+        return self.average_win / denom
+
+    @property
     def cagr(self) -> float:
         periods = self.total_trades
 
@@ -249,25 +276,18 @@ class Performance:
         if total_trades < TOTAL_TRADES_THRESHOLD:
             return self._risk_per_trade
 
-        win_trades = self._pnl[self._pnl > 0]
-        loss_trades = self._pnl[self._pnl < 0]
+        wl_ratio = self.payoff_ratio
 
-        if len(win_trades) == 0 or len(loss_trades) == 0:
+        if wl_ratio == 0:
             return self._risk_per_trade
 
-        win_probability = len(win_trades) / total_trades
-        average_win_to_loss_ratio = np.mean(win_trades) / np.abs(np.mean(loss_trades))
+        win_prob = self.hit_ratio
+        lose_prob = 1 - win_prob
 
-        p = 1 / average_win_to_loss_ratio
-        q = 1 - win_probability
-
-        return (win_probability * p - q) / p
+        return ((wl_ratio * win_prob) - lose_prob) / wl_ratio
 
     @property
     def ann_sharpe_ratio(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return 0
-
         return self.sharpe_ratio * np.sqrt(self._periods_per_year)
 
     @property
@@ -321,17 +341,14 @@ class Performance:
 
     @property
     def risk_of_ruin(self) -> float:
-        win_rate = self.hit_ratio
+        total_trades = self.total_trades
 
-        if win_rate < 2:
+        if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        loss_rate = 1 - win_rate
+        win_rate = self.hit_ratio
 
-        return (
-            (1 - (self._risk_per_trade * (1 - loss_rate / win_rate)))
-            ** self._account_size
-        ) * 100
+        return ((1 - win_rate) / (1 + win_rate)) ** total_trades
 
     @property
     def skew(self) -> float:
@@ -539,8 +556,8 @@ class Performance:
             + f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, smart_sortino_ratio={self.smart_sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
             + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, optimal_f={self.optimal_f}, "
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, total_fee={self.total_fee}, sharpe_ratio={self.sharpe_ratio}, smart_sharpe_ratio={self.smart_sharpe_ratio}, deflated_sharpe_ratio={self.deflated_sharpe_ratio}, "
-            + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, "
-            + f"cagr={self.cagr}, expected_return={self.expected_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, "
+            + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, average_win={self.average_win}, average_loss={self.average_loss}, "
+            + f"cagr={self.cagr}, expected_return={self.expected_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, payoff_ratio={self.payoff_ratio}, "
             + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, kelly={self.kelly}, "
             + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, "
             + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, "
@@ -554,6 +571,8 @@ class Performance:
             "total_pnl": self.total_pnl,
             "total_fee": self.total_fee,
             "average_pnl": self.average_pnl,
+            "average_win": self.average_win,
+            "average_loss": self.average_loss,
             "max_consecutive_wins": self.max_consecutive_wins,
             "max_consecutive_losses": self.max_consecutive_losses,
             "hit_ratio": self.hit_ratio,
@@ -568,6 +587,7 @@ class Performance:
             "calmar_ratio": self.calmar_ratio,
             "sortino_ratio": self.sortino_ratio,
             "smart_sortino_ratio": self.smart_sortino_ratio,
+            "payoff_ratio": self.payoff_ratio,
             "cagr": self.cagr,
             "optimal_f": self.optimal_f,
             "kelly": self.kelly,

@@ -63,9 +63,10 @@ class Portfolio(AbstractEventManager):
             f"Performance: strategy={symbol}_{timeframe}{strategy}, "
             + f"trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, "
             + f"cagr={round(performance.cagr * 100, 2)}%, return={round(performance.expected_return * 100, 2)}%, volatility={round(performance.ann_volatility * 100, 2)}%, "
-            + f"smart_sharpe={round(performance.smart_sharpe_ratio, 4)}, smart_sortino={round(performance.smart_sortino_ratio, 4)}, "
-            + f"pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}, "
-            + f"skew={round(performance.skew, 4)}, kurtosis={round(performance.kurtosis, 4)}, omega={round(performance.omega_ratio, 4)}"
+            + f"smart_sharpe={round(performance.smart_sharpe_ratio, 4)}, smart_sortino={round(performance.smart_sortino_ratio, 4)}, profit_factor={round(performance.profit_factor, 4)}, "
+            + f"pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}, ror={round(performance.risk_of_ruin, 4)}, "
+            + f"skew={round(performance.skew, 4)}, kurtosis={round(performance.kurtosis, 4)}, omega={round(performance.omega_ratio, 4)}, "
+            + f"kelly={round(performance.kelly, 4)}, optimal_f={round(performance.optimal_f, 4)}"
         )
 
         await self.dispatch(
