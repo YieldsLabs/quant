@@ -63,10 +63,11 @@ class Portfolio(AbstractEventManager):
             f"Performance: strategy={symbol}_{timeframe}{strategy}, "
             + f"trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, "
             + f"cagr={round(performance.cagr * 100, 2)}%, return={round(performance.expected_return * 100, 2)}%, volatility={round(performance.ann_volatility * 100, 2)}%, "
-            + f"smart_sharpe={round(performance.smart_sharpe_ratio, 4)}, smart_sortino={round(performance.smart_sortino_ratio, 4)}, profit_factor={round(performance.profit_factor, 4)}, "
-            + f"pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}, ror={round(performance.risk_of_ruin, 4)}, "
-            + f"skew={round(performance.skew, 4)}, kurtosis={round(performance.kurtosis, 4)}, omega={round(performance.omega_ratio, 4)}, "
-            + f"kelly={round(performance.kelly, 4)}, optimal_f={round(performance.optimal_f, 4)}"
+            + f"smart_sharpe={round(performance.smart_sharpe_ratio, 4)}, smart_sortino={round(performance.smart_sortino_ratio, 4)}, "
+            + f"profit_factor={round(performance.profit_factor, 2)}, ror={round(performance.risk_of_ruin, 2)}, "
+            + f"skew={round(performance.skew, 2)}, kurtosis={round(performance.kurtosis, 2)}, omega={round(performance.omega_ratio, 2)}, upi={round(performance.upi, 2)}, "
+            + f"kelly={round(performance.kelly, 4)}, optimal_f={round(performance.optimal_f, 4)}, "
+            + f"pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}"
         )
 
         await self.dispatch(
@@ -80,6 +81,8 @@ class Portfolio(AbstractEventManager):
             performance.ulcer_index,
             performance.sterling_ratio,
             performance.burke_ratio,
+            performance.risk_of_ruin,
+            performance.cpc_ratio,
             performance.total_pnl - performance.total_fee,
         ]
 
@@ -109,7 +112,7 @@ class Portfolio(AbstractEventManager):
 
         if query.type == PositionSizeType.Kelly:
             kelly = await self.state.get_kelly(symbol, timeframe, strategy)
-            return equity * kelly if kelly else risk_per_trade
+            return equity * kelly if kelly and kelly > 0 else equity * risk_per_trade
 
         if query.type == PositionSizeType.Optimalf:
             optimalf = await self.state.get_optimalf(symbol, timeframe, strategy)

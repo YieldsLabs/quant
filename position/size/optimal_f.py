@@ -6,7 +6,7 @@ from core.models.size import PositionSizeType
 from core.queries.portfolio import GetPositionRisk
 
 
-class PositionOptinalFSizeStrategy(AbstractPositionSizeStrategy):
+class PositionOptimalFSizeStrategy(AbstractPositionSizeStrategy):
     def __init__(self):
         super().__init__()
 

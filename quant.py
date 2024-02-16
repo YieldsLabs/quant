@@ -19,7 +19,7 @@ from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
 from position.risk.break_even import PositionRiskBreakEvenStrategy
-from position.size.optimal_f import PositionOptinalFSizeStrategy
+from position.size.optimal_f import PositionOptimalFSizeStrategy
 from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
 from risk import RiskActorFactory
 from service import EnvironmentSecretService, SignalService, WasmFileService
@@ -68,7 +68,7 @@ async def main():
     SmartRouter(exchange_factory, config_service)
 
     position_factory = PositionFactory(
-        PositionOptinalFSizeStrategy(),
+        PositionOptimalFSizeStrategy(),
         PositionRiskBreakEvenStrategy(config_service),
         PositionRiskRewardTakeProfitStrategy(config_service),
     )

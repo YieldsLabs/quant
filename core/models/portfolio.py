@@ -246,28 +246,21 @@ class Performance:
 
     @property
     def optimal_f(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return self._risk_per_trade
+        total_trades = self.total_trades
 
-        max_loss = np.min(self.drawdown)
-
-        if max_loss == 0:
+        if total_trades < TOTAL_TRADES_THRESHOLD:
             return self._risk_per_trade
 
         equity = self.equity
 
-        if len(equity) < 2:
+        max_loss = np.abs(np.min(self._pnl))
+        initial_value = self._account_size
+        growth_factor = equity[-1] / initial_value
+
+        if growth_factor <= 0:
             return self._risk_per_trade
 
-        initial_value = self._account_size
-        final_value = equity[-1]
-        growth_factor = final_value / initial_value
-
-        drawdown_fraction = np.abs(max_loss) / np.abs(initial_value)
-
-        geometric_mean = np.sqrt(growth_factor)
-
-        return drawdown_fraction * geometric_mean
+        return (max_loss / np.abs(initial_value)) * np.sqrt(growth_factor)
 
     @property
     def kelly(self) -> float:
@@ -282,9 +275,8 @@ class Performance:
             return self._risk_per_trade
 
         win_prob = self.hit_ratio
-        lose_prob = 1 - win_prob
 
-        return ((wl_ratio * win_prob) - lose_prob) / wl_ratio
+        return win_prob - ((1 - win_prob) / wl_ratio)
 
     @property
     def ann_sharpe_ratio(self) -> float:
@@ -297,12 +289,12 @@ class Performance:
         if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        pnl_product = np.prod(1 + self._pnl)
+        prod = np.prod(1 + self._pnl)
 
-        if pnl_product <= 0:
+        if prod <= 0:
             return 0
 
-        return pnl_product ** (1 / total_trades) - 1
+        return prod ** (1 / total_trades) - 1
 
     @property
     def ann_volatility(self) -> float:
@@ -386,7 +378,7 @@ class Performance:
         var = self.var
         pnl = self._pnl[self._pnl < var]
 
-        if not len(pnl):
+        if len(pnl) < 2:
             return var
 
         return np.mean(pnl)
@@ -396,17 +388,37 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        account_size = self._account_size
-        peak = account_size
-        drawdowns_squared = []
+        drawdown = self.drawdown
 
-        for pnl_value in self._pnl:
-            account_size += pnl_value
-            peak = max(peak, account_size)
-            drawdown = (peak - account_size) / peak
-            drawdowns_squared.append(drawdown**2)
+        if len(drawdown) < 2:
+            return 0
 
-        return np.sqrt(np.mean(drawdowns_squared))
+        return np.sqrt(np.mean(drawdown**2)) * 100
+
+    @property
+    def upi(self) -> float:
+        ulcer_index = self.ulcer_index
+
+        if ulcer_index == 0:
+            return 0
+
+        prod = np.prod(1 + self._pnl) - 1
+
+        return prod / ulcer_index
+
+    @property
+    def common_sense_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
+        return self.profit_factor * self.tail_ratio
+
+    @property
+    def cpc_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0
+
+        return self.profit_factor * self.hit_ratio * self.payoff_ratio
 
     @property
     def lake_ratio(self) -> float:
@@ -447,7 +459,7 @@ class Performance:
 
         shortfall = pnl_sorted[pnl_sorted <= var_95]
 
-        if len(shortfall) == 0:
+        if len(shortfall) < 2:
             return 0
 
         expected_shortfall = np.abs(np.mean(shortfall))
@@ -464,7 +476,7 @@ class Performance:
 
         gains, losses = self._pnl[self._pnl > 0], self._pnl[self._pnl < 0]
 
-        if len(losses) == 0 or len(gains) == 0:
+        if len(losses) < 2 or len(gains) < 2:
             return 0
 
         upside_potential = np.mean(gains)
@@ -508,7 +520,7 @@ class Performance:
 
         gains, losses = self._pnl[self._pnl > 0], self._pnl[self._pnl < 0]
 
-        if len(losses) == 0 or len(gains) == 0:
+        if len(losses) < 2 or len(gains) < 2:
             return 0
 
         avg_gain, avg_loss = np.mean(gains), np.mean(losses)
@@ -558,9 +570,9 @@ class Performance:
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, total_fee={self.total_fee}, sharpe_ratio={self.sharpe_ratio}, smart_sharpe_ratio={self.smart_sharpe_ratio}, deflated_sharpe_ratio={self.deflated_sharpe_ratio}, "
             + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, average_win={self.average_win}, average_loss={self.average_loss}, "
             + f"cagr={self.cagr}, expected_return={self.expected_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, payoff_ratio={self.payoff_ratio}, "
-            + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, kelly={self.kelly}, "
+            + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, upi={self.upi}, kelly={self.kelly}, "
             + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, "
-            + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, "
+            + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, cpc_ratio={self.cpc_ratio}, common_sense_ratio={self.common_sense_ratio}, "
             + f"skew={self.skew}, kurtosis={self.kurtosis})"
         )
 
@@ -585,6 +597,8 @@ class Performance:
             "smart_sharpe_ratio": self.smart_sharpe_ratio,
             "deflated_sharpe_ratio": self.deflated_sharpe_ratio,
             "calmar_ratio": self.calmar_ratio,
+            "cpc_ratio": self.cpc_ratio,
+            "common_sense_ratio": self.common_sense_ratio,
             "sortino_ratio": self.sortino_ratio,
             "smart_sortino_ratio": self.smart_sortino_ratio,
             "payoff_ratio": self.payoff_ratio,
@@ -602,6 +616,7 @@ class Performance:
             "var": self.var,
             "cvar": self.cvar,
             "ulcer_index": self.ulcer_index,
+            "upi": self.upi,
             "lake_ratio": self.lake_ratio,
             "burke_ratio": self.burke_ratio,
             "rachev_ratio": self.rachev_ratio,
