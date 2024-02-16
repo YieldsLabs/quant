@@ -259,8 +259,10 @@ class Performance:
 
         if growth_factor <= 0:
             return self._risk_per_trade
-
-        return (max_loss / np.abs(initial_value)) * np.sqrt(growth_factor)
+        
+        optimal_f = (max_loss / np.abs(initial_value)) * np.sqrt(growth_factor)
+    
+        return optimal_f if optimal_f > self._risk_per_trade else self._risk_per_trade
 
     @property
     def kelly(self) -> float:
