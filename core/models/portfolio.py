@@ -211,7 +211,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        denom = abs(self.average_loss)
+        denom = np.abs(self.average_loss)
 
         if denom == 0:
             return 0
@@ -259,10 +259,8 @@ class Performance:
 
         if growth_factor <= 0:
             return self._risk_per_trade
-        
-        optimal_f = (max_loss / np.abs(initial_value)) * np.sqrt(growth_factor)
-    
-        return optimal_f if optimal_f > self._risk_per_trade else self._risk_per_trade
+
+        return (max_loss / np.abs(initial_value)) * np.sqrt(growth_factor)
 
     @property
     def kelly(self) -> float:
@@ -494,7 +492,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        return abs(
+        return np.abs(
             np.percentile(self._pnl, cutoff) / np.percentile(self._pnl, 100 - cutoff)
         )
 
