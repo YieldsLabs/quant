@@ -22,13 +22,13 @@ impl Confirm for SupertrendConfirm {
     }
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (_, trendline) = supertrend(
+        let (direction, _) = supertrend(
             &data.hl2(),
             &data.close,
             &data.atr(self.atr_period),
             self.factor,
         );
 
-        (data.close.sgt(&trendline), data.close.slt(&trendline))
+        (direction.seq(&1.0), direction.seq(&-1.0))
     }
 }

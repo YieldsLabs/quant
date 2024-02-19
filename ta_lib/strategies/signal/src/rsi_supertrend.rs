@@ -40,7 +40,7 @@ impl Signal for RSISupertrendSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
-        let (_, trendline) = supertrend(
+        let (direction, _) = supertrend(
             &data.hl2(),
             &data.close,
             &data.atr(self.atr_period),
@@ -52,13 +52,13 @@ impl Signal for RSISupertrendSignal {
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
 
         (
-            data.close.sgt(&trendline)
+            direction.seq(&1.0)
                 & rsi.sgt(&RSI_NEUTRALITY)
                 & rsi.slt(&upper_barrier)
                 & rsi.shift(1).sgt(&lower_neutrality)
                 & rsi.shift(2).sgt(&lower_neutrality)
                 & rsi.shift(3).sgt(&lower_neutrality),
-            data.close.slt(&trendline)
+            direction.seq(&-1.0)
                 & rsi.slt(&RSI_NEUTRALITY)
                 & rsi.sgt(&lower_barrier)
                 & rsi.shift(1).slt(&upper_neutrality)

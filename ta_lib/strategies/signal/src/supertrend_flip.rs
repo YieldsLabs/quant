@@ -22,16 +22,18 @@ impl Signal for SupertrendFlipSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (_, trendline) = supertrend(
+        let (direction, _) = supertrend(
             &data.hl2(),
             &data.close,
             &data.atr(self.atr_period),
             self.factor,
         );
 
+        let prev_direction = direction.shift(1);
+
         (
-            trendline.cross_under(&data.close),
-            trendline.cross_over(&data.close),
+            direction.seq(&1.0) & prev_direction.seq(&-1.0),
+            direction.seq(&-1.0) & prev_direction.seq(&1.0),
         )
     }
 }
