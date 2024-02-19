@@ -66,7 +66,7 @@ class Performance:
         if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        return np.sum(self._pnl > 0) / total_trades
+        return np.divide(np.sum(self._pnl > 0), total_trades)
 
     @property
     def equity(self):
@@ -80,9 +80,8 @@ class Performance:
             return np.array([0, 0])
 
         peak = np.maximum.accumulate(equity_curve)
-        drawdowns = (peak - equity_curve) / peak
 
-        return drawdowns
+        return np.divide(peak - equity_curve, peak)
 
     @property
     def runup(self) -> float:
@@ -92,9 +91,8 @@ class Performance:
             return np.array([0, 0])
 
         trough = np.minimum.accumulate(equity_curve)
-        runups = (equity_curve - trough) / trough
 
-        return runups
+        return np.divide(equity_curve - trough, trough)
 
     @property
     def max_runup(self) -> float:
@@ -111,7 +109,7 @@ class Performance:
         if max_drawdown == 0:
             return 0
 
-        return self.cagr / np.abs(max_drawdown)
+        return np.divide(self.cagr, np.abs(max_drawdown))
 
     @property
     def sharpe_ratio(self) -> float:
@@ -123,7 +121,7 @@ class Performance:
         if std_return == 0:
             return 0
 
-        return self.average_pnl / std_return
+        return np.divide(self.average_pnl, std_return)
 
     @property
     def smart_sharpe_ratio(self) -> float:
@@ -133,10 +131,10 @@ class Performance:
         std_return = np.std(self._pnl, ddof=1)
         penalty = self._penalty(self._pnl)
 
-        if std_return == 0 or penalty == 0:
+        if std_return == 0 or penalty is None or np.isnan(penalty):
             return 0
 
-        return self.average_pnl / std_return * penalty
+        return np.divide(self.average_pnl, std_return * penalty)
 
     @property
     def deflated_sharpe_ratio(self) -> float:
@@ -163,8 +161,10 @@ class Performance:
             return 0
 
         return norm.cdf(
-            ((sharpe_ratio - sharpe_ratio_star) * np.sqrt(total_trades - 1))
-            / np.sqrt(denom)
+            np.divide(
+                (sharpe_ratio - sharpe_ratio_star) * np.sqrt(total_trades - 1),
+                np.sqrt(denom),
+            )
         )
 
     @property
@@ -184,7 +184,7 @@ class Performance:
         if downside == 0:
             return 0
 
-        return self.average_pnl / downside
+        return np.divide(self.average_pnl, downside)
 
     @property
     def smart_sortino_ratio(self) -> float:
@@ -201,10 +201,10 @@ class Performance:
         downside = np.sqrt(np.sum(downside_returns**2) / total_trades)
         penalty = self._penalty(self._pnl)
 
-        if downside == 0 or penalty == 0:
+        if downside == 0 or penalty is None or np.isnan(penalty):
             return 0
 
-        return self.average_pnl / downside * penalty
+        return np.divide(self.average_pnl, downside * penalty)
 
     @property
     def payoff_ratio(self) -> float:
@@ -216,7 +216,7 @@ class Performance:
         if denom == 0:
             return 0
 
-        return self.average_win / denom
+        return np.divide(self.average_win, denom)
 
     @property
     def cagr(self) -> float:
@@ -260,7 +260,7 @@ class Performance:
         if growth_factor <= 0:
             return self._risk_per_trade
 
-        return (max_loss / np.abs(initial_value)) * np.sqrt(growth_factor)
+        return np.divide(max_loss, np.abs(initial_value)) * np.sqrt(growth_factor)
 
     @property
     def kelly(self) -> float:
@@ -276,7 +276,7 @@ class Performance:
 
         win_prob = self.hit_ratio
 
-        return win_prob - ((1 - win_prob) / wl_ratio)
+        return win_prob - np.divide(1 - win_prob, wl_ratio)
 
     @property
     def ann_sharpe_ratio(self) -> float:
@@ -302,6 +302,7 @@ class Performance:
             return 0
 
         daily_returns = self._pnl / self._account_size
+
         volatility = np.std(daily_returns, ddof=1)
 
         return volatility * np.sqrt(self._periods_per_year)
@@ -315,7 +316,7 @@ class Performance:
 
         total_profit = np.sum(self._pnl[self._pnl > 0])
 
-        return total_profit / max_drawdown
+        return np.divide(total_profit, max_drawdown)
 
     @property
     def profit_factor(self) -> float:
@@ -323,13 +324,17 @@ class Performance:
             return 0
 
         pnl_positive = self._pnl > 0
-        gross_profit = np.sum(self._pnl[pnl_positive])
-        gross_loss = np.abs(np.sum(self._pnl[~pnl_positive]))
+        profit, loss = self._pnl[pnl_positive], self._pnl[~pnl_positive]
+
+        if len(profit) < 2 or len(loss) < 2:
+            return 0
+
+        gross_profit, gross_loss = np.sum(profit), np.abs(np.sum(loss))
 
         if gross_loss == 0:
             return 0
 
-        return gross_profit / gross_loss
+        return np.divide(gross_profit, gross_loss)
 
     @property
     def risk_of_ruin(self) -> float:
@@ -340,22 +345,18 @@ class Performance:
 
         win_rate = self.hit_ratio
 
-        return ((1 - win_rate) / (1 + win_rate)) ** total_trades
+        return np.divide(1 - win_rate, 1 + win_rate) ** total_trades
 
     @property
     def skew(self) -> float:
-        total_trades = self.total_trades
-
-        if total_trades < TOTAL_TRADES_THRESHOLD:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         return skew(self._pnl, bias=False)
 
     @property
     def kurtosis(self) -> float:
-        total_trades = self.total_trades
-
-        if total_trades < TOTAL_TRADES_THRESHOLD:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         return kurtosis(self._pnl, bias=False)
@@ -404,7 +405,7 @@ class Performance:
 
         prod = np.prod(1 + self._pnl) - 1
 
-        return prod / ulcer_index
+        return np.divide(prod, ulcer_index)
 
     @property
     def common_sense_ratio(self) -> float:
@@ -432,7 +433,7 @@ class Performance:
 
         peaks = np.maximum.accumulate(equity)
         drawdowns = (peaks - equity) / peaks
-        underwater_time = np.sum(drawdowns < 0) / self._periods_per_year
+        underwater_time = np.divide(np.sum(drawdowns < 0), self._periods_per_year)
 
         return 1 - underwater_time
 
@@ -446,7 +447,7 @@ class Performance:
         if downside_deviation == 0:
             return 0
 
-        return self.cagr / downside_deviation
+        return np.divide(self.cagr, downside_deviation)
 
     @property
     def rachev_ratio(self) -> float:
@@ -467,7 +468,7 @@ class Performance:
         if expected_shortfall == 0:
             return 0
 
-        return np.abs(self.average_pnl) / expected_shortfall
+        return np.divide(np.abs(self.average_pnl), expected_shortfall)
 
     @property
     def sterling_ratio(self) -> float:
@@ -485,16 +486,19 @@ class Performance:
         if downside_risk == 0:
             return 0
 
-        return upside_potential / downside_risk
+        return np.divide(upside_potential, downside_risk)
 
     @property
     def tail_ratio(self, cutoff=95) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        return np.abs(
-            np.percentile(self._pnl, cutoff) / np.percentile(self._pnl, 100 - cutoff)
-        )
+        denom = np.percentile(self._pnl, 100 - cutoff)
+
+        if denom == 0:
+            return 0
+
+        return np.abs(np.divide(np.percentile(self._pnl, cutoff), denom))
 
     @property
     def omega_ratio(self) -> float:
@@ -503,7 +507,7 @@ class Performance:
 
         gains, losses = self._pnl[self._pnl > 0], self._pnl[self._pnl < 0]
 
-        if len(losses) == 0 or len(gains) == 0:
+        if len(losses) < 2 or len(gains) < 2:
             return 0
 
         sum_losses = np.sum(np.abs(losses))
@@ -511,11 +515,13 @@ class Performance:
         if sum_losses == 0:
             return 0
 
-        return np.sum(gains) / sum_losses
+        return np.divide(np.sum(gains), sum_losses)
 
     @property
     def kappa_three_ratio(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+        total_trades = self.total_trades
+
+        if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         gains, losses = self._pnl[self._pnl > 0], self._pnl[self._pnl < 0]
@@ -527,10 +533,15 @@ class Performance:
 
         threshold = avg_gain - avg_loss
 
-        up_proportion = np.sum(gains > threshold) / self.total_trades
-        down_proportion = np.sum(losses < threshold) / self.total_trades
+        up_proportion = np.sum(gains > threshold) / total_trades
+        down_proportion = np.sum(losses < threshold) / total_trades
 
-        return (up_proportion**3 - down_proportion) / np.sqrt(np.mean(self._pnl**2))
+        denom = np.sqrt(np.mean(self._pnl**2))
+
+        if denom == 0:
+            return 0
+
+        return np.divide((up_proportion**3 - down_proportion), denom)
 
     def next(self, pnl: float, fee: float) -> "Performance":
         _pnl, _fee = np.append(self._pnl, pnl), np.append(self._fee, fee)
@@ -556,7 +567,10 @@ class Performance:
         if len(pnl) < TOTAL_TRADES_THRESHOLD:
             return 1
 
-        coef = np.abs(np.corrcoef(pnl[:-1], pnl[1:])[0, 1])
+        x = pnl[:-1]
+        y = pnl[1:]
+        y[0] += 1e-15
+        coef = np.abs(np.corrcoef(x, y)[0, 1])
         num = len(pnl)
         corr = [((num - x) / num) * coef**x for x in range(1, num)]
 
