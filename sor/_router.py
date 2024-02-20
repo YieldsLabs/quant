@@ -108,6 +108,10 @@ class SmartRouter(AbstractEventManager):
         num_order_breach = 0
         order_timestamps = {}
 
+        if self.exchange.fetch_position(symbol, position.side):
+            logging.info("Position already exists")
+            return
+
         for price in self.algo_price.calculate(symbol, self.exchange):
             current_distance_to_stop_loss = abs(stop_loss - price)
 
@@ -204,7 +208,7 @@ class SmartRouter(AbstractEventManager):
             if not self.exchange.fetch_position(symbol, position.side):
                 break
 
-            if spread < -0.02:
+            if spread < -0.005:
                 self.exchange.close_full_position(symbol, position.side)
                 break
 
