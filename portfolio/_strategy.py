@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.impute import KNNImputer
 from sklearn.preprocessing import MinMaxScaler
 
 from core.models.strategy import Strategy
@@ -14,6 +15,7 @@ class StrategyStorage:
     def __init__(self, n_clusters=3):
         self.kmeans = KMeans(n_clusters=n_clusters, n_init="auto")
         self.scaler = MinMaxScaler()
+        self.imputer = KNNImputer(n_neighbors=3)
         self.data: Dict[Tuple[Symbol, Timeframe, Strategy], Tuple[np.array, int]] = {}
         self.lock = asyncio.Lock()
 
@@ -61,7 +63,8 @@ class StrategyStorage:
 
     def _update_clusters(self):
         data_matrix = np.array([item[0] for item in self.data.values()])
-        normalized_data = self.scaler.fit_transform(data_matrix)
+        imputed_data = self.imputer.fit_transform(data_matrix)
+        normalized_data = self.scaler.fit_transform(imputed_data)
         cluster_indices = self.kmeans.fit_predict(normalized_data)
 
         for (symbol, timeframe, strategy), idx in zip(
