@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Union
 
@@ -23,7 +24,7 @@ from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
-from ._sm import PositionStateMachine
+from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
@@ -56,7 +57,8 @@ class PositionActor(Actor):
         super().__init__(symbol, timeframe, strategy)
         self.position_factory = position_factory
 
-        self.sm = PositionStateMachine(self)
+        self.long_sm = PositionStateMachine(self, LONG_TRANSITIONS)
+        self.short_sm = PositionStateMachine(self, SHORT_TRANSITIONS)
         self.state = PositionStorage()
         self.config = config_service.get("position")
 
@@ -66,7 +68,12 @@ class PositionActor(Actor):
 
     async def on_receive(self, event):
         symbol, _ = self._get_event_key(event)
-        await self.sm.process_event(symbol, event)
+        await asyncio.gather(
+            *[
+                self.long_sm.process_event(symbol, event),
+                self.short_sm.process_event(symbol, event),
+            ]
+        )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         async def create_and_store_position(event: SignalEvent):
