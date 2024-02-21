@@ -20,6 +20,13 @@ class PositionOptimalFSizeStrategy(AbstractPositionSizeStrategy):
             GetPositionRisk(signal, PositionSizeType.Optimalf)
         )
 
+        fixed_risk_amount = await self.query(
+            GetPositionRisk(signal, PositionSizeType.Fixed)
+        )
+
+        if risk_amount >= 3 * fixed_risk_amount:
+            risk_amount = risk_amount * 0.033
+
         if stop_loss_price is not None and entry_price is not None:
             price_difference = abs(entry_price - stop_loss_price)
         else:

@@ -7,7 +7,7 @@ from core.queries.portfolio import GetPositionRisk
 
 
 class PositionKellySizeStrategy(AbstractPositionSizeStrategy):
-    def __init__(self, kelly_factor: float = 0.33):
+    def __init__(self, kelly_factor: float = 0.033):
         super().__init__()
         self.kelly_factor = kelly_factor
 
