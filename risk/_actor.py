@@ -1,6 +1,6 @@
 import asyncio
 from collections import deque
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
@@ -52,7 +52,7 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe, strategy)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=21)
+        self._ohlcv = deque(maxlen=100)
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
@@ -99,7 +99,7 @@ class RiskActor(Actor):
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
         async with self.lock:
-            self._ohlcv.append(event.ohlcv)
+            self._ohlcv.append((event.ohlcv, event.closed))
 
             current_long_position, current_short_position = self._position
 
@@ -153,13 +153,13 @@ class RiskActor(Actor):
             self._position = (long_position, short_position)
 
     async def _process_position(
-        self, position: Optional[Position], ohlcvs: List[OHLCV]
+        self, position: Optional[Position], ohlcvs: List[Tuple[OHLCV, bool]]
     ):
         next_position = None
 
         if position and len(ohlcvs) > 1:
             next_position = position.next(ohlcvs)
-            last_candle = ohlcvs[-1]
+            last_candle, _ = ohlcvs[-1]
 
             exit_event = self._create_exit_event(next_position, last_candle)
 

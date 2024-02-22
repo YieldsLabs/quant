@@ -141,8 +141,7 @@ class BacktestSystem(AbstractSystem):
             account_size = await self.query(GetBalance())
             await self.execute(UpdateAccountSize(account_size))
 
-            if strategy not in self.active_strategy:
-                await self._process_backtest(strategy)
+            await self._process_backtest(strategy)
 
             logger.info(f"Remaining backtest time: {estimator.remaining_time()}")
 
@@ -176,8 +175,7 @@ class BacktestSystem(AbstractSystem):
             account_size = await self.query(GetBalance())
             await self.execute(UpdateAccountSize(account_size))
 
-            if data not in self.active_strategy:
-                await self._process_backtest(data, True)
+            await self._process_backtest(data, True)
 
         await self.event_queue.put(Event.VERIFICATION_COMPLETE)
 
@@ -190,8 +188,6 @@ class BacktestSystem(AbstractSystem):
 
         if not len(strategies):
             return await self.event_queue.put(Event.REGENERATE)
-
-        self.active_strategy = set(strategies)
 
         await self.dispatch(DeployStrategy(strategy=strategies))
 
@@ -222,7 +218,7 @@ class BacktestSystem(AbstractSystem):
         max_gen = self.context.config_service.get("optimization")["max_generations"]
         window_size = self.context.config_service.get("backtest")["window_size"]
 
-        verify_sample = 1
+        verify_sample = 2
         in_sample = window_size
         out_sample = max((max_gen - curr_gen) * window_size - in_sample, 0)
 

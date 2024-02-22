@@ -90,7 +90,7 @@ class Position:
                 last_modified=last_modified,
             )
 
-    def next(self, ohlcvs: List[OHLCV]) -> "Position":
+    def next(self, ohlcvs: List[Tuple[OHLCV, bool]]) -> "Position":
         next_stop_loss_price, next_take_profit_price = self.risk_strategy.next(
             self.side,
             self.entry_price,
