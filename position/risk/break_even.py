@@ -103,14 +103,12 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
                 and closed_ohlcv[-2].close > entry_price
                 and closed_ohlcv[-3].close > entry_price
             ):
-                print("PULLBACK")
                 next_take_profit = min(
                     entry_price - risk_value,
                     max(next_take_profit, next_take_profit + tp_threshold),
                 )
 
             if regime[-1] == Regime.RANGE:
-                print("RRRRANGEEE")
                 next_take_profit = min(
                     entry_price - risk_value,
                     max(next_take_profit, next_take_profit + tp_threshold),
@@ -134,7 +132,7 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         highs = np.array([ohlcv.high for ohlcv in ohlcvs])
         lows = np.array([ohlcv.low for ohlcv in ohlcvs])
         closes = np.array([ohlcv.close for ohlcv in ohlcvs])
-        
+
         prev_closes = np.roll(closes, 1)
 
         true_ranges = np.maximum(
