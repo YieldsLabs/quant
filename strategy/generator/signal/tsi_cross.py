@@ -13,6 +13,6 @@ from .base import Signal, SignalType
 class TsiCrossSignal(Signal):
     type: SignalType = SignalType.TsiCross
     smooth_type: Parameter = StaticParameter(Smooth.EMA)
-    long_period: Parameter = StaticParameter(25.0)
-    short_period: Parameter = StaticParameter(13.0)
+    fast_period: Parameter = StaticParameter(13.0)
+    slow_period: Parameter = StaticParameter(25.0)
     signal_period: Parameter = StaticParameter(13.0)

@@ -14,3 +14,9 @@ class Individual:
 
     def update_fitness(self, value):
         self.fitness = value
+
+    def __hash__(self) -> int:
+        return hash(f"{self.symbol}_{self.timeframe}{self.strategy}")
+
+    def __str__(self):
+        return f"{self.symbol}_{self.timeframe}{self.strategy}"

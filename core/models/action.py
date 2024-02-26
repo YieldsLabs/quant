@@ -2,11 +2,11 @@ from enum import Enum
 
 
 class Action(Enum):
-    GO_LONG = 1.0
-    GO_SHORT = 2.0
-    EXIT_LONG = 3.0
-    EXIT_SHORT = 4.0
-    DO_NOTHING = 0.0
+    GO_LONG = 1
+    GO_SHORT = 2
+    EXIT_LONG = 3
+    EXIT_SHORT = 4
+    DO_NOTHING = 0
 
     @classmethod
     def from_raw(cls, value: float):

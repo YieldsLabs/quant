@@ -189,7 +189,7 @@ pub enum SignalConfig {
         atr_period: f32,
         factor: f32,
     },
-    TIICross {
+    TiiCross {
         smooth_type: f32,
         major_period: f32,
         minor_period: f32,
@@ -202,13 +202,13 @@ pub enum SignalConfig {
     },
     TsiFlip {
         smooth_type: f32,
-        long_period: f32,
-        short_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     },
     TsiCross {
         smooth_type: f32,
-        long_period: f32,
-        short_period: f32,
+        fast_period: f32,
+        slow_period: f32,
         signal_period: f32,
     },
     QstickFlip {
@@ -502,7 +502,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             k_period,
             d_period,
         )),
-        SignalConfig::TIICross {
+        SignalConfig::TiiCross {
             smooth_type,
             major_period,
             minor_period,
@@ -533,22 +533,22 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         )),
         SignalConfig::TsiFlip {
             smooth_type,
-            long_period,
-            short_period,
+            fast_period,
+            slow_period,
         } => Box::new(TSIFlipSignal::new(
             map_to_smooth(smooth_type as usize),
-            long_period,
-            short_period,
+            fast_period,
+            slow_period,
         )),
         SignalConfig::TsiCross {
             smooth_type,
-            long_period,
-            short_period,
+            fast_period,
+            slow_period,
             signal_period,
         } => Box::new(TSICrossSignal::new(
             map_to_smooth(smooth_type as usize),
-            long_period,
-            short_period,
+            fast_period,
+            slow_period,
             signal_period,
         )),
         SignalConfig::QstickFlip {

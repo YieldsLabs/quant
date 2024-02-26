@@ -112,19 +112,34 @@ class RiskActor(Actor):
                 ]
             )
 
+            # await asyncio.gather(
+            #     *[
+            #         self._process_sl_signal(current_long_position, ohlcvs),
+            #         self._process_sl_signal(current_short_position, ohlcvs),
+            #     ]
+            # )
+
     async def _handle_reverse_exit(
         self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
     ):
         async with self.lock:
             long_position, short_position = self._position
 
-            if long_position and isinstance(event, GoShortSignalReceived):
+            if (
+                long_position
+                and not short_position
+                and isinstance(event, GoShortSignalReceived)
+            ):
                 long_position = await self._process_signal_exit(
                     long_position,
                     event.entry_price,
                 )
 
-            if short_position and isinstance(event, GoLongSignalReceived):
+            if (
+                short_position
+                and not long_position
+                and isinstance(event, GoLongSignalReceived)
+            ):
                 short_position = await self._process_signal_exit(
                     short_position,
                     event.entry_price,
@@ -222,12 +237,9 @@ class RiskActor(Actor):
         if price_exceeds_take_profit or price_exceeds_stop_loss:
             return position
 
-        potential_loss = abs((price - stop_loss_price) / stop_loss_price) * 100
-        potential_profit = abs((price - take_profit_price) / take_profit_price) * 100
+        distance_to_take_profit = abs(price - take_profit_price)
 
-        rrr = potential_profit / potential_loss
-
-        if rrr <= 0.819 or rrr > 13.82:
+        if distance_to_take_profit <= 0.236:
             await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
             return None
 

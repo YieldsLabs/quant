@@ -112,7 +112,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         sampled_timeframes = self.generate_timeframes()
         strategies = self.generate_strategies()
 
-        data = list(product(sampled_symbols, sampled_timeframes, strategies))
+        data = list(set(product(sampled_symbols, sampled_timeframes, strategies)))
 
         shuffle(data)
 
@@ -134,7 +134,52 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
 
     def _diversified_strategies(self):
-        return []
+        return [
+            Strategy(
+                *(
+                    StrategyType.TREND,
+                    TrendCandleSignal(
+                        candle=StaticParameter(TrendCandleType.SLINGSHOT)
+                    ),
+                    EomConfirm(),
+                    AdxPulse(),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.RMSMA),
+                        period=StaticParameter(15.0),
+                    ),
+                    AtrStopLoss(),
+                    CeExit(),
+                )
+            ),
+            Strategy(
+                *(
+                    StrategyType.TREND,
+                    RsiSupertrendSignal(),
+                    StcConfirm(),
+                    VoPulse(),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.EMA),
+                        period=StaticParameter(10.0),
+                    ),
+                    AtrStopLoss(period=StaticParameter(48.0)),
+                    CeExit(),
+                )
+            ),
+            Strategy(
+                *(
+                    StrategyType.TREND,
+                    TrixCrossSignal(),
+                    SupertrendConfirm(),
+                    VoPulse(),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.MD),
+                        period=StaticParameter(15.0),
+                    ),
+                    AtrStopLoss(period=StaticParameter(48.0)),
+                    RsiExit(period=StaticParameter(19.0)),
+                )
+            ),
+        ]
 
     def _random_strategies(self):
         strategies_set = set()
@@ -202,11 +247,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _generate_invariants(self, base_strategy: Strategy) -> List[Strategy]:
         result = [base_strategy]
-        attributes = ["entry", "baseline"]
+        attributes = []
         smooth_type_map = {
             str(Smooth.EMA): [Smooth.ZLEMA, Smooth.KAMA],
             str(Smooth.SMA): [Smooth.SMMA, Smooth.LSMA],
             str(Smooth.WMA): [Smooth.HMA],
+            str(Smooth.SMMA): [Smooth.WMA, Smooth.EMA, Smooth.LSMA],
         }
 
         def smooth_invariants(strategy_part):
@@ -233,8 +279,27 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
             return [
                 replace(strategy_part, candle=CategoricalParameter(TrendCandleType))
-                for _ in range(3)
+                for _ in range(5)
             ]
+
+        def period_invariants(strategy_part):
+            if not hasattr(strategy_part, "period"):
+                return []
+
+            return (
+                [
+                    replace(strategy_part, period=RandomParameter(8.0, 20.0, 5.0))
+                    for _ in range(2)
+                ]
+                + [
+                    replace(strategy_part, period=RandomParameter(25.0, 50.0, 8.0))
+                    for _ in range(3)
+                ]
+                + [
+                    replace(strategy_part, period=RandomParameter(58.0, 100.0, 10.0))
+                    for _ in range(2)
+                ]
+            )
 
         def ma_invariants(strategy_part):
             if not hasattr(strategy_part, "ma"):
@@ -251,7 +316,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
             return [
                 replace(strategy_part, factor=RandomParameter(1.0, 8.0, 0.5))
-                for _ in range(2)
+                for _ in range(3)
             ]
 
         for attr in attributes:
@@ -272,6 +337,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
                 factor_parts = factor_invariants(strategy_attr)
                 for part in factor_parts:
+                    result.append(replace(strategy, **{attr: part}))
+
+                period_parts = period_invariants(strategy_attr)
+                for part in period_parts:
                     result.append(replace(strategy, **{attr: part}))
 
         return result

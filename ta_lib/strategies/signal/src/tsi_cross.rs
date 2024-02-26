@@ -4,22 +4,22 @@ use momentum::tsi;
 
 pub struct TSICrossSignal {
     smooth_type: Smooth,
-    long_period: usize,
-    short_period: usize,
+    fast_period: usize,
+    slow_period: usize,
     signal_period: usize,
 }
 
 impl TSICrossSignal {
     pub fn new(
         smooth_type: Smooth,
-        long_period: f32,
-        short_period: f32,
+        fast_period: f32,
+        slow_period: f32,
         signal_period: f32,
     ) -> Self {
         Self {
             smooth_type,
-            long_period: long_period as usize,
-            short_period: short_period as usize,
+            fast_period: fast_period as usize,
+            slow_period: slow_period as usize,
             signal_period: signal_period as usize,
         }
     }
@@ -27,7 +27,7 @@ impl TSICrossSignal {
 
 impl Signal for TSICrossSignal {
     fn lookback(&self) -> usize {
-        let adj_lookback = std::cmp::max(self.short_period, self.long_period);
+        let adj_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adj_lookback, self.signal_period)
     }
 
@@ -35,8 +35,8 @@ impl Signal for TSICrossSignal {
         let tsi = tsi(
             &data.close,
             self.smooth_type,
-            self.long_period,
-            self.short_period,
+            self.slow_period,
+            self.fast_period,
         );
         let signal_line = tsi.smooth(self.smooth_type, self.signal_period);
 

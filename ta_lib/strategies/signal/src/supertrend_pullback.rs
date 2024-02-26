@@ -25,7 +25,7 @@ impl Signal for SupertrendPullBackSignal {
         let (direction, trendline) = supertrend(
             &data.hl2(),
             &data.close,
-            &data.atr(self.atr_period),
+            &data.atr(self.atr_period, Smooth::SMMA),
             self.factor,
         );
 

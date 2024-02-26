@@ -78,7 +78,11 @@ class PositionActor(Actor):
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         async def create_and_store_position(event: SignalEvent):
             position = await self.position_factory.create_position(
-                event.signal, event.ohlcv, event.entry_price, event.stop_loss
+                event.signal,
+                event.ohlcv,
+                event.entry_price,
+                event.stop_loss,
+                event.take_profit,
             )
 
             await self.state.store_position(position)

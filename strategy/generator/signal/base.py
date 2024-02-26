@@ -38,7 +38,7 @@ class SignalType(Enum):
     StochCross = "StochCross"
     TestGround = "TestGround"
     TrendCandle = "TrendCandle"
-    TIICross = "TIICross"
+    TiiCross = "TiiCross"
     TiiV = "TiiV"
     TrixFlip = "TrixFlip"
     TrixCross = "TrixCross"

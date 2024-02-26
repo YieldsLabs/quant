@@ -162,7 +162,7 @@ class TradingSystem(AbstractSystem):
                     symbol,
                     self.config["leverage"],
                     PositionMode.HEDGED,
-                    MarginMode.ISOLATED,
+                    MarginMode.CROSS,
                 )
             )
 

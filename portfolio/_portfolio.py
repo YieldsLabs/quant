@@ -31,14 +31,9 @@ class PortfolioStorage:
 
             self.data[key] = performance
 
-    async def get(self, position: Position):
+    async def get(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         async with self._lock:
-            key = self._get_key(
-                position.signal.symbol,
-                position.signal.timeframe,
-                position.signal.strategy,
-            )
-
+            key = self._get_key(symbol, timeframe, strategy)
             return self.data.get(key)
 
     async def reset(self, symbol, timeframe, strategy):

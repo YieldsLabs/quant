@@ -23,9 +23,9 @@ class Position:
     take_profit_strategy: AbstractPositionTakeProfitStrategy
     orders: Tuple[Order] = ()
     closed: bool = False
-    stop_loss_price: float = 0.0000001
-    take_profit_price: float = 0.0000001
-    fee: float = 0.0
+    stop_loss_price: float = field(default_factory=lambda: 0.0000001)
+    take_profit_price: float = field(default_factory=lambda: 0.0000001)
+    fee: float = field(default_factory=lambda: 0)
     open_timestamp: float = field(default_factory=lambda: 0)
     closed_timestamp: float = field(default_factory=lambda: 0)
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
@@ -57,6 +57,14 @@ class Position:
             return replace(self, orders=orders, last_modified=last_modified)
 
         if order.status == OrderStatus.EXECUTED:
+            take_profit_price = (
+                self.take_profit_strategy.next(
+                    self.side, order.price, self.stop_loss_price
+                )
+                if not self.take_profit_price
+                else self.take_profit_price
+            )
+
             return replace(
                 self,
                 orders=orders,
@@ -64,9 +72,7 @@ class Position:
                 fee=order.fee,
                 size=order.size,
                 last_modified=last_modified,
-                take_profit_price=self.take_profit_strategy.next(
-                    self.side, order.price, self.stop_loss_price
-                ),
+                take_profit_price=take_profit_price,
             )
 
         if order.status == OrderStatus.CLOSED:
@@ -98,6 +104,16 @@ class Position:
             self.stop_loss_price,
             ohlcvs,
         )
+
+        if next_stop_loss_price != self.stop_loss_price:
+            print(
+                f"SIDE: {self.side}, nextSL: {next_stop_loss_price}, SL: {self.stop_loss_price}, ENTRY: {self.entry_price}"
+            )
+
+        if next_take_profit_price != self.take_profit_price:
+            print(
+                f"SIDE: {self.side}, nextTP: {next_take_profit_price}, TP: {self.take_profit_price}, ENTRY: {self.entry_price}"
+            )
 
         return replace(
             self,

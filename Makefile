@@ -22,5 +22,6 @@ run:
 	pipenv run python3 quant.py
 
 format:
+	cargo fmt --all --manifest-path=$(TA_LIB_PATH)
 	pipenv run black .
 	pipenv run ruff . --fix

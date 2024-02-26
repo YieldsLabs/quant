@@ -32,7 +32,7 @@ impl Pulse for ADXPulse {
         let (adx, _, _) = dmi(
             &data.high,
             &data.low,
-            &data.atr(self.di_period),
+            &data.atr(self.di_period, Smooth::SMMA),
             self.smooth_type,
             self.adx_period,
             self.di_period,

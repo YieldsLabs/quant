@@ -12,4 +12,4 @@ from .base import Exit, ExitType
 class AstExit(Exit):
     type: ExitType = ExitType.Ast
     atr_period: Parameter = StaticParameter(12.0)
-    multi: Parameter = StaticParameter(3.0)
+    factor: Parameter = StaticParameter(3.0)

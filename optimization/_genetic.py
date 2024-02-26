@@ -68,6 +68,8 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
         children = self._crossover_parents(parents)
         self._update_population(elite, children)
 
+        self._population = list(set(self._population))
+
         self._generation += 1
 
     async def _evaluate_fitness(self) -> None:

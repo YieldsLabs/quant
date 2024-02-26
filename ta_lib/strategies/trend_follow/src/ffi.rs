@@ -39,19 +39,12 @@ pub fn register(
     let stop_loss: StopLossConfig = serde_json::from_slice(stop_loss_buffer).unwrap();
     let exit: ExitConfig = serde_json::from_slice(exit_buffer).unwrap();
 
-    let mapped_signal = map_to_signal(signal);
-    let mapped_confirm = map_to_confirm(confirm);
-    let mapped_pulse = map_to_pulse(pulse);
-    let mapped_baseline = map_to_baseline(baseline);
-    let mapped_stoploss = map_to_stoploss(stop_loss);
-    let mapped_exit = map_to_exit(exit);
-
     register_strategy(
-        mapped_signal,
-        mapped_confirm,
-        mapped_pulse,
-        mapped_baseline,
-        mapped_stoploss,
-        mapped_exit,
+        map_to_signal(signal),
+        map_to_confirm(confirm),
+        map_to_pulse(pulse),
+        map_to_baseline(baseline),
+        map_to_stoploss(stop_loss),
+        map_to_exit(exit),
     )
 }

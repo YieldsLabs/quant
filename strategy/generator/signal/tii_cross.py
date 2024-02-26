@@ -8,7 +8,7 @@ from .base import Signal, SignalType
 
 @dataclass(frozen=True)
 class TiiCrossSignal(Signal):
-    type: SignalType = SignalType.TIICross
+    type: SignalType = SignalType.TiiCross
     smooth_type: Parameter = StaticParameter(Smooth.SMA)
     major_period: Parameter = StaticParameter(60.0)
     minor_period: Parameter = StaticParameter(30.0)

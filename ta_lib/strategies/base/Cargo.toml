@@ -10,7 +10,7 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-once_cell = "1.18"
+once_cell = "1.19"
 core = { path = "../../core" }
 price = { path = "../../price" }
 volatility = { path = "../../indicators/volatility" }

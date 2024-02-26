@@ -49,7 +49,7 @@ pub fn strategy_next(
     low: f32,
     close: f32,
     volume: f32,
-) -> (f32, f32) {
+) -> (i32, f32) {
     let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
     if let Some(strategy) = strategies.get_mut(&strategy_id) {
         let ohlcv = OHLCV {
@@ -63,14 +63,14 @@ pub fn strategy_next(
         let result = strategy.next(ohlcv);
 
         match result {
-            TradeAction::GoLong(entry_price) => (1.0, entry_price),
-            TradeAction::GoShort(entry_price) => (2.0, entry_price),
-            TradeAction::ExitLong(exit_price) => (3.0, exit_price),
-            TradeAction::ExitShort(exit_price) => (4.0, exit_price),
-            TradeAction::DoNothing => (0.0, 0.0),
+            TradeAction::GoLong(entry_price) => (1, entry_price),
+            TradeAction::GoShort(entry_price) => (2, entry_price),
+            TradeAction::ExitLong(exit_price) => (3, exit_price),
+            TradeAction::ExitShort(exit_price) => (4, exit_price),
+            TradeAction::DoNothing => (0, 0.0),
         }
     } else {
-        (-1.0, 0.0)
+        (-1, 0.0)
     }
 }
 

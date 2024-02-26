@@ -1,4 +1,3 @@
-from enum import Enum, auto
 from typing import List, Tuple
 
 import numpy as np
@@ -7,12 +6,6 @@ from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.models.ohlcv import OHLCV
 from core.models.position_side import PositionSide
-
-
-class Regime(Enum):
-    BULL = auto()
-    BEAR = auto()
-    RANGE = auto()
 
 
 class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
@@ -34,96 +27,66 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         if len(closed_ohlcv) < lookback_window:
             return stop_loss_price, take_profit_price
 
-        recent_low = min(ohlcv.low for ohlcv in closed_ohlcv)
-        recent_high = max(ohlcv.high for ohlcv in closed_ohlcv)
-
         next_stop_loss = stop_loss_price
         next_take_profit = take_profit_price
 
-        atr = self._atr(closed_ohlcv, lookback_window)
-        regime = self._regime(closed_ohlcv)
+        wicks = [ohlcv for ohlcv, _ in ohlcvs]
+        recent_low = min(ohlcv.low for ohlcv in closed_ohlcv)
+        recent_high = max(ohlcv.high for ohlcv in closed_ohlcv)
 
+        atr = self._atr(closed_ohlcv, lookback_window)
         atr_val = atr[-1]
 
         risk_value = atr_val * self.config["risk_factor"]
         tp_threshold = atr_val * self.config["tp_factor"]
-        dist = abs(entry_price - next_take_profit) * self.config["sl_factor"]
 
         if side == PositionSide.LONG:
+            sl = max(next_stop_loss, entry_price + risk_value, recent_low - risk_value)
+            dist = (
+                abs(entry_price - next_take_profit - risk_value)
+                * self.config["sl_factor"]
+            )
+
             if (
                 closed_ohlcv[-1].high >= entry_price + dist
-                and next_stop_loss <= entry_price
+                and sl < closed_ohlcv[-1].low
             ):
-                next_stop_loss = max(
-                    next_stop_loss, entry_price + risk_value, recent_low - risk_value
-                )
+                next_stop_loss = sl
 
-            if (
-                closed_ohlcv[-1].open < closed_ohlcv[-1].close
-                and closed_ohlcv[-2].open > closed_ohlcv[-2].close
-                and closed_ohlcv[-1].close < entry_price
-                and closed_ohlcv[-2].close < entry_price
-                and closed_ohlcv[-3].close < entry_price
-            ):
-                next_take_profit = max(
-                    entry_price + risk_value,
-                    min(next_take_profit, next_take_profit - tp_threshold),
-                )
-
-            if regime[-1] == Regime.RANGE:
-                next_take_profit = max(
-                    entry_price + risk_value,
-                    min(next_take_profit, next_take_profit - tp_threshold),
-                )
-
-            if closed_ohlcv[-1].high >= next_take_profit - tp_threshold:
+            if wicks[-1].high >= next_take_profit - tp_threshold:
                 current_price = self._price(closed_ohlcv)
+
                 next_take_profit = max(
                     next_take_profit,
                     current_price
-                    + tp_threshold
-                    + (current_price + tp_threshold - next_stop_loss)
+                    + (current_price - stop_loss_price)
                     * self.config["risk_reward_ratio"],
                 )
-                next_stop_loss = max(next_stop_loss, recent_low - risk_value)
+
+                next_stop_loss = sl
 
         elif side == PositionSide.SHORT:
+            sl = min(next_stop_loss, entry_price - risk_value, recent_high + risk_value)
+            dist = (
+                abs(entry_price - next_take_profit + risk_value)
+                * self.config["sl_factor"]
+            )
+
             if (
                 closed_ohlcv[-1].low <= entry_price - dist
-                and next_stop_loss >= entry_price
+                and sl > closed_ohlcv[-1].high
             ):
-                next_stop_loss = min(
-                    next_stop_loss, entry_price - risk_value, recent_high + risk_value
-                )
+                next_stop_loss = sl
 
-            if (
-                closed_ohlcv[-1].open > closed_ohlcv[-1].close
-                and closed_ohlcv[-2].open < closed_ohlcv[-2].close
-                and closed_ohlcv[-1].close > entry_price
-                and closed_ohlcv[-2].close > entry_price
-                and closed_ohlcv[-3].close > entry_price
-            ):
-                next_take_profit = min(
-                    entry_price - risk_value,
-                    max(next_take_profit, next_take_profit + tp_threshold),
-                )
-
-            if regime[-1] == Regime.RANGE:
-                next_take_profit = min(
-                    entry_price - risk_value,
-                    max(next_take_profit, next_take_profit + tp_threshold),
-                )
-
-            if closed_ohlcv[-1].low <= next_take_profit + tp_threshold:
+            if wicks[-1].low <= next_take_profit + tp_threshold:
                 current_price = self._price(closed_ohlcv)
                 next_take_profit = min(
                     next_take_profit,
                     current_price
-                    - tp_threshold
-                    - (next_stop_loss - current_price - tp_threshold)
+                    - (next_stop_loss - current_price)
                     * self.config["risk_reward_ratio"],
                 )
-                next_stop_loss = min(next_stop_loss, recent_high + risk_value)
+                next_stop_loss = sl
 
         return next_stop_loss, next_take_profit
 
@@ -150,36 +113,3 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
     @staticmethod
     def _price(ohlcvs: List[OHLCV]) -> float:
         return (ohlcvs[-1].high + ohlcvs[-1].low + 2 * ohlcvs[-1].close) / 4.0
-
-    @staticmethod
-    def _regime(ohlcvs: List[OHLCV]) -> Regime:
-        length = len(ohlcvs)
-        res = [None] * length
-
-        if length < 13:
-            return res
-
-        highs = [ohlcv.high for ohlcv in ohlcvs]
-        lows = [ohlcv.low for ohlcv in ohlcvs]
-
-        for i in range(length - 1, -1, -1):
-            if (
-                highs[i] > lows[i - 2]
-                and highs[i] > lows[i - 3]
-                and highs[i] > lows[i - 5]
-                and highs[i] > lows[i - 8]
-                and highs[i] > lows[i - 13]
-            ):
-                res[i] = Regime.BULL
-            elif (
-                lows[i] < highs[i - 2]
-                and lows[i] < highs[i - 3]
-                and lows[i] < highs[i - 5]
-                and lows[i] < highs[i - 8]
-                and lows[i] < highs[i - 13]
-            ):
-                res[i] = Regime.BULL
-            else:
-                res[i] = Regime.RANGE
-
-        return res

@@ -43,7 +43,7 @@ impl Signal for RSISupertrendSignal {
         let (direction, _) = supertrend(
             &data.hl2(),
             &data.close,
-            &data.atr(self.atr_period),
+            &data.atr(self.atr_period, Smooth::SMMA),
             self.factor,
         );
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
@@ -53,22 +53,14 @@ impl Signal for RSISupertrendSignal {
 
         (
             direction.seq(&1.0)
-                & (direction.shift(1).seq(&-1.0)
-                    | direction.shift(2).seq(&-1.0)
-                    | direction.shift(3).seq(&-1.0)
-                    | direction.shift(4).seq(&-1.0)
-                    | direction.shift(5).seq(&-1.0))
+                & direction.shift(1).seq(&1.0)
                 & rsi.sgt(&RSI_NEUTRALITY)
                 & rsi.slt(&upper_barrier)
                 & rsi.shift(1).sgt(&lower_neutrality)
                 & rsi.shift(2).sgt(&lower_neutrality)
                 & rsi.shift(3).sgt(&lower_neutrality),
             direction.seq(&-1.0)
-                & (direction.shift(1).seq(&1.0)
-                    | direction.shift(2).seq(&1.0)
-                    | direction.shift(3).seq(&1.0)
-                    | direction.shift(4).seq(&1.0)
-                    | direction.shift(5).seq(&1.0))
+                & direction.shift(1).seq(&-1.0)
                 & rsi.slt(&RSI_NEUTRALITY)
                 & rsi.sgt(&lower_barrier)
                 & rsi.shift(1).slt(&upper_neutrality)

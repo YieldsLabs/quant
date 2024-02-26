@@ -73,9 +73,11 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn shift(&self, n: usize) -> Self {
+        let shifted_len = self.len() - n;
+
         std::iter::repeat(None)
             .take(n)
-            .chain(self.iter().take(self.len() - n).cloned())
+            .chain(self.iter().take(shifted_len).cloned())
             .collect()
     }
 

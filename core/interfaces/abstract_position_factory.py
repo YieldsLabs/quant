@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from core.models.ohlcv import OHLCV
 from core.models.position import Position
@@ -12,6 +13,7 @@ class AbstractPositionFactory(ABC):
         signal: Signal,
         ohlcv: OHLCV,
         entry_price: float,
-        stop_loss: float | None,
+        stop_loss: Optional[float],
+        take_profit: Optional[float],
     ) -> Position:
         pass

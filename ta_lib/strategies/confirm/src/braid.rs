@@ -43,7 +43,7 @@ impl Confirm for BraidConfirm {
         let ma_one = data.close.smooth(self.smooth_type, self.period_one);
         let ma_two = data.open.smooth(self.smooth_type, self.period_two);
         let ma_three = data.close.smooth(self.smooth_type, self.period_three);
-        let filter = data.atr(self.atr_period) * self.strength / 100.0;
+        let filter = data.atr(self.atr_period, Smooth::SMMA) * self.strength / 100.0;
 
         let max = ma_one.max(&ma_two).max(&ma_three);
         let min = ma_one.min(&ma_two).min(&ma_three);

@@ -21,6 +21,7 @@ seaborn = "*"
 cachetools = "*"
 orjson = "*"
 scipy = "*"
+cbor2 = "*"
 
 [dev-packages]
 mypy = "*"

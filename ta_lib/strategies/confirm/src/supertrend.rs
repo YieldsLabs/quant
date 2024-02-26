@@ -25,7 +25,7 @@ impl Confirm for SupertrendConfirm {
         let (direction, _) = supertrend(
             &data.hl2(),
             &data.close,
-            &data.atr(self.atr_period),
+            &data.atr(self.atr_period, Smooth::SMMA),
             self.factor,
         );
 

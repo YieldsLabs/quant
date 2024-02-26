@@ -1,5 +1,6 @@
 use crate::price::Price;
 use crate::{BaseLine, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
+use core::prelude::*;
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;

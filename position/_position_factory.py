@@ -1,3 +1,5 @@
+from typing import Optional
+
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.interfaces.abstract_position_size_strategy import AbstractPositionSizeStrategy
@@ -27,7 +29,8 @@ class PositionFactory(AbstractPositionFactory):
         signal: Signal,
         ohlcv: OHLCV,
         entry_price: float,
-        stop_loss_price: float | None,
+        stop_loss_price: Optional[float],
+        take_profit_price: Optional[float],
     ) -> Position:
         symbol = signal.symbol
 
@@ -54,4 +57,5 @@ class PositionFactory(AbstractPositionFactory):
             self.take_profit_strategy,
             open_timestamp=ohlcv.timestamp,
             stop_loss_price=stop_loss_price,
+            take_profit_price=take_profit_price,
         )

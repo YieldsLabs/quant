@@ -29,7 +29,7 @@ impl Pulse for CHOPPulse {
         let chop = chop(
             &data.high,
             &data.low,
-            &data.atr(self.atr_period),
+            &data.atr(self.atr_period, Smooth::SMMA),
             self.period,
         );
         let lower_chop = CHOP_MIDDLE_LINE + self.threshold;

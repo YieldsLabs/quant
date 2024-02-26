@@ -57,7 +57,7 @@ class Portfolio(AbstractEventManager):
         timeframe = signal.timeframe
         strategy = signal.strategy
 
-        performance = await self.state.get(position)
+        performance = await self.state.get(symbol, timeframe, strategy)
 
         logger.info(
             f"Performance: strategy={symbol}_{timeframe}{strategy}, "
@@ -80,9 +80,8 @@ class Portfolio(AbstractEventManager):
             performance.ulcer_index,
             performance.sterling_ratio,
             performance.burke_ratio,
-            performance.common_sense_ratio,
             performance.ann_volatility,
-            performance.total_pnl - performance.total_fee,
+            performance.common_sense_ratio,
         ]
 
         await self.strategy.next(
@@ -94,8 +93,24 @@ class Portfolio(AbstractEventManager):
 
     @query_handler(GetTopStrategy)
     async def top_strategies(self, query: GetTopStrategy):
-        strategies = await self.strategy.get_top(query.num, query.positive_pnl)
-        return strategies
+        strategies = await self.strategy.get_top(query.num * 5)
+
+        if not query.positive_pnl:
+            return strategies[: query.num]
+
+        res = []
+
+        for symbol, timeframe, strategy in strategies:
+            performance = await self.state.get(symbol, timeframe, strategy)
+
+            if (
+                performance.cagr >= self.config["cagr_threshold"]
+                or performance.smart_sharpe_ratio
+                >= self.config["sharpe_ratio_threshold"]
+            ) and performance.total_trades >= self.config["total_trades_threshold"]:
+                res.append((symbol, timeframe, strategy))
+
+        return res[: query.num]
 
     @query_handler(GetPositionRisk)
     async def position_risk(self, query: GetPositionRisk):

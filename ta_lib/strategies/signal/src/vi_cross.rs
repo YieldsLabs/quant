@@ -25,7 +25,7 @@ impl Signal for VICrossSignal {
         let (vip, vim) = vi(
             &data.high,
             &data.low,
-            &data.atr(self.atr_period),
+            &data.atr(self.atr_period, Smooth::SMMA),
             self.period,
         );
 

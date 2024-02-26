@@ -13,5 +13,5 @@ from .base import Signal, SignalType
 class TsiFlipSignal(Signal):
     type: SignalType = SignalType.TsiFlip
     smooth_type: Parameter = StaticParameter(Smooth.EMA)
-    long_period: Parameter = StaticParameter(25.0)
-    short_period: Parameter = StaticParameter(13.0)
+    fast_period: Parameter = StaticParameter(13.0)
+    slow_period: Parameter = StaticParameter(25.0)
