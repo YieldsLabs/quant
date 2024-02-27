@@ -24,10 +24,11 @@ class SignalActor(Actor):
         strategy: Strategy,
         service: AbstractSignalService,
     ):
-        super().__init__(symbol, timeframe, strategy)
+        super().__init__(symbol, timeframe)
 
         self.strategy_ref: Optional[StrategyRef] = None
         self.service = service
+        self._strategy = strategy
 
     def on_start(self):
         self.strategy_ref = self.service.register(self._strategy)

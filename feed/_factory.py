@@ -3,7 +3,6 @@ from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.interfaces.abstract_feed_actor_factory import AbstractFeedActorFactory
 from core.models.exchange import ExchangeType
 from core.models.feed import FeedType
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -27,14 +26,12 @@ class FeedActorFactory(AbstractFeedActorFactory):
         feed_type: FeedType,
         symbol: Symbol,
         timeframe: Timeframe,
-        strategy: Strategy,
         exchange_type: ExchangeType,
     ):
         actor = (
             HistoricalActor(
                 symbol,
                 timeframe,
-                strategy,
                 self.exchange_factory.create(exchange_type),
                 self.config_service,
             )
@@ -42,7 +39,6 @@ class FeedActorFactory(AbstractFeedActorFactory):
             else RealtimeActor(
                 symbol,
                 timeframe,
-                strategy,
                 self.ws_factory.create(exchange_type),
             )
         )

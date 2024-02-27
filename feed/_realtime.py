@@ -5,7 +5,6 @@ from core.actors import Actor
 from core.commands.feed import StartRealtimeFeed
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_ws import AbstractWS
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -53,10 +52,9 @@ class RealtimeActor(Actor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        strategy: Strategy,
         ws: AbstractWS,
     ):
-        super().__init__(symbol, timeframe, strategy)
+        super().__init__(symbol, timeframe)
         self.ws = ws
         self.task = None
 

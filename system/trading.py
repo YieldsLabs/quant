@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from collections import defaultdict
 from enum import Enum, auto
 
 from core.commands.broker import UpdateSettings
@@ -49,7 +50,7 @@ class TradingSystem(AbstractSystem):
     ):
         super().__init__()
         self.active_strategy = []
-        self.next_strategy = []
+        self.next_strategy = defaultdict(list)
         self.event_queue = asyncio.Queue()
         self.state = SystemState.IDLE
         self.config = config_service.get("system")
@@ -68,7 +69,10 @@ class TradingSystem(AbstractSystem):
             [f"{strategy[0]}_{strategy[1]}{strategy[2]}" for strategy in event.strategy]
         )
 
-        self.next_strategy = event.strategy
+        for symbol, timeframe, strategy in event.strategy:
+            self.next_strategy[(symbol, timeframe)].append(
+                (symbol, timeframe, strategy)
+            )
 
         await self.event_queue.put(Event.CHANGE)
 
@@ -109,54 +113,31 @@ class TradingSystem(AbstractSystem):
         await state_handlers[self.state]()
 
     async def _run_pretrading(self):
-        for symbol, timeframe, strategy in self.next_strategy:
-            if any(
-                actor.symbol == symbol
-                and actor.timeframe == timeframe
-                and actor.strategy == strategy
-                for actors in self.active_strategy
-                for actor in actors
-            ):
-                logger.info(
-                    f"Strategy {symbol}_{timeframe}{strategy} is already active and running."
+        signal_actors = defaultdict(list)
+
+        for _, strategies in self.next_strategy.items():
+            for symbol, timeframe, strategy in strategies:
+                await self.dispatch(TradeStarted(symbol, timeframe, strategy))
+
+                signal_actor = self.signal_factory.create_actor(
+                    symbol, timeframe, strategy
                 )
-                continue
 
-            await self.dispatch(TradeStarted(symbol, timeframe, strategy))
+                logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
 
-            logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
+                feed_actor = self.feed_factory.create_actor(
+                    FeedType.HISTORICAL, symbol, timeframe, self.exchange_type
+                )
 
-            signal_actor = self.signal_factory.create_actor(symbol, timeframe, strategy)
+                await self.execute(
+                    StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
+                )
 
-            feed_actor = self.feed_factory.create_actor(
-                FeedType.HISTORICAL, symbol, timeframe, strategy, self.exchange_type
-            )
+                feed_actor.stop()
 
-            await self.execute(
-                StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
-            )
+                signal_actors[(symbol, timeframe)].append(signal_actor)
 
-            feed_actor.stop()
-
-            actors = (
-                self.feed_factory.create_actor(
-                    FeedType.REALTIME,
-                    symbol,
-                    timeframe,
-                    strategy,
-                    self.exchange_type,
-                ),
-                signal_actor,
-                self.position_factory.create_actor(symbol, timeframe, strategy),
-                self.risk_factory.create_actor(symbol, timeframe, strategy),
-                self.executor_factory.create_actor(
-                    OrderType.MARKET if self.config["mode"] == 1 else OrderType.PAPER,
-                    symbol,
-                    timeframe,
-                    strategy,
-                ),
-            )
-
+        for (symbol, timeframe), _ in self.next_strategy.items():
             await self.execute(
                 UpdateSettings(
                     symbol,
@@ -166,37 +147,29 @@ class TradingSystem(AbstractSystem):
                 )
             )
 
+            actors = (
+                *signal_actors[(symbol, timeframe)],
+                self.risk_factory.create_actor(symbol, timeframe),
+                self.position_factory.create_actor(symbol, timeframe),
+                self.executor_factory.create_actor(
+                    OrderType.MARKET if self.config["mode"] == 1 else OrderType.PAPER,
+                    symbol,
+                    timeframe,
+                ),
+                self.feed_factory.create_actor(
+                    FeedType.REALTIME,
+                    symbol,
+                    timeframe,
+                    self.exchange_type,
+                ),
+            )
+
             self.active_strategy.append(actors)
 
         await self.event_queue.put(Event.TRADING)
 
     async def _run_trading(self):
         logger.info("Start trading")
-
-        strategies_to_run = self.active_strategy[: self.config["active_strategy_num"]]
-        remaining_strategies = self.active_strategy[
-            self.config["active_strategy_num"] :
-        ]
-
-        for actors in remaining_strategies:
-            if any(
-                actor.symbol == actors[0].symbol
-                and actor.timeframe == actors[0].timeframe
-                and actor.strategy == actors[0].strategy
-                for actor in actors
-            ):
-                logger.info(
-                    f"Strategy {actors[0].symbol}_{actors[0].timeframe}{actors[0].strategy} is already active and running."
-                )
-                continue
-
-            strategies_to_run.append(actors)
-
-        for actors in remaining_strategies:
-            for actor in actors:
-                actor.stop()
-
-        self.active_strategy = strategies_to_run
 
         await asyncio.gather(
             *[

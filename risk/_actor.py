@@ -16,7 +16,6 @@ from core.interfaces.abstract_config import AbstractConfig
 from core.models.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.position_side import PositionSide
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -46,10 +45,9 @@ class RiskActor(Actor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        strategy: Strategy,
         config_service: AbstractConfig,
     ):
-        super().__init__(symbol, timeframe, strategy)
+        super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
         self._position = (None, None)
         self._ohlcv = deque(maxlen=100)

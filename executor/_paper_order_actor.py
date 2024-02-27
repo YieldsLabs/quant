@@ -16,7 +16,6 @@ from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position
 from core.models.position_side import PositionSide
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -35,8 +34,8 @@ class PriceDirection(Enum):
 class PaperOrderActor(Actor):
     _EVENTS = [NewMarketDataReceived, PositionInitialized, PositionCloseRequested]
 
-    def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
-        super().__init__(symbol, timeframe, strategy)
+    def __init__(self, symbol: Symbol, timeframe: Timeframe):
+        super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
         self.tick_buffer = deque(maxlen=3)
 

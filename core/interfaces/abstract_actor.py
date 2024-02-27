@@ -19,7 +19,6 @@ from core.events.signal import (
     GoLongSignalReceived,
     GoShortSignalReceived,
 )
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.base import Query
@@ -57,11 +56,6 @@ class AbstractActor(ABC):
     @property
     @abstractmethod
     def timeframe(self) -> Timeframe:
-        pass
-
-    @property
-    @abstractmethod
-    def strategy(self) -> Strategy:
         pass
 
     @property

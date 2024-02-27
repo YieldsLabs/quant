@@ -20,6 +20,7 @@ class BybitWS(AbstractWS):
 
     SUBSCRIBE_OPERATION = "subscribe"
     UNSUBSCRIBE_OPERATION = "unsubscribe"
+    PING_OPERATION = "ping"
     INTERVALS = {
         Timeframe.ONE_MINUTE: 1,
         Timeframe.THREE_MINUTES: 3,
@@ -55,28 +56,33 @@ class BybitWS(AbstractWS):
 
         return cls._instance
 
-    async def _connect_to_websocket(self, interval=5):
-        if self.ws and self.ws.open:
-            return
+    async def _connect_to_websocket(self):
+        await self.close()
 
-        self.ws = await websockets.connect(self.wss)
-
-        await asyncio.sleep(interval)
+        self.ws = await websockets.connect(
+            self.wss,
+            open_timeout=3,
+            ping_interval=None,
+            ping_timeout=None,
+            close_timeout=1,
+        )
 
         if not self.ws.open:
             raise RuntimeError("Reconnect WS")
 
         await self._resubscribe()
 
-    async def _send_ping(self, interval):
+    async def _send_ping(self, ping_interval=20, ping_timeout=10):
         while True:
             try:
-                await asyncio.sleep(interval)
-
                 if not self.ws or not self.ws.open:
                     continue
 
-                await asyncio.wait_for(self.ws.ping(), timeout=interval)
+                async with asyncio.timeout(ping_timeout):
+                    await self.ws.send(json.dumps({"op": self.PING_OPERATION}))
+
+                await asyncio.sleep(ping_interval)
+
             except Exception as e:
                 logger.error(e)
                 self.ping_task = None
@@ -92,22 +98,20 @@ class BybitWS(AbstractWS):
             CancelledError,
         ),
     )
-    async def run(self, ping_interval=5):
+    async def run(self):
         await self._connect_to_websocket()
 
         if not self.ping_task:
-            self.ping_task = asyncio.create_task(
-                self._send_ping(interval=ping_interval)
-            )
+            self.ping_task = asyncio.create_task(self._send_ping())
 
     async def close(self):
-        if self.ws and self.ws.open:
-            await self.ws.close()
-
         if self.ping_task:
             self.ping_task.cancel()
 
         self.ping_task = None
+
+        if self.ws and self.ws.open:
+            await self.ws.close()
 
     @retry(
         max_retries=13,
@@ -126,9 +130,8 @@ class BybitWS(AbstractWS):
                     return
 
                 topic = data["topic"].split(".")
-                _symbol, _timeframe = topic[2], topic[1]
 
-                if symbol.name == _symbol and timeframe == self.TIMEFRAMES[_timeframe]:
+                if symbol.name == topic[2] and timeframe == self.TIMEFRAMES[topic[1]]:
                     ohlcv = data[self.DATA_KEY][0]
 
                     return Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY])

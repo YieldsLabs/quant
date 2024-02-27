@@ -1,7 +1,6 @@
 from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_executor_actor_factory import AbstractExecutorActorFactory
 from core.models.order import OrderType
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -23,13 +22,12 @@ class OrderExecutorActorFactory(AbstractExecutorActorFactory):
         type: OrderType,
         symbol: Symbol,
         timeframe: Timeframe,
-        strategy: Strategy,
     ) -> AbstractActor:
         if type not in self._type:
             raise ValueError(f"Unknown OrderExecutor: {type}")
 
         order_cls = self._type.get(type)
 
-        instance: AbstractActor = order_cls(symbol, timeframe, strategy)
+        instance: AbstractActor = order_cls(symbol, timeframe)
         instance.start()
         return instance

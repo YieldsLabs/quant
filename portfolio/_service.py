@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from collections import defaultdict
 
 from core.commands.account import UpdateAccountSize
 from core.commands.portfolio import PortfolioReset, StrategyReset
@@ -81,7 +82,8 @@ class Portfolio(AbstractEventManager):
             performance.sterling_ratio,
             performance.burke_ratio,
             performance.ann_volatility,
-            performance.common_sense_ratio,
+            performance.cpc_ratio,
+            performance.rachev_ratio,
         ]
 
         await self.strategy.next(
@@ -93,12 +95,13 @@ class Portfolio(AbstractEventManager):
 
     @query_handler(GetTopStrategy)
     async def top_strategies(self, query: GetTopStrategy):
-        strategies = await self.strategy.get_top(query.num * 5)
+        strategies = await self.strategy.get_top(query.num * 3)
 
         if not query.positive_pnl:
             return strategies[: query.num]
 
         res = []
+        strategy_by_symbol = defaultdict(list)
 
         for symbol, timeframe, strategy in strategies:
             performance = await self.state.get(symbol, timeframe, strategy)
@@ -108,9 +111,12 @@ class Portfolio(AbstractEventManager):
                 or performance.smart_sharpe_ratio
                 >= self.config["sharpe_ratio_threshold"]
             ) and performance.total_trades >= self.config["total_trades_threshold"]:
-                res.append((symbol, timeframe, strategy))
+                strategy_by_symbol[symbol].append((symbol, timeframe, strategy))
 
-        return res[: query.num]
+        for strategy in strategy_by_symbol.values():
+            res.extend(strategy[: query.num])
+
+        return res
 
     @query_handler(GetPositionRisk)
     async def position_risk(self, query: GetPositionRisk):

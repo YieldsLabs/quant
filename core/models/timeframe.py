@@ -30,3 +30,6 @@ class Timeframe(Enum):
         return self._member_names_.index(self.name) < self._member_names_.index(
             other.name
         )
+
+    def __hash__(self) -> int:
+        return hash(self.value)

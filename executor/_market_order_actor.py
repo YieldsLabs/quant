@@ -9,7 +9,6 @@ from core.events.position import (
     PositionCloseRequested,
     PositionInitialized,
 )
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.position import GetClosePosition, GetOpenPosition
@@ -23,8 +22,8 @@ PositionEventType = Union[PositionInitialized, PositionCloseRequested]
 class MarketOrderActor(Actor):
     _EVENTS = [PositionInitialized, PositionCloseRequested]
 
-    def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
-        super().__init__(symbol, timeframe, strategy)
+    def __init__(self, symbol: Symbol, timeframe: Timeframe):
+        super().__init__(symbol, timeframe)
 
     def pre_receive(self, event: PositionEventType):
         event = event.position.signal if hasattr(event, "position") else event

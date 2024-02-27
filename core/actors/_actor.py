@@ -1,26 +1,28 @@
+import time
+
 from core.commands.base import Command
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.base import Query
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
+MAX_ALLOWED_DELAY = 1.236
+
 
 class Actor(AbstractActor):
     _EVENTS = []
 
-    def __init__(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
+    def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__()
         self._symbol = symbol
         self._timeframe = timeframe
-        self._strategy = strategy
         self._running = False
         self._mailbox = EventDispatcher()
 
     @property
     def id(self):
-        return f"{self._symbol}_{self._timeframe}{self._strategy}"
+        return f"{self._symbol}_{self._timeframe}"
 
     @property
     def symbol(self):
@@ -29,10 +31,6 @@ class Actor(AbstractActor):
     @property
     def timeframe(self):
         return self._timeframe
-
-    @property
-    def strategy(self):
-        return self._strategy
 
     @property
     def running(self):
@@ -55,7 +53,7 @@ class Actor(AbstractActor):
             raise RuntimeError(f"Start: {self.__class__.__name__} is running")
 
         for event in self._EVENTS:
-            self._mailbox.register(event, self.on_receive, self.pre_receive)
+            self._mailbox.register(event, self.on_receive, self._pre_receive)
 
         self.on_start()
         self._running = True
@@ -78,3 +76,9 @@ class Actor(AbstractActor):
             return await self._mailbox.query(msg, *args, **kwrgs)
         if isinstance(msg, Command):
             await self._mailbox.execute(msg, *args, **kwrgs)
+
+    def _pre_receive(self, _msg: Message):
+        if abs(_msg.meta.timestamp - time.time()) > MAX_ALLOWED_DELAY:
+            return False
+
+        return self.pre_receive(_msg)

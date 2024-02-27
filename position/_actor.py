@@ -20,7 +20,6 @@ from core.events.signal import (
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.position_side import PositionSide
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -50,11 +49,10 @@ class PositionActor(Actor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        strategy: Strategy,
         position_factory: AbstractPositionFactory,
         config_service: AbstractConfig,
     ):
-        super().__init__(symbol, timeframe, strategy)
+        super().__init__(symbol, timeframe)
         self.position_factory = position_factory
 
         self.long_sm = PositionStateMachine(self, LONG_TRANSITIONS)

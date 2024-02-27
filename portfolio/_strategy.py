@@ -15,7 +15,7 @@ class StrategyStorage:
     def __init__(self, n_clusters=3):
         self.kmeans = KMeans(n_clusters=n_clusters, n_init="auto")
         self.scaler = MinMaxScaler()
-        self.imputer = KNNImputer(n_neighbors=3)
+        self.imputer = KNNImputer(n_neighbors=2)
         self.data: Dict[Tuple[Symbol, Timeframe, Strategy], Tuple[np.array, int]] = {}
         self.lock = asyncio.Lock()
 
@@ -46,16 +46,7 @@ class StrategyStorage:
             sorted_strategies = sorted(
                 self.data.keys(), key=self._sorting_key, reverse=True
             )
-
-            selected_symbols = set()
-            top_strategies = [
-                key
-                for key in sorted_strategies
-                if (symbol := key[0]) not in selected_symbols
-                and not selected_symbols.add(symbol)
-            ]
-
-            return top_strategies[:num]
+            return sorted_strategies[:num]
 
     def _update_clusters(self):
         data_matrix = np.array([item[0] for item in self.data.values()])

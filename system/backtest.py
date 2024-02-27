@@ -199,18 +199,17 @@ class BacktestSystem(AbstractSystem):
         await self.dispatch(BacktestStarted(symbol, timeframe, strategy))
 
         actors = [
+            self.context.signal_factory.create_actor(symbol, timeframe, strategy),
+            self.context.position_factory.create_actor(symbol, timeframe),
+            self.context.risk_factory.create_actor(symbol, timeframe),
+            self.context.executor_factory.create_actor(
+                OrderType.PAPER, symbol, timeframe
+            ),
             self.context.feed_factory.create_actor(
                 FeedType.HISTORICAL,
                 symbol,
                 timeframe,
-                strategy,
                 self.context.exchange_type,
-            ),
-            self.context.signal_factory.create_actor(symbol, timeframe, strategy),
-            self.context.position_factory.create_actor(symbol, timeframe, strategy),
-            self.context.risk_factory.create_actor(symbol, timeframe, strategy),
-            self.context.executor_factory.create_actor(
-                OrderType.PAPER, symbol, timeframe, strategy
             ),
         ]
 
@@ -233,11 +232,11 @@ class BacktestSystem(AbstractSystem):
             StartHistoricalFeed(symbol, timeframe, in_lookback, out_lookback)
         )
 
-        if actors[0].last_bar:
+        last_bar = actors[-1].last_bar
+
+        if last_bar:
             await self.dispatch(
-                BacktestEnded(
-                    symbol, timeframe, strategy, actors[0].last_bar.ohlcv.close
-                )
+                BacktestEnded(symbol, timeframe, strategy, last_bar.ohlcv.close)
             )
 
         for actor in actors:

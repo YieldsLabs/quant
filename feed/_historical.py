@@ -8,7 +8,6 @@ from core.interfaces.abstract_exchange import AbstractExchange
 from core.models.bar import Bar
 from core.models.lookback import Lookback
 from core.models.ohlcv import OHLCV
-from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -76,11 +75,10 @@ class HistoricalActor(Actor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        strategy: Strategy,
         exchange: AbstractExchange,
         config_service: AbstractConfig,
     ):
-        super().__init__(symbol, timeframe, strategy)
+        super().__init__(symbol, timeframe)
         self.exchange = exchange
         self.config_service = config_service.get("backtest")
         self.last_bar = None
