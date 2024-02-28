@@ -105,16 +105,6 @@ class Position:
             ohlcvs,
         )
 
-        if next_stop_loss_price != self.stop_loss_price:
-            print(
-                f"SIDE: {self.side}, nextSL: {next_stop_loss_price}, SL: {self.stop_loss_price}, ENTRY: {self.entry_price}"
-            )
-
-        if next_take_profit_price != self.take_profit_price:
-            print(
-                f"SIDE: {self.side}, nextTP: {next_take_profit_price}, TP: {self.take_profit_price}, ENTRY: {self.entry_price}"
-            )
-
         return replace(
             self,
             stop_loss_price=next_stop_loss_price,
