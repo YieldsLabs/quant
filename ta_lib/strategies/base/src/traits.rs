@@ -19,6 +19,7 @@ pub trait Pulse: Send + Sync {
 pub trait BaseLine: Send + Sync {
     fn lookback(&self) -> usize;
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait Exit: Send + Sync {

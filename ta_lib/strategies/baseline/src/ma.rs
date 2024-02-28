@@ -26,14 +26,19 @@ impl BaseLine for MABaseLine {
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.period);
-        let prev_ma = ma.shift(1);
 
         let dist = (&ma - &data.close).abs();
         let atr = data.atr(DEFAULT_ATR_LOOKBACK, Smooth::SMMA) * DEFAULT_ATR_FACTOR;
 
         (
-            dist.slt(&atr) & ma.sgt(&prev_ma) & ma.slt(&data.close),
-            dist.slt(&atr) & ma.slt(&prev_ma) & ma.sgt(&data.close),
+            ma.slt(&data.close) & dist.slt(&atr),
+            ma.sgt(&data.close) & dist.slt(&atr),
         )
+    }
+
+    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let ma = ma_indicator(&self.ma, data, self.period);
+
+        (data.close.cross_over(&ma), data.close.cross_under(&ma))
     }
 }

@@ -123,23 +123,25 @@ impl BaseStrategy {
         let series = self.ohlcv_series();
 
         let (go_long_trigger, go_short_trigger) = self.signal.generate(&series);
+        let (go_long_baseline, go_short_baseline) = self.base_line.generate(&series);
         let (go_long_confirm, go_short_confirm) = self.confirm.validate(&series);
         let (go_long_momentum, go_short_momentum) = self.pulse.assess(&series);
-        let (go_long_baseline, go_short_baseline) = self.base_line.filter(&series);
+        let (filter_long_baseline, filter_short_baseline) = self.base_line.filter(&series);
         let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
 
         let prev_go_long_trigger = go_long_trigger.shift(1);
         let prev_go_short_trigger = go_short_trigger.shift(1);
 
-        let go_long_signal = go_long_trigger | prev_go_long_trigger;
-        let go_short_signal = go_short_trigger | prev_go_short_trigger;
+        let go_long_signal = go_long_trigger | prev_go_long_trigger | go_long_baseline;
+        let go_short_signal = go_short_trigger | prev_go_short_trigger | go_short_baseline;
 
-        let go_long = (go_long_signal & go_long_baseline & go_long_confirm & go_long_momentum)
+        let go_long = (go_long_signal & filter_long_baseline & go_long_confirm & go_long_momentum)
             .last()
             .unwrap_or(false);
-        let go_short = (go_short_signal & go_short_baseline & go_short_confirm & go_short_momentum)
-            .last()
-            .unwrap_or(false);
+        let go_short =
+            (go_short_signal & filter_short_baseline & go_short_confirm & go_short_momentum)
+                .last()
+                .unwrap_or(false);
 
         let exit_long = exit_long_eval.last().unwrap_or(false);
         let exit_short = exit_short_eval.last().unwrap_or(false);
@@ -224,6 +226,11 @@ mod tests {
     impl BaseLine for MockBaseLine {
         fn lookback(&self) -> usize {
             self.period
+        }
+
+        fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            let len = data.close.len();
+            (Series::one(len).into(), Series::zero(len).into())
         }
 
         fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
