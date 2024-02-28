@@ -7,7 +7,7 @@ from .base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class TestingGroundSignal(Signal):
-    type: SignalType = SignalType.TestGround
+class MaTestingGroundSignal(Signal):
+    type: SignalType = SignalType.MaTestingGround
     ma: Parameter = CategoricalParameter(MovingAverageType)
     period: Parameter = StaticParameter(100.0)

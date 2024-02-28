@@ -8,7 +8,7 @@ from .base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class QuadrupleSignal(Signal):
-    type: SignalType = SignalType.Quadruple
+class MaSurpassSignal(Signal):
+    type: SignalType = SignalType.MaSurpass
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = RandomParameter(40.0, 60.0, 10.0)
+    period: Parameter = RandomParameter(150.0, 200.0, 10.0)

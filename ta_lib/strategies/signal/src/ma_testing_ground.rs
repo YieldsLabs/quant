@@ -2,12 +2,12 @@ use base::prelude::*;
 use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
-pub struct TestingGroundSignal {
+pub struct MATestingGroundSignal {
     ma: MovingAverageType,
     period: usize,
 }
 
-impl TestingGroundSignal {
+impl MATestingGroundSignal {
     pub fn new(ma: MovingAverageType, period: f32) -> Self {
         Self {
             ma,
@@ -16,7 +16,7 @@ impl TestingGroundSignal {
     }
 }
 
-impl Signal for TestingGroundSignal {
+impl Signal for MATestingGroundSignal {
     fn lookback(&self) -> usize {
         self.period
     }

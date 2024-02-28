@@ -2,12 +2,12 @@ use base::prelude::*;
 use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
 
-pub struct QuadrupleSignal {
+pub struct MAQuadrupleSignal {
     ma: MovingAverageType,
     period: usize,
 }
 
-impl QuadrupleSignal {
+impl MAQuadrupleSignal {
     pub fn new(ma: MovingAverageType, period: f32) -> Self {
         Self {
             ma,
@@ -16,7 +16,7 @@ impl QuadrupleSignal {
     }
 }
 
-impl Signal for QuadrupleSignal {
+impl Signal for MAQuadrupleSignal {
     fn lookback(&self) -> usize {
         self.period
     }

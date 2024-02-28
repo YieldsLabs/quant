@@ -43,6 +43,11 @@ from strategy.generator.signal.di_flip import DiFlipSignal
 from strategy.generator.signal.dmi_cross import DmiCrossSignal
 from strategy.generator.signal.hl import HighLowSignal
 from strategy.generator.signal.kst_cross import KstCrossSignal
+from strategy.generator.signal.ma_quadruple import MaQuadrupleSignal
+from strategy.generator.signal.ma_surpass import MaSurpassSignal
+from strategy.generator.signal.ma_testing_ground import (
+    MaTestingGroundSignal,
+)
 from strategy.generator.signal.ma_three_cross import Ma3CrossSignal
 from strategy.generator.signal.macd_bb import MacdBbSignal
 from strategy.generator.signal.macd_color_switch import MacdColorSwitchSignal
@@ -50,7 +55,6 @@ from strategy.generator.signal.macd_cross import MacdCrossSignal
 from strategy.generator.signal.macd_flip import MacdFlipSignal
 from strategy.generator.signal.qstick_cross import QstickCrossSignal
 from strategy.generator.signal.qstick_flip import QstickFlipSignal
-from strategy.generator.signal.quadruple import QuadrupleSignal
 from strategy.generator.signal.roc_flip import RocFlipSignal
 from strategy.generator.signal.rsi_ma_pullback import RsiMaPullbackSignal
 from strategy.generator.signal.rsi_neutrality_cross import RsiNautralityCrossSignal
@@ -67,7 +71,6 @@ from strategy.generator.signal.snatr import SnatrSignal
 from strategy.generator.signal.stc_flip import StcFlipSignal
 from strategy.generator.signal.stoch_cross import StochCrossSignal
 from strategy.generator.signal.supertrend_flip import SupertrendFlipSignal
-from strategy.generator.signal.testing_ground import TestingGroundSignal
 from strategy.generator.signal.tii_cross import TiiCrossSignal
 from strategy.generator.signal.tii_v import TiiVSignal
 from strategy.generator.signal.trend_candle import TrendCandleSignal
@@ -247,7 +250,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _generate_invariants(self, base_strategy: Strategy) -> List[Strategy]:
         result = [base_strategy]
-        attributes = []
+        attributes = ["entry", "baseline"]
         smooth_type_map = {
             str(Smooth.EMA): [Smooth.ZLEMA, Smooth.KAMA],
             str(Smooth.SMA): [Smooth.SMMA, Smooth.LSMA],
@@ -411,8 +414,9 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     Ma3CrossSignal(),
                     Rsi2MaSignal(),
                     Dch2MaSignal(),
-                    TestingGroundSignal(),
-                    QuadrupleSignal(),
+                    MaTestingGroundSignal(),
+                    MaQuadrupleSignal(),
+                    MaSurpassSignal(),
                 ]
             )
         if signal == TrendSignalType.PULLBACK:

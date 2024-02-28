@@ -108,7 +108,7 @@ class Portfolio(AbstractEventManager):
 
             if (
                 performance.cagr >= self.config["cagr_threshold"]
-                or performance.smart_sharpe_ratio
+                and performance.smart_sharpe_ratio
                 >= self.config["sharpe_ratio_threshold"]
             ) and performance.total_trades >= self.config["total_trades_threshold"]:
                 strategy_by_symbol[symbol].append((symbol, timeframe, strategy))

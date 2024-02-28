@@ -59,6 +59,18 @@ pub enum SignalConfig {
         medium_period: f32,
         long_period: f32,
     },
+    MaTestingGround {
+        ma: f32,
+        period: f32,
+    },
+    MaSurpass {
+        ma: f32,
+        period: f32,
+    },
+    MaQuadruple {
+        ma: f32,
+        period: f32,
+    },
     MacdFlip {
         smooth_type: f32,
         fast_period: f32,
@@ -145,10 +157,6 @@ pub enum SignalConfig {
         short_period: f32,
         long_period: f32,
     },
-    TestGround {
-        ma: f32,
-        period: f32,
-    },
     TrendCandle {
         candle: f32,
     },
@@ -219,10 +227,6 @@ pub enum SignalConfig {
         smooth_type: f32,
         period: f32,
         signal_period: f32,
-    },
-    Quadruple {
-        ma: f32,
-        period: f32,
     },
     ViCross {
         atr_period: f32,
@@ -437,8 +441,11 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             long_period,
         )),
         SignalConfig::RocFlip { period } => Box::new(ROCFlipSignal::new(period)),
-        SignalConfig::TestGround { ma, period } => {
-            Box::new(TestingGroundSignal::new(map_to_ma(ma as usize), period))
+        SignalConfig::MaTestingGround { ma, period } => {
+            Box::new(MATestingGroundSignal::new(map_to_ma(ma as usize), period))
+        }
+        SignalConfig::MaSurpass { ma, period } => {
+            Box::new(MASurpassSignal::new(map_to_ma(ma as usize), period))
         }
         SignalConfig::TrendCandle { candle } => {
             Box::new(TrendCandleSignal::new(map_to_candle(candle as usize)))
@@ -567,8 +574,8 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period,
             signal_period,
         )),
-        SignalConfig::Quadruple { ma, period } => {
-            Box::new(QuadrupleSignal::new(map_to_ma(ma as usize), period))
+        SignalConfig::MaQuadruple { ma, period } => {
+            Box::new(MAQuadrupleSignal::new(map_to_ma(ma as usize), period))
         }
         SignalConfig::ViCross { period, atr_period } => {
             Box::new(VICrossSignal::new(period, atr_period))
