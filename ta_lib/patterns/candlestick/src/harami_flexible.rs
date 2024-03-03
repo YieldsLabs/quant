@@ -6,12 +6,15 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.slt(&open.shift(1))
-        & open.sge(&close.shift(1))
+    let prev_close = close.shift(1);
+    let prev_open = open.shift(1);
+
+    close.slt(&prev_open)
+        & open.sge(&prev_close)
         & high.slt(&high.shift(1))
         & low.sgt(&low.shift(1))
         & close.sgt(open)
-        & close.shift(1).slt(&open.shift(1))
+        & prev_close.slt(&prev_open)
         & close.shift(2).slt(&open.shift(2))
 }
 
@@ -21,12 +24,15 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.sgt(&open.shift(1))
-        & open.sle(&close.shift(1))
+    let prev_close = close.shift(1);
+    let prev_open = open.shift(1);
+
+    close.sgt(&prev_open)
+        & open.sle(&prev_close)
         & high.slt(&high.shift(1))
         & low.sgt(&low.shift(1))
         & close.slt(open)
-        & close.shift(1).sgt(&open.shift(1))
+        & prev_close.sgt(&prev_open)
         & close.shift(2).sgt(&open.shift(2))
 }
 

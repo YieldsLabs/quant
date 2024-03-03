@@ -50,7 +50,7 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=100)
+        self._ohlcv = deque(maxlen=14)
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
@@ -97,7 +97,7 @@ class RiskActor(Actor):
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
         async with self.lock:
-            self._ohlcv.append((event.ohlcv, event.closed))
+            self._ohlcv.append(event.ohlcv)
 
             current_long_position, current_short_position = self._position
 
@@ -109,13 +109,6 @@ class RiskActor(Actor):
                     self._process_position(current_short_position, ohlcvs),
                 ]
             )
-
-            # await asyncio.gather(
-            #     *[
-            #         self._process_sl_signal(current_long_position, ohlcvs),
-            #         self._process_sl_signal(current_short_position, ohlcvs),
-            #     ]
-            # )
 
     async def _handle_reverse_exit(
         self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
@@ -172,7 +165,7 @@ class RiskActor(Actor):
 
         if position and len(ohlcvs) > 1:
             next_position = position.next(ohlcvs)
-            last_candle, _ = ohlcvs[-1]
+            last_candle = ohlcvs[-1]
 
             exit_event = self._create_exit_event(next_position, last_candle)
 

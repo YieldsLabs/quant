@@ -46,6 +46,7 @@ dependencies = [
  "base",
  "core",
  "shared",
+ "signal",
  "trend",
 ]
 

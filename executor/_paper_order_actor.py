@@ -37,7 +37,7 @@ class PaperOrderActor(Actor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
-        self.tick_buffer = deque(maxlen=3)
+        self.tick_buffer = deque(maxlen=15)
 
     def pre_receive(self, event: OrderEventType):
         event = event.position.signal if hasattr(event, "position") else event

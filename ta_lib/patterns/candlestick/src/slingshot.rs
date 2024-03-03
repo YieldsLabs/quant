@@ -6,14 +6,18 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).sgt(&open.shift(1))
-        & close.shift(1).sgt(&high.shift(2))
-        & close.shift(1).sgt(&high.shift(3))
+    let prev_close = close.shift(1);
+    let close_3_back = close.shift(3);
+    let close_4_back = close.shift(4);
+
+    prev_close.sgt(&open.shift(1))
+        & prev_close.sgt(&high.shift(2))
+        & prev_close.sgt(&high.shift(3))
         & close.shift(2).slt(&open.shift(2))
-        & close.shift(3).sgt(&open.shift(3))
-        & close.shift(4).sgt(&open.shift(4))
-        & close.shift(3).sgt(&close.shift(4))
-        & low.shift(1).sgt(&close.shift(4))
+        & close_3_back.sgt(&open.shift(3))
+        & close_4_back.sgt(&open.shift(4))
+        & close_3_back.sgt(&close_4_back)
+        & low.shift(1).sgt(&close_4_back)
 }
 
 pub fn bearish(
@@ -22,14 +26,18 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).slt(&open.shift(1))
-        & close.shift(1).slt(&low.shift(2))
-        & close.shift(1).slt(&low.shift(3))
+    let prev_close = close.shift(1);
+    let back_3_close = close.shift(3);
+    let back_4_close = close.shift(4);
+
+    prev_close.slt(&open.shift(1))
+        & prev_close.slt(&low.shift(2))
+        & prev_close.slt(&low.shift(3))
         & close.shift(2).sgt(&open.shift(2))
-        & close.shift(3).slt(&open.shift(3))
-        & close.shift(4).slt(&open.shift(4))
-        & close.shift(3).slt(&close.shift(4))
-        & high.shift(1).slt(&close.shift(4))
+        & back_3_close.slt(&open.shift(3))
+        & back_4_close.slt(&open.shift(4))
+        & back_3_close.slt(&back_4_close)
+        & high.shift(1).slt(&back_4_close)
 }
 
 #[cfg(test)]

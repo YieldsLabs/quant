@@ -43,11 +43,6 @@ from strategy.generator.signal.di_flip import DiFlipSignal
 from strategy.generator.signal.dmi_cross import DmiCrossSignal
 from strategy.generator.signal.hl import HighLowSignal
 from strategy.generator.signal.kst_cross import KstCrossSignal
-from strategy.generator.signal.ma_quadruple import MaQuadrupleSignal
-from strategy.generator.signal.ma_surpass import MaSurpassSignal
-from strategy.generator.signal.ma_testing_ground import (
-    MaTestingGroundSignal,
-)
 from strategy.generator.signal.ma_three_cross import Ma3CrossSignal
 from strategy.generator.signal.macd_bb import MacdBbSignal
 from strategy.generator.signal.macd_color_switch import MacdColorSwitchSignal
@@ -92,7 +87,7 @@ class TrendSignalType(Enum):
     HFT = auto()
     FLIP = auto()
     V = auto()
-    MA = auto()
+    BREAKOUT = auto()
     CUSTOM = auto()
     PULLBACK = auto()
     VOLATILITY = auto()
@@ -137,52 +132,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
 
     def _diversified_strategies(self):
-        return [
-            Strategy(
-                *(
-                    StrategyType.TREND,
-                    TrendCandleSignal(
-                        candle=StaticParameter(TrendCandleType.SLINGSHOT)
-                    ),
-                    EomConfirm(),
-                    AdxPulse(),
-                    MaBaseLine(
-                        ma=StaticParameter(MovingAverageType.RMSMA),
-                        period=StaticParameter(15.0),
-                    ),
-                    AtrStopLoss(),
-                    CeExit(),
-                )
-            ),
-            Strategy(
-                *(
-                    StrategyType.TREND,
-                    RsiSupertrendSignal(),
-                    StcConfirm(),
-                    VoPulse(),
-                    MaBaseLine(
-                        ma=StaticParameter(MovingAverageType.EMA),
-                        period=StaticParameter(10.0),
-                    ),
-                    AtrStopLoss(period=StaticParameter(48.0)),
-                    CeExit(),
-                )
-            ),
-            Strategy(
-                *(
-                    StrategyType.TREND,
-                    TrixCrossSignal(),
-                    SupertrendConfirm(),
-                    VoPulse(),
-                    MaBaseLine(
-                        ma=StaticParameter(MovingAverageType.MD),
-                        period=StaticParameter(15.0),
-                    ),
-                    AtrStopLoss(period=StaticParameter(48.0)),
-                    RsiExit(period=StaticParameter(19.0)),
-                )
-            ),
-        ]
+        return []
 
     def _random_strategies(self):
         strategies_set = set()
@@ -250,7 +200,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _generate_invariants(self, base_strategy: Strategy) -> List[Strategy]:
         result = [base_strategy]
-        attributes = ["entry", "baseline"]
+        attributes = ["baseline"]
         smooth_type_map = {
             str(Smooth.EMA): [Smooth.ZLEMA, Smooth.KAMA],
             str(Smooth.SMA): [Smooth.SMMA, Smooth.LSMA],
@@ -394,6 +344,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
+                    Ma3CrossSignal(),
                     MacdCrossSignal(),
                     TiiCrossSignal(),
                     RsiNautralityCrossSignal(),
@@ -408,15 +359,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     ViCrossSignal(),
                 ]
             )
-        if signal == TrendSignalType.MA:
+        if signal == TrendSignalType.BREAKOUT:
             return np.random.choice(
                 [
-                    Ma3CrossSignal(),
-                    Rsi2MaSignal(),
                     Dch2MaSignal(),
-                    MaTestingGroundSignal(),
-                    MaQuadrupleSignal(),
-                    MaSurpassSignal(),
                 ]
             )
         if signal == TrendSignalType.PULLBACK:
@@ -438,5 +384,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             [
                 RsiNautralityRejectionSignal(),
                 RsiSupertrendSignal(),
+                Rsi2MaSignal(),
             ]
         )

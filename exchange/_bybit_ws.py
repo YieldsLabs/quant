@@ -52,18 +52,16 @@ class BybitWS(AbstractWS):
             cls._instance._channels = set()
             cls._instance._receive_semaphore = asyncio.Semaphore(1)
             cls._instance._lock = asyncio.Lock()
-            cls._instance.ping_task = None
+            cls.ping_task = None
 
         return cls._instance
 
     async def _connect_to_websocket(self):
-        await self.close()
-
         self.ws = await websockets.connect(
             self.wss,
-            open_timeout=3,
-            ping_interval=None,
-            ping_timeout=None,
+            open_timeout=2,
+            ping_interval=20,
+            ping_timeout=10,
             close_timeout=1,
         )
 
@@ -71,22 +69,6 @@ class BybitWS(AbstractWS):
             raise RuntimeError("Reconnect WS")
 
         await self._resubscribe()
-
-    async def _send_ping(self, ping_interval=20, ping_timeout=10):
-        while True:
-            try:
-                if not self.ws or not self.ws.open:
-                    continue
-
-                async with asyncio.timeout(ping_timeout):
-                    await self.ws.send(json.dumps({"op": self.PING_OPERATION}))
-
-                await asyncio.sleep(ping_interval)
-
-            except Exception as e:
-                logger.error(e)
-                self.ping_task = None
-                raise e
 
     @retry(
         max_retries=13,
@@ -99,17 +81,10 @@ class BybitWS(AbstractWS):
         ),
     )
     async def run(self):
+        await self.close()
         await self._connect_to_websocket()
 
-        if not self.ping_task:
-            self.ping_task = asyncio.create_task(self._send_ping())
-
     async def close(self):
-        if self.ping_task:
-            self.ping_task.cancel()
-
-        self.ping_task = None
-
         if self.ws and self.ws.open:
             await self.ws.close()
 

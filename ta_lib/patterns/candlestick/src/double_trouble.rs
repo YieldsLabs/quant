@@ -8,10 +8,11 @@ pub fn bullish(
     close: &Series<f32>,
 ) -> Series<bool> {
     let atr = atr(high, low, close, Smooth::SMMA, 10);
+    let prev_close = close.shift(1);
 
     close.sgt(open)
-        & close.shift(1).sgt(&open.shift(1))
-        & close.sgt(&close.shift(1))
+        & prev_close.sgt(&open.shift(1))
+        & close.sgt(&prev_close)
         & (close - open).sgt(&(2.0 * atr.shift(1)))
 }
 
@@ -22,10 +23,11 @@ pub fn bearish(
     close: &Series<f32>,
 ) -> Series<bool> {
     let atr = atr(high, low, close, Smooth::SMMA, 10);
+    let prev_close = close.shift(1);
 
     close.slt(open)
-        & close.shift(1).slt(&open.shift(1))
-        & close.slt(&close.shift(1))
+        & prev_close.slt(&open.shift(1))
+        & close.slt(&prev_close)
         & (open - close).sgt(&(2.0 * atr.shift(1)))
 }
 

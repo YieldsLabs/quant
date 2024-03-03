@@ -25,10 +25,11 @@ impl Signal for AOFlipSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ao = ao(&data.hl2(), self.short_period, self.long_period);
+        let prev_ao = ao.shift(2);
 
         (
-            ao.cross_over(&AO_ZERO) & ao.shift(2).slt(&AO_ZERO),
-            ao.cross_under(&AO_ZERO) & ao.shift(2).sgt(&AO_ZERO),
+            ao.cross_over(&AO_ZERO) & prev_ao.slt(&AO_ZERO),
+            ao.cross_under(&AO_ZERO) & prev_ao.sgt(&AO_ZERO),
         )
     }
 }

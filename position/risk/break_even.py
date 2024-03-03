@@ -19,74 +19,48 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         entry_price: float,
         take_profit_price: float,
         stop_loss_price: float,
-        ohlcvs: List[Tuple[OHLCV, bool]],
+        ohlcvs: List[Tuple[OHLCV]],
     ) -> float:
-        lookback_window = 3
-        closed_ohlcv = [ohlcv for ohlcv, closed in ohlcvs if closed]
-
-        if len(closed_ohlcv) < lookback_window:
-            return stop_loss_price, take_profit_price
-
         next_stop_loss = stop_loss_price
         next_take_profit = take_profit_price
 
-        wicks = [ohlcv for ohlcv, _ in ohlcvs]
-        recent_low = min(ohlcv.low for ohlcv in closed_ohlcv)
-        recent_high = max(ohlcv.high for ohlcv in closed_ohlcv)
+        if len(ohlcvs) < 2:
+            return next_stop_loss, next_take_profit
 
-        atr = self._atr(closed_ohlcv, lookback_window)
+        lookback_window = 3
+
+        recent_high = max([ohlcv.high for ohlcv in ohlcvs[-lookback_window:]])
+        recent_low = min([ohlcv.low for ohlcv in ohlcvs[-lookback_window:]])
+
+        atr = self._atr(ohlcvs, lookback_window)
         atr_val = atr[-1]
+        curr_price = self._price(ohlcvs)
 
         risk_value = atr_val * self.config["risk_factor"]
         tp_threshold = atr_val * self.config["tp_factor"]
+        sl_threshold = atr_val * self.config["sl_factor"]
 
         if side == PositionSide.LONG:
-            sl = max(next_stop_loss, entry_price + risk_value, recent_low - risk_value)
-            dist = (
-                abs(entry_price - next_take_profit - risk_value)
-                * self.config["sl_factor"]
-            )
-
-            if (
-                closed_ohlcv[-1].high >= entry_price + dist
-                and sl < closed_ohlcv[-1].low
-            ):
-                next_stop_loss = sl
-
-            if wicks[-1].high >= next_take_profit - tp_threshold:
-                current_price = self._price(closed_ohlcv)
-
-                next_take_profit = max(
-                    next_take_profit,
-                    current_price
-                    + (current_price - stop_loss_price)
-                    * self.config["risk_reward_ratio"],
+            if curr_price >= entry_price + sl_threshold:
+                next_stop_loss = max(
+                    next_stop_loss, entry_price - risk_value, recent_low - risk_value
                 )
 
-                next_stop_loss = sl
+            if recent_high >= entry_price + tp_threshold:
+                next_take_profit = max(
+                    entry_price + risk_value, recent_high + risk_value
+                )
 
         elif side == PositionSide.SHORT:
-            sl = min(next_stop_loss, entry_price - risk_value, recent_high + risk_value)
-            dist = (
-                abs(entry_price - next_take_profit + risk_value)
-                * self.config["sl_factor"]
-            )
-
-            if (
-                closed_ohlcv[-1].low <= entry_price - dist
-                and sl > closed_ohlcv[-1].high
-            ):
-                next_stop_loss = sl
-
-            if wicks[-1].low <= next_take_profit + tp_threshold:
-                current_price = self._price(closed_ohlcv)
-                next_take_profit = min(
-                    next_take_profit,
-                    current_price
-                    - (next_stop_loss - current_price)
-                    * self.config["risk_reward_ratio"],
+            if curr_price <= entry_price - sl_threshold:
+                next_stop_loss = min(
+                    next_stop_loss, entry_price + risk_value, recent_high + risk_value
                 )
-                next_stop_loss = sl
+
+            if recent_low <= entry_price - tp_threshold:
+                next_take_profit = min(
+                    entry_price - risk_value, recent_low - risk_value
+                )
 
         return next_stop_loss, next_take_profit
 

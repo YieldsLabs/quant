@@ -132,8 +132,11 @@ impl BaseStrategy {
         let prev_go_long_trigger = go_long_trigger.shift(1);
         let prev_go_short_trigger = go_short_trigger.shift(1);
 
-        let go_long_signal = go_long_trigger | prev_go_long_trigger | go_long_baseline;
-        let go_short_signal = go_short_trigger | prev_go_short_trigger | go_short_baseline;
+        let go_long_trigger_signal = go_long_trigger | prev_go_long_trigger;
+        let go_short_trigger_signal = go_short_trigger | prev_go_short_trigger;
+
+        let go_long_signal = go_long_trigger_signal | go_long_baseline;
+        let go_short_signal = go_short_trigger_signal | go_short_baseline;
 
         let go_long = (go_long_signal & filter_long_baseline & go_long_confirm & go_long_momentum)
             .last()

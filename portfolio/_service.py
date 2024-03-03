@@ -35,23 +35,31 @@ class Portfolio(AbstractEventManager):
 
     @event_handler(BacktestStarted)
     async def handle_backtest_started(self, event: BacktestStarted):
-        await self.state.reset(event.symbol, event.timeframe, event.strategy)
+        await self.state.reset(
+            event.symbol,
+            event.timeframe,
+            event.strategy,
+            self.account_size,
+            self.config["risk_per_trade"],
+        )
 
     @event_handler(TradeStarted)
     async def trade_started(self, event: TradeStarted):
         await asyncio.gather(
             *[
-                self.state.reset(event.symbol, event.timeframe, event.strategy),
+                self.state.reset(
+                    event.symbol,
+                    event.timeframe,
+                    event.strategy,
+                    self.account_size,
+                    self.config["risk_per_trade"],
+                ),
                 self.strategy.reset(event.symbol, event.timeframe, event.strategy),
             ]
         )
 
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
-        await self.state.next(
-            event.position, self.account_size, self.config["risk_per_trade"]
-        )
-
         position = event.position
         signal = position.signal
         symbol = signal.symbol
@@ -59,6 +67,16 @@ class Portfolio(AbstractEventManager):
         strategy = signal.strategy
 
         performance = await self.state.get(symbol, timeframe, strategy)
+
+        if not performance:
+            performance = await self.state.next(
+                event.position, self.account_size, self.config["risk_per_trade"]
+            )
+
+        if performance.updated_at < event.meta.timestamp:
+            performance = await self.state.next(
+                event.position, self.account_size, self.config["risk_per_trade"]
+            )
 
         logger.info(
             f"Performance: strategy={symbol}_{timeframe}{strategy}, "

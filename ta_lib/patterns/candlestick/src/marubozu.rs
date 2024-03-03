@@ -6,9 +6,10 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).sgt(&open.shift(1))
-        & high.shift(1).seq(&close.shift(1))
-        & low.shift(1).seq(&open.shift(1))
+    let prev_close = close.shift(1);
+    let prev_open = open.shift(1);
+
+    prev_close.sgt(&prev_open) & high.shift(1).seq(&prev_close) & low.shift(1).seq(&prev_open)
 }
 
 pub fn bearish(
@@ -17,9 +18,10 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).slt(&open.shift(1))
-        & high.shift(1).seq(&open.shift(1))
-        & low.shift(1).seq(&close.shift(1))
+    let prev_close = close.shift(1);
+    let prev_open = open.shift(1);
+
+    prev_close.slt(&prev_open) & high.shift(1).seq(&prev_open) & low.shift(1).seq(&prev_close)
 }
 
 #[cfg(test)]

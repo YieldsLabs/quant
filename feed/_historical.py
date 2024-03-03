@@ -32,28 +32,31 @@ class AsyncHistoricalData:
         self.sentinel = object()
         self.last_row = None
 
+    async def __aenter__(self):
+        self.iterator = self.exchange.fetch_ohlcv(
+            self.symbol,
+            self.timeframe,
+            self.in_sample,
+            self.out_sample,
+            self.batch_size,
+        )
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        self.iterator = None
+        return self
+
     def __aiter__(self):
         return self
 
     async def __anext__(self):
-        self._init_iterator()
-
         next_item = await self._fetch_next_item()
+
         if next_item is self.sentinel:
             raise StopAsyncIteration
 
         self.last_row = next_item
         return next_item
-
-    def _init_iterator(self) -> None:
-        if self.iterator is None:
-            self.iterator = self.exchange.fetch_ohlcv(
-                self.symbol,
-                self.timeframe,
-                self.in_sample,
-                self.out_sample,
-                self.batch_size,
-            )
 
     async def _fetch_next_item(self):
         return await asyncio.to_thread(self._next_item_or_end)
@@ -89,18 +92,17 @@ class HistoricalActor(Actor):
     async def on_receive(self, msg: StartHistoricalFeed):
         symbol, timeframe = msg.symbol, msg.timeframe
 
-        stream = AsyncHistoricalData(
+        async with AsyncHistoricalData(
             self.exchange,
             symbol,
             timeframe,
             msg.in_sample,
             msg.out_sample,
             self.config_service["batch_size"],
-        )
+        ) as stream:
+            async for bar in stream:
+                await self.tell(
+                    NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
+                )
 
-        async for bar in stream:
-            await self.tell(
-                NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
-            )
-
-        self.last_bar = stream.get_last_bar()
+            self.last_bar = stream.get_last_bar()

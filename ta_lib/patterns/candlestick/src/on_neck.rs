@@ -1,18 +1,22 @@
 use core::prelude::*;
 
 pub fn bullish(open: &Series<f32>, high: &Series<f32>, close: &Series<f32>) -> Series<bool> {
-    close.seq(&close.shift(1))
-        & high.seq(&close.shift(1))
-        & open.slt(&close.shift(1))
-        & close.shift(1).slt(&open.shift(1))
+    let prev_close = close.shift(1);
+
+    close.seq(&prev_close)
+        & high.seq(&prev_close)
+        & open.slt(&prev_close)
+        & prev_close.slt(&open.shift(1))
         & close.sgt(open)
 }
 
 pub fn bearish(open: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<bool> {
-    close.seq(&close.shift(1))
-        & low.seq(&close.shift(1))
-        & open.sgt(&close.shift(1))
-        & close.shift(1).sgt(&open.shift(1))
+    let prev_close = close.shift(1);
+
+    close.seq(&prev_close)
+        & low.seq(&prev_close)
+        & open.sgt(&prev_close)
+        & prev_close.sgt(&open.shift(1))
         & close.slt(open)
 }
 

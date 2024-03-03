@@ -30,17 +30,22 @@ impl Signal for RSINeutralityCrossSignal {
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
         let lower_neutrality = RSI_NEUTRALITY - self.threshold;
 
+        let prev_rsi = rsi.shift(1);
+        let back_2_rsi = rsi.shift(2);
+        let back_3_rsi = rsi.shift(3);
+        let back_4_rsi = rsi.shift(4);
+
         (
             rsi.sgt(&upper_neutrality)
-                & rsi.shift(1).sgt(&RSI_NEUTRALITY)
-                & rsi.shift(2).slt(&RSI_NEUTRALITY)
-                & rsi.shift(3).slt(&RSI_NEUTRALITY)
-                & rsi.shift(4).slt(&RSI_NEUTRALITY),
+                & prev_rsi.sgt(&RSI_NEUTRALITY)
+                & back_2_rsi.slt(&RSI_NEUTRALITY)
+                & back_3_rsi.slt(&RSI_NEUTRALITY)
+                & back_4_rsi.slt(&RSI_NEUTRALITY),
             rsi.slt(&lower_neutrality)
-                & rsi.shift(1).slt(&RSI_NEUTRALITY)
-                & rsi.shift(2).sgt(&RSI_NEUTRALITY)
-                & rsi.shift(3).sgt(&RSI_NEUTRALITY)
-                & rsi.shift(4).sgt(&RSI_NEUTRALITY),
+                & prev_rsi.slt(&RSI_NEUTRALITY)
+                & back_2_rsi.sgt(&RSI_NEUTRALITY)
+                & back_3_rsi.sgt(&RSI_NEUTRALITY)
+                & back_4_rsi.sgt(&RSI_NEUTRALITY),
         )
     }
 }

@@ -41,17 +41,24 @@ impl Signal for RSIMaPullbackSignal {
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
         let lower_neutrality = RSI_NEUTRALITY - self.threshold;
 
+        let prev_rsi = rsi.shift(1);
+        let back_2_rsi = rsi.shift(2);
+        let back_3_rsi = rsi.shift(3);
+
+        let prev_rsi_ma = rsi_ma.shift(1);
+        let back_3_rsi_ma = rsi_ma.shift(3);
+
         (
             rsi.sgt(&rsi_ma)
                 & rsi.slt(&upper_neutrality)
-                & rsi.shift(1).seq(&rsi_ma.shift(1))
-                & rsi.shift(2).sgt(&rsi.shift(1))
-                & rsi.shift(3).slt(&rsi_ma.shift(3)),
+                & prev_rsi.seq(&prev_rsi_ma)
+                & back_2_rsi.sgt(&prev_rsi)
+                & back_3_rsi.slt(&back_3_rsi_ma),
             rsi.slt(&rsi_ma)
                 & rsi.sgt(&lower_neutrality)
-                & rsi.shift(1).seq(&rsi_ma.shift(1))
-                & rsi.shift(2).slt(&rsi.shift(1))
-                & rsi.shift(3).sgt(&rsi_ma.shift(3)),
+                & prev_rsi.seq(&prev_rsi_ma)
+                & back_2_rsi.slt(&prev_rsi)
+                & back_3_rsi.sgt(&back_3_rsi_ma),
         )
     }
 }

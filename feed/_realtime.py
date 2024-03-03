@@ -23,15 +23,14 @@ class AsyncRealTimeData:
         self.timeframe = timeframe
         self.iterator = None
 
-        self.task = asyncio.create_task(self._initialize())
-
-    async def _initialize(self):
+    async def __aenter__(self):
         await self.ws.run()
         await self.ws.subscribe(self.symbol, self.timeframe)
+        return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        self.task.cancel()
         await self.ws.unsubscribe(self.symbol, self.timeframe)
+        return self
 
     def __aiter__(self):
         return self
@@ -73,13 +72,12 @@ class RealtimeActor(Actor):
     async def _run_realtime_feed(self, msg: StartRealtimeFeed):
         symbol, timeframe = msg.symbol, msg.timeframe
 
-        stream = AsyncRealTimeData(self.ws, symbol, timeframe)
+        async with AsyncRealTimeData(self.ws, symbol, timeframe) as stream:
+            async for bar in stream:
+                if bar:
+                    await self.tell(
+                        NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
+                    )
 
-        async for bar in stream:
-            if bar:
-                await self.tell(
-                    NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
-                )
-
-            if bar and bar.closed:
-                logger.info(f"Tick: {symbol}_{timeframe}:{bar}")
+                if bar and bar.closed:
+                    logger.info(f"Tick: {symbol}_{timeframe}:{bar}")

@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
+use signal::{MAQuadrupleSignal, MASurpassSignal, MATestingGroundSignal};
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.382;
@@ -8,6 +9,7 @@ const DEFAULT_ATR_FACTOR: f32 = 1.382;
 pub struct MABaseLine {
     ma: MovingAverageType,
     period: usize,
+    signal: Vec<Box<dyn Signal>>,
 }
 
 impl MABaseLine {
@@ -15,6 +17,11 @@ impl MABaseLine {
         Self {
             ma,
             period: period as usize,
+            signal: vec![
+                Box::new(MATestingGroundSignal::new(ma, period)),
+                Box::new(MAQuadrupleSignal::new(ma, period)),
+                Box::new(MASurpassSignal::new(ma, period)),
+            ],
         }
     }
 }
@@ -31,14 +38,24 @@ impl BaseLine for MABaseLine {
         let atr = data.atr(DEFAULT_ATR_LOOKBACK, Smooth::SMMA) * DEFAULT_ATR_FACTOR;
 
         (
-            ma.slt(&data.close) & dist.slt(&atr),
-            ma.sgt(&data.close) & dist.slt(&atr),
+            data.close.sgt(&ma) & dist.slt(&atr),
+            data.close.slt(&ma) & dist.slt(&atr),
         )
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.ma, data, self.period);
+        let lookback = self.lookback();
 
-        (data.close.cross_over(&ma), data.close.cross_under(&ma))
+        let mut go_long_signal: Series<bool> = Series::zero(lookback).into();
+        let mut go_short_signal: Series<bool> = Series::zero(lookback).into();
+
+        for signal in &self.signal {
+            let (go_long, go_short) = signal.generate(data);
+
+            go_long_signal = go_long_signal | go_long;
+            go_short_signal = go_short_signal | go_short;
+        }
+
+        (go_long_signal, go_short_signal)
     }
 }

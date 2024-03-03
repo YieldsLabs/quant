@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field, replace
+from datetime import datetime
 
 import numpy as np
 from scipy.stats import kurtosis, norm, skew
@@ -13,6 +14,7 @@ class Performance:
     _periods_per_year: float = 252
     _pnl: np.array = field(default_factory=lambda: np.array([]))
     _fee: np.array = field(default_factory=lambda: np.array([]))
+    updated_at: float = field(default_factory=lambda: datetime.now().timestamp())
 
     @property
     def total_trades(self) -> int:
@@ -546,7 +548,9 @@ class Performance:
     def next(self, pnl: float, fee: float) -> "Performance":
         _pnl, _fee = np.append(self._pnl, pnl), np.append(self._fee, fee)
 
-        return replace(self, _pnl=_pnl, _fee=_fee)
+        return replace(
+            self, _pnl=_pnl, _fee=_fee, updated_at=datetime.now().timestamp()
+        )
 
     @staticmethod
     def _max_streak(pnl, winning: bool) -> int:

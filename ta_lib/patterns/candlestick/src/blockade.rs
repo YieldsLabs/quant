@@ -6,17 +6,27 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).sgt(&open.shift(1))
-        & close.shift(4).slt(&open.shift(4))
-        & low.shift(1).sge(&low.shift(4))
-        & low.shift(1).sle(&close.shift(4))
-        & close.shift(1).sgt(&high.shift(4))
-        & low.shift(2).sge(&low.shift(4))
-        & low.shift(2).sle(&close.shift(4))
-        & low.shift(3).sge(&low.shift(4))
-        & low.shift(3).sle(&close.shift(4))
-        & high.shift(2).slt(&high.shift(4))
-        & high.shift(3).slt(&high.shift(4))
+    let prev_close = close.shift(1);
+    let close_4_back = close.shift(4);
+
+    let prev_low = low.shift(1);
+    let low_2_back = low.shift(2);
+    let low_3_back = low.shift(3);
+    let low_4_back = low.shift(4);
+
+    let high_4_back = high.shift(4);
+
+    prev_close.sgt(&open.shift(1))
+        & close_4_back.slt(&open.shift(4))
+        & prev_low.sge(&low_4_back)
+        & prev_low.sle(&close_4_back)
+        & prev_close.sgt(&high_4_back)
+        & low_2_back.sge(&low_4_back)
+        & low_2_back.sle(&close_4_back)
+        & low_3_back.sge(&low_4_back)
+        & low_3_back.sle(&close_4_back)
+        & high.shift(2).slt(&high_4_back)
+        & high.shift(3).slt(&high_4_back)
 }
 
 pub fn bearish(
@@ -25,17 +35,27 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    close.shift(1).slt(&open.shift(1))
-        & close.shift(4).sgt(&open.shift(4))
-        & high.shift(1).sle(&high.shift(4))
-        & high.shift(1).sge(&close.shift(4))
-        & close.shift(1).slt(&low.shift(4))
-        & high.shift(2).sle(&high.shift(4))
-        & high.shift(2).sge(&close.shift(4))
-        & high.shift(3).sle(&high.shift(4))
-        & high.shift(3).sge(&close.shift(4))
-        & low.shift(2).sgt(&low.shift(4))
-        & low.shift(3).sgt(&low.shift(4))
+    let prev_close = close.shift(1);
+    let close_4_back = close.shift(4);
+
+    let prev_high = high.shift(1);
+    let high_2_back = high.shift(2);
+    let high_3_back = high.shift(3);
+    let high_4_back = high.shift(4);
+
+    let low_4_back = low.shift(4);
+
+    prev_close.slt(&open.shift(1))
+        & close_4_back.sgt(&open.shift(4))
+        & prev_high.sle(&high_4_back)
+        & prev_high.sge(&close_4_back)
+        & prev_close.slt(&low_4_back)
+        & high_2_back.sle(&high_4_back)
+        & high_2_back.sge(&close_4_back)
+        & high_3_back.sle(&high_4_back)
+        & high_3_back.sge(&close_4_back)
+        & low.shift(2).sgt(&low_4_back)
+        & low.shift(3).sgt(&low_4_back)
 }
 
 #[cfg(test)]

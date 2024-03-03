@@ -3,27 +3,33 @@ use core::prelude::*;
 pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (close - open).abs();
 
+    let back_2_body = body.shift(2);
+    let back_3_body = body.shift(3);
+
     close.shift(5).slt(&open.shift(5))
         & close.shift(4).slt(&open.shift(4))
         & close.shift(3).slt(&open.shift(3))
         & close.shift(2).slt(&open.shift(2))
         & close.shift(1).slt(&open.shift(1))
-        & body.shift(1).sgt(&body.shift(2))
-        & body.shift(2).sgt(&body.shift(3))
-        & body.shift(3).sgt(&body.shift(4))
+        & body.shift(1).sgt(&back_2_body)
+        & back_2_body.sgt(&back_3_body)
+        & back_3_body.sgt(&body.shift(4))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (close - open).abs();
+
+    let back_2_body = body.shift(2);
+    let back_3_body = body.shift(3);
 
     close.shift(5).sgt(&open.shift(5))
         & close.shift(4).sgt(&open.shift(4))
         & close.shift(3).sgt(&open.shift(3))
         & close.shift(2).slt(&open.shift(2))
         & close.shift(1).slt(&open.shift(1))
-        & body.shift(1).sgt(&body.shift(2))
-        & body.shift(2).sgt(&body.shift(3))
-        & body.shift(3).sgt(&body.shift(4))
+        & body.shift(1).sgt(&back_2_body)
+        & back_2_body.sgt(&back_3_body)
+        & back_3_body.sgt(&body.shift(4))
 }
 
 #[cfg(test)]

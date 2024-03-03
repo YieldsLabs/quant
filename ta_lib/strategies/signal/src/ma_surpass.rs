@@ -24,43 +24,28 @@ impl Signal for MASurpassSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.period);
 
+        let prev_ma = ma.shift(1);
+        let back_2_ma = ma.shift(2);
+
+        let prev_open = data.open.shift(1);
+        let back_2_open = data.open.shift(2);
+
+        let prev_close = data.close.shift(1);
+        let back_2_close = data.close.shift(2);
+
         (
             data.open.sgt(&ma)
                 & data.close.sgt(&ma)
                 & data.low.slt(&ma)
-                & data
-                    .close
-                    .shift(1)
-                    .max(&data.open.shift(1))
-                    .sgt(&ma.shift(1))
-                & data
-                    .close
-                    .shift(1)
-                    .min(&data.open.shift(1))
-                    .slt(&ma.shift(1))
-                & data
-                    .close
-                    .shift(2)
-                    .max(&data.open.shift(2))
-                    .slt(&ma.shift(2)),
+                & prev_close.max(&prev_open).sgt(&prev_ma)
+                & prev_close.min(&prev_open).slt(&prev_ma)
+                & back_2_close.max(&back_2_open).slt(&back_2_ma),
             data.open.slt(&ma)
                 & data.close.slt(&ma)
                 & data.high.sgt(&ma)
-                & data
-                    .close
-                    .shift(1)
-                    .min(&data.open.shift(1))
-                    .slt(&ma.shift(1))
-                & data
-                    .close
-                    .shift(1)
-                    .max(&data.open.shift(1))
-                    .sgt(&ma.shift(1))
-                & data
-                    .close
-                    .shift(2)
-                    .min(&data.open.shift(2))
-                    .sgt(&ma.shift(2)),
+                & prev_close.min(&prev_open).slt(&prev_ma)
+                & prev_close.max(&prev_open).sgt(&prev_ma)
+                & back_2_close.min(&back_2_open).sgt(&back_2_ma),
         )
     }
 }

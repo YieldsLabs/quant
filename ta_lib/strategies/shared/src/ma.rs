@@ -5,6 +5,7 @@ use trend::{
     vwma, wma, zlema, zlsma,
 };
 
+#[derive(Copy, Clone)]
 pub enum MovingAverageType {
     ALMA,
     DEMA,

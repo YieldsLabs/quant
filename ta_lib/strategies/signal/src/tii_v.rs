@@ -2,8 +2,8 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::tii;
 
-const TII_UPPER_BARRIER: f32 = 60.0;
-const TII_LOWER_BARRIER: f32 = 40.0;
+const TII_UPPER_BARRIER: f32 = 100.0;
+const TII_LOWER_BARRIER: f32 = 0.0;
 
 pub struct TIIVSignal {
     smooth_type: Smooth,
@@ -34,13 +34,16 @@ impl Signal for TIIVSignal {
             self.minor_period,
         );
 
+        let prev_tii = tii.shift(1);
+        let tii_2_back = tii.shift(2);
+
         (
             tii.sgt(&TII_LOWER_BARRIER)
-                & tii.shift(1).slt(&TII_LOWER_BARRIER)
-                & tii.shift(2).sgt(&TII_LOWER_BARRIER),
+                & prev_tii.seq(&TII_LOWER_BARRIER)
+                & tii_2_back.sgt(&TII_LOWER_BARRIER),
             tii.slt(&TII_UPPER_BARRIER)
-                & tii.shift(1).sgt(&TII_UPPER_BARRIER)
-                & tii.shift(2).slt(&TII_UPPER_BARRIER),
+                & prev_tii.seq(&TII_UPPER_BARRIER)
+                & tii_2_back.slt(&TII_UPPER_BARRIER),
         )
     }
 }

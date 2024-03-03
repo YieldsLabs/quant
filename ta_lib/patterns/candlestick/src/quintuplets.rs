@@ -3,39 +3,59 @@ use core::prelude::*;
 pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
+    let prev_close = close.shift(1);
+    let back_2_close = close.shift(2);
+    let back_3_close = close.shift(3);
+    let back_4_close = close.shift(4);
+
+    let prev_body = body.shift(1);
+    let back_2_body = body.shift(2);
+    let back_3_body = body.shift(3);
+    let back_4_body = body.shift(4);
+
     close.sgt(open)
-        & close.sgt(&close.shift(1))
-        & body.slt(&body.shift(1))
-        & close.shift(1).sgt(&open.shift(1))
-        & close.shift(1).sgt(&close.shift(2))
-        & body.shift(1).slt(&body.shift(2))
-        & close.shift(2).sgt(&open.shift(2))
-        & close.shift(2).sgt(&close.shift(3))
-        & body.shift(2).slt(&body.shift(3))
-        & close.shift(3).sgt(&open.shift(3))
-        & close.shift(3).sgt(&close.shift(4))
-        & body.shift(3).slt(&body.shift(4))
-        & close.shift(4).sgt(&open.shift(4))
-        & body.shift(4).slt(&body.shift(5))
+        & close.sgt(&prev_close)
+        & body.slt(&prev_body)
+        & prev_close.sgt(&open.shift(1))
+        & prev_close.sgt(&back_2_close)
+        & prev_body.slt(&back_2_body)
+        & back_2_close.sgt(&open.shift(2))
+        & back_2_close.sgt(&back_3_close)
+        & back_2_body.slt(&back_3_body)
+        & back_3_close.sgt(&open.shift(3))
+        & back_3_close.sgt(&back_4_close)
+        & back_3_body.slt(&back_4_body)
+        & back_4_close.sgt(&open.shift(4))
+        & back_4_body.slt(&body.shift(5))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
+    let prev_close = close.shift(1);
+    let back_2_close = close.shift(2);
+    let back_3_close = close.shift(3);
+    let back_4_close = close.shift(4);
+
+    let prev_body = body.shift(1);
+    let back_2_body = body.shift(2);
+    let back_3_body = body.shift(3);
+    let back_4_body = body.shift(4);
+
     close.slt(open)
-        & close.slt(&close.shift(1))
-        & body.slt(&body.shift(1))
-        & close.shift(1).slt(&open.shift(1))
-        & close.shift(1).slt(&close.shift(2))
-        & body.shift(1).slt(&body.shift(2))
-        & close.shift(2).slt(&open.shift(2))
-        & close.shift(2).slt(&close.shift(3))
-        & body.shift(2).slt(&body.shift(3))
-        & close.shift(3).slt(&open.shift(3))
-        & close.shift(3).slt(&close.shift(4))
-        & body.shift(3).slt(&body.shift(4))
-        & close.shift(4).slt(&open.shift(4))
-        & body.shift(4).slt(&body.shift(5))
+        & close.slt(&prev_close)
+        & body.slt(&prev_body)
+        & prev_close.slt(&open.shift(1))
+        & prev_close.slt(&back_2_close)
+        & prev_body.slt(&back_2_body)
+        & back_2_close.slt(&open.shift(2))
+        & back_2_close.slt(&back_3_close)
+        & back_2_body.slt(&back_3_body)
+        & back_3_close.slt(&open.shift(3))
+        & back_3_close.slt(&back_4_close)
+        & back_3_body.slt(&back_4_body)
+        & back_4_close.slt(&open.shift(4))
+        & back_4_body.slt(&body.shift(5))
 }
 
 #[cfg(test)]

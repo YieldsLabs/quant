@@ -3,23 +3,35 @@ use core::prelude::*;
 pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
-    close.sgt(&close.shift(1))
-        & close.shift(1).sgt(&close.shift(2))
-        & close.shift(2).sgt(&close.shift(3))
+    let prev_close = close.shift(1);
+    let back_2_close = close.shift(2);
+
+    let prev_back = body.shift(1);
+    let back_2_body = body.shift(2);
+
+    close.sgt(&prev_close)
+        & prev_close.sgt(&back_2_close)
+        & back_2_close.sgt(&close.shift(3))
         & body.sge(&body.highest(5))
-        & body.shift(1).sge(&body.shift(1).highest(5))
-        & body.shift(2).sge(&body.shift(2).highest(5))
+        & prev_back.sge(&prev_back.highest(5))
+        & back_2_body.sge(&back_2_body.highest(5))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     let body = (open - close).abs();
 
-    close.slt(&close.shift(1))
-        & close.shift(1).slt(&close.shift(2))
-        & close.shift(2).slt(&close.shift(3))
+    let prev_close = close.shift(1);
+    let back_2_close = close.shift(2);
+
+    let prev_back = body.shift(1);
+    let back_2_body = body.shift(2);
+
+    close.slt(&prev_close)
+        & prev_close.slt(&back_2_close)
+        & back_2_close.slt(&close.shift(3))
         & body.sge(&body.highest(5))
-        & body.shift(1).sge(&body.shift(1).highest(5))
-        & body.shift(2).sge(&body.shift(2).highest(5))
+        & prev_back.sge(&prev_back.highest(5))
+        & back_2_body.sge(&back_2_body.highest(5))
 }
 
 #[cfg(test)]

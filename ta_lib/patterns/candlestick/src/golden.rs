@@ -8,7 +8,8 @@ pub fn bullish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    let golden_low = low.shift(2) + GOLDEN_RATIO * (high.shift(2) - low.shift(2));
+    let back_2_low = low.shift(2);
+    let golden_low = &back_2_low + GOLDEN_RATIO * (high.shift(2) - &back_2_low);
 
     low.sle(&open.shift(1)) & close.shift(1).sgt(&golden_low) & close.shift(2).sgt(&open.shift(2))
 }
@@ -19,7 +20,8 @@ pub fn bearish(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> Series<bool> {
-    let golden_high = high.shift(2) - GOLDEN_RATIO * (high.shift(2) - low.shift(2));
+    let back_2_high = high.shift(2);
+    let golden_high = &back_2_high - GOLDEN_RATIO * (&back_2_high - low.shift(2));
 
     high.sge(&open.shift(1)) & close.shift(1).slt(&golden_high) & close.shift(2).slt(&open.shift(2))
 }

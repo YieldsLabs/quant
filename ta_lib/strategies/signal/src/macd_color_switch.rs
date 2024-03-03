@@ -42,15 +42,19 @@ impl Signal for MACDColorSwitchSignal {
             self.signal_period,
         );
 
+        let prev_histogram = histogram.shift(1);
+        let back_2_histogram = histogram.shift(2);
+        let back_3_histogram = histogram.shift(3);
+
         (
             histogram.slt(&ZERO_LINE)
-                & histogram.sgt(&histogram.shift(1))
-                & histogram.shift(1).slt(&histogram.shift(2))
-                & histogram.shift(2).slt(&histogram.shift(3)),
+                & histogram.sgt(&prev_histogram)
+                & prev_histogram.slt(&back_2_histogram)
+                & back_2_histogram.slt(&back_3_histogram),
             histogram.sgt(&ZERO_LINE)
-                & histogram.slt(&histogram.shift(1))
-                & histogram.shift(1).sgt(&histogram.shift(2))
-                & histogram.shift(2).sgt(&histogram.shift(3)),
+                & histogram.slt(&prev_histogram)
+                & prev_histogram.sgt(&back_2_histogram)
+                & back_2_histogram.sgt(&back_3_histogram),
         )
     }
 }

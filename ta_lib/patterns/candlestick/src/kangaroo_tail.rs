@@ -10,13 +10,15 @@ pub fn bullish(
 ) -> Series<bool> {
     let range = high - low;
     let two_third_low_range = low + &range * RANGE_RATIO;
+    let prev_low = low.shift(1);
+    let prev_high = high.shift(1);
 
     close.sgt(&two_third_low_range)
         & open.sgt(&two_third_low_range)
-        & close.sgt(&low.shift(1))
-        & close.slt(&high.shift(1))
-        & open.sgt(&low.shift(1))
-        & open.slt(&high.shift(1))
+        & close.sgt(&prev_low)
+        & close.slt(&prev_high)
+        & open.sgt(&prev_low)
+        & open.slt(&prev_high)
         & close.slt(&close.shift(200))
         & range.sgt(&range.shift(1))
         & range.sgt(&range.shift(2))
@@ -33,13 +35,15 @@ pub fn bearish(
 ) -> Series<bool> {
     let range = high - low;
     let two_third_high_range = high - &range * RANGE_RATIO;
+    let prev_low = low.shift(1);
+    let prev_high = high.shift(1);
 
     close.slt(&two_third_high_range)
         & open.slt(&two_third_high_range)
-        & close.sgt(&low.shift(1))
-        & close.slt(&high.shift(1))
-        & open.sgt(&low.shift(1))
-        & open.slt(&high.shift(1))
+        & close.sgt(&prev_low)
+        & close.slt(&prev_high)
+        & open.sgt(&prev_low)
+        & open.slt(&prev_high)
         & close.sgt(&close.shift(200))
         & range.sgt(&range.shift(1))
         & range.sgt(&range.shift(2))

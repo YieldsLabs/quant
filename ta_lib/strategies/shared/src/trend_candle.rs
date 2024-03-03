@@ -5,6 +5,7 @@ use candlestick::{
 };
 use core::prelude::*;
 
+#[derive(Copy, Clone)]
 pub enum TrendCandleType {
     BOTTLE,
     DOUBLE_TROUBLE,

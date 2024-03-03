@@ -1,19 +1,29 @@
 use core::prelude::*;
 
 pub fn bullish(open: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<bool> {
-    close.shift(2).sgt(&open.shift(2))
-        & close.shift(1).sgt(&open.shift(1))
-        & open.shift(1).slt(&close.shift(2))
-        & open.shift(1).seq(&low.shift(1))
-        & close.shift(1).sgt(&close.shift(2))
+    let prev_close = close.shift(1);
+    let back_2_close = close.shift(2);
+
+    let prev_open = open.shift(1);
+
+    back_2_close.sgt(&open.shift(2))
+        & prev_close.sgt(&prev_open)
+        & prev_open.slt(&back_2_close)
+        & prev_open.seq(&low.shift(1))
+        & prev_close.sgt(&back_2_close)
 }
 
 pub fn bearish(open: &Series<f32>, high: &Series<f32>, close: &Series<f32>) -> Series<bool> {
-    close.shift(2).slt(&open.shift(2))
-        & close.shift(1).slt(&open.shift(1))
-        & open.shift(1).sgt(&close.shift(2))
-        & open.shift(1).seq(&high.shift(1))
-        & close.shift(1).slt(&close.shift(2))
+    let prev_close = close.shift(1);
+    let back_2_close = close.shift(2);
+
+    let prev_open = open.shift(1);
+
+    back_2_close.slt(&open.shift(2))
+        & prev_close.slt(&prev_open)
+        & prev_open.sgt(&back_2_close)
+        & prev_open.seq(&high.shift(1))
+        & prev_close.slt(&back_2_close)
 }
 
 #[cfg(test)]
