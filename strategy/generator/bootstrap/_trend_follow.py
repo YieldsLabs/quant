@@ -30,6 +30,7 @@ from strategy.generator.exit.pattern import PatternExit
 from strategy.generator.exit.rsi import RsiExit
 from strategy.generator.pulse.adx import AdxPulse
 from strategy.generator.pulse.chop import ChopPulse
+from strategy.generator.pulse.nvol import NvolPulse
 from strategy.generator.pulse.vo import VoPulse
 from strategy.generator.signal.ao_flip import AoFlipSignal
 from strategy.generator.signal.ao_saucer import AoSaucerSignal
@@ -173,7 +174,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 SupertrendConfirm(),
             ]
         )
-        pulse = np.random.choice([AdxPulse(), ChopPulse(), VoPulse()])
+        pulse = np.random.choice([AdxPulse(), ChopPulse(), VoPulse(), NvolPulse()])
         stop_loss = np.random.choice([AtrStopLoss()])
         exit_signal = np.random.choice(
             [

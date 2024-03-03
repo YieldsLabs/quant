@@ -8,6 +8,7 @@ class PulseType(Enum):
     Adx = "Adx"
     Dumb = "Dumb"
     Chop = "Chop"
+    Nvol = "Nvol"
     Vo = "Vo"
 
     def __str__(self):

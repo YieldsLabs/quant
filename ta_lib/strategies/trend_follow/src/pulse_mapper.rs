@@ -20,6 +20,10 @@ pub enum PulseConfig {
         period: f32,
         threshold: f32,
     },
+    Nvol {
+        smooth_type: f32,
+        period: f32,
+    },
     Vo {
         smooth_type: f32,
         short_period: f32,
@@ -46,6 +50,10 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             threshold,
         } => Box::new(CHOPPulse::new(atr_period, period, threshold)),
         PulseConfig::Dumb { period } => Box::new(DumbPulse::new(period)),
+        PulseConfig::Nvol {
+            smooth_type,
+            period,
+        } => Box::new(NvolPulse::new(map_to_smooth(smooth_type as usize), period)),
         PulseConfig::Vo {
             smooth_type,
             short_period,
