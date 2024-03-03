@@ -68,7 +68,7 @@ class Bybit(AbstractExchange):
     def has_open_orders(self, symbol: Symbol):
         try:
             orders = self.connector.fetch_open_orders(symbol.name)
-            return len(orders)
+            return len([order for order in orders if not order["stopPrice"]])
         except Exception as e:
             logger.error(f"{symbol}: {e}")
             return
