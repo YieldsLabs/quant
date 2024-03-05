@@ -8,7 +8,7 @@ pub fn tr(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<
         high.shift(1).na(),
         diff,
         diff.max(&(high - &prev_close).abs())
-            .max(&(low - &prev_close).abs())
+            .max(&(low.negate() + &prev_close).abs())
     )
 }
 
