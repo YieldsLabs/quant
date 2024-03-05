@@ -7,7 +7,7 @@ from core.models.timeframe import Timeframe
 from core.queries.base import Query
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
-MAX_ALLOWED_DELAY = 1.236
+MAX_ALLOWED_DELAY = 1.618
 
 
 class Actor(AbstractActor):

@@ -68,12 +68,7 @@ class Portfolio(AbstractEventManager):
 
         performance = await self.state.get(symbol, timeframe, strategy)
 
-        if not performance:
-            performance = await self.state.next(
-                event.position, self.account_size, self.config["risk_per_trade"]
-            )
-
-        if performance.updated_at < event.meta.timestamp:
+        if not performance or performance.updated_at < event.meta.timestamp:
             performance = await self.state.next(
                 event.position, self.account_size, self.config["risk_per_trade"]
             )

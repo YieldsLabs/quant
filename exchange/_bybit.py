@@ -15,7 +15,7 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from infrastructure.retry import retry
 
-MAX_RETRIES = 5
+MAX_RETRIES = 13
 EXCEPTIONS = (RequestTimeout, NetworkError)
 
 
