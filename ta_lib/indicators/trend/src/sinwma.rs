@@ -1,17 +1,11 @@
 use core::prelude::*;
 
 pub fn sinwma(source: &Series<f32>, period: usize) -> Series<f32> {
-    let mut sum = Series::zero(source.len());
     let weights = (0..period)
         .map(|i| ((i as f32 + 1.) * std::f32::consts::PI / (period as f32 + 1.)).sin())
         .collect::<Vec<_>>();
-    let norm = weights.iter().sum::<f32>();
 
-    for (i, &weight) in weights.iter().enumerate() {
-        sum = sum + source.shift(i) * weight;
-    }
-
-    sum / norm
+    source.wg(&weights, period)
 }
 
 #[cfg(test)]

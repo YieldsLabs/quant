@@ -31,6 +31,17 @@ impl Series<f32> {
         sum
     }
 
+    pub fn wg(&self, weights: &Vec<f32>, period: usize) -> Self {
+        let mut sum = Series::zero(self.len());
+        let norm = weights.iter().sum::<f32>();
+
+        for (i, &weight) in weights.iter().enumerate() {
+            sum = sum + self.shift(i) * weight;
+        }
+
+        sum / norm
+    }
+
     fn ma(&self, period: usize) -> Self {
         self.window(period)
             .map(|w| w.iter().flatten().sum::<f32>() / w.len() as f32)
@@ -50,15 +61,9 @@ impl Series<f32> {
     }
 
     fn wma(&self, period: usize) -> Self {
-        let mut sum = Series::zero(self.len());
         let weights = (0..period).map(|i| (period - i) as f32).collect::<Vec<_>>();
-        let norm = weights.iter().sum::<f32>();
 
-        for (i, &weight) in weights.iter().enumerate() {
-            sum = sum + self.shift(i) * weight;
-        }
-
-        sum / norm
+        self.wg(&weights, period)
     }
 
     fn swma(&self) -> Self {

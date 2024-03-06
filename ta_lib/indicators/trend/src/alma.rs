@@ -3,18 +3,12 @@ use core::prelude::*;
 pub fn alma(source: &Series<f32>, period: usize, offset: f32, sigma: f32) -> Series<f32> {
     let m = offset * (period as f32 - 1.);
     let s = period as f32 / sigma;
-    let mut sum = Series::zero(source.len());
 
     let weights = (0..period)
         .map(|i| ((-1. * (i as f32 - m).powi(2)) / (2. * s.powi(2))).exp())
         .collect::<Vec<_>>();
-    let norm = weights.iter().sum::<f32>();
 
-    for (i, &weight) in weights.iter().enumerate() {
-        sum = sum + source.shift(i) * weight;
-    }
-
-    sum / norm
+    source.wg(&weights, period)
 }
 
 #[cfg(test)]
