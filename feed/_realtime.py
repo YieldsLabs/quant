@@ -24,8 +24,8 @@ class AsyncRealTimeData:
         self.iterator = None
 
     async def __aenter__(self):
-        await self.ws.run()
         await self.ws.subscribe(self.symbol, self.timeframe)
+        await self.ws.run()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):

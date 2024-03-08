@@ -59,14 +59,11 @@ class BybitWS(AbstractWS):
     async def _connect_to_websocket(self):
         self.ws = await websockets.connect(
             self.wss,
-            open_timeout=2,
+            open_timeout=None,
             ping_interval=20,
             ping_timeout=10,
-            close_timeout=1,
+            close_timeout=None,
         )
-
-        if not self.ws.open:
-            raise RuntimeError("Reconnect WS")
 
         await self._resubscribe()
 
@@ -85,8 +82,10 @@ class BybitWS(AbstractWS):
         await self._connect_to_websocket()
 
     async def close(self):
-        if self.ws and self.ws.open:
-            await self.ws.close()
+        if not self.ws or not self.ws.open:
+            return
+
+        await self.ws.close()
 
     @retry(
         max_retries=13,
