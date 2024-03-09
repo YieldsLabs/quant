@@ -10,6 +10,7 @@ class PulseType(Enum):
     Chop = "Chop"
     Nvol = "Nvol"
     Vo = "Vo"
+    Tdfi = "Tdfi"
 
     def __str__(self):
         return self.value.upper()

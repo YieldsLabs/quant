@@ -21,8 +21,8 @@ impl Series<f32> {
         self.fmap(|val| val.map(|v| v.exp()))
     }
 
-    pub fn pow(&self, period: i32) -> Self {
-        self.fmap(|val| val.map(|v| v.powi(period)))
+    pub fn pow(&self, period: usize) -> Self {
+        self.fmap(|val| val.map(|v| v.powi(period as i32)))
     }
 
     pub fn sign(&self) -> Self {

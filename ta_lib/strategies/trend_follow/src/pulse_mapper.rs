@@ -29,6 +29,11 @@ pub enum PulseConfig {
         short_period: f32,
         long_period: f32,
     },
+    Tdfi {
+        smooth_type: f32,
+        period: f32,
+        n: f32,
+    },
 }
 
 pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
@@ -54,6 +59,15 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             smooth_type,
             period,
         } => Box::new(NvolPulse::new(map_to_smooth(smooth_type as usize), period)),
+        PulseConfig::Tdfi {
+            smooth_type,
+            period,
+            n,
+        } => Box::new(TDFIPulse::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            n,
+        )),
         PulseConfig::Vo {
             smooth_type,
             short_period,
