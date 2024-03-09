@@ -24,6 +24,11 @@ pub enum SignalConfig {
         smooth_type: f32,
         smoothing_period: f32,
     },
+    CeFlip {
+        period: f32,
+        atr_period: f32,
+        factor: f32,
+    },
     CfoFlip {
         period: f32,
     },
@@ -264,6 +269,11 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             map_to_smooth(smooth_type as usize),
             smoothing_period,
         )),
+        SignalConfig::CeFlip {
+            period,
+            atr_period,
+            factor,
+        } => Box::new(CEFlipSignal::new(period, atr_period, factor)),
         SignalConfig::CfoFlip { period } => Box::new(CFOFlipSignal::new(period)),
         SignalConfig::CcFlip {
             short_period,

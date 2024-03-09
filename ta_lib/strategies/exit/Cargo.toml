@@ -15,4 +15,5 @@ core = { path = "../../core" }
 candlestick = { path = "../../patterns/candlestick" }
 trend = { path = "../../indicators/trend" }
 momentum = { path = "../../indicators/momentum" }
+volume = {path = "../../indicators/volume" }
 shared = { path = "../shared" }

@@ -23,10 +23,9 @@ from strategy.generator.confirm.rsi import RsiConfirm
 from strategy.generator.confirm.stc import StcConfirm
 from strategy.generator.confirm.supertrend import SupertrendConfirm
 from strategy.generator.exit.ast import AstExit
-from strategy.generator.exit.ce import CeExit
+from strategy.generator.exit.cci import CciExit
 from strategy.generator.exit.highlow import HighLowExit
-from strategy.generator.exit.ma import MaExit
-from strategy.generator.exit.pattern import PatternExit
+from strategy.generator.exit.mfi import MfiExit
 from strategy.generator.exit.rsi import RsiExit
 from strategy.generator.pulse.adx import AdxPulse
 from strategy.generator.pulse.chop import ChopPulse
@@ -37,6 +36,7 @@ from strategy.generator.signal.ao_saucer import AoSaucerSignal
 from strategy.generator.signal.apo_flip import ApoFlipSignal
 from strategy.generator.signal.bop_flip import BopFlipSignal
 from strategy.generator.signal.cc_flip import CcFlipSignal
+from strategy.generator.signal.ce_flip import CeFlipSignal
 from strategy.generator.signal.cfo_flip import CfoFlipSignal
 from strategy.generator.signal.dch_two_ma import Dch2MaSignal
 from strategy.generator.signal.di_cross import DiCrossSignal
@@ -179,11 +179,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         exit_signal = np.random.choice(
             [
                 AstExit(),
-                CeExit(),
-                PatternExit(),
                 HighLowExit(),
-                MaExit(),
                 RsiExit(),
+                MfiExit(),
+                CciExit(),
             ]
         )
 
@@ -201,7 +200,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _generate_invariants(self, base_strategy: Strategy) -> List[Strategy]:
         result = [base_strategy]
-        attributes = ["baseline"]
+        attributes = []
         smooth_type_map = {
             str(Smooth.EMA): [Smooth.ZLEMA, Smooth.KAMA],
             str(Smooth.SMA): [Smooth.SMMA, Smooth.LSMA],
@@ -312,6 +311,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     DiFlipSignal(),
                     QstickFlipSignal(),
                     CcFlipSignal(),
+                    CeFlipSignal(),
                     StcFlipSignal(),
                     ApoFlipSignal(),
                     BopFlipSignal(),

@@ -5,12 +5,12 @@ from core.models.parameter import (
     StaticParameter,
 )
 
-from .base import Exit, ExitType
+from .base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class CeExit(Exit):
-    type: ExitType = ExitType.Ce
+class CeFlipSignal(Signal):
+    type: SignalType = SignalType.CeFlip
     period: Parameter = StaticParameter(22.0)
-    atr_period: Parameter = StaticParameter(14.0)
+    atr_period: Parameter = StaticParameter(22.0)
     factor: Parameter = StaticParameter(3.0)

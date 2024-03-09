@@ -1,4 +1,3 @@
-use crate::ma_mapper::map_to_ma;
 use crate::smooth_mapper::map_to_smooth;
 use base::prelude::*;
 use exit::*;
@@ -11,15 +10,14 @@ pub enum ExitConfig {
         atr_period: f32,
         factor: f32,
     },
+    Cci {
+        smooth_type: f32,
+        period: f32,
+        factor: f32,
+        threshold: f32,
+    },
     Dumb {},
-    Pattern {
-        period: f32,
-    },
     HighLow {
-        period: f32,
-    },
-    Ma {
-        ma: f32,
         period: f32,
     },
     Rsi {
@@ -27,25 +25,28 @@ pub enum ExitConfig {
         period: f32,
         threshold: f32,
     },
-    Ce {
+    Mfi {
         period: f32,
-        atr_period: f32,
-        factor: f32,
+        threshold: f32,
     },
 }
 
 pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
     match config {
         ExitConfig::Ast { atr_period, factor } => Box::new(AstExit::new(atr_period, factor)),
-        ExitConfig::Ce {
+        ExitConfig::Cci {
+            smooth_type,
             period,
-            atr_period,
             factor,
-        } => Box::new(CeExit::new(period, atr_period, factor)),
+            threshold,
+        } => Box::new(CCIExit::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            factor,
+            threshold,
+        )),
         ExitConfig::Dumb {} => Box::new(DumbExit {}),
-        ExitConfig::Pattern { period } => Box::new(PatternExit::new(period)),
         ExitConfig::HighLow { period } => Box::new(HighLowExit::new(period)),
-        ExitConfig::Ma { ma, period } => Box::new(MAExit::new(map_to_ma(ma as usize), period)),
         ExitConfig::Rsi {
             smooth_type,
             period,
@@ -55,5 +56,6 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
             period,
             threshold,
         )),
+        ExitConfig::Mfi { period, threshold } => Box::new(MFIExit::new(period, threshold)),
     }
 }

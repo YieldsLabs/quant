@@ -170,8 +170,8 @@ class TradingSystem(AbstractSystem):
 
     async def _run_trading(self):
         logger.info("Start trading")
-        
+
         for actors in self.active_strategy:
             await self.execute(StartRealtimeFeed(actors[0].symbol, actors[0].timeframe))
-            
+
             logger.info(f"Started feed: {actors[0].symbol}_{actors[0].timeframe}")

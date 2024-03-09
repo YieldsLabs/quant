@@ -7,11 +7,10 @@ from core.models.indicator import Indicator
 class ExitType(Enum):
     Ast = "Ast"
     Dumb = "Dumb"
-    Ce = "Ce"
     HighLow = "HighLow"
-    Pattern = "Pattern"
-    Ma = "Ma"
     Rsi = "Rsi"
+    Mfi = "Mfi"
+    Cci = "Cci"
 
     def __str__(self):
         return self.value.upper()

@@ -1,15 +1,13 @@
 mod ast;
-mod ce;
+mod cci;
 mod dumb;
 mod highlow;
-mod ma;
-mod pattern;
+mod mfi;
 mod rsi;
 
 pub use ast::AstExit;
-pub use ce::CeExit;
+pub use cci::CCIExit;
 pub use dumb::DumbExit;
 pub use highlow::HighLowExit;
-pub use ma::MAExit;
-pub use pattern::PatternExit;
+pub use mfi::MFIExit;
 pub use rsi::RSIExit;

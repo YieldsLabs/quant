@@ -2,6 +2,9 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::supertrend;
 
+const ONE: f32 = 1.0;
+const MINUS_ONE: f32 = -1.0;
+
 pub struct SupertrendFlipSignal {
     atr_period: usize,
     factor: f32,
@@ -32,8 +35,8 @@ impl Signal for SupertrendFlipSignal {
         let prev_direction = direction.shift(1);
 
         (
-            direction.seq(&1.0) & prev_direction.seq(&-1.0),
-            direction.seq(&-1.0) & prev_direction.seq(&1.0),
+            direction.seq(&ONE) & prev_direction.seq(&MINUS_ONE),
+            direction.seq(&MINUS_ONE) & prev_direction.seq(&ONE),
         )
     }
 }

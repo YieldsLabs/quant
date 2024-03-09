@@ -7,8 +7,9 @@ from .base import Exit, ExitType
 
 
 @dataclass(frozen=True)
-class RsiExit(Exit):
-    type: ExitType = ExitType.Rsi
-    smooth_type: Parameter = StaticParameter(Smooth.SMMA)
-    period: Parameter = StaticParameter(8.0)
+class CciExit(Exit):
+    type: ExitType = ExitType.Cci
+    smooth_type: Parameter = StaticParameter(Smooth.SMA)
+    period: Parameter = StaticParameter(20.0)
+    factor: Parameter = StaticParameter(0.015)
     threshold: Parameter = RandomParameter(0.0, 5.0, 1.0)
