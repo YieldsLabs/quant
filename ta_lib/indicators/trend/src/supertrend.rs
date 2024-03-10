@@ -1,5 +1,8 @@
 use core::prelude::*;
 
+const ONE: f32 = 1.0;
+const MINUS_ONE: f32 = -1.0;
+
 pub fn supertrend(
     hl2: &Series<f32>,
     close: &Series<f32>,
@@ -25,9 +28,9 @@ pub fn supertrend(
         dn = iff!(prev_close.slt(&prev_dn), dn.min(&prev_dn), dn);
     }
 
-    let mut direction = Series::empty(len);
-    let trend_up = Series::one(len);
-    let trend_dn = trend_up.negate();
+    let mut direction = Series::one(len);
+    let trend_bull = Series::one(len);
+    let trend_bear = trend_bull.negate();
 
     let prev_up = up.shift(1);
     let prev_dn = dn.shift(1);
@@ -35,12 +38,25 @@ pub fn supertrend(
     for _ in 0..len {
         let prev_direction = direction.shift(1);
 
-        direction = iff!(prev_direction.na(), trend_up, prev_direction);
-        direction = iff!(close.slt(&prev_up), trend_dn, direction);
-        direction = iff!(close.sgt(&prev_dn), trend_up, direction);
+        direction = iff!(prev_direction.na(), direction, prev_direction);
+
+        direction = iff!(
+            direction.seq(&ONE) & close.slt(&prev_up),
+            trend_bear,
+            direction
+        );
+        direction = iff!(
+            direction.seq(&MINUS_ONE) & close.sgt(&prev_dn),
+            trend_bull,
+            direction
+        );
     }
 
-    let supertrend = iff!(direction.seq(&1.), up, dn);
+    let supertrend = iff!(
+        direction.seq(&ONE),
+        up,
+        iff!(direction.seq(&MINUS_ONE), dn, Series::zero(len))
+    );
 
     (direction, supertrend)
 }

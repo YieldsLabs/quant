@@ -208,7 +208,7 @@ class SmartRouter(AbstractEventManager):
             if not self.exchange.fetch_position(symbol, position.side):
                 break
 
-            if spread < -0.005:
+            if spread < -0.001:
                 self.exchange.close_full_position(symbol, position.side)
                 break
 
