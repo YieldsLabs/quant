@@ -1,7 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
-use signal::{MAQuadrupleSignal, MASurpassSignal, MATestingGroundSignal};
+use signal::{MACrossSignal, MAQuadrupleSignal, MASurpassSignal, MATestingGroundSignal};
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.382;
@@ -18,6 +18,7 @@ impl MABaseLine {
             ma,
             period: period as usize,
             signal: vec![
+                Box::new(MACrossSignal::new(ma, period)),
                 Box::new(MATestingGroundSignal::new(ma, period)),
                 Box::new(MAQuadrupleSignal::new(ma, period)),
                 Box::new(MASurpassSignal::new(ma, period)),
@@ -28,7 +29,13 @@ impl MABaseLine {
 
 impl BaseLine for MABaseLine {
     fn lookback(&self) -> usize {
-        std::cmp::max(DEFAULT_ATR_LOOKBACK, self.period)
+        let mut m = std::cmp::max(DEFAULT_ATR_LOOKBACK, self.period);
+
+        for signal in &self.signal {
+            m = std::cmp::max(m, signal.lookback());
+        }
+
+        m
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {

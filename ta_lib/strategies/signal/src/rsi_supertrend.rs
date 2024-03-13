@@ -52,6 +52,8 @@ impl Signal for RSISupertrendSignal {
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
 
         let prev_direction = direction.shift(1);
+        let back_2_direction = direction.shift(2);
+
         let prev_rsi = rsi.shift(1);
         let back_2_rsi = rsi.shift(2);
         let back_3_rsi = rsi.shift(3);
@@ -59,6 +61,7 @@ impl Signal for RSISupertrendSignal {
         (
             direction.seq(&1.0)
                 & prev_direction.seq(&1.0)
+                & back_2_direction.seq(&1.0)
                 & rsi.sgt(&RSI_NEUTRALITY)
                 & rsi.slt(&upper_barrier)
                 & prev_rsi.sgt(&lower_neutrality)
@@ -66,6 +69,7 @@ impl Signal for RSISupertrendSignal {
                 & back_3_rsi.sgt(&lower_neutrality),
             direction.seq(&-1.0)
                 & prev_direction.seq(&-1.0)
+                & back_2_direction.seq(&-1.0)
                 & rsi.slt(&RSI_NEUTRALITY)
                 & rsi.sgt(&lower_barrier)
                 & prev_rsi.slt(&upper_neutrality)
