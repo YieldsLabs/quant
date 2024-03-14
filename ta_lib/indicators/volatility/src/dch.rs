@@ -8,7 +8,7 @@ pub fn dch(
     let upper_band = high.highest(period);
     let lower_band = low.lowest(period);
 
-    let middle_band = (&upper_band + &lower_band) / 2.;
+    let middle_band = 0.5 * (&upper_band + &lower_band);
 
     (upper_band, middle_band, lower_band)
 }

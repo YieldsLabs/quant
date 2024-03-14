@@ -8,7 +8,7 @@ pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
         & prev_close.slt(&prev_open)
         & open.slt(&prev_close)
         & close.slt(&prev_open)
-        & close.sge(&((prev_close + prev_open) / 2.0))
+        & close.sge(&(0.5 * (prev_close + prev_open)))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
@@ -19,7 +19,7 @@ pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
         & prev_close.sgt(&prev_open)
         & open.sgt(&prev_close)
         & close.sgt(&prev_open)
-        & close.sle(&((prev_close + prev_open) / 2.0))
+        & close.sle(&(0.5 * (prev_close + prev_open)))
 }
 
 #[cfg(test)]

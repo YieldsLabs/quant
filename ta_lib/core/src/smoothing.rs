@@ -75,7 +75,7 @@ impl Series<f32> {
     }
 
     fn hma(&self, period: usize) -> Self {
-        let lag = (period as f32 / 2.).round() as usize;
+        let lag = (0.5 * period as f32).round() as usize;
         let sqrt_period = (period as f32).sqrt() as usize;
 
         (2. * self.wma(lag) - self.wma(period)).wma(sqrt_period)
@@ -129,7 +129,7 @@ impl Series<f32> {
     }
 
     fn zlema(&self, period: usize) -> Series<f32> {
-        let lag = ((period as f32 - 1.) / 2.) as usize;
+        let lag = (0.5 * (period as f32 - 1.)) as usize;
 
         (self + (self - self.shift(lag))).ema(period)
     }

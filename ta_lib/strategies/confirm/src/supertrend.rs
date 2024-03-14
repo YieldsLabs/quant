@@ -2,6 +2,9 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::supertrend;
 
+const ONE: f32 = 1.0;
+const MINUS_ONE: f32 = -1.0;
+
 pub struct SupertrendConfirm {
     atr_period: usize,
     factor: f32,
@@ -29,6 +32,14 @@ impl Confirm for SupertrendConfirm {
             self.factor,
         );
 
-        (direction.seq(&1.0), direction.seq(&-1.0))
+        let prev_direction = direction.shift(1);
+        let back_2_direction = direction.shift(2);
+
+        (
+            direction.seq(&ONE) & prev_direction.seq(&ONE) & back_2_direction.seq(&ONE),
+            direction.seq(&MINUS_ONE)
+                & prev_direction.seq(&MINUS_ONE)
+                & back_2_direction.seq(&MINUS_ONE),
+        )
     }
 }

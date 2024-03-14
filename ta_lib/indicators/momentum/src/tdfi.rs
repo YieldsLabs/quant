@@ -6,7 +6,7 @@ pub fn tdfi(source: &Series<f32>, smooth_type: Smooth, period: usize, n: usize) 
     let ma = (SCALE * source).smooth(smooth_type, period);
     let sma = ma.smooth(smooth_type, period);
 
-    let tdf = (&ma - &sma).abs().pow(1) * ((ma.change(1) + sma.change(1)) / 2.0).pow(n);
+    let tdf = (&ma - &sma).abs().pow(1) * (0.5 * (ma.change(1) + sma.change(1))).pow(n);
 
     &tdf / tdf.abs().highest(period * n)
 }

@@ -1,8 +1,8 @@
 use core::prelude::*;
 
 pub fn tma(source: &Series<f32>, period: usize) -> Series<f32> {
-    let n = (period as f32 / 2.).signum() as usize;
-    let m = (period as f32 / 2. + 1.) as usize;
+    let n = (0.5 * period as f32).signum() as usize;
+    let m = (0.5 * period as f32 + 1.) as usize;
 
     source.smooth(Smooth::SMA, n).smooth(Smooth::SMA, m)
 }

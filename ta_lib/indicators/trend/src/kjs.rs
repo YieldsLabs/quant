@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn kjs(high: &Series<f32>, low: &Series<f32>, period: usize) -> Series<f32> {
-    (low.lowest(period) + high.highest(period)) / 2.
+    0.5 * (low.lowest(period) + high.highest(period))
 }
 
 #[cfg(test)]
