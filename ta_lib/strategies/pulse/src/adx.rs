@@ -38,6 +38,9 @@ impl Pulse for ADXPulse {
         );
         let adx_lower = ADX_LOWER_BARRIER + self.threshold;
 
-        (adx.sgt(&adx_lower), adx.sgt(&adx_lower))
+        (
+            adx.sgt(&adx_lower) & adx.sgt(&adx.shift(1)),
+            adx.sgt(&adx_lower) & adx.sgt(&adx.shift(1)),
+        )
     }
 }

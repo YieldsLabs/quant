@@ -26,7 +26,7 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         if len(ohlcvs) < 2:
             return stop_loss_price, take_profit_price
 
-        lookback = 20
+        lookback = 14
         factor = 2.0
 
         atr = self._atr(ohlcvs, lookback)
@@ -36,40 +36,35 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         tp_threshold = atr[-1] * self.config["tp_factor"]
         sl_threshold = atr[-1] * self.config["sl_factor"]
 
-        dist = abs(entry_price - take_profit_price)
+        dist = abs(entry_price - take_profit_price) * self.config["be_factor"]
         curr_dist = abs(entry_price - price)
 
         high = min(ohlcvs[-lookback:], key=lambda x: abs(x.high - price)).high
         low = min(ohlcvs[-lookback:], key=lambda x: abs(x.low - price)).low
 
         upper_band, lower_band = self._bb(ohlcvs, lookback, factor)
+        next_stop_loss = stop_loss_price
 
         if side == PositionSide.LONG:
             next_stop_loss = max(stop_loss_price, low - sl_threshold)
             next_take_profit = max(
-                entry_price + tp_threshold, high + risk_value, upper_band + risk_value
+                entry_price + risk_value, high + tp_threshold, upper_band
             )
 
-            if (
-                curr_dist > dist * self.config["be_factor"]
-                and ohlcvs[-1].close > entry_price
-            ):
+            if curr_dist > dist and ohlcvs[-1].low > entry_price:
                 next_stop_loss = max(
-                    stop_loss_price, entry_price + risk_value, low - risk_value
+                    stop_loss_price, entry_price - risk_value, low - sl_threshold
                 )
 
         elif side == PositionSide.SHORT:
             next_stop_loss = min(stop_loss_price, high + sl_threshold)
             next_take_profit = min(
-                entry_price - tp_threshold, low - risk_value, lower_band - risk_value
+                entry_price - risk_value, low - tp_threshold, lower_band
             )
 
-            if (
-                curr_dist > dist * self.config["be_factor"]
-                and ohlcvs[-1].close < entry_price
-            ):
+            if curr_dist > dist and ohlcvs[-1].high < entry_price:
                 next_stop_loss = min(
-                    stop_loss_price, entry_price - risk_value, high + risk_value
+                    stop_loss_price, entry_price + risk_value, high + sl_threshold
                 )
 
         return next_stop_loss, next_take_profit

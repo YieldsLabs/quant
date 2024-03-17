@@ -1,7 +1,9 @@
 use base::prelude::*;
 use core::prelude::*;
 use shared::{ma_indicator, MovingAverageType};
-use signal::{MACrossSignal, MAQuadrupleSignal, MASurpassSignal, MATestingGroundSignal};
+use signal::{
+    MACandleSignal, MACrossSignal, MAQuadrupleSignal, MASurpassSignal, MATestingGroundSignal,
+};
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.382;
@@ -19,9 +21,10 @@ impl MABaseLine {
             period: period as usize,
             signal: vec![
                 Box::new(MACrossSignal::new(ma, period)),
-                Box::new(MATestingGroundSignal::new(ma, period)),
-                Box::new(MAQuadrupleSignal::new(ma, period)),
                 Box::new(MASurpassSignal::new(ma, period)),
+                Box::new(MAQuadrupleSignal::new(ma, period)),
+                Box::new(MACandleSignal::new(ma, period)),
+                Box::new(MATestingGroundSignal::new(ma, period)),
             ],
         }
     }

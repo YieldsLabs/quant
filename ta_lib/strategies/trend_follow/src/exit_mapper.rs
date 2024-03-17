@@ -29,6 +29,11 @@ pub enum ExitConfig {
         period: f32,
         threshold: f32,
     },
+    Trix {
+        smooth_type: f32,
+        period: f32,
+        signal_period: f32,
+    },
 }
 
 pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
@@ -55,6 +60,15 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
             map_to_smooth(smooth_type as usize),
             period,
             threshold,
+        )),
+        ExitConfig::Trix {
+            smooth_type,
+            period,
+            signal_period,
+        } => Box::new(TRIXExit::new(
+            map_to_smooth(smooth_type as usize),
+            period,
+            signal_period,
         )),
         ExitConfig::Mfi { period, threshold } => Box::new(MFIExit::new(period, threshold)),
     }
