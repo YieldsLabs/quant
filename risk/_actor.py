@@ -50,7 +50,7 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=14)
+        self._ohlcv = deque(maxlen=55)
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
@@ -161,7 +161,7 @@ class RiskActor(Actor):
     async def _process_position(
         self, position: Optional[Position], ohlcvs: List[Tuple[OHLCV, bool]]
     ):
-        next_position = None
+        next_position = position
 
         if position and len(ohlcvs) > 1:
             next_position = position.next(ohlcvs)
@@ -218,19 +218,25 @@ class RiskActor(Actor):
         stop_loss_price = position.stop_loss_price
 
         price_exceeds_take_profit = (
-            side == PositionSide.LONG and price >= take_profit_price
-        ) or (side == PositionSide.SHORT and price <= take_profit_price)
+            side == PositionSide.LONG and price > take_profit_price
+        ) or (side == PositionSide.SHORT and price < take_profit_price)
 
         price_exceeds_stop_loss = (
-            side == PositionSide.LONG and price <= stop_loss_price
-        ) or (side == PositionSide.SHORT and price >= stop_loss_price)
+            side == PositionSide.LONG and price < stop_loss_price
+        ) or (side == PositionSide.SHORT and price > stop_loss_price)
 
         if price_exceeds_take_profit or price_exceeds_stop_loss:
             return position
 
         distance_to_take_profit = abs(price - take_profit_price)
+        distance_to_stop_loss = abs(price - stop_loss_price)
 
-        if distance_to_take_profit <= 0.236:
+        if distance_to_take_profit < distance_to_stop_loss and (
+            side == PositionSide.LONG
+            and price > position.entry_price
+            or side == PositionSide.SHORT
+            and price < position.entry_price
+        ):
             await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
             return None
 
