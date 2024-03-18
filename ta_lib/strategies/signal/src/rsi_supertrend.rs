@@ -6,6 +6,8 @@ use trend::supertrend;
 const RSI_UPPER_BARRIER: f32 = 75.0;
 const RSI_LOWER_BARRIER: f32 = 25.0;
 const RSI_NEUTRALITY: f32 = 50.0;
+const ONE: f32 = 1.0;
+const MINUS_ONE: f32 = -1.0;
 
 pub struct RSISupertrendSignal {
     smooth_type: Smooth,
@@ -53,23 +55,26 @@ impl Signal for RSISupertrendSignal {
 
         let prev_direction = direction.shift(1);
         let back_2_direction = direction.shift(2);
+        let back_3_direction = direction.shift(3);
 
         let prev_rsi = rsi.shift(1);
         let back_2_rsi = rsi.shift(2);
         let back_3_rsi = rsi.shift(3);
 
         (
-            direction.seq(&1.0)
-                & prev_direction.seq(&1.0)
-                & back_2_direction.seq(&1.0)
+            direction.seq(&ONE)
+                & prev_direction.seq(&ONE)
+                & back_2_direction.seq(&ONE)
+                & back_3_direction.seq(&ONE)
                 & rsi.sgt(&RSI_NEUTRALITY)
                 & rsi.slt(&upper_barrier)
                 & prev_rsi.sgt(&lower_neutrality)
                 & back_2_rsi.sgt(&lower_neutrality)
                 & back_3_rsi.sgt(&lower_neutrality),
-            direction.seq(&-1.0)
-                & prev_direction.seq(&-1.0)
-                & back_2_direction.seq(&-1.0)
+            direction.seq(&MINUS_ONE)
+                & prev_direction.seq(&MINUS_ONE)
+                & back_2_direction.seq(&MINUS_ONE)
+                & back_3_direction.seq(&MINUS_ONE)
                 & rsi.slt(&RSI_NEUTRALITY)
                 & rsi.sgt(&lower_barrier)
                 & prev_rsi.slt(&upper_neutrality)
