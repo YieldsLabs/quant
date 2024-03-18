@@ -50,7 +50,7 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=55)
+        self._ohlcv = deque(maxlen=233)
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
@@ -94,6 +94,9 @@ class RiskActor(Actor):
                 None if event.position.side == PositionSide.LONG else long_position,
                 None if event.position.side == PositionSide.SHORT else short_position,
             )
+
+            if not long_position and not short_position:
+                self._ohlcv.clear()
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
         async with self.lock:
