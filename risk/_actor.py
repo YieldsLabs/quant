@@ -235,10 +235,8 @@ class RiskActor(Actor):
         distance_to_stop_loss = abs(price - stop_loss_price)
 
         if distance_to_take_profit < distance_to_stop_loss and (
-            side == PositionSide.LONG
-            and price > position.entry_price
-            or side == PositionSide.SHORT
-            and price < position.entry_price
+            (side == PositionSide.LONG and price > position.entry_price)
+            or (side == PositionSide.SHORT and price < position.entry_price)
         ):
             await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
             return None
