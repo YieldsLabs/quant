@@ -22,12 +22,10 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         ohlcvs: List[Tuple[OHLCV]],
     ) -> float:
         ohlcvs = ohlcvs[:]
-
-        if len(ohlcvs) < 2:
-            return stop_loss_price, take_profit_price
-
         lookback = 14
-        factor = 2.0
+
+        if len(ohlcvs) < lookback:
+            return stop_loss_price, take_profit_price
 
         atr = self._atr(ohlcvs, lookback)
         price = self._price(ohlcvs)
@@ -42,30 +40,19 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         high = min(ohlcvs[-lookback:], key=lambda x: abs(x.high - price)).high
         low = min(ohlcvs[-lookback:], key=lambda x: abs(x.low - price)).low
 
-        upper_band, lower_band = self._bb(ohlcvs, lookback, factor)
         next_stop_loss = stop_loss_price
 
         if side == PositionSide.LONG:
-            next_stop_loss = max(stop_loss_price, low - sl_threshold)
-            next_take_profit = max(
-                entry_price + risk_value, high + tp_threshold, upper_band
-            )
+            next_take_profit = max(entry_price + risk_value, high + tp_threshold)
 
-            if curr_dist > dist and ohlcvs[-1].low > entry_price:
-                next_stop_loss = max(
-                    stop_loss_price, entry_price - risk_value, low - sl_threshold
-                )
+            if curr_dist > dist and price > entry_price:
+                next_stop_loss = max(entry_price - risk_value, low - sl_threshold)
 
         elif side == PositionSide.SHORT:
-            next_stop_loss = min(stop_loss_price, high + sl_threshold)
-            next_take_profit = min(
-                entry_price - risk_value, low - tp_threshold, lower_band
-            )
+            next_take_profit = min(entry_price - risk_value, low - tp_threshold)
 
-            if curr_dist > dist and ohlcvs[-1].high < entry_price:
-                next_stop_loss = min(
-                    stop_loss_price, entry_price + risk_value, high + sl_threshold
-                )
+            if curr_dist > dist and price < entry_price:
+                next_stop_loss = min(entry_price + risk_value, high + sl_threshold)
 
         return next_stop_loss, next_take_profit
 
@@ -90,17 +77,6 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
             atr[i] = np.divide((atr[i - 1] * (period - 1) + true_ranges[i]), period)
 
         return atr
-
-    @staticmethod
-    def _bb(ohlcvs: List[OHLCV], period: int, factor: float) -> float:
-        prices = np.array([ohlcv.close for ohlcv in ohlcvs[-period:]])
-        moving_avg = np.mean(prices)
-        std_dev = np.std(prices)
-
-        upper_band = moving_avg + factor * std_dev
-        lower_band = moving_avg - factor * std_dev
-
-        return upper_band, lower_band
 
     @staticmethod
     def _price(ohlcvs: List[OHLCV]) -> float:
