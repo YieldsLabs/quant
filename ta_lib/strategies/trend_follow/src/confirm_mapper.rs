@@ -42,10 +42,6 @@ pub enum ConfirmConfig {
         d_first: f32,
         d_second: f32,
     },
-    Sup {
-        atr_period: f32,
-        factor: f32,
-    },
 }
 
 pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
@@ -88,9 +84,6 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             period,
             threshold,
         )),
-        ConfirmConfig::Sup { atr_period, factor } => {
-            Box::new(SupertrendConfirm::new(atr_period, factor))
-        }
         ConfirmConfig::Roc { period } => Box::new(ROCConfirm::new(period)),
         ConfirmConfig::Stc {
             smooth_type,

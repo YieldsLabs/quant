@@ -6,7 +6,7 @@ use signal::{
 };
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
-const DEFAULT_ATR_FACTOR: f32 = 1.382;
+const DEFAULT_ATR_FACTOR: f32 = 1.236;
 
 pub struct MABaseLine {
     ma: MovingAverageType,
@@ -19,13 +19,7 @@ impl MABaseLine {
         Self {
             ma,
             period: period as usize,
-            signal: vec![
-                Box::new(MACrossSignal::new(ma, period)),
-                Box::new(MASurpassSignal::new(ma, period)),
-                Box::new(MAQuadrupleSignal::new(ma, period)),
-                Box::new(MACandleSignal::new(ma, period)),
-                Box::new(MATestingGroundSignal::new(ma, period)),
-            ],
+            signal: vec![Box::new(MASurpassSignal::new(ma, period))],
         }
     }
 }
