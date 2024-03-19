@@ -1,6 +1,6 @@
 import asyncio
 from collections import deque
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
@@ -76,26 +76,28 @@ class RiskActor(Actor):
     async def _open_position(self, event: PositionOpened):
         async with self.lock:
             long_position, short_position = self._position
+            next_position = event.position
 
             self._position = (
-                event.position
-                if event.position.side == PositionSide.LONG
+                next_position
+                if next_position.side == PositionSide.LONG
                 else long_position,
-                event.position
-                if event.position.side == PositionSide.SHORT
+                next_position
+                if next_position.side == PositionSide.SHORT
                 else short_position,
             )
 
     async def _close_position(self, event: PositionClosed):
         async with self.lock:
             long_position, short_position = self._position
+            closed_position = event.position
 
             self._position = (
-                None if event.position.side == PositionSide.LONG else long_position,
-                None if event.position.side == PositionSide.SHORT else short_position,
+                None if closed_position.side == PositionSide.LONG else long_position,
+                None if closed_position.side == PositionSide.SHORT else short_position,
             )
 
-            if not long_position and not short_position:
+            if not self._position[0] and not self._position[1]:
                 self._ohlcv.clear()
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
@@ -104,12 +106,10 @@ class RiskActor(Actor):
 
             current_long_position, current_short_position = self._position
 
-            ohlcvs = list(self._ohlcv)
-
             self._position = await asyncio.gather(
                 *[
-                    self._process_position(current_long_position, ohlcvs),
-                    self._process_position(current_short_position, ohlcvs),
+                    self._process_position(current_long_position),
+                    self._process_position(current_short_position),
                 ]
             )
 
@@ -161,10 +161,9 @@ class RiskActor(Actor):
 
             self._position = (long_position, short_position)
 
-    async def _process_position(
-        self, position: Optional[Position], ohlcvs: List[Tuple[OHLCV, bool]]
-    ):
+    async def _process_position(self, position: Optional[Position]):
         next_position = position
+        ohlcvs = list(self._ohlcv)
 
         if position and len(ohlcvs) > 1:
             next_position = position.next(ohlcvs)
@@ -238,6 +237,7 @@ class RiskActor(Actor):
             (side == PositionSide.LONG and price > position.entry_price)
             or (side == PositionSide.SHORT and price < position.entry_price)
         ):
+            print("Exit signals")
             await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
             return None
 
