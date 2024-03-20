@@ -26,6 +26,7 @@ mod vwma;
 mod wma;
 mod zlema;
 mod zlsma;
+mod zltema;
 
 pub use alma::alma;
 pub use ast::ast;
@@ -55,3 +56,4 @@ pub use vwma::vwma;
 pub use wma::wma;
 pub use zlema::zlema;
 pub use zlsma::zlsma;
+pub use zltema::zltema;
