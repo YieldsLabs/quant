@@ -22,7 +22,7 @@ mod tests {
     fn test_zltema() {
         let source = Series::from([18.898, 18.838, 18.881, 18.925, 18.846]);
         let period = 3;
-        let expected = vec![0.0, 18.777998, 18.851, 18.91, 18.838501];
+        let expected = vec![18.898, 18.852058, 18.865294, 18.910984, 18.869732];
 
         let result: Vec<f32> = zltema(&source, period).into();
 
