@@ -9,7 +9,7 @@ import numpy as np
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
+from core.models.parameter import CategoricalParameter, RandomParameter
 from core.models.smooth import Smooth
 from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
@@ -21,12 +21,12 @@ from strategy.generator.confirm.eom import EomConfirm
 from strategy.generator.confirm.roc import RocConfirm
 from strategy.generator.confirm.rsi import RsiConfirm
 from strategy.generator.confirm.stc import StcConfirm
-from strategy.generator.confirm.supertrend import SupertrendConfirm
 from strategy.generator.exit.ast import AstExit
 from strategy.generator.exit.cci import CciExit
 from strategy.generator.exit.highlow import HighLowExit
 from strategy.generator.exit.mfi import MfiExit
 from strategy.generator.exit.rsi import RsiExit
+from strategy.generator.exit.trix import TrixExit
 from strategy.generator.pulse.adx import AdxPulse
 from strategy.generator.pulse.chop import ChopPulse
 from strategy.generator.pulse.nvol import NvolPulse
@@ -41,7 +41,6 @@ from strategy.generator.signal.ce_flip import CeFlipSignal
 from strategy.generator.signal.cfo_flip import CfoFlipSignal
 from strategy.generator.signal.dch_two_ma import Dch2MaSignal
 from strategy.generator.signal.di_cross import DiCrossSignal
-from strategy.generator.signal.di_flip import DiFlipSignal
 from strategy.generator.signal.dmi_cross import DmiCrossSignal
 from strategy.generator.signal.hl import HighLowSignal
 from strategy.generator.signal.kst_cross import KstCrossSignal
@@ -172,7 +171,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 RocConfirm(),
                 RsiConfirm(),
                 StcConfirm(),
-                SupertrendConfirm(),
             ]
         )
         pulse = np.random.choice(
@@ -186,6 +184,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 RsiExit(),
                 MfiExit(),
                 CciExit(),
+                TrixExit(),
             ]
         )
 
@@ -204,12 +203,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
     def _generate_invariants(self, base_strategy: Strategy) -> List[Strategy]:
         result = [base_strategy]
         attributes = []
-        smooth_type_map = {
-            str(Smooth.EMA): [Smooth.ZLEMA, Smooth.KAMA],
-            str(Smooth.SMA): [Smooth.SMMA, Smooth.LSMA],
-            str(Smooth.WMA): [Smooth.HMA],
-            str(Smooth.SMMA): [Smooth.WMA, Smooth.EMA, Smooth.LSMA],
-        }
 
         def smooth_invariants(strategy_part):
             if not hasattr(strategy_part, "smooth_type") or not hasattr(
@@ -217,16 +210,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             ):
                 return []
 
-            smooth_types = smooth_type_map.get(str(strategy_part.smooth_type.value), [])
-            smooth_signals = smooth_type_map.get(
-                str(strategy_part.smooth_signal.value), []
-            )
             return [
-                replace(strategy_part, smooth_type=StaticParameter(smooth_type))
-                for smooth_type in smooth_types
+                replace(strategy_part, smooth_type=CategoricalParameter(Smooth))
+                for _ in range(5)
             ] + [
-                replace(strategy_part, smooth_signal=StaticParameter(smooth_signal))
-                for smooth_signal in smooth_signals
+                replace(strategy_part, smooth_signal=CategoricalParameter(Smooth))
+                for _ in range(5)
             ]
 
         def candle_invariants(strategy_part):
@@ -311,7 +300,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     RocFlipSignal(),
                     TrixFlipSignal(),
                     TsiFlipSignal(),
-                    DiFlipSignal(),
+                    CeFlipSignal(),
                     QstickFlipSignal(),
                     CcFlipSignal(),
                     CeFlipSignal(),
