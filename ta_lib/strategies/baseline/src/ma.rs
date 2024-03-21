@@ -7,6 +7,7 @@ use signal::{
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.236;
+const ONE: f32 = 1.;
 
 pub struct MABaseLine {
     ma: MovingAverageType,
@@ -37,13 +38,14 @@ impl BaseLine for MABaseLine {
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.period);
+        let diff = &ma - ma.shift(1);
 
         let dist = (&ma - &data.close).abs();
         let atr = data.atr(DEFAULT_ATR_LOOKBACK, Smooth::SMMA) * DEFAULT_ATR_FACTOR;
 
         (
-            data.close.sgt(&ma) & dist.slt(&atr),
-            data.close.slt(&ma) & dist.slt(&atr),
+            diff.sgt(&ONE) & dist.slt(&atr),
+            diff.slt(&ONE) & dist.slt(&atr),
         )
     }
 
