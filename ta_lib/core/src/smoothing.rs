@@ -31,7 +31,7 @@ impl Series<f32> {
         sum
     }
 
-    pub fn wg(&self, weights: &Vec<f32>, period: usize) -> Self {
+    pub fn wg(&self, weights: &[f32], period: usize) -> Self {
         let mut sum = Series::zero(self.len());
         let norm = weights.iter().sum::<f32>();
 
