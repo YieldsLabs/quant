@@ -25,6 +25,7 @@ mod vi;
 mod vwma;
 mod wma;
 mod zlema;
+mod zlhma;
 mod zlsma;
 mod zltema;
 
@@ -55,5 +56,6 @@ pub use vi::vi;
 pub use vwma::vwma;
 pub use wma::wma;
 pub use zlema::zlema;
+pub use zlhma::zlhma;
 pub use zlsma::zlsma;
 pub use zltema::zltema;

@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::{
     alma, dema, ema, frama, gma, hma, kama, kjs, lsma, md, rmsma, sinwma, sma, smma, t3, tema, tma,
-    vwma, wma, zlema, zlsma, zltema,
+    vwma, wma, zlema, zlhma, zlsma, zltema,
 };
 
 #[derive(Copy, Clone)]
@@ -29,6 +29,7 @@ pub enum MovingAverageType {
     ZLEMA,
     ZLSMA,
     ZLTEMA,
+    ZLHMA,
 }
 
 pub fn ma_indicator(ma: &MovingAverageType, data: &OHLCVSeries, period: usize) -> Series<f32> {
@@ -55,5 +56,6 @@ pub fn ma_indicator(ma: &MovingAverageType, data: &OHLCVSeries, period: usize) -
         MovingAverageType::ZLEMA => zlema(&data.close, period),
         MovingAverageType::ZLSMA => zlsma(&data.close, period),
         MovingAverageType::ZLTEMA => zltema(&data.close, period),
+        MovingAverageType::ZLHMA => zlhma(&data.close, period, 3),
     }
 }
