@@ -1,10 +1,10 @@
 use core::prelude::*;
 
 pub fn vidya(source: &Series<f32>, period: usize, alpha: f32) -> Series<f32> {
-    let volatility = source.std(period).smooth(Smooth::WMA, period);
+    let alpha = alpha / source.std(period).smooth(Smooth::WMA, period);
     let ema = source.smooth(Smooth::EMA, period);
 
-    &ema + alpha * (source - &ema) / volatility
+    &ema + alpha * (source - &ema)
 }
 
 #[cfg(test)]
