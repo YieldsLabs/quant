@@ -21,11 +21,12 @@ pub fn map_to_ma(smoothing: usize) -> MovingAverageType {
         17 => MovingAverageType::TMA,
         18 => MovingAverageType::VIDYA,
         19 => MovingAverageType::VWMA,
-        20 => MovingAverageType::WMA,
-        21 => MovingAverageType::ZLEMA,
-        22 => MovingAverageType::ZLSMA,
-        23 => MovingAverageType::ZLTEMA,
-        24 => MovingAverageType::ZLHMA,
+        20 => MovingAverageType::VWEMA,
+        21 => MovingAverageType::WMA,
+        22 => MovingAverageType::ZLEMA,
+        23 => MovingAverageType::ZLSMA,
+        24 => MovingAverageType::ZLTEMA,
+        25 => MovingAverageType::ZLHMA,
         _ => MovingAverageType::SMA,
     }
 }
