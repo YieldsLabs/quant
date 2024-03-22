@@ -53,7 +53,7 @@ pub fn ma_indicator(ma: &MovingAverageType, data: &OHLCVSeries, period: usize) -
         MovingAverageType::TTHREE => t3(&data.close, period),
         MovingAverageType::TEMA => tema(&data.close, period),
         MovingAverageType::TMA => tma(&data.close, period),
-        MovingAverageType::VIDYA => vidya(&data.close, period, 30),
+        MovingAverageType::VIDYA => vidya(&data.close, period, 3 * period),
         MovingAverageType::VWMA => vwma(&data.close, &data.volume, period),
         MovingAverageType::VWEMA => vwema(&data.close, &data.volume, period),
         MovingAverageType::WMA => wma(&data.close, period),
