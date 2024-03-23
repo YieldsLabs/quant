@@ -1,8 +1,5 @@
 use core::prelude::*;
 
-const ONE: f32 = 1.0;
-const MINUS_ONE: f32 = -1.0;
-
 pub fn supertrend(
     hl2: &Series<f32>,
     close: &Series<f32>,

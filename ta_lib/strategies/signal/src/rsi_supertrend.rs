@@ -6,8 +6,6 @@ use trend::supertrend;
 const RSI_UPPER_BARRIER: f32 = 75.0;
 const RSI_LOWER_BARRIER: f32 = 25.0;
 const RSI_NEUTRALITY: f32 = 50.0;
-const ONE: f32 = 1.0;
-const MINUS_ONE: f32 = -1.0;
 
 pub struct RSISupertrendSignal {
     smooth_type: Smooth,

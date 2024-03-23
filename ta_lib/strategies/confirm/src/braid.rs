@@ -1,9 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
 
-const ONE: f32 = 1.;
-const MINUS_ONE: f32 = -1.;
-
 pub struct BraidConfirm {
     smooth_type: Smooth,
     period_one: usize,
