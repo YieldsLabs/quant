@@ -2,15 +2,15 @@ use crate::stoch;
 use core::prelude::*;
 
 pub fn stochosc(
+    source: &Series<f32>,
     high: &Series<f32>,
     low: &Series<f32>,
-    close: &Series<f32>,
     smooth_type: Smooth,
     period: usize,
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let stoch = stoch(high, low, close, period);
+    let stoch = stoch(source, high, low, period);
 
     let k = stoch.smooth(smooth_type, k_period);
 
@@ -36,7 +36,7 @@ mod tests {
         let expected_k = [50.0, 62.5, 58.3333, 50.0, 41.6666];
         let expected_d = [50.0, 56.25, 56.9444, 56.9444, 50.0];
 
-        let (k, d) = stochosc(&high, &low, &close, Smooth::SMA, period, k_period, d_period);
+        let (k, d) = stochosc(&close, &high, &low, Smooth::SMA, period, k_period, d_period);
 
         let result_k: Vec<f32> = k.into();
         let result_d: Vec<f32> = d.into();

@@ -1,9 +1,7 @@
 use core::prelude::*;
 
-const SCALE: f32 = 1000.;
-
 pub fn tdfi(source: &Series<f32>, smooth_type: Smooth, period: usize, n: usize) -> Series<f32> {
-    let ma = (SCALE * source).smooth(smooth_type, period);
+    let ma = (SCALE * 10. * source).smooth(smooth_type, period);
     let sma = ma.smooth(smooth_type, period);
 
     let tdf = (&ma - &sma).abs().pow(1) * (0.5 * (ma.change(1) + sma.change(1))).pow(n);

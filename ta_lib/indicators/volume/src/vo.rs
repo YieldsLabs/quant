@@ -1,7 +1,5 @@
 use core::prelude::*;
 
-const PERCENTAGE_SCALE: f32 = 100.;
-
 pub fn vo(
     source: &Series<f32>,
     smooth_type: Smooth,
@@ -11,7 +9,7 @@ pub fn vo(
     let vo_short = source.smooth(smooth_type, short_period);
     let vo_long = source.smooth(smooth_type, long_period);
 
-    PERCENTAGE_SCALE * (vo_short - &vo_long) / vo_long
+    SCALE * (vo_short - &vo_long) / vo_long
 }
 
 #[cfg(test)]

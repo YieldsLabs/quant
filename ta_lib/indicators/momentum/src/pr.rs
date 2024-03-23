@@ -1,7 +1,5 @@
 use core::prelude::*;
 
-const SCALE: f32 = 100.;
-
 pub fn pr(
     source: &Series<f32>,
     high: &Series<f32>,

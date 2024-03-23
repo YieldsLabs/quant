@@ -1,8 +1,6 @@
 use crate::roc;
 use core::prelude::*;
 
-const SCALE: f32 = 1.;
-
 pub fn trix(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
     let ema3 = source
         .smooth(smooth_type, period)
@@ -24,21 +22,8 @@ mod tests {
         ]);
         let period = 3;
         let expected = vec![
-            0.0,
-            0.0036433754,
-            -0.016401544,
-            -0.010020561,
-            0.009569516,
-            0.0061472696,
-            -0.019254234,
-            -0.0332163,
-            -0.050126247,
-            -0.06273622,
-            -0.05246739,
-            -0.0370036,
-            -0.026727742,
-            -0.029872786,
-            -0.009277002,
+            0.0, 0.36433753, -1.6401544, -1.002056, 0.9569516, 0.61472696, -1.9254234, -3.3216302,
+            -5.0126247, -6.273622, -5.246739, -3.7003598, -2.672774, -2.9872787, -0.9277002,
         ];
 
         let result: Vec<f32> = trix(&source, Smooth::EMA, period).into();

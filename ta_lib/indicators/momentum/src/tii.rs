@@ -1,8 +1,5 @@
 use core::prelude::*;
 
-const ZERO: f32 = 0.;
-const PERCENTAGE_SCALE: f32 = 100.;
-
 pub fn tii(
     source: &Series<f32>,
     smooth_type: Smooth,
@@ -17,7 +14,7 @@ pub fn tii(
         .abs()
         .smooth(smooth_type, minor_period);
 
-    PERCENTAGE_SCALE * &positive_sum / (positive_sum + negative_sum)
+    SCALE * &positive_sum / (positive_sum + negative_sum)
 }
 
 #[cfg(test)]

@@ -1,9 +1,7 @@
 use core::prelude::*;
 
-const PERCENTAGE_SCALE: f32 = 100.;
-
 pub fn nvol(volume: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
-    PERCENTAGE_SCALE * volume / volume.smooth(smooth_type, period)
+    SCALE * volume / volume.smooth(smooth_type, period)
 }
 
 #[cfg(test)]

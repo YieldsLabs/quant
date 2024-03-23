@@ -1,11 +1,9 @@
 use core::prelude::*;
 
-const PERCENTAGE_SCALE: f32 = 100.;
-
 pub fn di(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
     let ma = source.smooth(smooth_type, period);
 
-    PERCENTAGE_SCALE * (source - &ma) / ma
+    SCALE * (source - &ma) / ma
 }
 
 #[cfg(test)]

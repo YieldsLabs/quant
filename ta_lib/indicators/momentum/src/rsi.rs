@@ -1,8 +1,5 @@
 use core::prelude::*;
 
-const ZERO: f32 = 0.;
-const PERCENTAGE_SCALE: f32 = 100.;
-
 pub fn rsi(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
     let len = source.len();
 
@@ -10,13 +7,9 @@ pub fn rsi(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f
     let up = mom.max(&ZERO).smooth(smooth_type, period);
     let down = mom.min(&ZERO).negate().smooth(smooth_type, period);
 
-    let oneh = Series::fill(PERCENTAGE_SCALE, len);
+    let oneh = Series::fill(SCALE, len);
 
-    iff!(
-        down.seq(&ZERO),
-        oneh,
-        PERCENTAGE_SCALE - (PERCENTAGE_SCALE / (1. + up / down))
-    )
+    iff!(down.seq(&ZERO), oneh, SCALE - (SCALE / (1. + up / down)))
 }
 
 #[cfg(test)]

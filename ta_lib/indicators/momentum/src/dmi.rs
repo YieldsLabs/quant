@@ -1,8 +1,5 @@
 use core::prelude::*;
 
-const ZERO: f32 = 0.;
-const PERCENTAGE_SCALE: f32 = 100.;
-
 pub fn dmi(
     high: &Series<f32>,
     low: &Series<f32>,
@@ -21,12 +18,12 @@ pub fn dmi(
     let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
     let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
 
-    let di_plus = PERCENTAGE_SCALE * dm_plus.smooth(smooth_type, di_period) / atr;
-    let di_minus = PERCENTAGE_SCALE * dm_minus.smooth(smooth_type, di_period) / atr;
+    let di_plus = SCALE * dm_plus.smooth(smooth_type, di_period) / atr;
+    let di_minus = SCALE * dm_minus.smooth(smooth_type, di_period) / atr;
 
     let sum = &di_plus + &di_minus;
 
-    let adx = PERCENTAGE_SCALE
+    let adx = SCALE
         * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum))
             .smooth(smooth_type, adx_period);
 

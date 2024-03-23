@@ -1,5 +1,6 @@
 mod bitwise;
 mod cmp;
+mod constants;
 mod cross;
 mod extremum;
 mod from;
@@ -11,6 +12,7 @@ mod smoothing;
 mod traits;
 
 pub mod prelude {
+    pub use crate::constants::*;
     pub use crate::iff;
     pub use crate::series::Series;
     pub use crate::smoothing::Smooth;

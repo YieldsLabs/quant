@@ -1,7 +1,5 @@
 use core::prelude::*;
 
-const PERCENTAGE_SCALE: f32 = 100.;
-
 pub fn tsi(
     source: &Series<f32>,
     smooth_type: Smooth,
@@ -18,7 +16,7 @@ pub fn tsi(
         .smooth(smooth_type, long_period)
         .smooth(smooth_type, short_period);
 
-    PERCENTAGE_SCALE * pcds / apcds
+    SCALE * pcds / apcds
 }
 
 #[cfg(test)]

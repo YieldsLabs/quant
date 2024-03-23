@@ -20,7 +20,10 @@ impl MABaseLine {
         Self {
             ma,
             period: period as usize,
-            signal: vec![Box::new(MASurpassSignal::new(ma, period))],
+            signal: vec![
+                Box::new(MASurpassSignal::new(ma, period)),
+                Box::new(MACrossSignal::new(ma, period)),
+            ],
         }
     }
 }
