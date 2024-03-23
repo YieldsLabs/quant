@@ -1,13 +1,14 @@
 use base::prelude::*;
 use core::prelude::*;
 use trend::{
-    alma, dema, ema, frama, gma, hma, kama, kjs, lsma, md, rmsma, sinwma, sma, smma, t3, tema, tma,
-    vidya, vwema, vwma, wma, zlema, zlhma, zlsma, zltema,
+    alma, cama, dema, ema, frama, gma, hma, kama, kjs, lsma, md, rmsma, sinwma, sma, smma, t3,
+    tema, tma, vidya, vwema, vwma, wma, zlema, zlhma, zlsma, zltema,
 };
 
 #[derive(Copy, Clone)]
 pub enum MovingAverageType {
     ALMA,
+    CAMA,
     DEMA,
     EMA,
     FRAMA,
@@ -37,6 +38,7 @@ pub enum MovingAverageType {
 pub fn ma_indicator(ma: &MovingAverageType, data: &OHLCVSeries, period: usize) -> Series<f32> {
     match ma {
         MovingAverageType::ALMA => alma(&data.close, period, 0.85, 6.0),
+        MovingAverageType::CAMA => cama(&data.close, &data.high, &data.low, &data.tr(), period),
         MovingAverageType::DEMA => dema(&data.close, period),
         MovingAverageType::EMA => ema(&data.close, period),
         MovingAverageType::FRAMA => frama(&data.high, &data.low, &data.close, period),
