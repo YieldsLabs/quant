@@ -12,7 +12,7 @@ pub fn sso(
     let low_smooth = low.smooth(smooth_type, period);
     let close_smooth = close.smooth(smooth_type, period);
 
-    let k = stoch(&high_smooth, &low_smooth, &close_smooth, period);
+    let k = stoch(&close_smooth, &high_smooth, &low_smooth, period);
 
     k.nz(Some(50.))
 }
