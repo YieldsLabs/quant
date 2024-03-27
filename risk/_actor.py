@@ -107,12 +107,14 @@ class RiskActor(Actor):
         async with self.lock:
             self._ohlcv.append(event.ohlcv)
 
-            await asyncio.gather(
+            long_position, short_position = await asyncio.gather(
                 *[
                     self._process_position(self._position[0]),
                     self._process_position(self._position[1]),
                 ]
             )
+
+            self._position = (long_position, short_position)
 
     async def _handle_reverse_exit(
         self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
@@ -160,6 +162,7 @@ class RiskActor(Actor):
 
     async def _process_position(self, position: Optional[Position]):
         ohlcvs = list(self._ohlcv)
+        next_position = position
 
         if position and len(ohlcvs) > 1:
             next_position = position.next(ohlcvs)
@@ -169,6 +172,8 @@ class RiskActor(Actor):
 
             if exit_event:
                 await self.tell(exit_event)
+
+        return next_position
 
     def _create_exit_event(self, position: Position, ohlcv: OHLCV):
         expiration = (
