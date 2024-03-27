@@ -208,10 +208,6 @@ class SmartRouter(AbstractEventManager):
             if not self.exchange.fetch_position(symbol, position.side):
                 break
 
-            if spread < -0.001:
-                self.exchange.close_full_position(symbol, position.side)
-                break
-
             curr_time = time.time()
             expired_orders = [
                 order_id
@@ -234,9 +230,8 @@ class SmartRouter(AbstractEventManager):
 
             if (
                 not self.exchange.has_open_orders(symbol)
-                and not len(order_timestamps.keys())
-                and spread < max_spread
-            ):
+                or not len(order_timestamps.keys())
+            ) and (spread < max_spread or spread < 0):
                 order_id = self.exchange.create_reduce_order(
                     symbol, position.side, size, price
                 )

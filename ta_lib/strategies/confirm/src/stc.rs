@@ -2,8 +2,8 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::stc;
 
-const LOWER_LINE: f32 = 25.0;
-const UPPER_LINE: f32 = 75.0;
+const LOWER_LINE: f32 = 25.;
+const UPPER_LINE: f32 = 75.;
 
 pub struct STCConfirm {
     smooth_type: Smooth,

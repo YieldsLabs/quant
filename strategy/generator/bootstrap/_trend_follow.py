@@ -15,7 +15,7 @@ from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from strategy.generator.baseline.ma import MaBaseLine
-from strategy.generator.confirm.braid import BraidConfirm
+from strategy.generator.confirm.cci import CciConfirm
 from strategy.generator.confirm.dpo import DpoConfirm
 from strategy.generator.confirm.eom import EomConfirm
 from strategy.generator.confirm.roc import RocConfirm
@@ -24,10 +24,12 @@ from strategy.generator.confirm.stc import StcConfirm
 from strategy.generator.exit.ast import AstExit
 from strategy.generator.exit.cci import CciExit
 from strategy.generator.exit.highlow import HighLowExit
+from strategy.generator.exit.ma import MaExit
 from strategy.generator.exit.mfi import MfiExit
 from strategy.generator.exit.rsi import RsiExit
 from strategy.generator.exit.trix import TrixExit
 from strategy.generator.pulse.adx import AdxPulse
+from strategy.generator.pulse.braid import BraidPulse
 from strategy.generator.pulse.chop import ChopPulse
 from strategy.generator.pulse.nvol import NvolPulse
 from strategy.generator.pulse.tdfi import TdfiPulse
@@ -165,22 +167,30 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         baseline = np.random.choice([MaBaseLine()])
         confirm = np.random.choice(
             [
-                BraidConfirm(),
                 DpoConfirm(),
                 EomConfirm(),
                 RocConfirm(),
                 RsiConfirm(),
                 StcConfirm(),
+                CciConfirm(),
             ]
         )
         pulse = np.random.choice(
-            [AdxPulse(), ChopPulse(), VoPulse(), NvolPulse(), TdfiPulse()]
+            [
+                AdxPulse(),
+                ChopPulse(),
+                BraidPulse(),
+                VoPulse(),
+                NvolPulse(),
+                TdfiPulse(),
+            ]
         )
         stop_loss = np.random.choice([AtrStopLoss()])
         exit_signal = np.random.choice(
             [
                 AstExit(),
                 HighLowExit(),
+                MaExit(),
                 RsiExit(),
                 MfiExit(),
                 CciExit(),

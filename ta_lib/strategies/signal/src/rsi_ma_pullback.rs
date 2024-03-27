@@ -8,7 +8,7 @@ pub struct RSIMaPullbackSignal {
     smooth_type: Smooth,
     rsi_period: usize,
     smooth_signal: Smooth,
-    smoothing_period: usize,
+    smooth_period: usize,
     threshold: f32,
 }
 
@@ -17,14 +17,14 @@ impl RSIMaPullbackSignal {
         smooth_type: Smooth,
         rsi_period: f32,
         smooth_signal: Smooth,
-        smoothing_period: f32,
+        smooth_period: f32,
         threshold: f32,
     ) -> Self {
         Self {
             smooth_type,
             rsi_period: rsi_period as usize,
             smooth_signal,
-            smoothing_period: smoothing_period as usize,
+            smooth_period: smooth_period as usize,
             threshold,
         }
     }
@@ -32,12 +32,12 @@ impl RSIMaPullbackSignal {
 
 impl Signal for RSIMaPullbackSignal {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.rsi_period, self.smoothing_period)
+        std::cmp::max(self.rsi_period, self.smooth_period)
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
-        let rsi_ma = rsi.smooth(self.smooth_signal, self.smoothing_period);
+        let rsi_ma = rsi.smooth(self.smooth_signal, self.smooth_period);
         let upper_neutrality = RSI_NEUTRALITY + self.threshold;
         let lower_neutrality = RSI_NEUTRALITY - self.threshold;
 

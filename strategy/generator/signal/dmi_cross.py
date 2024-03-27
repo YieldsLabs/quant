@@ -13,5 +13,5 @@ from .base import Signal, SignalType
 class DmiCrossSignal(Signal):
     type: SignalType = SignalType.DmiCross
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)
-    adx_period: Parameter = StaticParameter(12.0)
-    di_period: Parameter = StaticParameter(12.0)
+    adx_period: Parameter = StaticParameter(4.0)
+    di_period: Parameter = StaticParameter(4.0)

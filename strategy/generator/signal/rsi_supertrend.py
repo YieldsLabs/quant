@@ -16,5 +16,5 @@ class RsiSupertrendSignal(Signal):
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)
     rsi_period: Parameter = StaticParameter(34.0)
     threshold: Parameter = RandomParameter(2.0, 4.0, 1.0)
-    atr_period: Parameter = StaticParameter(10.0)
-    factor: Parameter = StaticParameter(3.0)
+    atr_period: Parameter = StaticParameter(16.0)
+    factor: Parameter = StaticParameter(4.5)

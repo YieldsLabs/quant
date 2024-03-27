@@ -5,9 +5,9 @@ from core.models.indicator import Indicator
 
 
 class ConfirmType(Enum):
-    Braid = "Braid"
     Dumb = "Dumb"
     Dpo = "Dpo"
+    Cci = "Cci"
     Eom = "Eom"
     Roc = "Roc"
     Rsi = "Rsi"

@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::roc;
 
-const ROC_FILTER: f32 = 0.0;
+const ROC_FILTER: f32 = 0.;
 
 pub struct ROCConfirm {
     period: usize,

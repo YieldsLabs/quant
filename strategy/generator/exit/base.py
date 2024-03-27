@@ -9,6 +9,7 @@ class ExitType(Enum):
     Dumb = "Dumb"
     HighLow = "HighLow"
     Rsi = "Rsi"
+    Ma = "Ma"
     Mfi = "Mfi"
     Cci = "Cci"
     Trix = "Trix"

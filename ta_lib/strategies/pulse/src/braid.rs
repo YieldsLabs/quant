@@ -1,7 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 
-pub struct BraidConfirm {
+pub struct BraidPulse {
     smooth_type: Smooth,
     period_one: usize,
     period_two: usize,
@@ -10,7 +10,7 @@ pub struct BraidConfirm {
     atr_period: usize,
 }
 
-impl BraidConfirm {
+impl BraidPulse {
     pub fn new(
         smooth_type: Smooth,
         period_one: f32,
@@ -30,13 +30,13 @@ impl BraidConfirm {
     }
 }
 
-impl Confirm for BraidConfirm {
+impl Pulse for BraidPulse {
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.period_one, self.period_two);
         std::cmp::max(adj_lookback, self.period_three)
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma_one = data.close.smooth(self.smooth_type, self.period_one);
         let ma_two = data.open.smooth(self.smooth_type, self.period_two);
         let ma_three = data.close.smooth(self.smooth_type, self.period_three);
@@ -49,19 +49,23 @@ impl Confirm for BraidConfirm {
 
         let len = data.close.len();
 
-        let regime = iff!(
-            ma_one.sgt(&ma_two),
-            Series::one(len),
-            iff!(
-                ma_one.slt(&ma_two),
-                Series::fill(MINUS_ONE, len),
-                Series::zero(len)
-            )
+        let mut regime = iff!(
+            ma_two.sgt(&ma_one) & diff.sgt(&filter),
+            Series::fill(MINUS_ONE, len),
+            Series::zero(len)
         );
 
+        regime = iff!(
+            ma_one.sgt(&ma_two) & diff.sgt(&filter),
+            Series::one(len),
+            regime
+        );
+
+        let prev_regime = regime.shift(1);
+
         (
-            regime.seq(&ONE) & diff.sgt(&filter),
-            regime.seq(&MINUS_ONE) & diff.sgt(&filter),
+            regime.seq(&ONE) & (prev_regime.seq(&ZERO) | prev_regime.seq(&MINUS_ONE)),
+            regime.seq(&MINUS_ONE) & (prev_regime.seq(&ZERO) | prev_regime.seq(&ONE)),
         )
     }
 }

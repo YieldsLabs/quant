@@ -1,3 +1,4 @@
+use crate::ma_mapper::map_to_ma;
 use crate::smooth_mapper::map_to_smooth;
 use base::prelude::*;
 use exit::*;
@@ -24,6 +25,10 @@ pub enum ExitConfig {
         smooth_type: f32,
         period: f32,
         threshold: f32,
+    },
+    Ma {
+        ma: f32,
+        period: f32,
     },
     Mfi {
         period: f32,
@@ -71,5 +76,6 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
             signal_period,
         )),
         ExitConfig::Mfi { period, threshold } => Box::new(MFIExit::new(period, threshold)),
+        ExitConfig::Ma { ma, period } => Box::new(MAExit::new(map_to_ma(ma as usize), period)),
     }
 }

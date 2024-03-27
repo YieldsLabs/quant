@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use volume::eom;
 
-const EOM_FILTER: f32 = 0.0;
+const EOM_FILTER: f32 = 0.;
 
 pub struct EOMConfirm {
     smooth_type: Smooth,

@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::dpo;
 
-const DPO_FILTER: f32 = 0.0;
+const DPO_FILTER: f32 = 0.;
 
 pub struct DPOConfirm {
     smooth_type: Smooth,

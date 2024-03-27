@@ -66,12 +66,19 @@ class PositionActor(Actor):
 
     async def on_receive(self, event):
         symbol, _ = self._get_event_key(event)
-        await asyncio.gather(
-            *[
-                self.long_sm.process_event(symbol, event),
-                self.short_sm.process_event(symbol, event),
-            ]
-        )
+
+        if hasattr(event, "position"):
+            if event.position.side == PositionSide.LONG:
+                await self.long_sm.process_event(symbol, event)
+            if event.position.side == PositionSide.SHORT:
+                await self.short_sm.process_event(symbol, event)
+        else:
+            await asyncio.gather(
+                *[
+                    self.long_sm.process_event(symbol, event),
+                    self.short_sm.process_event(symbol, event),
+                ]
+            )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         async def create_and_store_position(event: SignalEvent):
@@ -88,7 +95,6 @@ class PositionActor(Actor):
             return True
 
         symbol, timeframe = self._get_event_key(event)
-
         long_position, short_position = await self.state.retrieve_position(
             symbol, timeframe
         )
@@ -112,24 +118,15 @@ class PositionActor(Actor):
         return True
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
+        if isinstance(event, RiskThresholdBreached):
+            await self.state.update_stored_position(event.position)
+            await self.tell(PositionCloseRequested(event.position, event.exit_price))
+            return True
+
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
             symbol, timeframe
         )
-
-        if isinstance(event, RiskThresholdBreached):
-            if (
-                event.position.side == PositionSide.LONG
-                and long_position.last_modified > event.meta.timestamp
-            ) or (
-                event.position.side == PositionSide.SHORT
-                and short_position.last_modified > event.meta.timestamp
-            ):
-                return False
-
-            await self.state.update_stored_position(event.position)
-            await self.tell(PositionCloseRequested(event.position, event.exit_price))
-            return True
 
         if isinstance(event, BacktestEnded) and any([long_position, short_position]):
             if long_position:

@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::dmi;
 
-const ADX_LOWER_BARRIER: f32 = 28.88;
+const ADX_LOWER_BARRIER: f32 = 25.;
 
 pub struct ADXPulse {
     smooth_type: Smooth,
@@ -38,9 +38,6 @@ impl Pulse for ADXPulse {
         );
         let adx_lower = ADX_LOWER_BARRIER + self.threshold;
 
-        (
-            adx.sgt(&adx_lower) & adx.sgt(&adx.shift(1)),
-            adx.sgt(&adx_lower) & adx.sgt(&adx.shift(1)),
-        )
+        (adx.sgt(&adx_lower), adx.sgt(&adx_lower))
     }
 }
