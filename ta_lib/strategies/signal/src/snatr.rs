@@ -8,7 +8,7 @@ const SNATR_LOWER_BARRIER: f32 = 0.2;
 pub struct SNATRSignal {
     smooth_type: Smooth,
     atr_period: usize,
-    atr_smoothing_period: usize,
+    atr_smooth_period: usize,
     threshold: f32,
 }
 
@@ -16,13 +16,13 @@ impl SNATRSignal {
     pub fn new(
         smooth_type: Smooth,
         atr_period: f32,
-        atr_smoothing_period: f32,
+        atr_smooth_period: f32,
         threshold: f32,
     ) -> Self {
         Self {
             smooth_type,
             atr_period: atr_period as usize,
-            atr_smoothing_period: atr_smoothing_period as usize,
+            atr_smooth_period: atr_smooth_period as usize,
             threshold,
         }
     }
@@ -30,7 +30,7 @@ impl SNATRSignal {
 
 impl Signal for SNATRSignal {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.atr_period, self.atr_smoothing_period)
+        std::cmp::max(self.atr_period, self.atr_smooth_period)
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -38,7 +38,7 @@ impl Signal for SNATRSignal {
             &data.atr(self.atr_period, Smooth::SMMA),
             self.atr_period,
             self.smooth_type,
-            self.atr_smoothing_period,
+            self.atr_smooth_period,
         );
         let upper_barrier = SNATR_UPPER_BARRIER - self.threshold;
         let lower_barrier = SNATR_LOWER_BARRIER + self.threshold;

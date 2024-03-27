@@ -13,4 +13,4 @@ from .base import Signal, SignalType
 class BopFlipSignal(Signal):
     type: SignalType = SignalType.BopFlip
     smooth_type: Parameter = StaticParameter(Smooth.SMA)
-    smoothing_period: Parameter = StaticParameter(14.0)
+    smooth_period: Parameter = StaticParameter(14.0)

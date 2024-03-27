@@ -11,5 +11,5 @@ class SnatrSignal(Signal):
     type: SignalType = SignalType.SnAtr
     smooth_type: Parameter = StaticParameter(Smooth.WMA)
     atr_period: Parameter = StaticParameter(60.0)
-    atr_smoothing_period: Parameter = StaticParameter(13.0)
+    atr_smooth_period: Parameter = StaticParameter(13.0)
     threshold: Parameter = RandomParameter(0.0, 0.2, 0.1)

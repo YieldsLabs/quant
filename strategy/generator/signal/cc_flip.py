@@ -15,4 +15,4 @@ class CcFlipSignal(Signal):
     short_period: Parameter = StaticParameter(11.0)
     long_period: Parameter = StaticParameter(14.0)
     smooth_type: Parameter = StaticParameter(Smooth.WMA)
-    smoothing_period: Parameter = StaticParameter(20.0)
+    smooth_period: Parameter = StaticParameter(20.0)
