@@ -60,8 +60,8 @@ class BybitWS(AbstractWS):
         self.ws = await websockets.connect(
             self.wss,
             open_timeout=None,
-            ping_interval=20,
-            ping_timeout=10,
+            ping_interval=30,
+            ping_timeout=15,
             close_timeout=None,
         )
 
@@ -69,7 +69,7 @@ class BybitWS(AbstractWS):
 
     @retry(
         max_retries=13,
-        initial_retry_delay=3,
+        initial_retry_delay=1,
         handled_exceptions=(
             ConnectionError,
             RuntimeError,
@@ -89,7 +89,7 @@ class BybitWS(AbstractWS):
 
     @retry(
         max_retries=13,
-        initial_retry_delay=5,
+        initial_retry_delay=1,
         handled_exceptions=(RuntimeError, ConnectionClosedError),
     )
     async def receive(self, symbol, timeframe):
