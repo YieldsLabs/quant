@@ -34,7 +34,7 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         tp_threshold = atr[-1] * self.config["tp_factor"]
         sl_threshold = atr[-1] * self.config["sl_factor"]
 
-        dist = abs(entry_price - take_profit_price) * self.config["be_factor"]
+        dist = abs(entry_price - take_profit_price) * self.config["tsl_factor"]
         curr_dist = abs(entry_price - price)
 
         high = min(ohlcvs[-lookback:], key=lambda x: abs(x.high - price)).high
