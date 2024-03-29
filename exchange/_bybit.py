@@ -33,6 +33,7 @@ class Bybit(AbstractExchange):
 
     def _initialize(self, api_key: str, api_secret: str):
         self.connector = ccxt.bybit({"apiKey": api_key, "secret": api_secret})
+        self.connector.load_markets()
 
     def update_symbol_settings(
         self,
