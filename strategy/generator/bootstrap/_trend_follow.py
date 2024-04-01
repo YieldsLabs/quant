@@ -9,7 +9,7 @@ import numpy as np
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.candle import TrendCandleType
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import CategoricalParameter, RandomParameter
+from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
 from core.models.smooth import Smooth
 from core.models.strategy import Strategy, StrategyType
 from core.models.symbol import Symbol
@@ -21,79 +21,39 @@ from strategy.generator.confirm.eom import EomConfirm
 from strategy.generator.confirm.roc import RocConfirm
 from strategy.generator.confirm.rsi import RsiConfirm
 from strategy.generator.confirm.stc import StcConfirm
-from strategy.generator.exit.ast import AstExit
-from strategy.generator.exit.cci import CciExit
 from strategy.generator.exit.highlow import HighLowExit
-from strategy.generator.exit.ma import MaExit
 from strategy.generator.exit.mfi import MfiExit
-from strategy.generator.exit.rsi import RsiExit
-from strategy.generator.exit.trix import TrixExit
 from strategy.generator.pulse.adx import AdxPulse
 from strategy.generator.pulse.braid import BraidPulse
 from strategy.generator.pulse.chop import ChopPulse
 from strategy.generator.pulse.nvol import NvolPulse
 from strategy.generator.pulse.tdfi import TdfiPulse
 from strategy.generator.pulse.vo import VoPulse
-from strategy.generator.signal.ao_flip import AoFlipSignal
-from strategy.generator.signal.ao_saucer import AoSaucerSignal
-from strategy.generator.signal.apo_flip import ApoFlipSignal
-from strategy.generator.signal.bop_flip import BopFlipSignal
-from strategy.generator.signal.cc_flip import CcFlipSignal
-from strategy.generator.signal.ce_flip import CeFlipSignal
-from strategy.generator.signal.cfo_flip import CfoFlipSignal
 from strategy.generator.signal.dch_two_ma import Dch2MaSignal
-from strategy.generator.signal.di_cross import DiCrossSignal
 from strategy.generator.signal.dmi_cross import DmiCrossSignal
-from strategy.generator.signal.hl import HighLowSignal
-from strategy.generator.signal.kst_cross import KstCrossSignal
-from strategy.generator.signal.ma_three_cross import Ma3CrossSignal
-from strategy.generator.signal.macd_bb import MacdBbSignal
-from strategy.generator.signal.macd_color_switch import MacdColorSwitchSignal
 from strategy.generator.signal.macd_cross import MacdCrossSignal
-from strategy.generator.signal.macd_flip import MacdFlipSignal
-from strategy.generator.signal.qstick_cross import QstickCrossSignal
-from strategy.generator.signal.qstick_flip import QstickFlipSignal
-from strategy.generator.signal.roc_flip import RocFlipSignal
-from strategy.generator.signal.rsi_ma_pullback import RsiMaPullbackSignal
-from strategy.generator.signal.rsi_neutrality_cross import RsiNautralityCrossSignal
-from strategy.generator.signal.rsi_neutrality_pullback import (
-    RsiNautralityPullbackSignal,
-)
 from strategy.generator.signal.rsi_neutrality_rejection import (
     RsiNautralityRejectionSignal,
 )
-from strategy.generator.signal.rsi_supertrend import RsiSupertrendSignal
-from strategy.generator.signal.rsi_two_ma import Rsi2MaSignal
 from strategy.generator.signal.rsi_v import RsiVSignal
-from strategy.generator.signal.snatr import SnatrSignal
-from strategy.generator.signal.stc_flip import StcFlipSignal
-from strategy.generator.signal.stoch_cross import StochCrossSignal
-from strategy.generator.signal.supertrend_flip import SupertrendFlipSignal
-from strategy.generator.signal.tii_cross import TiiCrossSignal
 from strategy.generator.signal.tii_v import TiiVSignal
 from strategy.generator.signal.trend_candle import TrendCandleSignal
-from strategy.generator.signal.trix_cross import TrixCrossSignal
-from strategy.generator.signal.trix_flip import TrixFlipSignal
-from strategy.generator.signal.tsi_cross import TsiCrossSignal
-from strategy.generator.signal.tsi_flip import TsiFlipSignal
 from strategy.generator.signal.vi_cross import ViCrossSignal
-from strategy.generator.signal.vwap_bb import VwapBbSignal
-from strategy.generator.signal.vwap_cross import VwapCrossSignal
 from strategy.generator.stop_loss.atr import AtrStopLoss
 
 
 class TrendSignalType(Enum):
-    BB = auto()
+    # BB = auto()
     CANDLE = auto()
     CROSS = auto()
-    HISTOGRAM = auto()
-    HFT = auto()
-    FLIP = auto()
+    # HISTOGRAM = auto()
+    # HFT = auto()
+    # FLIP = auto()
     V = auto()
     BREAKOUT = auto()
     CUSTOM = auto()
-    PULLBACK = auto()
-    VOLATILITY = auto()
+    # PULLBACK = auto()
+    # VOLATILITY = auto()
 
 
 class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
@@ -188,13 +148,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         stop_loss = np.random.choice([AtrStopLoss()])
         exit_signal = np.random.choice(
             [
-                AstExit(),
+                # AstExit(),
                 HighLowExit(),
-                MaExit(),
-                RsiExit(),
+                # MaExit(),
+                # RsiExit(),
                 MfiExit(),
-                CciExit(),
-                TrixExit(),
+                # CciExit(),
+                # TrixExit(),
             ]
         )
 
@@ -212,7 +172,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _generate_invariants(self, base_strategy: Strategy) -> List[Strategy]:
         result = [base_strategy]
-        attributes = []
+        attributes = ["pulse"]
 
         def smooth_invariants(strategy_part):
             if not hasattr(strategy_part, "smooth_type") or not hasattr(
@@ -301,64 +261,64 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return result
 
     def _generate_signal(self, signal: TrendSignalType):
-        if signal == TrendSignalType.FLIP:
-            return np.random.choice(
-                [
-                    AoFlipSignal(),
-                    MacdFlipSignal(),
-                    SupertrendFlipSignal(),
-                    RocFlipSignal(),
-                    TrixFlipSignal(),
-                    TsiFlipSignal(),
-                    CeFlipSignal(),
-                    QstickFlipSignal(),
-                    CcFlipSignal(),
-                    CeFlipSignal(),
-                    StcFlipSignal(),
-                    ApoFlipSignal(),
-                    BopFlipSignal(),
-                    CfoFlipSignal(),
-                ]
-            )
+        # if signal == TrendSignalType.FLIP:
+        #     return np.random.choice(
+        #         [
+        #             AoFlipSignal(),
+        #             MacdFlipSignal(),
+        #             SupertrendFlipSignal(),
+        #             RocFlipSignal(),
+        #             TrixFlipSignal(),
+        #             TsiFlipSignal(),
+        #             CeFlipSignal(),
+        #             QstickFlipSignal(),
+        #             CcFlipSignal(),
+        #             CeFlipSignal(),
+        #             StcFlipSignal(),
+        #             ApoFlipSignal(),
+        #             BopFlipSignal(),
+        #             CfoFlipSignal(),
+        #         ]
+        #     )
         if signal == TrendSignalType.V:
             return np.random.choice([TiiVSignal(), RsiVSignal()])
-        if signal == TrendSignalType.BB:
-            return np.random.choice(
-                [
-                    MacdBbSignal(),
-                    VwapBbSignal(),
-                ]
-            )
+        # if signal == TrendSignalType.BB:
+        #     return np.random.choice(
+        #         [
+        #             MacdBbSignal(),
+        #             VwapBbSignal(),
+        #         ]
+        #     )
         if signal == TrendSignalType.CANDLE:
             return np.random.choice(
                 [
                     TrendCandleSignal(),
                 ]
             )
-        if signal == TrendSignalType.HISTOGRAM:
-            return np.random.choice(
-                [
-                    AoSaucerSignal(),
-                    MacdColorSwitchSignal(),
-                ]
-            )
-        if signal == TrendSignalType.HFT:
-            return np.random.choice([HighLowSignal()])
+        # if signal == TrendSignalType.HISTOGRAM:
+        #     return np.random.choice(
+        #         [
+        #             AoSaucerSignal(),
+        #             MacdColorSwitchSignal(),
+        #         ]
+        #     )
+        # if signal == TrendSignalType.HFT:
+        #     return np.random.choice([HighLowSignal()])
         if signal == TrendSignalType.CROSS:
             return np.random.choice(
                 [
-                    Ma3CrossSignal(),
-                    MacdCrossSignal(),
-                    TiiCrossSignal(),
-                    RsiNautralityCrossSignal(),
-                    TsiCrossSignal(),
-                    DiCrossSignal(),
-                    QstickCrossSignal(),
-                    VwapCrossSignal(),
+                    # Ma3CrossSignal(),
+                    MacdCrossSignal(smooth_type=StaticParameter(Smooth.ZLEMA)),
+                    # TiiCrossSignal(),
+                    # RsiNautralityCrossSignal(),
+                    # TsiCrossSignal(),
+                    # DiCrossSignal(),
+                    # QstickCrossSignal(),
+                    # VwapCrossSignal(),
                     DmiCrossSignal(),
-                    StochCrossSignal(),
-                    KstCrossSignal(),
-                    TrixCrossSignal(),
+                    # StochCrossSignal(),
+                    # KstCrossSignal(),
+                    # TrixCrossSignal(),
                     ViCrossSignal(),
                 ]
             )
@@ -368,25 +328,25 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     Dch2MaSignal(),
                 ]
             )
-        if signal == TrendSignalType.PULLBACK:
-            return np.random.choice(
-                [
-                    RsiNautralityPullbackSignal(),
-                    RsiMaPullbackSignal(),
-                ]
-            )
+        # if signal == TrendSignalType.PULLBACK:
+        #     return np.random.choice(
+        #         [
+        #             RsiNautralityPullbackSignal(),
+        #             RsiMaPullbackSignal(),
+        #         ]
+        #     )
 
-        if signal == TrendSignalType.VOLATILITY:
-            return np.random.choice(
-                [
-                    SnatrSignal(),
-                ]
-            )
+        # if signal == TrendSignalType.VOLATILITY:
+        #     return np.random.choice(
+        #         [
+        #             SnatrSignal(),
+        #         ]
+        #     )
 
         return np.random.choice(
             [
                 RsiNautralityRejectionSignal(),
-                RsiSupertrendSignal(),
-                Rsi2MaSignal(),
+                # RsiSupertrendSignal(),
+                # Rsi2MaSignal(),
             ]
         )

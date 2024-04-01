@@ -80,6 +80,8 @@ class RiskActor(Actor):
 
     async def _open_position(self, event: PositionOpened):
         async with self.lock:
+            # print(f"Open before: {self._position}")
+
             long_position, short_position = self._position
 
             self._position = (
@@ -91,14 +93,20 @@ class RiskActor(Actor):
                 else short_position,
             )
 
+            # print(f"Open after: {self._position}")
+
     async def _close_position(self, event: PositionClosed):
         async with self.lock:
+            # print(f"Close before: {self._position}")
+
             long_position, short_position = self._position
 
             self._position = (
                 None if event.position.side == PositionSide.LONG else long_position,
                 None if event.position.side == PositionSide.SHORT else short_position,
             )
+
+            # print(f"Close after: {self._position}")
 
             if not self._position[0] and not self._position[1]:
                 self._ohlcv.clear()
@@ -107,14 +115,17 @@ class RiskActor(Actor):
         async with self.lock:
             self._ohlcv.append(event.ohlcv)
 
-            long_position, short_position = await asyncio.gather(
-                *[
-                    self._process_position(self._position[0]),
-                    self._process_position(self._position[1]),
-                ]
-            )
+            long_position, short_position = self._position
 
-            self._position = (long_position, short_position)
+            if long_position or short_position:
+                long_position, short_position = await asyncio.gather(
+                    *[
+                        self._process_position(long_position),
+                        self._process_position(short_position),
+                    ]
+                )
+
+                self._position = (long_position, short_position)
 
     async def _handle_reverse_exit(
         self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
@@ -216,6 +227,7 @@ class RiskActor(Actor):
         side = position.side
         take_profit_price = position.take_profit_price
         stop_loss_price = position.stop_loss_price
+        entry_price = position.entry_price
 
         price_exceeds_take_profit = (
             side == PositionSide.LONG and price > take_profit_price
@@ -230,11 +242,11 @@ class RiskActor(Actor):
 
         distance_to_take_profit = abs(price - take_profit_price)
         distance_to_stop_loss = abs(price - stop_loss_price)
+        trailing_dist = abs(price - entry_price)
 
-        if distance_to_take_profit < distance_to_stop_loss and (
-            (side == PositionSide.LONG and price > position.entry_price)
-            or (side == PositionSide.SHORT and price < position.entry_price)
-        ):
+        ttp = distance_to_take_profit * self.config["trl_factor"]
+
+        if distance_to_take_profit < distance_to_stop_loss and trailing_dist > ttp:
             await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
 
     @staticmethod

@@ -12,7 +12,7 @@ from .base import Pulse, PulseType
 @dataclass(frozen=True)
 class BraidPulse(Pulse):
     type: PulseType = PulseType.Braid
-    smooth_type: Parameter = StaticParameter(Smooth.LSMA)
+    smooth_type: Parameter = StaticParameter(Smooth.WMA)
     period_one: Parameter = StaticParameter(3.0)
     period_two: Parameter = StaticParameter(7.0)
     period_three: Parameter = StaticParameter(14.0)

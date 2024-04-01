@@ -116,6 +116,10 @@ class BacktestSystem(AbstractSystem):
 
         futures_symbols = await self.query(GetSymbols())
 
+        futures_symbols = [
+            symbol for symbol in futures_symbols if symbol.name in ["TONUSDT"]
+        ]
+
         generator = self.context.strategy_generator_factory.create(
             self.context.strategy_type, futures_symbols
         )
@@ -126,6 +130,99 @@ class BacktestSystem(AbstractSystem):
 
         self.optimizer.init()
 
+        # strategies = [
+        # (
+        #     futures_symbols[0],
+        #     Timeframe.ONE_MINUTE,
+        #     Strategy(
+        #         *(
+        #             StrategyType.TREND,
+        #             ViCrossSignal(),
+        #             RsiConfirm(),
+        #             BraidPulse(),
+        #             MaBaseLine(),
+        #             AtrStopLoss(),
+        #             MfiExit(),
+        #         )
+        #     ),
+        # ),
+        # (
+        #     futures_symbols[0],
+        #     Timeframe.ONE_MINUTE,
+        #     Strategy(
+        #         *(
+        #             StrategyType.TREND,
+        #             DmiCrossSignal(),
+        #             RsiConfirm(),
+        #             VoPulse(),
+        #             MaBaseLine(),
+        #             AtrStopLoss(),
+        #             MfiExit(),
+        #         )
+        #     ),
+        # ),
+        # (
+        #     futures_symbols[0],
+        #     Timeframe.ONE_MINUTE,
+        #     Strategy(
+        #         *(
+        #             StrategyType.TREND,
+        #             RsiNautralityRejectionSignal(),
+        #             RsiConfirm(),
+        #             VoPulse(),
+        #             MaBaseLine(),
+        #             AtrStopLoss(),
+        #             HighLowExit(),
+        #         )
+        #     ),
+        # ),
+        # (
+        #     futures_symbols[0],
+        #     Timeframe.ONE_MINUTE,
+        #     Strategy(
+        #         *(
+        #             StrategyType.TREND,
+        #             TiiVSignal(),
+        #             RsiConfirm(),
+        #             BraidPulse(),
+        #             MaBaseLine(),
+        #             AtrStopLoss(),
+        #             MfiExit(),
+        #         )
+        #     ),
+        # ),
+        # (
+        #     futures_symbols[0],
+        #     Timeframe.ONE_MINUTE,
+        #     Strategy(
+        #         *(
+        #             StrategyType.TREND,
+        #             MacdCrossSignal(),
+        #             RsiConfirm(),
+        #             AdxPulse(),
+        #             MaBaseLine(),
+        #             AtrStopLoss(),
+        #             MfiExit(),
+        #         )
+        #     ),
+        # ),
+        # (
+        #     futures_symbols[0],
+        #     Timeframe.ONE_MINUTE,
+        #     Strategy(
+        #         *(
+        #             StrategyType.TREND,
+        #             Dch2MaSignal(),
+        #             RsiConfirm(),
+        #             TdfiPulse(),
+        #             MaBaseLine(),
+        #             AtrStopLoss(),
+        #             MfiExit(),
+        #         )
+        #     ),
+        # ),
+        # ]
+        # await self.dispatch(DeployStrategy(strategy=strategies))
         await self.event_queue.put(Event.GENERATE_COMPLETE)
 
     async def _run_backtest(self):

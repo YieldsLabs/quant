@@ -108,25 +108,64 @@ class PositionActor(Actor):
         return False
 
     async def handle_position_opened(self, event: BrokerPositionOpened) -> bool:
-        await self.state.update_stored_position(event.position)
-        await self.tell(PositionOpened(event.position))
-        return True
-
-    async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
-        await self.state.close_stored_position(event.position)
-        await self.tell(PositionClosed(event.position))
-        return True
-
-    async def handle_exit_received(self, event: ExitSignal) -> bool:
-        if isinstance(event, RiskThresholdBreached):
-            await self.state.update_stored_position(event.position)
-            await self.tell(PositionCloseRequested(event.position, event.exit_price))
-            return True
-
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
             symbol, timeframe
         )
+
+        if event.position.side == PositionSide.LONG and long_position:
+            await self.state.update_stored_position(event.position)
+            await self.tell(PositionOpened(event.position))
+            return True
+
+        if event.position.side == PositionSide.SHORT and short_position:
+            await self.state.update_stored_position(event.position)
+            await self.tell(PositionOpened(event.position))
+            return True
+
+        return False
+
+    async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
+        symbol, timeframe = self._get_event_key(event)
+        long_position, short_position = await self.state.retrieve_position(
+            symbol, timeframe
+        )
+
+        if event.position.side == PositionSide.LONG and long_position:
+            await self.state.close_stored_position(event.position)
+            await self.tell(PositionClosed(event.position))
+            return True
+
+        if event.position.side == PositionSide.SHORT and short_position:
+            await self.state.close_stored_position(event.position)
+            await self.tell(PositionClosed(event.position))
+            return True
+
+        return False
+
+    async def handle_exit_received(self, event: ExitSignal) -> bool:
+        symbol, timeframe = self._get_event_key(event)
+        long_position, short_position = await self.state.retrieve_position(
+            symbol, timeframe
+        )
+
+        if (
+            isinstance(event, RiskThresholdBreached)
+            and event.position.side == PositionSide.LONG
+            and long_position
+        ):
+            await self.state.update_stored_position(event.position)
+            await self.tell(PositionCloseRequested(event.position, event.exit_price))
+            return True
+
+        if (
+            isinstance(event, RiskThresholdBreached)
+            and event.position.side == PositionSide.SHORT
+            and short_position
+        ):
+            await self.state.update_stored_position(event.position)
+            await self.tell(PositionCloseRequested(event.position, event.exit_price))
+            return True
 
         if isinstance(event, BacktestEnded) and any([long_position, short_position]):
             if long_position:

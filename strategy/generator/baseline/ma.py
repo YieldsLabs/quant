@@ -4,7 +4,7 @@ from core.models.moving_average import MovingAverageType
 from core.models.parameter import (
     CategoricalParameter,
     Parameter,
-    RandomParameter,
+    StaticParameter,
 )
 
 from .base import BaseLine, BaseLineType
@@ -14,4 +14,4 @@ from .base import BaseLine, BaseLineType
 class MaBaseLine(BaseLine):
     type: BaseLineType = BaseLineType.Ma
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = RandomParameter(8.0, 25.0, 3.0)
+    period: Parameter = StaticParameter(24.0)
