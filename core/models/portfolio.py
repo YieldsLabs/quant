@@ -12,8 +12,8 @@ class Performance:
     _account_size: float
     _risk_per_trade: float
     _periods_per_year: float = 252
-    _pnl: np.array = field(default_factory=lambda: np.array([]))
-    _fee: np.array = field(default_factory=lambda: np.array([]))
+    _pnl: np.array = field(default_factory=lambda: np.array([], dtype=np.float64))
+    _fee: np.array = field(default_factory=lambda: np.array([], dtype=np.float64))
     updated_at: float = field(default_factory=lambda: datetime.now().timestamp())
 
     @property
@@ -291,12 +291,17 @@ class Performance:
         if total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
-        prod = np.prod(1 + self._pnl)
+        pnl_positive = self._pnl[self._pnl > 0]
 
-        if prod <= 0:
+        if len(pnl_positive) == 0:
             return 0
 
-        return prod ** (1 / total_trades) - 1
+        log_prod = np.sum(np.log(1.0 + pnl_positive))
+
+        if log_prod <= 0:
+            return 0
+
+        return np.exp(log_prod / total_trades) - 1.0
 
     @property
     def ann_volatility(self) -> float:
@@ -371,7 +376,7 @@ class Performance:
         mu = self.average_pnl
         sigma = np.std(self._pnl, ddof=1)
 
-        return norm.ppf(1 - confidence_level, mu, sigma)
+        return norm.ppf(1.0 - confidence_level, mu, sigma)
 
     @property
     def cvar(self) -> float:
@@ -396,7 +401,7 @@ class Performance:
         if len(drawdown) < 2:
             return 0
 
-        return np.sqrt(np.mean(drawdown**2)) * 100
+        return np.sqrt(np.mean(drawdown**2))
 
     @property
     def upi(self) -> float:
@@ -405,7 +410,7 @@ class Performance:
         if ulcer_index == 0:
             return 0
 
-        prod = np.prod(1 + self._pnl) - 1
+        prod = np.prod(1.0 + self._pnl) - 1.0
 
         return np.divide(prod, ulcer_index)
 
