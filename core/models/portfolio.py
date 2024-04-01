@@ -410,9 +410,7 @@ class Performance:
         if ulcer_index == 0:
             return 0
 
-        prod = np.prod(1.0 + self._pnl) - 1.0
-
-        return np.divide(prod, ulcer_index)
+        return np.divide(self.expected_return, ulcer_index)
 
     @property
     def common_sense_ratio(self) -> float:
