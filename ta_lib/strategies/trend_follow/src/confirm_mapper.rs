@@ -41,6 +41,12 @@ pub enum ConfirmConfig {
         d_first: f32,
         d_second: f32,
     },
+    Dso {
+        smooth_type: f32,
+        smooth_period: f32,
+        k_period: f32,
+        d_period: f32,
+    },
 }
 
 pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
@@ -49,6 +55,17 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             smooth_type,
             period,
         } => Box::new(DPOConfirm::new(map_to_smooth(smooth_type as usize), period)),
+        ConfirmConfig::Dso {
+            smooth_type,
+            smooth_period,
+            k_period,
+            d_period,
+        } => Box::new(DSOConfirm::new(
+            map_to_smooth(smooth_type as usize),
+            smooth_period,
+            k_period,
+            d_period,
+        )),
         ConfirmConfig::Cci {
             smooth_type,
             period,
