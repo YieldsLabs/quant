@@ -22,6 +22,7 @@ class PositionRiskVolatilityStrategy(AbstractPositionRiskStrategy):
 
         self.x_sl_buff = deque(maxlen=24)
         self.y_sl_buff = deque(maxlen=24)
+        self.lookback = 14
 
     def next(
         self,
@@ -32,12 +33,11 @@ class PositionRiskVolatilityStrategy(AbstractPositionRiskStrategy):
         ohlcvs: List[Tuple[OHLCV]],
     ) -> float:
         ohlcvs = ohlcvs[:]
-        lookback = 8
 
-        if len(ohlcvs) < lookback + 3:
+        if len(ohlcvs) < self.lookback:
             return stop_loss_price, take_profit_price
 
-        atr = self._atr(ohlcvs, lookback)
+        atr = self._atr(ohlcvs, self.lookback)
         price = self._hlc2(ohlcvs)
 
         curr_price, curr_atr = price[-1], atr[-1]
@@ -67,49 +67,53 @@ class PositionRiskVolatilityStrategy(AbstractPositionRiskStrategy):
             else stop_loss_price - tsl
         )
 
-        high = min(ohlcvs[-lookback:], key=lambda x: abs(x.high - tsl)).high
-        low = min(ohlcvs[-lookback:], key=lambda x: abs(x.low - tsl)).low
+        high = min(ohlcvs[-self.lookback :], key=lambda x: abs(x.high - tsl)).high
+        low = min(ohlcvs[-self.lookback :], key=lambda x: abs(x.low - tsl)).low
 
         print(
-            f"PREDICT: ENTRY: {entry_price}, TP: {predict_tp}, SL: {predict_sl}, SIDE: {side}, PRICE: {curr_price}"
+            f"PREDICT: ENTRY: {entry_price}, TP: {predict_tp}, SL: {predict_sl}, SIDE: {side}, PRICE: {curr_price}, H:{high}, L:{low}"
         )
 
         if side == PositionSide.LONG:
-            next_take_profit = max(entry_price + risk_value, predict_tp)
-            next_stop_loss = max(stop_loss_price, low - sl_threshold, predict_sl)
+            if predict_tp > curr_price:
+                next_take_profit = max(entry_price + risk_value, predict_tp)
+
+            if predict_sl < curr_price:
+                next_stop_loss = max(stop_loss_price, low - sl_threshold, predict_sl)
 
         elif side == PositionSide.SHORT:
-            next_take_profit = min(entry_price - risk_value, predict_tp)
-            next_stop_loss = min(stop_loss_price, high + sl_threshold, predict_sl)
+            if predict_tp < curr_price:
+                next_take_profit = min(entry_price - risk_value, predict_tp)
+
+            if predict_sl > curr_price:
+                next_stop_loss = min(stop_loss_price, high + sl_threshold, predict_sl)
 
         return next_stop_loss, next_take_profit
 
     def predict_take_profit(self, take_profit_price) -> float:
-        if len(self.x_tp_buff) < 13:
+        if len(self.x_tp_buff) < self.lookback:
             return take_profit_price
 
         latest_X = self.x_tp_buff[-1]
         prediction = self.tp_model.predict(latest_X)
 
         if (
-            prediction[0] < 0
-            or prediction[0] > 2.236 * take_profit_price
+            prediction[0] > 2.236 * take_profit_price
             or prediction[0] < 0.618 * take_profit_price
         ):
             return take_profit_price
 
-        return prediction[0]
+        return abs(prediction[0])
 
     def predict_stop_loss(self, stop_loss_price) -> float:
-        if len(self.x_sl_buff) < 13:
+        if len(self.x_sl_buff) < self.lookback:
             return stop_loss_price
 
         latest_X = self.x_sl_buff[-1]
         prediction = self.sl_model.predict(latest_X)
 
         if (
-            prediction[0] < 0
-            or prediction[0] > 2.236 * stop_loss_price
+            prediction[0] > 2.236 * stop_loss_price
             or prediction[0] < 0.618 * stop_loss_price
         ):
             return stop_loss_price
@@ -189,7 +193,7 @@ class PositionRiskVolatilityStrategy(AbstractPositionRiskStrategy):
         self.x_tp_buff.append(X)
         self.y_tp_buff.append(y)
 
-        if len(self.x_tp_buff) > 8:
+        if len(self.x_tp_buff) > self.lookback:
             X_train = np.vstack(self.x_tp_buff)
             y_train = np.vstack(self.y_tp_buff).ravel()
 
@@ -199,7 +203,7 @@ class PositionRiskVolatilityStrategy(AbstractPositionRiskStrategy):
         self.x_sl_buff.append(X)
         self.y_sl_buff.append(y)
 
-        if len(self.x_sl_buff) > 8:
+        if len(self.x_sl_buff) > self.lookback:
             X_train = np.vstack(self.x_sl_buff)
             y_train = np.vstack(self.y_sl_buff).ravel()
 
