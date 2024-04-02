@@ -103,7 +103,7 @@ class PositionRiskVolatilityStrategy(AbstractPositionRiskStrategy):
         ):
             return take_profit_price
 
-        return abs(prediction[0])
+        return prediction[0]
 
     def predict_stop_loss(self, stop_loss_price) -> float:
         if len(self.x_sl_buff) < self.lookback:
