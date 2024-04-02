@@ -28,8 +28,12 @@ mod tests {
         let k_period = 2;
         let d_period = 2;
 
-        let expected_k = vec![0.0, 66.66667, 88.88889, 96.2963, 98.76544, 99.588486, 99.86283];
-        let expected_d = vec![0.0, 44.44445, 74.07408, 88.8889, 95.47326, 98.21674, 99.31413];
+        let expected_k = vec![
+            0.0, 66.66667, 88.88889, 96.2963, 98.76544, 99.588486, 99.86283,
+        ];
+        let expected_d = vec![
+            0.0, 44.44445, 74.07408, 88.8889, 95.47326, 98.21674, 99.31413,
+        ];
 
         let (k, d) = dso(&close, Smooth::EMA, period, k_period, d_period);
 
