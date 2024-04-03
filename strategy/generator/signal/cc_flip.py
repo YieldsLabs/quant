@@ -12,7 +12,7 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class CcFlipSignal(Signal):
     type: SignalType = SignalType.CcFlip
-    short_period: Parameter = StaticParameter(11.0)
-    long_period: Parameter = StaticParameter(14.0)
+    fast_period: Parameter = StaticParameter(11.0)
+    slow_period: Parameter = StaticParameter(14.0)
     smooth_type: Parameter = StaticParameter(Smooth.WMA)
     smooth_period: Parameter = StaticParameter(20.0)

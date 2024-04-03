@@ -11,8 +11,8 @@ pub struct RSI2MASignal {
     rsi_period: usize,
     threshold: f32,
     ma: MovingAverageType,
-    short_period: usize,
-    long_period: usize,
+    fast_period: usize,
+    slow_period: usize,
 }
 
 impl RSI2MASignal {
@@ -21,30 +21,30 @@ impl RSI2MASignal {
         rsi_period: f32,
         threshold: f32,
         ma: MovingAverageType,
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     ) -> Self {
         Self {
             smooth_type,
             rsi_period: rsi_period as usize,
             threshold,
             ma,
-            short_period: short_period as usize,
-            long_period: long_period as usize,
+            fast_period: fast_period as usize,
+            slow_period: slow_period as usize,
         }
     }
 }
 
 impl Signal for RSI2MASignal {
     fn lookback(&self) -> usize {
-        let adj_lookback = std::cmp::max(self.short_period, self.long_period);
+        let adj_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adj_lookback, self.rsi_period)
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
-        let ma_short = ma_indicator(&self.ma, data, self.short_period);
-        let ma_long = ma_indicator(&self.ma, data, self.long_period);
+        let ma_short = ma_indicator(&self.ma, data, self.fast_period);
+        let ma_long = ma_indicator(&self.ma, data, self.slow_period);
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
 

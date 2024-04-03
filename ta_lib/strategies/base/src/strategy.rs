@@ -72,7 +72,7 @@ impl BaseStrategy {
         self.data.push_back(data);
     }
 
-    #[inline]
+    #[inline(always)]
     fn can_process(&self) -> bool {
         self.data.len() >= self.lookback_period
     }
@@ -93,10 +93,10 @@ impl Strategy for BaseStrategy {
         let theo_price = self.suggested_entry();
 
         match self.trade_signals() {
-            (true, _, _, _) => TradeAction::GoLong(theo_price),
-            (_, true, _, _) => TradeAction::GoShort(theo_price),
-            (_, _, true, _) => TradeAction::ExitLong(data.close),
-            (_, _, _, true) => TradeAction::ExitShort(data.close),
+            (true, false, false, false) => TradeAction::GoLong(theo_price),
+            (false, true, false, false) => TradeAction::GoShort(theo_price),
+            (false, false, true, false) => TradeAction::ExitLong(data.close),
+            (false, false, false, true) => TradeAction::ExitShort(data.close),
             _ => TradeAction::DoNothing,
         }
     }
@@ -178,12 +178,12 @@ mod tests {
     use core::Series;
 
     struct MockSignal {
-        short_period: usize,
+        fast_period: usize,
     }
 
     impl Signal for MockSignal {
         fn lookback(&self) -> usize {
-            self.short_period
+            self.fast_period
         }
 
         fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -277,7 +277,7 @@ mod tests {
     #[test]
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
-            Box::new(MockSignal { short_period: 10 }),
+            Box::new(MockSignal { fast_period: 10 }),
             Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
@@ -293,7 +293,7 @@ mod tests {
     #[test]
     fn test_strategy_data() {
         let mut strategy = BaseStrategy::new(
-            Box::new(MockSignal { short_period: 10 }),
+            Box::new(MockSignal { fast_period: 10 }),
             Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
@@ -333,6 +333,6 @@ mod tests {
         assert_eq!(hlc3, vec![1.333_333_4; lookback]);
         assert_eq!(hlcc4, vec![1.375; lookback]);
         assert_eq!(ohlc4, vec![1.25; lookback]);
-        assert_eq!(action, TradeAction::GoLong(1.333_333_4));
+        assert_eq!(action, TradeAction::DoNothing);
     }
 }

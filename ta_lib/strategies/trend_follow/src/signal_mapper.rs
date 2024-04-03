@@ -9,16 +9,16 @@ use signal::*;
 #[serde(tag = "type")]
 pub enum SignalConfig {
     AoSaucer {
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     },
     AoFlip {
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     },
     ApoFlip {
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     },
     BopFlip {
         smooth_type: f32,
@@ -33,8 +33,8 @@ pub enum SignalConfig {
         period: f32,
     },
     CcFlip {
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
         smooth_type: f32,
         smooth_period: f32,
     },
@@ -60,9 +60,9 @@ pub enum SignalConfig {
     },
     Ma3Cross {
         ma: f32,
-        short_period: f32,
+        fast_period: f32,
         medium_period: f32,
-        long_period: f32,
+        slow_period: f32,
     },
     MaTestingGround {
         ma: f32,
@@ -125,8 +125,8 @@ pub enum SignalConfig {
         rsi_period: f32,
         threshold: f32,
         ma: f32,
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     },
     RsiSup {
         smooth_type: f32,
@@ -159,8 +159,8 @@ pub enum SignalConfig {
     Dch2Ma {
         dch_period: f32,
         ma: f32,
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     },
     TrendCandle {
         candle: f32,
@@ -251,17 +251,17 @@ pub enum SignalConfig {
 pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
     match config {
         SignalConfig::AoFlip {
-            short_period,
-            long_period,
-        } => Box::new(AOFlipSignal::new(short_period, long_period)),
+            fast_period,
+            slow_period,
+        } => Box::new(AOFlipSignal::new(fast_period, slow_period)),
         SignalConfig::AoSaucer {
-            short_period,
-            long_period,
-        } => Box::new(AOSaucerSignal::new(short_period, long_period)),
+            fast_period,
+            slow_period,
+        } => Box::new(AOSaucerSignal::new(fast_period, slow_period)),
         SignalConfig::ApoFlip {
-            short_period,
-            long_period,
-        } => Box::new(APOFlipSignal::new(short_period, long_period)),
+            fast_period,
+            slow_period,
+        } => Box::new(APOFlipSignal::new(fast_period, slow_period)),
         SignalConfig::BopFlip {
             smooth_type,
             smooth_period,
@@ -276,13 +276,13 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         } => Box::new(CEFlipSignal::new(period, atr_period, factor)),
         SignalConfig::CfoFlip { period } => Box::new(CFOFlipSignal::new(period)),
         SignalConfig::CcFlip {
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
             smooth_type,
             smooth_period,
         } => Box::new(CCFlipSignal::new(
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
             map_to_smooth(smooth_type as usize),
             smooth_period,
         )),
@@ -297,14 +297,14 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         )),
         SignalConfig::Ma3Cross {
             ma,
-            short_period,
+            fast_period,
             medium_period,
-            long_period,
+            slow_period,
         } => Box::new(MA3CrossSignal::new(
             map_to_ma(ma as usize),
-            short_period,
+            fast_period,
             medium_period,
-            long_period,
+            slow_period,
         )),
         SignalConfig::MacdFlip {
             smooth_type,
@@ -386,15 +386,15 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             rsi_period,
             threshold,
             ma,
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
         } => Box::new(RSI2MASignal::new(
             map_to_smooth(smooth_type as usize),
             rsi_period,
             threshold,
             map_to_ma(ma as usize),
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
         )),
         SignalConfig::RsiSup {
             smooth_type,
@@ -442,13 +442,13 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::Dch2Ma {
             dch_period,
             ma,
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
         } => Box::new(DCH2MASignal::new(
             dch_period,
             map_to_ma(ma as usize),
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
         )),
         SignalConfig::RocFlip { period } => Box::new(ROCFlipSignal::new(period)),
         SignalConfig::MaTestingGround { ma, period } => {

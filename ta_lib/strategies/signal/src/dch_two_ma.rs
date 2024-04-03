@@ -6,36 +6,31 @@ use volatility::dch;
 pub struct DCH2MASignal {
     dch_period: usize,
     ma: MovingAverageType,
-    short_period: usize,
-    long_period: usize,
+    fast_period: usize,
+    slow_period: usize,
 }
 
 impl DCH2MASignal {
-    pub fn new(
-        dch_period: f32,
-        ma: MovingAverageType,
-        short_period: f32,
-        long_period: f32,
-    ) -> Self {
+    pub fn new(dch_period: f32, ma: MovingAverageType, fast_period: f32, slow_period: f32) -> Self {
         Self {
             dch_period: dch_period as usize,
             ma,
-            short_period: short_period as usize,
-            long_period: long_period as usize,
+            fast_period: fast_period as usize,
+            slow_period: slow_period as usize,
         }
     }
 }
 
 impl Signal for DCH2MASignal {
     fn lookback(&self) -> usize {
-        let adj_lookback = std::cmp::max(self.short_period, self.long_period);
+        let adj_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adj_lookback, self.dch_period)
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (upper_band, _, lower_band) = dch(&data.high, &data.low, self.dch_period);
-        let ma_short = ma_indicator(&self.ma, data, self.short_period);
-        let ma_long = ma_indicator(&self.ma, data, self.long_period);
+        let ma_short = ma_indicator(&self.ma, data, self.fast_period);
+        let ma_long = ma_indicator(&self.ma, data, self.slow_period);
 
         (
             data.close.sgt(&upper_band.shift(1)) & ma_short.sgt(&ma_long),

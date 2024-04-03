@@ -6,31 +6,31 @@ const VO_ZERO_LINE: f32 = 0.0;
 
 pub struct VoPulse {
     smooth_type: Smooth,
-    short_period: usize,
-    long_period: usize,
+    fast_period: usize,
+    slow_period: usize,
 }
 
 impl VoPulse {
-    pub fn new(smooth_type: Smooth, short_period: f32, long_period: f32) -> Self {
+    pub fn new(smooth_type: Smooth, fast_period: f32, slow_period: f32) -> Self {
         Self {
             smooth_type,
-            short_period: short_period as usize,
-            long_period: long_period as usize,
+            fast_period: fast_period as usize,
+            slow_period: slow_period as usize,
         }
     }
 }
 
 impl Pulse for VoPulse {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.short_period, self.long_period)
+        std::cmp::max(self.fast_period, self.slow_period)
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let vo = vo(
             &data.volume,
             self.smooth_type,
-            self.short_period,
-            self.long_period,
+            self.fast_period,
+            self.slow_period,
         );
 
         (vo.sgt(&VO_ZERO_LINE), vo.sgt(&VO_ZERO_LINE))

@@ -11,5 +11,5 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class AoSaucerSignal(Signal):
     type: SignalType = SignalType.AoSaucer
-    short_period: Parameter = StaticParameter(5.0)
-    long_period: Parameter = StaticParameter(34.0)
+    fast_period: Parameter = StaticParameter(5.0)
+    slow_period: Parameter = StaticParameter(34.0)

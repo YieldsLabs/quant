@@ -46,12 +46,12 @@ fn momentum(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let source = median_price(&high, &low);
-                let short_period = 5;
-                let long_period = 34;
+                let fast_period = 5;
+                let slow_period = 34;
 
-                (source, short_period, long_period)
+                (source, fast_period, slow_period)
             },
-            |(source, short_period, long_period)| ao(source, *short_period, *long_period),
+            |(source, fast_period, slow_period)| ao(source, *fast_period, *slow_period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -60,11 +60,11 @@ fn momentum(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
-                let short_period = 10;
-                let long_period = 20;
-                (source, short_period, long_period)
+                let fast_period = 10;
+                let slow_period = 20;
+                (source, fast_period, slow_period)
             },
-            |(source, short_period, long_period)| apo(source, *short_period, *long_period),
+            |(source, fast_period, slow_period)| apo(source, *fast_period, *slow_period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -92,22 +92,22 @@ fn momentum(c: &mut Criterion) {
             || {
                 let source = Series::from(&close);
                 let smooth_type = Smooth::WMA;
-                let short_period = 20;
-                let long_period = 15;
+                let fast_period = 20;
+                let slow_period = 15;
                 let smoothing_period = 13;
                 (
                     source,
                     smooth_type,
-                    short_period,
-                    long_period,
+                    fast_period,
+                    slow_period,
                     smoothing_period,
                 )
             },
-            |(source, smooth_type, short_period, long_period, smoothing_period)| {
+            |(source, smooth_type, fast_period, slow_period, smoothing_period)| {
                 cc(
                     source,
-                    *short_period,
-                    *long_period,
+                    *fast_period,
+                    *slow_period,
                     *smooth_type,
                     *smoothing_period,
                 )
@@ -383,12 +383,12 @@ fn momentum(c: &mut Criterion) {
             || {
                 let source = Series::from(&close);
                 let smooth_type = Smooth::EMA;
-                let long_period = 25;
-                let short_period = 13;
-                (source, smooth_type, long_period, short_period)
+                let slow_period = 25;
+                let fast_period = 13;
+                (source, smooth_type, slow_period, fast_period)
             },
-            |(source, smooth_type, long_period, short_period)| {
-                tsi(source, *smooth_type, *long_period, *short_period)
+            |(source, smooth_type, slow_period, fast_period)| {
+                tsi(source, *smooth_type, *slow_period, *fast_period)
             },
             criterion::BatchSize::SmallInput,
         )
@@ -1091,14 +1091,14 @@ fn volume(c: &mut Criterion) {
         b.iter_batched_ref(
             || {
                 let volume = Series::from(&volume);
-                let short_period = 5;
-                let long_period = 10;
+                let fast_period = 5;
+                let slow_period = 10;
                 let smooth_type = Smooth::EMA;
 
-                (volume, smooth_type, short_period, long_period)
+                (volume, smooth_type, fast_period, slow_period)
             },
-            |(volume, smooth_type, short_period, long_period)| {
-                vo(volume, *smooth_type, *short_period, *long_period)
+            |(volume, smooth_type, fast_period, slow_period)| {
+                vo(volume, *smooth_type, *fast_period, *slow_period)
             },
             criterion::BatchSize::SmallInput,
         )

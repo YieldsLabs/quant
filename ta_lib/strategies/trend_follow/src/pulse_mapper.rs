@@ -34,8 +34,8 @@ pub enum PulseConfig {
     },
     Vo {
         smooth_type: f32,
-        short_period: f32,
-        long_period: f32,
+        fast_period: f32,
+        slow_period: f32,
     },
     Tdfi {
         smooth_type: f32,
@@ -93,12 +93,12 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
         )),
         PulseConfig::Vo {
             smooth_type,
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
         } => Box::new(VoPulse::new(
             map_to_smooth(smooth_type as usize),
-            short_period,
-            long_period,
+            fast_period,
+            slow_period,
         )),
     }
 }

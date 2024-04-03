@@ -11,5 +11,5 @@ from .base import Signal, SignalType
 @dataclass(frozen=True)
 class ApoFlipSignal(Signal):
     type: SignalType = SignalType.ApoFlip
-    short_period: Parameter = StaticParameter(10.0)
-    long_period: Parameter = StaticParameter(20.0)
+    fast_period: Parameter = StaticParameter(10.0)
+    slow_period: Parameter = StaticParameter(20.0)

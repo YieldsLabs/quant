@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-pub fn ao(source: &Series<f32>, short_period: usize, long_period: usize) -> Series<f32> {
-    source.smooth(Smooth::SMA, short_period) - source.smooth(Smooth::SMA, long_period)
+pub fn ao(source: &Series<f32>, fast_period: usize, slow_period: usize) -> Series<f32> {
+    source.smooth(Smooth::SMA, fast_period) - source.smooth(Smooth::SMA, slow_period)
 }
 
 #[cfg(test)]
@@ -14,11 +14,11 @@ mod tests {
         let high = Series::from([3.0, 4.0, 5.0, 6.0, 7.0]);
         let low = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let hl2 = median_price(&high, &low);
-        let short_period = 2;
-        let long_period = 4;
+        let fast_period = 2;
+        let slow_period = 4;
         let expected = vec![0.0, 0.0, 0.5, 1.0, 1.0];
 
-        let result: Vec<f32> = ao(&hl2, short_period, long_period).into();
+        let result: Vec<f32> = ao(&hl2, fast_period, slow_period).into();
 
         assert_eq!(result, expected);
     }

@@ -3,11 +3,11 @@ use core::prelude::*;
 pub fn vo(
     source: &Series<f32>,
     smooth_type: Smooth,
-    short_period: usize,
-    long_period: usize,
+    fast_period: usize,
+    slow_period: usize,
 ) -> Series<f32> {
-    let vo_short = source.smooth(smooth_type, short_period);
-    let vo_long = source.smooth(smooth_type, long_period);
+    let vo_short = source.smooth(smooth_type, fast_period);
+    let vo_long = source.smooth(smooth_type, slow_period);
 
     SCALE * (vo_short - &vo_long) / vo_long
 }

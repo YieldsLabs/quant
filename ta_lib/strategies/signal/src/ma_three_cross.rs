@@ -4,37 +4,37 @@ use shared::{ma_indicator, MovingAverageType};
 
 pub struct MA3CrossSignal {
     ma: MovingAverageType,
-    short_period: usize,
+    fast_period: usize,
     medium_period: usize,
-    long_period: usize,
+    slow_period: usize,
 }
 
 impl MA3CrossSignal {
     pub fn new(
         ma: MovingAverageType,
-        short_period: f32,
+        fast_period: f32,
         medium_period: f32,
-        long_period: f32,
+        slow_period: f32,
     ) -> Self {
         Self {
             ma,
-            short_period: short_period as usize,
+            fast_period: fast_period as usize,
             medium_period: medium_period as usize,
-            long_period: long_period as usize,
+            slow_period: slow_period as usize,
         }
     }
 }
 
 impl Signal for MA3CrossSignal {
     fn lookback(&self) -> usize {
-        let adjusted_lookback = std::cmp::max(self.short_period, self.long_period);
+        let adjusted_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adjusted_lookback, self.medium_period)
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let short_ma = ma_indicator(&self.ma, data, self.short_period);
+        let short_ma = ma_indicator(&self.ma, data, self.fast_period);
         let medium_ma = ma_indicator(&self.ma, data, self.medium_period);
-        let long_ma = ma_indicator(&self.ma, data, self.long_period);
+        let long_ma = ma_indicator(&self.ma, data, self.slow_period);
 
         (
             short_ma.cross_over(&medium_ma) & medium_ma.sgt(&long_ma),
