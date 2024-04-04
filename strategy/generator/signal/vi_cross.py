@@ -9,4 +9,4 @@ from .base import Signal, SignalType
 class ViCrossSignal(Signal):
     type: SignalType = SignalType.ViCross
     atr_period: Parameter = StaticParameter(1.0)
-    period: Parameter = StaticParameter(2.0)
+    period: Parameter = StaticParameter(8.0)

@@ -93,10 +93,10 @@ impl Strategy for BaseStrategy {
         let theo_price = self.suggested_entry();
 
         match self.trade_signals() {
-            (true, false, false, false) => TradeAction::GoLong(theo_price),
-            (false, true, false, false) => TradeAction::GoShort(theo_price),
-            (false, false, true, false) => TradeAction::ExitLong(data.close),
-            (false, false, false, true) => TradeAction::ExitShort(data.close),
+            (true, _, false, false) => TradeAction::GoLong(theo_price),
+            (_, true, false, false) => TradeAction::GoShort(theo_price),
+            (false, false, true, _) => TradeAction::ExitLong(data.close),
+            (false, false, _, true) => TradeAction::ExitShort(data.close),
             _ => TradeAction::DoNothing,
         }
     }

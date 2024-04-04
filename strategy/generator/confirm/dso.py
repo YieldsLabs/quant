@@ -10,6 +10,6 @@ from .base import Confirm, ConfirmType
 class DsoConfirm(Confirm):
     type: Confirm = ConfirmType.Dso
     smooth_type: Parameter = StaticParameter(Smooth.EMA)
-    smooth_period: Parameter = StaticParameter(13.0)
-    k_period: Parameter = StaticParameter(8.0)
-    d_period: Parameter = StaticParameter(9.0)
+    smooth_period: Parameter = StaticParameter(10.0)
+    k_period: Parameter = StaticParameter(5.0)
+    d_period: Parameter = StaticParameter(7.0)
