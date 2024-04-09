@@ -162,7 +162,6 @@ class PositionActor(Actor):
         ):
             await self.state.close_stored_position(event.position)
             await self.tell(PositionClosed(event.position))
-            print(f"Position {event.position.side} Closed: {self.state.data}")
             return True
 
         return False
