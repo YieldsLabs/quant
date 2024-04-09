@@ -5,8 +5,10 @@ from typing import Union
 from core.actors import Actor
 from core.events.backtest import BacktestEnded
 from core.events.position import (
+    BrokerPositionAdjusted,
     BrokerPositionClosed,
     BrokerPositionOpened,
+    PositionAdjusted,
     PositionClosed,
     PositionCloseRequested,
     PositionInitialized,
@@ -27,10 +29,13 @@ from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
-BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
-ExitSignal = Union[RiskThresholdBreached, BacktestEnded]
+BrokerPositionEvent = Union[
+    BrokerPositionOpened, BrokerPositionAdjusted, BrokerPositionClosed
+]
+ExitSignal = RiskThresholdBreached
+BacktestSignal = BacktestEnded
 
-PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent]
+PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent, BacktestSignal]
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +44,11 @@ class PositionActor(Actor):
     _EVENTS = [
         GoLongSignalReceived,
         GoShortSignalReceived,
-        BacktestEnded,
         BrokerPositionOpened,
+        BrokerPositionAdjusted,
         BrokerPositionClosed,
         RiskThresholdBreached,
+        BacktestEnded,
     ]
 
     def __init__(
@@ -83,11 +89,7 @@ class PositionActor(Actor):
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         async def create_and_store_position(event: SignalEvent):
             position = await self.position_factory.create_position(
-                event.signal,
-                event.ohlcv,
-                event.entry_price,
-                event.stop_loss,
-                event.take_profit,
+                event.signal, event.ohlcv, event.entry_price, event.stop_loss
             )
 
             await self.state.store_position(position)
@@ -113,14 +115,38 @@ class PositionActor(Actor):
             symbol, timeframe
         )
 
-        if event.position.side == PositionSide.LONG and long_position:
-            await self.state.update_stored_position(event.position)
-            await self.tell(PositionOpened(event.position))
+        if (
+            event.position.side == PositionSide.LONG
+            and long_position
+            and long_position.last_modified < event.meta.timestamp
+        ) or (
+            event.position.side == PositionSide.SHORT
+            and short_position
+            and short_position.last_modified < event.meta.timestamp
+        ):
+            next_position = await self.state.update_stored_position(event.position)
+            await self.tell(PositionOpened(next_position))
             return True
 
-        if event.position.side == PositionSide.SHORT and short_position:
-            await self.state.update_stored_position(event.position)
-            await self.tell(PositionOpened(event.position))
+        return False
+
+    async def handle_position_adjusted(self, event: BrokerPositionAdjusted) -> bool:
+        symbol, timeframe = self._get_event_key(event)
+        long_position, short_position = await self.state.retrieve_position(
+            symbol, timeframe
+        )
+
+        if (
+            event.position.side == PositionSide.LONG
+            and long_position
+            and long_position.last_modified < event.meta.timestamp
+        ) or (
+            event.position.side == PositionSide.SHORT
+            and short_position
+            and short_position.last_modified < event.meta.timestamp
+        ):
+            next_position = await self.state.update_stored_position(event.position)
+            await self.tell(PositionAdjusted(next_position))
             return True
 
         return False
@@ -131,14 +157,12 @@ class PositionActor(Actor):
             symbol, timeframe
         )
 
-        if event.position.side == PositionSide.LONG and long_position:
+        if (event.position.side == PositionSide.LONG and long_position) or (
+            event.position.side == PositionSide.SHORT and short_position
+        ):
             await self.state.close_stored_position(event.position)
             await self.tell(PositionClosed(event.position))
-            return True
-
-        if event.position.side == PositionSide.SHORT and short_position:
-            await self.state.close_stored_position(event.position)
-            await self.tell(PositionClosed(event.position))
+            print(f"Position {event.position.side} Closed: {self.state.data}")
             return True
 
         return False
@@ -150,35 +174,37 @@ class PositionActor(Actor):
         )
 
         if (
-            isinstance(event, RiskThresholdBreached)
-            and event.position.side == PositionSide.LONG
+            event.position.side == PositionSide.LONG
             and long_position
-        ):
-            await self.state.update_stored_position(event.position)
-            await self.tell(PositionCloseRequested(event.position, event.exit_price))
-            return True
-
-        if (
-            isinstance(event, RiskThresholdBreached)
-            and event.position.side == PositionSide.SHORT
+            and long_position.last_modified < event.meta.timestamp
+        ) or (
+            event.position.side == PositionSide.SHORT
             and short_position
+            and short_position.last_modified < event.meta.timestamp
         ):
-            await self.state.update_stored_position(event.position)
-            await self.tell(PositionCloseRequested(event.position, event.exit_price))
-            return True
-
-        if isinstance(event, BacktestEnded) and any([long_position, short_position]):
-            if long_position:
-                await self.tell(PositionCloseRequested(long_position, event.exit_price))
-
-            if short_position:
-                await self.tell(
-                    PositionCloseRequested(short_position, event.exit_price)
-                )
-
+            next_position = await self.state.update_stored_position(event.position)
+            await self.tell(PositionCloseRequested(next_position, event.exit_price))
             return True
 
         return False
+
+    async def handle_backtest(self, event: BacktestSignal) -> bool:
+        symbol, timeframe = self._get_event_key(event)
+        long_position, short_position = await self.state.retrieve_position(
+            symbol, timeframe
+        )
+
+        if long_position:
+            await self.tell(
+                PositionCloseRequested(long_position, long_position.entry_price)
+            )
+
+        if short_position:
+            await self.tell(
+                PositionCloseRequested(short_position, short_position.entry_price)
+            )
+
+        return True
 
     @staticmethod
     def _get_event_key(event: PositionEvent):

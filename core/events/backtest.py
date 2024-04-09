@@ -25,4 +25,4 @@ class BacktestStarted(BacktestEvent):
 
 @dataclass(frozen=True)
 class BacktestEnded(BacktestEvent):
-    exit_price: float
+    pass

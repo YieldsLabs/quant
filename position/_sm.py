@@ -4,7 +4,11 @@ from enum import Enum, auto
 from typing import Callable, Dict, Tuple, Type, Union
 
 from core.events.backtest import BacktestEnded
-from core.events.position import BrokerPositionClosed, BrokerPositionOpened
+from core.events.position import (
+    BrokerPositionAdjusted,
+    BrokerPositionClosed,
+    BrokerPositionOpened,
+)
 from core.events.risk import RiskThresholdBreached
 from core.events.signal import (
     GoLongSignalReceived,
@@ -25,6 +29,7 @@ class PositionState(Enum):
 
 PositionEvent = Union[
     BrokerPositionOpened,
+    BrokerPositionAdjusted,
     BrokerPositionClosed,
     GoLongSignalReceived,
     GoShortSignalReceived,
@@ -50,7 +55,11 @@ LONG_TRANSITIONS: Transitions = {
     ),
     (PositionState.WAITING_BROKER_CONFIRMATION, BacktestEnded): (
         PositionState.CLOSE,
-        "handle_exit_received",
+        "handle_backtest",
+    ),
+    (PositionState.OPENED, BrokerPositionAdjusted): (
+        PositionState.OPENED,
+        "handle_position_adjusted",
     ),
     (PositionState.OPENED, RiskThresholdBreached): (
         PositionState.CLOSE,
@@ -58,7 +67,7 @@ LONG_TRANSITIONS: Transitions = {
     ),
     (PositionState.OPENED, BacktestEnded): (
         PositionState.CLOSE,
-        "handle_exit_received",
+        "handle_backtest",
     ),
     (PositionState.CLOSE, BrokerPositionClosed): (
         PositionState.IDLE,
@@ -81,7 +90,11 @@ SHORT_TRANSITIONS: Transitions = {
     ),
     (PositionState.WAITING_BROKER_CONFIRMATION, BacktestEnded): (
         PositionState.CLOSE,
-        "handle_exit_received",
+        "handle_backtest",
+    ),
+    (PositionState.OPENED, BrokerPositionAdjusted): (
+        PositionState.OPENED,
+        "handle_position_adjusted",
     ),
     (PositionState.OPENED, RiskThresholdBreached): (
         PositionState.CLOSE,
@@ -89,7 +102,7 @@ SHORT_TRANSITIONS: Transitions = {
     ),
     (PositionState.OPENED, BacktestEnded): (
         PositionState.CLOSE,
-        "handle_exit_received",
+        "handle_backtest",
     ),
     (PositionState.CLOSE, BrokerPositionClosed): (
         PositionState.IDLE,
@@ -130,7 +143,9 @@ class PositionStateMachine:
 
         await self._set_state(symbol, next_state)
 
-        logger.debug(f"Position: symbol={symbol}, state={next_state}")
+        logger.debug(
+            f"SM: symbol={symbol}, event={event}, curr_state={current_state}, next_state={next_state}"
+        )
 
     def _is_valid_state(self, state: PositionState, event: PositionEvent) -> bool:
         return (state, type(event)) in self._transitions

@@ -29,6 +29,11 @@ class PositionInitialized(PositionEvent):
 
 
 @dataclass(frozen=True)
+class PositionAdjusted(PositionEvent):
+    pass
+
+
+@dataclass(frozen=True)
 class PositionOpened(PositionEvent):
     pass
 
@@ -45,6 +50,11 @@ class PositionClosed(PositionEvent):
 
 @dataclass(frozen=True)
 class BrokerPositionOpened(PositionEvent):
+    pass
+
+
+@dataclass(frozen=True)
+class BrokerPositionAdjusted(PositionEvent):
     pass
 
 

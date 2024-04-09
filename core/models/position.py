@@ -57,12 +57,8 @@ class Position:
             return replace(self, orders=orders, last_modified=last_modified)
 
         if order.status == OrderStatus.EXECUTED:
-            take_profit_price = (
-                self.take_profit_strategy.next(
-                    self.side, order.price, self.stop_loss_price
-                )
-                if not self.take_profit_price
-                else self.take_profit_price
+            take_profit_price = self.take_profit_strategy.next(
+                self.side, order.price, self.stop_loss_price
             )
 
             return replace(
@@ -96,7 +92,7 @@ class Position:
                 last_modified=last_modified,
             )
 
-    def next(self, ohlcvs: List[Tuple[OHLCV, bool]]) -> "Position":
+    def next(self, ohlcvs: List[Tuple[OHLCV]]) -> "Position":
         next_stop_loss_price, next_take_profit_price = self.risk_strategy.next(
             self.side,
             self.entry_price,
@@ -104,6 +100,12 @@ class Position:
             self.stop_loss_price,
             ohlcvs,
         )
+
+        if next_stop_loss_price != self.stop_loss_price:
+            print(f"Next SL: {next_stop_loss_price}, Prev: {self.stop_loss_price}")
+
+        if next_take_profit_price != self.take_profit_price:
+            print(f"Next TP: {next_take_profit_price}, Prev: {self.take_profit_price}")
 
         return replace(
             self,

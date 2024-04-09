@@ -236,12 +236,9 @@ class BacktestSystem(AbstractSystem):
             StartHistoricalFeed(symbol, timeframe, in_lookback, out_lookback)
         )
 
-        last_bar = actors[-1].last_bar
+        await self.dispatch(BacktestEnded(symbol, timeframe, strategy))
 
-        if last_bar:
-            await self.dispatch(
-                BacktestEnded(symbol, timeframe, strategy, last_bar.ohlcv.close)
-            )
+        await self.wait()
 
         for actor in actors:
             actor.stop()

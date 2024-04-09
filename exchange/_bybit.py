@@ -66,10 +66,24 @@ class Bybit(AbstractExchange):
             logger.error(f"{symbol}: {e}")
             return
 
-    def has_open_orders(self, symbol: Symbol):
+    def has_open_orders(
+        self, symbol: Symbol, side: PositionSide, is_reduced: bool = False
+    ):
         try:
             orders = self.connector.fetch_open_orders(symbol.name)
-            return len([order for order in orders if not order["stopPrice"]])
+
+            if not is_reduced:
+                order_side = "buy" if side == PositionSide.LONG else "sell"
+            else:
+                order_side = "sell" if side == PositionSide.LONG else "buy"
+
+            return len(
+                [
+                    order
+                    for order in orders
+                    if not order["stopPrice"] and order["side"] == order_side
+                ]
+            )
         except Exception as e:
             logger.error(f"{symbol}: {e}")
             return

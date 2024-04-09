@@ -18,3 +18,8 @@ class RiskEvent(Event):
 class RiskThresholdBreached(RiskEvent):
     exit_price: float
     reason: RiskType
+
+
+@dataclass(frozen=True)
+class RiskAdjustRequested(RiskEvent):
+    adjust_price: float

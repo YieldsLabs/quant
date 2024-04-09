@@ -5,12 +5,11 @@ from typing import Optional, Union
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
-    BrokerPositionClosed,
-    BrokerPositionOpened,
+    PositionAdjusted,
     PositionClosed,
     PositionOpened,
 )
-from core.events.risk import RiskThresholdBreached, RiskType
+from core.events.risk import RiskAdjustRequested, RiskThresholdBreached, RiskType
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -27,6 +26,7 @@ from core.models.timeframe import Timeframe
 RiskEvent = Union[
     NewMarketDataReceived,
     PositionOpened,
+    PositionAdjusted,
     PositionClosed,
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -38,8 +38,9 @@ RiskEvent = Union[
 class RiskActor(Actor):
     _EVENTS = [
         NewMarketDataReceived,
-        BrokerPositionOpened,
-        BrokerPositionClosed,
+        PositionOpened,
+        PositionAdjusted,
+        PositionClosed,
         ExitLongSignalReceived,
         ExitShortSignalReceived,
         GoLongSignalReceived,
@@ -55,7 +56,7 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=233)
+        self._ohlcv = deque(maxlen=120)
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
@@ -65,10 +66,11 @@ class RiskActor(Actor):
     async def on_receive(self, event: RiskEvent):
         handlers = {
             NewMarketDataReceived: self._handle_market_risk,
-            BrokerPositionOpened: self._open_position,
-            BrokerPositionClosed: self._close_position,
-            GoLongSignalReceived: self._handle_reverse_exit,
-            GoShortSignalReceived: self._handle_reverse_exit,
+            PositionOpened: self._open_position,
+            PositionClosed: self._close_position,
+            PositionAdjusted: self._adjust_position,
+            GoLongSignalReceived: self._handle_reverse,
+            GoShortSignalReceived: self._handle_reverse,
             ExitLongSignalReceived: self._handle_signal_exit,
             ExitShortSignalReceived: self._handle_signal_exit,
         }
@@ -80,8 +82,6 @@ class RiskActor(Actor):
 
     async def _open_position(self, event: PositionOpened):
         async with self.lock:
-            # print(f"Open before: {self._position}")
-
             long_position, short_position = self._position
 
             self._position = (
@@ -93,23 +93,27 @@ class RiskActor(Actor):
                 else short_position,
             )
 
-            # print(f"Open after: {self._position}")
+    async def _adjust_position(self, event: PositionAdjusted):
+        async with self.lock:
+            long_position, short_position = self._position
+
+            self._position = (
+                event.position
+                if event.position.side == PositionSide.LONG
+                else long_position,
+                event.position
+                if event.position.side == PositionSide.SHORT
+                else short_position,
+            )
 
     async def _close_position(self, event: PositionClosed):
         async with self.lock:
-            # print(f"Close before: {self._position}")
-
             long_position, short_position = self._position
 
             self._position = (
                 None if event.position.side == PositionSide.LONG else long_position,
                 None if event.position.side == PositionSide.SHORT else short_position,
             )
-
-            # print(f"Close after: {self._position}")
-
-            if not self._position[0] and not self._position[1]:
-                self._ohlcv.clear()
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
         async with self.lock:
@@ -127,31 +131,25 @@ class RiskActor(Actor):
 
                 self._position = (long_position, short_position)
 
-    async def _handle_reverse_exit(
+    async def _handle_reverse(
         self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
     ):
         async with self.lock:
             long_position, short_position = self._position
 
             if (
-                long_position
+                isinstance(event, GoShortSignalReceived)
+                and long_position
                 and not short_position
-                and isinstance(event, GoShortSignalReceived)
             ):
-                await self._process_signal_exit(
-                    long_position,
-                    event.entry_price,
-                )
+                await self.tell(RiskAdjustRequested(long_position, event.entry_price))
 
             if (
-                short_position
+                isinstance(event, GoLongSignalReceived)
+                and short_position
                 and not long_position
-                and isinstance(event, GoLongSignalReceived)
             ):
-                await self._process_signal_exit(
-                    short_position,
-                    event.entry_price,
-                )
+                await self.tell(RiskAdjustRequested(short_position, event.entry_price))
 
     async def _handle_signal_exit(
         self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived]
@@ -159,17 +157,35 @@ class RiskActor(Actor):
         async with self.lock:
             long_position, short_position = self._position
 
-            if long_position and isinstance(event, ExitLongSignalReceived):
-                await self._process_signal_exit(
+            if isinstance(event, ExitLongSignalReceived) and long_position:
+                exit_long = await self._process_signal_exit(
                     long_position,
                     event.exit_price,
                 )
 
-            if short_position and isinstance(event, ExitShortSignalReceived):
-                await self._process_signal_exit(
+                if (
+                    exit_long
+                    and short_position
+                    and event.exit_price > short_position.stop_loss_price
+                ):
+                    await self.tell(
+                        RiskAdjustRequested(short_position, event.exit_price)
+                    )
+
+            if isinstance(event, ExitShortSignalReceived) and short_position:
+                exit_short = await self._process_signal_exit(
                     short_position,
                     event.exit_price,
                 )
+
+                if (
+                    exit_short
+                    and long_position
+                    and event.exit_price < long_position.stop_loss_price
+                ):
+                    await self.tell(
+                        RiskAdjustRequested(long_position, event.exit_price)
+                    )
 
     async def _process_position(self, position: Optional[Position]):
         ohlcvs = list(self._ohlcv)
@@ -198,14 +214,14 @@ class RiskActor(Actor):
                 risk_type = RiskType.TIME
             elif self._is_long_meets_tp(position, ohlcv):
                 risk_type = RiskType.TP
-            elif self._is_long_meets_sl(position, ohlcv):
+            elif self._is_long_meets_sl(position, ohlcv) and not self._position[1]:
                 risk_type = RiskType.SL
         elif position.side == PositionSide.SHORT:
             if self._is_short_expires(position, expiration, ohlcv):
                 risk_type = RiskType.TIME
             elif self._is_short_meets_tp(position, ohlcv):
                 risk_type = RiskType.TP
-            elif self._is_short_meets_sl(position, ohlcv):
+            elif self._is_short_meets_sl(position, ohlcv) and not self._position[0]:
                 risk_type = RiskType.SL
 
         if risk_type:
@@ -248,6 +264,7 @@ class RiskActor(Actor):
 
         if distance_to_take_profit < distance_to_stop_loss and trailing_dist > ttp:
             await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
+            return position
 
     @staticmethod
     def _long_exit_price(position: Position, ohlcv: OHLCV):

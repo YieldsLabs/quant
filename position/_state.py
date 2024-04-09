@@ -81,10 +81,9 @@ class PositionStorage:
 
             return data.get(key, (None, None))
 
-    async def update_stored_position(
-        self, position: Position
-    ) -> Tuple[Optional[Position], Optional[Position]]:
-        return await self.store_position(position)
+    async def update_stored_position(self, position: Position) -> Position:
+        long, short = await self.store_position(position)
+        return long if position.side == PositionSide.LONG else short
 
     async def close_stored_position(self, position: Position):
         await self.delete_position(position)

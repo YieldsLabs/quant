@@ -38,6 +38,10 @@ def eda(cls: Type):
         async def execute(self, command, *args, **kwargs):
             return await self._dispatcher.execute(command, *args, **kwargs)
 
+        async def wait(self):
+            await asyncio.sleep(1)
+            await self._dispatcher.wait()
+
         def _unregister(self):
             for event_type, handler in self._registered_handlers:
                 self._dispatcher.unregister(event_type, handler)

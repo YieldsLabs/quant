@@ -52,7 +52,7 @@ class EventHandler:
         try:
             await self._execute_handler(handler, event, *args, **kwargs)
         except Exception as e:
-            self._handle_exception(event, e)
+            self._handle_exception(handler, event, e)
 
     async def _execute_handler(
         self, handler: HandlerType, event: Event, *args, **kwargs
@@ -67,9 +67,11 @@ class EventHandler:
         elif isinstance(event, Command):
             event.executed()
 
-    def _handle_exception(self, event: Event, exception: Exception) -> None:
+    def _handle_exception(
+        self, handler: HandlerType, event: Event, exception: Exception
+    ) -> None:
         logger.error(
-            f"Exception encountered in event {event}: {exception}. Event added to dead letter queue."
+            f"Exception encountered in event {event}:{handler} {exception}. Event added to dead letter queue."
         )
 
         if isinstance(event, Command):

@@ -12,6 +12,6 @@ class AbstractPositionRiskStrategy(ABC):
         side: SignalSide,
         entry_price: float,
         stop_loss_price: float,
-        ohlcvs: List[Tuple[OHLCV, bool]],
+        ohlcvs: List[Tuple[OHLCV]],
     ) -> float:
         pass

@@ -66,7 +66,7 @@ class AbstractExchange(ABC):
         pass
 
     @abstractmethod
-    def has_open_orders(self, symbol: Symbol):
+    def has_open_orders(self, symbol: Symbol, side: PositionSide, is_reduced: bool):
         pass
 
     @abstractmethod

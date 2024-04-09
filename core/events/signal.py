@@ -1,5 +1,4 @@
 from dataclasses import asdict, dataclass, field
-from typing import Optional
 
 from core.models.ohlcv import OHLCV
 from core.models.signal import Signal
@@ -21,7 +20,6 @@ class SignalEvent(Event):
 class SignalEntryEvent(SignalEvent):
     entry_price: float
     stop_loss: float
-    take_profit: Optional[float] = None
 
     def to_dict(self):
         parent_dict = super().to_dict()
@@ -29,7 +27,6 @@ class SignalEntryEvent(SignalEvent):
         current_dict = {
             "signal": self.signal.to_dict(),
             "entry_price": self.entry_price,
-            "take_profit": self.take_profit,
             "stop_loss": self.stop_loss,
             "ohlcv": asdict(self.ohlcv),
         }

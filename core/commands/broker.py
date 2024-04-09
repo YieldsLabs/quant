@@ -33,3 +33,9 @@ class OpenPosition(BrokerCommand):
 class ClosePosition(BrokerCommand):
     position: Position
     exit_price: float
+
+
+@dataclass(frozen=True)
+class AdjustPosition(BrokerCommand):
+    position: Position
+    adjust_price: float

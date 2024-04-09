@@ -1,13 +1,9 @@
-import time
-
 from core.commands.base import Command
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.base import Query
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
-
-MAX_ALLOWED_DELAY = 1.618
 
 
 class Actor(AbstractActor):
@@ -78,7 +74,4 @@ class Actor(AbstractActor):
             await self._mailbox.execute(msg, *args, **kwrgs)
 
     def _pre_receive(self, _msg: Message):
-        if abs(_msg.meta.timestamp - time.time()) > MAX_ALLOWED_DELAY:
-            return False
-
         return self.pre_receive(_msg)

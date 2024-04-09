@@ -7,11 +7,13 @@ from typing import Union
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
+    BrokerPositionAdjusted,
     BrokerPositionClosed,
     BrokerPositionOpened,
     PositionCloseRequested,
     PositionInitialized,
 )
+from core.events.risk import RiskAdjustRequested
 from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position
@@ -32,7 +34,12 @@ class PriceDirection(Enum):
 
 
 class PaperOrderActor(Actor):
-    _EVENTS = [NewMarketDataReceived, PositionInitialized, PositionCloseRequested]
+    _EVENTS = [
+        NewMarketDataReceived,
+        PositionInitialized,
+        RiskAdjustRequested,
+        PositionCloseRequested,
+    ]
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
@@ -46,6 +53,7 @@ class PaperOrderActor(Actor):
     async def on_receive(self, event: OrderEventType):
         handlers = {
             PositionInitialized: self._execute_order,
+            RiskAdjustRequested: self._adjust_position,
             PositionCloseRequested: self._close_position,
             NewMarketDataReceived: self._update_tick,
         }
@@ -95,10 +103,39 @@ class PaperOrderActor(Actor):
         else:
             await self.tell(BrokerPositionOpened(current_position))
 
+    async def _adjust_position(self, event: RiskAdjustRequested):
+        current_position = event.position
+
+        logger.debug(f"To Adjust Position: {current_position}")
+
+        total_value = (current_position.size * current_position.entry_price) + (
+            current_position.size * event.adjust_price
+        )
+
+        size = current_position.size + current_position.size
+        fill_price = total_value / size
+
+        order = Order(
+            status=OrderStatus.EXECUTED,
+            type=OrderType.PAPER,
+            fee=fill_price * size * current_position.signal.symbol.taker_fee,
+            price=fill_price,
+            size=size,
+        )
+
+        current_position = current_position.add_order(order)
+
+        logger.debug(f"Adjusted Position: {current_position}")
+
+        if current_position.closed:
+            await self.tell(BrokerPositionClosed(current_position))
+        else:
+            await self.tell(BrokerPositionAdjusted(current_position))
+
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
 
-        logger.debug(f"To Close Position: {current_position}")
+        logger.info(f"To Close Position: {current_position}")
 
         fill_price = await self._determine_fill_price(
             current_position.side, event.exit_price

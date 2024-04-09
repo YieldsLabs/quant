@@ -133,6 +133,8 @@ class TradingSystem(AbstractSystem):
                     StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
                 )
 
+                await self.wait()
+
                 feed_actor.stop()
 
                 signal_actors[(symbol, timeframe)].append(signal_actor)
