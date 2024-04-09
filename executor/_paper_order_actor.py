@@ -96,7 +96,7 @@ class PaperOrderActor(Actor):
 
         current_position = current_position.add_order(order)
 
-        logger.debug(f"Position to Open: {current_position}")
+        logger.info(f"Position to Open: {current_position}")
 
         if current_position.closed:
             await self.tell(BrokerPositionClosed(current_position))
@@ -125,7 +125,7 @@ class PaperOrderActor(Actor):
 
         current_position = current_position.add_order(order)
 
-        logger.debug(f"Adjusted Position: {current_position}")
+        logger.info(f"Adjusted Position: {current_position}")
 
         if current_position.closed:
             await self.tell(BrokerPositionClosed(current_position))
@@ -135,7 +135,7 @@ class PaperOrderActor(Actor):
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
 
-        logger.info(f"To Close Position: {current_position}")
+        logger.debug(f"To Close Position: {current_position}")
 
         fill_price = await self._determine_fill_price(
             current_position.side, event.exit_price
@@ -153,7 +153,7 @@ class PaperOrderActor(Actor):
 
         next_position = current_position.add_order(order)
 
-        logger.debug(f"Closed Position: {next_position}")
+        logger.info(f"Closed Position: {next_position}")
 
         await self.tell(BrokerPositionClosed(next_position))
 

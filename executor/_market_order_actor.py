@@ -46,11 +46,9 @@ class MarketOrderActor(Actor):
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
 
-        logger.info(f"New Position: {current_position}")
+        logger.debug(f"New Position: {current_position}")
 
         await self.ask(OpenPosition(current_position))
-
-        logger.info("Get Open Position")
 
         order = await self.ask(GetOpenPosition(current_position))
 
@@ -66,7 +64,7 @@ class MarketOrderActor(Actor):
     async def _adjust_position(self, event: RiskAdjustRequested):
         current_position, entry_price = event.position, event.adjust_price
 
-        logger.info(f"To Adjust Position: {current_position}, adjust: {entry_price}")
+        logger.debug(f"To Adjust Position: {current_position}, adjust: {entry_price}")
 
         await self.ask(AdjustPosition(current_position, entry_price))
 
@@ -84,7 +82,7 @@ class MarketOrderActor(Actor):
     async def _close_position(self, event: PositionCloseRequested):
         current_position = event.position
 
-        logger.info(f"To Close Position: {current_position}")
+        logger.debug(f"To Close Position: {current_position}")
 
         await self.ask(ClosePosition(current_position, event.exit_price))
 
