@@ -115,21 +115,26 @@ class PaperOrderActor(Actor):
         size = current_position.size + current_position.size
         fill_price = total_value / size
 
-        order = Order(
-            status=OrderStatus.EXECUTED,
-            type=OrderType.PAPER,
-            fee=fill_price * size * current_position.signal.symbol.taker_fee,
-            price=fill_price,
-            size=size,
-        )
-
-        current_position = current_position.add_order(order)
-
-        logger.info(f"Adjusted Position: {current_position}")
-
-        if current_position.closed:
-            await self.tell(BrokerPositionClosed(current_position))
+        if (
+            current_position.side == PositionSide.LONG and current_position.stop_loss_price > current_position.take_profit_price
+        ) or (
+            current_position.side == PositionSide.SHORT and current_position.stop_loss_price < current_position.take_profit_price
+        ):
+            logger.error(f"Wrong Adjust: {current_position}")
+            return
         else:
+            order = Order(
+                status=OrderStatus.EXECUTED,
+                type=OrderType.PAPER,
+                fee=fill_price * size * current_position.signal.symbol.taker_fee,
+                price=fill_price,
+                size=size,
+            )
+
+            current_position = current_position.add_order(order)
+
+            logger.info(f"Adjusted Position: {current_position}")
+
             await self.tell(BrokerPositionAdjusted(current_position))
 
     async def _close_position(self, event: PositionCloseRequested):
