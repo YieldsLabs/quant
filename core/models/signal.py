@@ -1,17 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum
 
+from .side import SignalSide
 from .strategy import Strategy
 from .symbol import Symbol
 from .timeframe import Timeframe
-
-
-class SignalSide(Enum):
-    BUY = "buy"
-    SELL = "sell"
-
-    def __str__(self):
-        return self.value.upper()
 
 
 @dataclass(frozen=True)

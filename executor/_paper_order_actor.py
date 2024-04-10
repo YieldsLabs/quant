@@ -17,7 +17,7 @@ from core.events.risk import RiskAdjustRequested
 from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -96,7 +96,7 @@ class PaperOrderActor(Actor):
 
         current_position = current_position.add_order(order)
 
-        logger.info(f"Position to Open: {current_position}")
+        logger.debug(f"Position to Open: {current_position}")
 
         if current_position.closed:
             await self.tell(BrokerPositionClosed(current_position))
@@ -116,9 +116,11 @@ class PaperOrderActor(Actor):
         fill_price = total_value / size
 
         if (
-            current_position.side == PositionSide.LONG and current_position.stop_loss_price > current_position.take_profit_price
+            current_position.side == PositionSide.LONG
+            and current_position.stop_loss_price > current_position.take_profit_price
         ) or (
-            current_position.side == PositionSide.SHORT and current_position.stop_loss_price < current_position.take_profit_price
+            current_position.side == PositionSide.SHORT
+            and current_position.stop_loss_price < current_position.take_profit_price
         ):
             logger.error(f"Wrong Adjust: {current_position}")
             return
@@ -158,7 +160,7 @@ class PaperOrderActor(Actor):
 
         next_position = current_position.add_order(order)
 
-        logger.info(f"Closed Position: {next_position}")
+        logger.debug(f"Closed Position: {next_position}")
 
         await self.tell(BrokerPositionClosed(next_position))
 

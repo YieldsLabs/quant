@@ -13,7 +13,7 @@ from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.exchange import ExchangeType
 from core.models.order import Order, OrderStatus
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbol, GetSymbols
 from core.queries.position import GetClosePosition, GetOpenPosition

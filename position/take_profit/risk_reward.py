@@ -2,7 +2,7 @@ from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_take_profit_strategy import (
     AbstractPositionTakeProfitStrategy,
 )
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 
 
 class PositionRiskRewardTakeProfitStrategy(AbstractPositionTakeProfitStrategy):

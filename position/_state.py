@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import List, Optional, Tuple
 
 from core.models.position import Position
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 

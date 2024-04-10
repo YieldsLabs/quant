@@ -5,7 +5,7 @@ import numpy as np
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
 from core.models.ohlcv import OHLCV
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 
 
 class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):

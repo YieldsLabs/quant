@@ -21,7 +21,7 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 

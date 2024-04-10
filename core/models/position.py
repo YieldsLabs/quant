@@ -9,7 +9,7 @@ from core.interfaces.abstract_position_take_profit_strategy import (
 
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
-from .position_side import PositionSide
+from .side import PositionSide
 from .signal import Signal
 
 

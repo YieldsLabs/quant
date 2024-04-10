@@ -6,7 +6,7 @@ from core.interfaces.abstract_position_take_profit_strategy import (
 )
 from core.models.ohlcv import OHLCV
 from core.models.position import Position
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 from core.models.signal import Signal, SignalSide
 
 

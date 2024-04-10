@@ -7,3 +7,10 @@ class PositionSide(Enum):
 
     def __str__(self):
         return self.value
+
+class SignalSide(Enum):
+    BUY = "buy"
+    SELL = "sell"
+
+    def __str__(self):
+        return self.value.upper()

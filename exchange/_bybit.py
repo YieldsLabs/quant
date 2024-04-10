@@ -10,7 +10,7 @@ from ccxt.base.errors import NetworkError, RequestTimeout
 from core.interfaces.abstract_exchange import AbstractExchange
 from core.models.broker import MarginMode, PositionMode
 from core.models.lookback import TIMEFRAMES_TO_LOOKBACK, Lookback
-from core.models.position_side import PositionSide
+from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from infrastructure.retry import retry
