@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::ao;
 
-const AO_ZERO: f32 = 0.0;
-
 pub struct AOFlipSignal {
     fast_period: usize,
     slow_period: usize,
@@ -28,8 +26,8 @@ impl Signal for AOFlipSignal {
         let prev_ao = ao.shift(2);
 
         (
-            ao.cross_over(&AO_ZERO) & prev_ao.slt(&AO_ZERO),
-            ao.cross_under(&AO_ZERO) & prev_ao.sgt(&AO_ZERO),
+            ao.cross_over(&ZERO_LINE) & prev_ao.slt(&ZERO_LINE),
+            ao.cross_under(&ZERO_LINE) & prev_ao.sgt(&ZERO_LINE),
         )
     }
 }

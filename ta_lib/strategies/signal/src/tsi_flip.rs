@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::tsi;
 
-const TSI_ZERO_LINE: f32 = 0.0;
-
 pub struct TSIFlipSignal {
     smooth_type: Smooth,
     fast_period: usize,
@@ -33,9 +31,6 @@ impl Signal for TSIFlipSignal {
             self.fast_period,
         );
 
-        (
-            tsi.cross_over(&TSI_ZERO_LINE),
-            tsi.cross_under(&TSI_ZERO_LINE),
-        )
+        (tsi.cross_over(&ZERO_LINE), tsi.cross_under(&ZERO_LINE))
     }
 }

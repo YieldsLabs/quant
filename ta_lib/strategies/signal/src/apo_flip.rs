@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::apo;
 
-const APO_ZERO: f32 = 0.0;
-
 pub struct APOFlipSignal {
     fast_period: usize,
     slow_period: usize,
@@ -26,6 +24,6 @@ impl Signal for APOFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let apo = apo(&data.close, self.fast_period, self.slow_period);
 
-        (apo.cross_over(&APO_ZERO), apo.cross_under(&APO_ZERO))
+        (apo.cross_over(&ZERO_LINE), apo.cross_under(&ZERO_LINE))
     }
 }

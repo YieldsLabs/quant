@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::qstick;
 
-const ZERO_LINE: f32 = 0.0;
-
 pub struct QSTICKFlipSignal {
     smooth_type: Smooth,
     period: usize,

@@ -15,6 +15,8 @@ class SignalType(Enum):
     DiFlip = "DiFlip"
     DiCross = "DiCross"
     DmiCross = "DmiCross"
+    DsoFlip = "DsoFlip"
+    DsoCross = "DsoCross"
     HighLow = "HighLow"
     Ma3Cross = "Ma3Cross"
     MaTestingGround = "MaTestingGround"

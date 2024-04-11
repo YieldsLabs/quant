@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use volume::eom;
 
-const EOM_FILTER: f32 = 0.;
-
 pub struct EOMConfirm {
     smooth_type: Smooth,
     period: usize,
@@ -36,6 +34,6 @@ impl Confirm for EOMConfirm {
             self.divisor,
         );
 
-        (eom.sgt(&EOM_FILTER), eom.slt(&EOM_FILTER))
+        (eom.sgt(&ZERO_LINE), eom.slt(&ZERO_LINE))
     }
 }

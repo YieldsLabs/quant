@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::roc;
 
-const ROC_ZERO: f32 = 0.0;
-
 pub struct ROCFlipSignal {
     period: usize,
 }
@@ -24,6 +22,6 @@ impl Signal for ROCFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let roc = roc(&data.close, self.period);
 
-        (roc.cross_over(&ROC_ZERO), roc.cross_under(&ROC_ZERO))
+        (roc.cross_over(&ZERO_LINE), roc.cross_under(&ZERO_LINE))
     }
 }

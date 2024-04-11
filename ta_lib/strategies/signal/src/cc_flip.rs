@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::cc;
 
-const ZERO_LINE: f32 = 0.0;
-
 pub struct CCFlipSignal {
     fast_period: usize,
     slow_period: usize,

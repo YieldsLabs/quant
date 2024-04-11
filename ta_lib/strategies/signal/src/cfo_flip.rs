@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::cfo;
 
-const CFO_ZERO: f32 = 0.0;
-
 pub struct CFOFlipSignal {
     period: usize,
 }
@@ -24,6 +22,6 @@ impl Signal for CFOFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let cfo = cfo(&data.close, self.period);
 
-        (cfo.cross_over(&CFO_ZERO), cfo.cross_under(&CFO_ZERO))
+        (cfo.cross_over(&ZERO_LINE), cfo.cross_under(&ZERO_LINE))
     }
 }

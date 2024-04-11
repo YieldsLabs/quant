@@ -2,9 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::ce;
 
-const ONE: f32 = 1.0;
-const MINUS_ONE: f32 = -1.0;
-
 pub struct CEFlipSignal {
     period: usize,
     atr_period: usize,

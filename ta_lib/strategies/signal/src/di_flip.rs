@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::di;
 
-const ZERO_LINE: f32 = 0.0;
-
 pub struct DIFlipSignal {
     smooth_type: Smooth,
     period: usize,

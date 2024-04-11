@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::roc;
 
-const ROC_FILTER: f32 = 0.;
-
 pub struct ROCConfirm {
     period: usize,
 }
@@ -24,6 +22,6 @@ impl Confirm for ROCConfirm {
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let roc = roc(&data.close, self.period);
 
-        (roc.sgt(&ROC_FILTER), roc.slt(&ROC_FILTER))
+        (roc.sgt(&ZERO_LINE), roc.slt(&ZERO_LINE))
     }
 }

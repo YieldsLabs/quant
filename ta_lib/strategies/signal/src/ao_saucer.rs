@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::ao;
 
-const AO_ZERO: f32 = 0.0;
-
 pub struct AOSaucerSignal {
     fast_period: usize,
     slow_period: usize,
@@ -31,17 +29,17 @@ impl Signal for AOSaucerSignal {
         let back_2_diff = diff.shift(2);
 
         (
-            ao.sgt(&AO_ZERO)
-                & diff.sgt(&AO_ZERO)
+            ao.sgt(&ZERO_LINE)
+                & diff.sgt(&ZERO_LINE)
                 & diff.sgt(&prev_diff)
-                & prev_diff.slt(&AO_ZERO)
-                & back_2_diff.slt(&AO_ZERO)
+                & prev_diff.slt(&ZERO_LINE)
+                & back_2_diff.slt(&ZERO_LINE)
                 & prev_diff.slt(&back_2_diff),
-            ao.slt(&AO_ZERO)
-                & diff.slt(&AO_ZERO)
+            ao.slt(&ZERO_LINE)
+                & diff.slt(&ZERO_LINE)
                 & diff.slt(&prev_diff)
-                & prev_diff.sgt(&AO_ZERO)
-                & back_2_diff.sgt(&AO_ZERO)
+                & prev_diff.sgt(&ZERO_LINE)
+                & back_2_diff.sgt(&ZERO_LINE)
                 & prev_diff.slt(&back_2_diff),
         )
     }

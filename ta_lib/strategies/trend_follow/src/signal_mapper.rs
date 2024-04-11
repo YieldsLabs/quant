@@ -43,6 +43,18 @@ pub enum SignalConfig {
         adx_period: f32,
         di_period: f32,
     },
+    DsoFlip {
+        smooth_type: f32,
+        smooth_period: f32,
+        k_period: f32,
+        d_period: f32,
+    },
+    DsoCross {
+        smooth_type: f32,
+        smooth_period: f32,
+        k_period: f32,
+        d_period: f32,
+    },
     HighLow {
         period: f32,
     },
@@ -428,6 +440,28 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         } => Box::new(DIFlipSignal::new(
             map_to_smooth(smooth_type as usize),
             period,
+        )),
+        SignalConfig::DsoFlip {
+            smooth_type,
+            smooth_period,
+            k_period,
+            d_period,
+        } => Box::new(DSOFlipSignal::new(
+            map_to_smooth(smooth_type as usize),
+            smooth_period,
+            k_period,
+            d_period,
+        )),
+        SignalConfig::DsoCross {
+            smooth_type,
+            smooth_period,
+            k_period,
+            d_period,
+        } => Box::new(DSOCrossSignal::new(
+            map_to_smooth(smooth_type as usize),
+            smooth_period,
+            k_period,
+            d_period,
         )),
         SignalConfig::DiCross {
             smooth_type,

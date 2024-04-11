@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::macd;
 
-const ZERO_LINE: f32 = 0.0;
-
 pub struct MACDFlipSignal {
     smooth_type: Smooth,
     fast_period: usize,

@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::bop;
 
-const BOP_ZERO: f32 = 0.0;
-
 pub struct BOPFlipSignal {
     smooth_type: Smooth,
     smooth_period: usize,
@@ -33,6 +31,6 @@ impl Signal for BOPFlipSignal {
             self.smooth_period,
         );
 
-        (bop.cross_over(&BOP_ZERO), bop.cross_under(&BOP_ZERO))
+        (bop.cross_over(&ZERO_LINE), bop.cross_under(&ZERO_LINE))
     }
 }

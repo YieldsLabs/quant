@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use volume::vo;
 
-const VO_ZERO_LINE: f32 = 0.0;
-
 pub struct VoPulse {
     smooth_type: Smooth,
     fast_period: usize,
@@ -33,6 +31,6 @@ impl Pulse for VoPulse {
             self.slow_period,
         );
 
-        (vo.sgt(&VO_ZERO_LINE), vo.sgt(&VO_ZERO_LINE))
+        (vo.sgt(&ZERO_LINE), vo.sgt(&ZERO_LINE))
     }
 }

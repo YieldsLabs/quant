@@ -44,6 +44,8 @@ from strategy.generator.signal.cfo_flip import CfoFlipSignal
 from strategy.generator.signal.dch_two_ma import Dch2MaSignal
 from strategy.generator.signal.di_cross import DiCrossSignal
 from strategy.generator.signal.dmi_cross import DmiCrossSignal
+from strategy.generator.signal.dso_cross import DsoCrossSignal
+from strategy.generator.signal.dso_flip import DsoFlipSignal
 from strategy.generator.signal.hl import HighLowSignal
 from strategy.generator.signal.kst_cross import KstCrossSignal
 from strategy.generator.signal.ma_three_cross import Ma3CrossSignal
@@ -305,6 +307,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     AoFlipSignal(),
+                    DsoFlipSignal(),
                     MacdFlipSignal(),
                     SupertrendFlipSignal(),
                     RocFlipSignal(),
@@ -356,6 +359,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     QstickCrossSignal(),
                     VwapCrossSignal(),
                     DmiCrossSignal(),
+                    DsoCrossSignal(),
                     StochCrossSignal(),
                     KstCrossSignal(),
                     TrixCrossSignal(),

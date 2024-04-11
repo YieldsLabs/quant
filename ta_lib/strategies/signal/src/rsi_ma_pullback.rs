@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
 
-const RSI_NEUTRALITY: f32 = 50.0;
-
 pub struct RSIMaPullbackSignal {
     smooth_type: Smooth,
     rsi_period: usize,
@@ -38,8 +36,8 @@ impl Signal for RSIMaPullbackSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
         let rsi_ma = rsi.smooth(self.smooth_signal, self.smooth_period);
-        let upper_neutrality = RSI_NEUTRALITY + self.threshold;
-        let lower_neutrality = RSI_NEUTRALITY - self.threshold;
+        let upper_neutrality = NEUTRALITY_LINE + self.threshold;
+        let lower_neutrality = NEUTRALITY_LINE - self.threshold;
 
         let prev_rsi = rsi.shift(1);
         let back_2_rsi = rsi.shift(2);

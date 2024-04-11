@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
 
-const RSI_NEUTRALITY: f32 = 50.0;
-
 pub struct RSINeutralityCrossSignal {
     smooth_type: Smooth,
     rsi_period: usize,
@@ -27,8 +25,8 @@ impl Signal for RSINeutralityCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
-        let upper_neutrality = RSI_NEUTRALITY + self.threshold;
-        let lower_neutrality = RSI_NEUTRALITY - self.threshold;
+        let upper_neutrality = NEUTRALITY_LINE + self.threshold;
+        let lower_neutrality = NEUTRALITY_LINE - self.threshold;
 
         let prev_rsi = rsi.shift(1);
         let back_2_rsi = rsi.shift(2);
@@ -37,15 +35,15 @@ impl Signal for RSINeutralityCrossSignal {
 
         (
             rsi.sgt(&upper_neutrality)
-                & prev_rsi.sgt(&RSI_NEUTRALITY)
-                & back_2_rsi.slt(&RSI_NEUTRALITY)
-                & back_3_rsi.slt(&RSI_NEUTRALITY)
-                & back_4_rsi.slt(&RSI_NEUTRALITY),
+                & prev_rsi.sgt(&NEUTRALITY_LINE)
+                & back_2_rsi.slt(&NEUTRALITY_LINE)
+                & back_3_rsi.slt(&NEUTRALITY_LINE)
+                & back_4_rsi.slt(&NEUTRALITY_LINE),
             rsi.slt(&lower_neutrality)
-                & prev_rsi.slt(&RSI_NEUTRALITY)
-                & back_2_rsi.sgt(&RSI_NEUTRALITY)
-                & back_3_rsi.sgt(&RSI_NEUTRALITY)
-                & back_4_rsi.sgt(&RSI_NEUTRALITY),
+                & prev_rsi.slt(&NEUTRALITY_LINE)
+                & back_2_rsi.sgt(&NEUTRALITY_LINE)
+                & back_3_rsi.sgt(&NEUTRALITY_LINE)
+                & back_4_rsi.sgt(&NEUTRALITY_LINE),
         )
     }
 }

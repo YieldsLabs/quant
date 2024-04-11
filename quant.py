@@ -18,7 +18,7 @@ from infrastructure.shutdown import GracefulShutdown
 from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
-from position.risk.volatility import PositionRiskVolatilityStrategy
+from position.risk.break_even import PositionRiskBreakEvenStrategy
 from position.size.optimal_f import PositionOptimalFSizeStrategy
 from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
 from risk import RiskActorFactory
@@ -69,7 +69,7 @@ async def main():
 
     position_factory = PositionFactory(
         PositionOptimalFSizeStrategy(),
-        PositionRiskVolatilityStrategy(config_service),
+        PositionRiskBreakEvenStrategy(config_service),
         PositionRiskRewardTakeProfitStrategy(config_service),
     )
 

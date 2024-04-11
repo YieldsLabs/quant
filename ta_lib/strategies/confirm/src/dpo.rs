@@ -2,8 +2,6 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::dpo;
 
-const DPO_FILTER: f32 = 0.;
-
 pub struct DPOConfirm {
     smooth_type: Smooth,
     period: usize,
@@ -26,6 +24,6 @@ impl Confirm for DPOConfirm {
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let dpo = dpo(&data.close, self.smooth_type, self.period);
 
-        (dpo.sgt(&DPO_FILTER), dpo.slt(&DPO_FILTER))
+        (dpo.sgt(&ZERO_LINE), dpo.slt(&ZERO_LINE))
     }
 }
