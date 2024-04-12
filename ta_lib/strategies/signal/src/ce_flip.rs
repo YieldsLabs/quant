@@ -33,11 +33,6 @@ impl Signal for CEFlipSignal {
             self.factor,
         );
 
-        let prev_direction = direction.shift(1);
-
-        (
-            direction.seq(&ONE) & prev_direction.seq(&MINUS_ONE),
-            direction.seq(&MINUS_ONE) & prev_direction.seq(&ONE),
-        )
+        (direction.cross_under(&ZERO), direction.cross_over(&ZERO))
     }
 }
