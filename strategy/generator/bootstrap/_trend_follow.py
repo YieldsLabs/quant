@@ -20,7 +20,8 @@ from strategy.generator.confirm.dpo import DpoConfirm
 from strategy.generator.confirm.dso import DsoConfirm
 from strategy.generator.confirm.eom import EomConfirm
 from strategy.generator.confirm.roc import RocConfirm
-from strategy.generator.confirm.rsi import RsiConfirm
+from strategy.generator.confirm.rsi_neutrality import RsiNeutralityConfirm
+from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
 from strategy.generator.confirm.stc import StcConfirm
 from strategy.generator.exit.ast import AstExit
 from strategy.generator.exit.cci import CciExit
@@ -44,9 +45,15 @@ from strategy.generator.signal.ma.ma2_rsi import Ma2RsiSignal
 from strategy.generator.signal.ma.ma3_cross import Ma3CrossSignal
 from strategy.generator.signal.ma.ma_testing_ground import MaTestingGroundSignal
 from strategy.generator.signal.ma.vwap_cross import VwapCrossSignal
-from strategy.generator.signal.neutrality.dso_neutrality_cross import DsoNeutralityCrossSignal
-from strategy.generator.signal.neutrality.rsi_neutrality_cross import RsiNautralityCrossSignal
-from strategy.generator.signal.neutrality.rsi_neutrality_pullback import RsiNautralityPullbackSignal
+from strategy.generator.signal.neutrality.dso_neutrality_cross import (
+    DsoNeutralityCrossSignal,
+)
+from strategy.generator.signal.neutrality.rsi_neutrality_cross import (
+    RsiNautralityCrossSignal,
+)
+from strategy.generator.signal.neutrality.rsi_neutrality_pullback import (
+    RsiNautralityPullbackSignal,
+)
 from strategy.generator.signal.neutrality.rsi_neutrality_rejection import (
     RsiNautralityRejectionSignal,
 )
@@ -63,7 +70,9 @@ from strategy.generator.signal.signalline.di_signalline import DiSignalLineSigna
 from strategy.generator.signal.signalline.dso_signalline import DsoSignalLineSignal
 from strategy.generator.signal.signalline.kst_signalline import KstSignalLineSignal
 from strategy.generator.signal.signalline.macd_signalline import MacdSignalLineSignal
-from strategy.generator.signal.signalline.qstick_signalline import QstickSignalLineSignal
+from strategy.generator.signal.signalline.qstick_signalline import (
+    QstickSignalLineSignal,
+)
 from strategy.generator.signal.signalline.rsi_signalline import RsiSignalLineSignal
 from strategy.generator.signal.signalline.stoch_signalline import StochSignalLineSignal
 from strategy.generator.signal.signalline.trix_signalline import TrixSignalLineSignal
@@ -167,7 +176,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 DpoConfirm(),
                 EomConfirm(),
                 RocConfirm(),
-                RsiConfirm(),
+                RsiSignalLineConfirm(),
+                RsiNeutralityConfirm(),
                 StcConfirm(),
                 DsoConfirm(),
                 CciConfirm(),

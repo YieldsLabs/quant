@@ -20,7 +20,12 @@ pub enum ConfirmConfig {
     Dumb {
         period: f32,
     },
-    Rsi {
+    RsiNeutrality {
+        smooth_type: f32,
+        period: f32,
+        threshold: f32,
+    },
+    RsiSignalLine {
         smooth_type: f32,
         period: f32,
         smooth_signal: f32,

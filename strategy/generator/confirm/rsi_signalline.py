@@ -7,8 +7,8 @@ from .base import Confirm, ConfirmType
 
 
 @dataclass(frozen=True)
-class RsiConfirm(Confirm):
-    type: Confirm = ConfirmType.Rsi
+class RsiSignalLineConfirm(Confirm):
+    type: Confirm = ConfirmType.RsiSignalLine
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)
     period: Parameter = StaticParameter(14.0)
     smooth_signal: Parameter = StaticParameter(Smooth.WMA)

@@ -11,7 +11,8 @@ class ConfirmType(Enum):
     Cci = "Cci"
     Eom = "Eom"
     Roc = "Roc"
-    Rsi = "Rsi"
+    RsiSignalLine = "RsiSignalLine"
+    RsiNeutrality = "RsiNeutrality"
     Stc = "Stc"
 
     def __str__(self):

@@ -43,17 +43,26 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             divisor,
         )),
         ConfirmConfig::Dumb { period } => Box::new(DumbConfirm::new(period)),
-        ConfirmConfig::Rsi {
+        ConfirmConfig::RsiSignalLine {
             smooth_type,
             period,
             smooth_signal,
             smooth_period,
             threshold,
-        } => Box::new(RsiConfirm::new(
+        } => Box::new(RsiSignalLineConfirm::new(
             smooth_deserialize(smooth_type as usize),
             period,
             smooth_deserialize(smooth_signal as usize),
             smooth_period,
+            threshold,
+        )),
+        ConfirmConfig::RsiNeutrality {
+            smooth_type,
+            period,
+            threshold,
+        } => Box::new(RsiNeutralityConfirm::new(
+            smooth_deserialize(smooth_type as usize),
+            period,
             threshold,
         )),
         ConfirmConfig::Roc { period } => Box::new(RocConfirm::new(period)),
