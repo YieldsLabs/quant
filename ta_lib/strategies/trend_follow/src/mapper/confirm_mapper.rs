@@ -66,6 +66,7 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             threshold,
         )),
         ConfirmConfig::Roc { period } => Box::new(RocConfirm::new(period)),
+        ConfirmConfig::Vi { atr_period, period } => Box::new(ViConfirm::new(atr_period, period)),
         ConfirmConfig::Stc {
             smooth_type,
             fast_period,

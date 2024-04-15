@@ -23,6 +23,7 @@ from strategy.generator.confirm.roc import RocConfirm
 from strategy.generator.confirm.rsi_neutrality import RsiNeutralityConfirm
 from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
 from strategy.generator.confirm.stc import StcConfirm
+from strategy.generator.confirm.vi import ViConfirm
 from strategy.generator.exit.ast import AstExit
 from strategy.generator.exit.cci import CciExit
 from strategy.generator.exit.highlow import HighLowExit
@@ -43,6 +44,7 @@ from strategy.generator.signal.flip.ce_flip import CeFlipSignal
 from strategy.generator.signal.flip.supertrend_flip import SupertrendFlipSignal
 from strategy.generator.signal.ma.ma2_rsi import Ma2RsiSignal
 from strategy.generator.signal.ma.ma3_cross import Ma3CrossSignal
+from strategy.generator.signal.ma.ma_cross import MaCrossSignal
 from strategy.generator.signal.ma.ma_testing_ground import MaTestingGroundSignal
 from strategy.generator.signal.ma.vwap_cross import VwapCrossSignal
 from strategy.generator.signal.neutrality.dso_neutrality_cross import (
@@ -181,6 +183,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 StcConfirm(),
                 DsoConfirm(),
                 CciConfirm(),
+                ViConfirm(),
             ]
         )
         pulse = np.random.choice(
@@ -374,7 +377,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     MaTestingGroundSignal(),
                     # MaQuadrupleSignal(),
                     # MaSurpassSignal(),
-                    # MaCrossSignal(),
+                    MaCrossSignal(),
                 ]
             )
         if signal == TrendSignalType.BREAKOUT:

@@ -14,6 +14,7 @@ class ConfirmType(Enum):
     RsiSignalLine = "RsiSignalLine"
     RsiNeutrality = "RsiNeutrality"
     Stc = "Stc"
+    Vi = "Vi"
 
     def __str__(self):
         return self.value.upper()

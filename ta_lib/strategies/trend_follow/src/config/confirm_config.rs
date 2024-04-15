@@ -49,4 +49,8 @@ pub enum ConfirmConfig {
         k_period: f32,
         d_period: f32,
     },
+    Vi {
+        atr_period: f32,
+        period: f32,
+    },
 }
