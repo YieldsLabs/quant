@@ -116,10 +116,6 @@ class BacktestSystem(AbstractSystem):
 
         futures_symbols = await self.query(GetSymbols())
 
-        futures_symbols = [
-            symbol for symbol in futures_symbols if symbol.name in ["TONUSDT"]
-        ]
-
         generator = self.context.strategy_generator_factory.create(
             self.context.strategy_type, futures_symbols
         )
