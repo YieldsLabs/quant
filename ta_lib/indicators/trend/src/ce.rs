@@ -38,20 +38,20 @@ pub fn ce(
     let prev_close = close.shift(1);
 
     let long_switch = iff!(
-        close.sge(&short.shift(1)) & prev_close.slt(&short.shift(1)),
+        close.sgte(&short.shift(1)) & prev_close.slt(&short.shift(1)),
         trend_up,
         trend_middle
     );
     let short_switch = iff!(
-        close.sle(&long.shift(1)) & prev_close.sgt(&long.shift(1)),
+        close.slte(&long.shift(1)) & prev_close.sgt(&long.shift(1)),
         trend_up,
         trend_middle
     );
 
     for _ in 0..len {
         let prev_direction = direction.shift(1);
-        let cond_one = prev_direction.sle(&trend_middle) & long_switch.clone().into();
-        let cond_two = prev_direction.sge(&trend_middle) & short_switch.clone().into();
+        let cond_one = prev_direction.slte(&trend_middle) & long_switch.clone().into();
+        let cond_two = prev_direction.sgte(&trend_middle) & short_switch.clone().into();
 
         direction = iff!(
             prev_direction.na(),

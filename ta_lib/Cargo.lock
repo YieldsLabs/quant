@@ -433,6 +433,7 @@ dependencies = [
  "core",
  "momentum",
  "trend",
+ "volatility",
  "volume",
 ]
 

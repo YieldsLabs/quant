@@ -27,7 +27,7 @@ impl Comparator<f32> for Series<f32> {
         self.compare(rhs, |a, b| a > b)
     }
 
-    fn sge(&self, rhs: &f32) -> Self::Output {
+    fn sgte(&self, rhs: &f32) -> Self::Output {
         self.compare(rhs, |a, b| a >= b)
     }
 
@@ -35,7 +35,7 @@ impl Comparator<f32> for Series<f32> {
         self.compare(rhs, |a, b| a < b)
     }
 
-    fn sle(&self, rhs: &f32) -> Self::Output {
+    fn slte(&self, rhs: &f32) -> Self::Output {
         self.compare(rhs, |a, b| a <= b)
     }
 }
@@ -67,7 +67,7 @@ impl Comparator<Series<f32>> for Series<f32> {
         self.compare(rhs, |a, b| a > b)
     }
 
-    fn sge(&self, rhs: &Series<f32>) -> Self::Output {
+    fn sgte(&self, rhs: &Series<f32>) -> Self::Output {
         self.compare(rhs, |a, b| a >= b)
     }
 
@@ -75,7 +75,7 @@ impl Comparator<Series<f32>> for Series<f32> {
         self.compare(rhs, |a, b| a < b)
     }
 
-    fn sle(&self, rhs: &Series<f32>) -> Self::Output {
+    fn slte(&self, rhs: &Series<f32>) -> Self::Output {
         self.compare(rhs, |a, b| a <= b)
     }
 }
@@ -118,12 +118,12 @@ mod tests {
     }
 
     #[test]
-    fn test_scalar_ge() {
+    fn test_scalar_gte() {
         let a = Series::from([f32::NAN, 2.0, 1.0, 1.0, 5.0]);
         let b = 1.0;
         let expected: Series<bool> = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
 
-        let result = a.sge(&b);
+        let result = a.sgte(&b);
 
         assert_eq!(result, expected);
     }
@@ -140,12 +140,12 @@ mod tests {
     }
 
     #[test]
-    fn test_scalar_le() {
+    fn test_scalar_lte() {
         let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
         let b = 1.0;
         let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 1.0, 0.0]).into();
 
-        let result = a.sle(&b);
+        let result = a.slte(&b);
 
         assert_eq!(result, expected);
     }
@@ -184,12 +184,12 @@ mod tests {
     }
 
     #[test]
-    fn test_series_ge() {
+    fn test_series_gte() {
         let a = Series::from([f32::NAN, 2.0, 1.0, 1.0, 5.0]);
         let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
         let expected: Series<bool> = Series::from([0.0, 1.0, 0.0, 1.0, 1.0]).into();
 
-        let result = a.sge(&b);
+        let result = a.sgte(&b);
 
         assert_eq!(result, expected);
     }
@@ -206,12 +206,12 @@ mod tests {
     }
 
     #[test]
-    fn test_series_le() {
+    fn test_series_lte() {
         let a = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
         let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
         let expected: Series<bool> = Series::from([0.0, 0.0, 1.0, 1.0, 0.0]).into();
 
-        let result = a.sle(&b);
+        let result = a.slte(&b);
 
         assert_eq!(result, expected);
     }

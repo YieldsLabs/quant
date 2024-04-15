@@ -12,7 +12,7 @@ pub fn bullish(
         & close.shift(1).slt(&open.shift(1))
         & high.sgt(&high.shift(1))
         & low.slt(&low.shift(1))
-        & body.sge(&(2.0 * body.shift(1)))
+        & body.sgte(&(2.0 * body.shift(1)))
 }
 
 pub fn bearish(
@@ -27,7 +27,7 @@ pub fn bearish(
         & close.shift(1).sgt(&open.shift(1))
         & high.sgt(&high.shift(1))
         & low.slt(&low.shift(1))
-        & body.sge(&(2.0 * body.shift(1)))
+        & body.sgte(&(2.0 * body.shift(1)))
 }
 
 #[cfg(test)]

@@ -12,9 +12,9 @@ pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     close.sgt(&prev_close)
         & prev_close.sgt(&back_2_close)
         & back_2_close.sgt(&close.shift(3))
-        & body.sge(&body.highest(5))
-        & prev_back.sge(&prev_back.highest(5))
-        & back_2_body.sge(&back_2_body.highest(5))
+        & body.sgte(&body.highest(5))
+        & prev_back.sgte(&prev_back.highest(5))
+        & back_2_body.sgte(&back_2_body.highest(5))
 }
 
 pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
@@ -29,9 +29,9 @@ pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
     close.slt(&prev_close)
         & prev_close.slt(&back_2_close)
         & back_2_close.slt(&close.shift(3))
-        & body.sge(&body.highest(5))
-        & prev_back.sge(&prev_back.highest(5))
-        & back_2_body.sge(&back_2_body.highest(5))
+        & body.sgte(&body.highest(5))
+        & prev_back.sgte(&prev_back.highest(5))
+        & back_2_body.sgte(&back_2_body.highest(5))
 }
 
 #[cfg(test)]

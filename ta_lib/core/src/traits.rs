@@ -27,9 +27,9 @@ pub trait Comparator<T> {
     fn seq(&self, rhs: &T) -> Self::Output;
     fn sne(&self, rhs: &T) -> Self::Output;
     fn sgt(&self, rhs: &T) -> Self::Output;
-    fn sge(&self, rhs: &T) -> Self::Output;
+    fn sgte(&self, rhs: &T) -> Self::Output;
     fn slt(&self, rhs: &T) -> Self::Output;
-    fn sle(&self, rhs: &T) -> Self::Output;
+    fn slte(&self, rhs: &T) -> Self::Output;
 }
 
 pub trait Operation<T, U, V> {

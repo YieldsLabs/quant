@@ -31,12 +31,7 @@ from strategy.generator.exit.ma import MaExit
 from strategy.generator.exit.mfi import MfiExit
 from strategy.generator.exit.rsi import RsiExit
 from strategy.generator.exit.trix import TrixExit
-from strategy.generator.pulse.adx import AdxPulse
-from strategy.generator.pulse.braid import BraidPulse
-from strategy.generator.pulse.chop import ChopPulse
-from strategy.generator.pulse.nvol import NvolPulse
-from strategy.generator.pulse.tdfi import TdfiPulse
-from strategy.generator.pulse.vo import VoPulse
+from strategy.generator.pulse.wae import WaePulse
 from strategy.generator.signal.bb.macd_bb import MacdBbSignal
 from strategy.generator.signal.bb.vwap_bb import VwapBbSignal
 from strategy.generator.signal.breakout.dch_two_ma import DchMa2BreakoutSignal
@@ -188,12 +183,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
         pulse = np.random.choice(
             [
-                AdxPulse(),
-                ChopPulse(),
-                BraidPulse(),
-                VoPulse(),
-                NvolPulse(),
-                TdfiPulse(),
+                # AdxPulse(),
+                # ChopPulse(),
+                # BraidPulse(),
+                # VoPulse(),
+                # NvolPulse(),
+                # TdfiPulse(),
+                WaePulse(),
             ]
         )
         stop_loss = np.random.choice([AtrStopLoss()])

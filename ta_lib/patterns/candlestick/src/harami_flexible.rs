@@ -10,7 +10,7 @@ pub fn bullish(
     let prev_open = open.shift(1);
 
     close.slt(&prev_open)
-        & open.sge(&prev_close)
+        & open.sgte(&prev_close)
         & high.slt(&high.shift(1))
         & low.sgt(&low.shift(1))
         & close.sgt(open)
@@ -28,7 +28,7 @@ pub fn bearish(
     let prev_open = open.shift(1);
 
     close.sgt(&prev_open)
-        & open.sle(&prev_close)
+        & open.slte(&prev_close)
         & high.slt(&high.shift(1))
         & low.sgt(&low.shift(1))
         & close.slt(open)
