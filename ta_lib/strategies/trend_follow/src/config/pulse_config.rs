@@ -39,4 +39,15 @@ pub enum PulseConfig {
         period: f32,
         n: f32,
     },
+    Wae {
+        smooth_type: f32,
+        fast_period: f32,
+        slow_period: f32,
+        smooth_bb: f32,
+        bb_period: f32,
+        factor: f32,
+        strength: f32,
+        atr_period: f32,
+        dz_factor: f32,
+    },
 }
