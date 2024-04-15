@@ -6,6 +6,6 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class CandleTrendSignal(Signal):
-    type: SignalType = SignalType.CandleTrend
+class CandlestickTrendSignal(Signal):
+    type: SignalType = SignalType.CandlestickTrend
     candle: Parameter = CategoricalParameter(CandleTrendType)

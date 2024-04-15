@@ -60,7 +60,7 @@ from strategy.generator.signal.neutrality.rsi_neutrality_rejection import (
     RsiNautralityRejectionSignal,
 )
 from strategy.generator.signal.pattern.ao_saucer import AoSaucerSignal
-from strategy.generator.signal.pattern.candle_trend import CandleTrendSignal
+from strategy.generator.signal.pattern.candle_trend import CandlestickTrendSignal
 from strategy.generator.signal.pattern.hl import HighLowSignal
 from strategy.generator.signal.pattern.macd_colorswitch import MacdColorSwitchSignal
 from strategy.generator.signal.pattern.rsi_v import RsiVSignal
@@ -346,7 +346,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     AoSaucerSignal(),
-                    CandleTrendSignal(),
+                    CandlestickTrendSignal(),
                     HighLowSignal(),
                     MacdColorSwitchSignal(),
                     TiiVSignal(),
@@ -360,7 +360,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     VwapBbSignal(),
                 ]
             )
-
         if signal == TrendSignalType.FLIP:
             return np.random.choice(
                 [
@@ -386,7 +385,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     DchMa2BreakoutSignal(),
                 ]
             )
-
         if signal == TrendSignalType.REVERSAL:
             return np.random.choice(
                 [
@@ -395,7 +393,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     ViReversalSignal(),
                 ]
             )
-
         if signal == TrendSignalType.NEUTRALITY:
             return np.random.choice(
                 [
@@ -405,7 +402,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     RsiNautralityRejectionSignal(),
                 ]
             )
-
         return np.random.choice(
             [
                 RsiNautralityRejectionSignal(),

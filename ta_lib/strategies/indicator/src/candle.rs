@@ -23,7 +23,7 @@ pub enum CandleTrendType {
     THREE_ONE_TWO,
 }
 
-pub fn candle_trend_indicator(
+pub fn candlestick_trend_indicator(
     candle: &CandleTrendType,
     data: &OHLCVSeries,
 ) -> (Series<bool>, Series<bool>) {
