@@ -8,4 +8,4 @@ from strategy.generator.confirm.base import Confirm, ConfirmType
 class ViConfirm(Confirm):
     type: ConfirmType = ConfirmType.Vi
     atr_period: Parameter = StaticParameter(1.0)
-    period: Parameter = StaticParameter(14.0)
+    period: Parameter = StaticParameter(21.0)
