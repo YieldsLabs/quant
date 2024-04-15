@@ -1,13 +1,13 @@
 use base::prelude::*;
 use core::prelude::*;
 
-pub struct ATRStopLoss {
+pub struct AtrStopLoss {
     smooth_type: Smooth,
     period: usize,
     factor: f32,
 }
 
-impl ATRStopLoss {
+impl AtrStopLoss {
     pub fn new(smooth_type: Smooth, period: f32, factor: f32) -> Self {
         Self {
             smooth_type,
@@ -17,7 +17,7 @@ impl ATRStopLoss {
     }
 }
 
-impl StopLoss for ATRStopLoss {
+impl StopLoss for AtrStopLoss {
     fn lookback(&self) -> usize {
         self.period
     }

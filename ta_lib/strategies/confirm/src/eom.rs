@@ -2,13 +2,13 @@ use base::prelude::*;
 use core::prelude::*;
 use volume::eom;
 
-pub struct EOMConfirm {
+pub struct EomConfirm {
     smooth_type: Smooth,
     period: usize,
     divisor: f32,
 }
 
-impl EOMConfirm {
+impl EomConfirm {
     pub fn new(smooth_type: Smooth, period: f32, divisor: f32) -> Self {
         Self {
             smooth_type,
@@ -18,7 +18,7 @@ impl EOMConfirm {
     }
 }
 
-impl Confirm for EOMConfirm {
+impl Confirm for EomConfirm {
     fn lookback(&self) -> usize {
         self.period
     }

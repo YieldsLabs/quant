@@ -27,11 +27,7 @@ impl Exit for AstExit {
             &data.atr(self.atr_period, Smooth::SMMA),
             self.factor,
         );
-        let prev_direction = direction.shift(1);
 
-        (
-            direction.seq(&-1.0) & prev_direction.seq(&1.0),
-            direction.seq(&1.0) & prev_direction.seq(&-1.0),
-        )
+        (direction.cross_over(&ZERO), direction.cross_under(&ZERO))
     }
 }

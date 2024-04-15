@@ -1,9 +1,9 @@
-use crate::baseline_mapper::{map_to_baseline, BaseLineConfig};
-use crate::confirm_mapper::{map_to_confirm, ConfirmConfig};
-use crate::exit_mapper::{map_to_exit, ExitConfig};
-use crate::pulse_mapper::{map_to_pulse, PulseConfig};
-use crate::signal_mapper::{map_to_signal, SignalConfig};
-use crate::stop_loss_mapper::{map_to_stoploss, StopLossConfig};
+use crate::config::{
+    BaseLineConfig, ConfirmConfig, ExitConfig, PulseConfig, SignalConfig, StopLossConfig,
+};
+use crate::mapper::{
+    map_to_baseline, map_to_confirm, map_to_exit, map_to_pulse, map_to_signal, map_to_stoploss,
+};
 use base::prelude::*;
 
 fn read_from_memory(ptr: *const u8, len: usize) -> &'static [u8] {

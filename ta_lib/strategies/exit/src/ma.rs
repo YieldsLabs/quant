@@ -1,13 +1,13 @@
 use base::prelude::*;
 use core::prelude::*;
-use shared::{ma_indicator, MovingAverageType};
+use indicator::{ma_indicator, MovingAverageType};
 
-pub struct MAExit {
+pub struct MaExit {
     ma: MovingAverageType,
     period: usize,
 }
 
-impl MAExit {
+impl MaExit {
     pub fn new(ma: MovingAverageType, period: f32) -> Self {
         Self {
             ma,
@@ -16,7 +16,7 @@ impl MAExit {
     }
 }
 
-impl Exit for MAExit {
+impl Exit for MaExit {
     fn lookback(&self) -> usize {
         self.period
     }

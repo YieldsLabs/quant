@@ -7,11 +7,11 @@ mod roc;
 mod rsi;
 mod stc;
 
-pub use cci::CCIConfirm;
-pub use dpo::DPOConfirm;
-pub use dso::DSOConfirm;
+pub use cci::CciConfirm;
+pub use dpo::DpoConfirm;
+pub use dso::DsoConfirm;
 pub use dumb::DumbConfirm;
-pub use eom::EOMConfirm;
-pub use roc::ROCConfirm;
-pub use rsi::RSIConfirm;
-pub use stc::STCConfirm;
+pub use eom::EomConfirm;
+pub use roc::RocConfirm;
+pub use rsi::RsiConfirm;
+pub use stc::StcConfirm;

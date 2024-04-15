@@ -9,6 +9,6 @@ from .base import Pulse, PulseType
 @dataclass(frozen=True)
 class TdfiPulse(Pulse):
     type: PulseType = PulseType.Tdfi
-    smooth_type: Parameter = StaticParameter(Smooth.ZLEMA)
+    smooth_type: Parameter = StaticParameter(Smooth.EMA)
     period: Parameter = StaticParameter(14.0)
     n: Parameter = StaticParameter(3.0)

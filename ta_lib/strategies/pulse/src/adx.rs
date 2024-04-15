@@ -4,14 +4,14 @@ use momentum::dmi;
 
 const ADX_LOWER_BARRIER: f32 = 25.;
 
-pub struct ADXPulse {
+pub struct AdxPulse {
     smooth_type: Smooth,
     adx_period: usize,
     di_period: usize,
     threshold: f32,
 }
 
-impl ADXPulse {
+impl AdxPulse {
     pub fn new(smooth_type: Smooth, adx_period: f32, di_period: f32, threshold: f32) -> Self {
         Self {
             smooth_type,
@@ -22,7 +22,7 @@ impl ADXPulse {
     }
 }
 
-impl Pulse for ADXPulse {
+impl Pulse for AdxPulse {
     fn lookback(&self) -> usize {
         std::cmp::max(self.adx_period, self.di_period)
     }

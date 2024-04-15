@@ -62,7 +62,6 @@ impl Pulse for BraidPulse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::prelude::*;
     use std::collections::VecDeque;
 
     #[test]

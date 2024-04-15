@@ -5,13 +5,13 @@ use momentum::rsi;
 const RSI_OVERBOUGHT: f32 = 70.0;
 const RSI_OVERSOLD: f32 = 30.0;
 
-pub struct RSIExit {
+pub struct RsiExit {
     smooth_type: Smooth,
     period: usize,
     threshold: f32,
 }
 
-impl RSIExit {
+impl RsiExit {
     pub fn new(smooth_type: Smooth, period: f32, threshold: f32) -> Self {
         Self {
             smooth_type,
@@ -21,7 +21,7 @@ impl RSIExit {
     }
 }
 
-impl Exit for RSIExit {
+impl Exit for RsiExit {
     fn lookback(&self) -> usize {
         self.period
     }

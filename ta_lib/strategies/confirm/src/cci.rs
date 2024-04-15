@@ -5,13 +5,13 @@ use momentum::cci;
 const CCI_UPPER_BARRIER: f32 = 50.;
 const CCI_LOWER_BARRIER: f32 = -50.;
 
-pub struct CCIConfirm {
+pub struct CciConfirm {
     smooth_type: Smooth,
     period: usize,
     factor: f32,
 }
 
-impl CCIConfirm {
+impl CciConfirm {
     pub fn new(smooth_type: Smooth, period: f32, factor: f32) -> Self {
         Self {
             smooth_type,
@@ -21,7 +21,7 @@ impl CCIConfirm {
     }
 }
 
-impl Confirm for CCIConfirm {
+impl Confirm for CciConfirm {
     fn lookback(&self) -> usize {
         self.period
     }

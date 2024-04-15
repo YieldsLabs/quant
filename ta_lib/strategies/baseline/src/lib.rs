@@ -1,3 +1,3 @@
 mod ma;
 
-pub use ma::MABaseLine;
+pub use ma::MaBaseLine;

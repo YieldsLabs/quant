@@ -1,0 +1,16 @@
+[package]
+name = "indicator"
+resolver = "2"
+
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+core = { path = "../../core" }
+base = { path = "../base" }
+candlestick = { path = "../../patterns/candlestick" }
+trend = { path = "../../indicators/trend" }

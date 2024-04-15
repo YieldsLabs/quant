@@ -2,12 +2,12 @@ use base::prelude::*;
 use core::prelude::*;
 use trend::dpo;
 
-pub struct DPOConfirm {
+pub struct DpoConfirm {
     smooth_type: Smooth,
     period: usize,
 }
 
-impl DPOConfirm {
+impl DpoConfirm {
     pub fn new(smooth_type: Smooth, period: f32) -> Self {
         Self {
             smooth_type,
@@ -16,7 +16,7 @@ impl DPOConfirm {
     }
 }
 
-impl Confirm for DPOConfirm {
+impl Confirm for DpoConfirm {
     fn lookback(&self) -> usize {
         self.period
     }

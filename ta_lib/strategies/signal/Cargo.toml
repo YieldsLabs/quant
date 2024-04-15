@@ -13,7 +13,7 @@ repository.workspace = true
 [dependencies]
 core = { path = "../../core" }
 base = { path = "../base" }
-shared = { path = "../shared" }
+indicator = { path = "../indicator" }
 trend = { path = "../../indicators/trend" }
 momentum = { path = "../../indicators/momentum" }
 volatility = { path = "../../indicators/volatility" }

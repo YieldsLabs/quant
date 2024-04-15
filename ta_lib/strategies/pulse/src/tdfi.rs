@@ -5,13 +5,13 @@ use momentum::tdfi;
 const TDFI_UPPER_LINE: f32 = 0.05;
 const TDFI_LOWER_LINE: f32 = -0.05;
 
-pub struct TDFIPulse {
+pub struct TdfiPulse {
     smooth_type: Smooth,
     period: usize,
     n: usize,
 }
 
-impl TDFIPulse {
+impl TdfiPulse {
     pub fn new(smooth_type: Smooth, period: f32, n: f32) -> Self {
         Self {
             smooth_type,
@@ -21,7 +21,7 @@ impl TDFIPulse {
     }
 }
 
-impl Pulse for TDFIPulse {
+impl Pulse for TdfiPulse {
     fn lookback(&self) -> usize {
         self.period
     }

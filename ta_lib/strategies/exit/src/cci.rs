@@ -5,14 +5,14 @@ use momentum::cci;
 const CCI_OVERBOUGHT: f32 = 100.0;
 const CCI_OVERSOLD: f32 = -100.0;
 
-pub struct CCIExit {
+pub struct CciExit {
     smooth_type: Smooth,
     period: usize,
     factor: f32,
     threshold: f32,
 }
 
-impl CCIExit {
+impl CciExit {
     pub fn new(smooth_type: Smooth, period: f32, factor: f32, threshold: f32) -> Self {
         Self {
             smooth_type,
@@ -23,7 +23,7 @@ impl CCIExit {
     }
 }
 
-impl Exit for CCIExit {
+impl Exit for CciExit {
     fn lookback(&self) -> usize {
         self.period
     }

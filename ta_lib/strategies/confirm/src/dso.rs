@@ -2,14 +2,14 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::dso;
 
-pub struct DSOConfirm {
+pub struct DsoConfirm {
     smooth_type: Smooth,
     smooth_period: usize,
     k_period: usize,
     d_period: usize,
 }
 
-impl DSOConfirm {
+impl DsoConfirm {
     pub fn new(smooth_type: Smooth, smooth_period: f32, k_period: f32, d_period: f32) -> Self {
         Self {
             smooth_type,
@@ -20,7 +20,7 @@ impl DSOConfirm {
     }
 }
 
-impl Confirm for DSOConfirm {
+impl Confirm for DsoConfirm {
     fn lookback(&self) -> usize {
         let period = std::cmp::max(self.smooth_period, self.k_period);
         std::cmp::max(period, self.d_period)
@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_confirm_dso() {
-        let confirm = DSOConfirm::new(Smooth::EMA, 13.0, 8.0, 9.0);
+        let confirm = DsoConfirm::new(Smooth::EMA, 13.0, 8.0, 9.0);
         let data = VecDeque::from([
             OHLCV {
                 open: 4.8914,

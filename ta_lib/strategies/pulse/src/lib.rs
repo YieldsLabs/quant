@@ -6,10 +6,10 @@ mod nvol;
 mod tdfi;
 mod vo;
 
-pub use adx::ADXPulse;
+pub use adx::AdxPulse;
 pub use braid::BraidPulse;
-pub use chop::CHOPPulse;
+pub use chop::ChopPulse;
 pub use dumb::DumbPulse;
 pub use nvol::NvolPulse;
-pub use tdfi::TDFIPulse;
+pub use tdfi::TdfiPulse;
 pub use vo::VoPulse;

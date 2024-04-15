@@ -4,13 +4,13 @@ use trend::chop;
 
 const CHOP_MIDDLE_LINE: f32 = 38.2;
 
-pub struct CHOPPulse {
+pub struct ChopPulse {
     period: usize,
     atr_period: usize,
     threshold: f32,
 }
 
-impl CHOPPulse {
+impl ChopPulse {
     pub fn new(period: f32, atr_period: f32, threshold: f32) -> Self {
         Self {
             period: period as usize,
@@ -20,7 +20,7 @@ impl CHOPPulse {
     }
 }
 
-impl Pulse for CHOPPulse {
+impl Pulse for ChopPulse {
     fn lookback(&self) -> usize {
         std::cmp::max(self.period, self.atr_period)
     }
