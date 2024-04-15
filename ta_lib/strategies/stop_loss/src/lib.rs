@@ -1,3 +1,3 @@
 mod atr;
 
-pub use atr::ATRStopLoss;
+pub use atr::AtrStopLoss;

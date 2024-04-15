@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class TrendCandleType(Enum):
+class CandleTrendType(Enum):
     BOTTLE = 1
     DOUBLE_TROUBLE = 2
     GOLDEN = 3

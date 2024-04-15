@@ -15,9 +15,9 @@ members = [
 "strategies/stop_loss",
 "strategies/signal",
 "strategies/confirm",
-"strategies/shared",
 "strategies/pulse",
 "strategies/baseline",
+"strategies/indicator",
 ]
 
 [workspace.package]

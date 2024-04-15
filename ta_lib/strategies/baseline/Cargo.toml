@@ -15,4 +15,4 @@ base = { path = "../base" }
 core = { path = "../../core" }
 trend = { path = "../../indicators/trend" }
 signal = { path = "../signal" }
-shared = { path = "../shared" }
+indicator = { path = "../indicator" }

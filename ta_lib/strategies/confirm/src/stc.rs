@@ -5,7 +5,7 @@ use momentum::stc;
 const LOWER_LINE: f32 = 25.;
 const UPPER_LINE: f32 = 75.;
 
-pub struct STCConfirm {
+pub struct StcConfirm {
     smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
@@ -14,7 +14,7 @@ pub struct STCConfirm {
     d_second: usize,
 }
 
-impl STCConfirm {
+impl StcConfirm {
     pub fn new(
         smooth_type: Smooth,
         fast_period: f32,
@@ -34,7 +34,7 @@ impl STCConfirm {
     }
 }
 
-impl Confirm for STCConfirm {
+impl Confirm for StcConfirm {
     fn lookback(&self) -> usize {
         let adj_lookback_one = std::cmp::max(self.fast_period, self.slow_period);
         let adj_lookback_two = std::cmp::max(adj_lookback_one, self.cycle);

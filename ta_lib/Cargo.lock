@@ -45,7 +45,7 @@ version = "0.1.0"
 dependencies = [
  "base",
  "core",
- "shared",
+ "indicator",
  "signal",
  "trend",
 ]
@@ -156,7 +156,6 @@ dependencies = [
  "base",
  "core",
  "momentum",
- "shared",
  "trend",
  "volume",
 ]
@@ -256,8 +255,8 @@ dependencies = [
  "base",
  "candlestick",
  "core",
+ "indicator",
  "momentum",
- "shared",
  "trend",
  "volume",
 ]
@@ -273,6 +272,16 @@ name = "hermit-abi"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
+
+[[package]]
+name = "indicator"
+version = "0.1.0"
+dependencies = [
+ "base",
+ "candlestick",
+ "core",
+ "trend",
+]
 
 [[package]]
 name = "is-terminal"
@@ -545,25 +554,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared"
-version = "0.1.0"
-dependencies = [
- "base",
- "candlestick",
- "core",
- "momentum",
- "trend",
-]
-
-[[package]]
 name = "signal"
 version = "0.1.0"
 dependencies = [
  "base",
  "candlestick",
  "core",
+ "indicator",
  "momentum",
- "shared",
  "trend",
  "volatility",
  "volume",
@@ -617,10 +615,10 @@ dependencies = [
  "confirm",
  "core",
  "exit",
+ "indicator",
  "pulse",
  "serde",
  "serde_json",
- "shared",
  "signal",
  "stop_loss",
 ]

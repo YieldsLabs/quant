@@ -2,11 +2,11 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::roc;
 
-pub struct ROCConfirm {
+pub struct RocConfirm {
     period: usize,
 }
 
-impl ROCConfirm {
+impl RocConfirm {
     pub fn new(period: f32) -> Self {
         Self {
             period: period as usize,
@@ -14,7 +14,7 @@ impl ROCConfirm {
     }
 }
 
-impl Confirm for ROCConfirm {
+impl Confirm for RocConfirm {
     fn lookback(&self) -> usize {
         self.period
     }

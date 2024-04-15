@@ -1,33 +1,31 @@
 use base::prelude::*;
 use core::prelude::*;
-use shared::{ma_indicator, MovingAverageType};
-use signal::{
-    MACandleSignal, MACrossSignal, MAQuadrupleSignal, MASurpassSignal, MATestingGroundSignal,
-};
+use indicator::{ma_indicator, MovingAverageType};
+use signal::{MaCrossSignal, MaQuadrupleSignal, MaSurpassSignal, MaTestingGroundSignal};
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.236;
 
-pub struct MABaseLine {
+pub struct MaBaseLine {
     ma: MovingAverageType,
     period: usize,
     signal: Vec<Box<dyn Signal>>,
 }
 
-impl MABaseLine {
+impl MaBaseLine {
     pub fn new(ma: MovingAverageType, period: f32) -> Self {
         Self {
             ma,
             period: period as usize,
             signal: vec![
-                Box::new(MASurpassSignal::new(ma, period)),
-                Box::new(MAQuadrupleSignal::new(ma, period)),
+                Box::new(MaSurpassSignal::new(ma, period)),
+                Box::new(MaQuadrupleSignal::new(ma, period)),
             ],
         }
     }
 }
 
-impl BaseLine for MABaseLine {
+impl BaseLine for MaBaseLine {
     fn lookback(&self) -> usize {
         let mut m = std::cmp::max(DEFAULT_ATR_LOOKBACK, self.period);
 

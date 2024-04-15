@@ -2,13 +2,13 @@ use base::prelude::*;
 use core::prelude::*;
 use momentum::trix;
 
-pub struct TRIXExit {
+pub struct TrixExit {
     smooth_type: Smooth,
     period: usize,
     signal_period: usize,
 }
 
-impl TRIXExit {
+impl TrixExit {
     pub fn new(smooth_type: Smooth, period: f32, signal_period: f32) -> Self {
         Self {
             smooth_type,
@@ -18,7 +18,7 @@ impl TRIXExit {
     }
 }
 
-impl Exit for TRIXExit {
+impl Exit for TrixExit {
     fn lookback(&self) -> usize {
         std::cmp::max(self.period, self.signal_period)
     }

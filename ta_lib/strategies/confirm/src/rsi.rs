@@ -5,7 +5,7 @@ use momentum::rsi;
 const RSI_UPPER_BARRIER: f32 = 75.;
 const RSI_LOWER_BARRIER: f32 = 35.;
 
-pub struct RSIConfirm {
+pub struct RsiConfirm {
     smooth_type: Smooth,
     rsi_period: usize,
     smooth_signal: Smooth,
@@ -13,7 +13,7 @@ pub struct RSIConfirm {
     threshold: f32,
 }
 
-impl RSIConfirm {
+impl RsiConfirm {
     pub fn new(
         smooth_type: Smooth,
         rsi_period: f32,
@@ -31,7 +31,7 @@ impl RSIConfirm {
     }
 }
 
-impl Confirm for RSIConfirm {
+impl Confirm for RsiConfirm {
     fn lookback(&self) -> usize {
         std::cmp::max(self.rsi_period, self.smooth_period)
     }

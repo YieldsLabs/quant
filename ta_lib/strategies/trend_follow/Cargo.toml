@@ -17,7 +17,7 @@ signal = { path = "../signal" }
 confirm = { path = "../confirm" }
 pulse = { path = "../pulse" }
 baseline = { path = "../baseline" }
-shared = { path = "../shared" }
+indicator = { path = "../indicator" }
 exit = { path = "../exit" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }

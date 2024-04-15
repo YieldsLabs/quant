@@ -5,12 +5,12 @@ use volume::mfi;
 const MFI_OVERBOUGHT: f32 = 80.0;
 const MFI_OVERSOLD: f32 = 20.0;
 
-pub struct MFIExit {
+pub struct MfiExit {
     period: usize,
     threshold: f32,
 }
 
-impl MFIExit {
+impl MfiExit {
     pub fn new(period: f32, threshold: f32) -> Self {
         Self {
             period: period as usize,
@@ -19,7 +19,7 @@ impl MFIExit {
     }
 }
 
-impl Exit for MFIExit {
+impl Exit for MfiExit {
     fn lookback(&self) -> usize {
         self.period
     }
