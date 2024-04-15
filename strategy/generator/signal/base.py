@@ -36,7 +36,7 @@ class SignalType(Enum):
     MacdColorSwitch = "MacdColorSwitch"
     RsiV = "RsiV"
     TiiV = "TiiV"
-    CandleTrend = "CandleTrend"
+    CandlestickTrend = "CandlestickTrend"
     # Flip
     CeFlip = "CeFlip"
     SupFlip = "SupFlip"
