@@ -237,6 +237,7 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             fast_period,
             slow_period,
             signal_period,
+            bb_smooth,
             bb_period,
             factor,
         } => Box::new(MacdBbSignal::new(
@@ -244,17 +245,18 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             fast_period,
             slow_period,
             signal_period,
+            smooth_deserialize(bb_smooth as usize),
             bb_period,
             factor,
         )),
         SignalConfig::VwapBb {
             period,
-            smooth_type,
+            bb_smooth,
             bb_period,
             factor,
         } => Box::new(VwapBbSignal::new(
             period,
-            smooth_deserialize(smooth_type as usize),
+            smooth_deserialize(bb_smooth as usize),
             bb_period,
             factor,
         )),

@@ -9,6 +9,6 @@ from strategy.generator.signal.base import Signal, SignalType
 class VwapBbSignal(Signal):
     type: SignalType = SignalType.VwapBb
     period: Parameter = StaticParameter(100.0)
-    smooth_type: Parameter = StaticParameter(Smooth.EMA)
+    bb_smooth: Parameter = StaticParameter(Smooth.EMA)
     bb_period: Parameter = StaticParameter(50.0)
     factor: Parameter = StaticParameter(2.0)

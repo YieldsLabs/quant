@@ -15,5 +15,6 @@ class MacdBbSignal(Signal):
     fast_period: Parameter = StaticParameter(8.0)
     slow_period: Parameter = StaticParameter(26.0)
     signal_period: Parameter = StaticParameter(9.0)
+    bb_smooth: Parameter = StaticParameter(Smooth.SMA)
     bb_period: Parameter = StaticParameter(9.0)
     factor: Parameter = StaticParameter(0.8)
