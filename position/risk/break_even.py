@@ -23,6 +23,7 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
     ) -> float:
         ohlcvs = ohlcvs[:]
         lookback = 14
+        factor = 2.0
 
         if len(ohlcvs) < lookback:
             return stop_loss_price, take_profit_price
@@ -40,16 +41,27 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         high = min(ohlcvs[-lookback:], key=lambda x: abs(x.high - price)).high
         low = min(ohlcvs[-lookback:], key=lambda x: abs(x.low - price)).low
 
+        upper_bb, lower_bb, middle_bb = self._bb(ohlcvs, lookback, factor)
+        bbw = (upper_bb - lower_bb) / middle_bb
+        
+        squeeze = bbw <= np.min(bbw[-lookback:])
+
         next_stop_loss = stop_loss_price
 
         if side == PositionSide.LONG:
-            next_take_profit = max(entry_price + risk_value, high + tp_threshold)
+            if squeeze[-1]:
+                next_take_profit = max(entry_price + risk_value, upper_bb[-1])
+            else:
+               next_take_profit = max(entry_price + risk_value, high + tp_threshold) 
 
             if curr_dist > dist and price > entry_price:
                 next_stop_loss = max(entry_price - risk_value, low - sl_threshold)
 
         elif side == PositionSide.SHORT:
-            next_take_profit = min(entry_price - risk_value, low - tp_threshold)
+            if squeeze[-1]:
+                next_take_profit = min(entry_price - risk_value, lower_bb[-1])
+            else:
+               next_take_profit = min(entry_price - risk_value, low - tp_threshold) 
 
             if curr_dist > dist and price < entry_price:
                 next_stop_loss = min(entry_price + risk_value, high + sl_threshold)
@@ -57,7 +69,7 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
         return next_stop_loss, next_take_profit
 
     @staticmethod
-    def _atr(ohlcvs: List[OHLCV], period: int) -> float:
+    def _atr(ohlcvs: List[OHLCV], period: int) -> List[float]:
         highs, lows, closes = (
             np.array([ohlcv.high for ohlcv in ohlcvs]),
             np.array([ohlcv.low for ohlcv in ohlcvs]),
@@ -81,3 +93,11 @@ class PositionRiskBreakEvenStrategy(AbstractPositionRiskStrategy):
     @staticmethod
     def _price(ohlcvs: List[OHLCV]) -> float:
         return (ohlcvs[-1].high + ohlcvs[-1].low + ohlcvs[-1].close) / 3.0
+
+    @staticmethod
+    def _bb(ohlcvs: List[OHLCV], period: int, factor: float) -> Tuple[List[float], List[float], List[float]]:
+        closes = np.array([ohlcv.close for ohlcv in ohlcvs])
+        rolling_mean = np.convolve(closes, np.ones(period) / period, mode='valid')
+        rolling_std = factor * np.std([closes[i:i+period] for i in range(len(closes) - period + 1)], axis=1)
+    
+        return rolling_mean + rolling_std, rolling_mean - rolling_std, rolling_mean

@@ -10,4 +10,4 @@ from strategy.generator.signal.base import Signal, SignalType
 class MaCrossSignal(Signal):
     type: SignalType = SignalType.MaCross
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = RandomParameter(150.0, 200.0, 10.0)
+    period: Parameter = RandomParameter(100.0, 150.0, 10.0)

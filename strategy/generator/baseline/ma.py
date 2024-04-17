@@ -14,4 +14,4 @@ from .base import BaseLine, BaseLineType
 class MaBaseLine(BaseLine):
     type: BaseLineType = BaseLineType.Ma
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = StaticParameter(24.0)
+    period: Parameter = StaticParameter(14.0)
