@@ -13,10 +13,10 @@ mod traits;
 
 pub mod prelude {
     pub use crate::constants::*;
-    pub use crate::iff;
     pub use crate::series::Series;
     pub use crate::smoothing::Smooth;
     pub use crate::traits::*;
+    pub use crate::{iff, nz};
 }
 
 pub use prelude::*;

@@ -29,6 +29,6 @@ impl Signal for SupertrendFlipSignal {
             self.factor,
         );
 
-        (direction.cross_under(&ZERO), direction.cross_over(&ZERO))
+        (direction.cross_over(&ZERO), direction.cross_under(&ZERO))
     }
 }
