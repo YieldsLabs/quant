@@ -9,5 +9,5 @@ from strategy.generator.signal.base import Signal, SignalType
 class TiiNeutralityCrossSignal(Signal):
     type: SignalType = SignalType.TiiNeutralityCross
     smooth_type: Parameter = StaticParameter(Smooth.SMA)
-    major_period: Parameter = StaticParameter(60.0)
-    minor_period: Parameter = StaticParameter(30.0)
+    major_period: Parameter = StaticParameter(40.0)
+    minor_period: Parameter = StaticParameter(20.0)
