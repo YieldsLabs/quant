@@ -57,6 +57,7 @@ class SignalType(Enum):
     RsiNeutralityCross = "RsiNeutralityCross"
     RsiNeutralityPullback = "RsiNeutralityPullback"
     RsiNeutralityRejection = "RsiNeutralityRejection"
+    TiiNeutralityCross = "TiiNeutralityCross"
     # Breakout
     DchMa2Breakout = "DchMa2Breakout"
 

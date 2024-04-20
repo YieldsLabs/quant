@@ -24,7 +24,6 @@ from strategy.generator.confirm.rsi_neutrality import RsiNeutralityConfirm
 from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
 from strategy.generator.confirm.stc import StcConfirm
 from strategy.generator.confirm.vi import ViConfirm
-from strategy.generator.exit.ast import AstExit
 from strategy.generator.exit.cci import CciExit
 from strategy.generator.exit.highlow import HighLowExit
 from strategy.generator.exit.ma import MaExit
@@ -41,7 +40,6 @@ from strategy.generator.pulse.wae import WaePulse
 from strategy.generator.signal.bb.macd_bb import MacdBbSignal
 from strategy.generator.signal.bb.vwap_bb import VwapBbSignal
 from strategy.generator.signal.breakout.dch_two_ma import DchMa2BreakoutSignal
-from strategy.generator.signal.flip.ce_flip import CeFlipSignal
 from strategy.generator.signal.flip.supertrend_flip import SupertrendFlipSignal
 from strategy.generator.signal.ma.ma2_rsi import Ma2RsiSignal
 from strategy.generator.signal.ma.ma3_cross import Ma3CrossSignal
@@ -60,6 +58,7 @@ from strategy.generator.signal.neutrality.rsi_neutrality_pullback import (
 from strategy.generator.signal.neutrality.rsi_neutrality_rejection import (
     RsiNautralityRejectionSignal,
 )
+from strategy.generator.signal.neutrality.tii_neutrality_cross import TiiNeutralityCrossSignal
 from strategy.generator.signal.pattern.ao_saucer import AoSaucerSignal
 from strategy.generator.signal.pattern.candle_trend import CandlestickTrendSignal
 from strategy.generator.signal.pattern.hl import HighLowSignal
@@ -201,7 +200,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         stop_loss = np.random.choice([AtrStopLoss()])
         exit_signal = np.random.choice(
             [
-                AstExit(),
+                # AstExit(),
                 HighLowExit(),
                 MaExit(),
                 RsiExit(),
@@ -365,7 +364,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.FLIP:
             return np.random.choice(
                 [
-                    CeFlipSignal(),
+                    # CeFlipSignal(),
                     SupertrendFlipSignal(),
                 ]
             )
@@ -402,6 +401,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     RsiNautralityCrossSignal(),
                     RsiNautralityPullbackSignal(),
                     RsiNautralityRejectionSignal(),
+                    TiiNeutralityCrossSignal(),
                 ]
             )
         return np.random.choice(

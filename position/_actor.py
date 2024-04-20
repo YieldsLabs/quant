@@ -87,6 +87,8 @@ class PositionActor(Actor):
             )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
+        logger.info(f"Signal Received: {event}")
+
         async def create_and_store_position(event: SignalEvent):
             position = await self.position_factory.create_position(
                 event.signal, event.ohlcv, event.entry_price, event.stop_loss

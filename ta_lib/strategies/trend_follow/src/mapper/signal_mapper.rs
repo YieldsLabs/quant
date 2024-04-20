@@ -299,6 +299,15 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             k_period,
             d_period,
         )),
+        SignalConfig::TiiNeutralityCross {
+            smooth_type,
+            major_period,
+            minor_period,
+        } => Box::new(TiiNeutralityCrossSignal::new(
+            smooth_deserialize(smooth_type as usize),
+            major_period,
+            minor_period,
+        )),
         // Ma
         SignalConfig::Ma3Cross {
             ma,

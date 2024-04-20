@@ -235,6 +235,11 @@ pub enum SignalConfig {
         rsi_period: f32,
         threshold: f32,
     },
+    TiiNeutralityCross {
+        smooth_type: f32,
+        major_period: f32,
+        minor_period: f32,
+    },
     // Breakout
     DchMa2Breakout {
         dch_period: f32,
