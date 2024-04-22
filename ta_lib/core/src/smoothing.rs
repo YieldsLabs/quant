@@ -21,11 +21,7 @@ impl Series<f32> {
         for _ in 0..len {
             let prev = sum.shift(1);
 
-            sum = iff!(
-                prev.na(),
-                seed,
-                alpha * self + (1. - alpha) * nz!(prev, sum)
-            )
+            sum = iff!(prev.na(), seed, alpha * self + (1. - alpha) * prev)
         }
 
         sum
