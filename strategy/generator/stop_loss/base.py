@@ -6,6 +6,7 @@ from core.models.indicator import Indicator
 
 class StopLossType(Enum):
     Atr = "Atr"
+    Dch = "Dch"
 
     def __str__(self):
         return self.value.upper()

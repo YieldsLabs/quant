@@ -58,7 +58,9 @@ from strategy.generator.signal.neutrality.rsi_neutrality_pullback import (
 from strategy.generator.signal.neutrality.rsi_neutrality_rejection import (
     RsiNautralityRejectionSignal,
 )
-from strategy.generator.signal.neutrality.tii_neutrality_cross import TiiNeutralityCrossSignal
+from strategy.generator.signal.neutrality.tii_neutrality_cross import (
+    TiiNeutralityCrossSignal,
+)
 from strategy.generator.signal.pattern.ao_saucer import AoSaucerSignal
 from strategy.generator.signal.pattern.candle_trend import CandlestickTrendSignal
 from strategy.generator.signal.pattern.hl import HighLowSignal
@@ -90,6 +92,7 @@ from strategy.generator.signal.zerocross.roc_zerocross import RocZeroCrossSignal
 from strategy.generator.signal.zerocross.trix_zerocross import TrixZeroCrossSignal
 from strategy.generator.signal.zerocross.tsi_zerocross import TsiZeroCrossSignal
 from strategy.generator.stop_loss.atr import AtrStopLoss
+from strategy.generator.stop_loss.dch import DchStopLoss
 
 
 class TrendSignalType(Enum):
@@ -197,7 +200,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 WaePulse(),
             ]
         )
-        stop_loss = np.random.choice([AtrStopLoss()])
+        stop_loss = np.random.choice([AtrStopLoss(), DchStopLoss()])
         exit_signal = np.random.choice(
             [
                 # AstExit(),
