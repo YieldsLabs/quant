@@ -38,3 +38,85 @@ impl Signal for DmiReversalSignal {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::prelude::*;
+    use std::collections::VecDeque;
+
+    #[test]
+    fn test_signal_dmi_reversal() {
+        let signal = DmiReversalSignal::new(Smooth::SMMA, 3.0, 3.0);
+        let data = VecDeque::from([
+            OHLCV {
+                open: 0.010631,
+                high: 0.010655,
+                low: 0.010612,
+                close: 0.010651,
+                volume: 100.0,
+            },
+            OHLCV {
+                open: 0.010651,
+                high: 0.010671,
+                low: 0.010596,
+                close: 0.010665,
+                volume: 100.0,
+            },
+            OHLCV {
+                open: 0.010665,
+                high: 0.010720,
+                low: 0.010661,
+                close: 0.010693,
+                volume: 100.0,
+            },
+            OHLCV {
+                open: 0.010693,
+                high: 0.010711,
+                low: 0.010651,
+                close: 0.010698,
+                volume: 100.0,
+            },
+            OHLCV {
+                open: 0.010698,
+                high: 0.010761,
+                low: 0.010675,
+                close: 0.010688,
+                volume: 100.0,
+            },
+            OHLCV {
+                open: 0.010688,
+                high: 0.010688,
+                low: 0.010614,
+                close: 0.010625,
+                volume: 100.0,
+            },
+            OHLCV {
+                open: 0.010625,
+                high: 0.010629,
+                low: 0.010533,
+                close: 0.010548,
+                volume: 100.0,
+            },
+            OHLCV {
+                open: 0.010548,
+                high: 0.010563,
+                low: 0.010501,
+                close: 0.010515,
+                volume: 100.0,
+            },
+        ]);
+        let series = OHLCVSeries::from_data(&data);
+
+        let (dip, dim) = signal.generate(&series);
+
+        let expected_long_signal = vec![false, false, false, false, false, false, false, false];
+        let expected_short_signal = vec![false, false, false, false, false, true, false, false];
+
+        let result_long_signal: Vec<bool> = dip.into();
+        let result_short_signal: Vec<bool> = dim.into();
+
+        assert_eq!(result_long_signal, expected_long_signal);
+        assert_eq!(result_short_signal, expected_short_signal);
+    }
+}
