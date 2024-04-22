@@ -280,6 +280,7 @@ class SmartRouter(AbstractEventManager):
             return
 
         position_size = position.size
+        position_side = position.side
         exit_price = command.exit_price
 
         min_size = symbol.min_position_size
@@ -292,12 +293,12 @@ class SmartRouter(AbstractEventManager):
         max_spread = float("-inf")
 
         for price in self.algo_price.calculate(symbol, self.exchange):
-            if not self.exchange.fetch_position(symbol, position.side):
+            if not self.exchange.fetch_position(symbol, position_side):
                 break
 
             spread = (
                 price - exit_price
-                if position.side == PositionSide.LONG
+                if position_side == PositionSide.LONG
                 else exit_price - price
             )
             max_spread = max(spread, max_spread)
@@ -305,9 +306,6 @@ class SmartRouter(AbstractEventManager):
             logging.info(
                 f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread}, max spread: {max_spread}"
             )
-
-            if not self.exchange.fetch_position(symbol, position.side):
-                break
 
             curr_time = time.time()
             expired_orders = [
@@ -330,14 +328,17 @@ class SmartRouter(AbstractEventManager):
                 break
 
             if (
-                not self.exchange.has_open_orders(symbol, position.side, True)
+                not self.exchange.has_open_orders(symbol, position_side, True)
                 or not len(order_timestamps.keys())
             ) and (spread < max_spread or spread < 0):
                 order_id = self.exchange.create_reduce_order(
-                    symbol, position.side, size, price
+                    symbol, position_side, size, price
                 )
                 if order_id:
                     order_timestamps[order_id] = time.time()
 
         for order_id in list(order_timestamps.keys()):
             self.exchange.cancel_order(order_id, symbol)
+
+        if self.exchange.fetch_position(symbol, position_side):
+            self.exchange.close_full_position(symbol, position_side)
