@@ -1,4 +1,4 @@
-use crate::price::Price;
+use crate::source::Source;
 use crate::{BaseLine, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
 use core::prelude::*;
 use std::collections::VecDeque;
@@ -170,7 +170,7 @@ impl BaseStrategy {
 
 #[cfg(test)]
 mod tests {
-    use crate::price::Price;
+    use crate::source::Source;
     use crate::{
         BaseLine, BaseStrategy, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy,
         TradeAction, OHLCV,
