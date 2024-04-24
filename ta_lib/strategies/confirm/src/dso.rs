@@ -172,6 +172,6 @@ mod tests {
         let result_short_signal: Vec<bool> = short_signal.into();
 
         assert_eq!(result_long_signal, expected_long_signal);
-        assert_eq!(expected_short_signal, result_short_signal);
+        assert_eq!(result_short_signal, expected_short_signal);
     }
 }
