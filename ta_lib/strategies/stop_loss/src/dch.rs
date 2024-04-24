@@ -4,12 +4,14 @@ use volatility::dch;
 
 pub struct DchStopLoss {
     period: usize,
+    factor: f32,
 }
 
 impl DchStopLoss {
-    pub fn new(period: f32) -> Self {
+    pub fn new(period: f32, factor: f32) -> Self {
         Self {
             period: period as usize,
+            factor,
         }
     }
 }
@@ -21,7 +23,8 @@ impl StopLoss for DchStopLoss {
 
     fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
         let (upper, _, lower) = dch(&data.high, &data.low, self.period);
+        let volatility = data.close.std(self.period).highest(self.period) * self.factor;
 
-        (lower, upper)
+        (lower - &volatility, upper + &volatility)
     }
 }

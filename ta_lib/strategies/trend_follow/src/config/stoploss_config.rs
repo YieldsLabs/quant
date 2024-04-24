@@ -10,5 +10,6 @@ pub enum StopLossConfig {
     },
     Dch {
         period: f32,
+        factor: f32,
     },
 }

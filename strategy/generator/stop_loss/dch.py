@@ -9,3 +9,4 @@ from .base import StopLoss, StopLossType
 class DchStopLoss(StopLoss):
     type: StopLossType = StopLossType.Dch
     period: Parameter = StaticParameter(21.0)
+    factor: Parameter = StaticParameter(0.2)

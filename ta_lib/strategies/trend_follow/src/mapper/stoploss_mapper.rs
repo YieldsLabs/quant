@@ -15,6 +15,6 @@ pub fn map_to_stoploss(config: StopLossConfig) -> Box<dyn StopLoss> {
             period,
             factor,
         )),
-        StopLossConfig::Dch { period } => Box::new(DchStopLoss::new(period)),
+        StopLossConfig::Dch { period, factor } => Box::new(DchStopLoss::new(period, factor)),
     }
 }
