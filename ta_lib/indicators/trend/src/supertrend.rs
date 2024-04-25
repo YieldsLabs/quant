@@ -31,7 +31,7 @@ pub fn supertrend(
 
         direction = nz!(direction.shift(1), direction);
         direction = iff!(close.sgte(&prev_dn), trend_bull, direction);
-        direction = iff!(close.slte(&prev_up), trend_bear, direction);
+        direction = iff!(close.slt(&prev_up), trend_bear, direction);
     }
 
     let first_non_empty = direction
