@@ -142,13 +142,13 @@ class RiskActor(Actor):
                 and long_position
                 and not short_position
             ):
-                await self._process_signal_exit(long_position, event.entry_price)
+                await self._process_reverse_exit(long_position, event.entry_price)
             if (
                 isinstance(event, GoLongSignalReceived)
                 and short_position
                 and not long_position
             ):
-                await self._process_signal_exit(short_position, event.entry_price)
+                await self._process_reverse_exit(short_position, event.entry_price)
 
     async def _handle_signal_exit(
         self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived]
@@ -214,6 +214,20 @@ class RiskActor(Actor):
             return RiskThresholdBreached(position, exit_price, risk_type)
 
         return None
+
+    async def _process_reverse_exit(
+        self,
+        position: Position,
+        price: float,
+    ):
+        take_profit_price = position.take_profit_price
+        stop_loss_price = position.stop_loss_price
+
+        distance_to_take_profit = abs(price - take_profit_price)
+        distance_to_stop_loss = abs(price - stop_loss_price)
+
+        if distance_to_take_profit < distance_to_stop_loss:
+            await self.tell(RiskThresholdBreached(position, price, RiskType.REVERSE))
 
     async def _process_signal_exit(
         self,
