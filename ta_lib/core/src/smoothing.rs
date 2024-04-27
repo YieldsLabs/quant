@@ -1,5 +1,5 @@
+use crate::iff;
 use crate::series::Series;
-use crate::{iff, nz};
 
 #[derive(Copy, Clone)]
 pub enum Smooth {
@@ -27,7 +27,7 @@ impl Series<f32> {
         sum
     }
 
-    pub fn wg(&self, weights: &[f32], period: usize) -> Self {
+    pub fn wg(&self, weights: &[f32]) -> Self {
         let mut sum = Series::zero(self.len());
         let norm = weights.iter().sum::<f32>();
 
@@ -60,7 +60,7 @@ impl Series<f32> {
     fn wma(&self, period: usize) -> Self {
         let weights = (0..period).map(|i| (period - i) as f32).collect::<Vec<_>>();
 
-        self.wg(&weights, period)
+        self.wg(&weights)
     }
 
     fn swma(&self) -> Self {

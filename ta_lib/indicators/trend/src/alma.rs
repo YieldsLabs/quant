@@ -8,7 +8,7 @@ pub fn alma(source: &Series<f32>, period: usize, offset: f32, sigma: f32) -> Ser
         .map(|i| ((-1. * (i as f32 - m).powi(2)) / (2. * s.powi(2))).exp())
         .collect::<Vec<_>>();
 
-    source.wg(&weights, period)
+    source.wg(&weights)
 }
 
 #[cfg(test)]

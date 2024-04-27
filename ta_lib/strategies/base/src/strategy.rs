@@ -1,10 +1,10 @@
 use crate::source::Source;
 use crate::{BaseLine, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
-use core::prelude::*;
 use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
 const DEFAULT_STOP_LEVEL: f32 = -1.0;
+const DEFAULT_BUFF_SIZE: f32 = 1.3;
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {
@@ -65,7 +65,7 @@ impl BaseStrategy {
     }
 
     fn store(&mut self, data: OHLCV) {
-        let buf_size = (self.lookback_period as f32 * 1.3) as usize;
+        let buf_size = (self.lookback_period as f32 * DEFAULT_BUFF_SIZE) as usize;
 
         if self.data.len() > buf_size {
             self.data.pop_front();
@@ -173,6 +173,9 @@ mod tests {
         TradeAction, OHLCV,
     };
     use core::Series;
+
+    const DEFAULT_BUFF_SIZE: f32 = 1.3;
+    const DEFAULT_LOOKBACK: usize = 55;
 
     struct MockSignal {
         fast_period: usize,
@@ -300,19 +303,16 @@ mod tests {
             }),
             Box::new(MockExit {}),
         );
-        let lookback = 55;
-
-        let ohlcvs = vec![
-            OHLCV {
-                ts: 1710297600000,
-                open: 1.0,
-                high: 2.0,
-                low: 0.5,
-                close: 1.5,
-                volume: 100.0,
-            };
-            lookback
-        ];
+        let lookback = (DEFAULT_BUFF_SIZE * DEFAULT_LOOKBACK as f32) as usize;
+        let data = OHLCV {
+            ts: 1710297600000,
+            open: 1.0,
+            high: 2.0,
+            low: 0.5,
+            close: 1.5,
+            volume: 100.0,
+        };
+        let ohlcvs = vec![data; lookback];
 
         let mut action = TradeAction::DoNothing;
 
@@ -327,10 +327,10 @@ mod tests {
         let hlcc4: Vec<f32> = series.hlcc4().into();
         let ohlc4: Vec<f32> = series.ohlc4().into();
 
-        assert_eq!(hl2, vec![1.25; lookback]);
-        assert_eq!(hlc3, vec![1.333_333_4; lookback]);
-        assert_eq!(hlcc4, vec![1.375; lookback]);
-        assert_eq!(ohlc4, vec![1.25; lookback]);
+        assert_eq!(hl2, vec![1.25]);
+        assert_eq!(hlc3, vec![1.333_333_4]);
+        assert_eq!(hlcc4, vec![1.375]);
+        assert_eq!(ohlc4, vec![1.25]);
         assert_eq!(action, TradeAction::DoNothing);
     }
 }

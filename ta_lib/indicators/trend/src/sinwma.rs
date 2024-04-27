@@ -5,7 +5,7 @@ pub fn sinwma(source: &Series<f32>, period: usize) -> Series<f32> {
         .map(|i| ((i as f32 + 1.) * std::f32::consts::PI / (period as f32 + 1.)).sin())
         .collect::<Vec<_>>();
 
-    source.wg(&weights, period)
+    source.wg(&weights)
 }
 
 #[cfg(test)]
