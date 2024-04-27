@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from typing import Union
 
 from core.actors import Actor
@@ -87,7 +88,9 @@ class PositionActor(Actor):
             )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        logger.info(f"Signal Received: {event}")
+        if int(event.meta.timestamp) < int(time.time()) - 3:
+            logger.warn(f"Stale Signal: {event}, {time.time()}")
+            return False
 
         async def create_and_store_position(event: SignalEvent):
             position = await self.position_factory.create_position(
