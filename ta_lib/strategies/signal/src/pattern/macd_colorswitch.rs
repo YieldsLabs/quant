@@ -33,7 +33,7 @@ impl Signal for MacdColorSwitchSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (_, _, histogram) = macd(
-            &data.close,
+            &data.close(),
             self.smooth_type,
             self.fast_period,
             self.slow_period,

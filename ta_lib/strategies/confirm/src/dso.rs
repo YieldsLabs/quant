@@ -42,7 +42,6 @@ impl Confirm for DsoConfirm {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::prelude::*;
     use std::collections::VecDeque;
 
     #[test]
@@ -50,6 +49,7 @@ mod tests {
         let confirm = DsoConfirm::new(Smooth::EMA, 13.0, 8.0, 9.0);
         let data = VecDeque::from([
             OHLCV {
+                ts: 1679827200,
                 open: 4.8914,
                 high: 4.9045,
                 low: 4.8895,
@@ -57,6 +57,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827500,
                 open: 4.8995,
                 high: 4.9073,
                 low: 4.8995,
@@ -64,6 +65,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827800,
                 open: 4.9061,
                 high: 4.9070,
                 low: 4.9001,
@@ -71,6 +73,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828100,
                 open: 4.9001,
                 high: 4.9053,
                 low: 4.8995,
@@ -78,6 +81,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828400,
                 open: 4.9053,
                 high: 4.9093,
                 low: 4.9046,
@@ -85,6 +89,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828700,
                 open: 4.9087,
                 high: 4.9154,
                 low: 4.9087,
@@ -92,6 +97,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829000,
                 open: 4.9131,
                 high: 4.9131,
                 low: 4.9040,
@@ -99,6 +105,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829300,
                 open: 4.9041,
                 high: 4.9068,
                 low: 4.8988,
@@ -106,6 +113,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829600,
                 open: 4.9023,
                 high: 4.9051,
                 low: 4.8949,
@@ -113,6 +121,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829900,
                 open: 4.9010,
                 high: 4.9052,
                 low: 4.8969,
@@ -120,6 +129,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679830200,
                 open: 4.8969,
                 high: 4.8969,
                 low: 4.8819,
@@ -127,6 +137,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679830500,
                 open: 4.8895,
                 high: 4.8928,
                 low: 4.8851,
@@ -134,6 +145,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679830800,
                 open: 4.8901,
                 high: 4.8910,
                 low: 4.8813,
@@ -141,6 +153,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679831100,
                 open: 4.8855,
                 high: 4.8864,
                 low: 4.8816,
@@ -148,6 +161,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679831400,
                 open: 4.8824,
                 high: 4.8934,
                 low: 4.8814,

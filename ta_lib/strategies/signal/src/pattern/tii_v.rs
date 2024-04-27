@@ -28,7 +28,7 @@ impl Signal for TiiVSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tii = tii(
-            &data.close,
+            &data.close(),
             self.smooth_type,
             self.major_period,
             self.minor_period,

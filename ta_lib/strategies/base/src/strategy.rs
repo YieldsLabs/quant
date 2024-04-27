@@ -65,7 +65,9 @@ impl BaseStrategy {
     }
 
     fn store(&mut self, data: OHLCV) {
-        if self.data.len() >= self.lookback_period {
+        let buf_size = (self.lookback_period as f32 * 1.3) as usize;
+
+        if self.data.len() > buf_size {
             self.data.pop_front();
         }
 
@@ -77,6 +79,7 @@ impl BaseStrategy {
         self.data.len() >= self.lookback_period
     }
 
+    #[inline(always)]
     fn ohlcv_series(&self) -> OHLCVSeries {
         OHLCVSeries::from_data(&self.data)
     }
@@ -93,10 +96,10 @@ impl Strategy for BaseStrategy {
         let theo_price = self.suggested_entry();
 
         match self.trade_signals() {
-            (true, _, false, false) => TradeAction::GoLong(theo_price),
-            (_, true, false, false) => TradeAction::GoShort(theo_price),
-            (false, false, true, _) => TradeAction::ExitLong(data.close),
-            (false, false, _, true) => TradeAction::ExitShort(data.close),
+            (true, false, false, false) => TradeAction::GoLong(theo_price),
+            (false, true, false, false) => TradeAction::GoShort(theo_price),
+            (false, false, true, false) => TradeAction::ExitLong(data.close),
+            (false, false, false, true) => TradeAction::ExitShort(data.close),
             _ => TradeAction::DoNothing,
         }
     }
@@ -129,14 +132,8 @@ impl BaseStrategy {
         let (filter_long_baseline, filter_short_baseline) = self.base_line.filter(&series);
         let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
 
-        let prev_go_long_trigger = go_long_trigger.shift(1);
-        let prev_go_short_trigger = go_short_trigger.shift(1);
-
-        let go_long_trigger_signal = go_long_trigger | prev_go_long_trigger;
-        let go_short_trigger_signal = go_short_trigger | prev_go_short_trigger;
-
-        let go_long_signal = go_long_trigger_signal | go_long_baseline;
-        let go_short_signal = go_short_trigger_signal | go_short_baseline;
+        let go_long_signal = go_long_trigger | go_long_baseline;
+        let go_short_signal = go_short_trigger | go_short_baseline;
 
         let go_long = (go_long_signal & filter_long_baseline & go_long_confirm & go_long_momentum)
             .last()
@@ -153,7 +150,7 @@ impl BaseStrategy {
     }
 
     fn suggested_entry(&self) -> f32 {
-        self.ohlcv_series().hlc3().last().unwrap_or(std::f32::NAN)
+        self.ohlcv_series().ohlc4().last().unwrap_or(std::f32::NAN)
     }
 
     fn stop_loss_levels(&self) -> (f32, f32) {
@@ -307,6 +304,7 @@ mod tests {
 
         let ohlcvs = vec![
             OHLCV {
+                ts: 1710297600000,
                 open: 1.0,
                 high: 2.0,
                 low: 0.5,

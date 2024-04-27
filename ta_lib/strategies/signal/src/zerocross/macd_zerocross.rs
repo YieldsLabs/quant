@@ -33,7 +33,7 @@ impl Signal for MacdZeroCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (macd_line, _, _) = macd(
-            &data.close,
+            &data.close(),
             self.smooth_type,
             self.fast_period,
             self.slow_period,

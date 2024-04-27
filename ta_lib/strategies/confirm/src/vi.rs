@@ -36,7 +36,6 @@ impl Confirm for ViConfirm {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::prelude::*;
     use std::collections::VecDeque;
 
     #[test]
@@ -44,6 +43,7 @@ mod tests {
         let confirm = ViConfirm::new(1.0, 3.0);
         let data = VecDeque::from([
             OHLCV {
+                ts: 1679827200,
                 open: 6.490,
                 high: 6.514,
                 low: 6.490,
@@ -51,6 +51,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827500,
                 open: 6.511,
                 high: 6.522,
                 low: 6.506,
@@ -58,6 +59,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827800,
                 open: 6.512,
                 high: 6.513,
                 low: 6.496,
@@ -65,6 +67,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828100,
                 open: 6.512,
                 high: 6.528,
                 low: 6.507,
@@ -72,6 +75,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828400,
                 open: 6.527,
                 high: 6.530,
                 low: 6.497,
@@ -79,6 +83,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828700,
                 open: 6.500,
                 high: 6.508,
                 low: 6.489,
@@ -86,6 +91,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829000,
                 open: 6.505,
                 high: 6.510,
                 low: 6.483,
@@ -93,6 +99,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829300,
                 open: 6.492,
                 high: 6.496,
                 low: 6.481,
@@ -100,6 +107,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829600,
                 open: 6.491,
                 high: 6.512,
                 low: 6.486,
@@ -107,6 +115,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829900,
                 open: 6.499,
                 high: 6.500,
                 low: 6.481,

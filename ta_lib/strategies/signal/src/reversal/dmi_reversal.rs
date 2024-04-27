@@ -42,7 +42,6 @@ impl Signal for DmiReversalSignal {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::prelude::*;
     use std::collections::VecDeque;
 
     #[test]
@@ -50,6 +49,7 @@ mod tests {
         let signal = DmiReversalSignal::new(Smooth::SMMA, 3.0, 3.0);
         let data = VecDeque::from([
             OHLCV {
+                ts: 1679827200,
                 open: 0.010631,
                 high: 0.010655,
                 low: 0.010612,
@@ -57,6 +57,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827500,
                 open: 0.010651,
                 high: 0.010671,
                 low: 0.010596,
@@ -64,6 +65,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827800,
                 open: 0.010665,
                 high: 0.010720,
                 low: 0.010661,
@@ -71,6 +73,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828100,
                 open: 0.010693,
                 high: 0.010711,
                 low: 0.010651,
@@ -78,6 +81,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828400,
                 open: 0.010698,
                 high: 0.010761,
                 low: 0.010675,
@@ -85,6 +89,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828700,
                 open: 0.010688,
                 high: 0.010688,
                 low: 0.010614,
@@ -92,6 +97,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829000,
                 open: 0.010625,
                 high: 0.010629,
                 low: 0.010533,
@@ -99,6 +105,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829300,
                 open: 0.010548,
                 high: 0.010563,
                 low: 0.010501,

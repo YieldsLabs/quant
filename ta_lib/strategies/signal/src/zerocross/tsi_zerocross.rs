@@ -25,7 +25,7 @@ impl Signal for TsiZeroCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tsi = tsi(
-            &data.close,
+            &data.close(),
             self.smooth_type,
             self.slow_period,
             self.fast_period,

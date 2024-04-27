@@ -44,6 +44,7 @@ pub fn unregister_strategy(strategy_id: i32) -> i32 {
 #[no_mangle]
 pub fn strategy_next(
     strategy_id: i32,
+    ts: i64,
     open: f32,
     high: f32,
     low: f32,
@@ -53,6 +54,7 @@ pub fn strategy_next(
     let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
     if let Some(strategy) = strategies.get_mut(&strategy_id) {
         let ohlcv = OHLCV {
+            ts,
             open,
             high,
             low,

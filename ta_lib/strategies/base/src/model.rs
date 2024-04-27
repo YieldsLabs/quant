@@ -1,8 +1,9 @@
 use core::prelude::*;
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 
 #[derive(Debug, Copy, Clone)]
 pub struct OHLCV {
+    pub ts: i64,
     pub open: f32,
     pub high: f32,
     pub low: f32,
@@ -29,12 +30,21 @@ impl OHLCVSeries {
         let mut close = Vec::with_capacity(len);
         let mut volume = Vec::with_capacity(len);
 
-        for ohlcv in data.iter() {
-            open.push(ohlcv.open);
-            high.push(ohlcv.high);
-            low.push(ohlcv.low);
-            close.push(ohlcv.close);
-            volume.push(ohlcv.volume);
+        let mut visited = HashSet::new();
+
+        let mut sorted_data: Vec<_> = data.iter().collect();
+        sorted_data.sort_by_key(|v| v.ts);
+
+        for ohlcv in sorted_data.iter() {
+            if !visited.contains(&ohlcv.ts) {
+                open.push(ohlcv.open);
+                high.push(ohlcv.high);
+                low.push(ohlcv.low);
+                close.push(ohlcv.close);
+                volume.push(ohlcv.volume);
+
+                visited.insert(ohlcv.ts);
+            }
         }
 
         Self {

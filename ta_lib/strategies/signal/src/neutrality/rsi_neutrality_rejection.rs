@@ -24,7 +24,7 @@ impl Signal for RsiNeutralityRejectionSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close, self.smooth_type, self.rsi_period);
+        let rsi = rsi(&data.close(), self.smooth_type, self.rsi_period);
         let upper_neutrality = NEUTRALITY_LINE + self.threshold;
         let lower_neutrality = NEUTRALITY_LINE - self.threshold;
 

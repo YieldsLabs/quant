@@ -46,6 +46,7 @@ class StrategyRef:
         [raw_action, price] = exports["strategy_next"](
             self.store_ref,
             self.id,
+            ohlcv.timestamp,
             ohlcv.open,
             ohlcv.high,
             ohlcv.low,

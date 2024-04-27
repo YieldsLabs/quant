@@ -43,6 +43,7 @@ mod tests {
         let signal = SupertrendFlipSignal::new(3.0, 3.0);
         let data = VecDeque::from([
             OHLCV {
+                ts: 1679827200,
                 open: 6.161,
                 high: 6.161,
                 low: 6.136,
@@ -50,6 +51,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827500,
                 open: 6.146,
                 high: 6.150,
                 low: 6.135,
@@ -57,6 +59,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679827800,
                 open: 6.148,
                 high: 6.157,
                 low: 6.143,
@@ -64,6 +67,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828100,
                 open: 6.155,
                 high: 6.174,
                 low: 6.155,
@@ -71,6 +75,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828400,
                 open: 6.174,
                 high: 6.179,
                 low: 6.163,
@@ -78,6 +83,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679828700,
                 open: 6.173,
                 high: 6.192,
                 low: 6.170,
@@ -85,6 +91,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829000,
                 open: 6.172,
                 high: 6.184,
                 low: 6.167,
@@ -92,6 +99,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829300,
                 open: 6.182,
                 high: 6.183,
                 low: 6.170,
@@ -99,6 +107,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829600,
                 open: 6.176,
                 high: 6.185,
                 low: 6.161,
@@ -106,6 +115,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679829900,
                 open: 6.167,
                 high: 6.193,
                 low: 6.165,
@@ -113,6 +123,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679830200,
                 open: 6.193,
                 high: 6.213,
                 low: 6.188,
@@ -120,6 +131,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679830500,
                 open: 6.201,
                 high: 6.201,
                 low: 6.183,
@@ -127,6 +139,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679830800,
                 open: 6.198,
                 high: 6.205,
                 low: 6.186,
@@ -134,6 +147,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679831100,
                 open: 6.188,
                 high: 6.188,
                 low: 6.168,
@@ -141,6 +155,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679831400,
                 open: 6.174,
                 high: 6.180,
                 low: 6.164,
@@ -148,6 +163,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679831700,
                 open: 6.176,
                 high: 6.194,
                 low: 6.176,
@@ -155,6 +171,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679832000,
                 open: 6.191,
                 high: 6.191,
                 low: 6.169,
@@ -162,6 +179,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679832300,
                 open: 6.175,
                 high: 6.184,
                 low: 6.175,
@@ -169,6 +187,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679832600,
                 open: 6.184,
                 high: 6.194,
                 low: 6.176,
@@ -176,6 +195,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679832900,
                 open: 6.188,
                 high: 6.188,
                 low: 6.171,
@@ -183,6 +203,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679833200,
                 open: 6.179,
                 high: 6.188,
                 low: 6.171,
@@ -190,6 +211,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679833500,
                 open: 6.184,
                 high: 6.195,
                 low: 6.182,
@@ -197,6 +219,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679833800,
                 open: 6.195,
                 high: 6.212,
                 low: 6.193,
@@ -204,6 +227,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679834100,
                 open: 6.210,
                 high: 6.210,
                 low: 6.180,
@@ -211,6 +235,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679834400,
                 open: 6.192,
                 high: 6.193,
                 low: 6.152,
@@ -218,6 +243,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679834700,
                 open: 6.173,
                 high: 6.178,
                 low: 6.161,
@@ -225,6 +251,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679835000,
                 open: 6.174,
                 high: 6.189,
                 low: 6.161,
@@ -232,6 +259,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679835300,
                 open: 6.189,
                 high: 6.197,
                 low: 6.183,
@@ -239,6 +267,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679835600,
                 open: 6.194,
                 high: 6.205,
                 low: 6.189,
@@ -246,6 +275,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679835900,
                 open: 6.202,
                 high: 6.232,
                 low: 6.193,
@@ -253,6 +283,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679836200,
                 open: 6.231,
                 high: 6.236,
                 low: 6.215,
@@ -260,6 +291,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679836500,
                 open: 6.218,
                 high: 6.222,
                 low: 6.205,
@@ -267,6 +299,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679836800,
                 open: 6.208,
                 high: 6.233,
                 low: 6.208,
@@ -274,6 +307,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679837100,
                 open: 6.224,
                 high: 6.231,
                 low: 6.213,
@@ -281,6 +315,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679837400,
                 open: 6.220,
                 high: 6.224,
                 low: 6.196,
@@ -288,6 +323,7 @@ mod tests {
                 volume: 100.0,
             },
             OHLCV {
+                ts: 1679837700,
                 open: 6.208,
                 high: 6.219,
                 low: 6.202,

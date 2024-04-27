@@ -28,7 +28,7 @@ impl Signal for DsoNeutralityCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (k, _) = dso(
-            &data.close,
+            &data.close(),
             self.smooth_type,
             self.smooth_period,
             self.k_period,

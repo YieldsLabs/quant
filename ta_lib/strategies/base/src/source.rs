@@ -3,6 +3,7 @@ use core::prelude::*;
 use price::prelude::*;
 
 pub trait Source {
+    fn close(&self) -> Series<f32>;
     fn hl2(&self) -> Series<f32>;
     fn hlc3(&self) -> Series<f32>;
     fn hlcc4(&self) -> Series<f32>;
@@ -10,6 +11,11 @@ pub trait Source {
 }
 
 impl Source for OHLCVSeries {
+    #[inline]
+    fn close(&self) -> Series<f32> {
+        self.close.clone()
+    }
+
     #[inline]
     fn hl2(&self) -> Series<f32> {
         median_price(&self.high, &self.low)
