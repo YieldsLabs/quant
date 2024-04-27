@@ -6,6 +6,7 @@ class RiskType(Enum):
     SIGNAL = 2
     SL = 3
     TP = 4
+    REVERSE = 5
 
     def __str__(self):
         return self.name.upper()
