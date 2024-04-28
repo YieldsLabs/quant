@@ -24,6 +24,6 @@ impl Signal for MaCrossSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.period);
 
-        (data.close.cross_over(&ma), data.close.cross_under(&ma))
+        (data.close().cross_over(&ma), data.close().cross_under(&ma))
     }
 }

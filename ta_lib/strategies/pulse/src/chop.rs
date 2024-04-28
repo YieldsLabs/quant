@@ -27,8 +27,8 @@ impl Pulse for ChopPulse {
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let chop = chop(
-            &data.high,
-            &data.low,
+            data.high(),
+            data.low(),
             &data.atr(self.atr_period, Smooth::SMMA),
             self.period,
         );

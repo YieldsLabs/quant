@@ -19,7 +19,7 @@ impl Confirm for DumbConfirm {
     }
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let len = data.close.len();
+        let len = data.len();
 
         (Series::one(len).into(), Series::one(len).into())
     }

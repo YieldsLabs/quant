@@ -29,8 +29,8 @@ impl Pulse for AdxPulse {
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (adx, _, _) = dmi(
-            &data.high,
-            &data.low,
+            data.high(),
+            data.low(),
             &data.atr(self.di_period, Smooth::SMMA),
             self.smooth_type,
             self.adx_period,

@@ -3,7 +3,6 @@ use core::prelude::*;
 use price::prelude::*;
 
 pub trait Source {
-    fn close(&self) -> Series<f32>;
     fn hl2(&self) -> Series<f32>;
     fn hlc3(&self) -> Series<f32>;
     fn hlcc4(&self) -> Series<f32>;
@@ -12,27 +11,22 @@ pub trait Source {
 
 impl Source for OHLCVSeries {
     #[inline]
-    fn close(&self) -> Series<f32> {
-        self.close.clone()
-    }
-
-    #[inline]
     fn hl2(&self) -> Series<f32> {
-        median_price(&self.high, &self.low)
+        median_price(self.high(), self.low())
     }
 
     #[inline]
     fn hlc3(&self) -> Series<f32> {
-        typical_price(&self.high, &self.low, &self.close)
+        typical_price(self.high(), self.low(), self.close())
     }
 
     #[inline]
     fn hlcc4(&self) -> Series<f32> {
-        wcl(&self.high, &self.low, &self.close)
+        wcl(&self.high(), self.low(), self.close())
     }
 
     #[inline]
     fn ohlc4(&self) -> Series<f32> {
-        average_price(&self.open, &self.high, &self.low, &self.close)
+        average_price(self.open(), self.high(), self.low(), self.close())
     }
 }

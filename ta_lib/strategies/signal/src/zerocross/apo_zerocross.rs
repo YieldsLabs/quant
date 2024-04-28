@@ -22,7 +22,7 @@ impl Signal for ApoZeroCrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let apo = apo(&data.close(), self.fast_period, self.slow_period);
+        let apo = apo(data.close(), self.fast_period, self.slow_period);
 
         (apo.cross_over(&ZERO_LINE), apo.cross_under(&ZERO_LINE))
     }

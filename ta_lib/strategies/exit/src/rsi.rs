@@ -27,7 +27,8 @@ impl Exit for RsiExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close, self.smooth_type, self.period);
+        let rsi = rsi(data.close(), self.smooth_type, self.period);
+
         let upper_bound = RSI_OVERBOUGHT - self.threshold;
         let lower_bound = RSI_OVERSOLD + self.threshold;
 

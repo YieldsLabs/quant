@@ -22,7 +22,7 @@ impl Confirm for DpoConfirm {
     }
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let dpo = dpo(&data.close, self.smooth_type, self.period);
+        let dpo = dpo(data.close(), self.smooth_type, self.period);
 
         (dpo.sgt(&ZERO_LINE), dpo.slt(&ZERO_LINE))
     }

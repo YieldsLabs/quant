@@ -22,7 +22,7 @@ impl Signal for QstickZeroCrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let qstick = qstick(&data.open, &data.close, self.smooth_type, self.period);
+        let qstick = qstick(data.open(), data.close(), self.smooth_type, self.period);
 
         (
             qstick.cross_over(&ZERO_LINE),

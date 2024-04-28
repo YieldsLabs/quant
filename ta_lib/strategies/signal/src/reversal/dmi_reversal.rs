@@ -25,8 +25,8 @@ impl Signal for DmiReversalSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (_, di_plus, di_minus) = dmi(
-            &data.high,
-            &data.low,
+            data.high(),
+            data.low(),
             &data.atr(self.di_period, Smooth::SMMA),
             self.smooth_type,
             self.adx_period,

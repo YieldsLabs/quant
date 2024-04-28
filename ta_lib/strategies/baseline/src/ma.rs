@@ -19,7 +19,7 @@ impl MaBaseLine {
             period: period as usize,
             signal: vec![
                 Box::new(MaSurpassSignal::new(ma, period)),
-                // Box::new(MaQuadrupleSignal::new(ma, period)),
+                Box::new(MaQuadrupleSignal::new(ma, period)),
             ],
         }
     }
@@ -40,7 +40,7 @@ impl BaseLine for MaBaseLine {
         let ma = ma_indicator(&self.ma, data, self.period);
         let prev_ma = ma.shift(1);
 
-        let dist = (&ma - &data.close).abs();
+        let dist = (&ma - data.close()).abs();
         let atr = data.atr(DEFAULT_ATR_LOOKBACK, Smooth::SMMA) * DEFAULT_ATR_FACTOR;
 
         (

@@ -20,8 +20,8 @@ impl Exit for HighLowExit {
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
-            data.close.sgt(&data.high.shift(self.period)),
-            data.close.slt(&data.low.shift(self.period)),
+            data.close().sgt(&data.high().shift(self.period)),
+            data.close().slt(&data.low().shift(self.period)),
         )
     }
 }

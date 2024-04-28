@@ -33,7 +33,7 @@ impl Signal for MacdSignalLineSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (macd_line, signal_line, _) = macd(
-            &data.close(),
+            data.close(),
             self.smooth_type,
             self.fast_period,
             self.slow_period,

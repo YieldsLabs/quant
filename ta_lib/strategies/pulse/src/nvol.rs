@@ -24,7 +24,7 @@ impl Pulse for NvolPulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let nvol = nvol(&data.volume, self.smooth_type, self.period);
+        let nvol = nvol(&data.volume(), self.smooth_type, self.period);
 
         (nvol.sgt(&NVOL_LINE), nvol.sgt(&NVOL_LINE))
     }

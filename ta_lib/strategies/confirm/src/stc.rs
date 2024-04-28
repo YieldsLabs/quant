@@ -44,7 +44,7 @@ impl Confirm for StcConfirm {
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let stc = stc(
-            &data.close,
+            data.close(),
             self.smooth_type,
             self.fast_period,
             self.slow_period,

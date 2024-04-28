@@ -20,8 +20,8 @@ impl Signal for HighLowSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
-            data.low.seq(&data.low.shift(1)),
-            data.high.seq(&data.high.shift(1)),
+            data.low().seq(&data.low().shift(1)),
+            data.high().seq(&data.high().shift(1)),
         )
     }
 }

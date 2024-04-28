@@ -24,7 +24,7 @@ impl Exit for TrixExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let trix = trix(&data.close, self.smooth_type, self.period);
+        let trix = trix(data.close(), self.smooth_type, self.period);
         let signal_line = trix.smooth(self.smooth_type, self.signal_period);
 
         (

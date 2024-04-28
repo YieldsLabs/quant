@@ -37,9 +37,9 @@ impl Pulse for BraidPulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let fast_ma = data.close.smooth(self.smooth_type, self.fast_period);
-        let open_ma = data.open.smooth(self.smooth_type, self.open_period);
-        let slow_ma = data.close.smooth(self.smooth_type, self.slow_period);
+        let fast_ma = data.close().smooth(self.smooth_type, self.fast_period);
+        let open_ma = data.open().smooth(self.smooth_type, self.open_period);
+        let slow_ma = data.close().smooth(self.smooth_type, self.slow_period);
 
         let filter = data.atr(self.atr_period, Smooth::SMMA) * self.strength / 100.0;
 

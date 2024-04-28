@@ -13,11 +13,11 @@ pub struct OHLCV {
 
 #[derive(Debug, Clone)]
 pub struct OHLCVSeries {
-    pub open: Series<f32>,
-    pub high: Series<f32>,
-    pub low: Series<f32>,
-    pub close: Series<f32>,
-    pub volume: Series<f32>,
+    open: Series<f32>,
+    high: Series<f32>,
+    low: Series<f32>,
+    close: Series<f32>,
+    volume: Series<f32>,
 }
 
 impl OHLCVSeries {
@@ -54,5 +54,35 @@ impl OHLCVSeries {
             close: Series::from(close),
             volume: Series::from(volume),
         }
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.close.len()
+    }
+
+    #[inline]
+    pub fn open(&self) -> &Series<f32> {
+        &self.open
+    }
+
+    #[inline]
+    pub fn high(&self) -> &Series<f32> {
+        &self.high
+    }
+
+    #[inline]
+    pub fn low(&self) -> &Series<f32> {
+        &self.low
+    }
+
+    #[inline]
+    pub fn close(&self) -> &Series<f32> {
+        &self.close
+    }
+
+    #[inline]
+    pub fn volume(&self) -> &Series<f32> {
+        &self.volume
     }
 }

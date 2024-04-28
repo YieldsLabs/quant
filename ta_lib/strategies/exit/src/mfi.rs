@@ -25,7 +25,7 @@ impl Exit for MfiExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let mfi = mfi(&data.hlc3(), &data.volume, self.period);
+        let mfi = mfi(&data.hlc3(), data.volume(), self.period);
         let upper_bound = MFI_OVERBOUGHT - self.threshold;
         let lower_bound = MFI_OVERSOLD + self.threshold;
 

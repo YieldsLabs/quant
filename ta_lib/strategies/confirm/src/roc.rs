@@ -20,7 +20,7 @@ impl Confirm for RocConfirm {
     }
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let roc = roc(&data.close, self.period);
+        let roc = roc(data.close(), self.period);
 
         (roc.sgt(&ZERO_LINE), roc.slt(&ZERO_LINE))
     }

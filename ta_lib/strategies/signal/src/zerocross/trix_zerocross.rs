@@ -22,7 +22,7 @@ impl Signal for TrixZeroCrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let trix = trix(&data.close(), self.smooth_type, self.period);
+        let trix = trix(data.close(), self.smooth_type, self.period);
 
         (trix.cross_over(&ZERO_LINE), trix.cross_under(&ZERO_LINE))
     }

@@ -23,10 +23,10 @@ impl Signal for BopZeroCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let bop = bop(
-            &data.open,
-            &data.high,
-            &data.low,
-            &data.close,
+            data.open(),
+            data.high(),
+            data.low(),
+            data.close(),
             self.smooth_type,
             self.smooth_period,
         );

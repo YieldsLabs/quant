@@ -28,13 +28,14 @@ impl Signal for DchMa2BreakoutSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (upper_band, _, lower_band) = dch(&data.high, &data.low, self.dch_period);
+        let (upper_band, _, lower_band) = dch(data.high(), data.low(), self.dch_period);
+
         let ma_short = ma_indicator(&self.ma, data, self.fast_period);
         let ma_long = ma_indicator(&self.ma, data, self.slow_period);
 
         (
-            data.close.sgt(&upper_band.shift(1)) & ma_short.sgt(&ma_long),
-            data.close.slt(&lower_band.shift(1)) & ma_short.slt(&ma_long),
+            data.close().sgt(&upper_band.shift(1)) & ma_short.sgt(&ma_long),
+            data.close().slt(&lower_band.shift(1)) & ma_short.slt(&ma_long),
         )
     }
 }

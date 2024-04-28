@@ -33,7 +33,7 @@ impl Signal for CcZeroCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let cc = cc(
-            &data.close(),
+            data.close(),
             self.fast_period,
             self.slow_period,
             self.smooth_type,

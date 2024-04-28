@@ -24,7 +24,7 @@ impl Signal for SupertrendFlipSignal {
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = supertrend(
             &data.hl2(),
-            &data.close,
+            data.close(),
             &data.atr(self.atr_period, Smooth::SMMA),
             self.factor,
         );

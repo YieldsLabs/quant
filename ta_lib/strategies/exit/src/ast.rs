@@ -23,7 +23,7 @@ impl Exit for AstExit {
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = ast(
-            &data.close,
+            data.close(),
             &data.atr(self.atr_period, Smooth::SMMA),
             self.factor,
         );

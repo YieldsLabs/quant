@@ -28,9 +28,9 @@ impl Signal for StochSignalLineSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (k, d) = stochosc(
-            &data.high,
-            &data.low,
-            &data.close,
+            data.high(),
+            data.low(),
+            data.close(),
             self.smooth_type,
             self.period,
             self.k_period,

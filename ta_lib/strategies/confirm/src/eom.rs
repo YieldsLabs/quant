@@ -26,9 +26,9 @@ impl Confirm for EomConfirm {
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let eom = eom(
             &data.hl2(),
-            &data.high,
-            &data.low,
-            &data.volume,
+            data.high(),
+            data.low(),
+            data.volume(),
             self.smooth_type,
             self.period,
             self.divisor,

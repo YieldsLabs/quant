@@ -57,7 +57,7 @@ impl Signal for KstSignalLineSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let kst = kst(
-            &data.close(),
+            data.close(),
             self.smooth_type,
             self.roc_period_first,
             self.roc_period_second,

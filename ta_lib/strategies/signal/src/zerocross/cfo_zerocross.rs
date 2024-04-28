@@ -20,7 +20,7 @@ impl Signal for CfoZeroCrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let cfo = cfo(&data.close(), self.period);
+        let cfo = cfo(data.close(), self.period);
 
         (cfo.cross_over(&ZERO_LINE), cfo.cross_under(&ZERO_LINE))
     }

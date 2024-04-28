@@ -20,8 +20,11 @@ impl Signal for VwapCrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let vwap = vwap(&data.hlc3(), &data.volume);
+        let vwap = vwap(&data.hlc3(), data.volume());
 
-        (data.close.cross_over(&vwap), data.close.cross_under(&vwap))
+        (
+            data.close().cross_over(&vwap),
+            data.close().cross_under(&vwap),
+        )
     }
 }

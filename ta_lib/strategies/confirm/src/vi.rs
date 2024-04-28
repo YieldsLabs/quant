@@ -23,8 +23,8 @@ impl Confirm for ViConfirm {
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (vip, vim) = vi(
-            &data.high,
-            &data.low,
+            data.high(),
+            data.low(),
             &data.atr(self.atr_period, Smooth::SMMA),
             self.period,
         );

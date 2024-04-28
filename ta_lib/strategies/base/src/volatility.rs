@@ -10,11 +10,11 @@ pub trait Volatility {
 impl Volatility for OHLCVSeries {
     #[inline]
     fn atr(&self, period: usize, smooth_type: Smooth) -> Series<f32> {
-        atr(&self.high, &self.low, &self.close, smooth_type, period)
+        atr(self.high(), self.low(), self.close(), smooth_type, period)
     }
 
     #[inline]
     fn tr(&self) -> Series<f32> {
-        tr(&self.high, &self.low, &self.close)
+        tr(self.high(), self.low(), self.close())
     }
 }

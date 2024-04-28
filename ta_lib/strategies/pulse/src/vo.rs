@@ -25,7 +25,7 @@ impl Pulse for VoPulse {
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let vo = vo(
-            &data.volume,
+            data.volume(),
             self.smooth_type,
             self.fast_period,
             self.slow_period,

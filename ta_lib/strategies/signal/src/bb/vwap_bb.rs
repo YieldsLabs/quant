@@ -27,7 +27,8 @@ impl Signal for VwapBbSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let vwap = vwap(&data.hlc3(), &data.volume);
+        let vwap = vwap(&data.hlc3(), data.volume());
+
         let (upper_bb, _, lower_bb) = bb(&vwap, self.bb_smooth, self.bb_period, self.factor);
 
         (vwap.cross_over(&upper_bb), vwap.cross_under(&lower_bb))

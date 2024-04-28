@@ -24,7 +24,7 @@ impl Signal for DiSignalLineSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let di = di(&data.close(), self.smooth_type, self.period);
+        let di = di(data.close(), self.smooth_type, self.period);
         let signal_line = di.smooth(self.smooth_type, self.signal_period);
 
         (di.cross_over(&signal_line), di.cross_under(&signal_line))

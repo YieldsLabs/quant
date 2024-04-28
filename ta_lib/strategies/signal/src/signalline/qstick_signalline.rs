@@ -24,7 +24,7 @@ impl Signal for QstickSignalLineSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let qstick = qstick(&data.open, &data.close, self.smooth_type, self.period);
+        let qstick = qstick(data.open(), data.close(), self.smooth_type, self.period);
         let signal_line = qstick.smooth(self.smooth_type, self.signal_period);
 
         (

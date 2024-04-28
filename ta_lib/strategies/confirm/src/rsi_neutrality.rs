@@ -27,7 +27,7 @@ impl Confirm for RsiNeutralityConfirm {
     }
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close, self.smooth_type, self.period);
+        let rsi = rsi(data.close(), self.smooth_type, self.period);
 
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;

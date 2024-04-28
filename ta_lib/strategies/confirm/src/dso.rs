@@ -28,7 +28,7 @@ impl Confirm for DsoConfirm {
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (k, d) = dso(
-            &data.close,
+            data.close(),
             self.smooth_type,
             self.smooth_period,
             self.k_period,

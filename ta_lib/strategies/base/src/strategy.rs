@@ -98,8 +98,8 @@ impl Strategy for BaseStrategy {
         match self.trade_signals() {
             (true, false, false, false) => TradeAction::GoLong(theo_price),
             (false, true, false, false) => TradeAction::GoShort(theo_price),
-            (false, false, true, false) => TradeAction::ExitLong(data.close),
-            (false, false, false, true) => TradeAction::ExitShort(data.close),
+            (false, false, true, false) => TradeAction::ExitLong(theo_price),
+            (false, false, false, true) => TradeAction::ExitShort(theo_price),
             _ => TradeAction::DoNothing,
         }
     }
@@ -187,7 +187,7 @@ mod tests {
         }
 
         fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.close.len();
+            let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
     }
@@ -202,7 +202,7 @@ mod tests {
         }
 
         fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.close.len();
+            let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
     }
@@ -217,7 +217,7 @@ mod tests {
         }
 
         fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.close.len();
+            let len = data.len();
             (Series::one(len).into(), Series::one(len).into())
         }
     }
@@ -232,12 +232,12 @@ mod tests {
         }
 
         fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.close.len();
+            let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
 
         fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.close.len();
+            let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
     }
@@ -253,7 +253,7 @@ mod tests {
         }
 
         fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-            let len = data.close.len();
+            let len = data.len();
             (
                 Series::from(vec![5.0; len]) * self.multi,
                 Series::from(vec![6.0; len]) * self.multi,
@@ -269,7 +269,7 @@ mod tests {
         }
 
         fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.close.len();
+            let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
     }
@@ -322,10 +322,10 @@ mod tests {
 
         let series = OHLCVSeries::from_data(&strategy.data);
 
-        let hl2: Vec<f32> = series.hl2().into();
-        let hlc3: Vec<f32> = series.hlc3().into();
-        let hlcc4: Vec<f32> = series.hlcc4().into();
-        let ohlc4: Vec<f32> = series.ohlc4().into();
+        let hl2: Vec<f32> = series.hl2().clone().into();
+        let hlc3: Vec<f32> = series.hlc3().clone().into();
+        let hlcc4: Vec<f32> = series.hlcc4().clone().into();
+        let ohlc4: Vec<f32> = series.ohlc4().clone().into();
 
         assert_eq!(hl2, vec![1.25]);
         assert_eq!(hlc3, vec![1.333_333_4]);

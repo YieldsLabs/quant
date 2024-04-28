@@ -22,8 +22,8 @@ impl StopLoss for DchStopLoss {
     }
 
     fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-        let (upper, _, lower) = dch(&data.high, &data.low, self.period);
-        let volatility = data.close.std(self.period).highest(self.period) * self.factor;
+        let (upper, _, lower) = dch(data.high(), data.low(), self.period);
+        let volatility = data.close().std(self.period).highest(self.period) * self.factor;
 
         (lower - &volatility, upper + &volatility)
     }
