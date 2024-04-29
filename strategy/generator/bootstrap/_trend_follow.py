@@ -82,7 +82,6 @@ from strategy.generator.signal.signalline.stoch_signalline import StochSignalLin
 from strategy.generator.signal.signalline.trix_signalline import TrixSignalLineSignal
 from strategy.generator.signal.signalline.tsi_signalline import TsiSignalLineSignal
 from strategy.generator.signal.zerocross.ao_zerocross import AoZeroCrossSignal
-from strategy.generator.signal.zerocross.apo_zerocross import ApoZeroCrossSignal
 from strategy.generator.signal.zerocross.bop_zerocross import BopZeroCrossSignal
 from strategy.generator.signal.zerocross.cc_zerocross import CcZeroCrossSignal
 from strategy.generator.signal.zerocross.cfo_zerocross import CfoZeroCrossSignal
@@ -320,7 +319,6 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     AoZeroCrossSignal(),
-                    ApoZeroCrossSignal(),
                     BopZeroCrossSignal(),
                     MacdZeroCrossSignal(),
                     RocZeroCrossSignal(),

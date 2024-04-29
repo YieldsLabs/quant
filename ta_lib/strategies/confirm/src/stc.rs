@@ -6,6 +6,7 @@ const LOWER_LINE: f32 = 25.;
 const UPPER_LINE: f32 = 75.;
 
 pub struct StcConfirm {
+    source_type: SourceType,
     smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
@@ -16,6 +17,7 @@ pub struct StcConfirm {
 
 impl StcConfirm {
     pub fn new(
+        source_type: SourceType,
         smooth_type: Smooth,
         fast_period: f32,
         slow_period: f32,
@@ -24,6 +26,7 @@ impl StcConfirm {
         d_second: f32,
     ) -> Self {
         Self {
+            source_type,
             smooth_type,
             fast_period: fast_period as usize,
             slow_period: slow_period as usize,
@@ -44,7 +47,7 @@ impl Confirm for StcConfirm {
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let stc = stc(
-            data.close(),
+            &data.source(self.source_type),
             self.smooth_type,
             self.fast_period,
             self.slow_period,

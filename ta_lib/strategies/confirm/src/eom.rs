@@ -3,14 +3,16 @@ use core::prelude::*;
 use volume::eom;
 
 pub struct EomConfirm {
+    source_type: SourceType,
     smooth_type: Smooth,
     period: usize,
     divisor: f32,
 }
 
 impl EomConfirm {
-    pub fn new(smooth_type: Smooth, period: f32, divisor: f32) -> Self {
+    pub fn new(source_type: SourceType, smooth_type: Smooth, period: f32, divisor: f32) -> Self {
         Self {
+            source_type,
             smooth_type,
             period: period as usize,
             divisor,
@@ -25,7 +27,7 @@ impl Confirm for EomConfirm {
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let eom = eom(
-            &data.hl2(),
+            &data.source(self.source_type),
             data.high(),
             data.low(),
             data.volume(),

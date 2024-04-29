@@ -44,7 +44,7 @@ class PaperOrderActor(Actor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
-        self.tick_buffer = deque(maxlen=15)
+        self.tick_buffer = deque(maxlen=13)
 
     def pre_receive(self, event: OrderEventType):
         event = event.position.signal if hasattr(event, "position") else event
@@ -172,7 +172,8 @@ class PaperOrderActor(Actor):
         self, side: PositionSide, event_price: float
     ) -> float:
         async with self.lock:
-            last_tick = self.tick_buffer[-1]
+            tick_buffer = sorted(self.tick_buffer, key=lambda x: x.timestamp)
+            last_tick = tick_buffer[-1]
 
             direction = self._intrabar_price_movement(last_tick)
             high, low = last_tick.high, last_tick.low

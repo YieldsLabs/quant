@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::dso;
 
 pub struct DsoNeutralityCrossSignal {
+    source_type: SourceType,
     smooth_type: Smooth,
     smooth_period: usize,
     k_period: usize,
@@ -10,8 +11,15 @@ pub struct DsoNeutralityCrossSignal {
 }
 
 impl DsoNeutralityCrossSignal {
-    pub fn new(smooth_type: Smooth, smooth_period: f32, k_period: f32, d_period: f32) -> Self {
+    pub fn new(
+        source_type: SourceType,
+        smooth_type: Smooth,
+        smooth_period: f32,
+        k_period: f32,
+        d_period: f32,
+    ) -> Self {
         Self {
+            source_type,
             smooth_type,
             smooth_period: smooth_period as usize,
             k_period: k_period as usize,
@@ -28,7 +36,7 @@ impl Signal for DsoNeutralityCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (k, _) = dso(
-            &data.close(),
+            &data.source(self.source_type),
             self.smooth_type,
             self.smooth_period,
             self.k_period,

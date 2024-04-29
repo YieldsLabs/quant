@@ -3,13 +3,15 @@ use core::prelude::*;
 use trend::supertrend;
 
 pub struct SupertrendFlipSignal {
+    source_type: SourceType,
     atr_period: usize,
     factor: f32,
 }
 
 impl SupertrendFlipSignal {
-    pub fn new(atr_period: f32, factor: f32) -> Self {
+    pub fn new(source_type: SourceType, atr_period: f32, factor: f32) -> Self {
         Self {
+            source_type,
             atr_period: atr_period as usize,
             factor,
         }
@@ -23,9 +25,9 @@ impl Signal for SupertrendFlipSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = supertrend(
-            &data.hl2(),
+            &data.source(self.source_type),
             data.close(),
-            &data.atr(self.atr_period, Smooth::SMMA),
+            &data.atr(self.atr_period),
             self.factor,
         );
 
@@ -40,7 +42,7 @@ mod tests {
 
     #[test]
     fn test_supertrend_flip_signal() {
-        let signal = SupertrendFlipSignal::new(3.0, 3.0);
+        let signal = SupertrendFlipSignal::new(SourceType::HL2, 3.0, 3.0);
         let data = VecDeque::from([
             OHLCV {
                 ts: 1679827200,

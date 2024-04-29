@@ -6,14 +6,16 @@ const RSI_UPPER_BARRIER: f32 = 75.0;
 const RSI_LOWER_BARRIER: f32 = 25.0;
 
 pub struct RsiNeutralityConfirm {
+    source_type: SourceType,
     smooth_type: Smooth,
     period: usize,
     threshold: f32,
 }
 
 impl RsiNeutralityConfirm {
-    pub fn new(smooth_type: Smooth, period: f32, threshold: f32) -> Self {
+    pub fn new(source_type: SourceType, smooth_type: Smooth, period: f32, threshold: f32) -> Self {
         Self {
+            source_type,
             smooth_type,
             period: period as usize,
             threshold,
@@ -27,7 +29,11 @@ impl Confirm for RsiNeutralityConfirm {
     }
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(data.close(), self.smooth_type, self.period);
+        let rsi = rsi(
+            &data.source(self.source_type),
+            self.smooth_type,
+            self.period,
+        );
 
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;

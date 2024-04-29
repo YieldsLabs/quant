@@ -3,13 +3,15 @@ use core::prelude::*;
 use trend::ast;
 
 pub struct AstExit {
+    source_type: SourceType,
     atr_period: usize,
     factor: f32,
 }
 
 impl AstExit {
-    pub fn new(atr_period: f32, factor: f32) -> Self {
+    pub fn new(source_type: SourceType, atr_period: f32, factor: f32) -> Self {
         Self {
+            source_type,
             atr_period: atr_period as usize,
             factor,
         }
@@ -23,8 +25,8 @@ impl Exit for AstExit {
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = ast(
-            data.close(),
-            &data.atr(self.atr_period, Smooth::SMMA),
+            &data.source(self.source_type),
+            &data.atr(self.atr_period),
             self.factor,
         );
 

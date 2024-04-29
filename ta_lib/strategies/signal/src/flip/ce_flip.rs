@@ -28,7 +28,7 @@ impl Signal for CeFlipSignal {
             data.high(),
             data.low(),
             data.close(),
-            &data.atr(self.atr_period, Smooth::SMMA),
+            &data.atr(self.atr_period),
             self.period,
             self.factor,
         );

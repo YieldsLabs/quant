@@ -1,5 +1,4 @@
 mod ao_zerocross;
-mod apo_zerocross;
 mod bop_zerocross;
 mod cc_zerocross;
 mod cfo_zerocross;
@@ -11,7 +10,6 @@ mod trix_zerocross;
 mod tsi_zerocross;
 
 pub use ao_zerocross::AoZeroCrossSignal;
-pub use apo_zerocross::ApoZeroCrossSignal;
 pub use bop_zerocross::BopZeroCrossSignal;
 pub use cc_zerocross::CcZeroCrossSignal;
 pub use cfo_zerocross::CfoZeroCrossSignal;

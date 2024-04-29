@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::dso;
 
 pub struct DsoConfirm {
+    source_type: SourceType,
     smooth_type: Smooth,
     smooth_period: usize,
     k_period: usize,
@@ -10,8 +11,15 @@ pub struct DsoConfirm {
 }
 
 impl DsoConfirm {
-    pub fn new(smooth_type: Smooth, smooth_period: f32, k_period: f32, d_period: f32) -> Self {
+    pub fn new(
+        source_type: SourceType,
+        smooth_type: Smooth,
+        smooth_period: f32,
+        k_period: f32,
+        d_period: f32,
+    ) -> Self {
         Self {
+            source_type,
             smooth_type,
             smooth_period: smooth_period as usize,
             k_period: k_period as usize,
@@ -28,7 +36,7 @@ impl Confirm for DsoConfirm {
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (k, d) = dso(
-            data.close(),
+            &data.source(self.source_type),
             self.smooth_type,
             self.smooth_period,
             self.k_period,
@@ -46,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_confirm_dso() {
-        let confirm = DsoConfirm::new(Smooth::EMA, 13.0, 8.0, 9.0);
+        let confirm = DsoConfirm::new(SourceType::CLOSE, Smooth::EMA, 13.0, 8.0, 9.0);
         let data = VecDeque::from([
             OHLCV {
                 ts: 1679827200,

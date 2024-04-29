@@ -3,13 +3,15 @@ use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
 
 pub struct MaTestingGroundSignal {
+    source_type: SourceType,
     ma: MovingAverageType,
     period: usize,
 }
 
 impl MaTestingGroundSignal {
-    pub fn new(ma: MovingAverageType, period: f32) -> Self {
+    pub fn new(source_type: SourceType, ma: MovingAverageType, period: f32) -> Self {
         Self {
+            source_type,
             ma,
             period: period as usize,
         }
@@ -22,7 +24,7 @@ impl Signal for MaTestingGroundSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.ma, data, self.period);
+        let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
 
         let prev_ma = ma.shift(1);
         let back_2_ma = ma.shift(2);

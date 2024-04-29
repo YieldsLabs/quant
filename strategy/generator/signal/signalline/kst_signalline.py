@@ -5,12 +5,14 @@ from core.models.parameter import (
     StaticParameter,
 )
 from core.models.smooth import Smooth
+from core.models.source import SourceType
 from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
 class KstSignalLineSignal(Signal):
     type: SignalType = SignalType.KstSignalLine
+    source_type: Parameter = StaticParameter(SourceType.CLOSE)
     smooth_type: Parameter = StaticParameter(Smooth.SMA)
     roc_period_first: Parameter = StaticParameter(10.0)
     roc_period_second: Parameter = StaticParameter(15.0)

@@ -31,7 +31,7 @@ impl Pulse for AdxPulse {
         let (adx, _, _) = dmi(
             data.high(),
             data.low(),
-            &data.atr(self.di_period, Smooth::SMMA),
+            &data.atr(self.di_period),
             self.smooth_type,
             self.adx_period,
             self.di_period,

@@ -4,6 +4,7 @@ use volatility::bb;
 use volume::vwap;
 
 pub struct VwapBbSignal {
+    source_type: SourceType,
     period: usize,
     bb_smooth: Smooth,
     bb_period: usize,
@@ -11,8 +12,15 @@ pub struct VwapBbSignal {
 }
 
 impl VwapBbSignal {
-    pub fn new(period: f32, bb_smooth: Smooth, bb_period: f32, factor: f32) -> Self {
+    pub fn new(
+        source_type: SourceType,
+        period: f32,
+        bb_smooth: Smooth,
+        bb_period: f32,
+        factor: f32,
+    ) -> Self {
         Self {
+            source_type,
             period: period as usize,
             bb_smooth,
             bb_period: bb_period as usize,
@@ -27,7 +35,7 @@ impl Signal for VwapBbSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let vwap = vwap(&data.hlc3(), data.volume());
+        let vwap = vwap(&data.source(self.source_type), data.volume());
 
         let (upper_bb, _, lower_bb) = bb(&vwap, self.bb_smooth, self.bb_period, self.factor);
 

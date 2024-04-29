@@ -6,6 +6,7 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
+from core.models.source import SourceType
 
 from .base import BaseLine, BaseLineType
 
@@ -13,5 +14,6 @@ from .base import BaseLine, BaseLineType
 @dataclass(frozen=True)
 class MaBaseLine(BaseLine):
     type: BaseLineType = BaseLineType.Ma
+    source_type: Parameter = StaticParameter(SourceType.CLOSE)
     ma: Parameter = CategoricalParameter(MovingAverageType)
     period: Parameter = StaticParameter(14.0)

@@ -1,4 +1,4 @@
-use crate::source::Source;
+use crate::source::{Source, SourceType};
 use crate::{BaseLine, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
 use std::collections::VecDeque;
 
@@ -150,7 +150,10 @@ impl BaseStrategy {
     }
 
     fn suggested_entry(&self) -> f32 {
-        self.ohlcv_series().ohlc4().last().unwrap_or(std::f32::NAN)
+        self.ohlcv_series()
+            .source(SourceType::OHLC4)
+            .last()
+            .unwrap_or(std::f32::NAN)
     }
 
     fn stop_loss_levels(&self) -> (f32, f32) {
@@ -167,7 +170,7 @@ impl BaseStrategy {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::Source;
+    use crate::source::{Source, SourceType};
     use crate::{
         BaseLine, BaseStrategy, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy,
         TradeAction, OHLCV,
@@ -322,10 +325,10 @@ mod tests {
 
         let series = OHLCVSeries::from_data(&strategy.data);
 
-        let hl2: Vec<f32> = series.hl2().clone().into();
-        let hlc3: Vec<f32> = series.hlc3().clone().into();
-        let hlcc4: Vec<f32> = series.hlcc4().clone().into();
-        let ohlc4: Vec<f32> = series.ohlc4().clone().into();
+        let hl2: Vec<f32> = series.source(SourceType::HL2).into();
+        let hlc3: Vec<f32> = series.source(SourceType::HLC3).into();
+        let hlcc4: Vec<f32> = series.source(SourceType::HLCC4).into();
+        let ohlc4: Vec<f32> = series.source(SourceType::OHLC4).into();
 
         assert_eq!(hl2, vec![1.25]);
         assert_eq!(hlc3, vec![1.333_333_4]);

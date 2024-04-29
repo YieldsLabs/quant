@@ -35,6 +35,7 @@ pub enum PulseConfig {
         slow_period: f32,
     },
     Tdfi {
+        source_type: f32,
         smooth_type: f32,
         period: f32,
         n: f32,

@@ -1,7 +1,12 @@
 use core::prelude::*;
 
-pub fn ao(source: &Series<f32>, fast_period: usize, slow_period: usize) -> Series<f32> {
-    source.smooth(Smooth::SMA, fast_period) - source.smooth(Smooth::SMA, slow_period)
+pub fn ao(
+    source: &Series<f32>,
+    smooth_type: Smooth,
+    fast_period: usize,
+    slow_period: usize,
+) -> Series<f32> {
+    source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period)
 }
 
 #[cfg(test)]
@@ -18,7 +23,7 @@ mod tests {
         let slow_period = 4;
         let expected = vec![0.0, 0.0, 0.5, 1.0, 1.0];
 
-        let result: Vec<f32> = ao(&hl2, fast_period, slow_period).into();
+        let result: Vec<f32> = ao(&hl2, Smooth::SMA, fast_period, slow_period).into();
 
         assert_eq!(result, expected);
     }

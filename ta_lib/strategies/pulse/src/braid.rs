@@ -41,7 +41,7 @@ impl Pulse for BraidPulse {
         let open_ma = data.open().smooth(self.smooth_type, self.open_period);
         let slow_ma = data.close().smooth(self.smooth_type, self.slow_period);
 
-        let filter = data.atr(self.atr_period, Smooth::SMMA) * self.strength / 100.0;
+        let filter = data.atr(self.atr_period) * self.strength / 100.0;
 
         let max = fast_ma.max(&open_ma).max(&slow_ma);
         let min = fast_ma.min(&open_ma).min(&slow_ma);

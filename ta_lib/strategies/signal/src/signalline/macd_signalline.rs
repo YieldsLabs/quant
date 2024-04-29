@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::macd;
 
 pub struct MacdSignalLineSignal {
+    source_type: SourceType,
     smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
@@ -11,12 +12,14 @@ pub struct MacdSignalLineSignal {
 
 impl MacdSignalLineSignal {
     pub fn new(
+        source_type: SourceType,
         smooth_type: Smooth,
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
     ) -> Self {
         Self {
+            source_type,
             smooth_type,
             fast_period: fast_period as usize,
             slow_period: slow_period as usize,
@@ -33,7 +36,7 @@ impl Signal for MacdSignalLineSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (macd_line, signal_line, _) = macd(
-            data.close(),
+            &data.source(self.source_type),
             self.smooth_type,
             self.fast_period,
             self.slow_period,

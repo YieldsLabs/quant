@@ -6,6 +6,7 @@ const RSI_UPPER_BARRIER: f32 = 75.;
 const RSI_LOWER_BARRIER: f32 = 35.;
 
 pub struct RsiSignalLineConfirm {
+    source_type: SourceType,
     smooth_type: Smooth,
     rsi_period: usize,
     smooth_signal: Smooth,
@@ -15,6 +16,7 @@ pub struct RsiSignalLineConfirm {
 
 impl RsiSignalLineConfirm {
     pub fn new(
+        source_type: SourceType,
         smooth_type: Smooth,
         rsi_period: f32,
         smooth_signal: Smooth,
@@ -22,6 +24,7 @@ impl RsiSignalLineConfirm {
         threshold: f32,
     ) -> Self {
         Self {
+            source_type,
             smooth_type,
             rsi_period: rsi_period as usize,
             smooth_signal,
@@ -37,7 +40,11 @@ impl Confirm for RsiSignalLineConfirm {
     }
 
     fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close(), self.smooth_type, self.rsi_period);
+        let rsi = rsi(
+            &data.source(self.source_type),
+            self.smooth_type,
+            self.rsi_period,
+        );
         let signal = rsi.smooth(self.smooth_signal, self.smooth_period);
 
         let upper_barrier = RSI_UPPER_BARRIER + self.threshold;

@@ -48,7 +48,7 @@ impl Pulse for WaePulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let dz = data.atr(self.atr_period, Smooth::SMMA) * self.dz_factor;
+        let dz = data.atr(self.atr_period) * self.dz_factor;
 
         let (upper_bb, _, lower_bb) = bb(data.close(), self.smooth_bb, self.bb_period, self.factor);
         let e = upper_bb - lower_bb;
@@ -61,7 +61,7 @@ impl Pulse for WaePulse {
             - prev_close.smooth(self.smooth_type, self.slow_period);
         let t = (macd_line - prev_macd_line) * self.strength;
 
-        let zero = Series::zero(data.close().len());
+        let zero = Series::zero(data.len());
 
         let up = iff!(t.sgte(&ZERO), t, zero);
         let down = iff!(t.slt(&ZERO), t.negate(), zero);

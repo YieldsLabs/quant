@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::kst;
 
 pub struct KstSignalLineSignal {
+    source_type: SourceType,
     smooth_type: Smooth,
     roc_period_first: usize,
     roc_period_second: usize,
@@ -17,6 +18,7 @@ pub struct KstSignalLineSignal {
 
 impl KstSignalLineSignal {
     pub fn new(
+        source_type: SourceType,
         smooth_type: Smooth,
         roc_period_first: f32,
         roc_period_second: f32,
@@ -29,6 +31,7 @@ impl KstSignalLineSignal {
         signal_period: f32,
     ) -> Self {
         Self {
+            source_type,
             smooth_type,
             roc_period_first: roc_period_first as usize,
             roc_period_second: roc_period_second as usize,
@@ -57,7 +60,7 @@ impl Signal for KstSignalLineSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let kst = kst(
-            data.close(),
+            &data.source(self.source_type),
             self.smooth_type,
             self.roc_period_first,
             self.roc_period_second,

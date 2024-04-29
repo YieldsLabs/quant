@@ -3,12 +3,14 @@ use core::prelude::*;
 use momentum::roc;
 
 pub struct RocZeroCrossSignal {
+    source_type: SourceType,
     period: usize,
 }
 
 impl RocZeroCrossSignal {
-    pub fn new(period: f32) -> Self {
+    pub fn new(source_type: SourceType, period: f32) -> Self {
         Self {
+            source_type,
             period: period as usize,
         }
     }
@@ -20,7 +22,7 @@ impl Signal for RocZeroCrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let roc = roc(data.close(), self.period);
+        let roc = roc(&data.source(self.source_type), self.period);
 
         (roc.cross_over(&ZERO_LINE), roc.cross_under(&ZERO_LINE))
     }

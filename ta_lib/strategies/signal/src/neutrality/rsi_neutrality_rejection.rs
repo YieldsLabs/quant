@@ -3,14 +3,21 @@ use core::prelude::*;
 use momentum::rsi;
 
 pub struct RsiNeutralityRejectionSignal {
+    source_type: SourceType,
     smooth_type: Smooth,
     rsi_period: usize,
     threshold: f32,
 }
 
 impl RsiNeutralityRejectionSignal {
-    pub fn new(smooth_type: Smooth, rsi_period: f32, threshold: f32) -> Self {
+    pub fn new(
+        source_type: SourceType,
+        smooth_type: Smooth,
+        rsi_period: f32,
+        threshold: f32,
+    ) -> Self {
         Self {
+            source_type,
             smooth_type,
             rsi_period: rsi_period as usize,
             threshold,
@@ -24,7 +31,11 @@ impl Signal for RsiNeutralityRejectionSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.close(), self.smooth_type, self.rsi_period);
+        let rsi = rsi(
+            &data.source(self.source_type),
+            self.smooth_type,
+            self.rsi_period,
+        );
         let upper_neutrality = NEUTRALITY_LINE + self.threshold;
         let lower_neutrality = NEUTRALITY_LINE - self.threshold;
 

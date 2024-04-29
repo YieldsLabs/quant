@@ -6,6 +6,7 @@ const CCI_OVERBOUGHT: f32 = 100.0;
 const CCI_OVERSOLD: f32 = -100.0;
 
 pub struct CciExit {
+    source_type: SourceType,
     smooth_type: Smooth,
     period: usize,
     factor: f32,
@@ -13,8 +14,15 @@ pub struct CciExit {
 }
 
 impl CciExit {
-    pub fn new(smooth_type: Smooth, period: f32, factor: f32, threshold: f32) -> Self {
+    pub fn new(
+        source_type: SourceType,
+        smooth_type: Smooth,
+        period: f32,
+        factor: f32,
+        threshold: f32,
+    ) -> Self {
         Self {
+            source_type,
             smooth_type,
             period: period as usize,
             factor,
@@ -29,7 +37,12 @@ impl Exit for CciExit {
     }
 
     fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = cci(&data.hlc3(), self.smooth_type, self.period, self.factor);
+        let rsi = cci(
+            &data.source(self.source_type),
+            self.smooth_type,
+            self.period,
+            self.factor,
+        );
         let upper_bound = CCI_OVERBOUGHT - self.threshold;
         let lower_bound = CCI_OVERSOLD + self.threshold;
 

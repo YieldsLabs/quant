@@ -7,19 +7,21 @@ const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.236;
 
 pub struct MaBaseLine {
+    source_type: SourceType,
     ma: MovingAverageType,
     period: usize,
     signal: Vec<Box<dyn Signal>>,
 }
 
 impl MaBaseLine {
-    pub fn new(ma: MovingAverageType, period: f32) -> Self {
+    pub fn new(source_type: SourceType, ma: MovingAverageType, period: f32) -> Self {
         Self {
+            source_type,
             ma,
             period: period as usize,
             signal: vec![
-                Box::new(MaSurpassSignal::new(ma, period)),
-                Box::new(MaQuadrupleSignal::new(ma, period)),
+                Box::new(MaSurpassSignal::new(source_type, ma, period)),
+                Box::new(MaQuadrupleSignal::new(source_type, ma, period)),
             ],
         }
     }
@@ -37,11 +39,11 @@ impl BaseLine for MaBaseLine {
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.ma, data, self.period);
+        let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
         let prev_ma = ma.shift(1);
 
         let dist = (&ma - data.close()).abs();
-        let atr = data.atr(DEFAULT_ATR_LOOKBACK, Smooth::SMMA) * DEFAULT_ATR_FACTOR;
+        let atr = data.atr(DEFAULT_ATR_LOOKBACK) * DEFAULT_ATR_FACTOR;
 
         (
             ma.sgt(&prev_ma) & dist.slt(&atr),

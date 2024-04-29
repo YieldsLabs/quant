@@ -40,6 +40,8 @@ PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent, BacktestSign
 
 logger = logging.getLogger(__name__)
 
+TIME_BUFF = 3
+
 
 class PositionActor(Actor):
     _EVENTS = [
@@ -88,7 +90,7 @@ class PositionActor(Actor):
             )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        if int(event.meta.timestamp) < int(time.time()) - 3:
+        if int(event.meta.timestamp) < int(time.time()) - TIME_BUFF:
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 

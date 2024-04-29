@@ -3,14 +3,14 @@ use core::prelude::*;
 use volatility::{atr, tr};
 
 pub trait Volatility {
-    fn atr(&self, period: usize, smooth_type: Smooth) -> Series<f32>;
+    fn atr(&self, period: usize) -> Series<f32>;
     fn tr(&self) -> Series<f32>;
 }
 
 impl Volatility for OHLCVSeries {
     #[inline]
-    fn atr(&self, period: usize, smooth_type: Smooth) -> Series<f32> {
-        atr(self.high(), self.low(), self.close(), smooth_type, period)
+    fn atr(&self, period: usize) -> Series<f32> {
+        atr(self.high(), self.low(), self.close(), Smooth::SMMA, period)
     }
 
     #[inline]

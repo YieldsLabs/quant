@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::cc;
 
 pub struct CcZeroCrossSignal {
+    source_type: SourceType,
     fast_period: usize,
     slow_period: usize,
     smooth_type: Smooth,
@@ -11,12 +12,14 @@ pub struct CcZeroCrossSignal {
 
 impl CcZeroCrossSignal {
     pub fn new(
+        source_type: SourceType,
         fast_period: f32,
         slow_period: f32,
         smooth_type: Smooth,
         smooth_period: f32,
     ) -> Self {
         Self {
+            source_type,
             fast_period: fast_period as usize,
             slow_period: slow_period as usize,
             smooth_type,
@@ -33,7 +36,7 @@ impl Signal for CcZeroCrossSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let cc = cc(
-            data.close(),
+            &data.source(self.source_type),
             self.fast_period,
             self.slow_period,
             self.smooth_type,

@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::rsi;
 
 pub struct RsiSignalLineSignal {
+    source_type: SourceType,
     smooth_type: Smooth,
     rsi_period: usize,
     smooth_signal: Smooth,
@@ -12,6 +13,7 @@ pub struct RsiSignalLineSignal {
 
 impl RsiSignalLineSignal {
     pub fn new(
+        source_type: SourceType,
         smooth_type: Smooth,
         rsi_period: f32,
         smooth_signal: Smooth,
@@ -19,6 +21,7 @@ impl RsiSignalLineSignal {
         threshold: f32,
     ) -> Self {
         Self {
+            source_type,
             smooth_type,
             rsi_period: rsi_period as usize,
             smooth_signal,
@@ -34,7 +37,11 @@ impl Signal for RsiSignalLineSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(data.close(), self.smooth_type, self.rsi_period);
+        let rsi = rsi(
+            &data.source(self.source_type),
+            self.smooth_type,
+            self.rsi_period,
+        );
         let rsi_ma = rsi.smooth(self.smooth_signal, self.smooth_period);
 
         let upper_neutrality = NEUTRALITY_LINE + self.threshold;

@@ -25,7 +25,7 @@ impl Signal for ViReversalSignal {
         let (vip, vim) = vi(
             data.high(),
             data.low(),
-            &data.atr(self.atr_period, Smooth::SMMA),
+            &data.atr(self.atr_period),
             self.period,
         );
 

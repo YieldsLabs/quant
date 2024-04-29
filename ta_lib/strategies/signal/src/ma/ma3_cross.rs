@@ -3,6 +3,7 @@ use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
 
 pub struct Ma3CrossSignal {
+    source_type: SourceType,
     ma: MovingAverageType,
     fast_period: usize,
     medium_period: usize,
@@ -11,12 +12,14 @@ pub struct Ma3CrossSignal {
 
 impl Ma3CrossSignal {
     pub fn new(
+        source_type: SourceType,
         ma: MovingAverageType,
         fast_period: f32,
         medium_period: f32,
         slow_period: f32,
     ) -> Self {
         Self {
+            source_type,
             ma,
             fast_period: fast_period as usize,
             medium_period: medium_period as usize,
@@ -32,9 +35,9 @@ impl Signal for Ma3CrossSignal {
     }
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let short_ma = ma_indicator(&self.ma, data, self.fast_period);
-        let medium_ma = ma_indicator(&self.ma, data, self.medium_period);
-        let long_ma = ma_indicator(&self.ma, data, self.slow_period);
+        let short_ma = ma_indicator(&self.ma, data, self.source_type, self.fast_period);
+        let medium_ma = ma_indicator(&self.ma, data, self.source_type, self.medium_period);
+        let long_ma = ma_indicator(&self.ma, data, self.source_type, self.slow_period);
 
         (
             short_ma.cross_over(&medium_ma) & medium_ma.sgt(&long_ma),

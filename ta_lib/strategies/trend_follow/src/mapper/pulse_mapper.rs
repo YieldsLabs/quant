@@ -1,5 +1,5 @@
 use crate::config::PulseConfig;
-use crate::deserialize::smooth_deserialize;
+use crate::deserialize::{smooth_deserialize, source_deserialize};
 use base::prelude::*;
 use pulse::*;
 
@@ -46,10 +46,12 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             period,
         )),
         PulseConfig::Tdfi {
+            source_type,
             smooth_type,
             period,
             n,
         } => Box::new(TdfiPulse::new(
+            source_deserialize(source_type as usize),
             smooth_deserialize(smooth_type as usize),
             period,
             n,

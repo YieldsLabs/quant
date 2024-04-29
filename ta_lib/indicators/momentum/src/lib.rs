@@ -1,5 +1,4 @@
 mod ao;
-mod apo;
 mod bop;
 mod cc;
 mod cci;
@@ -23,7 +22,6 @@ mod trix;
 mod tsi;
 
 pub use ao::ao;
-pub use apo::apo;
 pub use bop::bop;
 pub use cc::cc;
 pub use cci::cci;

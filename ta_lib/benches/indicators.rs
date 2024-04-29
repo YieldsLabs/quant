@@ -46,25 +46,15 @@ fn momentum(c: &mut Criterion) {
                 let high = Series::from(&high);
                 let low = Series::from(&low);
                 let source = median_price(&high, &low);
+                let smooth_type = Smooth::SMA;
                 let fast_period = 5;
                 let slow_period = 34;
 
-                (source, fast_period, slow_period)
+                (source, smooth_type, fast_period, slow_period)
             },
-            |(source, fast_period, slow_period)| ao(source, *fast_period, *slow_period),
-            criterion::BatchSize::SmallInput,
-        )
-    });
-
-    group.bench_function("apo", |b| {
-        b.iter_batched_ref(
-            || {
-                let source = Series::from(&close);
-                let fast_period = 10;
-                let slow_period = 20;
-                (source, fast_period, slow_period)
+            |(source, smooth_type, fast_period, slow_period)| {
+                ao(source, *smooth_type, *fast_period, *slow_period)
             },
-            |(source, fast_period, slow_period)| apo(source, *fast_period, *slow_period),
             criterion::BatchSize::SmallInput,
         )
     });
