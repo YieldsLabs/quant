@@ -307,6 +307,10 @@ class SmartRouter(AbstractEventManager):
                 f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread}, max spread: {max_spread}"
             )
 
+            if max_spread < 0:
+                self.exchange.close_full_position(symbol, position_side)
+                break
+
             curr_time = time.time()
             expired_orders = [
                 order_id
