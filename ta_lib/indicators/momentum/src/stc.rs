@@ -16,7 +16,9 @@ pub fn stc(
     let d = k.smooth(smooth_type, d_first);
     let kd = stoch(&d, &d, &d, cycle);
 
-    kd.smooth(smooth_type, d_second)
+    let stc = kd.smooth(smooth_type, d_second);
+
+    stc.min(&SCALE).max(&ZERO)
 }
 
 #[cfg(test)]
