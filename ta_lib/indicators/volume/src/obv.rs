@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn obv(source: &Series<f32>, volume: &Series<f32>) -> Series<f32> {
-    (source.change(1).nz(Some(0.)).sign() * volume).cumsum()
+    (source.change(1).nz(Some(ZERO)).sign() * volume).cumsum()
 }
 
 #[cfg(test)]

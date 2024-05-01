@@ -15,7 +15,7 @@ pub fn mfi(hlc3: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f3
 
     let mfi = SCALE - SCALE / (1. + money_ratio);
 
-    mfi.nz(Some(50.))
+    mfi.nz(Some(0.5 * SCALE))
 }
 
 #[cfg(test)]
