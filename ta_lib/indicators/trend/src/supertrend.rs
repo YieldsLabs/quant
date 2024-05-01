@@ -41,9 +41,9 @@ pub fn supertrend(
 
     direction = direction.nz(first_non_empty);
 
-    let supertrend = iff!(direction.seq(&ONE), up, dn);
+    let trend = iff!(direction.seq(&ONE), up, dn);
 
-    (direction, supertrend)
+    (direction, trend)
 }
 
 #[cfg(test)]
