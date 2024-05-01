@@ -1,8 +1,7 @@
 use crate::series::Series;
 use crate::smoothing::Smooth;
+use crate::ZERO;
 use std::ops::Neg;
-
-const ZERO: f32 = 0.;
 
 impl Series<f32> {
     pub fn abs(&self) -> Self {
@@ -57,7 +56,13 @@ impl Series<f32> {
 impl Series<f32> {
     pub fn sum(&self, period: usize) -> Self {
         self.window(period)
-            .map(|w| w.iter().flatten().sum::<f32>())
+            .map(|w| {
+                if w.iter().all(|&x| x.is_none()) {
+                    None
+                } else {
+                    Some(w.iter().flatten().sum::<f32>())
+                }
+            })
             .collect()
     }
 
@@ -72,14 +77,21 @@ impl Series<f32> {
     pub fn mad(&self, period: usize) -> Self {
         self.window(period)
             .map(|w| {
-                let len = w.len() as f32;
-                let mean = w.iter().flatten().sum::<f32>() / len;
+                if w.iter().all(|&x| x.is_none()) {
+                    None
+                } else {
+                    let len = w.len() as f32;
+                    let mean = w.iter().flatten().sum::<f32>() / len;
 
-                w.iter()
-                    .flatten()
-                    .map(|value| (value - mean).abs())
-                    .sum::<f32>()
-                    / len
+                    let mad = w
+                        .iter()
+                        .flatten()
+                        .map(|value| (value - mean).abs())
+                        .sum::<f32>()
+                        / len;
+
+                    Some(mad)
+                }
             })
             .collect()
     }
@@ -195,7 +207,7 @@ mod tests {
     #[test]
     fn test_sum() {
         let source = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([0.0, 2.0, 5.0, 9.0, 12.0]);
+        let expected = Series::from([f32::NAN, 2.0, 5.0, 9.0, 12.0]);
         let n = 3;
 
         let result = source.sum(n);

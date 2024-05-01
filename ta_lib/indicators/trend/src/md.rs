@@ -7,13 +7,8 @@ pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
     let seed = source.smooth(Smooth::EMA, period);
 
     for _ in 0..len {
-        let prev_mg = mg.shift(1);
-
-        mg = iff!(
-            prev_mg.na(),
-            seed,
-            &prev_mg + (source - &prev_mg) / ((source / &prev_mg).pow(4) * period as f32)
-        );
+        let prev_mg = nz!(mg.shift(1), seed);
+        mg = &prev_mg + (source - &prev_mg) / ((source / &prev_mg).pow(4) * period as f32);
     }
 
     mg

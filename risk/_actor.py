@@ -9,7 +9,7 @@ from core.events.position import (
     PositionClosed,
     PositionOpened,
 )
-from core.events.risk import RiskThresholdBreached, RiskType
+from core.events.risk import RiskAdjustRequested, RiskThresholdBreached, RiskType
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -69,8 +69,8 @@ class RiskActor(Actor):
             PositionOpened: self._open_position,
             PositionClosed: self._close_position,
             PositionAdjusted: self._adjust_position,
-            GoLongSignalReceived: self._handle_reverse,
-            GoShortSignalReceived: self._handle_reverse,
+            GoLongSignalReceived: [self._handle_reverse, self._handle_scale_in],
+            GoShortSignalReceived: [self._handle_reverse, self._handle_scale_in],
             ExitLongSignalReceived: self._handle_signal_exit,
             ExitShortSignalReceived: self._handle_signal_exit,
         }
@@ -78,7 +78,11 @@ class RiskActor(Actor):
         handler = handlers.get(type(event))
 
         if handler:
-            await handler(event)
+            if isinstance(handler, list):
+                for h in handler:
+                    await h(event)
+            else:
+                await handler(event)
 
     async def _open_position(self, event: PositionOpened):
         async with self.lock:
@@ -158,6 +162,27 @@ class RiskActor(Actor):
                 and not long_position
             ):
                 await self._process_reverse_exit(short_position, event.entry_price)
+
+    async def _handle_scale_in(
+        self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
+    ):
+        async with self.lock:
+            long_position, short_position = self._position
+
+            if (
+                isinstance(event, GoLongSignalReceived)
+                and long_position
+                and long_position.adj_count < self.config["max_scale_in"]
+                and long_position.entry_price < event.entry_price
+            ):
+                await self.tell(RiskAdjustRequested(long_position, event.entry_price))
+            if (
+                isinstance(event, GoShortSignalReceived)
+                and short_position
+                and short_position.adj_count < self.config["max_scale_in"]
+                and short_position.entry_price > event.entry_price
+            ):
+                await self.tell(RiskAdjustRequested(short_position, event.entry_price))
 
     async def _handle_signal_exit(
         self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived]

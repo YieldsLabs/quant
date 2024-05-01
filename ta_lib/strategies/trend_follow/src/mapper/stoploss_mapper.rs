@@ -1,5 +1,4 @@
 use crate::config::StopLossConfig;
-use crate::deserialize::smooth_deserialize;
 use base::prelude::*;
 use stop_loss::*;
 

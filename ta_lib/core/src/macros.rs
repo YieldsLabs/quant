@@ -48,12 +48,12 @@ mod tests {
 
     #[test]
     fn test_nz() {
-        let source = Series::from([f32::NAN, 5.0, 4.0, 3.0, 5.0]);
+        let source = Series::from([3.0, 5.0, 4.0, 3.0, 5.0]);
         let fill = Series::from([1.0, 0.5, 5.0, 2.0, 8.0]);
 
-        let expected = Series::from([1.0, 5.0, 4.0, 3.0, 5.0]);
+        let expected = Series::from([1.0, 3.0, 5.0, 4.0, 3.0]);
 
-        let result = nz!(source, fill);
+        let result = nz!(source.shift(1), fill);
 
         assert_eq!(result, expected);
     }

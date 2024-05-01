@@ -1,5 +1,7 @@
-use crate::iff;
 use crate::series::Series;
+use crate::traits::Comparator;
+use crate::ZERO;
+use crate::{iff, nz};
 
 #[derive(Copy, Clone)]
 pub enum Smooth {
@@ -19,9 +21,7 @@ impl Series<f32> {
         let mut sum = Series::zero(len);
 
         for _ in 0..len {
-            let prev = sum.shift(1);
-
-            sum = iff!(prev.na(), seed, alpha * self + (1. - alpha) * prev)
+            sum = alpha * self + (1. - alpha) * nz!(sum.shift(1), seed)
         }
 
         sum
@@ -40,7 +40,13 @@ impl Series<f32> {
 
     fn ma(&self, period: usize) -> Self {
         self.window(period)
-            .map(|w| w.iter().flatten().sum::<f32>() / w.len() as f32)
+            .map(|w| {
+                if w.iter().all(|&x| x.is_none()) {
+                    None
+                } else {
+                    Some(w.iter().flatten().sum::<f32>() / w.len() as f32)
+                }
+            })
             .collect()
     }
 
@@ -99,30 +105,13 @@ impl Series<f32> {
 
     fn kama(&self, period: usize) -> Series<f32> {
         let len = self.len();
-        let change = self.change(period).abs();
+        let mom = self.change(period).abs();
         let volatility = self.change(1).abs().sum(period);
+        let er = iff!(volatility.seq(&ZERO), Series::zero(len), mom / volatility);
 
-        let er = change / volatility;
+        let alpha = (er * 0.666_666_7).pow(2);
 
-        let alpha = iff!(
-            er.na(),
-            Series::fill(2. / (period as f32 + 1.), len),
-            (er * 0.666_666_7).sqrt()
-        );
-
-        let mut kama = Series::empty(len);
-
-        for _ in 0..len {
-            let prev_kama = kama.shift(1);
-
-            kama = iff!(
-                prev_kama.na(),
-                self,
-                &prev_kama + &alpha * (self - &prev_kama)
-            )
-        }
-
-        kama
+        self.ew(&alpha, self)
     }
 
     fn zlema(&self, period: usize) -> Series<f32> {
@@ -151,8 +140,8 @@ mod tests {
 
     #[test]
     fn test_ma() {
-        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([1.0, 1.5, 2.0, 3.0, 4.0]);
+        let source = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([f32::NAN, 1.0, 1.6666666, 3.0, 4.0]);
 
         let result = source.ma(3);
 
@@ -195,6 +184,16 @@ mod tests {
         let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 2.5, 3.5]);
 
         let result = source.swma();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_kama() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 4.0, 4.4444447]);
+
+        let result = source.kama(3);
 
         assert_eq!(result, expected);
     }

@@ -1,7 +1,8 @@
 use core::prelude::*;
 
 pub fn vidya(source: &Series<f32>, fast_period: usize, slow_period: usize) -> Series<f32> {
-    let alpha = 2. / (fast_period as f32 + 1.) * source.std(fast_period) / source.std(slow_period);
+    let k = source.std(fast_period) / source.std(slow_period);
+    let alpha = 2. / (fast_period as f32 + 1.) * k.nz(Some(ZERO));
 
     source.ew(&alpha, source)
 }

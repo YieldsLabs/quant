@@ -243,8 +243,8 @@ mod tests {
 
     #[test]
     fn test_lowest() {
-        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([1.0, 1.0, 1.0, 2.0, 3.0]);
+        let source = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let expected = Series::from([f32::NAN, 2.0, 2.0, 1.0, 1.0]);
         let period = 3;
 
         let result = source.lowest(period);

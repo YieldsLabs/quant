@@ -1,32 +1,24 @@
 use core::prelude::*;
 
 pub fn frama(
+    source: &Series<f32>,
     high: &Series<f32>,
     low: &Series<f32>,
-    close: &Series<f32>,
     period: usize,
 ) -> Series<f32> {
-    let hh1 = high.highest(2 * period).shift(period);
-    let ll1 = low.lowest(2 * period).shift(period);
-    let n1 = (&hh1 - &ll1) / period as f32;
+    let len = (0.5 * period as f32).round() as usize;
+    let hh = high.highest(len);
+    let ll = low.lowest(len);
 
-    let hh2 = high.highest(period);
-    let ll2 = low.lowest(period);
-    let n2 = (&hh2 - &ll2) / period as f32;
+    let n1 = (&hh - &ll) / len as f32;
+    let n2 = (hh.shift(len) - ll.shift(len)) / len as f32;
+    let n3 = (high.highest(period) - low.lowest(period)) / period as f32;
 
-    let hh3 = hh1.max(&hh2);
-    let ll3 = ll1.min(&ll2);
-    let n3 = (hh3 - ll3) / (2. * period as f32);
+    let d = ((n1 + n2) / n3).log() / 2.0_f32.ln();
 
-    let d = ((n1 + n2).log() - n3.log()) / 2.0_f32.ln();
+    let alpha = (-4.6 * (d - 1.)).exp();
 
-    let alpha = iff!(
-        d.na(),
-        Series::fill(2. / (period as f32 + 1.), close.len()),
-        (-4.6 * (d - 1.)).exp()
-    );
-
-    close.ew(&alpha, close)
+    source.ew(&alpha, source)
 }
 
 #[cfg(test)]
@@ -35,12 +27,24 @@ mod tests {
 
     #[test]
     fn test_frama() {
-        let high = Series::from([18.904, 18.988, 18.992, 18.979, 18.941]);
-        let low = Series::from([18.825, 18.866, 18.950, 18.912, 18.877]);
-        let close = Series::from([18.889, 18.966, 18.963, 18.922, 18.940]);
-        let expected = vec![18.889, 18.9275, 18.94525, 18.939285, 18.939308];
+        let high = Series::from([
+            5.0994, 5.0910, 5.1015, 5.1051, 5.1041, 5.1138, 5.1150, 5.1160, 5.1392, 5.1550, 5.1739,
+            5.2000, 5.2193,
+        ]);
+        let low = Series::from([
+            5.0770, 5.0788, 5.0897, 5.0933, 5.0943, 5.0996, 5.1001, 5.0968, 5.1125, 5.1326, 5.1468,
+            5.1675, 5.1907,
+        ]);
+        let source = Series::from([
+            5.0788, 5.0897, 5.0958, 5.1023, 5.0998, 5.1046, 5.1014, 5.1141, 5.1355, 5.1477, 5.1675,
+            5.2000, 5.2169,
+        ]);
+        let expected = vec![
+            0.0, 0.0, 5.0958, 5.09975, 5.0997515, 5.100709, 5.10147, 5.1022835, 5.130958,
+            5.2076283, 5.172987, 5.1907825, 5.2242994,
+        ];
 
-        let result: Vec<f32> = frama(&high, &low, &close, 3).into();
+        let result: Vec<f32> = frama(&source, &high, &low, 3).into();
 
         assert_eq!(result, expected);
     }
