@@ -98,14 +98,13 @@ class SmartRouter(AbstractEventManager):
         logger.info(f"Try to open position: {position}")
 
         symbol = position.signal.symbol
-        position_size = position.size
+        position_size = position.pending_size
+        stop_loss = position.stop_loss_price
+        entry_price = position.pending_price
 
         if self.exchange.fetch_position(symbol, position.side):
             logging.info("Position already exists")
             return
-
-        stop_loss = position.stop_loss_price
-        entry_price = position.entry_price
 
         distance_to_stop_loss = abs(entry_price - stop_loss)
 
@@ -190,7 +189,7 @@ class SmartRouter(AbstractEventManager):
         logger.info(f"Try to adjust position: {position}")
 
         symbol = position.signal.symbol
-        position_size = position.size
+        position_size = position.filled_size
         stop_loss = position.stop_loss_price
         entry_price = command.adjust_price
 
@@ -279,7 +278,7 @@ class SmartRouter(AbstractEventManager):
             logging.info("Position is not existed")
             return
 
-        position_size = position.size
+        position_size = position.filled_size
         position_side = position.side
         exit_price = command.exit_price
 

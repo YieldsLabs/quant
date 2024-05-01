@@ -5,6 +5,7 @@ from core.interfaces.abstract_position_take_profit_strategy import (
     AbstractPositionTakeProfitStrategy,
 )
 from core.models.ohlcv import OHLCV
+from core.models.order import Order, OrderStatus
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.signal import Signal, SignalSide
@@ -36,20 +37,24 @@ class PositionFactory(AbstractPositionFactory):
             PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
         )
 
-        position_size = await self.position_size_strategy.calculate(
+        order_size = await self.position_size_strategy.calculate(
             signal, entry_price, stop_loss_price
         )
 
-        adjusted_position_size = max(position_size, symbol.min_position_size)
-        rounded_position_size = round(adjusted_position_size, symbol.position_precision)
+        adjusted_order_size = max(order_size, symbol.min_position_size)
+        rounded_order_size = round(adjusted_order_size, symbol.position_precision)
 
-        return Position(
+        order = Order(
+            status=OrderStatus.PENDING, price=entry_price, size=rounded_order_size
+        )
+
+        position = Position(
             signal,
             position_side,
-            rounded_position_size,
-            entry_price,
             self.risk_strategy,
             self.take_profit_strategy,
             open_timestamp=ohlcv.timestamp,
             stop_loss_price=stop_loss_price,
         )
+
+        return position.add_order(order)

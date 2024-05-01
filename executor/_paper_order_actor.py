@@ -68,11 +68,10 @@ class PaperOrderActor(Actor):
 
         logger.debug(f"New Position: {current_position}")
 
-        size = current_position.size
+        size = current_position.pending_size
         side = current_position.side
-        fill_price = await self._determine_fill_price(
-            side, current_position.entry_price
-        )
+        price = current_position.pending_price
+        fill_price = await self._determine_fill_price(side, price)
 
         if (
             side == PositionSide.LONG and current_position.stop_loss_price > fill_price
@@ -82,8 +81,8 @@ class PaperOrderActor(Actor):
             order = Order(
                 status=OrderStatus.FAILED,
                 type=OrderType.PAPER,
-                price=fill_price,
-                size=size,
+                price=0,
+                size=0,
             )
         else:
             order = Order(
@@ -108,12 +107,17 @@ class PaperOrderActor(Actor):
 
         logger.debug(f"To Adjust Position: {current_position}")
 
-        total_value = (current_position.size * current_position.entry_price) + (
-            current_position.size * event.adjust_price
+        total_value = (current_position.filled_size * current_position.entry_price) + (
+            current_position.filled_size * event.adjust_price
         )
 
-        size = current_position.size + current_position.size
-        fill_price = total_value / size
+        size = round(
+            1.3 * current_position.filled_size,
+            current_position.signal.symbol.position_precision,
+        )
+        fill_price = round(
+            total_value / size, current_position.signal.symbol.price_precision
+        )
 
         if (
             current_position.side == PositionSide.LONG
@@ -135,7 +139,7 @@ class PaperOrderActor(Actor):
 
             current_position = current_position.add_order(order)
 
-            logger.info(f"Adjusted Position: {current_position}")
+            logger.debug(f"Adjusted Position: {current_position}")
 
             await self.tell(BrokerPositionAdjusted(current_position))
 
@@ -148,7 +152,7 @@ class PaperOrderActor(Actor):
             current_position.side, event.exit_price
         )
         price = self._calculate_closing_price(current_position, fill_price)
-        size = current_position.size
+        size = current_position.filled_size
 
         order = Order(
             status=OrderStatus.CLOSED,
