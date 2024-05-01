@@ -1,17 +1,9 @@
 use core::prelude::*;
 
 pub fn zltema(source: &Series<f32>, period: usize) -> Series<f32> {
-    let ema1 = source.smooth(Smooth::EMA, period);
-    let ema2 = ema1.smooth(Smooth::EMA, period);
-    let ema3 = ema2.smooth(Smooth::EMA, period);
-
-    let tema = 3. * (ema1 - ema2) + ema3;
-
-    let tema1 = tema.smooth(Smooth::EMA, period);
-    let tema2 = tema1.smooth(Smooth::EMA, period);
-    let tema3 = tema2.smooth(Smooth::EMA, period);
-
-    3. * (tema1 - tema2) + tema3
+    source
+        .smooth(Smooth::TEMA, period)
+        .smooth(Smooth::TEMA, period)
 }
 
 #[cfg(test)]

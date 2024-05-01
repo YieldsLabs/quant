@@ -1,9 +1,9 @@
 use core::prelude::*;
 
 pub fn zlhma(source: &Series<f32>, period: usize, smooth_period: usize) -> Series<f32> {
-    let hma = source.smooth(Smooth::HMA, period);
-
-    hma.smooth(Smooth::HMA, smooth_period)
+    source
+        .smooth(Smooth::HMA, period)
+        .smooth(Smooth::HMA, smooth_period)
 }
 
 #[cfg(test)]

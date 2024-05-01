@@ -13,6 +13,7 @@ pub enum Smooth {
     WMA,
     ZLEMA,
     LSMA,
+    TEMA,
 }
 
 impl Series<f32> {
@@ -61,6 +62,14 @@ impl Series<f32> {
         let seed = self.ma(period);
 
         self.ew(&alpha, &seed)
+    }
+
+    fn tema(&self, period: usize) -> Self {
+        let ema1 = self.ema(period);
+        let ema2 = ema1.ema(period);
+        let ema3 = ema2.ema(period);
+
+        3. * (ema1 - ema2) + ema3
     }
 
     fn wma(&self, period: usize) -> Self {
@@ -130,6 +139,7 @@ impl Series<f32> {
             Smooth::WMA => self.wma(period),
             Smooth::ZLEMA => self.zlema(period),
             Smooth::LSMA => self.linreg(period),
+            Smooth::TEMA => self.tema(period),
         }
     }
 }
