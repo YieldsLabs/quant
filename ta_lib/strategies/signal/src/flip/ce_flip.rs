@@ -25,8 +25,6 @@ impl Signal for CeFlipSignal {
 
     fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = ce(
-            data.high(),
-            data.low(),
             data.close(),
             &data.atr(self.atr_period),
             self.period,

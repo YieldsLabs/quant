@@ -473,9 +473,9 @@ fn trend(c: &mut Criterion) {
                 let factor = 3.0;
                 let period = 20;
 
-                (high, low, close, atr, period, factor)
+                (close, atr, period, factor)
             },
-            |(high, low, close, atr, period, factor)| ce(high, low, close, atr, *period, *factor),
+            |(close, atr, period, factor)| ce(close, atr, *period, *factor),
             criterion::BatchSize::SmallInput,
         )
     });

@@ -40,6 +40,7 @@ from strategy.generator.pulse.wae import WaePulse
 from strategy.generator.signal.bb.macd_bb import MacdBbSignal
 from strategy.generator.signal.bb.vwap_bb import VwapBbSignal
 from strategy.generator.signal.breakout.dch_two_ma import DchMa2BreakoutSignal
+from strategy.generator.signal.flip.ce_flip import CeFlipSignal
 from strategy.generator.signal.flip.supertrend_flip import SupertrendFlipSignal
 from strategy.generator.signal.ma.ma2_rsi import Ma2RsiSignal
 from strategy.generator.signal.ma.ma3_cross import Ma3CrossSignal
@@ -365,7 +366,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         if signal == TrendSignalType.FLIP:
             return np.random.choice(
                 [
-                    # CeFlipSignal(),
+                    CeFlipSignal(),
                     SupertrendFlipSignal(),
                 ]
             )
