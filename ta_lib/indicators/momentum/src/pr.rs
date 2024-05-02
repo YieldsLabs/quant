@@ -9,13 +9,7 @@ pub fn pr(
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
-    let div = &hh - &ll;
-
-    iff!(
-        div.seq(&ZERO),
-        Series::zero(hh.len()),
-        SCALE * (source - &hh) / &div
-    )
+    SCALE * (source - &hh) / (&hh - &ll)
 }
 
 #[cfg(test)]

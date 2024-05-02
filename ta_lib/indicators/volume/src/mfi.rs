@@ -13,9 +13,7 @@ pub fn mfi(hlc3: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f3
 
     let money_ratio = upper / lower;
 
-    let mfi = SCALE - SCALE / (1. + money_ratio);
-
-    mfi.nz(Some(0.5 * SCALE))
+    SCALE - SCALE / (1. + money_ratio)
 }
 
 #[cfg(test)]
@@ -29,7 +27,7 @@ mod tests {
         let period = 3;
         let epsilon = 0.001;
 
-        let expected = [50.0, 50.0, 51.9992, 36.1106, 34.2859];
+        let expected = [0.0, 0.0, 51.9992, 36.1106, 34.2859];
 
         let result: Vec<f32> = mfi(&hlc3, &volume, period).into();
 

@@ -11,7 +11,7 @@ mod tests {
     #[test]
     fn test_lsma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = vec![0.0, 2.0, 3.0000002, 4.0, 5.0];
+        let expected = vec![1.0, 2.0, 3.0000002, 4.0, 5.0];
 
         let result: Vec<f32> = lsma(&source, 3).into();
 

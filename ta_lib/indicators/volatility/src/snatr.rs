@@ -28,7 +28,7 @@ fn test_snatr() {
     let period = 3;
     let epsilon = 0.001;
     let expected = [
-        0.0, 0.0, 0.0, 0.8257546, 0.99494743, 0.9974737, 1.0, 0.9014031, 0.5520136,
+        0.0, 0.0, 0.5, 0.8257546, 0.99494743, 0.9974737, 1.0, 0.9014031, 0.5520136,
     ];
 
     let result: Vec<f32> = snatr(&atr, atr_period, Smooth::WMA, period).into();

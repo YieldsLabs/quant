@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 
 const DEFAULT_LOOKBACK: usize = 55;
 const DEFAULT_STOP_LEVEL: f32 = -1.0;
-const DEFAULT_BUFF_SIZE: f32 = 1.3;
+const DEFAULT_BUFF_SIZE: f32 = 1.236;
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {

@@ -205,9 +205,20 @@ mod tests {
     }
 
     #[test]
-    fn test_sum() {
+    fn test_sum_first_nan() {
         let source = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
         let expected = Series::from([f32::NAN, 2.0, 5.0, 9.0, 12.0]);
+        let n = 3;
+
+        let result = source.sum(n);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_sum_last_nan() {
+        let source = Series::from([1.0, 2.0, f32::NAN, f32::NAN, f32::NAN]);
+        let expected = Series::from([1.0, 3.0, 3.0, 2.0, f32::NAN]);
         let n = 3;
 
         let result = source.sum(n);

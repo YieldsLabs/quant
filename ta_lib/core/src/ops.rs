@@ -1,3 +1,4 @@
+use crate::constants::ZERO;
 use crate::series::Series;
 use crate::traits::Operation;
 use std::ops::{Add, Div, Mul, Sub};
@@ -21,7 +22,7 @@ impl Operation<f32, f32, f32> for Series<f32> {
     }
 
     fn sdiv(&self, scalar: &f32) -> Series<f32> {
-        self.ops(scalar, |v, s| if s != &0.0 { v / s } else { 0.0 })
+        self.ops(scalar, |v, s| if *s != ZERO { v / s } else { ZERO })
     }
 
     fn ssub(&self, scalar: &f32) -> Series<f32> {
@@ -51,7 +52,8 @@ impl Operation<Series<f32>, f32, f32> for Series<f32> {
 
     fn sdiv(&self, rhs: &Series<f32>) -> Series<f32> {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) if b_val != &0.0 => Some(a_val / b_val),
+            (Some(a_val), Some(b_val)) if *b_val == ZERO => Some(ZERO),
+            (Some(a_val), Some(b_val)) if *b_val != ZERO => Some(a_val / b_val),
             _ => None,
         })
     }

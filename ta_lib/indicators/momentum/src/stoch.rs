@@ -9,13 +9,7 @@ pub fn stoch(
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
-    let div = &hh - &ll;
-
-    iff!(
-        div.seq(&ZERO),
-        Series::zero(hh.len()),
-        SCALE * (source - &ll) / div
-    )
+    SCALE * (source - &ll) / (&hh - &ll)
 }
 
 #[cfg(test)]

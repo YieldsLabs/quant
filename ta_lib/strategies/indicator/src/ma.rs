@@ -44,7 +44,13 @@ pub fn ma_indicator(
 ) -> Series<f32> {
     match ma {
         MovingAverageType::ALMA => alma(&data.source(source_type), period, 0.85, 6.0),
-        MovingAverageType::CAMA => cama(data.close(), data.high(), data.low(), &data.tr(), period),
+        MovingAverageType::CAMA => cama(
+            &data.source(source_type),
+            data.high(),
+            data.low(),
+            &data.tr(),
+            period,
+        ),
         MovingAverageType::DEMA => dema(&data.source(source_type), period),
         MovingAverageType::EMA => ema(&data.source(source_type), period),
         MovingAverageType::FRAMA => {
