@@ -2,7 +2,6 @@ import logging
 import time
 
 from core.commands.broker import (
-    AdjustPosition,
     ClosePosition,
     OpenPosition,
     UpdateSettings,
@@ -98,9 +97,11 @@ class SmartRouter(AbstractEventManager):
         logger.info(f"Try to open position: {position}")
 
         symbol = position.signal.symbol
-        position_size = position.pending_size
-        stop_loss = position.stop_loss_price
-        entry_price = position.pending_price
+        stop_loss = position.stop_loss
+        pending_order = position.entry_order()
+
+        entry_price = pending_order.price
+        size = pending_order.size
 
         if self.exchange.fetch_position(symbol, position.side):
             logging.info("Position already exists")
@@ -109,97 +110,8 @@ class SmartRouter(AbstractEventManager):
         distance_to_stop_loss = abs(entry_price - stop_loss)
 
         min_size = symbol.min_position_size
-        num_orders = min(
-            max(1, int(position_size / min_size)), self.config["max_order_slice"]
-        )
-        size = round(position_size / num_orders, symbol.position_precision)
-        order_counter = 0
-        num_order_breach = 0
-        order_timestamps = {}
-
-        for price in self.algo_price.calculate(symbol, self.exchange):
-            current_distance_to_stop_loss = abs(stop_loss - price)
-
-            threshold_breach = (
-                self.config["stop_loss_threshold"] * distance_to_stop_loss
-                > current_distance_to_stop_loss
-            )
-
-            if threshold_breach:
-                logging.info(
-                    f"Order risk breached: ENTR: {entry_price}, STPLS: {stop_loss}, THEO_DSTNC: {distance_to_stop_loss}, ALG_DSTNC: {current_distance_to_stop_loss}"
-                )
-
-                num_order_breach += 1
-
-                if num_order_breach >= self.config["max_order_breach"]:
-                    break
-
-            spread = (
-                price - entry_price
-                if position.side == PositionSide.LONG
-                else entry_price - price
-            )
-
-            spread_percentage = (spread / entry_price) * 100
-
-            logging.info(
-                f"Trying to open order -> algo price: {price}, theo price: {entry_price}, spread: {spread_percentage}%"
-            )
-
-            if spread_percentage > 1.5:
-                break
-
-            curr_time = time.time()
-            expired_orders = [
-                order_id
-                for order_id, timestamp in order_timestamps.items()
-                if curr_time - timestamp > self.config["order_expiration_time"]
-            ]
-
-            for order_id in expired_orders:
-                self.exchange.cancel_order(order_id, symbol)
-                order_timestamps.pop(order_id)
-
-            for order_id in list(order_timestamps.keys()):
-                if self.exchange.has_filled_order(order_id, symbol):
-                    order_timestamps.pop(order_id)
-                    order_counter += 1
-
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
-                break
-
-            if not self.exchange.has_open_orders(symbol, position.side) and not len(
-                order_timestamps.keys()
-            ):
-                order_id = self.exchange.create_limit_order(
-                    symbol, position.side, size, price
-                )
-                if order_id:
-                    order_timestamps[order_id] = time.time()
-
-        for order_id in list(order_timestamps.keys()):
-            self.exchange.cancel_order(order_id, symbol)
-
-    @command_handler(AdjustPosition)
-    async def adjust_position(self, command: AdjustPosition):
-        position = command.position
-
-        logger.info(f"Try to adjust position: {position}")
-
-        symbol = position.signal.symbol
-        position_size = position.filled_size
-        stop_loss = position.stop_loss_price
-        entry_price = command.adjust_price
-
-        distance_to_stop_loss = abs(entry_price - stop_loss)
-
-        min_size = symbol.min_position_size
-        num_orders = min(
-            max(1, int(position_size / min_size)), self.config["max_order_slice"]
-        )
-        size = round(position_size / num_orders, symbol.position_precision)
+        num_orders = min(max(1, int(size / min_size)), self.config["max_order_slice"])
+        size = round(size / num_orders, symbol.position_precision)
         order_counter = 0
         num_order_breach = 0
         order_timestamps = {}
@@ -278,15 +190,14 @@ class SmartRouter(AbstractEventManager):
             logging.info("Position is not existed")
             return
 
-        position_size = position.filled_size
+        exit_order = position.exit_order()
         position_side = position.side
-        exit_price = command.exit_price
 
         min_size = symbol.min_position_size
         num_orders = min(
-            max(1, int(position_size / min_size)), self.config["max_order_slice"]
+            max(1, int(exit_order.size / min_size)), self.config["max_order_slice"]
         )
-        size = round(position_size / num_orders, symbol.position_precision)
+        size = round(exit_order.size / num_orders, symbol.position_precision)
         order_counter = 0
         order_timestamps = {}
         max_spread = float("-inf")
@@ -296,14 +207,14 @@ class SmartRouter(AbstractEventManager):
                 break
 
             spread = (
-                price - exit_price
+                price - exit_order.price
                 if position_side == PositionSide.LONG
-                else exit_price - price
+                else exit_order.price - price
             )
             max_spread = max(spread, max_spread)
 
             logging.info(
-                f"Trying to reduce order -> algo price: {price}, theo price: {exit_price}, spread: {spread}, max spread: {max_spread}"
+                f"Trying to reduce order -> algo price: {price}, theo price: {exit_order.price}, spread: {spread}, max spread: {max_spread}"
             )
 
             if max_spread < 0:

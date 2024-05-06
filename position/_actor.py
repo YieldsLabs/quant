@@ -6,10 +6,8 @@ from typing import Union
 from core.actors import Actor
 from core.events.backtest import BacktestEnded
 from core.events.position import (
-    BrokerPositionAdjusted,
     BrokerPositionClosed,
     BrokerPositionOpened,
-    PositionAdjusted,
     PositionClosed,
     PositionCloseRequested,
     PositionInitialized,
@@ -30,9 +28,7 @@ from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
-BrokerPositionEvent = Union[
-    BrokerPositionOpened, BrokerPositionAdjusted, BrokerPositionClosed
-]
+BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
 ExitSignal = RiskThresholdBreached
 BacktestSignal = BacktestEnded
 
@@ -48,7 +44,6 @@ class PositionActor(Actor):
         GoLongSignalReceived,
         GoShortSignalReceived,
         BrokerPositionOpened,
-        BrokerPositionAdjusted,
         BrokerPositionClosed,
         RiskThresholdBreached,
         BacktestEnded,
@@ -94,10 +89,10 @@ class PositionActor(Actor):
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 
+        # logger.info(f"Signal side: {event}")
+
         async def create_and_store_position(event: SignalEvent):
-            position = await self.position_factory.create_position(
-                event.signal, event.ohlcv, event.entry_price, event.stop_loss
-            )
+            position = await self.position_factory.create(event.signal)
 
             await self.state.store_position(position)
             await self.tell(PositionInitialized(position))
@@ -137,27 +132,6 @@ class PositionActor(Actor):
 
         return False
 
-    async def handle_position_adjusted(self, event: BrokerPositionAdjusted) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-        long_position, short_position = await self.state.retrieve_position(
-            symbol, timeframe
-        )
-
-        if (
-            event.position.side == PositionSide.LONG
-            and long_position
-            and long_position.last_modified < event.meta.timestamp
-        ) or (
-            event.position.side == PositionSide.SHORT
-            and short_position
-            and short_position.last_modified < event.meta.timestamp
-        ):
-            next_position = await self.state.update_stored_position(event.position)
-            await self.tell(PositionAdjusted(next_position))
-            return True
-
-        return False
-
     async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
@@ -174,6 +148,10 @@ class PositionActor(Actor):
         return False
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
+        if not event.position.has_risk:
+            logger.warn(f"Try to close not risky position: {event.position}")
+            return False
+
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
             symbol, timeframe
@@ -189,7 +167,7 @@ class PositionActor(Actor):
             and short_position.last_modified < event.meta.timestamp
         ):
             next_position = await self.state.update_stored_position(event.position)
-            await self.tell(PositionCloseRequested(next_position, event.exit_price))
+            await self.tell(PositionCloseRequested(next_position))
             return True
 
         return False
@@ -201,14 +179,10 @@ class PositionActor(Actor):
         )
 
         if long_position:
-            await self.tell(
-                PositionCloseRequested(long_position, long_position.entry_price)
-            )
+            await self.tell(PositionCloseRequested(long_position))
 
         if short_position:
-            await self.tell(
-                PositionCloseRequested(short_position, short_position.entry_price)
-            )
+            await self.tell(PositionCloseRequested(short_position))
 
         return True
 

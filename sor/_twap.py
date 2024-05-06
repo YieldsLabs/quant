@@ -55,7 +55,7 @@ class TWAP:
         high_low = np.log(high_prices / low_prices)
         volatility = np.sqrt((1 / (4 * np.log(2))) * np.mean(high_low**2))
 
-        base_interval = 1.0
+        base_interval = 1.236
         volatility_factor = 30.0
 
-        return base_interval + volatility_factor * volatility
+        return base_interval + np.tanh(volatility_factor * volatility)

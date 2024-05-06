@@ -6,7 +6,7 @@ class PositionSide(Enum):
     SHORT = "short"
 
     def __str__(self):
-        return self.value
+        return self.value.upper()
 
 
 class SignalSide(Enum):

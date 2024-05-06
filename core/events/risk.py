@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 
 from core.models.position import Position
-from core.models.risk_type import RiskType
 
 from .base import Event, EventGroup, EventMeta
 
@@ -16,8 +15,7 @@ class RiskEvent(Event):
 
 @dataclass(frozen=True)
 class RiskThresholdBreached(RiskEvent):
-    exit_price: float
-    reason: RiskType
+    pass
 
 
 @dataclass(frozen=True)

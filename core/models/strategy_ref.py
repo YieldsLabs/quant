@@ -12,7 +12,8 @@ from core.events.signal import (
 )
 from core.models.action import Action
 from core.models.ohlcv import OHLCV
-from core.models.signal import Signal, SignalSide
+from core.models.side import SignalSide
+from core.models.signal import Signal
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -63,37 +64,54 @@ class StrategyRef:
                 self.store_ref, self.id
             )
 
-        signal = Signal(
-            symbol,
-            timeframe,
-            strategy,
+        side = (
             SignalSide.BUY
             if action in (Action.GO_LONG, Action.EXIT_SHORT)
-            else SignalSide.SELL,
+            else SignalSide.SELL
         )
 
         action_event_map = {
             Action.GO_LONG: GoLongSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                entry_price=price,
-                stop_loss=long_stop_loss,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    entry=price,
+                    stop_loss=long_stop_loss,
+                ),
             ),
             Action.GO_SHORT: GoShortSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                entry_price=price,
-                stop_loss=short_stop_loss,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    entry=price,
+                    stop_loss=short_stop_loss,
+                ),
             ),
             Action.EXIT_LONG: ExitLongSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                exit_price=price,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    exit=price,
+                ),
             ),
             Action.EXIT_SHORT: ExitShortSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                exit_price=price,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    exit=price,
+                ),
             ),
         }
 

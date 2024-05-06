@@ -158,6 +158,7 @@ pub enum SignalConfig {
     },
     // Flip
     CeFlip {
+        source_type: f32,
         period: f32,
         atr_period: f32,
         factor: f32,

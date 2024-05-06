@@ -227,10 +227,16 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         )),
         // Flip
         SignalConfig::CeFlip {
+            source_type,
             period,
             atr_period,
             factor,
-        } => Box::new(CeFlipSignal::new(period, atr_period, factor)),
+        } => Box::new(CeFlipSignal::new(
+            source_deserialize(source_type as usize),
+            period,
+            atr_period,
+            factor,
+        )),
         SignalConfig::SupFlip {
             source_type,
             atr_period,

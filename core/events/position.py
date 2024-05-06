@@ -40,7 +40,7 @@ class PositionOpened(PositionEvent):
 
 @dataclass(frozen=True)
 class PositionCloseRequested(PositionEvent):
-    exit_price: float
+    pass
 
 
 @dataclass(frozen=True)

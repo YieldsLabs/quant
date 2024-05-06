@@ -33,7 +33,7 @@ impl Pulse for ChopPulse {
             self.period,
         );
 
-        let lower_chop = CHOP_MIDDLE_LINE + self.threshold;
+        let lower_chop = CHOP_MIDDLE_LINE - self.threshold;
 
         (chop.slt(&lower_chop), chop.slt(&lower_chop))
     }
