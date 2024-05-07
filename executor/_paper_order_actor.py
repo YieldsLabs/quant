@@ -76,20 +76,21 @@ class PaperOrderActor(Actor):
 
         if next_bar:
             price = self._find_fill_price(current_position, next_bar, entry_order)
-            size = entry_order.size
-            fee = current_position.theo_taker_fee(size, price)
-
-            order = Order(
-                status=OrderStatus.EXECUTED,
-                type=OrderType.PAPER,
-                price=price,
-                size=size,
-                fee=fee,
-            )
         else:
-            order = Order(
-                status=OrderStatus.FAILED, type=OrderType.PAPER, price=0, size=0
+            price = self._find_fill_price(
+                current_position, current_position.signal_bar, entry_order
             )
+
+        size = entry_order.size
+        fee = current_position.theo_taker_fee(size, price)
+
+        order = Order(
+            status=OrderStatus.EXECUTED,
+            type=OrderType.PAPER,
+            price=price,
+            size=size,
+            fee=fee,
+        )
 
         current_position = current_position.fill_order(order)
 
@@ -114,11 +115,11 @@ class PaperOrderActor(Actor):
 
         exit_order = current_position.exit_order()
 
+        size = exit_order.size
         price = self._find_closing_price(
             current_position, current_position.risk_bar, exit_order
         )
 
-        size = exit_order.size
         fee = current_position.theo_taker_fee(size, price)
 
         order = Order(

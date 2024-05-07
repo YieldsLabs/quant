@@ -59,19 +59,20 @@ class RiskActor(Actor):
 
     def pre_receive(self, event: RiskEvent):
         symbol, timeframe = self._get_event_key(event)
-        return self._symbol == symbol and self._timeframe == timeframe
+        return self.symbol == symbol and self.timeframe == timeframe
 
     async def on_receive(self, event: RiskEvent):
         handlers = {
-            NewMarketDataReceived: self._handle_market_risk,
-            PositionOpened: self._open_position,
-            PositionClosed: self._close_position,
+            NewMarketDataReceived: [self._handle_market, self._handle_position_risk],
+            PositionOpened: [self._open_position],
+            PositionClosed: [self._close_position],
         }
 
         handler = handlers.get(type(event))
 
         if handler:
-            await handler(event)
+            for h in handler:
+                await h(event)
 
     async def _open_position(self, event: PositionOpened):
         async with self.lock:
@@ -95,10 +96,12 @@ class RiskActor(Actor):
                 None if event.position.side == PositionSide.SHORT else short_position,
             )
 
-    async def _handle_market_risk(self, event: NewMarketDataReceived):
+    async def _handle_market(self, event: NewMarketDataReceived):
         async with self.lock:
             self._timeseries.enqueue(event.ohlcv)
 
+    async def _handle_position_risk(self, _event: NewMarketDataReceived):
+        async with self.lock:
             long_position, short_position = self._position
 
             if long_position or short_position:
@@ -135,8 +138,7 @@ class RiskActor(Actor):
             async for next_bar in self._timeseries.find_next_bar(
                 next_position.risk_bar
             ):
-                if next_bar:
-                    next_position = next_position.next(next_bar)
+                next_position = next_position.next(next_bar)
 
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))

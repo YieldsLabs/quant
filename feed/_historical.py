@@ -85,9 +85,9 @@ class HistoricalActor(Actor):
     ):
         super().__init__(symbol, timeframe)
         self.exchange = exchange
-        self.buff_size = 10
         self.config_service = config_service.get("backtest")
-        self.buffer: List[Bar] = deque(maxlen=self.buff_size)
+        self.batch_size = 8
+        self.buffer: deque[Bar] = deque()
 
     def pre_receive(self, msg: StartHistoricalFeed):
         return self.symbol == msg.symbol and self.timeframe == msg.timeframe
@@ -103,9 +103,43 @@ class HistoricalActor(Actor):
             msg.out_sample,
             self.config_service["batch_size"],
         ) as stream:
-            async for bar in stream:
+            async for bars in self.batched(stream, self.batch_size):
+                self.process_bars(bars)
+                await self.process_buffer()
+
+    def process_bars(self, batch: List[Bar]):
+        for bar in batch:
+            self.insert_into_buffer(bar)
+
+    def insert_into_buffer(self, bar: Bar):
+        index = 0
+
+        while (
+            index < len(self.buffer)
+            and self.buffer[index].ohlcv.timestamp < bar.ohlcv.timestamp
+        ):
+            index += 1
+
+        self.buffer.insert(index, bar)
+
+    async def process_buffer(self):
+        while len(self.buffer) >= self.batch_size:
+            for bar in [self.buffer.popleft() for _ in range(self.batch_size)]:
                 await self.tell(
                     NewMarketDataReceived(
                         self.symbol, self.timeframe, bar.ohlcv, bar.closed
                     )
                 )
+
+            await asyncio.sleep(0.001)
+
+    @staticmethod
+    async def batched(stream, batch_size):
+        batch = []
+        async for bar in stream:
+            batch.append(bar)
+            if len(batch) >= batch_size:
+                yield batch
+                batch = []
+        if batch:
+            yield batch

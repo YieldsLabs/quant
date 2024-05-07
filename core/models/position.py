@@ -219,9 +219,12 @@ class Position:
         if ohlcv.timestamp <= self.risk_bar.timestamp:
             return self
 
-        print(
-            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {ohlcv.timestamp - self.risk.ohlcv.timestamp}"
-        )
+        gap = ohlcv.timestamp - self.risk.ohlcv.timestamp
+
+        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
+
+        # if gap > 300000:
+        #     return self
 
         risk = self.risk.assess(
             self.side,
