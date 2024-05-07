@@ -33,5 +33,11 @@ class OHLCV:
             ]
         )
 
+    def __lt__(self, other: object):
+        if not isinstance(other, OHLCV):
+            return NotImplemented
+
+        return self.timestamp < other.timestamp
+
     def to_dict(self):
         return asdict(self)

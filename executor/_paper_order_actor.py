@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from enum import Enum, auto
 from typing import Union
@@ -27,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 NEXT_BAR_TRY = 13
 
+
 class PriceDirection(Enum):
     OHLC = auto()
     OLHC = auto()
@@ -41,7 +41,6 @@ class PaperOrderActor(Actor):
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
-        self.lock = asyncio.Lock()
         self._timeseries = Timeseries()
 
     def pre_receive(self, event: OrderEventType):
@@ -61,8 +60,7 @@ class PaperOrderActor(Actor):
             await handler(event)
 
     async def _update_bar(self, event: NewMarketDataReceived):
-        async with self.lock:
-            self._timeseries.enqueue(event.ohlcv)
+        await self._timeseries.enqueue(event.ohlcv)
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
@@ -160,14 +158,13 @@ class PaperOrderActor(Actor):
             return min(max(fill_price, position.take_profit), position.stop_loss)
 
     async def _find_next_bar(self, timestamp: int) -> OHLCV:
-        async with self.lock:
-            counter = NEXT_BAR_TRY
+        counter = NEXT_BAR_TRY
 
-            async for next_bar in self._timeseries.find_next_bar(timestamp):
-                if next_bar or counter < 0:
-                    return next_bar
-                else:
-                    counter -= 1
+        async for next_bar in self._timeseries.find_next_bar(timestamp):
+            if next_bar or counter < 0:
+                return next_bar
+            else:
+                counter -= 1
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:

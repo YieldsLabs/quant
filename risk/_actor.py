@@ -97,7 +97,7 @@ class RiskActor(Actor):
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
         async with self.lock:
-            self._timeseries.enqueue(event.ohlcv)
+            await self._timeseries.enqueue(event.ohlcv)
 
             long_position, short_position = self._position
 
