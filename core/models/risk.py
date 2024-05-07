@@ -28,7 +28,7 @@ class Risk:
             if bar.high > self.stop_loss_price:
                 return replace(self, type=RiskType.SL, ohlcv=bar)
 
-        if bar.timestamp - open_timestamp <= self.expiration:
+        if bar.timestamp - open_timestamp - self.expiration > 0:
             return replace(self, type=RiskType.TIME, ohlcv=bar)
 
         return replace(self, ohlcv=bar)

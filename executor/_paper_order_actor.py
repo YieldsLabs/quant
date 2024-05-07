@@ -25,8 +25,6 @@ OrderEventType = Union[
 
 logger = logging.getLogger(__name__)
 
-NEXT_BAR_TRY = 8
-
 
 class PriceDirection(Enum):
     OHLC = auto()
@@ -68,7 +66,7 @@ class PaperOrderActor(Actor):
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
 
-        logger.info(f"New Position: {current_position}")
+        logger.debug(f"New Position: {current_position}")
 
         next_bar = await self._find_next_bar(current_position.signal_bar)
 
@@ -87,8 +85,8 @@ class PaperOrderActor(Actor):
         order = Order(
             status=OrderStatus.EXECUTED,
             type=OrderType.PAPER,
-            price=price,
             size=size,
+            price=price,
             fee=fee,
         )
 
@@ -101,7 +99,7 @@ class PaperOrderActor(Actor):
 
             current_position = current_position.fill_order(order)
 
-        logger.info(f"Position to Open: {current_position}")
+        logger.debug(f"Position to Open: {current_position}")
 
         if current_position.closed:
             await self.tell(BrokerPositionClosed(current_position))
@@ -125,8 +123,8 @@ class PaperOrderActor(Actor):
         order = Order(
             status=OrderStatus.CLOSED,
             type=OrderType.PAPER,
-            price=price,
             size=size,
+            price=price,
             fee=fee,
         )
 

@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import List, Tuple
@@ -18,6 +19,7 @@ class Position:
     orders: Tuple[Order] = ()
     trailed: bool = False
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     @property
     def side(self) -> PositionSide:
@@ -219,12 +221,9 @@ class Position:
         if ohlcv.timestamp <= self.risk_bar.timestamp:
             return self
 
-        gap = ohlcv.timestamp - self.risk.ohlcv.timestamp
+        # gap = ohlcv.timestamp - self.risk.ohlcv.timestamp
 
-        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
-
-        # if gap > 300000:
-        #     return self
+        # print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
 
         risk = self.risk.assess(
             self.side,
@@ -232,7 +231,7 @@ class Position:
             ohlcv,
         )
 
-        # print(f"RISK: {risk}")
+        print(f"RISK: {risk}")
 
         return replace(
             self,
