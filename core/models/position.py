@@ -57,7 +57,7 @@ class Position:
 
     @property
     def trade_time(self) -> int:
-        return abs(int(self.close_timestamp - self.open_timestamp))
+        return abs(self.close_timestamp - self.open_timestamp)
 
     @property
     def closed(self) -> bool:
@@ -220,11 +220,10 @@ class Position:
         if self.closed:
             return self
 
-        if ohlcv.timestamp < self.risk_bar.timestamp:
-            print("ERRR")
+        if ohlcv.timestamp <= self.risk_bar.timestamp:
             return self
 
-        print(f"GAP: {ohlcv.timestamp - self.risk.ohlcv.timestamp}")
+        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {ohlcv.timestamp - self.risk.ohlcv.timestamp}")
 
         risk = self.risk.assess(
             self.side,
@@ -232,7 +231,7 @@ class Position:
             ohlcv,
         )
 
-        print(f"RISK: {risk}")
+        # print(f"RISK: {risk}")
 
         return replace(
             self,

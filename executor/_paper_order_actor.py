@@ -25,6 +25,7 @@ OrderEventType = Union[
 
 logger = logging.getLogger(__name__)
 
+NEXT_BAR_TRY = 13
 
 class PriceDirection(Enum):
     OHLC = auto()
@@ -100,7 +101,7 @@ class PaperOrderActor(Actor):
 
             current_position = current_position.fill_order(order)
 
-        logger.info(f"Position to Open: {current_position}")
+        logger.debug(f"Position to Open: {current_position}")
 
         if current_position.closed:
             await self.tell(BrokerPositionClosed(current_position))
@@ -160,15 +161,13 @@ class PaperOrderActor(Actor):
 
     async def _find_next_bar(self, timestamp: int) -> OHLCV:
         async with self.lock:
-            next_bar = None
-            counter = 3
+            counter = NEXT_BAR_TRY
 
-            while next_bar is None or counter > 0:
-                next_bar = next(self._timeseries.find_next_bar(timestamp))
-                await asyncio.sleep(0.01)
-                counter -= 1
-
-            return next_bar
+            async for next_bar in self._timeseries.find_next_bar(timestamp):
+                if next_bar or counter < 0:
+                    return next_bar
+                else:
+                    counter -= 1
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:

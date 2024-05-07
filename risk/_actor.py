@@ -132,10 +132,11 @@ class RiskActor(Actor):
         next_position = position
 
         if position:
-            for next_bar in self._timeseries.find_next_bar(
+            async for next_bar in self._timeseries.find_next_bar(
                 next_position.risk_bar.timestamp
             ):
-                next_position = position.next(next_bar)
+                if next_bar:
+                    next_position = next_position.next(next_bar)
 
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))
