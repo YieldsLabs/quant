@@ -1,6 +1,5 @@
 import asyncio
-from collections import deque
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
@@ -17,11 +16,11 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.interfaces.abstract_config import AbstractConfig
-from core.models.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.models.timeseries import Timeseries
 
 RiskEvent = Union[
     NewMarketDataReceived,
@@ -55,7 +54,7 @@ class RiskActor(Actor):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=120)
+        self._timeseries = Timeseries()
         self.config = config_service.get("position")
 
     def pre_receive(self, event: RiskEvent):
@@ -98,24 +97,15 @@ class RiskActor(Actor):
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
         async with self.lock:
-            self._ohlcv.append(event.ohlcv)
-            visited = set()
-            ohlcvs = []
-
-            for i in range(len(self._ohlcv)):
-                if self._ohlcv[i].timestamp not in visited:
-                    ohlcvs.append(self._ohlcv[i])
-                    visited.add(self._ohlcv[i].timestamp)
-
-            ohlcvs = sorted(ohlcvs, key=lambda x: x.timestamp)
+            self._timeseries.enqueue(event.ohlcv)
 
             long_position, short_position = self._position
 
             if long_position or short_position:
                 long_position, short_position = await asyncio.gather(
                     *[
-                        self._process_market(long_position, ohlcvs),
-                        self._process_market(short_position, ohlcvs),
+                        self._process_market(long_position),
+                        self._process_market(short_position),
                     ]
                 )
 
@@ -138,14 +128,18 @@ class RiskActor(Actor):
     #                 event.signal.exit,
     #             )
 
-    async def _process_market(self, position: Optional[Position], ohlcvs: List[OHLCV]):
+    async def _process_market(self, position: Optional[Position]):
         next_position = position
 
-        if position and len(ohlcvs) > 1:
-            next_position = position.next(ohlcvs)
+        if position:
+            for next_bar in self._timeseries.find_next_bar(
+                next_position.risk_bar.timestamp
+            ):
+                next_position = position.next(next_bar)
 
-            if next_position.has_risk:
-                await self.tell(RiskThresholdBreached(next_position))
+                if next_position.has_risk:
+                    await self.tell(RiskThresholdBreached(next_position))
+                    break
 
         return next_position
 

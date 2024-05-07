@@ -62,18 +62,12 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.event_handler.unregister(event_class, handler)
 
     async def execute(self, command: Command, *args, **kwargs) -> None:
-        await asyncio.gather(
-            self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs),
-            command.wait_for_execution(),
-        )
+        await self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs)
+        await command.wait_for_execution()
 
     async def query(self, query: Query, *args, **kwargs) -> Any:
-        _, result = await asyncio.gather(
-            self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs),
-            query.wait_for_response(),
-        )
-
-        return result
+        await self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs)
+        return await query.wait_for_response()
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)

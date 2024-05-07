@@ -18,9 +18,7 @@ from infrastructure.shutdown import GracefulShutdown
 from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
-from position.risk.break_even import PositionRiskBreakEvenStrategy
 from position.size.fixed import PositionFixedSizeStrategy
-from position.take_profit.risk_reward import PositionRiskRewardTakeProfitStrategy
 from risk import RiskActorFactory
 from service import EnvironmentSecretService, SignalService, WasmFileService
 from sor import SmartRouter
@@ -68,9 +66,8 @@ async def main():
     SmartRouter(exchange_factory, config_service)
 
     position_factory = PositionFactory(
+        config_service,
         PositionFixedSizeStrategy(),
-        PositionRiskBreakEvenStrategy(config_service),
-        PositionRiskRewardTakeProfitStrategy(config_service),
     )
 
     signal_actor_factory = SignalActorFactory(

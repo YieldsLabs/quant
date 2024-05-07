@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field, replace
-from typing import List
 
 from .ohlcv import OHLCV
 from .risk_type import RiskType
@@ -16,30 +15,23 @@ class Risk:
     stop_loss_price: float = field(default_factory=lambda: 0.0000001)
     expiration: float = field(default_factory=lambda: 0.0)
 
-    def assess(
-        self, side: PositionSide, entry: float, open_ts: float, ohlcv: List[OHLCV]
-    ) -> "Risk":
-        last_candle = ohlcv[-1]
-
+    def assess(self, side: PositionSide, open_timestamp: int, bar: OHLCV) -> "Risk":
         if side == PositionSide.LONG:
-            if last_candle.high > self.take_profit_price:
-                return replace(self, type=RiskType.TP, ohlcv=last_candle)
-            if last_candle.low < self.stop_loss_price:
-                return replace(self, type=RiskType.SL, ohlcv=last_candle)
+            if bar.high > self.take_profit_price:
+                return replace(self, type=RiskType.TP, ohlcv=bar)
+            if bar.low < self.stop_loss_price:
+                return replace(self, type=RiskType.SL, ohlcv=bar)
 
         if side == PositionSide.SHORT:
-            if last_candle.low < self.take_profit_price:
-                return replace(self, type=RiskType.TP, ohlcv=last_candle)
-            if last_candle.high > self.stop_loss_price:
-                return replace(self, type=RiskType.SL, ohlcv=last_candle)
+            if bar.low < self.take_profit_price:
+                return replace(self, type=RiskType.TP, ohlcv=bar)
+            if bar.high > self.stop_loss_price:
+                return replace(self, type=RiskType.SL, ohlcv=bar)
 
-        if open_ts + self.expiration - last_candle.timestamp <= 0:
-            if (side == PositionSide.LONG and last_candle.high > entry) or (
-                side == PositionSide.SHORT and last_candle.low < entry
-            ):
-                return replace(self, type=RiskType.TIME, ohlcv=last_candle)
+        if bar.timestamp - open_timestamp <= self.expiration:
+            return replace(self, type=RiskType.TIME, ohlcv=bar)
 
-        return replace(self, ohlcv=last_candle)
+        return replace(self, ohlcv=bar)
 
     def target(self, side: PositionSide, execution_price: float) -> "Risk":
         take_profit_price = execution_price

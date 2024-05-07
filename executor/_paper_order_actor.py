@@ -1,8 +1,7 @@
 import asyncio
 import logging
-from collections import deque
 from enum import Enum, auto
-from typing import List, Union
+from typing import Union
 
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
@@ -18,6 +17,7 @@ from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.models.timeseries import Timeseries
 
 OrderEventType = Union[
     NewMarketDataReceived, PositionInitialized, PositionCloseRequested
@@ -41,7 +41,7 @@ class PaperOrderActor(Actor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
         self.lock = asyncio.Lock()
-        self.tick_buffer = deque(maxlen=55)
+        self._timeseries = Timeseries()
 
     def pre_receive(self, event: OrderEventType):
         event = event.position.signal if hasattr(event, "position") else event
@@ -51,7 +51,7 @@ class PaperOrderActor(Actor):
         handlers = {
             PositionInitialized: self._execute_order,
             PositionCloseRequested: self._close_position,
-            NewMarketDataReceived: self._update_tick,
+            NewMarketDataReceived: self._update_bar,
         }
 
         handler = handlers.get(type(event))
@@ -59,29 +59,25 @@ class PaperOrderActor(Actor):
         if handler:
             await handler(event)
 
+    async def _update_bar(self, event: NewMarketDataReceived):
+        async with self.lock:
+            self._timeseries.enqueue(event.ohlcv)
+
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
 
         logger.debug(f"New Position: {current_position}")
 
-        next_bar = await self._find_next_bar(current_position.open_timestamp)
-
-        counter = 2
-
-        while not next_bar and counter > 0:
-            logger.warn("Wait, No next bar for position")
-            await asyncio.sleep(0.1)
-            next_bar = await self._find_next_bar(current_position.open_timestamp)
-            counter -= 1
+        next_bar = await self._find_next_bar(current_position.signal_bar.timestamp)
 
         entry_order = current_position.entry_order()
 
         if next_bar:
             price = self._find_fill_price(current_position, next_bar, entry_order)
         else:
-            logger.warn("Will use current bar for  position")
+            logger.warn("Will use signal bar for position")
             price = self._find_fill_price(
-                current_position, current_position.open_bar, entry_order
+                current_position, current_position.signal_bar, entry_order
             )
 
         size = entry_order.size
@@ -104,7 +100,7 @@ class PaperOrderActor(Actor):
 
             current_position = current_position.fill_order(order)
 
-        logger.debug(f"Position to Open: {current_position}")
+        logger.info(f"Position to Open: {current_position}")
 
         if current_position.closed:
             await self.tell(BrokerPositionClosed(current_position))
@@ -139,16 +135,10 @@ class PaperOrderActor(Actor):
 
         await self.tell(BrokerPositionClosed(next_position))
 
-    async def _update_tick(self, event: NewMarketDataReceived):
-        async with self.lock:
-            self.tick_buffer.append(event.ohlcv)
+    def _find_fill_price(self, position: Position, bar: OHLCV, order: Order) -> float:
+        direction = self._intrabar_price_movement(bar)
 
-    def _find_fill_price(
-        self, position: Position, next_candle: OHLCV, order: Order
-    ) -> float:
-        direction = self._intrabar_price_movement(next_candle)
-
-        high, low = next_candle.high, next_candle.low
+        high, low = bar.high, bar.low
         in_bar = low <= order.price <= high
 
         if position.side == PositionSide.LONG and direction == PriceDirection.OHLC:
@@ -156,12 +146,12 @@ class PaperOrderActor(Actor):
         elif position.side == PositionSide.SHORT and direction == PriceDirection.OLHC:
             return order.price if in_bar else low
         else:
-            return next_candle.close
+            return bar.close
 
     def _find_closing_price(
-        self, position: Position, next_candle: OHLCV, price: float
+        self, position: Position, bar: OHLCV, price: float
     ) -> float:
-        fill_price = self._find_fill_price(position, next_candle, price)
+        fill_price = self._find_fill_price(position, bar, price)
 
         if position.side == PositionSide.LONG:
             return max(min(fill_price, position.take_profit), position.stop_loss)
@@ -170,24 +160,15 @@ class PaperOrderActor(Actor):
 
     async def _find_next_bar(self, timestamp: int) -> OHLCV:
         async with self.lock:
-            tick_buffer: List[OHLCV] = sorted(
-                self.tick_buffer, key=lambda x: x.timestamp
-            )
-            left, right = 0, len(tick_buffer)
+            next_bar = None
+            counter = 3
 
-            while left < right:
-                mid = (left + right) // 2
-                if tick_buffer[mid].timestamp <= timestamp:
-                    left = mid + 1
-                else:
-                    right = mid
+            while next_bar is None or counter > 0:
+                next_bar = next(self._timeseries.find_next_bar(timestamp))
+                await asyncio.sleep(0.01)
+                counter -= 1
 
-            index = left
-
-            if index == len(tick_buffer):
-                return
-
-            return tick_buffer[index]
+            return next_bar
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:

@@ -44,11 +44,11 @@ class Position:
         return self.risk.ohlcv.timestamp
 
     @property
-    def open_bar(self) -> int:
+    def signal_bar(self) -> OHLCV:
         return self.signal.ohlcv
 
     @property
-    def risk_bar(self) -> int:
+    def risk_bar(self) -> OHLCV:
         return self.risk.ohlcv
 
     @property
@@ -86,13 +86,10 @@ class Position:
     @property
     def size(self) -> float:
         if self.closed_orders:
-            return sum([order.size for order in self.closed_orders]) / len(
-                self.closed_orders
-            )
-        elif self.open_orders:
-            return sum([order.size for order in self.open_orders]) / len(
-                self.open_orders
-            )
+            return self._average_size(self.closed_orders)
+
+        if self.open_orders:
+            return self._average_size(self.open_orders)
 
         return 0.0
 
@@ -116,7 +113,7 @@ class Position:
             return pnl
 
         factor = -1 if self.side == PositionSide.SHORT else 1
-        pnl = factor * (self.exit_price - self.entry_price) * len(self.closed_orders)
+        pnl = factor * (self.exit_price - self.entry_price) * self.size
 
         return pnl
 
@@ -128,13 +125,11 @@ class Position:
 
     @property
     def entry_price(self) -> float:
-        open_price = [order.price for order in self.open_orders]
-        return sum(open_price) / len(open_price) if open_price else 0.0
+        return self._average_price(self.open_orders)
 
     @property
     def exit_price(self) -> float:
-        close_price = [order.price for order in self.closed_orders]
-        return sum(close_price) / len(close_price) if close_price else 0.0
+        return self._average_price(self.closed_orders)
 
     @property
     def is_valid(self) -> bool:
@@ -190,10 +185,10 @@ class Position:
         if self.closed:
             return self
 
-        execution_time = datetime.now().timestamp()
-
         if order.status == OrderStatus.PENDING:
             return self
+
+        execution_time = datetime.now().timestamp()
 
         orders = (*self.orders, order)
 
@@ -221,18 +216,23 @@ class Position:
                 last_modified=execution_time,
             )
 
-    def next(self, ohlcvs: List[OHLCV]) -> "Position":
+    def next(self, ohlcv: OHLCV) -> "Position":
         if self.closed:
             return self
 
+        if ohlcv.timestamp < self.risk_bar.timestamp:
+            print("ERRR")
+            return self
+
+        print(f"GAP: {ohlcv.timestamp - self.risk.ohlcv.timestamp}")
+
         risk = self.risk.assess(
             self.side,
-            self.entry_price,
             self.open_timestamp,
-            ohlcvs,
+            ohlcv,
         )
 
-        # print(f"RISK: {risk}")
+        print(f"RISK: {risk}")
 
         return replace(
             self,
@@ -257,10 +257,23 @@ class Position:
             "entry_price": self.entry_price,
             "exit_price": self.exit_price,
             "closed": self.closed,
+            "valid": self.is_valid,
             "pnl": self.pnl,
             "fee": self.fee,
+            "take_profit": self.take_profit,
+            "stop_loss": self.stop_loss,
             "trade_time": self.trade_time,
         }
+
+    @staticmethod
+    def _average_size(orders: List[Order]) -> float:
+        total_size = sum(order.size for order in orders)
+        return total_size / len(orders) if orders else 0.0
+
+    @staticmethod
+    def _average_price(orders: List[Order]) -> float:
+        total_price = sum(order.price for order in orders)
+        return total_price / len(orders) if orders else 0.0
 
     def __str__(self):
         return f"Position(signal={self.signal}, open_ohlcv={self.signal.ohlcv}, close_ohlcv={self.risk.ohlcv}, side={self.side}, size={self.size}, entry_price={self.entry_price}, tp={self.take_profit}, sl={self.stop_loss}, exit_price={self.exit_price}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid})"
