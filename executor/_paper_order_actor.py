@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from enum import Enum, auto
 from typing import Union
@@ -24,7 +25,7 @@ OrderEventType = Union[
 
 logger = logging.getLogger(__name__)
 
-NEXT_BAR_TRY = 13
+NEXT_BAR_TRY = 8
 
 
 class PriceDirection(Enum):
@@ -42,6 +43,7 @@ class PaperOrderActor(Actor):
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
         self._timeseries = Timeseries()
+        self._lock = asyncio.Lock()
 
     def pre_receive(self, event: OrderEventType):
         event = event.position.signal if hasattr(event, "position") else event
@@ -60,14 +62,15 @@ class PaperOrderActor(Actor):
             await handler(event)
 
     async def _update_bar(self, event: NewMarketDataReceived):
-        await self._timeseries.enqueue(event.ohlcv)
+        async with self._lock:
+            self._timeseries.enqueue(event.ohlcv)
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
 
         logger.debug(f"New Position: {current_position}")
 
-        next_bar = await self._find_next_bar(current_position.signal_bar.timestamp)
+        next_bar = await self._find_next_bar(current_position.signal_bar)
 
         entry_order = current_position.entry_order()
 
@@ -157,14 +160,12 @@ class PaperOrderActor(Actor):
         else:
             return min(max(fill_price, position.take_profit), position.stop_loss)
 
-    async def _find_next_bar(self, timestamp: int) -> OHLCV:
-        counter = NEXT_BAR_TRY
-
-        async for next_bar in self._timeseries.find_next_bar(timestamp):
-            if next_bar or counter < 0:
-                return next_bar
-            else:
-                counter -= 1
+    async def _find_next_bar(self, curr_bar: OHLCV) -> OHLCV:
+        async with self._lock:
+            async for next_bar in self._timeseries.find_next_bar(curr_bar):
+                if next_bar:
+                    return next_bar
+                    
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:

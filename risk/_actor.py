@@ -97,7 +97,7 @@ class RiskActor(Actor):
 
     async def _handle_market_risk(self, event: NewMarketDataReceived):
         async with self.lock:
-            await self._timeseries.enqueue(event.ohlcv)
+            self._timeseries.enqueue(event.ohlcv)
 
             long_position, short_position = self._position
 
@@ -133,7 +133,7 @@ class RiskActor(Actor):
 
         if position:
             async for next_bar in self._timeseries.find_next_bar(
-                next_position.risk_bar.timestamp
+                next_position.risk_bar
             ):
                 if next_bar:
                     next_position = next_position.next(next_bar)
