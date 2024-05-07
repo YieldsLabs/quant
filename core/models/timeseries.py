@@ -1,4 +1,5 @@
 import asyncio
+import heapq
 from bisect import bisect_right
 from dataclasses import dataclass, field
 from typing import List
@@ -9,15 +10,10 @@ from .ohlcv import OHLCV
 @dataclass()
 class Timeseries:
     heap: List["OHLCV"] = field(default_factory=list)
-    capacity: int = 1200
-    total_time_diff: int = 0.0
+    capacity: int = 60000
 
     def enqueue(self, bar: OHLCV):
-        if self.last:
-            self.total_time_diff += bar.timestamp - self.last.timestamp
-
         if self.size >= self.capacity:
-            self.total_time_diff -= self.heap[0].timestamp - self.heap[1].timestamp
             self.heap.pop(0)
 
         index = bisect_right(self.heap, bar)
@@ -35,21 +31,22 @@ class Timeseries:
     def last(self):
         return self.heap[-1] if self.heap else None
 
-    def avg_time_diff(self):
-        if len(self.heap) <= 1:
-            return float("inf")
-
-        return self.total_time_diff / (len(self.heap) - 1)
-
-    async def find_next_bar(self, curr_bar: OHLCV):
-        avg_time_diff = self.avg_time_diff()
-
+    async def find_next_bar(self, curr_bar: OHLCV, k=3):
+        nearest = []
         index = bisect_right(self.heap, curr_bar)
+
         for i in range(index, len(self.heap)):
             next_bar = self.heap[i]
+            heapq.heappush(
+                nearest, (abs(next_bar.timestamp - curr_bar.timestamp), next_bar)
+            )
 
-            if next_bar.timestamp - curr_bar.timestamp <= avg_time_diff:
-                await asyncio.sleep(0.001)
-                yield next_bar
+            if len(nearest) > k:
+                heapq.heappop(nearest)
 
-        yield None
+        nearest_bars = [bar for _, bar in sorted(nearest, key=lambda x: x[0])]
+
+        for bar in nearest_bars:
+            yield bar
+
+        await asyncio.sleep(0.001)

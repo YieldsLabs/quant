@@ -68,7 +68,7 @@ class PaperOrderActor(Actor):
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
 
-        logger.debug(f"New Position: {current_position}")
+        logger.info(f"New Position: {current_position}")
 
         next_bar = await self._find_next_bar(current_position.signal_bar)
 
@@ -76,22 +76,20 @@ class PaperOrderActor(Actor):
 
         if next_bar:
             price = self._find_fill_price(current_position, next_bar, entry_order)
-        else:
-            logger.warn("Will use signal bar for position")
-            price = self._find_fill_price(
-                current_position, current_position.signal_bar, entry_order
+            size = entry_order.size
+            fee = current_position.theo_taker_fee(size, price)
+
+            order = Order(
+                status=OrderStatus.EXECUTED,
+                type=OrderType.PAPER,
+                price=price,
+                size=size,
+                fee=fee,
             )
-
-        size = entry_order.size
-        fee = current_position.theo_taker_fee(size, price)
-
-        order = Order(
-            status=OrderStatus.EXECUTED,
-            type=OrderType.PAPER,
-            price=price,
-            size=size,
-            fee=fee,
-        )
+        else:
+            order = Order(
+                status=OrderStatus.FAILED, type=OrderType.PAPER, price=0, size=0
+            )
 
         current_position = current_position.fill_order(order)
 
@@ -102,7 +100,7 @@ class PaperOrderActor(Actor):
 
             current_position = current_position.fill_order(order)
 
-        logger.debug(f"Position to Open: {current_position}")
+        logger.info(f"Position to Open: {current_position}")
 
         if current_position.closed:
             await self.tell(BrokerPositionClosed(current_position))
@@ -163,9 +161,7 @@ class PaperOrderActor(Actor):
     async def _find_next_bar(self, curr_bar: OHLCV) -> OHLCV:
         async with self._lock:
             async for next_bar in self._timeseries.find_next_bar(curr_bar):
-                if next_bar:
-                    return next_bar
-                    
+                return next_bar
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:

@@ -39,5 +39,11 @@ class OHLCV:
 
         return self.timestamp < other.timestamp
 
+    def __eq__(self, other):
+        if not isinstance(other, OHLCV):
+            return False
+
+        return self.timestamp == other.timestamp
+
     def to_dict(self):
         return asdict(self)

@@ -1,4 +1,6 @@
 import asyncio
+from collections import deque
+from typing import List
 
 from core.actors import Actor
 from core.commands.feed import StartHistoricalFeed
@@ -83,11 +85,12 @@ class HistoricalActor(Actor):
     ):
         super().__init__(symbol, timeframe)
         self.exchange = exchange
+        self.buff_size = 10
         self.config_service = config_service.get("backtest")
-        self.last_bar = None
+        self.buffer: List[Bar] = deque(maxlen=self.buff_size)
 
     def pre_receive(self, msg: StartHistoricalFeed):
-        return self._symbol == msg.symbol and self._timeframe == msg.timeframe
+        return self.symbol == msg.symbol and self.timeframe == msg.timeframe
 
     async def on_receive(self, msg: StartHistoricalFeed):
         symbol, timeframe = msg.symbol, msg.timeframe
@@ -102,7 +105,7 @@ class HistoricalActor(Actor):
         ) as stream:
             async for bar in stream:
                 await self.tell(
-                    NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
+                    NewMarketDataReceived(
+                        self.symbol, self.timeframe, bar.ohlcv, bar.closed
+                    )
                 )
-
-            self.last_bar = stream.get_last_bar()
