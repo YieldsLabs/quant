@@ -15,6 +15,7 @@ from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
+from market import MarketRepository
 from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
@@ -65,6 +66,8 @@ async def main():
     Portfolio(config_service)
     SmartRouter(exchange_factory, config_service)
 
+    market_data = MarketRepository()
+
     position_factory = PositionFactory(
         config_service,
         PositionFixedSizeStrategy(),
@@ -74,8 +77,8 @@ async def main():
         SignalService(WasmFileService(WASM_FOLDER))
     )
     position_actor_factory = PositionActorFactory(position_factory, config_service)
-    risk_actor_factory = RiskActorFactory(config_service)
-    executor_actor_factory = OrderExecutorActorFactory()
+    risk_actor_factory = RiskActorFactory(config_service, market_data)
+    executor_actor_factory = OrderExecutorActorFactory(market_data)
     feed_actor_factory = FeedActorFactory(exchange_factory, ws_factory, config_service)
 
     trend_context = SystemContext(
