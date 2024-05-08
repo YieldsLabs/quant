@@ -16,11 +16,11 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.interfaces.abstract_config import AbstractConfig
+from core.interfaces.abstract_market_repository import AbstractMarketRepository
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.models.timeseries import Timeseries
 
 RiskEvent = Union[
     NewMarketDataReceived,
@@ -50,12 +50,13 @@ class RiskActor(Actor):
         symbol: Symbol,
         timeframe: Timeframe,
         config_service: AbstractConfig,
+        repository: AbstractMarketRepository,
     ):
         super().__init__(symbol, timeframe)
-        self.lock = asyncio.Lock()
+        self._lock = asyncio.Lock()
         self._position = (None, None)
-        self._timeseries = Timeseries()
         self.config = config_service.get("position")
+        self._store = repository
 
     def pre_receive(self, event: RiskEvent):
         symbol, timeframe = self._get_event_key(event)
@@ -75,7 +76,7 @@ class RiskActor(Actor):
                 await h(event)
 
     async def _open_position(self, event: PositionOpened):
-        async with self.lock:
+        async with self._lock:
             long_position, short_position = self._position
 
             self._position = (
@@ -88,7 +89,7 @@ class RiskActor(Actor):
             )
 
     async def _close_position(self, event: PositionClosed):
-        async with self.lock:
+        async with self._lock:
             long_position, short_position = self._position
 
             self._position = (
@@ -97,11 +98,10 @@ class RiskActor(Actor):
             )
 
     async def _handle_market(self, event: NewMarketDataReceived):
-        async with self.lock:
-            self._timeseries.enqueue(event.ohlcv)
+        await self._store.upsert(self.symbol, self.timeframe, event.ohlcv)
 
     async def _handle_position_risk(self, _event: NewMarketDataReceived):
-        async with self.lock:
+        async with self._lock:
             long_position, short_position = self._position
 
             if long_position or short_position:
@@ -135,8 +135,8 @@ class RiskActor(Actor):
         next_position = position
 
         if position:
-            async for next_bar in self._timeseries.find_next_bar(
-                next_position.risk_bar
+            async for next_bar in self._store.find_next_bar(
+                self.symbol, self.timeframe, next_position.risk_bar
             ):
                 next_position = next_position.next(next_bar)
 

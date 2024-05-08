@@ -1,7 +1,6 @@
-import asyncio
 import logging
 from enum import Enum, auto
-from typing import Union
+from typing import Optional, Union
 
 from core.actors import Actor
 from core.events.ohlcv import NewMarketDataReceived
@@ -11,13 +10,13 @@ from core.events.position import (
     PositionCloseRequested,
     PositionInitialized,
 )
+from core.interfaces.abstract_market_repository import AbstractMarketRepository
 from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.models.timeseries import Timeseries
 
 OrderEventType = Union[
     NewMarketDataReceived, PositionInitialized, PositionCloseRequested
@@ -38,10 +37,11 @@ class PaperOrderActor(Actor):
         PositionCloseRequested,
     ]
 
-    def __init__(self, symbol: Symbol, timeframe: Timeframe):
+    def __init__(
+        self, symbol: Symbol, timeframe: Timeframe, repository: AbstractMarketRepository
+    ):
         super().__init__(symbol, timeframe)
-        self._timeseries = Timeseries()
-        self._lock = asyncio.Lock()
+        self.repository = repository
 
     def pre_receive(self, event: OrderEventType):
         event = event.position.signal if hasattr(event, "position") else event
@@ -60,8 +60,13 @@ class PaperOrderActor(Actor):
             await handler(event)
 
     async def _update_bar(self, event: NewMarketDataReceived):
-        async with self._lock:
-            self._timeseries.enqueue(event.ohlcv)
+        await self.repository.upsert(self.symbol, self.timeframe, event.ohlcv)
+
+    async def _find_next_bar(self, curr_bar: OHLCV) -> Optional[OHLCV]:
+        async for next_bar in self.repository.find_next_bar(
+            self.symbol, self.timeframe, curr_bar
+        ):
+            return next_bar
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
@@ -156,11 +161,6 @@ class PaperOrderActor(Actor):
             return max(min(fill_price, position.take_profit), position.stop_loss)
         else:
             return min(max(fill_price, position.take_profit), position.stop_loss)
-
-    async def _find_next_bar(self, curr_bar: OHLCV) -> OHLCV:
-        async with self._lock:
-            async for next_bar in self._timeseries.find_next_bar(curr_bar):
-                return next_bar
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:

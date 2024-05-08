@@ -27,7 +27,7 @@ class MarketOrderActor(Actor):
 
     def pre_receive(self, event: PositionEventType):
         event = event.position.signal if hasattr(event, "position") else event
-        return event.symbol == self._symbol and event.timeframe == self._timeframe
+        return event.symbol == self.symbol and event.timeframe == self.timeframe
 
     async def on_receive(self, event: PositionEventType):
         handlers = {

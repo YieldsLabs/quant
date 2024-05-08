@@ -30,8 +30,12 @@ class SignalActor(Actor):
         self.service = service
         self._strategy = strategy
 
+    @property
+    def strategy(self):
+        return self._strategy
+
     def on_start(self):
-        self.strategy_ref = self.service.register(self._strategy)
+        self.strategy_ref = self.service.register(self.strategy)
 
     def on_stop(self):
         self.strategy_ref.unregister()
@@ -39,14 +43,14 @@ class SignalActor(Actor):
 
     def pre_receive(self, event: NewMarketDataReceived):
         return (
-            event.symbol == self._symbol
+            event.symbol == self.symbol
             and event.timeframe == self._timeframe
             and event.closed
         )
 
     async def on_receive(self, event: NewMarketDataReceived):
         signal_event = self.strategy_ref.next(
-            self._symbol, self._timeframe, self._strategy, event.ohlcv
+            self.symbol, self.timeframe, self.strategy, event.ohlcv
         )
 
         if signal_event:

@@ -66,7 +66,7 @@ class PositionActor(Actor):
 
     def pre_receive(self, event: PositionEvent) -> bool:
         symbol, timeframe = self._get_event_key(event)
-        return self._symbol == symbol and self._timeframe == timeframe
+        return self.symbol == symbol and self.timeframe == timeframe
 
     async def on_receive(self, event):
         symbol, _ = self._get_event_key(event)
