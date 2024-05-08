@@ -116,7 +116,7 @@ class SmartRouter(AbstractEventManager):
         num_order_breach = 0
         order_timestamps = {}
 
-        for price in self.algo_price.calculate(symbol, self.exchange):
+        async for price in self.algo_price.next_value(symbol, self.exchange):
             current_distance_to_stop_loss = abs(stop_loss - price)
 
             threshold_breach = (
@@ -202,7 +202,7 @@ class SmartRouter(AbstractEventManager):
         order_timestamps = {}
         max_spread = float("-inf")
 
-        for price in self.algo_price.calculate(symbol, self.exchange):
+        async for price in self.algo_price.next_value(symbol, self.exchange):
             if not self.exchange.fetch_position(symbol, position_side):
                 break
 

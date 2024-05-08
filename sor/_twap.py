@@ -1,4 +1,4 @@
-import time
+from asyncio import sleep
 
 import numpy as np
 
@@ -11,7 +11,7 @@ class TWAP:
     def __init__(self, config_service: AbstractConfig):
         self.config = config_service.get("position")
 
-    def calculate(self, symbol: Symbol, exchange: AbstractExchange):
+    async def next_value(self, symbol: Symbol, exchange: AbstractExchange):
         current_time = 0
         timepoints = []
         twap_duration = self.config["twap_duration"]
@@ -28,7 +28,7 @@ class TWAP:
 
             yield twap_value
 
-            time.sleep(time_interval)
+            await sleep(time_interval)
 
     def _fetch_book(self, symbol: Symbol, exchange: AbstractExchange):
         bids, asks = exchange.fetch_order_book(symbol, depth=self.config["depth"])

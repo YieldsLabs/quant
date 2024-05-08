@@ -10,7 +10,7 @@ from .ohlcv import OHLCV
 @dataclass()
 class Timeseries:
     heap: List[OHLCV] = field(default_factory=list)
-    capacity: int = 60000
+    capacity: int = 120000
 
     def enqueue(self, bar: OHLCV):
         heapq.heappush(self.heap, bar)
@@ -35,5 +35,4 @@ class Timeseries:
 
         for bar in self.heap[index:]:
             yield bar
-
-        await sleep(0.001)
+            await sleep(0.001)
