@@ -118,14 +118,14 @@ class PositionStateMachine:
         self._state: Dict[str, PositionState] = {}
         self._position_manager = position_manager
         self._transitions = transitions
-        self._state_lock = asyncio.Lock()
+        self._lock = asyncio.Lock()
 
     async def _get_state(self, symbol: Symbol) -> PositionState:
-        async with self._state_lock:
+        async with self._lock:
             return self._state.get(symbol, PositionState.IDLE)
 
     async def _set_state(self, symbol: Symbol, state: PositionState) -> None:
-        async with self._state_lock:
+        async with self._lock:
             self._state[symbol] = state
 
     async def process_event(self, symbol: Symbol, event: PositionEvent):
