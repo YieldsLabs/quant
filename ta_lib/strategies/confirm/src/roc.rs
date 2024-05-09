@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::roc;
+use timeseries::prelude::*;
 
 pub struct RocConfirm {
     source_type: SourceType,

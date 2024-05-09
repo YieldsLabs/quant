@@ -14,3 +14,4 @@ core = { path = "../../core" }
 base = { path = "../base" }
 candlestick = { path = "../../patterns/candlestick" }
 trend = { path = "../../indicators/trend" }
+timeseries = { path = "../../timeseries" }

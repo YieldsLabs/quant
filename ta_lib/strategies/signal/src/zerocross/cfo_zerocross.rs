@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::cfo;
+use timeseries::prelude::*;
 
 pub struct CfoZeroCrossSignal {
     source_type: SourceType,

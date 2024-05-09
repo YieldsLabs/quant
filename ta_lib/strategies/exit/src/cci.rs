@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::cci;
+use timeseries::prelude::*;
 
 const CCI_OVERBOUGHT: f32 = 100.0;
 const CCI_OVERSOLD: f32 = -100.0;

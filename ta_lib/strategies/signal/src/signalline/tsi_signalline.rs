@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::tsi;
+use timeseries::prelude::*;
 
 pub struct TsiSignalLineSignal {
     source_type: SourceType,

@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::stochosc;
+use timeseries::prelude::*;
 
 pub struct StochSignalLineSignal {
     smooth_type: Smooth,

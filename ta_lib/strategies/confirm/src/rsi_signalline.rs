@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
+use timeseries::prelude::*;
 
 const RSI_UPPER_BARRIER: f32 = 75.;
 const RSI_LOWER_BARRIER: f32 = 35.;

@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::di;
+use timeseries::prelude::*;
 
 pub struct DiSignalLineSignal {
     source_type: SourceType,

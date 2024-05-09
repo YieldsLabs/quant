@@ -2,6 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
 use signal::{MaCrossSignal, MaQuadrupleSignal, MaSurpassSignal, MaTestingGroundSignal};
+use timeseries::prelude::*;
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.236;

@@ -1,5 +1,6 @@
-use crate::{OHLCVSeries, StopLossLevels, TradeAction, OHLCV};
+use crate::{StopLossLevels, TradeAction};
 use core::prelude::*;
+use timeseries::prelude::*;
 
 pub trait Signal: Send + Sync {
     fn lookback(&self) -> usize;
@@ -33,6 +34,6 @@ pub trait StopLoss: Send + Sync {
 }
 
 pub trait Strategy {
-    fn next(&mut self, ohlcv: OHLCV) -> TradeAction;
+    fn next(&mut self, bar: OHLCV) -> TradeAction;
     fn stop_loss(&self) -> StopLossLevels;
 }

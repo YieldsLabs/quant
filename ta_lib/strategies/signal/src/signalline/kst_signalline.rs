@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::kst;
+use timeseries::prelude::*;
 
 pub struct KstSignalLineSignal {
     source_type: SourceType,

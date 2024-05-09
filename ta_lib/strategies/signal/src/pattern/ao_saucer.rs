@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::ao;
+use timeseries::prelude::*;
 
 pub struct AoSaucerSignal {
     source_type: SourceType,

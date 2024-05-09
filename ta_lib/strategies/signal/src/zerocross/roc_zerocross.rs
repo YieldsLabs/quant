@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::roc;
+use timeseries::prelude::*;
 
 pub struct RocZeroCrossSignal {
     source_type: SourceType,

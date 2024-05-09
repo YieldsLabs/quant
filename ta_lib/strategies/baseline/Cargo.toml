@@ -16,3 +16,4 @@ core = { path = "../../core" }
 trend = { path = "../../indicators/trend" }
 signal = { path = "../signal" }
 indicator = { path = "../indicator" }
+timeseries = { path = "../../timeseries" }

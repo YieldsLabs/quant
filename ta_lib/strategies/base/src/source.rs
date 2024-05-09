@@ -1,6 +1,6 @@
-use crate::OHLCVSeries;
 use core::prelude::*;
 use price::prelude::*;
+use timeseries::prelude::*;
 
 #[derive(Copy, Clone)]
 pub enum SourceType {

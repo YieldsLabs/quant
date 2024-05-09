@@ -1,5 +1,5 @@
-use crate::OHLCVSeries;
 use core::prelude::*;
+use timeseries::prelude::*;
 use volatility::{atr, tr};
 
 pub trait Volatility {

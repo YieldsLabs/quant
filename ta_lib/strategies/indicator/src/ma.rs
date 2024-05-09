@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use trend::{
     alma, cama, dema, ema, frama, gma, hema, hma, kama, kjs, lsma, md, rmsma, sinwma, sma, smma,
     t3, tema, tma, vidya, vwema, vwma, wma, zlema, zlhma, zlsma, zltema,

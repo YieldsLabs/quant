@@ -4,6 +4,7 @@ use candlestick::{
     slingshot, tasuki, three_candles, three_methods, three_one_two,
 };
 use core::prelude::*;
+use timeseries::prelude::*;
 
 #[derive(Copy, Clone)]
 pub enum CandleTrendType {

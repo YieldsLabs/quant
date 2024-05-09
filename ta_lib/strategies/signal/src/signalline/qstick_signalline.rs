@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use trend::qstick;
 
 pub struct QstickSignalLineSignal {

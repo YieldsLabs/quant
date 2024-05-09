@@ -1,15 +1,16 @@
 use crate::{
-    BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss, Strategy, TradeAction, OHLCV,
+    BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss, Strategy, TradeAction,
 };
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard, RwLock};
+use timeseries::prelude::*;
 
 static STRATEGY_ID_TO_INSTANCE: Lazy<
     RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>,
 > = Lazy::new(|| RwLock::new(HashMap::new()));
 
-static STRATEGY_ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
+static ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
 
 static ALLOC_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
@@ -21,7 +22,7 @@ pub fn register_strategy(
     stop_loss: Box<dyn StopLoss>,
     exit: Box<dyn Exit>,
 ) -> i32 {
-    let mut id_counter = STRATEGY_ID_COUNTER.write().unwrap();
+    let mut id_counter = ID_COUNTER.write().unwrap();
     *id_counter += 1;
 
     let current_id = *id_counter;
@@ -53,7 +54,7 @@ pub fn strategy_next(
 ) -> (i32, f32) {
     let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
     if let Some(strategy) = strategies.get_mut(&strategy_id) {
-        let ohlcv = OHLCV {
+        let bar = OHLCV {
             ts,
             open,
             high,
@@ -62,7 +63,7 @@ pub fn strategy_next(
             volume,
         };
 
-        let result = strategy.next(ohlcv);
+        let result = strategy.next(bar);
 
         match result {
             TradeAction::GoLong(entry_price) => (1, entry_price),

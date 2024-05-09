@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
+use timeseries::prelude::*;
 
 pub struct MaTestingGroundSignal {
     source_type: SourceType,

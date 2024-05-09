@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::bop;
+use timeseries::prelude::*;
 
 pub struct BopZeroCrossSignal {
     smooth_type: Smooth,

@@ -12,5 +12,6 @@ repository.workspace = true
 [dependencies]
 once_cell = "1.19"
 core = { path = "../../core" }
+timeseries = { path = "../../timeseries" }
 price = { path = "../../price" }
 volatility = { path = "../../indicators/volatility" }

@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::dso;
+use timeseries::prelude::*;
 
 pub struct DsoSignalLineSignal {
     source_type: SourceType,

@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{candlestick_trend_indicator, CandleTrendType};
+use timeseries::prelude::*;
 
 const DEFAULT_LOOKBACK: usize = 13;
 

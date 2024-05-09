@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
+use timeseries::prelude::*;
 
 pub struct Ma3CrossSignal {
     source_type: SourceType,

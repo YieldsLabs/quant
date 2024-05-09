@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::tii;
+use timeseries::prelude::*;
 
 const TII_UPPER_BARRIER: f32 = 100.0;
 const TII_LOWER_BARRIER: f32 = 0.0;

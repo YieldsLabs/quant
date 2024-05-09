@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::cci;
+use timeseries::prelude::*;
 
 const CCI_UPPER_BARRIER: f32 = 50.;
 const CCI_LOWER_BARRIER: f32 = -50.;

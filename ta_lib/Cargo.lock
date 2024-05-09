@@ -36,6 +36,7 @@ dependencies = [
  "core",
  "once_cell",
  "price",
+ "timeseries",
  "volatility",
 ]
 
@@ -47,6 +48,7 @@ dependencies = [
  "core",
  "indicator",
  "signal",
+ "timeseries",
  "trend",
 ]
 
@@ -150,6 +152,7 @@ dependencies = [
  "base",
  "core",
  "momentum",
+ "timeseries",
  "trend",
  "volume",
 ]
@@ -240,6 +243,7 @@ dependencies = [
  "core",
  "indicator",
  "momentum",
+ "timeseries",
  "trend",
  "volume",
 ]
@@ -267,6 +271,7 @@ dependencies = [
  "base",
  "candlestick",
  "core",
+ "timeseries",
  "trend",
 ]
 
@@ -404,6 +409,7 @@ dependencies = [
  "base",
  "core",
  "momentum",
+ "timeseries",
  "trend",
  "volatility",
  "volume",
@@ -522,6 +528,7 @@ dependencies = [
  "core",
  "indicator",
  "momentum",
+ "timeseries",
  "trend",
  "volatility",
  "volume",
@@ -533,6 +540,7 @@ version = "0.1.0"
 dependencies = [
  "base",
  "core",
+ "timeseries",
  "volatility",
 ]
 
@@ -545,6 +553,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "timeseries"
+version = "0.1.0"
+dependencies = [
+ "core",
 ]
 
 [[package]]

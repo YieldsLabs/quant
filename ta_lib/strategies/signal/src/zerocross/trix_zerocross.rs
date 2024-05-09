@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::trix;
+use timeseries::prelude::*;
 
 pub struct TrixZeroCrossSignal {
     source_type: SourceType,

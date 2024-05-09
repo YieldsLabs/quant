@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use volume::nvol;
 
 const NVOL_LINE: f32 = 100.0;

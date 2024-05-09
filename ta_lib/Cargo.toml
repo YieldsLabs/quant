@@ -4,6 +4,7 @@ resolver = "2"
 members = [
 "benches",
 "core",
+"timeseries",
 "indicators/momentum",
 "indicators/trend",
 "indicators/volatility",
@@ -17,7 +18,7 @@ members = [
 "strategies/confirm",
 "strategies/pulse",
 "strategies/baseline",
-"strategies/indicator",
+"strategies/indicator", "timeseries",
 ]
 
 [workspace.package]

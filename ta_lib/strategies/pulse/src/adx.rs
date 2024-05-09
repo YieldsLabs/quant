@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::dmi;
+use timeseries::prelude::*;
 
 const ADX_LOWER_BARRIER: f32 = 25.;
 

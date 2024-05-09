@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
+use timeseries::prelude::*;
 
 const RSI_OVERBOUGHT: f32 = 70.0;
 const RSI_OVERSOLD: f32 = 30.0;

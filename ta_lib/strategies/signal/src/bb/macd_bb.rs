@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::macd;
+use timeseries::prelude::*;
 use volatility::bb;
 
 pub struct MacdBbSignal {

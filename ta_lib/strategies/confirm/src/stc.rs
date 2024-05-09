@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::stc;
+use timeseries::prelude::*;
 
 const LOWER_LINE: f32 = 25.;
 const UPPER_LINE: f32 = 75.;
