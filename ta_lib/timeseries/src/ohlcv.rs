@@ -1,6 +1,7 @@
 use core::prelude::*;
+use serde::Deserialize;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize)]
 pub struct OHLCV {
     pub ts: i64,
     pub open: f32,

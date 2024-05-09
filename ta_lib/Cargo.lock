@@ -560,6 +560,9 @@ name = "timeseries"
 version = "0.1.0"
 dependencies = [
  "core",
+ "once_cell",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
