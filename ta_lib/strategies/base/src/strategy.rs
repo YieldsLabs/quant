@@ -63,7 +63,7 @@ impl BaseStrategy {
         }
     }
 
-    fn store(&mut self, bar: OHLCV) {
+    fn store(&mut self, bar: &OHLCV) {
         self.data.add(bar)
     }
 
@@ -78,7 +78,7 @@ impl BaseStrategy {
 }
 
 impl Strategy for BaseStrategy {
-    fn next(&mut self, bar: OHLCV) -> TradeAction {
+    fn next(&mut self, bar: &OHLCV) -> TradeAction {
         self.store(bar);
 
         if !self.can_process() {

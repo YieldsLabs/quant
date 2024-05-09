@@ -63,7 +63,7 @@ pub fn strategy_next(
             volume,
         };
 
-        let result = strategy.next(bar);
+        let result = strategy.next(&bar);
 
         match result {
             TradeAction::GoLong(entry_price) => (1, entry_price),

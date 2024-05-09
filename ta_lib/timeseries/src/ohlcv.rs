@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct OHLCV {
     pub ts: i64,
     pub open: f32,
