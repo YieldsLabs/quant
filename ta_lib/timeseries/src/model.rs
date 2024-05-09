@@ -1,6 +1,8 @@
 use crate::{OHLCVSeries, TimeSeries, OHLCV};
 use std::collections::HashMap;
 
+const BUFF_FACTOR: f32 = 1.3;
+
 #[derive(Debug, Clone)]
 pub struct BaseTimeSeries {
     index: HashMap<i64, usize>,
@@ -65,8 +67,10 @@ impl TimeSeries for BaseTimeSeries {
     }
 
     fn ohlcv(&self, size: usize) -> OHLCVSeries {
-        let start_index = if self.data.len() >= size {
-            self.data.len() - size
+        let buff_size = (size as f32 * BUFF_FACTOR) as usize;
+
+        let start_index = if self.len() >= buff_size {
+            self.len() - buff_size
         } else {
             0
         };

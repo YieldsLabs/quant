@@ -29,7 +29,10 @@ class Risk:
                 return replace(self, type=RiskType.SL, ohlcv=bar)
 
         if bar.timestamp - open_timestamp - self.expiration > 0:
-            return replace(self, type=RiskType.TIME, ohlcv=bar)
+            if side == PositionSide.LONG:
+                return replace(self, type=RiskType.TIME, take_profit_price=bar.high, ohlcv=bar)
+            if side == PositionSide.SHORT:
+                return replace(self, type=RiskType.TIME, take_profit_price=bar.low, ohlcv=bar)
 
         return replace(self, ohlcv=bar)
 

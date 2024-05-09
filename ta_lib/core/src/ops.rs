@@ -52,7 +52,7 @@ impl Operation<Series<f32>, f32, f32> for Series<f32> {
 
     fn sdiv(&self, rhs: &Series<f32>) -> Series<f32> {
         self.zip_with(rhs, |a, b| match (a, b) {
-            (Some(a_val), Some(b_val)) if *b_val == ZERO => Some(ZERO),
+            (Some(_a_val), Some(b_val)) if *b_val == ZERO => Some(ZERO),
             (Some(a_val), Some(b_val)) if *b_val != ZERO => Some(a_val / b_val),
             _ => None,
         })

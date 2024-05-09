@@ -1,3 +1,3 @@
 mod timeseries;
 
-pub use timeseries::timeseries_register;
+pub use timeseries::*;
