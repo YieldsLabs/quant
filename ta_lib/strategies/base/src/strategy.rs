@@ -21,7 +21,7 @@ pub struct StopLossLevels {
 }
 
 pub struct BaseStrategy {
-    data: TimeSeries,
+    timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
     confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
@@ -33,6 +33,7 @@ pub struct BaseStrategy {
 
 impl BaseStrategy {
     pub fn new(
+        timeseries: Box<dyn TimeSeries>,
         signal: Box<dyn Signal>,
         confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
@@ -52,7 +53,7 @@ impl BaseStrategy {
         let lookback_period = lookbacks.into_iter().max().unwrap_or(DEFAULT_LOOKBACK);
 
         Self {
-            data: TimeSeries::new(),
+            timeseries,
             signal,
             confirm,
             pulse,
@@ -64,16 +65,16 @@ impl BaseStrategy {
     }
 
     fn store(&mut self, bar: &OHLCV) {
-        self.data.add(bar)
+        self.timeseries.add(bar)
     }
 
     #[inline(always)]
     fn can_process(&self) -> bool {
-        self.data.len() >= self.lookback_period
+        self.timeseries.len() >= self.lookback_period
     }
 
     fn ohlcv(&self) -> OHLCVSeries {
-        self.data.ohlcv(self.lookback_period)
+        self.timeseries.ohlcv(self.lookback_period)
     }
 }
 
@@ -167,7 +168,7 @@ mod tests {
         BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss, Strategy, TradeAction,
     };
     use core::Series;
-    use timeseries::OHLCVSeries;
+    use timeseries::{BaseTimeSeries, OHLCVSeries};
 
     struct MockSignal {
         fast_period: usize,
@@ -269,6 +270,7 @@ mod tests {
     #[test]
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
+            Box::new(BaseTimeSeries::default()),
             Box::new(MockSignal { fast_period: 10 }),
             Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),

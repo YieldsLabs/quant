@@ -1,4 +1,3 @@
-use base::prelude::*;
 use candlestick::{
     bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets,
     slingshot, tasuki, three_candles, three_methods, three_one_two,

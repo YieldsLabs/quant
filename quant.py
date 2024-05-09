@@ -7,7 +7,6 @@ import uvloop
 from dotenv import load_dotenv
 
 from core.models.exchange import ExchangeType
-from core.models.strategy import StrategyType
 from exchange import ExchangeFactory, WSFactory
 from executor import OrderExecutorActorFactory
 from feed import FeedActorFactory
@@ -65,17 +64,16 @@ async def main():
 
     Portfolio(config_service)
     SmartRouter(exchange_factory, config_service)
+    wasm = WasmFileService(WASM_FOLDER)
 
-    market_data = MarketRepository()
+    market_data = MarketRepository(wasm)
 
     position_factory = PositionFactory(
         config_service,
         PositionFixedSizeStrategy(),
     )
 
-    signal_actor_factory = SignalActorFactory(
-        SignalService(WasmFileService(WASM_FOLDER))
-    )
+    signal_actor_factory = SignalActorFactory(SignalService(wasm))
     position_actor_factory = PositionActorFactory(position_factory, config_service)
     risk_actor_factory = RiskActorFactory(config_service, market_data)
     executor_actor_factory = OrderExecutorActorFactory(market_data)
@@ -89,7 +87,6 @@ async def main():
         feed_actor_factory,
         StrategyGeneratorFactory(config_service),
         StrategyOptimizerFactory(config_service),
-        strategy_type=StrategyType.TREND,
         exchange_type=ExchangeType.BYBIT,
         config_service=config_service,
     )

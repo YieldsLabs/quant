@@ -7,17 +7,12 @@ from .indicator import Indicator
 from .parameter import Parameter
 
 
-class StrategyType(Enum):
-    TREND = auto()
-
-
 class StrategyOptimizationType(Enum):
     GENETIC = auto()
 
 
 @dataclass(frozen=True)
 class Strategy:
-    type: StrategyType
     entry: Indicator
     confirm: Indicator
     pulse: Indicator

@@ -1,11 +1,15 @@
 import asyncio
+from typing import Optional
+
+from wasmtime import Instance, Linker, Store, WasiConfig
 
 from core.interfaces.abstract_market_repository import AbstractMarketRepository
 from core.interfaces.abstract_wasm_service import AbstractWasmService
 from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.models.timeseries import Timeseries
+from core.models.timeseries_ref import TimeSeriesRef
+from core.models.wasm_type import WasmType
 
 
 class MarketRepository(AbstractMarketRepository):
@@ -14,6 +18,19 @@ class MarketRepository(AbstractMarketRepository):
         self._lock = asyncio.Lock()
         self._bucket = {}
         self.wasm_service = wasm_service
+        self.store = Store()
+        wasi_config = WasiConfig()
+        wasi_config.wasm_multi_value = True
+        self.store.set_wasi(wasi_config)
+        self.linker = Linker(self.store.engine)
+        self.linker.define_wasi()
+        self.instance: Optional[Instance] = None
+
+        self._load()
+
+    def _load(self):
+        module = self.wasm_service.get_module(WasmType.TIMESERIES, self.store.engine)
+        self.instance = self.linker.instantiate(self.store, module)
 
     async def upsert(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         timeseries = await self._get_timeseries(symbol, timeframe)
@@ -22,14 +39,25 @@ class MarketRepository(AbstractMarketRepository):
     async def find_next_bar(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         timeseries = await self._get_timeseries(symbol, timeframe)
 
-        async for next_bar in timeseries.find_next_bar(bar):
+        next_bar = timeseries.find_next_bar(bar)
+
+        if next_bar:
             yield next_bar
 
-    async def _get_timeseries(self, symbol: Symbol, timeframe: Timeframe) -> Timeseries:
+        await asyncio.sleep(0.001)
+
+    async def _get_timeseries(
+        self, symbol: Symbol, timeframe: Timeframe
+    ) -> TimeSeriesRef:
         async with self._lock:
             key = (symbol, timeframe)
 
             if key not in self._bucket:
-                self._bucket[key] = Timeseries()
+                exports = self.instance.exports(self.store)
+                id = exports["timeseries_register"](self.store)
+
+                self._bucket[key] = TimeSeriesRef(
+                    id=id, instance_ref=self.instance, store_ref=self.store
+                )
 
             return self._bucket[key]

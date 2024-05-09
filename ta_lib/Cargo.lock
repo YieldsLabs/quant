@@ -249,6 +249,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ffi"
+version = "0.1.0"
+dependencies = [
+ "once_cell",
+ "serde",
+ "serde_json",
+ "timeseries",
+]
+
+[[package]]
 name = "half"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -560,9 +570,7 @@ name = "timeseries"
 version = "0.1.0"
 dependencies = [
  "core",
- "once_cell",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -599,6 +607,7 @@ dependencies = [
  "serde_json",
  "signal",
  "stop_loss",
+ "timeseries",
 ]
 
 [[package]]

@@ -1,11 +1,11 @@
-mod ffi;
 mod model;
 mod ohlcv;
+mod traits;
 
 pub mod prelude {
-    pub use crate::model::TimeSeries;
+    pub use crate::model::BaseTimeSeries;
     pub use crate::ohlcv::{OHLCVSeries, OHLCV};
+    pub use crate::traits::*;
 }
 
-pub use ffi::*;
 pub use prelude::*;

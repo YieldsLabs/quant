@@ -1,16 +1,18 @@
 from ctypes import addressof, c_ubyte
-from typing import Optional
+from typing import Optional, Tuple
 
 from wasmtime import Instance, Linker, Store, WasiConfig
 
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.interfaces.abstract_wasm_service import AbstractWasmService
-from core.models.strategy import Strategy, StrategyType
+from core.models.strategy import Strategy
 from core.models.strategy_ref import StrategyRef
+from core.models.wasm_type import WasmType
 
 
 class SignalService(AbstractSignalService):
     def __init__(self, wasm_service: AbstractWasmService):
+        super().__init__()
         self.wasm_service = wasm_service
         self.store = Store()
         wasi_config = WasiConfig()
@@ -20,13 +22,13 @@ class SignalService(AbstractSignalService):
         self.linker.define_wasi()
         self.instance: Optional[Instance] = None
 
-    def _load(self, type: StrategyType):
+    def _load(self, type: WasmType):
         module = self.wasm_service.get_module(type, self.store.engine)
         self.instance = self.linker.instantiate(self.store, module)
 
-    def register(self, strategy: Strategy) -> StrategyRef:
+    def register(self, strategy: Strategy, wasm: WasmType) -> StrategyRef:
         if not self.instance:
-            self._load(strategy.type)
+            self._load(wasm)
 
         exports = self.instance.exports(self.store)
 
@@ -40,8 +42,7 @@ class SignalService(AbstractSignalService):
         }
 
         allocation_data = {
-            key: self._allocate_and_write(self.store, exports, data)
-            for key, data in data.items()
+            key: self._write(self.store, exports, data) for key, data in data.items()
         }
 
         id = exports["register"](
@@ -51,7 +52,7 @@ class SignalService(AbstractSignalService):
         return StrategyRef(id=id, instance_ref=self.instance, store_ref=self.store)
 
     @staticmethod
-    def _allocate_and_write(store, exports, data: bytes) -> (int, int):
+    def _write(store, exports, data: bytes) -> Tuple[int]:
         ptr = exports["allocate"](store, len(data))
         memory = exports["memory"]
 

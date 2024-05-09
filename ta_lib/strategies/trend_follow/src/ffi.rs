@@ -5,6 +5,7 @@ use crate::mapper::{
     map_to_baseline, map_to_confirm, map_to_exit, map_to_pulse, map_to_signal, map_to_stoploss,
 };
 use base::prelude::*;
+use timeseries::prelude::*;
 
 fn read_from_memory(ptr: *const u8, len: usize) -> &'static [u8] {
     unsafe { std::slice::from_raw_parts(ptr, len) }
@@ -32,6 +33,8 @@ pub fn register(
     let stop_loss_buffer = read_from_memory(stop_loss_ptr, stop_loss_len);
     let exit_buffer = read_from_memory(exit_ptr, exit_len);
 
+    let timeseries = BaseTimeSeries::default();
+
     let signal: SignalConfig = serde_json::from_slice(signal_buffer).unwrap();
     let confirm: ConfirmConfig = serde_json::from_slice(confirm_buffer).unwrap();
     let pulse: PulseConfig = serde_json::from_slice(pulse_buffer).unwrap();
@@ -40,6 +43,7 @@ pub fn register(
     let exit: ExitConfig = serde_json::from_slice(exit_buffer).unwrap();
 
     register_strategy(
+        Box::new(timeseries),
         map_to_signal(signal),
         map_to_confirm(confirm),
         map_to_pulse(pulse),

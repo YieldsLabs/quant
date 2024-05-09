@@ -1,20 +1,19 @@
-use crate::{OHLCVSeries, OHLCV};
-use core::prelude::*;
+use crate::{OHLCVSeries, TimeSeries, OHLCV};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
-pub struct TimeSeries {
+pub struct BaseTimeSeries {
     index: HashMap<i64, usize>,
     data: Vec<OHLCV>,
 }
 
-impl Default for TimeSeries {
+impl Default for BaseTimeSeries {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl TimeSeries {
+impl BaseTimeSeries {
     const CAPACITY: usize = 600000;
 
     pub fn new() -> Self {
@@ -24,18 +23,7 @@ impl TimeSeries {
         }
     }
 
-    pub fn add(&mut self, bar: &OHLCV) {
-        if let Some(&existing_idx) = self.index.get(&bar.ts) {
-            self.data[existing_idx] = *bar;
-        } else {
-            let idx = self.data.len();
-            self.index.insert(bar.ts, idx);
-            self.data.push(*bar);
-            self._shift_up(idx);
-        }
-    }
-
-    fn _shift_up(&mut self, mut index: usize) {
+    fn shift_up(&mut self, mut index: usize) {
         while index > 0 {
             let parent_index = index - 1;
 
@@ -51,19 +39,32 @@ impl TimeSeries {
 
         self.index.insert(self.data[index].ts, index);
     }
+}
 
-    pub fn next_bar(&self, bar: &OHLCV) -> Option<OHLCV> {
+impl TimeSeries for BaseTimeSeries {
+    fn add(&mut self, bar: &OHLCV) {
+        if let Some(&existing_idx) = self.index.get(&bar.ts) {
+            self.data[existing_idx] = *bar;
+        } else {
+            let idx = self.data.len();
+            self.index.insert(bar.ts, idx);
+            self.data.push(*bar);
+            self.shift_up(idx);
+        }
+    }
+
+    fn next_bar(&self, bar: &OHLCV) -> Option<OHLCV> {
         self.index
             .get(&bar.ts)
             .and_then(|&idx| self.data.get(idx + 1).copied())
     }
 
     #[inline]
-    pub fn len(&self) -> usize {
+    fn len(&self) -> usize {
         self.index.len()
     }
 
-    pub fn ohlcv(&self, size: usize) -> OHLCVSeries {
+    fn ohlcv(&self, size: usize) -> OHLCVSeries {
         let start_index = if self.data.len() >= size {
             self.data.len() - size
         } else {
@@ -122,7 +123,7 @@ mod tests {
                 volume: 100.0,
             },
         ];
-        let mut ts = TimeSeries::new();
+        let mut ts = BaseTimeSeries::new();
 
         for bar in &data {
             ts.add(bar);
@@ -175,7 +176,7 @@ mod tests {
                 volume: 100.0,
             },
         ];
-        let mut ts = TimeSeries::new();
+        let mut ts = BaseTimeSeries::new();
 
         for bar in &data {
             ts.add(bar);

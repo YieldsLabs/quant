@@ -7,6 +7,7 @@ from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.models.wasm_type import WasmType
 
 if TYPE_CHECKING:
     from core.models.strategy_ref import StrategyRef
@@ -22,6 +23,7 @@ class SignalActor(Actor):
         symbol: Symbol,
         timeframe: Timeframe,
         strategy: Strategy,
+        wasm: WasmType,
         service: AbstractSignalService,
     ):
         super().__init__(symbol, timeframe)
@@ -29,13 +31,14 @@ class SignalActor(Actor):
         self.strategy_ref: Optional[StrategyRef] = None
         self.service = service
         self._strategy = strategy
+        self._wasm = wasm
 
     @property
     def strategy(self):
         return self._strategy
 
     def on_start(self):
-        self.strategy_ref = self.service.register(self.strategy)
+        self.strategy_ref = self.service.register(self.strategy, self._wasm)
 
     def on_stop(self):
         self.strategy_ref.unregister()

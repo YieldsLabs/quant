@@ -12,7 +12,7 @@ class Timeseries:
     timestamp_index: Dict[float, int] = field(default_factory=dict)
     capacity: int = 120000
 
-    def enqueue(self, bar: OHLCV):
+    def add(self, bar: OHLCV):
         timestamp = bar.timestamp
 
         if timestamp in self.timestamp_index:

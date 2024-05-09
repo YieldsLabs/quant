@@ -153,7 +153,6 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
             GeneticAttributes.EXIT,
         ]:
             child1_strategy = Strategy(
-                parent1.strategy.type,
                 parent2.strategy.entry
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent1.strategy.entry,
@@ -174,7 +173,6 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 else parent2.strategy.exit,
             )
             child2_strategy = Strategy(
-                parent2.strategy.type,
                 parent1.strategy.entry
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent2.strategy.entry,

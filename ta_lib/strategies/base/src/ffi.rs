@@ -15,6 +15,7 @@ static ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
 static ALLOC_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 pub fn register_strategy(
+    timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
     confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
@@ -29,7 +30,7 @@ pub fn register_strategy(
     STRATEGY_ID_TO_INSTANCE.write().unwrap().insert(
         current_id,
         Box::new(BaseStrategy::new(
-            signal, confirm, pulse, base_line, stop_loss, exit,
+            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
         )),
     );
 

@@ -21,8 +21,8 @@ build-strategy:
 	cp $(TA_LIB_DIR)/target/wasm32-wasi/release/trend_follow.wasm $(WASM_DIR)/trend_follow.wasm
 
 build-timeseries:
-	RUSTFLAGS="-C target-feature=+multivalue,+simd128 -C link-arg=-s" cargo build --release --manifest-path=$(TA_LIB_PATH) --package timeseries --target wasm32-wasi
-	cp $(TA_LIB_DIR)/target/wasm32-wasi/release/timeseries.wasm $(WASM_DIR)/timeseries.wasm
+	RUSTFLAGS="-C target-feature=+multivalue,+simd128 -C link-arg=-s" cargo build --release --manifest-path=$(TA_LIB_PATH) --package ffi --target wasm32-wasi
+	cp $(TA_LIB_DIR)/target/wasm32-wasi/release/ffi.wasm $(WASM_DIR)/timeseries.wasm
 
 run:
 	pipenv run python3 quant.py

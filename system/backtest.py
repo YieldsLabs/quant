@@ -6,12 +6,13 @@ from core.commands.account import UpdateAccountSize
 from core.commands.feed import StartHistoricalFeed
 from core.commands.portfolio import StrategyReset
 from core.events.backtest import BacktestEnded, BacktestStarted
-from core.events.system import DeployStrategy
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
+from core.models.moving_average import MovingAverageType
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
+from core.models.parameter import StaticParameter
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -19,6 +20,12 @@ from core.queries.account import GetBalance
 from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
+from strategy.generator.baseline.ma import MaBaseLine
+from strategy.generator.confirm.cci import CciConfirm
+from strategy.generator.exit.cci import CciExit
+from strategy.generator.pulse.chop import ChopPulse
+from strategy.generator.signal.reversal.vi_reversal import ViReversalSignal
+from strategy.generator.stop_loss.dch import DchStopLoss
 
 from .context import SystemContext
 
@@ -121,9 +128,10 @@ class BacktestSystem(AbstractSystem):
             # "ALGOUSDT",
             # "WAVESUSDT",
             # "NEARUSDT",
-            "SOLUSDT",
+            # "DOTUSDT",
+            # "SOLUSDT",
             # "FILUSDT"
-            # "TONUSDT"
+            "TONUSDT"
             # "ATOMUSDT",
             # "SCUSDT"
             # "FTMUSDT",
@@ -135,9 +143,7 @@ class BacktestSystem(AbstractSystem):
 
         futures_symbols = [symbol for symbol in futures_symbols if symbol.name in scalp]
 
-        generator = self.context.strategy_generator_factory.create(
-            self.context.strategy_type, futures_symbols
-        )
+        generator = self.context.strategy_generator_factory.create(futures_symbols)
         self.optimizer = self.context.strategy_optimizer_factory.create(
             Optimizer.GENETIC,
             generator,
@@ -145,6 +151,52 @@ class BacktestSystem(AbstractSystem):
 
         self.optimizer.init()
 
+        strategies = [
+            (
+                futures_symbols[0],
+                Timeframe.FIVE_MINUTES,
+                Strategy(
+                    *(
+                        ViReversalSignal(),
+                        CciConfirm(),
+                        ChopPulse(),
+                        MaBaseLine(ma=StaticParameter(MovingAverageType.VIDYA)),
+                        DchStopLoss(),
+                        CciExit(),
+                    )
+                ),
+            ),
+            # (
+            #     futures_symbols[0],
+            #     Timeframe.FIVE_MINUTES,
+            #     Strategy(
+            #         *(
+            #             SupertrendFlipSignal(),
+            #             CciConfirm(),
+            #             TdfiPulse(),
+            #             MaBaseLine(ma=StaticParameter(MovingAverageType.LSMA)),
+            #             AtrStopLoss(),
+            #             MfiExit(),
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     Timeframe.FIVE_MINUTES,
+            #     Strategy(
+            #         *(
+            #             VwapBbSignal(),
+            #             CciConfirm(),
+            #             TdfiPulse(),
+            #             MaBaseLine(ma=StaticParameter(MovingAverageType.LSMA)),
+            #             AtrStopLoss(),
+            #             MfiExit(),
+            #         )
+            #     ),
+            # ),
+        ]
+
+        # await self.dispatch(DeployStrategy(strategy=strategies))
         await self.event_queue.put(Event.GENERATE_COMPLETE)
 
     async def _run_backtest(self):
@@ -205,10 +257,10 @@ class BacktestSystem(AbstractSystem):
             GetTopStrategy(num=self.config["active_strategy_num"], positive_pnl=True)
         )
 
-        if not len(strategies):
-            return await self.event_queue.put(Event.REGENERATE)
+        # if not len(strategies):
+        #     return await self.event_queue.put(Event.REGENERATE)
 
-        await self.dispatch(DeployStrategy(strategy=strategies))
+        # await self.dispatch(DeployStrategy(strategy=strategies))
 
     async def _process_backtest(
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False

@@ -5,6 +5,7 @@ members = [
 "benches",
 "core",
 "timeseries",
+"ffi",
 "indicators/momentum",
 "indicators/trend",
 "indicators/volatility",
@@ -18,7 +19,7 @@ members = [
 "strategies/confirm",
 "strategies/pulse",
 "strategies/baseline",
-"strategies/indicator", "timeseries",
+"strategies/indicator", "timeseries", "ffi",
 ]
 
 [workspace.package]
