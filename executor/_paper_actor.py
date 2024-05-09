@@ -83,6 +83,7 @@ class PaperOrderActor(Actor):
             price = self._find_fill_price(
                 current_position, current_position.signal_bar, entry_order
             )
+            logger.warn(f"Will use current bar with price: {price}")
 
         size = entry_order.size
         fee = current_position.theo_taker_fee(size, price)

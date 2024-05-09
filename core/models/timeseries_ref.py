@@ -1,7 +1,7 @@
-import json
 from dataclasses import dataclass
 from typing import Optional
 
+import orjson as json
 from wasmtime import Instance, Store
 
 from core.models.ohlcv import OHLCV
@@ -54,7 +54,7 @@ class TimeSeriesRef:
         try:
             raw_bar = json.loads("".join(chr(val) for val in buff))
             bar = OHLCV.from_list(raw_bar.values())
-        except:
+        except Exception:
             bar = None
 
         return bar

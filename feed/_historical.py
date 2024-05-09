@@ -86,7 +86,6 @@ class HistoricalActor(Actor):
         super().__init__(symbol, timeframe)
         self.exchange = exchange
         self.config_service = config_service.get("backtest")
-        self.batch_size = 8
         self.buffer: deque[Bar] = deque()
 
     def pre_receive(self, msg: StartHistoricalFeed):
@@ -103,7 +102,7 @@ class HistoricalActor(Actor):
             msg.out_sample,
             self.config_service["batch_size"],
         ) as stream:
-            async for bars in self.batched(stream, self.batch_size):
+            async for bars in self.batched(stream, self.config_service["buff_size"]):
                 self.process_bars(bars)
                 await self.process_buffer()
 
@@ -123,15 +122,17 @@ class HistoricalActor(Actor):
         self.buffer.insert(index, bar)
 
     async def process_buffer(self):
-        while len(self.buffer) >= self.batch_size:
-            for bar in [self.buffer.popleft() for _ in range(self.batch_size)]:
+        buff_size = self.config_service["buff_size"]
+
+        while len(self.buffer) >= buff_size:
+            for bar in [self.buffer.popleft() for _ in range(buff_size)]:
                 await self.tell(
                     NewMarketDataReceived(
                         self.symbol, self.timeframe, bar.ohlcv, bar.closed
                     )
                 )
 
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.0001)
 
     @staticmethod
     async def batched(stream, batch_size):
