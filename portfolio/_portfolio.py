@@ -59,7 +59,7 @@ class PortfolioStorage:
             if performance and len(performance.equity) > 2:
                 return performance.equity[-1]
 
-            return 0
+            return 1
 
     async def get_kelly(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
         async with self._lock:
