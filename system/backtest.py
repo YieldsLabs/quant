@@ -6,6 +6,7 @@ from core.commands.account import UpdateAccountSize
 from core.commands.feed import StartHistoricalFeed
 from core.commands.portfolio import StrategyReset
 from core.events.backtest import BacktestEnded, BacktestStarted
+from core.events.system import DeployStrategy
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
@@ -257,10 +258,10 @@ class BacktestSystem(AbstractSystem):
             GetTopStrategy(num=self.config["active_strategy_num"], positive_pnl=True)
         )
 
-        # if not len(strategies):
-        #     return await self.event_queue.put(Event.REGENERATE)
+        if not len(strategies):
+            return await self.event_queue.put(Event.REGENERATE)
 
-        # await self.dispatch(DeployStrategy(strategy=strategies))
+        await self.dispatch(DeployStrategy(strategy=strategies))
 
     async def _process_backtest(
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False
