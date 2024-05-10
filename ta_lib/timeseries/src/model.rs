@@ -48,7 +48,7 @@ impl TimeSeries for BaseTimeSeries {
         if let Some(&existing_idx) = self.index.get(&bar.ts) {
             self.data[existing_idx] = *bar;
         } else {
-            let idx = self.data.len();
+            let idx = self.len();
             self.index.insert(bar.ts, idx);
             self.data.push(*bar);
             self.shift_up(idx);
