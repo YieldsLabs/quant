@@ -33,16 +33,23 @@ RiskEvent = Union[
     GoShortSignalReceived,
 ]
 
+TrailEvent = Union[
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+    GoLongSignalReceived,
+    GoShortSignalReceived,
+]
+
 
 class RiskActor(Actor):
     _EVENTS = [
         NewMarketDataReceived,
         PositionOpened,
         PositionClosed,
-        # ExitLongSignalReceived,
-        # ExitShortSignalReceived,
-        # GoLongSignalReceived,
-        # GoShortSignalReceived,
+        ExitLongSignalReceived,
+        ExitShortSignalReceived,
+        GoLongSignalReceived,
+        GoShortSignalReceived,
     ]
 
     def __init__(
@@ -67,6 +74,10 @@ class RiskActor(Actor):
             NewMarketDataReceived: [self._handle_market, self._handle_position_risk],
             PositionOpened: [self._open_position],
             PositionClosed: [self._close_position],
+            ExitLongSignalReceived: [self._trail_position],
+            ExitShortSignalReceived: [self._trail_position],
+            GoLongSignalReceived: [self._trail_position],
+            GoShortSignalReceived: [self._trail_position],
         }
 
         handler = handlers.get(type(event))
@@ -112,24 +123,25 @@ class RiskActor(Actor):
                     ]
                 )
 
-                self._position = (long_position, short_position)
+            self._position = (long_position, short_position)
 
-    # async def _handle_signal_exit(
-    #     self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived]
-    # ):
-    #     async with self.lock:
-    #         long_position, short_position = self._position
+    async def _trail_position(self, event: TrailEvent):
+        async with self._lock:
+            long_position, short_position = self._position
 
-    #         if isinstance(event, ExitLongSignalReceived) and long_position:
-    #             await self._process_signal_exit(
-    #                 long_position,
-    #                 event.signal.exit,
-    #             )
-    #         if isinstance(event, ExitShortSignalReceived) and short_position:
-    #             await self._process_signal_exit(
-    #                 short_position,
-    #                 event.signal.exit,
-    #             )
+            if isinstance(event, ExitLongSignalReceived) and long_position:
+                long_position = long_position.trail(event.signal.exit)
+
+            if isinstance(event, ExitShortSignalReceived) and short_position:
+                short_position = short_position.trail(event.signal.exit)
+
+            if isinstance(event, GoLongSignalReceived) and short_position:
+                short_position = short_position.trail(event.signal.entry)
+
+            if isinstance(event, GoShortSignalReceived) and long_position:
+                long_position = long_position.trail(event.signal.entry)
+
+            self._position = (long_position, short_position)
 
     async def _process_market(self, position: Optional[Position]):
         next_position = position
@@ -145,38 +157,6 @@ class RiskActor(Actor):
                     break
 
         return next_position
-
-    async def _process_signal_exit(
-        self,
-        position: Position,
-        price: float,
-    ):
-        side = position.side
-        take_profit_price = position.take_profit
-        stop_loss_price = position.stop_loss
-        entry_price = position.entry_price
-
-        price_exceeds_take_profit = (
-            side == PositionSide.LONG and price > take_profit_price
-        ) or (side == PositionSide.SHORT and price < take_profit_price)
-
-        price_exceeds_stop_loss = (
-            side == PositionSide.LONG and price < stop_loss_price
-        ) or (side == PositionSide.SHORT and price > stop_loss_price)
-
-        if price_exceeds_take_profit or price_exceeds_stop_loss:
-            return
-
-        distance_to_take_profit = abs(price - take_profit_price)
-        distance_to_stop_loss = abs(price - stop_loss_price)
-
-        trailing_dist = abs(price - entry_price)
-
-        ttp = distance_to_take_profit * self.config["trl_factor"]
-
-        if distance_to_take_profit < distance_to_stop_loss and trailing_dist > ttp:
-            await self.tell(RiskThresholdBreached(position))
-            return position
 
     @staticmethod
     def _get_event_key(event: RiskEvent):

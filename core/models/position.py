@@ -17,7 +17,6 @@ class Position:
     risk: Risk
     initial_size: float
     orders: Tuple[Order] = ()
-    trailed: bool = False
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -221,9 +220,9 @@ class Position:
         if ohlcv.timestamp <= self.risk_bar.timestamp:
             return self
 
-        # gap = ohlcv.timestamp - self.risk.ohlcv.timestamp
+        gap = ohlcv.timestamp - self.risk.ohlcv.timestamp
 
-        # print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
+        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
 
         risk = self.risk.assess(
             self.side,
@@ -231,15 +230,15 @@ class Position:
             ohlcv,
         )
 
-        print(f"RISK: {risk}")
+        # print(f"RISK: {risk}")
 
         return replace(
             self,
             risk=risk,
         )
 
-    def trail(self, ohlcvs: List[OHLCV]) -> "Position":
-        return replace(self, trailed=True)
+    def trail(self, entry_price: float) -> "Position":
+        return replace(self, risk=self.risk.trail(self.side, entry_price))
 
     def theo_taker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.taker_fee
