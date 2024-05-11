@@ -63,15 +63,14 @@ class Position:
         curr_price = self.curr_price
 
         first_tp = self.first_take_profit
-        second_tp = self.second_take_profit
 
         if side == PositionSide.LONG:
             if curr_price > first_tp:
-                return second_tp
+                return self.second_take_profit
 
         if side == PositionSide.SHORT:
             if curr_price < first_tp:
-                return second_tp
+                return self.second_take_profit
 
         return first_tp
 
@@ -113,7 +112,7 @@ class Position:
 
     @property
     def break_even(self) -> bool:
-        return self.curr_price == self.stop_loss
+        return self.stop_loss >= self.entry_price
 
     @property
     def closed(self) -> bool:
