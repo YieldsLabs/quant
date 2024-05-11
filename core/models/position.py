@@ -274,11 +274,12 @@ class Position:
         print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
 
         # print(f"RISK: {risk}")
-        next_risk = self.risk.next(ohlcv)
-        next_sl = self.adjust_sl()
-        next_tp = self.adjust_tp()
+        next_position = replace(self, risk=self.risk.next(ohlcv))
 
-        next_risk = next_risk.assess(
+        next_sl = next_position.adjust_sl()
+        next_tp = next_position.adjust_tp()
+
+        next_risk = next_position.risk.assess(
             self.side,
             next_sl,
             next_tp,
@@ -287,7 +288,7 @@ class Position:
         )
 
         return replace(
-            self,
+            next_position,
             risk=next_risk,
             _sl=next_sl,
             _tp=next_tp,
