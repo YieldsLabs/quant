@@ -79,8 +79,8 @@ class Position:
     def stop_loss(self) -> float:
         side = self.side
         curr_price = self.curr_price
-        break_even = self.first_factor
-        
+        break_even = self.first_take_profit
+
         if side == PositionSide.LONG:
             if curr_price > break_even:
                 return self.entry_price
@@ -88,7 +88,7 @@ class Position:
         if side == PositionSide.SHORT:
             if curr_price < break_even:
                 return self.entry_price
-    
+
         return self.signal.stop_loss
 
     @property
@@ -110,7 +110,7 @@ class Position:
     @property
     def trade_time(self) -> int:
         return abs(self.close_timestamp - self.open_timestamp)
-    
+
     @property
     def break_even(self) -> bool:
         return self.curr_price == self.stop_loss
@@ -186,9 +186,17 @@ class Position:
     @property
     def exit_price(self) -> float:
         return self._average_price(self.closed_orders)
-    
+
     @property
     def curr_price(self) -> float:
+        side = self.side
+
+        if side == PositionSide.LONG:
+            return self.risk.ohlcv.high
+
+        if side == PositionSide.SHORT:
+            return self.risk.ohlcv.low
+
         return self.risk.ohlcv.close
 
     @property
