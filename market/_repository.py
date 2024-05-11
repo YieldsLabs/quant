@@ -41,8 +41,7 @@ class MarketRepository(AbstractMarketRepository):
 
         next_bar = timeseries.find_next_bar(bar)
 
-        if next_bar:
-            yield next_bar
+        yield next_bar
 
         await asyncio.sleep(0.001)
 

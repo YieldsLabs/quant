@@ -22,8 +22,9 @@ class Position:
     expiration: int = field(default_factory=lambda: 900000)  # 15min
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    first_factor: float = field(default_factory=lambda: np.random.uniform(0.2, 0.5))
-    second_factor: float = field(default_factory=lambda: np.random.uniform(0.6, 1.1))
+    first_factor: float = field(default_factory=lambda: np.random.uniform(0.2, 0.3))
+    second_factor: float = field(default_factory=lambda: np.random.uniform(0.35, 0.5))
+    third_factor: float = field(default_factory=lambda: np.random.uniform(0.55, 1.2))
 
     @property
     def side(self) -> PositionSide:
@@ -58,19 +59,39 @@ class Position:
             return entry_price - dist
 
     @property
+    def third_take_profit(self):
+        side = self.side
+        entry_price = self.entry_price
+        stop_loss = self.signal.stop_loss
+        dist = self.third_factor * abs(entry_price - stop_loss)
+
+        if side == PositionSide.LONG:
+            return entry_price + dist
+        if side == PositionSide.SHORT:
+            return entry_price - dist
+
+    @property
     def take_profit(self) -> float:
         side = self.side
         curr_price = self.curr_price
 
         first_tp = self.first_take_profit
+        second_tp = self.second_take_profit
+        third_tp = self.third_take_profit
 
         if side == PositionSide.LONG:
+            if curr_price > second_tp:
+                return third_tp
+
             if curr_price > first_tp:
-                return self.second_take_profit
+                return second_tp
 
         if side == PositionSide.SHORT:
+            if curr_price < second_tp:
+                return third_tp
+
             if curr_price < first_tp:
-                return self.second_take_profit
+                return second_tp
 
         return first_tp
 
@@ -78,14 +99,28 @@ class Position:
     def stop_loss(self) -> float:
         side = self.side
         curr_price = self.curr_price
-        break_even = self.first_take_profit
+        first_break_even = self.first_take_profit
+        second_break_even = self.second_take_profit
+        third_break_even = self.third_take_profit
 
         if side == PositionSide.LONG:
-            if curr_price > break_even:
+            if curr_price > third_break_even:
+                return second_break_even
+
+            if curr_price > second_break_even:
+                return first_break_even
+
+            if curr_price > first_break_even:
                 return self.entry_price
 
         if side == PositionSide.SHORT:
-            if curr_price < break_even:
+            if curr_price < third_break_even:
+                return second_break_even
+
+            if curr_price < second_break_even:
+                return first_break_even
+
+            if curr_price < first_break_even:
                 return self.entry_price
 
         return self.signal.stop_loss
@@ -322,6 +357,7 @@ class Position:
             "break_even": self.break_even,
             "ff": self.first_factor,
             "sf": self.second_factor,
+            "tf": self.third_take_profit,
         }
 
     @staticmethod

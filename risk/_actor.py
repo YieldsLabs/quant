@@ -150,7 +150,8 @@ class RiskActor(Actor):
             async for next_bar in self._store.find_next_bar(
                 self.symbol, self.timeframe, next_position.risk_bar
             ):
-                next_position = next_position.next(next_bar)
+                if next_bar:
+                    next_position = next_position.next(next_bar)
 
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))
