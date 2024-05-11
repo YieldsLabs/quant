@@ -112,7 +112,14 @@ class Position:
 
     @property
     def break_even(self) -> bool:
-        return self.stop_loss >= self.entry_price
+        side = self.side
+
+        if side == PositionSide.LONG:
+            return self.stop_loss >= self.entry_price
+        if side == PositionSide.SHORT:
+            return self.stop_loss <= self.entry_price
+
+        return False
 
     @property
     def closed(self) -> bool:
