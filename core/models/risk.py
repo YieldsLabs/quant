@@ -1,4 +1,5 @@
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
+from typing import List
 
 from .ohlcv import OHLCV
 from .risk_type import RiskType
@@ -7,8 +8,18 @@ from .side import PositionSide
 
 @dataclass(frozen=True)
 class Risk:
-    ohlcv: OHLCV
+    ohlcv: List[OHLCV] = field(default_factory=list)
     type: RiskType = RiskType.NONE
+
+    @property
+    def last_bar(self):
+        return self.ohlcv[-1]
+
+    def next(self, bar: OHLCV):
+        self.ohlcv.append(bar)
+        ohlcv = sorted(self.ohlcv, key=lambda x: x.timestamp)
+
+        return replace(self, ohlcv=ohlcv)
 
     def assess(
         self,
@@ -17,52 +28,61 @@ class Risk:
         tp: float,
         open_timestamp: float,
         expiration: float,
-        bar: OHLCV,
     ) -> "Risk":
+        bar = self.last_bar
+
         if side == PositionSide.LONG:
             if bar.high > tp:
-                return replace(self, type=RiskType.TP, ohlcv=bar)
+                return replace(self, type=RiskType.TP)
             if bar.low < sl:
-                return replace(self, type=RiskType.SL, ohlcv=bar)
+                return replace(self, type=RiskType.SL)
 
         if side == PositionSide.SHORT:
             if bar.low < tp:
-                return replace(self, type=RiskType.TP, ohlcv=bar)
+                return replace(self, type=RiskType.TP)
             if bar.high > sl:
-                return replace(self, type=RiskType.SL, ohlcv=bar)
+                return replace(self, type=RiskType.SL)
 
         expiration = bar.timestamp - open_timestamp - expiration
 
         if expiration >= 0:
             if side == PositionSide.LONG:
-                return replace(self, type=RiskType.TIME, ohlcv=bar)
+                return replace(self, type=RiskType.TIME)
             if side == PositionSide.SHORT:
-                return replace(self, type=RiskType.TIME, ohlcv=bar)
+                return replace(self, type=RiskType.TIME)
 
-        return replace(self, ohlcv=bar)
-
-    def trail(self) -> "Risk":
         return self
 
-    def exit_price(self, side: PositionSide, sl: float, tp: float) -> "float":
-        if side == PositionSide.LONG:
-            if self.ohlcv.low <= sl:
-                return self.ohlcv.low
+    def trail(self, side: PositionSide) -> "float":
+        last_bar = self.last_bar
 
-            if self.ohlcv.high >= tp:
-                return self.ohlcv.high
+        if side == PositionSide.LONG:
+            return last_bar.low
 
         if side == PositionSide.SHORT:
-            if self.ohlcv.high >= sl:
-                return self.ohlcv.high
+            return last_bar.high
 
-            if self.ohlcv.low <= tp:
-                return self.ohlcv.low
+    def exit_price(self, side: PositionSide, sl: float, tp: float) -> "float":
+        last_bar = self.last_bar
 
-        return self.ohlcv.close
+        if side == PositionSide.LONG:
+            if last_bar.low <= sl:
+                return last_bar.low
+
+            if last_bar.high >= tp:
+                return last_bar.high
+
+        if side == PositionSide.SHORT:
+            if last_bar.high >= sl:
+                return last_bar.high
+
+            if last_bar.low <= tp:
+                return last_bar.low
+
+        return last_bar.close
 
     def to_dict(self):
         return {
             "type": self.type,
-            "ohlcv": self.ohlcv.to_dict(),
+            "ohlcv": self.last_bar.to_dict(),
         }

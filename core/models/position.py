@@ -25,6 +25,7 @@ class Position:
     first_factor: float = field(default_factory=lambda: np.random.uniform(0.2, 0.3))
     second_factor: float = field(default_factory=lambda: np.random.uniform(0.35, 0.5))
     third_factor: float = field(default_factory=lambda: np.random.uniform(0.55, 1.2))
+    trailed: bool = False
 
     @property
     def side(self) -> PositionSide:
@@ -98,6 +99,7 @@ class Position:
     @property
     def stop_loss(self) -> float:
         side = self.side
+
         curr_price = self.curr_price
         first_break_even = self.first_take_profit
         second_break_even = self.second_take_profit
@@ -131,7 +133,7 @@ class Position:
 
     @property
     def close_timestamp(self) -> int:
-        return self.risk.ohlcv.timestamp
+        return self.risk.last_bar.timestamp
 
     @property
     def signal_bar(self) -> OHLCV:
@@ -139,7 +141,7 @@ class Position:
 
     @property
     def risk_bar(self) -> OHLCV:
-        return self.risk.ohlcv
+        return self.risk.last_bar
 
     @property
     def trade_time(self) -> int:
@@ -231,14 +233,15 @@ class Position:
     @property
     def curr_price(self) -> float:
         side = self.side
+        last_bar = self.risk_bar
 
         if side == PositionSide.LONG:
-            return self.risk.ohlcv.high
+            return last_bar.high
 
         if side == PositionSide.SHORT:
-            return self.risk.ohlcv.low
+            return last_bar.low
 
-        return self.risk.ohlcv.close
+        return last_bar.close
 
     @property
     def is_valid(self) -> bool:
@@ -312,26 +315,35 @@ class Position:
         if ohlcv.timestamp <= self.risk_bar.timestamp:
             return self
 
-        gap = ohlcv.timestamp - self.risk.ohlcv.timestamp
+        gap = ohlcv.timestamp - self.risk_bar.timestamp
 
         print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
 
         # print(f"RISK: {risk}")
+        next_risk = self.risk.next(ohlcv)
 
         return replace(
             self,
-            risk=self.risk.assess(
+            risk=next_risk.assess(
                 self.side,
                 self.stop_loss,
                 self.take_profit,
                 self.open_timestamp,
                 self.expiration,
-                ohlcv,
             ),
         )
 
     def trail(self) -> "Position":
-        return replace(self, risk=self.risk.trail())
+        if self.trailed:
+            return self
+
+        dist_sl = abs(self.curr_price - self.stop_loss)
+        dist_tp = abs(self.curr_price - self.take_profit)
+
+        if dist_tp > dist_sl:
+            return replace(self, trailed=True)
+
+        return self
 
     def theo_taker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.taker_fee
@@ -358,6 +370,7 @@ class Position:
             "ff": self.first_factor,
             "sf": self.second_factor,
             "tf": self.third_take_profit,
+            "trailed": self.trailed,
         }
 
     @staticmethod

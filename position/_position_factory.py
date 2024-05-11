@@ -21,9 +21,11 @@ class PositionFactory(AbstractPositionFactory):
         signal: Signal,
     ) -> Position:
         size = await self.size_strategy.calculate(signal)
+        risk = Risk().next(signal.ohlcv)
+
         return Position(
             signal=signal,
-            risk=Risk(ohlcv=signal.ohlcv),
+            risk=risk,
             initial_size=size,
             expiration=self.config["trade_duration"] * 1000,
         )
