@@ -87,7 +87,6 @@ impl Strategy for BaseStrategy {
         }
 
         let ohlcv = self.ohlcv();
-
         let theo_price = self.suggested_entry(&ohlcv);
 
         match self.trade_signals(&ohlcv) {
@@ -108,7 +107,6 @@ impl Strategy for BaseStrategy {
         }
 
         let ohlcv = self.ohlcv();
-
         let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&ohlcv);
 
         StopLossLevels {
@@ -146,7 +144,7 @@ impl BaseStrategy {
 
     fn suggested_entry(&self, ohlcv: &OHLCVSeries) -> f32 {
         ohlcv
-            .source(SourceType::OHLC4)
+            .source(SourceType::CLOSE)
             .last()
             .unwrap_or(std::f32::NAN)
     }
@@ -283,49 +281,4 @@ mod tests {
         );
         assert_eq!(strategy.lookback_period, 55);
     }
-
-    // #[test]
-    // fn test_strategy_data() {
-    //     let mut strategy = BaseStrategy::new(
-    //         Box::new(MockSignal { fast_period: 10 }),
-    //         Box::new(MockConfirm { period: 1 }),
-    //         Box::new(MockPulse { period: 7 }),
-    //         Box::new(MockBaseLine { period: 15 }),
-    //         Box::new(MockStopLoss {
-    //             period: 2,
-    //             multi: 2.0,
-    //         }),
-    //         Box::new(MockExit {}),
-    //     );
-    //     let lookback = 60;
-
-    //     let data = OHLCV {
-    //         ts: 1710297600000,
-    //         open: 1.0,
-    //         high: 2.0,
-    //         low: 0.5,
-    //         close: 1.5,
-    //         volume: 100.0,
-    //     };
-    //     let ohlcvs = vec![data; lookback];
-
-    //     let mut action = TradeAction::DoNothing;
-
-    //     for ohlcv in ohlcvs {
-    //         action = strategy.next(ohlcv);
-    //     }
-
-    //     let series = OHLCVSeries::from_data(&strategy.data);
-
-    //     let hl2: Vec<f32> = series.source(SourceType::HL2).into();
-    //     let hlc3: Vec<f32> = series.source(SourceType::HLC3).into();
-    //     let hlcc4: Vec<f32> = series.source(SourceType::HLCC4).into();
-    //     let ohlc4: Vec<f32> = series.source(SourceType::OHLC4).into();
-
-    //     assert_eq!(hl2, vec![1.25]);
-    //     assert_eq!(hlc3, vec![1.333_333_4]);
-    //     assert_eq!(hlcc4, vec![1.375]);
-    //     assert_eq!(ohlc4, vec![1.25]);
-    //     assert_eq!(action, TradeAction::DoNothing);
-    // }
 }

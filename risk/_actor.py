@@ -123,7 +123,7 @@ class RiskActor(Actor):
                     ]
                 )
 
-            self._position = (long_position, short_position)
+                self._position = (long_position, short_position)
 
     async def _trail_position(self, event: TrailEvent):
         async with self._lock:
