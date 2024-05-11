@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass, field, replace
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -26,6 +26,8 @@ class Position:
     second_factor: float = field(default_factory=lambda: np.random.uniform(0.35, 0.5))
     third_factor: float = field(default_factory=lambda: np.random.uniform(0.55, 1.2))
     trailed: bool = False
+    _tp: Optional[int] = None
+    _sl: Optional[int] = None
 
     @property
     def side(self) -> PositionSide:
@@ -73,59 +75,11 @@ class Position:
 
     @property
     def take_profit(self) -> float:
-        side = self.side
-        curr_price = self.curr_price
-
-        first_tp = self.first_take_profit
-        second_tp = self.second_take_profit
-        third_tp = self.third_take_profit
-
-        if side == PositionSide.LONG:
-            if curr_price > second_tp:
-                return third_tp
-
-            if curr_price > first_tp:
-                return second_tp
-
-        if side == PositionSide.SHORT:
-            if curr_price < second_tp:
-                return third_tp
-
-            if curr_price < first_tp:
-                return second_tp
-
-        return first_tp
+        return self.first_take_profit if not self._tp else self._tp
 
     @property
     def stop_loss(self) -> float:
-        side = self.side
-
-        curr_price = self.curr_price
-        first_break_even = self.first_take_profit
-        second_break_even = self.second_take_profit
-        third_break_even = self.third_take_profit
-
-        if side == PositionSide.LONG:
-            if curr_price > third_break_even:
-                return second_break_even
-
-            if curr_price > second_break_even:
-                return first_break_even
-
-            if curr_price > first_break_even:
-                return self.entry_price
-
-        if side == PositionSide.SHORT:
-            if curr_price < third_break_even:
-                return second_break_even
-
-            if curr_price < second_break_even:
-                return first_break_even
-
-            if curr_price < first_break_even:
-                return self.entry_price
-
-        return self.signal.stop_loss
+        return self.signal.stop_loss if not self._sl else self._sl
 
     @property
     def open_timestamp(self) -> int:
@@ -321,17 +275,83 @@ class Position:
 
         # print(f"RISK: {risk}")
         next_risk = self.risk.next(ohlcv)
+        next_sl = self.adjust_sl()
+        next_tp = self.adjust_tp()
+
+        next_risk = next_risk.assess(
+            self.side,
+            next_sl,
+            next_tp,
+            self.open_timestamp,
+            self.expiration,
+        )
 
         return replace(
             self,
-            risk=next_risk.assess(
-                self.side,
-                self.stop_loss,
-                self.take_profit,
-                self.open_timestamp,
-                self.expiration,
-            ),
+            risk=next_risk,
+            _sl=next_sl,
+            _tp=next_tp,
         )
+
+    def adjust_tp(self) -> float:
+        side = self.side
+        curr_price = self.curr_price
+
+        first_tp = self.first_take_profit
+        second_tp = self.second_take_profit
+        third_tp = self.third_take_profit
+
+        curr_tp = self.take_profit
+
+        if side == PositionSide.LONG:
+            if curr_price > first_tp:
+                curr_tp = max(curr_tp, second_tp)
+
+            if curr_price > second_tp:
+                curr_tp = max(curr_tp, third_tp)
+
+        if side == PositionSide.SHORT:
+            if curr_price < first_tp:
+                curr_tp = min(curr_tp, second_tp)
+
+            if curr_price < second_tp:
+                curr_tp = min(curr_tp, third_tp)
+
+        return curr_tp
+
+    def adjust_sl(self) -> float:
+        # if self.trailed:
+        #     return self.stop_loss
+
+        side = self.side
+        curr_price = self.curr_price
+        curr_sl = self.stop_loss
+
+        first_break_even = self.first_take_profit
+        second_break_even = self.second_take_profit
+        third_break_even = self.third_take_profit
+
+        if side == PositionSide.LONG:
+            if curr_price > first_break_even:
+                curr_sl = max(curr_sl, self.entry_price)
+
+            if curr_price > second_break_even:
+                curr_sl = max(curr_sl, first_break_even)
+
+            if curr_price > third_break_even:
+                curr_sl = max(curr_sl, second_break_even)
+
+        if side == PositionSide.SHORT:
+            if curr_price < first_break_even:
+                curr_sl = min(curr_sl, self.entry_price)
+
+            if curr_price < second_break_even:
+                curr_sl = min(curr_sl, first_break_even)
+
+            if curr_price < third_break_even:
+                curr_sl = min(curr_sl, second_break_even)
+
+        return curr_sl
 
     def trail(self) -> "Position":
         if self.trailed:
@@ -340,7 +360,7 @@ class Position:
         dist_sl = abs(self.curr_price - self.stop_loss)
         dist_tp = abs(self.curr_price - self.take_profit)
 
-        if dist_tp > dist_sl:
+        if dist_tp < dist_sl:
             return replace(self, trailed=True)
 
         return self
