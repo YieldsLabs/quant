@@ -3,6 +3,8 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import List, Tuple
 
+import numpy as np
+
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .risk import Risk
@@ -13,12 +15,15 @@ from .signal import Signal
 
 @dataclass(frozen=True)
 class Position:
+    initial_size: float
     signal: Signal
     risk: Risk
-    initial_size: float
     orders: Tuple[Order] = ()
+    expiration: int = field(default_factory=lambda: 900000)  # 15min
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    first_factor: float = field(default_factory=lambda: np.random.uniform(0.2, 0.5))
+    second_factor: float = field(default_factory=lambda: np.random.uniform(0.6, 1.1))
 
     @property
     def side(self) -> PositionSide:
@@ -29,12 +34,62 @@ class Position:
             return PositionSide.SHORT
 
     @property
+    def first_take_profit(self):
+        side = self.side
+        entry_price = self.entry_price
+        stop_loss = self.signal.stop_loss
+        dist = self.first_factor * abs(entry_price - stop_loss)
+
+        if side == PositionSide.LONG:
+            return entry_price + dist
+        if side == PositionSide.SHORT:
+            return entry_price - dist
+
+    @property
+    def second_take_profit(self):
+        side = self.side
+        entry_price = self.entry_price
+        stop_loss = self.signal.stop_loss
+        dist = self.second_factor * abs(entry_price - stop_loss)
+
+        if side == PositionSide.LONG:
+            return entry_price + dist
+        if side == PositionSide.SHORT:
+            return entry_price - dist
+
+    @property
     def take_profit(self) -> float:
-        return self.risk.take_profit_price
+        side = self.side
+        curr_price = self.curr_price
+
+        first_tp = self.first_take_profit
+        second_tp = self.second_take_profit
+
+        if side == PositionSide.LONG:
+            if curr_price > first_tp:
+                return second_tp
+
+        if side == PositionSide.SHORT:
+            if curr_price < first_tp:
+                return second_tp
+
+        return first_tp
 
     @property
     def stop_loss(self) -> float:
-        return self.risk.stop_loss_price
+        side = self.side
+        curr_price = self.curr_price
+        break_even = self.first_factor
+        
+        if side == PositionSide.LONG:
+            if curr_price > break_even:
+                return self.entry_price
+
+        if side == PositionSide.SHORT:
+            if curr_price < break_even:
+                return self.entry_price
+    
+        return self.signal.stop_loss
 
     @property
     def open_timestamp(self) -> int:
@@ -55,6 +110,10 @@ class Position:
     @property
     def trade_time(self) -> int:
         return abs(self.close_timestamp - self.open_timestamp)
+    
+    @property
+    def break_even(self) -> bool:
+        return self.curr_price == self.stop_loss
 
     @property
     def closed(self) -> bool:
@@ -127,6 +186,10 @@ class Position:
     @property
     def exit_price(self) -> float:
         return self._average_price(self.closed_orders)
+    
+    @property
+    def curr_price(self) -> float:
+        return self.risk.ohlcv.close
 
     @property
     def is_valid(self) -> bool:
@@ -140,21 +203,6 @@ class Position:
             return self.take_profit < self.stop_loss
 
         return False
-
-    @classmethod
-    def from_signal(
-        cls,
-        signal: Signal,
-        initial_size: float,
-        expiration: float,
-    ) -> "Position":
-        risk = Risk(
-            ohlcv=signal.ohlcv,
-            stop_loss_price=signal.stop_loss,
-            expiration=expiration,
-        )
-
-        return cls(signal=signal, risk=risk, initial_size=initial_size)
 
     def entry_order(self) -> Order:
         price = round(self.signal.entry, self.signal.symbol.price_precision)
@@ -170,11 +218,9 @@ class Position:
         )
 
     def exit_order(self) -> Order:
-        price = self.risk.exit_price(self.side)
-
         return Order(
             status=OrderStatus.PENDING,
-            price=price,
+            price=self.risk.exit_price(self, self.stop_loss, self.take_profit),
             size=self.size,
         )
 
@@ -190,12 +236,9 @@ class Position:
         orders = (*self.orders, order)
 
         if order.status == OrderStatus.EXECUTED:
-            risk = self.risk.target(self.side, order.price)
-
             return replace(
                 self,
                 orders=orders,
-                risk=risk,
                 last_modified=execution_time,
             )
 
@@ -224,21 +267,22 @@ class Position:
 
         print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
 
-        risk = self.risk.assess(
-            self.side,
-            self.open_timestamp,
-            ohlcv,
-        )
-
         # print(f"RISK: {risk}")
 
         return replace(
             self,
-            risk=risk,
+            risk=self.risk.assess(
+                self.side,
+                self.stop_loss,
+                self.take_profit,
+                self.open_timestamp,
+                self.expiration,
+                ohlcv,
+            ),
         )
 
-    def trail(self, entry_price: float) -> "Position":
-        return replace(self, risk=self.risk.trail(self.side, entry_price))
+    def trail(self) -> "Position":
+        return replace(self, risk=self.risk.trail())
 
     def theo_taker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.taker_fee
@@ -261,6 +305,9 @@ class Position:
             "take_profit": self.take_profit,
             "stop_loss": self.stop_loss,
             "trade_time": self.trade_time,
+            "break_even": self.break_even,
+            "ff": self.first_factor,
+            "sf": self.second_factor,
         }
 
     @staticmethod
