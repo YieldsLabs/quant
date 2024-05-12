@@ -27,8 +27,8 @@ class Risk:
     def assess(
         self,
         side: PositionSide,
-        sl: float,
         tp: float,
+        sl: float,
         open_timestamp: float,
         expiration: float,
     ) -> "Risk":

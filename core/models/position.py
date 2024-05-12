@@ -40,9 +40,11 @@ class Position:
 
     @cached_property
     def first_take_profit(self):
+        p = self.signal.symbol.price_precision
         entry_price = self.entry_price
         stop_loss = self.signal.stop_loss
         dist = self.first_factor * abs(entry_price - stop_loss)
+        dist = round(dist, p)
 
         if self.side == PositionSide.LONG:
             return entry_price + dist
@@ -51,9 +53,11 @@ class Position:
 
     @cached_property
     def second_take_profit(self):
+        p = self.signal.symbol.price_precision
         entry_price = self.entry_price
         stop_loss = self.signal.stop_loss
         dist = self.second_factor * abs(entry_price - stop_loss)
+        dist = round(dist, p)
 
         if self.side == PositionSide.LONG:
             return entry_price + dist
@@ -62,9 +66,11 @@ class Position:
 
     @cached_property
     def third_take_profit(self):
+        p = self.signal.symbol.price_precision
         entry_price = self.entry_price
         stop_loss = self.signal.stop_loss
         dist = self.third_factor * abs(entry_price - stop_loss)
+        dist = round(dist, p)
 
         if self.side == PositionSide.LONG:
             return entry_price + dist
@@ -77,10 +83,12 @@ class Position:
 
     @property
     def stop_loss(self) -> float:
-        if not self.trailed:
-            return self.signal.stop_loss if not self._sl else self._sl
+        p = self.signal.symbol.price_precision
 
-        tsl = self.risk.trail(self.side)
+        if not self.trailed:
+            return round(self.signal.stop_loss, p) if not self._sl else self._sl
+
+        tsl = round(self.risk.trail(self.side), p)
 
         return (
             max(self.entry_price, tsl)
@@ -192,8 +200,9 @@ class Position:
     @property
     def curr_price(self) -> float:
         last_bar = self.risk_bar
+        p = self.signal.symbol.price_precision
 
-        return (last_bar.high + last_bar.low + last_bar.close) / 3
+        return round((last_bar.high + last_bar.low + last_bar.close) / 3, p)
 
     @property
     def is_valid(self) -> bool:
@@ -273,8 +282,8 @@ class Position:
 
         next_position = replace(self, risk=self.risk.next(ohlcv))
 
-        next_sl = next_position.adjust_sl()
         next_tp = next_position.adjust_tp()
+        next_sl = next_position.adjust_sl()
 
         if not next_position.trailed:
             if self.side == PositionSide.LONG and next_tp > self.third_take_profit:
@@ -283,10 +292,15 @@ class Position:
             if self.side == PositionSide.SHORT and next_tp < self.third_take_profit:
                 next_sl = next_position.risk.trail(self.side)
 
+        p = self.signal.symbol.price_precision
+
+        next_tp = round(next_tp, p)
+        next_sl = round(next_sl, p)
+
         next_risk = next_position.risk.assess(
             self.side,
-            next_sl,
             next_tp,
+            next_sl,
             self.open_timestamp,
             self.expiration,
         )
@@ -296,18 +310,17 @@ class Position:
         return replace(
             next_position,
             risk=next_risk,
-            _sl=next_sl,
             _tp=next_tp,
+            _sl=next_sl,
         )
 
     def adjust_tp(self) -> float:
         curr_price = self.curr_price
+        curr_tp = self.take_profit
 
         first_tp = self.first_take_profit
         second_tp = self.second_take_profit
         third_tp = self.third_take_profit
-
-        curr_tp = self.take_profit
 
         if self.side == PositionSide.LONG:
             if curr_price >= first_tp:
