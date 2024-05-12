@@ -221,8 +221,9 @@ class Bybit(AbstractExchange):
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def fetch_position(self, symbol: Symbol, side: PositionSide):
         positions = self.connector.fetch_positions([symbol.name])
+        side = str(side).lower()
         position = next(
-            iter([position for position in positions if position["side"] == str(side)]),
+            iter([position for position in positions if position["side"] == side]),
             None,
         )
 
