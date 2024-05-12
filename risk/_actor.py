@@ -129,29 +129,47 @@ class RiskActor(Actor):
         async with self._lock:
             long_position, short_position = self._position
 
-            if isinstance(event, ExitLongSignalReceived) and long_position:
+            if (
+                isinstance(event, ExitLongSignalReceived)
+                and long_position
+                and not long_position.has_risk
+            ):
                 long_position = long_position.trail()
 
-            if isinstance(event, ExitShortSignalReceived) and short_position:
+            if (
+                isinstance(event, ExitShortSignalReceived)
+                and short_position
+                and not short_position.has_risk
+            ):
                 short_position = short_position.trail()
 
-            if isinstance(event, GoLongSignalReceived) and short_position:
-                short_position = short_position.trail()
+            if (
+                isinstance(event, GoLongSignalReceived)
+                and short_position
+                and not short_position.has_risk
+            ):
+                short_position = short_position.trail(force=True)
 
-            if isinstance(event, GoShortSignalReceived) and long_position:
-                long_position = long_position.trail()
+            if (
+                isinstance(event, GoShortSignalReceived)
+                and long_position
+                and not long_position.has_risk
+            ):
+                long_position = long_position.trail(force=True)
 
             self._position = (long_position, short_position)
 
     async def _process_market(self, position: Optional[Position]):
         next_position = position
 
-        if position:
+        if position and not position.has_risk:
             async for next_bar in self._store.find_next_bar(
                 self.symbol, self.timeframe, next_position.risk_bar
             ):
-                if next_bar:
-                    next_position = next_position.next(next_bar)
+                if not next_bar:
+                    continue
+
+                next_position = next_position.next(next_bar)
 
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))

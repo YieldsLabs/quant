@@ -125,13 +125,13 @@ class HistoricalActor(Actor):
         buff_size = self.config_service["buff_size"]
 
         while len(self.buffer) >= buff_size:
-            for bar in [self.buffer.popleft() for _ in range(buff_size)]:
+            bars = [self.buffer.popleft() for _ in range(buff_size)]
+            for bar in bars:
                 await self.tell(
                     NewMarketDataReceived(
                         self.symbol, self.timeframe, bar.ohlcv, bar.closed
                     )
                 )
-
             await asyncio.sleep(0.0001)
 
     @staticmethod

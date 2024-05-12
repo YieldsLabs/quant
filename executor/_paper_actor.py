@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from enum import Enum, auto
 from typing import Optional, Union
@@ -63,10 +64,14 @@ class PaperOrderActor(Actor):
         await self.repository.upsert(self.symbol, self.timeframe, event.ohlcv)
 
     async def _find_next_bar(self, curr_bar: OHLCV) -> Optional[OHLCV]:
-        async for next_bar in self.repository.find_next_bar(
-            self.symbol, self.timeframe, curr_bar
-        ):
-            return next_bar
+        for _ in range(4):
+            async for next_bar in self.repository.find_next_bar(
+                self.symbol, self.timeframe, curr_bar
+            ):
+                return next_bar
+            await asyncio.sleep(0.001)
+
+        return None
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position

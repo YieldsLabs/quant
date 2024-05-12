@@ -1,11 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
+from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
 
-class AbstractMarketRepository(ABC):
+class AbstractMarketRepository(AbstractEventManager):
     @abstractmethod
     def upsert(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         pass

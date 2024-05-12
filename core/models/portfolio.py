@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field, replace
 from datetime import datetime
+from functools import cached_property
 
 import numpy as np
 from scipy.stats import kurtosis, norm, skew
@@ -16,26 +17,26 @@ class Performance:
     _fee: np.array = field(default_factory=lambda: np.array([], dtype=np.float64))
     updated_at: float = field(default_factory=lambda: datetime.now().timestamp())
 
-    @property
+    @cached_property
     def total_trades(self) -> int:
         return self._pnl.size
 
-    @property
+    @cached_property
     def total_pnl(self) -> float:
         return np.sum(self._pnl)
 
-    @property
+    @cached_property
     def total_fee(self) -> float:
         return np.sum(self._fee)
 
-    @property
+    @cached_property
     def average_pnl(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         return np.mean(self._pnl)
 
-    @property
+    @cached_property
     def average_win(self) -> float:
         win = self._pnl[self._pnl > 0]
 
@@ -44,7 +45,7 @@ class Performance:
 
         return np.mean(win)
 
-    @property
+    @cached_property
     def average_loss(self) -> float:
         loss = self._pnl[self._pnl < 0]
 
@@ -53,15 +54,15 @@ class Performance:
 
         return np.mean(loss)
 
-    @property
+    @cached_property
     def max_consecutive_wins(self) -> int:
         return self._max_streak(self._pnl, True)
 
-    @property
+    @cached_property
     def max_consecutive_losses(self) -> int:
         return self._max_streak(self._pnl, False)
 
-    @property
+    @cached_property
     def hit_ratio(self) -> float:
         total_trades = self.total_trades
 
@@ -74,7 +75,7 @@ class Performance:
     def equity(self):
         return [self._account_size] + self._pnl.cumsum()
 
-    @property
+    @cached_property
     def drawdown(self):
         equity_curve = self.equity
 
@@ -85,7 +86,7 @@ class Performance:
 
         return np.divide(peak - equity_curve, peak)
 
-    @property
+    @cached_property
     def runup(self) -> float:
         equity_curve = self.equity
 
@@ -96,15 +97,15 @@ class Performance:
 
         return np.divide(equity_curve - trough, trough)
 
-    @property
+    @cached_property
     def max_runup(self) -> float:
         return np.max(self.runup)
 
-    @property
+    @cached_property
     def max_drawdown(self) -> float:
         return np.max(self.drawdown)
 
-    @property
+    @cached_property
     def calmar_ratio(self) -> float:
         max_drawdown = self.max_drawdown
 
@@ -113,7 +114,7 @@ class Performance:
 
         return np.divide(self.cagr, np.abs(max_drawdown))
 
-    @property
+    @cached_property
     def sharpe_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -125,7 +126,7 @@ class Performance:
 
         return np.divide(self.average_pnl, std_return)
 
-    @property
+    @cached_property
     def smart_sharpe_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -138,7 +139,7 @@ class Performance:
 
         return np.divide(self.average_pnl, std_return * penalty)
 
-    @property
+    @cached_property
     def deflated_sharpe_ratio(self) -> float:
         total_trades = self.total_trades
 
@@ -169,7 +170,7 @@ class Performance:
             )
         )
 
-    @property
+    @cached_property
     def sortino_ratio(self) -> float:
         total_trades = self.total_trades
 
@@ -188,7 +189,7 @@ class Performance:
 
         return np.divide(self.average_pnl, downside)
 
-    @property
+    @cached_property
     def smart_sortino_ratio(self) -> float:
         total_trades = self.total_trades
 
@@ -208,7 +209,7 @@ class Performance:
 
         return np.divide(self.average_pnl, downside * penalty)
 
-    @property
+    @cached_property
     def payoff_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -220,7 +221,7 @@ class Performance:
 
         return np.divide(self.average_win, denom)
 
-    @property
+    @cached_property
     def cagr(self) -> float:
         periods = self.total_trades
 
@@ -246,7 +247,7 @@ class Performance:
 
         return np.power(compound_factor, time_factor) - 1
 
-    @property
+    @cached_property
     def optimal_f(self) -> float:
         total_trades = self.total_trades
 
@@ -264,7 +265,7 @@ class Performance:
 
         return np.divide(max_loss, np.abs(initial_value)) * np.sqrt(growth_factor)
 
-    @property
+    @cached_property
     def kelly(self) -> float:
         total_trades = self.total_trades
 
@@ -280,11 +281,11 @@ class Performance:
 
         return win_prob - np.divide(1 - win_prob, wl_ratio)
 
-    @property
+    @cached_property
     def ann_sharpe_ratio(self) -> float:
         return self.sharpe_ratio * np.sqrt(self._periods_per_year)
 
-    @property
+    @cached_property
     def expected_return(self) -> float:
         total_trades = self.total_trades
 
@@ -303,7 +304,7 @@ class Performance:
 
         return np.exp(log_prod / total_trades) - 1.0
 
-    @property
+    @cached_property
     def ann_volatility(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -314,7 +315,7 @@ class Performance:
 
         return volatility * np.sqrt(self._periods_per_year)
 
-    @property
+    @cached_property
     def recovery_factor(self) -> float:
         max_drawdown = self.max_drawdown
 
@@ -325,7 +326,7 @@ class Performance:
 
         return np.divide(total_profit, max_drawdown)
 
-    @property
+    @cached_property
     def profit_factor(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -343,7 +344,7 @@ class Performance:
 
         return np.divide(gross_profit, gross_loss)
 
-    @property
+    @cached_property
     def risk_of_ruin(self) -> float:
         total_trades = self.total_trades
 
@@ -354,21 +355,21 @@ class Performance:
 
         return np.divide(1 - win_rate, 1 + win_rate) ** total_trades
 
-    @property
+    @cached_property
     def skew(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         return skew(self._pnl, bias=False)
 
-    @property
+    @cached_property
     def kurtosis(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         return kurtosis(self._pnl, bias=False)
 
-    @property
+    @cached_property
     def var(self, confidence_level=0.95) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -378,7 +379,7 @@ class Performance:
 
         return norm.ppf(1.0 - confidence_level, mu, sigma)
 
-    @property
+    @cached_property
     def cvar(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -391,7 +392,7 @@ class Performance:
 
         return np.mean(pnl)
 
-    @property
+    @cached_property
     def ulcer_index(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -403,7 +404,7 @@ class Performance:
 
         return np.sqrt(np.mean(drawdown**2))
 
-    @property
+    @cached_property
     def upi(self) -> float:
         ulcer_index = self.ulcer_index
 
@@ -412,21 +413,21 @@ class Performance:
 
         return np.divide(self.expected_return, ulcer_index)
 
-    @property
+    @cached_property
     def common_sense_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         return self.profit_factor * self.tail_ratio
 
-    @property
+    @cached_property
     def cpc_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
 
         return self.profit_factor * self.hit_ratio * self.payoff_ratio
 
-    @property
+    @cached_property
     def lake_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -442,7 +443,7 @@ class Performance:
 
         return 1 - underwater_time
 
-    @property
+    @cached_property
     def burke_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -454,7 +455,7 @@ class Performance:
 
         return np.divide(self.cagr, downside_deviation)
 
-    @property
+    @cached_property
     def rachev_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -475,7 +476,7 @@ class Performance:
 
         return np.divide(np.abs(self.average_pnl), expected_shortfall)
 
-    @property
+    @cached_property
     def sterling_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -493,7 +494,7 @@ class Performance:
 
         return np.divide(upside_potential, downside_risk)
 
-    @property
+    @cached_property
     def tail_ratio(self, cutoff=95) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -505,7 +506,7 @@ class Performance:
 
         return np.abs(np.divide(np.percentile(self._pnl, cutoff), denom))
 
-    @property
+    @cached_property
     def omega_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0
@@ -522,7 +523,7 @@ class Performance:
 
         return np.divide(np.sum(gains), sum_losses)
 
-    @property
+    @cached_property
     def kappa_three_ratio(self) -> float:
         total_trades = self.total_trades
 

@@ -3,6 +3,8 @@ from typing import Optional
 
 from wasmtime import Instance, Linker, Store, WasiConfig
 
+from core.event_decorators import event_handler
+from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_market_repository import AbstractMarketRepository
 from core.interfaces.abstract_wasm_service import AbstractWasmService
 from core.models.ohlcv import OHLCV
@@ -32,18 +34,22 @@ class MarketRepository(AbstractMarketRepository):
         module = self.wasm_service.get_module(WasmType.TIMESERIES, self.store.engine)
         self.instance = self.linker.instantiate(self.store, module)
 
+    @event_handler(NewMarketDataReceived)
+    async def _market_handler(self, event: NewMarketDataReceived):
+        await self.upsert(event.symbol, event.timeframe, event.ohlcv)
+
     async def upsert(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         timeseries = await self._get_timeseries(symbol, timeframe)
         timeseries.add(bar)
 
     async def find_next_bar(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         timeseries = await self._get_timeseries(symbol, timeframe)
-
         next_bar = timeseries.find_next_bar(bar)
 
-        yield next_bar
-
-        await asyncio.sleep(0.001)
+        while next_bar:
+            yield next_bar
+            await asyncio.sleep(0.0001)
+            next_bar = timeseries.find_next_bar(next_bar)
 
     async def _get_timeseries(
         self, symbol: Symbol, timeframe: Timeframe
