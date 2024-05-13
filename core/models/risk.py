@@ -12,7 +12,7 @@ from .side import PositionSide
 class Risk:
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: RiskType = RiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.2, 1.8))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.5, 3.5))
 
     @property
     def last_bar(self):
@@ -34,6 +34,14 @@ class Risk:
     ) -> "Risk":
         bar = self.last_bar
 
+        expiration = bar.timestamp - open_timestamp - expiration
+
+        if expiration >= 0:
+            if side == PositionSide.LONG:
+                return replace(self, type=RiskType.TIME)
+            if side == PositionSide.SHORT:
+                return replace(self, type=RiskType.TIME)
+
         if side == PositionSide.LONG:
             if bar.high > tp:
                 return replace(self, type=RiskType.TP)
@@ -46,26 +54,25 @@ class Risk:
             if bar.high > sl:
                 return replace(self, type=RiskType.SL)
 
-        expiration = bar.timestamp - open_timestamp - expiration
+        return self.reset()
 
-        if expiration >= 0:
-            if side == PositionSide.LONG:
-                return replace(self, type=RiskType.TIME)
-            if side == PositionSide.SHORT:
-                return replace(self, type=RiskType.TIME)
+    def sl_low(self, side: PositionSide, sl: float) -> "float":
+        period = 6
 
-        return replace(self, type=RiskType.NONE)
-
-    def trail(self, side: PositionSide) -> "float":
-        last_bar = self.last_bar
-        atr = self._ema(self._true_ranges(self.ohlcv), 8)
-        atr_mul = self.trail_factor * atr[-1]
+        low = self._ll(self.ohlcv, period)
 
         if side == PositionSide.LONG:
-            return last_bar.low - atr_mul
-
+            return max(sl, max(low))
         if side == PositionSide.SHORT:
-            return last_bar.high + atr_mul
+            return min(sl, min(low))
+
+    def sl_ats(self) -> "float":
+        period = 5
+
+        atr = self._ema(self._true_ranges(self.ohlcv), period)
+        ats = self._ats(self.ohlcv, atr, self.trail_factor)
+
+        return ats[-1]
 
     def exit_price(self, side: PositionSide, sl: float, tp: float) -> "float":
         last_bar = self.last_bar
@@ -85,6 +92,45 @@ class Risk:
                 return last_bar.low
 
         return last_bar.close
+
+    def reset(self):
+        return replace(self, type=RiskType.NONE)
+
+    @staticmethod
+    def _ats(ohlcvs: List[OHLCV], atr: List[OHLCV], factor: float) -> "float":
+        close_prices = np.array([ohlcv.close for ohlcv in ohlcvs])
+        stop_prices = np.zeros_like(close_prices)
+        period = min(len(close_prices), len(atr))
+
+        for i in range(1, period):
+            stop = factor * atr[i]
+            cond_one = (
+                close_prices[i] > close_prices[i - 1]
+                and close_prices[i - 1] > stop_prices[i - 1]
+            )
+            cond_two = (
+                close_prices[i] < close_prices[i - 1]
+                and close_prices[i - 1] < stop_prices[i - 1]
+            )
+            cond_three = (
+                close_prices[i] > close_prices[i - 1]
+                and close_prices[i - 1] < stop_prices[i - 1]
+            )
+            cond_four = (
+                close_prices[i] < close_prices[i - 1]
+                and close_prices[i - 1] > stop_prices[i - 1]
+            )
+
+            if cond_one:
+                stop_prices[i] = max(stop_prices[i - 1], close_prices[i] - stop)
+            elif cond_two:
+                stop_prices[i] = min(stop_prices[i - 1], close_prices[i] + stop)
+            elif cond_three:
+                stop_prices[i] = close_prices[i] - stop
+            elif cond_four:
+                stop_prices[i] = close_prices[i] + stop
+
+        return stop_prices
 
     @staticmethod
     def _true_ranges(ohlcvs: List[OHLCV]) -> List[float]:
@@ -112,6 +158,18 @@ class Risk:
             ema.append((values[i] - ema[-1]) * alpha + ema[-1])
 
         return np.array(ema)
+
+    @staticmethod
+    def _hh(ohlcvs: List[OHLCV], period: int) -> List[float]:
+        highs = np.array([ohlcv.high for ohlcv in ohlcvs])
+        hh = np.maximum.reduce([np.roll(highs, i) for i in range(period)])
+        return hh.tolist()
+
+    @staticmethod
+    def _ll(ohlcvs: List[OHLCV], period: int) -> List[float]:
+        lows = np.array([ohlcv.low for ohlcv in ohlcvs])
+        ll = np.minimum.reduce([np.roll(lows, i) for i in range(period)])
+        return ll.tolist()
 
     def to_dict(self):
         return {
