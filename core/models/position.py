@@ -285,7 +285,7 @@ class Position:
         if not self.trailed:
             next_sl = next_position.risk.sl_low(self.side, next_sl)
         else:
-            next_sl = next_position.risk.sl_ats()
+            next_sl = next_position.risk.sl_ats(self.side, next_sl)
 
         p = self.signal.symbol.price_precision
 
@@ -339,9 +339,16 @@ class Position:
 
         return curr_sl
 
-    def trail(self) -> "Position":
+    def trail(self, price: Optional[float] = None) -> "Position":
         if self.trailed:
             return self
+
+        if price:
+            if self.side == PositionSide.LONG and price > self.first_take_profit:
+                return replace(self, _tp=price, trailed=True)
+
+            if self.side == PositionSide.SHORT and price < self.first_take_profit:
+                return replace(self, _tp=price, trailed=True)
 
         return replace(self, trailed=True)
 

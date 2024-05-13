@@ -32,9 +32,10 @@ class Risk:
         open_timestamp: float,
         expiration: float,
     ) -> "Risk":
-        bar = self.last_bar
+        curr_bar = self.last_bar
+        prev_bar = self.ohlcv[-2]
 
-        expiration = bar.timestamp - open_timestamp - expiration
+        expiration = curr_bar.timestamp - open_timestamp - expiration
 
         if expiration >= 0:
             if side == PositionSide.LONG:
@@ -43,36 +44,45 @@ class Risk:
                 return replace(self, type=RiskType.TIME)
 
         if side == PositionSide.LONG:
-            if bar.high > tp:
+            if curr_bar.high >= tp and prev_bar.high < tp:
                 return replace(self, type=RiskType.TP)
-            if bar.low < sl:
+            if curr_bar.low <= sl and prev_bar.low > sl:
                 return replace(self, type=RiskType.SL)
 
         if side == PositionSide.SHORT:
-            if bar.low < tp:
+            if curr_bar.low <= tp and prev_bar.low > tp:
                 return replace(self, type=RiskType.TP)
-            if bar.high > sl:
+            if curr_bar.high >= sl and prev_bar.high < sl:
                 return replace(self, type=RiskType.SL)
 
         return self.reset()
 
     def sl_low(self, side: PositionSide, sl: float) -> "float":
-        period = 6
+        period = 5
 
         low = self._ll(self.ohlcv, period)
+
+        if len(low) < period:
+            return sl
 
         if side == PositionSide.LONG:
             return max(sl, max(low))
         if side == PositionSide.SHORT:
             return min(sl, min(low))
 
-    def sl_ats(self) -> "float":
+    def sl_ats(self, side: PositionSide, sl: float) -> "float":
         period = 5
 
         atr = self._ema(self._true_ranges(self.ohlcv), period)
         ats = self._ats(self.ohlcv, atr, self.trail_factor)
 
-        return ats[-1]
+        if ats[-1] == 0:
+            return sl
+
+        if side == PositionSide.LONG:
+            return max(sl, ats[-1])
+        if side == PositionSide.SHORT:
+            return min(sl, ats[-1])
 
     def exit_price(self, side: PositionSide, sl: float, tp: float) -> "float":
         last_bar = self.last_bar
