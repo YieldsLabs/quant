@@ -33,7 +33,6 @@ class Risk:
         expiration: float,
     ) -> "Risk":
         curr_bar = self.last_bar
-        prev_bar = self.ohlcv[-2]
 
         expiration = curr_bar.timestamp - open_timestamp - expiration
 
@@ -44,31 +43,32 @@ class Risk:
                 return replace(self, type=RiskType.TIME)
 
         if side == PositionSide.LONG:
-            if curr_bar.high >= tp and prev_bar.high < tp:
+            if curr_bar.high >= tp:
                 return replace(self, type=RiskType.TP)
-            if curr_bar.low <= sl and prev_bar.low > sl:
+            if curr_bar.low <= sl:
                 return replace(self, type=RiskType.SL)
 
         if side == PositionSide.SHORT:
-            if curr_bar.low <= tp and prev_bar.low > tp:
+            if curr_bar.low <= tp:
                 return replace(self, type=RiskType.TP)
-            if curr_bar.high >= sl and prev_bar.high < sl:
+            if curr_bar.high >= sl:
                 return replace(self, type=RiskType.SL)
 
         return self.reset()
 
     def sl_low(self, side: PositionSide, sl: float) -> "float":
-        period = 5
+        period = 2
 
         low = self._ll(self.ohlcv, period)
+        atr = self._ema(self._true_ranges(self.ohlcv), period)
 
         if len(low) < period:
             return sl
 
         if side == PositionSide.LONG:
-            return max(sl, max(low))
+            return max(sl, max(low - atr[-1]))
         if side == PositionSide.SHORT:
-            return min(sl, min(low))
+            return min(sl, min(low - atr[-1]))
 
     def sl_ats(self, side: PositionSide, sl: float) -> "float":
         period = 5

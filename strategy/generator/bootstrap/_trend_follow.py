@@ -226,7 +226,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
 
     def _generate_invariants(self, base_strategy: Strategy) -> List[Strategy]:
         result = [base_strategy]
-        strategy_attributes = []
+        strategy_attributes = ["confirm"]
 
         def smooth_invariants(strategy_part, nums=3):
             smooth_attr = ["smooth_type", "smooth_signal", "smooth_bb"]
@@ -347,17 +347,17 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 for part in factor_parts:
                     result.append(replace(strategy, **{attr: part}))
 
-                # ma_parts = ma_invariants(strategy_attr)
-                # for part in ma_parts:
-                #     result.append(replace(strategy, **{attr: part}))
+                ma_parts = ma_invariants(strategy_attr)
+                for part in ma_parts:
+                    result.append(replace(strategy, **{attr: part}))
 
-                # candle_parts = candle_invariants(strategy_attr)
-                # for part in candle_parts:
-                #     result.append(replace(strategy, **{attr: part}))
+                candle_parts = candle_invariants(strategy_attr)
+                for part in candle_parts:
+                    result.append(replace(strategy, **{attr: part}))
 
-                # period_parts = period_invariants(strategy_attr)
-                # for part in period_parts:
-                #     result.append(replace(strategy, **{attr: part}))
+                period_parts = period_invariants(strategy_attr)
+                for part in period_parts:
+                    result.append(replace(strategy, **{attr: part}))
 
         return result
 
