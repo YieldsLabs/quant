@@ -7,6 +7,8 @@ from .ohlcv import OHLCV
 from .risk_type import RiskType
 from .side import PositionSide
 
+TIME_THRESHOLD = 45000
+
 
 @dataclass(frozen=True)
 class Risk:
@@ -54,21 +56,31 @@ class Risk:
             if curr_bar.high >= sl:
                 return replace(self, type=RiskType.SL)
 
-        return self.reset()
+        return self
 
     def sl_low(self, side: PositionSide, sl: float) -> "float":
-        period = 2
+        ts = sum(
+            [
+                self.ohlcv[i].timestamp - self.ohlcv[i - 1].timestamp
+                for i in range(1, len(self.ohlcv))
+            ]
+        )
 
-        low = self._ll(self.ohlcv, period)
-        atr = self._ema(self._true_ranges(self.ohlcv), period)
-
-        if len(low) < period:
+        if ts < TIME_THRESHOLD:
             return sl
 
+        period = 3
+
+        ll = self._ll(self.ohlcv, period)
+        hh = self._hh(self.ohlcv, period)
+
+        atr = self._ema(self._true_ranges(self.ohlcv), period)
+
         if side == PositionSide.LONG:
-            return max(sl, max(low - atr[-1]))
+            return max(sl, np.max(ll - atr))
+
         if side == PositionSide.SHORT:
-            return min(sl, min(low - atr[-1]))
+            return min(sl, np.min(hh + atr))
 
     def sl_ats(self, side: PositionSide, sl: float) -> "float":
         period = 5
@@ -102,9 +114,6 @@ class Risk:
                 return last_bar.low
 
         return last_bar.close
-
-    def reset(self):
-        return replace(self, type=RiskType.NONE)
 
     @staticmethod
     def _ats(ohlcvs: List[OHLCV], atr: List[OHLCV], factor: float) -> "float":
@@ -167,19 +176,21 @@ class Risk:
         for i in range(period, len(values)):
             ema.append((values[i] - ema[-1]) * alpha + ema[-1])
 
-        return np.array(ema)
+        padding_length = max(0, len(values) - len(ema))
+
+        return np.pad(np.array(ema), (padding_length, 0), mode="constant")
 
     @staticmethod
     def _hh(ohlcvs: List[OHLCV], period: int) -> List[float]:
         highs = np.array([ohlcv.high for ohlcv in ohlcvs])
-        hh = np.maximum.reduce([np.roll(highs, i) for i in range(period)])
-        return hh.tolist()
+        max_values = np.maximum.reduce([np.roll(highs, i) for i in range(period)])
+        return max_values
 
     @staticmethod
     def _ll(ohlcvs: List[OHLCV], period: int) -> List[float]:
         lows = np.array([ohlcv.low for ohlcv in ohlcvs])
-        ll = np.minimum.reduce([np.roll(lows, i) for i in range(period)])
-        return ll.tolist()
+        min_values = np.minimum.reduce([np.roll(lows, i) for i in range(period)])
+        return min_values
 
     def to_dict(self):
         return {

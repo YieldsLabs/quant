@@ -79,7 +79,7 @@ class Position:
 
     @property
     def take_profit(self) -> float:
-        return self.third_take_profit if not self._tp else self._tp
+        return self.second_take_profit if not self._tp else self._tp
 
     @property
     def stop_loss(self) -> float:
@@ -280,12 +280,14 @@ class Position:
 
         next_position = replace(self, risk=self.risk.next(ohlcv))
 
-        next_sl = next_position.break_even()
+        next_sl = next_position.risk.sl_low(self.side, self.stop_loss)
 
-        if not self.trailed:
-            next_sl = next_position.risk.sl_low(self.side, next_sl)
-        else:
-            next_sl = next_position.risk.sl_ats(self.side, next_sl)
+        # next_sl = next_position.break_even()
+
+        # if not self.trailed:
+        #     next_sl = next_position.risk.sl_low(self.side, next_sl)
+        # else:
+        #     next_sl = next_position.risk.sl_ats(self.side, next_sl)
 
         p = self.signal.symbol.price_precision
 

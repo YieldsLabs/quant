@@ -130,7 +130,7 @@ class PaperOrderActor(Actor):
 
         next_position = current_position.fill_order(order)
 
-        logger.debug(f"Closed Position: {next_position}")
+        logger.info(f"Closed Position: {next_position}")
 
         await self.tell(BrokerPositionClosed(next_position))
 
