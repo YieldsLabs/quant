@@ -78,26 +78,18 @@ class PaperOrderActor(Actor):
 
         logger.debug(f"New Position: {current_position}")
 
+        entry_order = current_position.entry_order()
         next_bar = await self._find_next_bar(current_position.signal_bar)
 
-        entry_order = current_position.entry_order()
-
-        if next_bar:
-            price = self._find_fill_price(current_position, next_bar, entry_order)
-        else:
-            price = self._find_fill_price(
-                current_position, current_position.signal_bar, entry_order
-            )
-            logger.warn(f"Will use current bar with price: {price}")
-
+        price = self._find_open_price(current_position, entry_order, next_bar)
         size = entry_order.size
         fee = current_position.theo_taker_fee(size, price)
 
         order = Order(
             status=OrderStatus.EXECUTED,
             type=OrderType.PAPER,
-            size=size,
             price=price,
+            size=size,
             fee=fee,
         )
 
@@ -124,18 +116,15 @@ class PaperOrderActor(Actor):
 
         exit_order = current_position.exit_order()
 
+        price = self._find_close_price(current_position, exit_order)
         size = exit_order.size
-        price = self._find_closing_price(
-            current_position, current_position.risk_bar, exit_order
-        )
-
         fee = current_position.theo_taker_fee(size, price)
 
         order = Order(
             status=OrderStatus.CLOSED,
             type=OrderType.PAPER,
-            size=size,
             price=price,
+            size=size,
             fee=fee,
         )
 
@@ -145,28 +134,42 @@ class PaperOrderActor(Actor):
 
         await self.tell(BrokerPositionClosed(next_position))
 
-    def _find_fill_price(self, position: Position, bar: OHLCV, order: Order) -> float:
+    def _find_fill_price(self, side: PositionSide, bar: OHLCV, price: float) -> float:
         direction = self._intrabar_price_movement(bar)
 
         high, low = bar.high, bar.low
-        in_bar = low <= order.price <= high
+        in_bar = low <= price <= high
 
-        if position.side == PositionSide.LONG and direction == PriceDirection.OHLC:
-            return order.price if in_bar else high
-        elif position.side == PositionSide.SHORT and direction == PriceDirection.OLHC:
-            return order.price if in_bar else low
+        if side == PositionSide.LONG and direction == PriceDirection.OHLC:
+            return price if in_bar else high
+        elif side == PositionSide.SHORT and direction == PriceDirection.OLHC:
+            return price if in_bar else low
         else:
             return bar.close
 
-    def _find_closing_price(
-        self, position: Position, bar: OHLCV, price: float
+    def _find_open_price(
+        self, position: Position, order: Order, bar: Optional[OHLCV] = None
     ) -> float:
-        fill_price = self._find_fill_price(position, bar, price)
+        if bar is None:
+            bar = position.signal_bar
+
+        return self._find_fill_price(position.side, bar, order.price)
+
+    def _find_close_price(
+        self, position: Position, order: Order, bar: Optional[OHLCV] = None
+    ) -> float:
+        if bar is None:
+            bar = position.risk_bar
+
+        order_price = self._find_fill_price(position.side, bar, order.price)
+        tp_price = self._find_fill_price(position.side, bar, position.take_profit)
+        sl_price = self._find_fill_price(position.side, bar, position.stop_loss)
 
         if position.side == PositionSide.LONG:
-            return max(min(fill_price, position.take_profit), position.stop_loss)
-        else:
-            return min(max(fill_price, position.take_profit), position.stop_loss)
+            return min(order_price, tp_price, sl_price)
+
+        if position.side == PositionSide.SHORT:
+            return max(order_price, tp_price, sl_price)
 
     @staticmethod
     def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:
