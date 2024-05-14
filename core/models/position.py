@@ -294,7 +294,7 @@ class Position:
 
         next_risk = next_position.risk.assess(
             self.side,
-            self.take_profit,
+            next_tp,
             next_sl,
             self.open_timestamp,
             self.expiration,
@@ -343,14 +343,14 @@ class Position:
         if self.trailed:
             return self
 
-        if price:
-            if self.side == PositionSide.LONG and price > self.first_take_profit:
-                return replace(self, _tp=price, trailed=True)
+        if not price:
+            return replace(self, trailed=True)
 
-            if self.side == PositionSide.SHORT and price < self.first_take_profit:
-                return replace(self, _tp=price, trailed=True)
+        if self.side == PositionSide.LONG and price > self.first_take_profit:
+            return replace(self, _tp=price, trailed=True)
 
-        return replace(self, trailed=True)
+        if self.side == PositionSide.SHORT and price < self.first_take_profit:
+            return replace(self, _tp=price, trailed=True)
 
     def theo_taker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.taker_fee
