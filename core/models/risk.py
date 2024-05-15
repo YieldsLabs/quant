@@ -66,6 +66,10 @@ class Risk:
             return sl
 
         period = 3
+        atr_period = 2
+
+        if len(self.ohlcv) < period:
+            return sl
 
         lows = np.array([candle.low for candle in self.ohlcv])
         highs = np.array([candle.high for candle in self.ohlcv])
@@ -78,11 +82,17 @@ class Risk:
         hh_ema = self._ema(hh, period)
 
         atr = self.trail_factor * self._ema(
-            self._true_ranges(highs, lows, closes), period
+            self._true_ranges(highs, lows, closes), atr_period
         )
 
+        min_length = min(len(ll_ema), len(hh_ema), len(atr))
+
+        ll_ema = ll_ema[-min_length:]
+        hh_ema = hh_ema[-min_length:]
+        atr = atr[-min_length:]
+
         ll_atr = ll_ema - atr
-        hh_atr = hh_ema - atr
+        hh_atr = hh_ema + atr
 
         if side == PositionSide.LONG:
             return max(sl, np.min(ll_atr))
