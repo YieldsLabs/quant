@@ -186,11 +186,11 @@
         },
         "ccxt": {
             "hashes": [
-                "sha256:188b6a4579b55de3d56c630483933dd000a32b924bb8819ec9666d6fcb1febe3",
-                "sha256:2acfe0c0941608aeda8cb8ba1fe4628e4ea2f62bcf95e622758722ff4e28c12e"
+                "sha256:01880d15b7def5e45ac740ecd3b630a5fc31bd1a31459179a41e944688676876",
+                "sha256:a6f94c2ac560aad8024421d1d7b97c421fdf38916886c18d292733909b4a9da3"
             ],
             "index": "pypi",
-            "version": "==4.3.21"
+            "version": "==4.3.23"
         },
         "certifi": {
             "hashes": [
@@ -1103,11 +1103,11 @@
         },
         "platformdirs": {
             "hashes": [
-                "sha256:031cd18d4ec63ec53e82dceaac0417d218a6863f7745dfcc9efe7793b7039bdf",
-                "sha256:17d5a1161b3fd67b390023cb2d3b026bbd40abde6fdb052dfbd3a29c3ba22ee1"
+                "sha256:2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee",
+                "sha256:38b7b51f512eed9e84a22788b4bce1de17c0adb134d6becb09836e37d8654cd3"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==4.2.1"
+            "version": "==4.2.2"
         },
         "plotly": {
             "hashes": [
@@ -1941,11 +1941,11 @@
         },
         "platformdirs": {
             "hashes": [
-                "sha256:031cd18d4ec63ec53e82dceaac0417d218a6863f7745dfcc9efe7793b7039bdf",
-                "sha256:17d5a1161b3fd67b390023cb2d3b026bbd40abde6fdb052dfbd3a29c3ba22ee1"
+                "sha256:2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee",
+                "sha256:38b7b51f512eed9e84a22788b4bce1de17c0adb134d6becb09836e37d8654cd3"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==4.2.1"
+            "version": "==4.2.2"
         },
         "prompt-toolkit": {
             "hashes": [

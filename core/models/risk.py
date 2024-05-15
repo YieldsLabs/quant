@@ -95,13 +95,16 @@ class Risk:
         hh_atr = hh_ema + atr
 
         if side == PositionSide.LONG:
-            return max(sl, np.min(ll_atr))
+            return max(sl, np.max(ll_atr))
 
         if side == PositionSide.SHORT:
-            return min(sl, np.max(hh_atr))
+            return min(sl, np.min(hh_atr))
 
     def sl_ats(self, side: PositionSide, sl: float) -> "float":
         period = 5
+
+        if len(self.ohlcv) < period:
+            return sl
 
         lows = np.array([candle.low for candle in self.ohlcv])
         highs = np.array([candle.high for candle in self.ohlcv])
@@ -109,9 +112,6 @@ class Risk:
 
         atr = self._ema(self._true_ranges(highs, lows, closes), period)
         ats = self._ats(closes, atr, self.trail_factor)
-
-        if ats[-1] == 0:
-            return sl
 
         if side == PositionSide.LONG:
             return max(sl, ats[-1])

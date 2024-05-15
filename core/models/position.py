@@ -281,6 +281,7 @@ class Position:
         next_position = replace(self, risk=self.risk.next(ohlcv))
 
         next_sl = next_position.risk.sl_low(self.side, self.stop_loss)
+        # next_sl = next_position.risk.sl_ats(self.side, self.stop_loss)
 
         # next_sl = next_position.break_even()
 
@@ -340,6 +341,10 @@ class Position:
                 curr_sl = min(curr_sl, second_break_even)
 
         return curr_sl
+    
+
+    def force_exit(self, price: float) -> "Position":
+        return replace(self, _tp=price)
 
     def trail(self, price: Optional[float] = None) -> "Position":
         if self.trailed:
