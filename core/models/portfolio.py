@@ -19,7 +19,7 @@ class Performance:
 
     @cached_property
     def total_trades(self) -> int:
-        return self._pnl.size
+        return len(self._pnl)
 
     @cached_property
     def total_pnl(self) -> float:
