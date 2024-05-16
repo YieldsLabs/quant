@@ -21,3 +21,15 @@ class NewMarketDataReceived(MarketEvent):
     timeframe: Timeframe
     ohlcv: OHLCV
     closed: bool
+
+    def to_dict(self):
+        parent_dict = super().to_dict()
+
+        current_dict = {
+            "symbol": str(self.symbol),
+            "timeframe": str(self.timeframe),
+            "ohlcv": self.ohlcv.to_dict(),
+            "closed": self.closed,
+        }
+
+        return {**parent_dict, **current_dict}

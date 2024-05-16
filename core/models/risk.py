@@ -7,7 +7,7 @@ from .ohlcv import OHLCV
 from .risk_type import RiskType
 from .side import PositionSide
 
-TIME_THRESHOLD = 25000
+TIME_THRESHOLD = 10000
 
 
 @dataclass(frozen=True)
