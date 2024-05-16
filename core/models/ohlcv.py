@@ -26,12 +26,13 @@ class OHLCV:
 
     @classmethod
     def from_dict(cls, data: Dict) -> "OHLCV":
-        return cls.from_list(
-            [
-                data[key]
-                for key in ["timestamp", "open", "high", "low", "close", "volume"]
-            ]
-        )
+        keys = ["timestamp", "open", "high", "low", "close", "volume"]
+
+        if any(key not in data for key in keys):
+            raise ValueError(f"Data dictionary must contain the keys: {keys}")
+
+        return cls.from_list([data[key] for key in keys])
+
 
     @property
     def real_body(self) -> float:
@@ -55,7 +56,14 @@ class OHLCV:
         if not isinstance(other, OHLCV):
             return False
 
-        return self.timestamp == other.timestamp
+        return (
+            self.timestamp == other.timestamp and
+            self.open == other.open and
+            self.high == other.high and
+            self.low == other.low and
+            self.close == other.close and
+            self.volume == other.volume
+        )
 
     def to_dict(self):
         return {
@@ -70,9 +78,28 @@ class OHLCV:
             "lower_shadow": self.lower_shadow
         }
 
-    def __str__(self):
-        return (f"OHLCV(timestamp={self.timestamp}, open={self.open}, high={self.high}, "
-                f"low={self.low}, close={self.close}, volume={self.volume}, "
-                f"real_body={round(self.real_body, 5)}, "
-                f"upper_shadow={round(self.upper_shadow, 5)}, "
-                f"lower_shadow={round(self.lower_shadow, 5)})")
+    def __str__(self) -> str:
+        return (
+            f"OHLCV(timestamp={self.timestamp}, "
+            f"open={self.open}, "
+            f"high={self.high}, "
+            f"low={self.low}, "
+            f"close={self.close}, "
+            f"volume={self.volume}, "
+            f"real_body={self.real_body:.5f}, "
+            f"upper_shadow={self.upper_shadow:.5f}, "
+            f"lower_shadow={self.lower_shadow:.5f})"
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"OHLCV(timestamp={self.timestamp}, "
+            f"open={self.open}, "
+            f"high={self.high}, "
+            f"low={self.low}, "
+            f"close={self.close}, "
+            f"volume={self.volume}, "
+            f"real_body={self.real_body:.5f}, "
+            f"upper_shadow={self.upper_shadow:.5f}, "
+            f"lower_shadow={self.lower_shadow:.5f})"
+        )
