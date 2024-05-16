@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any, Dict, List
 
 
@@ -33,6 +33,18 @@ class OHLCV:
             ]
         )
 
+    @property
+    def real_body(self) -> float:
+        return abs(self.open - self.close)
+
+    @property
+    def upper_shadow(self) -> float:
+        return self.high - max(self.open, self.close)
+
+    @property
+    def lower_shadow(self) -> float:
+        return min(self.open, self.close) - self.low
+
     def __lt__(self, other: object):
         if not isinstance(other, OHLCV):
             return NotImplemented
@@ -46,4 +58,21 @@ class OHLCV:
         return self.timestamp == other.timestamp
 
     def to_dict(self):
-        return asdict(self)
+        return {
+            "timestamp": self.timestamp,
+            "open": self.open,
+            "high": self.high,
+            "low": self.low,
+            "close": self.close,
+            "volume": self.volume,
+            "real_body": self.real_body,
+            "upper_shadow": self.upper_shadow,
+            "lower_shadow": self.lower_shadow
+        }
+
+    def __str__(self):
+        return (f"OHLCV(timestamp={self.timestamp}, open={self.open}, high={self.high}, "
+                f"low={self.low}, close={self.close}, volume={self.volume}, "
+                f"real_body={round(self.real_body, 5)}, "
+                f"upper_shadow={round(self.upper_shadow, 5)}, "
+                f"lower_shadow={round(self.lower_shadow, 5)})")
