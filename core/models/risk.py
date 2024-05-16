@@ -7,7 +7,7 @@ from .ohlcv import OHLCV
 from .risk_type import RiskType
 from .side import PositionSide
 
-TIME_THRESHOLD = 45000
+TIME_THRESHOLD = 25000
 
 
 @dataclass(frozen=True)
@@ -100,6 +100,48 @@ class Risk:
         if side == PositionSide.SHORT:
             return min(sl, np.min(hh_atr))
 
+    def tp_low(self, side: PositionSide, tp: float) -> "float":
+        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
+        ts_diff = np.diff(timestamps)
+
+        if ts_diff.sum() < TIME_THRESHOLD:
+            return tp
+
+        period = 3
+        atr_period = 2
+
+        if len(self.ohlcv) < period:
+            return tp
+
+        lows = np.array([candle.low for candle in self.ohlcv])
+        highs = np.array([candle.high for candle in self.ohlcv])
+        closes = np.array([candle.close for candle in self.ohlcv])
+
+        ll = self._min(lows, period)
+        hh = self._max(highs, period)
+
+        ll_ema = self._ema(ll, period)
+        hh_ema = self._ema(hh, period)
+
+        atr = self.trail_factor * self._ema(
+            self._true_ranges(highs, lows, closes), atr_period
+        )
+
+        min_length = min(len(ll_ema), len(hh_ema), len(atr))
+
+        ll_ema = ll_ema[-min_length:]
+        hh_ema = hh_ema[-min_length:]
+        atr = atr[-min_length:]
+
+        ll_atr = ll_ema - atr
+        hh_atr = hh_ema + atr
+
+        if side == PositionSide.LONG:
+            return min(tp, np.min(hh_atr))
+
+        if side == PositionSide.SHORT:
+            return max(tp, np.max(ll_atr))
+
     def sl_ats(self, side: PositionSide, sl: float) -> "float":
         period = 5
 
@@ -118,22 +160,20 @@ class Risk:
         if side == PositionSide.SHORT:
             return min(sl, ats[-1])
 
-    def exit_price(self, side: PositionSide, sl: float, tp: float) -> "float":
+    def exit_price(self, side: PositionSide, tp: float, sl: float) -> "float":
         last_bar = self.last_bar
 
-        if side == PositionSide.LONG:
-            if last_bar.low <= sl:
-                return last_bar.low
+        if self.type == RiskType.TP:
+            if side == PositionSide.LONG:
+                return min(tp, last_bar.high)
+            elif side == PositionSide.SHORT:
+                return max(tp, last_bar.low)
 
-            if last_bar.high >= tp:
-                return last_bar.high
-
-        if side == PositionSide.SHORT:
-            if last_bar.high >= sl:
-                return last_bar.high
-
-            if last_bar.low <= tp:
-                return last_bar.low
+        elif self.type == RiskType.SL:
+            if side == PositionSide.LONG:
+                return max(sl, last_bar.low)
+            elif side == PositionSide.SHORT:
+                return min(sl, last_bar.high)
 
         return last_bar.close
 

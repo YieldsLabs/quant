@@ -140,12 +140,14 @@ class PaperOrderActor(Actor):
         high, low = bar.high, bar.low
         in_bar = low <= price <= high
 
-        if side == PositionSide.LONG and direction == PriceDirection.OHLC:
-            return price if in_bar else high
-        elif side == PositionSide.SHORT and direction == PriceDirection.OLHC:
-            return price if in_bar else low
-        else:
-            return bar.close
+        if direction == PriceDirection.OHLC:
+            if side == PositionSide.LONG:
+                return price if in_bar else high
+        elif direction == PriceDirection.OLHC:
+            if side == PositionSide.SHORT:
+                return price if in_bar else low
+
+        return bar.close
 
     def _find_open_price(
         self, position: Position, order: Order, bar: Optional[OHLCV] = None
@@ -161,20 +163,12 @@ class PaperOrderActor(Actor):
         if bar is None:
             bar = position.risk_bar
 
-        order_price = self._find_fill_price(position.side, bar, order.price)
-        tp_price = self._find_fill_price(position.side, bar, position.take_profit)
-        sl_price = self._find_fill_price(position.side, bar, position.stop_loss)
-
-        if position.side == PositionSide.LONG:
-            return min(order_price, tp_price, sl_price)
-
-        if position.side == PositionSide.SHORT:
-            return max(order_price, tp_price, sl_price)
+        return self._find_fill_price(position.side, bar, order.price)
 
     @staticmethod
-    def _intrabar_price_movement(tick: OHLCV) -> PriceDirection:
+    def _intrabar_price_movement(bar: OHLCV) -> PriceDirection:
         return (
             PriceDirection.OHLC
-            if abs(tick.open - tick.high) < abs(tick.open - tick.low)
+            if abs(bar.open - bar.high) < abs(bar.open - bar.low)
             else PriceDirection.OLHC
         )

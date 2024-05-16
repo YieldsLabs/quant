@@ -23,9 +23,9 @@ class Position:
     expiration: int = field(default_factory=lambda: 900000)  # 15min
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    first_factor: float = field(default_factory=lambda: np.random.uniform(0.13, 0.25))
-    second_factor: float = field(default_factory=lambda: np.random.uniform(0.3, 0.6))
-    third_factor: float = field(default_factory=lambda: np.random.uniform(1.5, 5.0))
+    first_factor: float = field(default_factory=lambda: np.random.uniform(0.13, 0.3))
+    second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.5))
+    third_factor: float = field(default_factory=lambda: np.random.uniform(0.55, 1.0))
     trailed: bool = False
     _tp: Optional[int] = None
     _sl: Optional[int] = None
@@ -79,12 +79,15 @@ class Position:
 
     @property
     def take_profit(self) -> float:
-        return self.second_take_profit if not self._tp else self._tp
+        p = self.signal.symbol.price_precision
+        tp = self.second_take_profit if not self._tp else self._tp
+        return round(tp, p)
 
     @property
     def stop_loss(self) -> float:
         p = self.signal.symbol.price_precision
-        return round(self.signal.stop_loss, p) if not self._sl else self._sl
+        sl = self.signal.stop_loss if not self._sl else self._sl
+        return round(sl, p)
 
     @property
     def open_timestamp(self) -> int:
@@ -178,6 +181,13 @@ class Position:
         return pnl
 
     @property
+    def curr_pnl(self) -> float:
+        factor = -1 if self.side == PositionSide.SHORT else 1
+        pnl = factor * (self.curr_price - self.entry_price) * self.size
+
+        return pnl
+
+    @property
     def fee(self) -> float:
         return sum([order.fee for order in self.open_orders]) + sum(
             [order.fee for order in self.closed_orders]
@@ -228,10 +238,11 @@ class Position:
         size = self._average_size(self.open_orders) - self._average_size(
             self.closed_orders
         )
+        price = self.risk.exit_price(self.side, self.take_profit, self.stop_loss)
 
         return Order(
             status=OrderStatus.PENDING,
-            price=self.risk.exit_price(self, self.stop_loss, self.take_profit),
+            price=price,
             size=size,
         )
 
@@ -276,12 +287,15 @@ class Position:
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
 
-        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
+        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}, PnL: {self.curr_pnl}")
 
         next_position = replace(self, risk=self.risk.next(ohlcv))
+        next_sl = self.stop_loss
+        next_tp = self.take_profit
 
+        next_tp = next_position.risk.tp_low(self.side, self.take_profit)
         next_sl = next_position.risk.sl_low(self.side, self.stop_loss)
-        # next_sl = next_position.risk.sl_ats(self.side, self.stop_loss)
+        # # next_sl = next_position.risk.sl_ats(self.side, self.stop_loss)
 
         # next_sl = next_position.break_even()
 
@@ -290,10 +304,19 @@ class Position:
         # else:
         #     next_sl = next_position.risk.sl_ats(self.side, next_sl)
 
-        p = self.signal.symbol.price_precision
+        # p = self.signal.symbol.price_precision
 
-        next_tp = round(self.take_profit, p)
-        next_sl = round(next_sl, p)
+        # next_tp = round(next_tp, p)
+        # next_sl = round(next_sl, p)
+
+        # if next_position.curr_pnl > 0.015:
+        #     if self.side == PositionSide.LONG:
+        #         next_tp = self.risk_bar.close
+        #         next_sl = self.risk_bar.close
+
+        #     if self.side == PositionSide.SHORT:
+        #         next_tp = self.risk_bar.close
+        #         next_sl = self.risk_bar.close
 
         next_risk = next_position.risk.assess(
             self.side,
@@ -341,10 +364,16 @@ class Position:
                 curr_sl = min(curr_sl, second_break_even)
 
         return curr_sl
-    
+
 
     def force_exit(self, price: float) -> "Position":
-        return replace(self, _tp=price)
+        if self.side == PositionSide.LONG and price > self.entry_price:
+            return replace(self, _tp=price)
+
+        if self.side == PositionSide.SHORT and price < self.entry_price:
+            return replace(self, _tp=price, trailed=True)
+
+        return self
 
     def trail(self, price: Optional[float] = None) -> "Position":
         if self.trailed:
@@ -401,4 +430,4 @@ class Position:
         return total_price / len(orders) if orders else 0.0
 
     def __str__(self):
-        return f"Position(signal={self.signal}, risk={self.risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, tp={self.take_profit}, sl={self.stop_loss}, exit_price={self.exit_price}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid})"
+        return f"Position(signal={self.signal}, risk={self.risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid})"
