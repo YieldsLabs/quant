@@ -18,12 +18,6 @@ class Signal:
     exit: float = field(default_factory=lambda: 0.0)
     stop_loss: float = field(default_factory=lambda: 0.0)
 
-    def __str__(self) -> str:
-        return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
-
-    def __repr__(self) -> str:
-        return f"Signal(symbol={self.symbol}, timeframe={self.timeframe}, side={self.side}, strategy={self.strategy})"
-
     def __hash__(self) -> int:
         return hash((self.symbol, self.timeframe, self.strategy, self.side))
 
@@ -37,6 +31,12 @@ class Signal:
             and self.timeframe == other.timeframe
             and self.strategy == other.strategy
         )
+
+    def __str__(self) -> str:
+        return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
+
+    def __repr__(self) -> str:
+        return f"Signal(symbol={self.symbol}, timeframe={self.timeframe}, side={self.side}, strategy={self.strategy})"
 
     def to_dict(self):
         return {

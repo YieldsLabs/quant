@@ -17,12 +17,6 @@ class Timeframe(Enum):
 
         raise ValueError(f"No matching Timeframe for value: {value}")
 
-    def __str__(self):
-        return self.value
-
-    def __repr__(self) -> str:
-        return f"Timeframe({self.value})"
-
     def __lt__(self, other):
         if not isinstance(other, Timeframe):
             return NotImplemented
@@ -33,3 +27,9 @@ class Timeframe(Enum):
 
     def __hash__(self) -> int:
         return hash(self.value)
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self) -> str:
+        return f"Timeframe({self.value})"

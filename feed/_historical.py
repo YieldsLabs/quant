@@ -1,6 +1,6 @@
 import asyncio
 from collections import deque
-from typing import List
+from typing import AsyncIterator, List
 
 from core.actors import Actor
 from core.commands.feed import StartHistoricalFeed
@@ -46,7 +46,6 @@ class AsyncHistoricalData:
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         self.iterator = None
-        return self
 
     def __aiter__(self):
         return self
@@ -135,7 +134,7 @@ class HistoricalActor(Actor):
             await asyncio.sleep(0.0001)
 
     @staticmethod
-    async def batched(stream, batch_size):
+    async def batched(stream: AsyncIterator[Bar], batch_size: int):
         batch = []
         async for bar in stream:
             batch.append(bar)

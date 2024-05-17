@@ -67,7 +67,7 @@ class Strategy:
         )
         exit_ = f"_EXT{self.exit.type}:{self._format_parameters(self.exit)}"
 
-        return entry_ + confirmation_ + pulse_ + baseline_ + stop_loss + exit_
+        return f"{entry_}{confirmation_}{pulse_}{baseline_}{stop_loss}{exit_}"
 
     def __hash__(self) -> int:
         return hash(str(self))

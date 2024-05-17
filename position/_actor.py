@@ -89,8 +89,6 @@ class PositionActor(Actor):
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 
-        # logger.info(f"Signal side: {event}")
-
         async def create_and_store_position(event: SignalEvent):
             position = await self.position_factory.create(event.signal)
 

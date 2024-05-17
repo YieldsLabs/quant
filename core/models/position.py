@@ -30,7 +30,7 @@ class Position:
     _tp: Optional[int] = None
     _sl: Optional[int] = None
 
-    @cached_property
+    @property
     def side(self) -> PositionSide:
         if self.signal.side == SignalSide.BUY:
             return PositionSide.LONG
@@ -287,7 +287,7 @@ class Position:
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
 
-        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}, PnL: {self.curr_pnl}")
+        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
 
         next_position = replace(self, risk=self.risk.next(ohlcv))
         next_sl = self.stop_loss
@@ -295,28 +295,6 @@ class Position:
 
         next_tp = next_position.risk.tp_low(self.side, self.take_profit)
         next_sl = next_position.risk.sl_low(self.side, self.stop_loss)
-        # # next_sl = next_position.risk.sl_ats(self.side, self.stop_loss)
-
-        # next_sl = next_position.break_even()
-
-        # if not self.trailed:
-        #     next_sl = next_position.risk.sl_low(self.side, next_sl)
-        # else:
-        #     next_sl = next_position.risk.sl_ats(self.side, next_sl)
-
-        # p = self.signal.symbol.price_precision
-
-        # next_tp = round(next_tp, p)
-        # next_sl = round(next_sl, p)
-
-        # if next_position.curr_pnl > 0.015:
-        #     if self.side == PositionSide.LONG:
-        #         next_tp = self.risk_bar.close
-        #         next_sl = self.risk_bar.close
-
-        #     if self.side == PositionSide.SHORT:
-        #         next_tp = self.risk_bar.close
-        #         next_sl = self.risk_bar.close
 
         next_risk = next_position.risk.assess(
             self.side,
@@ -326,7 +304,7 @@ class Position:
             self.expiration,
         )
 
-        print(f"RISK: {next_risk}, TP: {next_tp}, SL: {next_sl}")
+        print(f"RISK: {next_risk}, TP: {next_tp}, SL: {next_sl}, PnL: {self.curr_pnl}")
 
         return replace(
             next_position,
@@ -371,7 +349,7 @@ class Position:
             return replace(self, _tp=price)
 
         if self.side == PositionSide.SHORT and price < self.entry_price:
-            return replace(self, _tp=price, trailed=True)
+            return replace(self, _tp=price)
 
         return self
 
