@@ -11,6 +11,12 @@ class OHLCV:
     close: float
     volume: float
 
+    def __post_init__(self):
+        if not (self.low <= self.open <= self.high and self.low <= self.close <= self.high):
+            raise ValueError("Open and Close prices must be between Low and High prices")
+        if self.low > self.high:
+            raise ValueError("Low price cannot be higher than High price")
+
     @classmethod
     def from_list(cls, data: List[Any]) -> "OHLCV":
         timestamp, open, high, low, close, volume = data
@@ -80,7 +86,7 @@ class OHLCV:
 
     def __str__(self) -> str:
         return (
-            f"OHLCV(timestamp={self.timestamp}, "
+            f"timestamp={self.timestamp}, "
             f"open={self.open}, "
             f"high={self.high}, "
             f"low={self.low}, "
@@ -88,7 +94,7 @@ class OHLCV:
             f"volume={self.volume}, "
             f"real_body={self.real_body:.5f}, "
             f"upper_shadow={self.upper_shadow:.5f}, "
-            f"lower_shadow={self.lower_shadow:.5f})"
+            f"lower_shadow={self.lower_shadow:.5f}"
         )
 
     def __repr__(self) -> str:
