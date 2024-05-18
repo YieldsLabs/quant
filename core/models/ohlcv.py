@@ -1,5 +1,15 @@
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Any, Dict, List
+
+
+class CandleType(Enum):
+    bullish = auto()
+    bearish = auto()
+    neutral = auto()
+
+    def __str__(self):
+        return self.name.upper()
 
 
 @dataclass(frozen=True)
@@ -39,7 +49,6 @@ class OHLCV:
 
         return cls.from_list([data[key] for key in keys])
 
-
     @property
     def real_body(self) -> float:
         return abs(self.open - self.close)
@@ -51,6 +60,15 @@ class OHLCV:
     @property
     def lower_shadow(self) -> float:
         return min(self.open, self.close) - self.low
+
+    @property
+    def type(self) -> CandleType:
+        if self.close > self.open:
+            return CandleType.bullish
+        elif self.close < self.open:
+            return CandleType.bearish
+        else:
+            return CandleType.neutral
 
     def __lt__(self, other: object):
         if not isinstance(other, OHLCV):
@@ -81,7 +99,8 @@ class OHLCV:
             "volume": self.volume,
             "real_body": self.real_body,
             "upper_shadow": self.upper_shadow,
-            "lower_shadow": self.lower_shadow
+            "lower_shadow": self.lower_shadow,
+            "type": str(self.type)
         }
 
     def __str__(self) -> str:
@@ -92,9 +111,10 @@ class OHLCV:
             f"low={self.low}, "
             f"close={self.close}, "
             f"volume={self.volume}, "
-            f"real_body={self.real_body:.5f}, "
-            f"upper_shadow={self.upper_shadow:.5f}, "
-            f"lower_shadow={self.lower_shadow:.5f}"
+            f"real_body={self.real_body:.8f}, "
+            f"upper_shadow={self.upper_shadow:.8f}, "
+            f"lower_shadow={self.lower_shadow:.8f}, "
+            f"type={self.type}"
         )
 
     def __repr__(self) -> str:
@@ -105,7 +125,8 @@ class OHLCV:
             f"low={self.low}, "
             f"close={self.close}, "
             f"volume={self.volume}, "
-            f"real_body={self.real_body:.5f}, "
-            f"upper_shadow={self.upper_shadow:.5f}, "
-            f"lower_shadow={self.lower_shadow:.5f})"
+            f"real_body={self.real_body:.8f}, "
+            f"upper_shadow={self.upper_shadow:.8f}, "
+            f"lower_shadow={self.lower_shadow:.8f}, "
+            f"type={self.type})"
         )
