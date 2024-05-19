@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field, replace
-from functools import wraps
 from typing import List
 
 import numpy as np
@@ -10,18 +9,6 @@ from .side import PositionSide
 
 TIME_THRESHOLD = 10000
 
-def time_threshold(func):
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
-        ts_diff = np.diff(timestamps)
-
-        if ts_diff.sum() < TIME_THRESHOLD:
-            return args[0]
-
-        return func(self, *args, **kwargs)
-
-    return wrapper
 
 class TaMixin:
     @staticmethod
@@ -150,8 +137,13 @@ class Risk(TaMixin):
 
         return last_bar.close
 
-    @time_threshold
     def sl_low(self, side: PositionSide, sl: float) -> "float":
+        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
+        ts_diff = np.diff(timestamps)
+
+        if ts_diff.sum() < TIME_THRESHOLD:
+            return sl
+
         period = 3
         atr_period = 2
 
@@ -187,8 +179,13 @@ class Risk(TaMixin):
         if side == PositionSide.SHORT:
             return min(sl, np.min(hh_atr))
 
-    @time_threshold
     def tp_low(self, side: PositionSide, tp: float) -> "float":
+        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
+        ts_diff = np.diff(timestamps)
+
+        if ts_diff.sum() < TIME_THRESHOLD:
+            return tp
+
         period = 3
         atr_period = 2
 
@@ -224,8 +221,13 @@ class Risk(TaMixin):
         if side == PositionSide.SHORT:
             return max(tp, np.max(ll_atr))
 
-    @time_threshold
     def sl_ats(self, side: PositionSide, sl: float) -> "float":
+        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
+        ts_diff = np.diff(timestamps)
+
+        if ts_diff.sum() < TIME_THRESHOLD:
+            return sl
+
         period = 5
 
         if len(self.ohlcv) < period:
@@ -239,9 +241,9 @@ class Risk(TaMixin):
         ats = self._ats(closes, atr, self.trail_factor)
 
         if side == PositionSide.LONG:
-            return max(sl, ats[-1])
+            return max(sl, np.min(ats))
         if side == PositionSide.SHORT:
-            return min(sl, ats[-1])
+            return min(sl, np.max(ats))
 
     def to_dict(self):
         return {
@@ -249,5 +251,8 @@ class Risk(TaMixin):
             "ohlcv": self.last_bar.to_dict(),
         }
 
-    def __str__(self):
+    def __repr__(self):
         return f"Risk(type={self.type}, ohlcv={self.last_bar})"
+
+    def __str__(self):
+        return f"type={self.type}, ohlcv={self.last_bar}"
