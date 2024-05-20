@@ -211,15 +211,17 @@ class SmartRouter(AbstractEventManager):
                 if position_side == PositionSide.LONG
                 else exit_order.price - price
             )
-            max_spread = max(spread, max_spread)
+            max_spread = max(max_spread, spread)
 
             logging.info(
                 f"Trying to reduce order -> algo price: {price}, theo price: {exit_order.price}, spread: {spread}, max spread: {max_spread}"
             )
 
-            if max_spread < 0:
-                self.exchange.close_full_position(symbol, position_side)
-                break
+            if max_spread < 0 or spread < max_spread or spread < 0:
+                if num_orders > 2:
+                    self.exchange.close_half_position(symbol, position_side)
+                else:
+                    self.exchange.close_full_position(symbol, position_side)
 
             curr_time = time.time()
             expired_orders = [
@@ -241,10 +243,10 @@ class SmartRouter(AbstractEventManager):
                 logging.info(f"All orders are filled: {order_counter}")
                 break
 
-            if (
-                not self.exchange.has_open_orders(symbol, position_side, True)
-                or not len(order_timestamps.keys())
-            ) and (spread < max_spread or spread < 0):
+            if not (
+                self.exchange.has_open_orders(symbol, position_side, True)
+                or len(order_timestamps.keys())
+            ):
                 order_id = self.exchange.create_reduce_order(
                     symbol, position_side, size, price
                 )
