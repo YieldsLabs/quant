@@ -46,11 +46,9 @@ class Actor(AbstractActor):
 
     def start(self):
         if self.running:
-            raise RuntimeError(f"Start: {self.__class__.__name__} is running")
+            raise RuntimeError(f"Start: {self.__class__.__name__} is already running")
 
-        for event in self._EVENTS:
-            self._mailbox.register(event, self.on_receive, self._pre_receive)
-
+        self._register_events()
         self.on_start()
         self._running = True
 
@@ -58,9 +56,7 @@ class Actor(AbstractActor):
         if not self.running:
             raise RuntimeError(f"Stop: {self.__class__.__name__} is not started")
 
-        for event in self._EVENTS:
-            self._mailbox.unregister(event, self.on_receive)
-
+        self._unregister_events()
         self.on_stop()
         self._running = False
 
@@ -72,6 +68,14 @@ class Actor(AbstractActor):
             return await self._mailbox.query(msg, *args, **kwrgs)
         if isinstance(msg, Command):
             await self._mailbox.execute(msg, *args, **kwrgs)
+
+    def _register_events(self):
+        for event in self._EVENTS:
+            self._mailbox.register(event, self.on_receive, self._pre_receive)
+
+    def _unregister_events(self):
+        for event in self._EVENTS:
+            self._mailbox.unregister(event, self.on_receive)
 
     def _pre_receive(self, _msg: Message):
         return self.pre_receive(_msg)
