@@ -99,16 +99,17 @@ impl TimeSeries for BaseTimeSeries {
 
         let high = series.high();
         let low = series.low();
-        let close = series.close();
+        let source = series.close();
         let volume = series.volume();
 
-        let rsi2 = rsi(&close, Smooth::SMMA, periods[0]);
-        let rsi14 = rsi(&close, Smooth::SMMA, periods[1]);
-        let (_, _, histogram) = macd(&close, Smooth::EMA, periods[2], periods[3], periods[4]);
-        let vo = vo(&volume, Smooth::EMA, periods[5], periods[6]);
-        let nvol = nvol(&volume, Smooth::SMA, periods[4]);
-        let atr = atr(&high, &low, &close, Smooth::EMA, periods[1]);
-        let (bbup, _, bbdn) = bb(&close, Smooth::SMA, periods[7], factors[0]);
+        let rsi2 = rsi(source, Smooth::SMMA, periods[0]);
+        let rsi14 = rsi(source, Smooth::SMMA, periods[1]);
+        let (_, _, histogram) = macd(source, Smooth::EMA, periods[2], periods[3], periods[4]);
+        let vo = vo(volume, Smooth::EMA, periods[5], periods[6]);
+        let nvol = nvol(volume, Smooth::SMA, periods[4]);
+        let atr = atr(high, low, source, Smooth::EMA, periods[1]);
+        let (bbup, _, bbdn) = bb(source, Smooth::SMA, periods[7], factors[0]);
+        let bbp = (source - &bbdn) / (bbup - &bbdn);
 
         TechAnalysis {
             rsi2: rsi2.into(),
@@ -117,8 +118,7 @@ impl TimeSeries for BaseTimeSeries {
             vo: vo.into(),
             nvol: nvol.into(),
             atr: atr.into(),
-            bbup: bbup.into(),
-            bbdn: bbdn.into(),
+            bbp: bbp.into(),
         }
     }
 }

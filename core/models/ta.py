@@ -10,17 +10,16 @@ class TechAnalysis:
     vo: List[float]
     nvol: List[float]
     atr: List[float]
-    bbup: List[float]
-    bbdn: List[float]
+    bbp: List[float]
 
     @classmethod
     def from_list(cls, data: List[Any]) -> "TechAnalysis":
-        rsi2, rsi14, macd, vo, nvol, atr, bbup, bbdn = data
+        rsi2, rsi14, macd, vo, nvol, atr, bbp = data
 
-        return cls(rsi2, rsi14, macd, vo, nvol, atr, bbup, bbdn)
+        return cls(rsi2, rsi14, macd, vo, nvol, atr, bbp)
 
     def __str__(self) -> str:
-        return f"rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bollinger_bands_up={self.bbup}, bollinger_bands_dn={self.bbdn}"
+        return f"rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp}"
 
     def __repr__(self) -> str:
-        return f"TechAnalysis(rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bollinger_bands_up={self.bbup}, bollinger_bands_dn={self.bbdn})"
+        return f"TechAnalysis(rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp})"

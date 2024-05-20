@@ -8,6 +8,5 @@ pub struct TechAnalysis {
     pub vo: Vec<f32>,
     pub nvol: Vec<f32>,
     pub atr: Vec<f32>,
-    pub bbup: Vec<f32>,
-    pub bbdn: Vec<f32>,
+    pub bbp: Vec<f32>,
 }
