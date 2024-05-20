@@ -80,11 +80,13 @@ class Portfolio(AbstractEventManager):
 
         logger.info(
             f"Performance: strategy={symbol}_{timeframe}{strategy}, side={position.side}, "
-            + f"trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, "
-            + f"cagr={round(performance.cagr * 100, 2)}%, return={round(performance.expected_return * 100, 2)}%, volatility={round(performance.ann_volatility * 100, 2)}%, "
-            + f"smart_sharpe={round(performance.smart_sharpe_ratio, 4)}, smart_sortino={round(performance.smart_sortino_ratio, 4)}, "
-            + f"skew={round(performance.skew, 2)}, kurtosis={round(performance.kurtosis, 2)}, omega={round(performance.omega_ratio, 2)}, upi={round(performance.upi, 2)}, "
-            + f"mdd={round(performance.max_drawdown * 100, 2)}%, pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}"
+            f"trades={performance.total_trades}, hit_ratio={performance.hit_ratio * 100:.0f}%, "
+            f"cagr={performance.cagr * 100:.2f}%, return={performance.expected_return * 100:.2f}%, "
+            f"volatility={performance.ann_volatility * 100:.2f}%, smart_sharpe={performance.smart_sharpe_ratio:.4f}, "
+            f"smart_sortino={performance.smart_sortino_ratio:.4f}, skew={performance.skew:.2f}, "
+            f"kurtosis={performance.kurtosis:.2f}, omega={performance.omega_ratio:.2f}, "
+            f"upi={performance.upi:.2f}, mdd={performance.max_drawdown * 100:.2f}%, "
+            f"pnl={performance.total_pnl:.4f}, fee={performance.total_fee:.4f}"
         )
 
         await self.dispatch(
