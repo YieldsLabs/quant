@@ -169,7 +169,9 @@ class RiskActor(Actor):
                 if not next_bar:
                     continue
 
-                next_position = next_position.next(next_bar)
+                ta = await self._store.ta(self.symbol, self.timeframe, next_bar)
+
+                next_position = next_position.next(next_bar, ta)
 
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))

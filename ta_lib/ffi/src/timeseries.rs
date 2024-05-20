@@ -90,6 +90,39 @@ pub fn timeseries_find_next_bar(
 }
 
 #[no_mangle]
+pub fn timeseries_ta(
+    timeseries_id: i32,
+    ts: i64,
+    open: f32,
+    high: f32,
+    low: f32,
+    close: f32,
+    volume: f32,
+) -> (i32, i32) {
+    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
+    if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
+        let curr_bar = OHLCV {
+            ts,
+            open,
+            high,
+            low,
+            close,
+            volume,
+        };
+
+        let ta = timeseries.ta(&curr_bar);
+        let ta_json = serde_json::to_string(&ta).unwrap();
+        let ta_bytes = ta_json.as_bytes();
+        let ta_ptr = ta_bytes.as_ptr() as i32;
+        let ta_len = ta_bytes.len() as i32;
+
+        (ta_ptr, ta_len)
+    } else {
+        (-1, 0)
+    }
+}
+
+#[no_mangle]
 pub fn timeseries_unregister(timeseries_id: i32) -> i32 {
     let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
     timeseries.remove(&timeseries_id).is_some() as i32

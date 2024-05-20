@@ -570,7 +570,9 @@ name = "timeseries"
 version = "0.1.0"
 dependencies = [
  "core",
+ "momentum",
  "serde",
+ "volume",
 ]
 
 [[package]]

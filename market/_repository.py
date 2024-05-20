@@ -51,6 +51,11 @@ class MarketRepository(AbstractMarketRepository):
             await asyncio.sleep(0.0001)
             next_bar = timeseries.find_next_bar(next_bar)
 
+    async def ta(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
+        timeseries = await self._get_timeseries(symbol, timeframe)
+        ta = timeseries.ta(bar)
+        return ta
+
     async def _get_timeseries(
         self, symbol: Symbol, timeframe: Timeframe
     ) -> TimeSeriesRef:

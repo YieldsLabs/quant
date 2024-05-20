@@ -72,11 +72,12 @@ class TaMixin:
             [np.max(data[i : i + period]) for i in range(len(data) - period + 1)]
         )
 
+
 @dataclass(frozen=True)
 class Risk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: RiskType = RiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.5, 3.5))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.2, 3.5))
 
     @property
     def last_bar(self):
@@ -85,7 +86,6 @@ class Risk(TaMixin):
     def next(self, bar: OHLCV):
         self.ohlcv.append(bar)
         ohlcv = sorted(self.ohlcv, key=lambda x: x.timestamp)
-
         return replace(self, ohlcv=ohlcv)
 
     def assess(

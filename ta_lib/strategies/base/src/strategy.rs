@@ -268,7 +268,7 @@ mod tests {
     #[test]
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
-            Box::new(BaseTimeSeries::default()),
+            Box::<BaseTimeSeries>::default(),
             Box::new(MockSignal { fast_period: 10 }),
             Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),

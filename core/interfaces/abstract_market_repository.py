@@ -14,3 +14,7 @@ class AbstractMarketRepository(AbstractEventManager):
     @abstractmethod
     def find_next_bar(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         pass
+
+    @abstractmethod
+    def ta(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
+        pass

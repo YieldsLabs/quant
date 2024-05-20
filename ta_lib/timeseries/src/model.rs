@@ -1,5 +1,8 @@
-use crate::{OHLCVSeries, TimeSeries, OHLCV};
+use crate::{OHLCVSeries, TechAnalysis, TimeSeries, OHLCV};
+use core::prelude::*;
+use momentum::{macd, rsi};
 use std::collections::HashMap;
+use volume::{nvol, vo};
 
 const BUFF_FACTOR: f32 = 1.3;
 
@@ -76,6 +79,38 @@ impl TimeSeries for BaseTimeSeries {
         };
 
         OHLCVSeries::from(&self.data[start_index..])
+    }
+
+    fn ta(&self, bar: &OHLCV) -> TechAnalysis {
+        let periods = [2, 14, 12, 26, 9, 5, 10, 9];
+
+        let end_index = *self.index.get(&bar.ts).unwrap_or(&self.data.len());
+        let max_period = periods.into_iter().max().unwrap_or(0);
+
+        let start_index = if end_index > max_period {
+            end_index - max_period
+        } else {
+            0
+        };
+
+        let series = OHLCVSeries::from(&self.data[start_index..end_index]);
+
+        let close = series.close();
+        let volume = series.volume();
+
+        let rsi2 = rsi(&close, Smooth::SMMA, periods[0]);
+        let rsi14 = rsi(&close, Smooth::SMMA, periods[1]);
+        let (_, _, histogram) = macd(&close, Smooth::EMA, periods[2], periods[3], periods[4]);
+        let vo = vo(&volume, Smooth::EMA, periods[5], periods[6]);
+        let nvol = nvol(&volume, Smooth::SMA, periods[7]);
+
+        TechAnalysis {
+            rsi2: rsi2.into(),
+            rsi14: rsi14.into(),
+            macd: histogram.into(),
+            vo: vo.into(),
+            nvol: nvol.into(),
+        }
     }
 }
 

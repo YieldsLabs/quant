@@ -12,6 +12,7 @@ from .risk import Risk
 from .risk_type import RiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
+from .ta import TechAnalysis
 
 
 @dataclass(frozen=True)
@@ -24,8 +25,8 @@ class Position:
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     first_factor: float = field(default_factory=lambda: np.random.uniform(0.13, 0.3))
-    second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.5))
-    third_factor: float = field(default_factory=lambda: np.random.uniform(0.55, 1.0))
+    second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.8))
+    third_factor: float = field(default_factory=lambda: np.random.uniform(0.9, 1.8))
     trailed: bool = False
     _tp: Optional[int] = None
     _sl: Optional[int] = None
@@ -278,7 +279,7 @@ class Position:
                 last_modified=execution_time,
             )
 
-    def next(self, ohlcv: OHLCV) -> "Position":
+    def next(self, ohlcv: OHLCV, ta: TechAnalysis) -> "Position":
         if self.closed:
             return self
 
@@ -289,14 +290,48 @@ class Position:
 
         print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
 
-        next_position = replace(self, risk=self.risk.next(ohlcv))
-        next_sl = self.stop_loss
+        next_risk = self.risk.next(ohlcv)
+        next_position = replace(self, risk=next_risk)
+
         next_tp = self.take_profit
+        next_sl = self.stop_loss
 
-        next_tp = next_position.risk.tp_low(self.side, self.take_profit)
-        next_sl = next_position.risk.sl_low(self.side, self.stop_loss)
+        next_sl = next_position.break_even()
 
-        next_risk = next_position.risk.assess(
+        next_tp = next_risk.tp_low(self.side, next_tp)
+        next_sl = next_risk.sl_low(self.side, next_sl)
+
+        bar = next_risk.last_bar
+        pnl_perc = (self.curr_pnl / self.curr_price) * 100
+
+        print(bar)
+        print(ta)
+
+        # if self.side == PositionSide.LONG and bar.type == CandleType.bullish and bar.upper_shadow <= 0:
+        #     next_sl = bar.close
+
+        # if self.side == PositionSide.SHORT and bar.type == CandleType.bearish and bar.lower_shadow <= 0:
+        #     next_sl = bar.close
+
+        # if self.side == PositionSide.LONG and next_risk.rsi2[1] > 70 and next_risk.rsi6[1] > 70:
+        #     next_sl = bar.close
+
+        # if self.side == PositionSide.SHORT and next_risk.rsi2[1] < 30 and next_risk.rsi6[1] < 30:
+        #     next_sl = bar.close
+
+        # if self.side == PositionSide.LONG and next_risk.rsi2[1] > 80:
+        #     next_sl = bar.close
+
+        # if self.side == PositionSide.LONG and next_risk.rsi2[1] == 0 and pnl_perc > 0:
+        #     next_sl = bar.close
+
+        # if self.side == PositionSide.SHORT and next_risk.rsi2[1] < 20:
+        #     next_sl = bar.close
+
+        # if self.side == PositionSide.SHORT and next_risk.rsi2[1] > 99 and pnl_perc > 0:
+        #     next_sl = bar.close
+
+        next_risk = next_risk.assess(
             self.side,
             next_tp,
             next_sl,
@@ -304,7 +339,7 @@ class Position:
             self.expiration,
         )
 
-        print(f"RISK: {next_risk}, TP: {next_tp}, SL: {next_sl}, PnL: {self.curr_pnl}")
+        print(f"RISK: {next_risk}, TP: {next_tp}, SL: {next_sl}, PnL%: {pnl_perc}")
 
         return replace(
             next_position,
@@ -323,48 +358,42 @@ class Position:
 
         if self.side == PositionSide.LONG:
             if curr_price >= first_break_even:
-                curr_sl = max(curr_sl, self.entry_price)
+                curr_sl = min(curr_sl, self.entry_price)
 
             if curr_price >= second_break_even:
-                curr_sl = max(curr_sl, first_break_even)
+                curr_sl = min(curr_sl, first_break_even)
 
             if curr_price >= third_break_even:
-                curr_sl = max(curr_sl, second_break_even)
+                curr_sl = min(curr_sl, second_break_even)
 
         if self.side == PositionSide.SHORT:
             if curr_price <= first_break_even:
-                curr_sl = min(curr_sl, self.entry_price)
+                curr_sl = max(curr_sl, self.entry_price)
 
             if curr_price <= second_break_even:
-                curr_sl = min(curr_sl, first_break_even)
+                curr_sl = max(curr_sl, first_break_even)
 
             if curr_price <= third_break_even:
-                curr_sl = min(curr_sl, second_break_even)
+                curr_sl = max(curr_sl, second_break_even)
 
         return curr_sl
 
-
     def force_exit(self, price: float) -> "Position":
-        if self.side == PositionSide.LONG and price > self.entry_price:
+        print(f"Force exit: side {self.side}, price: {price}")
+
+        if self.side == PositionSide.LONG and price > self.first_take_profit:
             return replace(self, _tp=price)
 
-        if self.side == PositionSide.SHORT and price < self.entry_price:
+        if self.side == PositionSide.SHORT and price < self.first_take_profit:
             return replace(self, _tp=price)
 
         return self
 
-    def trail(self, price: Optional[float] = None) -> "Position":
+    def trail(self) -> "Position":
         if self.trailed:
             return self
 
-        if not price:
-            return replace(self, trailed=True)
-
-        if self.side == PositionSide.LONG and price > self.first_take_profit:
-            return replace(self, _tp=price, trailed=True)
-
-        if self.side == PositionSide.SHORT and price < self.first_take_profit:
-            return replace(self, _tp=price, trailed=True)
+        return replace(self, trailed=True)
 
     def theo_taker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.taker_fee
@@ -407,5 +436,8 @@ class Position:
         total_price = sum(order.price for order in orders)
         return total_price / len(orders) if orders else 0.0
 
-    def __str__(self):
+    def __repr__(self):
         return f"Position(signal={self.signal}, risk={self.risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid})"
+
+    def __str__(self):
+        return f"signal={self.signal}, risk={self.risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}"

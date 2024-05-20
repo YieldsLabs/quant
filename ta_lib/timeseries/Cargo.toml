@@ -10,4 +10,6 @@ version.workspace = true
 
 [dependencies]
 core = { path = "../core" }
+momentum = { path = "../indicators/momentum" }
+volume = { path = "../indicators/volume" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }

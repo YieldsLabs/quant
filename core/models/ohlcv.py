@@ -22,8 +22,12 @@ class OHLCV:
     volume: float
 
     def __post_init__(self):
-        if not (self.low <= self.open <= self.high and self.low <= self.close <= self.high):
-            raise ValueError("Open and Close prices must be between Low and High prices")
+        if not (
+            self.low <= self.open <= self.high and self.low <= self.close <= self.high
+        ):
+            raise ValueError(
+                "Open and Close prices must be between Low and High prices"
+            )
         if self.low > self.high:
             raise ValueError("Low price cannot be higher than High price")
 
@@ -81,12 +85,12 @@ class OHLCV:
             return False
 
         return (
-            self.timestamp == other.timestamp and
-            self.open == other.open and
-            self.high == other.high and
-            self.low == other.low and
-            self.close == other.close and
-            self.volume == other.volume
+            self.timestamp == other.timestamp
+            and self.open == other.open
+            and self.high == other.high
+            and self.low == other.low
+            and self.close == other.close
+            and self.volume == other.volume
         )
 
     def to_dict(self):
@@ -100,7 +104,7 @@ class OHLCV:
             "real_body": self.real_body,
             "upper_shadow": self.upper_shadow,
             "lower_shadow": self.lower_shadow,
-            "type": str(self.type)
+            "type": str(self.type),
         }
 
     def __str__(self) -> str:
