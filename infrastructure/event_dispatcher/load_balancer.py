@@ -69,11 +69,11 @@ class LoadBalancer:
         )
 
         self._previous_errors = errors.copy()
-
-        weights = softmax(control_outputs)
         self._learning_rate *= self._decay_rate
 
-        return np.random.choice(np.arange(len(control_outputs)), p=weights)
+        return np.random.choice(
+            np.arange(len(control_outputs)), p=softmax(control_outputs)
+        )
 
     def _update_pid(self, errors: np.ndarray):
         for i, error in enumerate(errors):
