@@ -26,7 +26,8 @@ class PortfolioStorage:
             if not performance:
                 performance = Performance(account_size, risk_per_trade)
 
-            performance = performance.next(position.pnl, position.fee)
+            if abs(position.pnl) != 0:
+                performance = performance.next(position.pnl, position.fee)
 
             self.data[key] = performance
 
