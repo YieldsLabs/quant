@@ -9,15 +9,16 @@ class TechAnalysis:
     macd: List[float]
     vo: List[float]
     nvol: List[float]
+    atr: List[float]
 
     @classmethod
     def from_list(cls, data: List[Any]) -> "TechAnalysis":
-        rsi2, rsi14, macd, vo, nvol = data
+        rsi2, rsi14, macd, vo, nvol, atr = data
 
-        return cls(rsi2, rsi14, macd, vo, nvol)
+        return cls(rsi2, rsi14, macd, vo, nvol, atr)
 
     def __str__(self) -> str:
-        return f"rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_norm={self.nvol}"
+        return f"rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_norm={self.nvol}, atr={self.atr}"
 
     def __repr__(self) -> str:
-        return f"TechAnalysis(rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_norm={self.nvol})"
+        return f"TechAnalysis(rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_norm={self.nvol}, atr={self.atr})"
