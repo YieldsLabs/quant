@@ -4,6 +4,7 @@ from typing import List
 import numpy as np
 from scipy.signal import savgol_filter
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 from .ohlcv import OHLCV
 from .risk_type import RiskType
@@ -14,10 +15,13 @@ TIME_THRESHOLD = 5000
 
 
 def optimize_params(data: np.ndarray, n_clusters: int = 3) -> int:
-    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data.reshape(-1, 1))
 
-    kmeans.fit(data.reshape(-1, 1))
-    centroids = kmeans.cluster_centers_.flatten()
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    kmeans.fit(data_scaled)
+
+    centroids = scaler.inverse_transform(kmeans.cluster_centers_).flatten()
 
     return int(round(np.mean(centroids)))
 
@@ -121,7 +125,7 @@ class Risk(TaMixin):
             if curr_bar.high >= sl:
                 return replace(self, type=RiskType.SL)
 
-        return self
+        return replace(self, type=RiskType.NONE)
 
     def exit_price(self, side: PositionSide, tp: float, sl: float) -> "float":
         last_bar = self.last_bar
@@ -149,7 +153,7 @@ class Risk(TaMixin):
 
         ll = np.array(ta.ll)
         hh = np.array(ta.hh)
-        tr = self.trail_factor * np.array(ta.tr)
+        tr = np.array(ta.tr)
 
         min_length = min(len(ll), len(hh), len(tr))
 
@@ -166,7 +170,7 @@ class Risk(TaMixin):
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
-        atr_smooth = atr_smooth[-min_length:]
+        atr_smooth = self.trail_factor * atr_smooth[-min_length:]
 
         ll_atr = ll_smooth - atr_smooth
         hh_atr = hh_smooth + atr_smooth
@@ -188,7 +192,7 @@ class Risk(TaMixin):
 
         ll = np.array(ta.ll)
         hh = np.array(ta.hh)
-        tr = self.trail_factor * np.array(ta.tr)
+        tr = np.array(ta.tr)
 
         min_length = min(len(ll), len(hh), len(tr))
 
@@ -205,7 +209,7 @@ class Risk(TaMixin):
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
-        atr_smooth = atr_smooth[-min_length:]
+        atr_smooth = self.trail_factor * atr_smooth[-min_length:]
 
         ll_atr = ll_smooth - atr_smooth
         hh_atr = hh_smooth + atr_smooth
@@ -226,9 +230,9 @@ class Risk(TaMixin):
             return sl
 
         closes = np.array([candle.close for candle in self.ohlcv])
-        tr = self.trail_factor * np.array(ta.tr)
+        tr = np.array(ta.tr)
 
-        ats = self._ats(closes, self._ema(tr, 5))
+        ats = self._ats(closes, self.trail_factor * self._ema(tr, 5))
 
         if side == PositionSide.LONG:
             return max(sl, np.min(ats))

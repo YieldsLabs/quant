@@ -83,7 +83,7 @@ impl TimeSeries for BaseTimeSeries {
     }
 
     fn ta(&self, bar: &OHLCV) -> TechAnalysis {
-        let periods = [2, 14, 12, 26, 9, 5, 10, 1, 3];
+        let periods = [2, 14, 12, 26, 9, 5, 10, 1, 3, 11];
         let factors = [1.8];
 
         let end_index = *self.index.get(&bar.ts).unwrap_or(&self.data.len());
@@ -104,6 +104,9 @@ impl TimeSeries for BaseTimeSeries {
 
         let rsi2 = rsi(source, Smooth::SMMA, periods[0]);
         let rsi14 = rsi(source, Smooth::SMMA, periods[1]);
+        let ema5 = source.smooth(Smooth::EMA, periods[5]);
+        let ema11 = source.smooth(Smooth::EMA, periods[9]);
+
         let (_, _, histogram) = macd(source, Smooth::EMA, periods[2], periods[3], periods[4]);
         let vo = vo(volume, Smooth::EMA, periods[5], periods[6]);
         let nvol = nvol(volume, Smooth::SMA, periods[4]);
@@ -123,8 +126,10 @@ impl TimeSeries for BaseTimeSeries {
         let ll = low.lowest(periods[5]);
 
         TechAnalysis {
-            rsi2: rsi2.into(),
-            rsi14: rsi14.into(),
+            rsifast: rsi2.into(),
+            rsislow: rsi14.into(),
+            mafast: ema5.into(),
+            maslow: ema11.into(),
             macd: histogram.into(),
             vo: vo.into(),
             nvol: nvol.into(),
