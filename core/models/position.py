@@ -298,38 +298,11 @@ class Position:
 
         next_sl = next_position.break_even()
 
-        next_tp = next_risk.tp_low(self.side, next_tp)
-        next_sl = next_risk.sl_low(self.side, next_sl)
+        next_tp = next_risk.tp_low(self.side, ta, next_tp)
+        next_sl = next_risk.sl_low(self.side, ta, next_sl)
 
         bar = next_risk.last_bar
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
-
-        print(bar)
-        print(ta)
-
-        # if self.side == PositionSide.LONG and bar.type == CandleType.bullish and bar.upper_shadow <= 0:
-        #     next_sl = bar.close
-
-        # if self.side == PositionSide.SHORT and bar.type == CandleType.bearish and bar.lower_shadow <= 0:
-        #     next_sl = bar.close
-
-        # if self.side == PositionSide.LONG and next_risk.rsi2[1] > 70 and next_risk.rsi6[1] > 70:
-        #     next_sl = bar.close
-
-        # if self.side == PositionSide.SHORT and next_risk.rsi2[1] < 30 and next_risk.rsi6[1] < 30:
-        #     next_sl = bar.close
-
-        # if self.side == PositionSide.LONG and next_risk.rsi2[1] > 80:
-        #     next_sl = bar.close
-
-        # if self.side == PositionSide.LONG and next_risk.rsi2[1] == 0 and pnl_perc > 0:
-        #     next_sl = bar.close
-
-        # if self.side == PositionSide.SHORT and next_risk.rsi2[1] < 20:
-        #     next_sl = bar.close
-
-        # if self.side == PositionSide.SHORT and next_risk.rsi2[1] > 99 and pnl_perc > 0:
-        #     next_sl = bar.close
 
         next_risk = next_risk.assess(
             self.side,

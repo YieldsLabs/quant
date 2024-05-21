@@ -6,6 +6,7 @@ import numpy as np
 from .ohlcv import OHLCV
 from .risk_type import RiskType
 from .side import PositionSide
+from .ta import TechAnalysis
 
 TIME_THRESHOLD = 10000
 
@@ -37,19 +38,6 @@ class TaMixin:
         return stop_prices
 
     @staticmethod
-    def _true_ranges(
-        highs: List[float], lows: List[float], closes: List[float]
-    ) -> List[float]:
-        prev_close = np.roll(closes, shift=1)
-        prev_close[0] = closes[0]
-
-        tr1 = highs - lows
-        tr2 = np.abs(highs - prev_close)
-        tr3 = np.abs(lows - prev_close)
-
-        return np.maximum(tr1, np.maximum(tr2, tr3))
-
-    @staticmethod
     def _ema(data: List[float], period: int) -> List[float]:
         ema = np.zeros_like(data)
         alpha = 2 / (period + 1)
@@ -59,18 +47,6 @@ class TaMixin:
             ema[i] = alpha * data[i] + (1 - alpha) * ema[i - 1]
 
         return ema
-
-    @staticmethod
-    def _min(data: List[float], period: int) -> List[float]:
-        return np.array(
-            [np.min(data[i : i + period]) for i in range(len(data) - period + 1)]
-        )
-
-    @staticmethod
-    def _max(data: List[float], period: int) -> List[float]:
-        return np.array(
-            [np.max(data[i : i + period]) for i in range(len(data) - period + 1)]
-        )
 
 
 @dataclass(frozen=True)
@@ -137,7 +113,7 @@ class Risk(TaMixin):
 
         return last_bar.close
 
-    def sl_low(self, side: PositionSide, sl: float) -> "float":
+    def sl_low(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
@@ -145,24 +121,14 @@ class Risk(TaMixin):
             return sl
 
         period = 3
-        atr_period = 2
 
-        if len(self.ohlcv) < period:
-            return sl
-
-        lows = np.array([candle.low for candle in self.ohlcv])
-        highs = np.array([candle.high for candle in self.ohlcv])
-        closes = np.array([candle.close for candle in self.ohlcv])
-
-        ll = self._min(lows, period)
-        hh = self._max(highs, period)
+        ll = np.array(ta.ll)
+        hh = np.array(ta.hh)
 
         ll_ema = self._ema(ll, period)
         hh_ema = self._ema(hh, period)
 
-        atr = self.trail_factor * self._ema(
-            self._true_ranges(highs, lows, closes), atr_period
-        )
+        atr = self.trail_factor * np.array(ta.atr)
 
         min_length = min(len(ll_ema), len(hh_ema), len(atr))
 
@@ -179,7 +145,7 @@ class Risk(TaMixin):
         if side == PositionSide.SHORT:
             return min(sl, np.min(hh_atr))
 
-    def tp_low(self, side: PositionSide, tp: float) -> "float":
+    def tp_low(self, side: PositionSide, ta: TechAnalysis, tp: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
@@ -187,24 +153,14 @@ class Risk(TaMixin):
             return tp
 
         period = 3
-        atr_period = 2
 
-        if len(self.ohlcv) < period:
-            return tp
-
-        lows = np.array([candle.low for candle in self.ohlcv])
-        highs = np.array([candle.high for candle in self.ohlcv])
-        closes = np.array([candle.close for candle in self.ohlcv])
-
-        ll = self._min(lows, period)
-        hh = self._max(highs, period)
+        ll = np.array(ta.ll)
+        hh = np.array(ta.hh)
 
         ll_ema = self._ema(ll, period)
         hh_ema = self._ema(hh, period)
 
-        atr = self.trail_factor * self._ema(
-            self._true_ranges(highs, lows, closes), atr_period
-        )
+        atr = self.trail_factor * np.array(ta.atr)
 
         min_length = min(len(ll_ema), len(hh_ema), len(atr))
 
@@ -221,23 +177,16 @@ class Risk(TaMixin):
         if side == PositionSide.SHORT:
             return max(tp, np.max(ll_atr))
 
-    def sl_ats(self, side: PositionSide, sl: float) -> "float":
+    def sl_ats(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
         if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
-        period = 5
-
-        if len(self.ohlcv) < period:
-            return sl
-
-        lows = np.array([candle.low for candle in self.ohlcv])
-        highs = np.array([candle.high for candle in self.ohlcv])
         closes = np.array([candle.close for candle in self.ohlcv])
+        atr = np.array(ta.atr)
 
-        atr = self._ema(self._true_ranges(highs, lows, closes), period)
         ats = self._ats(closes, atr, self.trail_factor)
 
         if side == PositionSide.LONG:
