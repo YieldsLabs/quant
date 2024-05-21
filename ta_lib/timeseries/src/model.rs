@@ -119,6 +119,8 @@ impl TimeSeries for BaseTimeSeries {
             periods[7],
             periods[8],
         );
+        let hh = high.highest(periods[5]);
+        let ll = low.lowest(periods[5]);
 
         TechAnalysis {
             rsi2: rsi2.into(),
@@ -130,6 +132,8 @@ impl TimeSeries for BaseTimeSeries {
             bbp: bbp.into(),
             k: k.into(),
             d: d.into(),
+            hh: hh.into(),
+            ll: ll.into(),
         }
     }
 }

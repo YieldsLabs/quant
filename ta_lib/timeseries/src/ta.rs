@@ -11,4 +11,6 @@ pub struct TechAnalysis {
     pub bbp: Vec<f32>,
     pub k: Vec<f32>,
     pub d: Vec<f32>,
+    pub hh: Vec<f32>,
+    pub ll: Vec<f32>,
 }
