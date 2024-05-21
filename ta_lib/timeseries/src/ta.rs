@@ -7,7 +7,7 @@ pub struct TechAnalysis {
     pub macd: Vec<f32>,
     pub vo: Vec<f32>,
     pub nvol: Vec<f32>,
-    pub atr: Vec<f32>,
+    pub tr: Vec<f32>,
     pub bbp: Vec<f32>,
     pub k: Vec<f32>,
     pub d: Vec<f32>,

@@ -2,7 +2,7 @@ use crate::{OHLCVSeries, TechAnalysis, TimeSeries, OHLCV};
 use core::prelude::*;
 use momentum::{macd, rsi, stochosc};
 use std::collections::HashMap;
-use volatility::{atr, bb};
+use volatility::{bb, tr};
 use volume::{nvol, vo};
 
 const BUFF_FACTOR: f32 = 1.3;
@@ -107,7 +107,7 @@ impl TimeSeries for BaseTimeSeries {
         let (_, _, histogram) = macd(source, Smooth::EMA, periods[2], periods[3], periods[4]);
         let vo = vo(volume, Smooth::EMA, periods[5], periods[6]);
         let nvol = nvol(volume, Smooth::SMA, periods[4]);
-        let atr = atr(high, low, source, Smooth::EMA, periods[1]);
+        let tr = tr(high, low, source);
         let (bbup, _, bbdn) = bb(source, Smooth::SMA, periods[5], factors[0]);
         let bbp = (source - &bbdn) / (bbup - &bbdn);
         let (k, d) = stochosc(
@@ -128,7 +128,7 @@ impl TimeSeries for BaseTimeSeries {
             macd: histogram.into(),
             vo: vo.into(),
             nvol: nvol.into(),
-            atr: atr.into(),
+            tr: tr.into(),
             bbp: bbp.into(),
             k: k.into(),
             d: d.into(),

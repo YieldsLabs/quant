@@ -2,23 +2,50 @@ from dataclasses import dataclass, field, replace
 from typing import List
 
 import numpy as np
+from scipy.signal import savgol_filter
+from sklearn.cluster import KMeans
 
 from .ohlcv import OHLCV
 from .risk_type import RiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 10000
+TIME_THRESHOLD = 5000
+
+
+def optimize_params(data: np.ndarray, n_clusters: int = 3) -> int:
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+
+    kmeans.fit(data.reshape(-1, 1))
+    centroids = kmeans.cluster_centers_.flatten()
+
+    return int(round(np.mean(centroids)))
+
+
+def optimize_window_polyorder(
+    ll_data: np.ndarray, hh_data: np.ndarray, atr_data: np.ndarray
+) -> tuple:
+    all_data = np.concatenate([ll_data, hh_data, atr_data])
+
+    window_length = optimize_params(all_data)
+    polyorder = optimize_params(all_data)
+
+    window_length = max(3, window_length)
+    window_length += 1 if window_length % 2 == 0 else 0
+
+    polyorder = min(polyorder, window_length - 1)
+
+    return window_length, polyorder
 
 
 class TaMixin:
     @staticmethod
-    def _ats(closes: List[float], atr: List[float], factor: float) -> List[float]:
+    def _ats(closes: List[float], atr: List[float]) -> List[float]:
         stop_prices = np.zeros_like(closes)
         period = min(len(closes), len(atr))
 
         for i in range(1, period):
-            stop = factor * atr[i]
+            stop = atr[i]
             cond_one = closes[i] > closes[i - 1] and closes[i - 1] > stop_prices[i - 1]
             cond_two = closes[i] < closes[i - 1] and closes[i - 1] < stop_prices[i - 1]
             cond_three = (
@@ -120,30 +147,37 @@ class Risk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
-        period = 3
-
         ll = np.array(ta.ll)
         hh = np.array(ta.hh)
+        tr = self.trail_factor * np.array(ta.tr)
 
-        ll_ema = self._ema(ll, period)
-        hh_ema = self._ema(hh, period)
+        min_length = min(len(ll), len(hh), len(tr))
 
-        atr = self.trail_factor * np.array(ta.atr)
+        if min_length < 3:
+            return sl
 
-        min_length = min(len(ll_ema), len(hh_ema), len(atr))
+        window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
 
-        ll_ema = ll_ema[-min_length:]
-        hh_ema = hh_ema[-min_length:]
-        atr = atr[-min_length:]
+        ll_smooth = savgol_filter(ll, window_length, polyorder)
+        hh_smooth = savgol_filter(hh, window_length, polyorder)
+        atr_smooth = savgol_filter(tr, window_length, polyorder)
 
-        ll_atr = ll_ema - atr
-        hh_atr = hh_ema + atr
+        min_length = min(len(ll_smooth), len(hh_smooth), len(tr))
+
+        ll_smooth = ll_smooth[-min_length:]
+        hh_smooth = hh_smooth[-min_length:]
+        atr_smooth = atr_smooth[-min_length:]
+
+        ll_atr = ll_smooth - atr_smooth
+        hh_atr = hh_smooth + atr_smooth
 
         if side == PositionSide.LONG:
             return max(sl, np.max(ll_atr))
 
         if side == PositionSide.SHORT:
             return min(sl, np.min(hh_atr))
+
+        return sl
 
     def tp_low(self, side: PositionSide, ta: TechAnalysis, tp: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
@@ -152,30 +186,37 @@ class Risk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return tp
 
-        period = 3
-
         ll = np.array(ta.ll)
         hh = np.array(ta.hh)
+        tr = self.trail_factor * np.array(ta.tr)
 
-        ll_ema = self._ema(ll, period)
-        hh_ema = self._ema(hh, period)
+        min_length = min(len(ll), len(hh), len(tr))
 
-        atr = self.trail_factor * np.array(ta.atr)
+        if min_length < 3:
+            return tp
 
-        min_length = min(len(ll_ema), len(hh_ema), len(atr))
+        window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
 
-        ll_ema = ll_ema[-min_length:]
-        hh_ema = hh_ema[-min_length:]
-        atr = atr[-min_length:]
+        ll_smooth = savgol_filter(ll, window_length, polyorder)
+        hh_smooth = savgol_filter(hh, window_length, polyorder)
+        atr_smooth = savgol_filter(tr, window_length, polyorder)
 
-        ll_atr = ll_ema - atr
-        hh_atr = hh_ema + atr
+        min_length = min(len(ll_smooth), len(hh_smooth), len(atr_smooth))
+
+        ll_smooth = ll_smooth[-min_length:]
+        hh_smooth = hh_smooth[-min_length:]
+        atr_smooth = atr_smooth[-min_length:]
+
+        ll_atr = ll_smooth - atr_smooth
+        hh_atr = hh_smooth + atr_smooth
 
         if side == PositionSide.LONG:
             return min(tp, np.min(hh_atr))
 
         if side == PositionSide.SHORT:
             return max(tp, np.max(ll_atr))
+
+        return tp
 
     def sl_ats(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
@@ -185,14 +226,16 @@ class Risk(TaMixin):
             return sl
 
         closes = np.array([candle.close for candle in self.ohlcv])
-        atr = np.array(ta.atr)
+        tr = self.trail_factor * np.array(ta.tr)
 
-        ats = self._ats(closes, atr, self.trail_factor)
+        ats = self._ats(closes, self._ema(tr, 5))
 
         if side == PositionSide.LONG:
             return max(sl, np.min(ats))
         if side == PositionSide.SHORT:
             return min(sl, np.max(ats))
+
+        return sl
 
     def to_dict(self):
         return {
