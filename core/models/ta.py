@@ -11,15 +11,17 @@ class TechAnalysis:
     nvol: List[float]
     atr: List[float]
     bbp: List[float]
+    k: List[float]
+    d: List[float]
 
     @classmethod
     def from_list(cls, data: List[Any]) -> "TechAnalysis":
-        rsi2, rsi14, macd, vo, nvol, atr, bbp = data
+        rsi2, rsi14, macd, vo, nvol, atr, bbp, k, d = data
 
-        return cls(rsi2, rsi14, macd, vo, nvol, atr, bbp)
+        return cls(rsi2, rsi14, macd, vo, nvol, atr, bbp, k, d)
 
     def __str__(self) -> str:
-        return f"rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp}"
+        return f"rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp}, stoch_k={self.k}, stoch_d={self.d}"
 
     def __repr__(self) -> str:
-        return f"TechAnalysis(rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp})"
+        return f"TechAnalysis(rsi_fast={self.rsi2}, rsi_slow={self.rsi14}, macd_histogram={self.macd}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp}, stoch_k={self.k}, stoch_d={self.d})"

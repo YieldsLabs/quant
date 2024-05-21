@@ -1,6 +1,6 @@
 use crate::{OHLCVSeries, TechAnalysis, TimeSeries, OHLCV};
 use core::prelude::*;
-use momentum::{macd, rsi};
+use momentum::{macd, rsi, stochosc};
 use std::collections::HashMap;
 use volatility::{atr, bb};
 use volume::{nvol, vo};
@@ -83,8 +83,8 @@ impl TimeSeries for BaseTimeSeries {
     }
 
     fn ta(&self, bar: &OHLCV) -> TechAnalysis {
-        let periods = [2, 14, 12, 26, 9, 5, 10, 20];
-        let factors = [2.0];
+        let periods = [2, 14, 12, 26, 9, 5, 10, 1, 3];
+        let factors = [1.8];
 
         let end_index = *self.index.get(&bar.ts).unwrap_or(&self.data.len());
         let max_period = periods.into_iter().max().unwrap_or(0);
@@ -108,8 +108,17 @@ impl TimeSeries for BaseTimeSeries {
         let vo = vo(volume, Smooth::EMA, periods[5], periods[6]);
         let nvol = nvol(volume, Smooth::SMA, periods[4]);
         let atr = atr(high, low, source, Smooth::EMA, periods[1]);
-        let (bbup, _, bbdn) = bb(source, Smooth::SMA, periods[7], factors[0]);
+        let (bbup, _, bbdn) = bb(source, Smooth::SMA, periods[5], factors[0]);
         let bbp = (source - &bbdn) / (bbup - &bbdn);
+        let (k, d) = stochosc(
+            source,
+            high,
+            low,
+            Smooth::SMA,
+            periods[1],
+            periods[7],
+            periods[8],
+        );
 
         TechAnalysis {
             rsi2: rsi2.into(),
@@ -119,6 +128,8 @@ impl TimeSeries for BaseTimeSeries {
             nvol: nvol.into(),
             atr: atr.into(),
             bbp: bbp.into(),
+            k: k.into(),
+            d: d.into(),
         }
     }
 }
