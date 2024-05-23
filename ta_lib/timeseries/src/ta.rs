@@ -9,6 +9,7 @@ pub struct TechAnalysis {
     pub froc: Vec<f32>,
     pub sroc: Vec<f32>,
     pub macd: Vec<f32>,
+    pub ppo: Vec<f32>,
     pub cci: Vec<f32>,
     pub obv: Vec<f32>,
     pub vo: Vec<f32>,

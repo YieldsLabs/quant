@@ -4,7 +4,8 @@ from typing import List
 import numpy as np
 from scipy.signal import savgol_filter
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import MinMaxScaler
 
 from .ohlcv import OHLCV
 from .risk_type import RiskType
@@ -14,16 +15,24 @@ from .ta import TechAnalysis
 TIME_THRESHOLD = 45000
 
 
-def optimize_params(data: np.ndarray, n_clusters: int = 3) -> int:
-    scaler = StandardScaler()
+def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
+    scaler = MinMaxScaler()
     data_scaled = scaler.fit_transform(data.reshape(-1, 1))
 
-    kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=42)
-    kmeans.fit(data_scaled)
+    best_score = -1
+    best_centroids = None
 
-    centroids = scaler.inverse_transform(kmeans.cluster_centers_).flatten()
+    for n_clusters in range(n_clusters_range[0], n_clusters_range[1] + 1):
+        kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=42)
+        kmeans.fit(data_scaled)
 
-    return int(round(np.mean(centroids)))
+        silhouette_avg = silhouette_score(data_scaled, kmeans.labels_)
+
+        if silhouette_avg > best_score:
+            best_score = silhouette_avg
+            best_centroids = scaler.inverse_transform(kmeans.cluster_centers_).flatten()
+
+    return int(round(np.mean(best_centroids)))
 
 
 def optimize_window_polyorder(
@@ -31,8 +40,12 @@ def optimize_window_polyorder(
 ) -> tuple:
     all_data = np.concatenate([ll_data, hh_data, atr_data])
 
-    window_length = optimize_params(all_data)
-    polyorder = optimize_params(all_data)
+    window_length = optimize_params(all_data, n_clusters_range=(2, 10))
+    polyorder_range = (2, window_length - 1 if window_length > 2 else 2)
+    polyorder = optimize_params(all_data, n_clusters_range=polyorder_range)
+
+    window_length += 1 if window_length % 2 == 0 else 0
+    polyorder = min(polyorder, window_length - 1)
 
     return window_length, polyorder
 
@@ -156,9 +169,11 @@ class Risk(TaMixin):
             return sl
 
         window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
-        window_length = min(window_length, min_length)
-        window_length += 1 if window_length % 2 == 0 else 0
-        polyorder = min(polyorder, window_length - 1)
+        # window_length = min(window_length, min_length)
+        # window_length += 1 if window_length % 2 == 0 else 0
+        # polyorder = min(polyorder, window_length - 1)
+
+        print(f"window length: {window_length}, polyorder: {polyorder}")
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)

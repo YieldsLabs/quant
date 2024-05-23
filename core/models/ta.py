@@ -11,6 +11,7 @@ class TechAnalysis:
     froc: List[float]
     sroc: List[float]
     macd: List[float]
+    ppo: List[float]
     cci: List[float]
     obv: List[float]
     vo: List[float]
@@ -32,6 +33,7 @@ class TechAnalysis:
             froc,
             sroc,
             macd,
+            ppo,
             cci,
             obv,
             vo,
@@ -52,6 +54,7 @@ class TechAnalysis:
             froc,
             sroc,
             macd,
+            ppo,
             cci,
             obv,
             vo,

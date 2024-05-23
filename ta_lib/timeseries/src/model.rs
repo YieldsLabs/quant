@@ -1,6 +1,6 @@
 use crate::{OHLCVSeries, TechAnalysis, TimeSeries, OHLCV};
 use core::prelude::*;
-use momentum::{cci, macd, roc, rsi, stochosc};
+use momentum::{cci, macd, ppo, roc, rsi, stochosc};
 use price::typical_price;
 use std::collections::HashMap;
 use volatility::{bb, tr};
@@ -110,6 +110,7 @@ impl TimeSeries for BaseTimeSeries {
         let ema11 = source.smooth(Smooth::EMA, periods[9]);
 
         let (_, _, histogram) = macd(source, Smooth::EMA, periods[2], periods[3], periods[4]);
+        let ppo = ppo(source, Smooth::EMA, periods[2], periods[3]);
         let vo = vo(volume, Smooth::EMA, periods[5], periods[6]);
         let nvol = nvol(volume, Smooth::SMA, periods[4]);
         let tr = tr(high, low, source);
@@ -139,6 +140,7 @@ impl TimeSeries for BaseTimeSeries {
             froc: roc9.into(),
             sroc: roc14.into(),
             macd: histogram.into(),
+            ppo: ppo.into(),
             cci: cci.into(),
             obv: obv.into(),
             vo: vo.into(),

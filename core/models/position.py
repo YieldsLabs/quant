@@ -317,10 +317,12 @@ class Position:
             f"STOCH_K: {ta.k[-last_items:]}, STOCH_D: {ta.d[-last_items:]}, "
             f"BB%B: {ta.bbp[-last_items:]}, "
             f"MACD_HISTOGRAM: {ta.macd[-last_items:]}, "
+            f"PPO: {ta.ppo[-last_items:]}, "
             f"CCI: {ta.cci[-last_items:]}, "
             f"Volume_Normalized: {ta.nvol[-last_items:]}, "
             f"Volume_OSC: {ta.vo[-last_items:]}, "
             f"OBV: {ta.obv[-last_items:]}, "
+            f"True Range: {ta.tr[-last_items:]}, "
             f"TP: {next_tp}, SL: {next_sl}, "
             f"PnL%: {pnl_perc}"
         )

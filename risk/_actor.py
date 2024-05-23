@@ -148,14 +148,14 @@ class RiskActor(Actor):
                 and short_position
                 and not short_position.has_risk
             ):
-                short_position = short_position.trail()
+                short_position = short_position.force_exit(event.signal.entry)
 
             if (
                 isinstance(event, GoShortSignalReceived)
                 and long_position
                 and not long_position.has_risk
             ):
-                long_position = long_position.trail()
+                long_position = long_position.force_exit(event.signal.entry)
 
             self._position = (long_position, short_position)
 
