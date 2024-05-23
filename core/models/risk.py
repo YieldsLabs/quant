@@ -11,14 +11,14 @@ from .risk_type import RiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 5000
+TIME_THRESHOLD = 45000
 
 
 def optimize_params(data: np.ndarray, n_clusters: int = 3) -> int:
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(data.reshape(-1, 1))
 
-    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=42)
     kmeans.fit(data_scaled)
 
     centroids = scaler.inverse_transform(kmeans.cluster_centers_).flatten()
@@ -33,11 +33,6 @@ def optimize_window_polyorder(
 
     window_length = optimize_params(all_data)
     polyorder = optimize_params(all_data)
-
-    window_length = max(3, window_length)
-    window_length += 1 if window_length % 2 == 0 else 0
-
-    polyorder = min(polyorder, window_length - 1)
 
     return window_length, polyorder
 
@@ -84,7 +79,7 @@ class TaMixin:
 class Risk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: RiskType = RiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.2, 3.5))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(2.8, 5.8))
 
     @property
     def last_bar(self):
@@ -161,12 +156,13 @@ class Risk(TaMixin):
             return sl
 
         window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
+        window_length = min(window_length, min_length)
+        window_length += 1 if window_length % 2 == 0 else 0
+        polyorder = min(polyorder, window_length - 1)
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)
         atr_smooth = savgol_filter(tr, window_length, polyorder)
-
-        min_length = min(len(ll_smooth), len(hh_smooth), len(tr))
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
@@ -200,12 +196,13 @@ class Risk(TaMixin):
             return tp
 
         window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
+        window_length = min(window_length, min_length)
+        window_length += 1 if window_length % 2 == 0 else 0
+        polyorder = min(polyorder, window_length - 1)
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)
         atr_smooth = savgol_filter(tr, window_length, polyorder)
-
-        min_length = min(len(ll_smooth), len(hh_smooth), len(atr_smooth))
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
@@ -230,9 +227,9 @@ class Risk(TaMixin):
             return sl
 
         closes = np.array([candle.close for candle in self.ohlcv])
-        tr = np.array(ta.tr)
+        atr = self.trail_factor * self._ema(np.array(ta.tr), 5)
 
-        ats = self._ats(closes, self.trail_factor * self._ema(tr, 5))
+        ats = self._ats(closes, atr)
 
         if side == PositionSide.LONG:
             return max(sl, np.min(ats))
@@ -244,6 +241,7 @@ class Risk(TaMixin):
     def to_dict(self):
         return {
             "type": self.type,
+            "trail_factor": self.trail_factor,
             "ohlcv": self.last_bar.to_dict(),
         }
 

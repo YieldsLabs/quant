@@ -27,7 +27,6 @@ class Position:
     first_factor: float = field(default_factory=lambda: np.random.uniform(0.13, 0.3))
     second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.8))
     third_factor: float = field(default_factory=lambda: np.random.uniform(0.9, 1.8))
-    trailed: bool = False
     _tp: Optional[int] = None
     _sl: Optional[int] = None
 
@@ -81,7 +80,7 @@ class Position:
     @property
     def take_profit(self) -> float:
         p = self.signal.symbol.price_precision
-        tp = self.second_take_profit if not self._tp else self._tp
+        tp = self.third_take_profit if not self._tp else self._tp
         return round(tp, p)
 
     @property
@@ -288,7 +287,7 @@ class Position:
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
 
-        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}")
+        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms")
 
         next_risk = self.risk.next(ohlcv)
         next_position = replace(self, risk=next_risk)
@@ -297,12 +296,7 @@ class Position:
         next_sl = self.stop_loss
 
         next_sl = next_position.break_even()
-
-        next_tp = next_risk.tp_low(self.side, ta, next_tp)
         next_sl = next_risk.sl_low(self.side, ta, next_sl)
-
-        bar = next_risk.last_bar
-        pnl_perc = (self.curr_pnl / self.curr_price) * 100
 
         next_risk = next_risk.assess(
             self.side,
@@ -312,7 +306,24 @@ class Position:
             self.expiration,
         )
 
-        print(f"RISK: {next_risk}, TP: {next_tp}, SL: {next_sl}, PnL%: {pnl_perc}")
+        pnl_perc = (self.curr_pnl / self.curr_price) * 100
+        last_items = 5
+
+        print(
+            f"RISK: {next_risk}, "
+            f"EMA_FAST: {ta.fma[-last_items:]}, EMA_SLOW: {ta.sma[-last_items:]}, "
+            f"RSI_FAST: {ta.frsi[-last_items:]}, RSI_SLOW: {ta.srsi[-last_items:]}, "
+            f"ROC_FAST: {ta.froc[-last_items:]}, ROC_SLOW: {ta.sroc[-last_items:]}, "
+            f"STOCH_K: {ta.k[-last_items:]}, STOCH_D: {ta.d[-last_items:]}, "
+            f"BB%B: {ta.bbp[-last_items:]}, "
+            f"MACD_HISTOGRAM: {ta.macd[-last_items:]}, "
+            f"CCI: {ta.cci[-last_items:]}, "
+            f"Volume_Normalized: {ta.nvol[-last_items:]}, "
+            f"Volume_OSC: {ta.vo[-last_items:]}, "
+            f"OBV: {ta.obv[-last_items:]}, "
+            f"TP: {next_tp}, SL: {next_sl}, "
+            f"PnL%: {pnl_perc}"
+        )
 
         return replace(
             next_position,
@@ -352,8 +363,6 @@ class Position:
         return curr_sl
 
     def force_exit(self, price: float) -> "Position":
-        print(f"Force exit: side {self.side}, price: {price}")
-
         if self.side == PositionSide.LONG and price > self.first_take_profit:
             return replace(self, _tp=price)
 
@@ -361,12 +370,6 @@ class Position:
             return replace(self, _tp=price)
 
         return self
-
-    def trail(self) -> "Position":
-        if self.trailed:
-            return self
-
-        return replace(self, trailed=True)
 
     def theo_taker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.taker_fee
@@ -396,7 +399,6 @@ class Position:
             "ft": self.first_take_profit,
             "st": self.second_take_profit,
             "tt": self.third_take_profit,
-            "trailed": self.trailed,
         }
 
     @staticmethod
