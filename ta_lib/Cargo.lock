@@ -571,6 +571,7 @@ version = "0.1.0"
 dependencies = [
  "core",
  "momentum",
+ "price",
  "serde",
  "volatility",
  "volume",

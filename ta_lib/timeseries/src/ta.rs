@@ -2,11 +2,15 @@ use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct TechAnalysis {
-    pub rsifast: Vec<f32>,
-    pub rsislow: Vec<f32>,
-    pub mafast: Vec<f32>,
-    pub maslow: Vec<f32>,
+    pub frsi: Vec<f32>,
+    pub srsi: Vec<f32>,
+    pub fma: Vec<f32>,
+    pub sma: Vec<f32>,
+    pub froc: Vec<f32>,
+    pub sroc: Vec<f32>,
     pub macd: Vec<f32>,
+    pub cci: Vec<f32>,
+    pub obv: Vec<f32>,
     pub vo: Vec<f32>,
     pub nvol: Vec<f32>,
     pub tr: Vec<f32>,

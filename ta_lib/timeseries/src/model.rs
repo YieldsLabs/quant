@@ -1,9 +1,10 @@
 use crate::{OHLCVSeries, TechAnalysis, TimeSeries, OHLCV};
 use core::prelude::*;
-use momentum::{macd, rsi, stochosc};
+use momentum::{cci, macd, roc, rsi, stochosc};
+use price::typical_price;
 use std::collections::HashMap;
 use volatility::{bb, tr};
-use volume::{nvol, vo};
+use volume::{nvol, obv, vo};
 
 const BUFF_FACTOR: f32 = 1.3;
 
@@ -84,7 +85,7 @@ impl TimeSeries for BaseTimeSeries {
 
     fn ta(&self, bar: &OHLCV) -> TechAnalysis {
         let periods = [2, 14, 12, 26, 9, 5, 10, 1, 3, 11];
-        let factors = [1.8];
+        let factors = [1.8, 0.015];
 
         let end_index = *self.index.get(&bar.ts).unwrap_or(&self.data.len());
         let max_period = periods.into_iter().max().unwrap_or(0);
@@ -101,6 +102,7 @@ impl TimeSeries for BaseTimeSeries {
         let low = series.low();
         let source = series.close();
         let volume = series.volume();
+        let hlc3 = typical_price(high, low, source);
 
         let rsi2 = rsi(source, Smooth::SMMA, periods[0]);
         let rsi14 = rsi(source, Smooth::SMMA, periods[1]);
@@ -122,15 +124,23 @@ impl TimeSeries for BaseTimeSeries {
             periods[7],
             periods[8],
         );
+        let cci = cci(&hlc3, Smooth::SMA, periods[5], factors[1]);
+        let roc9 = roc(source, periods[4]);
+        let roc14 = roc(source, periods[1]);
+        let obv = obv(source, volume);
         let hh = high.highest(periods[5]);
         let ll = low.lowest(periods[5]);
 
         TechAnalysis {
-            rsifast: rsi2.into(),
-            rsislow: rsi14.into(),
-            mafast: ema5.into(),
-            maslow: ema11.into(),
+            frsi: rsi2.into(),
+            srsi: rsi14.into(),
+            fma: ema5.into(),
+            sma: ema11.into(),
+            froc: roc9.into(),
+            sroc: roc14.into(),
             macd: histogram.into(),
+            cci: cci.into(),
+            obv: obv.into(),
             vo: vo.into(),
             nvol: nvol.into(),
             tr: tr.into(),
