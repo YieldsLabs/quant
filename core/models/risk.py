@@ -169,9 +169,6 @@ class Risk(TaMixin):
             return sl
 
         window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
-        # window_length = min(window_length, min_length)
-        # window_length += 1 if window_length % 2 == 0 else 0
-        # polyorder = min(polyorder, window_length - 1)
 
         print(f"window length: {window_length}, polyorder: {polyorder}")
 
@@ -211,9 +208,6 @@ class Risk(TaMixin):
             return tp
 
         window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
-        window_length = min(window_length, min_length)
-        window_length += 1 if window_length % 2 == 0 else 0
-        polyorder = min(polyorder, window_length - 1)
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)

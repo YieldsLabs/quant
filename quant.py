@@ -125,5 +125,5 @@ async def main():
         logging.info("Finished.")
 
 
-with asyncio.Runner() as runner:
+with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
     runner.run(main())

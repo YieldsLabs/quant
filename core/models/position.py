@@ -307,7 +307,7 @@ class Position:
         )
 
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
-        last_items = 5
+        last_items = 3
 
         print(
             f"RISK: {next_risk}, "
