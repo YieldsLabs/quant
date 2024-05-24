@@ -16,6 +16,9 @@ TIME_THRESHOLD = 45000
 
 
 def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
+    if data.ndim == 1:
+        data = data.reshape(-1, 1)
+
     scaler = MinMaxScaler()
     data_scaled = scaler.fit_transform(data.reshape(-1, 1))
 
@@ -25,6 +28,9 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
     for n_clusters in range(n_clusters_range[0], n_clusters_range[1] + 1):
         kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=42)
         kmeans.fit(data_scaled)
+
+        if len(np.unique(kmeans.labels_)) < n_clusters:
+            continue
 
         silhouette_avg = silhouette_score(data_scaled, kmeans.labels_)
 
