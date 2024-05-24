@@ -159,9 +159,9 @@ class Risk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
-        ll = np.array(ta.ll)
-        hh = np.array(ta.hh)
-        tr = np.array(ta.tr)
+        ll = np.array(ta.trend.ll)
+        hh = np.array(ta.trend.hh)
+        tr = np.array(ta.volatility.tr)
 
         min_length = min(len(ll), len(hh), len(tr))
 
@@ -198,9 +198,9 @@ class Risk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return tp
 
-        ll = np.array(ta.ll)
-        hh = np.array(ta.hh)
-        tr = np.array(ta.tr)
+        ll = np.array(ta.trend.ll)
+        hh = np.array(ta.trend.hh)
+        tr = np.array(ta.volatility.tr)
 
         min_length = min(len(ll), len(hh), len(tr))
 
@@ -236,7 +236,7 @@ class Risk(TaMixin):
             return sl
 
         closes = np.array([candle.close for candle in self.ohlcv])
-        atr = self.trail_factor * self._ema(np.array(ta.tr), 5)
+        atr = self.trail_factor * self._ema(np.array(ta.volatility.tr), 5)
 
         ats = self._ats(closes, atr)
 

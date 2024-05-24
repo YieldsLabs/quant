@@ -3,25 +3,80 @@ from typing import Any, List
 
 
 @dataclass(frozen=True)
-class TechAnalysis:
-    frsi: List[float]
-    srsi: List[float]
-    fma: List[float]
-    sma: List[float]
-    froc: List[float]
-    sroc: List[float]
-    macd: List[float]
-    ppo: List[float]
-    cci: List[float]
+class VolumeAnalysis:
     obv: List[float]
     vo: List[float]
     nvol: List[float]
+
+    def __str__(self) -> str:
+        return f"obv={self.obv}, vo={self.vo}, nvol={self.nvol}"
+
+    def __repr__(self) -> str:
+        return f"VolumeAnalysis(obv={self.obv}, vo={self.vo}, nvol={self.nvol})"
+
+
+@dataclass(frozen=True)
+class VolatilityAnalysis:
     tr: List[float]
+
+    def __str__(self) -> str:
+        return f"tr={self.tr}"
+
+    def __repr__(self) -> str:
+        return f"VolatilityAnalysis(tr={self.tr})"
+
+
+@dataclass(frozen=True)
+class TrendAnalysis:
+    fma: List[float]
+    sma: List[float]
+    macd: List[float]
+    ppo: List[float]
+    hh: List[float]
+    ll: List[float]
+
+    def __str__(self) -> str:
+        return f"fma={self.fma}, sma={self.sma}, macd={self.macd}, ppo={self.ppo}, hh={self.hh}, ll={self.ll}"
+
+    def __repr__(self) -> str:
+        return f"TrendAnalysis(fma={self.fma}, sma={self.sma}, macd={self.macd}, ppo={self.ppo}, hh={self.hh}, ll={self.ll})"
+
+
+@dataclass(frozen=True)
+class MomentumAnalysis:
+    froc: List[float]
+    sroc: List[float]
+    cci: List[float]
+
+    def __str__(self) -> str:
+        return f"froc={self.froc}, sroc={self.sroc}, cci={self.cci}"
+
+    def __repr__(self) -> str:
+        return f"MomentumAnalysis(froc={self.froc}, sroc={self.sroc}, cci={self.cci})"
+
+
+@dataclass(frozen=True)
+class OscillatorAnalysis:
+    frsi: List[float]
+    srsi: List[float]
     bbp: List[float]
     k: List[float]
     d: List[float]
-    hh: List[float]
-    ll: List[float]
+
+    def __str__(self) -> str:
+        return f"frsi={self.frsi}, srsi={self.srsi}, bbp={self.bbp}, k={self.k}, d={self.d}"
+
+    def __repr__(self) -> str:
+        return f"OscillatorAnalysis(frsi={self.frsi}, srsi={self.srsi}, bbp={self.bbp}, k={self.k}, d={self.d})"
+
+
+@dataclass(frozen=True)
+class TechAnalysis:
+    trend: TrendAnalysis
+    momentum: MomentumAnalysis
+    oscillator: OscillatorAnalysis
+    volume: VolumeAnalysis
+    volatility: VolatilityAnalysis
 
     @classmethod
     def from_list(cls, data: List[Any]) -> "TechAnalysis":
@@ -46,29 +101,22 @@ class TechAnalysis:
             ll,
         ) = data
 
-        return cls(
-            frsi,
-            srsi,
-            fma,
-            sma,
-            froc,
-            sroc,
-            macd,
-            ppo,
-            cci,
-            obv,
-            vo,
-            nvol,
-            tr,
-            bbp,
-            k,
-            d,
-            hh,
-            ll,
-        )
+        trend = TrendAnalysis(fma, sma, macd, ppo, hh, ll)
+        momentum = MomentumAnalysis(froc, sroc, cci)
+        oscillator = OscillatorAnalysis(frsi, srsi, bbp, k, d)
+        volume = VolumeAnalysis(obv, vo, nvol)
+        volatility = VolatilityAnalysis(tr)
+
+        return cls(trend, momentum, oscillator, volume, volatility)
 
     def __str__(self) -> str:
-        return f"rsi_fast={self.frsi}, rsi_slow={self.srsi}, ma_fast={self.fma}, ma_slow={self.sma}, roc_fast={self.froc}, roc_slow={self.sroc}, macd_histogram={self.macd}, cci={self.cci}, obv={self.obv}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp}, stoch_k={self.k}, stoch_d={self.d}, hh={self.hh}, ll={self.ll}"
+        return (
+            f"trend={self.trend}, momentum={self.momentum}, oscillator={self.oscillator}, "
+            f"volume={self.volume}, volatility={self.volatility}"
+        )
 
     def __repr__(self) -> str:
-        return f"TechAnalysis(rsi_fast={self.frsi}, rsi_slow={self.srsi}, ma_fast={self.fma}, ma_slow={self.sma}, roc_fast={self.froc}, roc_slow={self.sroc}, macd_histogram={self.macd}, cci={self.cci}, obv={self.obv}, volume_osc={self.vo}, volume_normalized={self.nvol}, atr={self.atr}, bb%b={self.bbp}, stoch_k={self.k}, stoch_d={self.d}, hh={self.hh}, ll={self.ll})"
+        return (
+            f"TechAnalysis(trend={self.trend}, momentum={self.momentum}, oscillator={self.oscillator}, "
+            f"volume={self.volume}, volatility={self.volatility})"
+        )
