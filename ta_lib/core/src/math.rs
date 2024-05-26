@@ -54,58 +54,48 @@ impl Series<f32> {
 }
 
 impl Series<f32> {
+    fn wsum(&self, window: &[Option<f32>]) -> Option<f32> {
+        let sum: f32 = window.iter().flatten().sum();
+
+        if window.iter().all(|&x| x.is_none()) {
+            None
+        } else {
+            Some(sum)
+        }
+    }
+
+    fn wmean(&self, window: &[Option<f32>]) -> Option<f32> {
+        self.wsum(window).map(|sum| sum / window.len() as f32)
+    }
+
     pub fn sum(&self, period: usize) -> Self {
-        self.window(period)
-            .map(|w| {
-                if w.iter().all(|&x| x.is_none()) {
-                    None
-                } else {
-                    Some(w.iter().flatten().sum::<f32>())
-                }
-            })
-            .collect()
+        self.window(period).map(|w| self.wsum(&w)).collect()
     }
 
     pub fn ma(&self, period: usize) -> Self {
-        self.window(period)
-            .map(|w| {
-                if w.iter().all(|&x| x.is_none()) {
-                    None
-                } else {
-                    Some(w.iter().flatten().sum::<f32>() / w.len() as f32)
-                }
-            })
-            .collect()
-    }
-
-    pub fn var(&self, period: usize) -> Self {
-        self.pow(2).smooth(Smooth::SMA, period) - self.smooth(Smooth::SMA, period).pow(2)
-    }
-
-    pub fn std(&self, period: usize) -> Self {
-        self.var(period).sqrt()
+        self.window(period).map(|w| self.wmean(&w)).collect()
     }
 
     pub fn mad(&self, period: usize) -> Self {
         self.window(period)
             .map(|w| {
-                if w.iter().all(|&x| x.is_none()) {
-                    None
-                } else {
-                    let len = w.len() as f32;
-                    let mean = w.iter().flatten().sum::<f32>() / len;
-
-                    let mad = w
-                        .iter()
+                self.wmean(&w).map(|mean| {
+                    w.iter()
                         .flatten()
                         .map(|value| (value - mean).abs())
                         .sum::<f32>()
-                        / len;
-
-                    Some(mad)
-                }
+                        / w.len() as f32
+                })
             })
             .collect()
+    }
+
+    pub fn var(&self, period: usize) -> Self {
+        self.pow(2).ma(period) - self.ma(period).pow(2)
+    }
+
+    pub fn std(&self, period: usize) -> Self {
+        self.var(period).sqrt()
     }
 
     pub fn zscore(&self, period: usize) -> Self {
