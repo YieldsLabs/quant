@@ -66,6 +66,10 @@ class OHLCV:
         return min(self.open, self.close) - self.low
 
     @property
+    def price_range(self) -> float:
+        return self.high - self.low
+
+    @property
     def type(self) -> CandleType:
         if self.close > self.open:
             return CandleType.bullish
@@ -104,6 +108,7 @@ class OHLCV:
             "real_body": self.real_body,
             "upper_shadow": self.upper_shadow,
             "lower_shadow": self.lower_shadow,
+            "price_range": self.price_range,
             "type": str(self.type),
         }
 
@@ -118,6 +123,7 @@ class OHLCV:
             f"real_body={self.real_body:.8f}, "
             f"upper_shadow={self.upper_shadow:.8f}, "
             f"lower_shadow={self.lower_shadow:.8f}, "
+            f"price_range={self.price_range:.8f}, "
             f"type={self.type}"
         )
 
@@ -132,5 +138,6 @@ class OHLCV:
             f"real_body={self.real_body:.8f}, "
             f"upper_shadow={self.upper_shadow:.8f}, "
             f"lower_shadow={self.lower_shadow:.8f}, "
+            f"price_range={self.price_range:.8f}, "
             f"type={self.type})"
         )
