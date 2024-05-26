@@ -39,18 +39,6 @@ impl Series<f32> {
         sum / norm
     }
 
-    fn ma(&self, period: usize) -> Self {
-        self.window(period)
-            .map(|w| {
-                if w.iter().all(|&x| x.is_none()) {
-                    None
-                } else {
-                    Some(w.iter().flatten().sum::<f32>() / w.len() as f32)
-                }
-            })
-            .collect()
-    }
-
     fn ema(&self, period: usize) -> Self {
         let alpha = Series::fill(2. / (period as f32 + 1.), self.len());
 
@@ -147,16 +135,6 @@ impl Series<f32> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_ma() {
-        let source = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, 1.0, 1.6666666, 3.0, 4.0]);
-
-        let result = source.ma(3);
-
-        assert_eq!(result, expected);
-    }
 
     #[test]
     fn test_ema() {

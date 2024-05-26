@@ -66,6 +66,18 @@ impl Series<f32> {
             .collect()
     }
 
+    pub fn ma(&self, period: usize) -> Self {
+        self.window(period)
+            .map(|w| {
+                if w.iter().all(|&x| x.is_none()) {
+                    None
+                } else {
+                    Some(w.iter().flatten().sum::<f32>() / w.len() as f32)
+                }
+            })
+            .collect()
+    }
+
     pub fn var(&self, period: usize) -> Self {
         self.pow(2).smooth(Smooth::SMA, period) - self.smooth(Smooth::SMA, period).pow(2)
     }
@@ -94,6 +106,10 @@ impl Series<f32> {
                 }
             })
             .collect()
+    }
+
+    pub fn zscore(&self, period: usize) -> Self {
+        (self - self.ma(period)) / self.std(period)
     }
 }
 
@@ -227,6 +243,16 @@ mod tests {
     }
 
     #[test]
+    fn test_ma() {
+        let source = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([f32::NAN, 1.0, 1.6666666, 3.0, 4.0]);
+
+        let result = source.ma(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_std() {
         let source = Series::from([2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0]);
         let expected = Series::from([
@@ -255,6 +281,17 @@ mod tests {
         let n = 3;
 
         let result = source.mad(n);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_zscore() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 1.0, 1.224745, 1.2247446, 1.2247455]);
+        let n = 3;
+
+        let result = source.zscore(n);
 
         assert_eq!(result, expected);
     }
