@@ -6,6 +6,7 @@ import numpy as np
 from scipy.stats import kurtosis, norm, skew
 
 TOTAL_TRADES_THRESHOLD = 3
+GAMMA = 0.57721566
 
 
 @dataclass(frozen=True)
@@ -150,12 +151,11 @@ class Performance:
         skewness = self.skew
         kurtosis = self.kurtosis
 
-        gamma = 0.57721566
         e = np.exp(1)
 
         sharpe_ratio_star = np.sqrt(0.5 / self._periods_per_year) * (
-            (1 - gamma) * norm.ppf(1 - 1 / total_trades)
-            + gamma * norm.ppf(1 - 1 / (total_trades * e))
+            (1 - GAMMA) * norm.ppf(1 - 1 / total_trades)
+            + GAMMA * norm.ppf(1 - 1 / (total_trades * e))
         )
 
         denom = 1 - skewness * sharpe_ratio + ((kurtosis - 1) / 4) * sharpe_ratio**2

@@ -4,9 +4,9 @@ from typing import Any, Dict, List
 
 
 class CandleType(Enum):
-    bullish = auto()
-    bearish = auto()
-    neutral = auto()
+    BULLISH = auto()
+    BEARISH = auto()
+    NEUTRAL = auto()
 
     def __str__(self):
         return self.name.upper()
@@ -72,11 +72,11 @@ class OHLCV:
     @property
     def type(self) -> CandleType:
         if self.close > self.open:
-            return CandleType.bullish
+            return CandleType.BULLISH
         elif self.close < self.open:
-            return CandleType.bearish
+            return CandleType.BEARISH
         else:
-            return CandleType.neutral
+            return CandleType.NEUTRAL
 
     def __lt__(self, other: object):
         if not isinstance(other, OHLCV):
