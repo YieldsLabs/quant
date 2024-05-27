@@ -12,7 +12,7 @@ from .risk_type import RiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 45000
+TIME_THRESHOLD = 25000
 
 
 def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
@@ -22,11 +22,11 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
     scaler = MinMaxScaler()
     data_scaled = scaler.fit_transform(data.reshape(-1, 1))
 
-    best_score = -1
+    best_score = float("-inf")
     best_centroids = None
 
     for n_clusters in range(n_clusters_range[0], n_clusters_range[1] + 1):
-        kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=42)
+        kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=None)
         kmeans.fit(data_scaled)
 
         if len(np.unique(kmeans.labels_)) < n_clusters:
@@ -175,8 +175,6 @@ class Risk(TaMixin):
             return sl
 
         window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
-
-        print(f"window length: {window_length}, polyorder: {polyorder}")
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)
