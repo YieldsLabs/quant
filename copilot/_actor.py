@@ -7,7 +7,7 @@ from core.models.risk_type import SignalRiskType
 
 system_prompt = "You are an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses and provide insights based on numerical information."
 signal_risk_prompt = """
-Candlestick data provided: Type=BULLISH, Open=9.609, High=9.638, Low=9.609, Close=9.634, Real_Body=0.02500000, Upper_Shadow=0.00400000, Lower_Shadow=0.00000000
+Candlestick data provided: {bar}
 Make a decision about Risk Level based on the candlestick data. Choose from: NONE, LOW, MODERATE, or HIGH.
 Return only the decision about the Risk Level.
 """
@@ -18,7 +18,7 @@ CopilotEvent = Any
 class CopilotActor(BaseActor):
     _EVENTS = []
 
-    def __init__(self, repository: AbstractMarketRepository, llm: AbstractLLMService):
+    def __init__(self, llm: AbstractLLMService, repository: AbstractMarketRepository):
         super().__init__()
         self.llm = llm
         self.repository = repository
