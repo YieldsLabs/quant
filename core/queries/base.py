@@ -13,6 +13,7 @@ class QueryGroup(Enum):
     broker = "broker"
     position = "position"
     portfolio = "portfolio"
+    copilot = "copilot"
 
     def __str__(self):
         return self.value

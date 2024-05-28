@@ -18,6 +18,7 @@ from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.copilot import EvaluateSignal
 
 OrderEventType = Union[
     NewMarketDataReceived, PositionInitialized, PositionCloseRequested
@@ -72,7 +73,11 @@ class PaperOrderActor(StrategyActor):
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
 
-        logger.debug(f"New Position: {current_position}")
+        logger.info(f"New Position: {current_position}")
+
+        risk_level = await self.ask(EvaluateSignal(current_position.signal))
+
+        logger.info(f"Risk Level: {risk_level}")
 
         entry_order = current_position.entry_order()
         next_bar = await self._find_next_bar(current_position.signal_bar)

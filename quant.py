@@ -74,7 +74,7 @@ async def main():
         PositionFixedSizeStrategy(),
     )
 
-    CopilotActor(LLMService(config_service), market_data)
+    CopilotActor(LLMService(config_service), market_data).start()
     Portfolio(config_service)
     SmartRouter(exchange_factory, config_service)
 
