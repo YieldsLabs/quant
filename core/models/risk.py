@@ -8,7 +8,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import MinMaxScaler
 
 from .ohlcv import OHLCV
-from .risk_type import RiskType
+from .risk_type import PositionRiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
@@ -23,9 +23,9 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
     data_scaled = scaler.fit_transform(data.reshape(-1, 1))
 
     best_score = float("-inf")
-    best_centroids = None
+    best_centroids = []
 
-    for n_clusters in range(n_clusters_range[0], n_clusters_range[1] + 1):
+    for n_clusters in range(*n_clusters_range):
         kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=None)
         kmeans.fit(data_scaled)
 
@@ -38,7 +38,7 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
             best_score = silhouette_avg
             best_centroids = scaler.inverse_transform(kmeans.cluster_centers_).flatten()
 
-    return int(round(np.mean(best_centroids)))
+    return int(round(np.mean(best_centroids))) if len(best_centroids) else 2
 
 
 def optimize_window_polyorder(
@@ -46,7 +46,7 @@ def optimize_window_polyorder(
 ) -> tuple:
     all_data = np.concatenate([ll_data, hh_data, atr_data])
 
-    window_length = optimize_params(all_data, n_clusters_range=(2, 10))
+    window_length = optimize_params(all_data)
     polyorder_range = (2, window_length - 1 if window_length > 2 else 2)
     polyorder = optimize_params(all_data, n_clusters_range=polyorder_range)
 
@@ -97,7 +97,7 @@ class TaMixin:
 @dataclass(frozen=True)
 class Risk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
-    type: RiskType = RiskType.NONE
+    type: PositionRiskType = PositionRiskType.NONE
     trail_factor: float = field(default_factory=lambda: np.random.uniform(2.8, 5.8))
 
     @property
@@ -123,34 +123,34 @@ class Risk(TaMixin):
 
         if expiration >= 0:
             if side == PositionSide.LONG:
-                return replace(self, type=RiskType.TIME)
+                return replace(self, type=PositionRiskType.TIME)
             if side == PositionSide.SHORT:
-                return replace(self, type=RiskType.TIME)
+                return replace(self, type=PositionRiskType.TIME)
 
         if side == PositionSide.LONG:
             if curr_bar.high >= tp:
-                return replace(self, type=RiskType.TP)
+                return replace(self, type=PositionRiskType.TP)
             if curr_bar.low <= sl:
-                return replace(self, type=RiskType.SL)
+                return replace(self, type=PositionRiskType.SL)
 
         if side == PositionSide.SHORT:
             if curr_bar.low <= tp:
-                return replace(self, type=RiskType.TP)
+                return replace(self, type=PositionRiskType.TP)
             if curr_bar.high >= sl:
-                return replace(self, type=RiskType.SL)
+                return replace(self, type=PositionRiskType.SL)
 
-        return replace(self, type=RiskType.NONE)
+        return replace(self, type=PositionRiskType.NONE)
 
     def exit_price(self, side: PositionSide, tp: float, sl: float) -> "float":
         last_bar = self.last_bar
 
-        if self.type == RiskType.TP:
+        if self.type == PositionRiskType.TP:
             if side == PositionSide.LONG:
                 return min(tp, last_bar.high)
             elif side == PositionSide.SHORT:
                 return max(tp, last_bar.low)
 
-        elif self.type == RiskType.SL:
+        elif self.type == PositionRiskType.SL:
             if side == PositionSide.LONG:
                 return max(sl, last_bar.low)
             elif side == PositionSide.SHORT:

@@ -9,7 +9,7 @@ import numpy as np
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .risk import Risk
-from .risk_type import RiskType
+from .risk_type import PositionRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
 from .ta import TechAnalysis
@@ -137,7 +137,7 @@ class Position:
 
     @property
     def has_risk(self) -> bool:
-        return self.risk.type != RiskType.NONE
+        return self.risk.type != PositionRiskType.NONE
 
     @property
     def adj_count(self) -> int:
@@ -204,9 +204,9 @@ class Position:
     @property
     def curr_price(self) -> float:
         last_bar = self.risk_bar
-        p = self.signal.symbol.price_precision
+        pr = self.signal.symbol.price_precision
 
-        return round((last_bar.high + last_bar.low + last_bar.close) / 3, p)
+        return round((last_bar.high + last_bar.low + last_bar.close) / 3, pr)
 
     @property
     def is_valid(self) -> bool:
@@ -307,7 +307,7 @@ class Position:
         )
 
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
-        last_items = 3
+        last_items = 5
 
         print(
             f"RISK: {next_risk}, "
