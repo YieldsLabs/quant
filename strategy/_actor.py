@@ -46,7 +46,7 @@ class SignalActor(StrategyActor):
         self.strategy_ref = None
 
     def pre_receive(self, event: NewMarketDataReceived):
-        return SignalPolicy.should_process(event)
+        return SignalPolicy.should_process(self, event)
 
     async def on_receive(self, event: NewMarketDataReceived):
         signal_event = self.strategy_ref.next(
