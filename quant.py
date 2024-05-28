@@ -6,6 +6,7 @@ import signal
 import uvloop
 from dotenv import load_dotenv
 
+from copilot import CopilotActor
 from core.models.exchange import ExchangeType
 from exchange import ExchangeFactory, WSFactory
 from executor import OrderExecutorActorFactory
@@ -20,7 +21,7 @@ from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
 from position.size.fixed import PositionFixedSizeStrategy
 from risk import RiskActorFactory
-from service import EnvironmentSecretService, SignalService, WasmFileService
+from service import EnvironmentSecretService, LLMService, SignalService, WasmFileService
 from sor import SmartRouter
 from strategy import SignalActorFactory
 from strategy.generator import StrategyGeneratorFactory
@@ -37,6 +38,7 @@ REGIME = os.getenv("REGIME")
 LOG_DIR = os.getenv("LOG_DIR")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 WASM_FOLDER = os.getenv("WASM_FOLDER")
+LLM_MODEL_PATH = os.getenv("LLM_MODEL_PATH")
 
 configure_logging(LOG_LEVEL)
 
@@ -53,7 +55,11 @@ async def main():
 
     config_service = ConfigService()
     config_service.load(config_path=f"config.{REGIME}.ini")
-    config = {"bus": {"num_workers": os.cpu_count()}, "store": {"base_dir": LOG_DIR}}
+    config = {
+        "bus": {"num_workers": os.cpu_count()},
+        "store": {"base_dir": LOG_DIR},
+        "llm": {"model_path": LLM_MODEL_PATH},
+    }
 
     config_service.update(config)
 
@@ -61,17 +67,16 @@ async def main():
 
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
     ws_factory = WSFactory(EnvironmentSecretService())
-
-    Portfolio(config_service)
-    SmartRouter(exchange_factory, config_service)
     wasm = WasmFileService(WASM_FOLDER)
-
     market_data = MarketRepository(wasm)
-
     position_factory = PositionFactory(
         config_service,
         PositionFixedSizeStrategy(),
     )
+
+    CopilotActor(market_data, LLMService(config_service))
+    Portfolio(config_service)
+    SmartRouter(exchange_factory, config_service)
 
     signal_actor_factory = SignalActorFactory(SignalService(wasm))
     position_actor_factory = PositionActorFactory(position_factory, config_service)
