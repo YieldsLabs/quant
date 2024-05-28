@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 from core.actors import StrategyActor
+from core.actors.policy.signal import SignalPolicy
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
@@ -45,11 +46,7 @@ class SignalActor(StrategyActor):
         self.strategy_ref = None
 
     def pre_receive(self, event: NewMarketDataReceived):
-        return (
-            event.symbol == self.symbol
-            and event.timeframe == self.timeframe
-            and event.closed
-        )
+        return SignalPolicy.should_process(event)
 
     async def on_receive(self, event: NewMarketDataReceived):
         signal_event = self.strategy_ref.next(

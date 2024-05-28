@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.commands.feed import StartRealtimeFeed
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_ws import AbstractWS
@@ -44,7 +44,7 @@ class AsyncRealTimeData:
             raise
 
 
-class RealtimeActor(Actor):
+class RealtimeActor(StrategyActor):
     _EVENTS = [StartRealtimeFeed]
 
     def __init__(
@@ -56,9 +56,6 @@ class RealtimeActor(Actor):
         super().__init__(symbol, timeframe)
         self.ws = ws
         self.task = None
-
-    def pre_receive(self, msg: StartRealtimeFeed):
-        return self._symbol == msg.symbol and self._timeframe == msg.timeframe
 
     def on_stop(self):
         if self.task:
@@ -80,4 +77,4 @@ class RealtimeActor(Actor):
                     )
 
                 if bar and bar.closed:
-                    logger.info(f"Tick: {symbol}_{timeframe}:{bar}")
+                    logger.info(f"Bar: {symbol}_{timeframe}:{bar}")

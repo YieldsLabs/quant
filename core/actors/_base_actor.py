@@ -61,11 +61,8 @@ class BaseActor(AbstractActor):
 
     def _register_events(self):
         for event in self._EVENTS:
-            self._mailbox.register(event, self.on_receive, self._pre_receive)
+            self._mailbox.register(event, self.on_receive, self.pre_receive)
 
     def _unregister_events(self):
         for event in self._EVENTS:
             self._mailbox.unregister(event, self.on_receive)
-
-    def _pre_receive(self, _msg: Message):
-        return self.pre_receive(_msg)

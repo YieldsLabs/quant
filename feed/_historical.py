@@ -2,7 +2,7 @@ import asyncio
 from collections import deque
 from typing import AsyncIterator, List
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.commands.feed import StartHistoricalFeed
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
@@ -72,7 +72,7 @@ class AsyncHistoricalData:
         return self.last_row
 
 
-class HistoricalActor(Actor):
+class HistoricalActor(StrategyActor):
     _EVENTS = [StartHistoricalFeed]
 
     def __init__(
@@ -86,9 +86,6 @@ class HistoricalActor(Actor):
         self.exchange = exchange
         self.config_service = config_service.get("backtest")
         self.buffer: deque[Bar] = deque()
-
-    def pre_receive(self, msg: StartHistoricalFeed):
-        return self.symbol == msg.symbol and self.timeframe == msg.timeframe
 
     async def on_receive(self, msg: StartHistoricalFeed):
         symbol, timeframe = msg.symbol, msg.timeframe

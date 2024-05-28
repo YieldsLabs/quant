@@ -1,11 +1,13 @@
 from typing import Any
 
+from core.actors import StrategyActor
+
 from .event import EventPolicy
 
 
 class StrategyPolicy(EventPolicy):
     @classmethod
-    def should_process(cls, actor, event) -> bool:
+    def should_process(cls, actor: StrategyActor, event) -> bool:
         symbol, timeframe = cls._get_event_key(event)
         return actor.symbol == symbol and actor.timeframe == timeframe
 
