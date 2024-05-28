@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Union
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.events.backtest import BacktestEnded
 from core.events.position import (
     BrokerPositionClosed,
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 TIME_BUFF = 3
 
 
-class PositionActor(Actor):
+class PositionActor(StrategyActor):
     _EVENTS = [
         GoLongSignalReceived,
         GoShortSignalReceived,
@@ -63,10 +63,6 @@ class PositionActor(Actor):
         self.short_sm = PositionStateMachine(self, SHORT_TRANSITIONS)
         self.state = PositionStorage()
         self.config = config_service.get("position")
-
-    def pre_receive(self, event: PositionEvent) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-        return self.symbol == symbol and self.timeframe == timeframe
 
     async def on_receive(self, event):
         symbol, _ = self._get_event_key(event)
@@ -148,7 +144,6 @@ class PositionActor(Actor):
     async def handle_exit_received(self, event: ExitSignal) -> bool:
         if not event.position.has_risk:
             logger.warn(f"Try to close not risky position: {event.position}")
-            return False
 
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(

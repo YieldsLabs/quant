@@ -1,32 +1,22 @@
+import uuid
+
 from core.commands.base import Command
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
 from core.queries.base import Query
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
 
-class Actor(AbstractActor):
+class BaseActor(AbstractActor):
     _EVENTS = []
 
-    def __init__(self, symbol: Symbol, timeframe: Timeframe):
+    def __init__(self):
         super().__init__()
-        self._symbol = symbol
-        self._timeframe = timeframe
         self._running = False
         self._mailbox = EventDispatcher()
 
     @property
     def id(self):
-        return f"{self._symbol}_{self._timeframe}"
-
-    @property
-    def symbol(self):
-        return self._symbol
-
-    @property
-    def timeframe(self):
-        return self._timeframe
+        return str(uuid.uuid4())
 
     @property
     def running(self):

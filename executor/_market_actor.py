@@ -1,7 +1,7 @@
 import logging
 from typing import Union
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.commands.broker import ClosePosition, OpenPosition
 from core.events.position import (
     BrokerPositionClosed,
@@ -19,15 +19,11 @@ logger = logging.getLogger(__name__)
 PositionEventType = Union[PositionInitialized, PositionCloseRequested]
 
 
-class MarketOrderActor(Actor):
+class MarketOrderActor(StrategyActor):
     _EVENTS = [PositionInitialized, PositionCloseRequested]
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
-
-    def pre_receive(self, event: PositionEventType):
-        event = event.position.signal if hasattr(event, "position") else event
-        return event.symbol == self.symbol and event.timeframe == self.timeframe
 
     async def on_receive(self, event: PositionEventType):
         handlers = {

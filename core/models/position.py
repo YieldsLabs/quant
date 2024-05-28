@@ -307,24 +307,9 @@ class Position:
         )
 
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
-        last_items = 5
 
         print(
-            f"RISK: {next_risk}, "
-            f"EMA_FAST: {ta.trend.fma[-last_items:]}, EMA_SLOW: {ta.trend.sma[-last_items:]}, "
-            f"MACD_HISTOGRAM: {ta.trend.macd[-last_items:]}, "
-            f"PPO: {ta.trend.ppo[-last_items:]}, "
-            f"ROC_FAST: {ta.momentum.froc[-last_items:]}, ROC_SLOW: {ta.momentum.sroc[-last_items:]}, "
-            f"CCI: {ta.momentum.cci[-last_items:]}, "
-            f"RSI_FAST: {ta.oscillator.frsi[-last_items:]}, RSI_SLOW: {ta.oscillator.srsi[-last_items:]}, "
-            f"STOCH_K: {ta.oscillator.k[-last_items:]}, STOCH_D: {ta.oscillator.d[-last_items:]}, "
-            f"BB%B: {ta.oscillator.bbp[-last_items:]}, "
-            f"Volume_Normalized: {ta.volume.nvol[-last_items:]}, "
-            f"Volume_OSC: {ta.volume.vo[-last_items:]}, "
-            f"OBV: {ta.volume.obv[-last_items:]}, "
-            f"True Range: {ta.volatility.tr[-last_items:]}, "
-            f"TP: {next_tp}, SL: {next_sl}, "
-            f"PnL%: {pnl_perc}"
+            f"RISK: {next_risk}, " f"TP: {next_tp}, SL: {next_sl}, " f"PnL%: {pnl_perc}"
         )
 
         return replace(

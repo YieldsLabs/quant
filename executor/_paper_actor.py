@@ -3,7 +3,7 @@ import logging
 from enum import Enum, auto
 from typing import Optional, Union
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     BrokerPositionClosed,
@@ -31,7 +31,7 @@ class PriceDirection(Enum):
     OLHC = auto()
 
 
-class PaperOrderActor(Actor):
+class PaperOrderActor(StrategyActor):
     _EVENTS = [
         NewMarketDataReceived,
         PositionInitialized,
@@ -43,10 +43,6 @@ class PaperOrderActor(Actor):
     ):
         super().__init__(symbol, timeframe)
         self.repository = repository
-
-    def pre_receive(self, event: OrderEventType):
-        event = event.position.signal if hasattr(event, "position") else event
-        return event.symbol == self._symbol and event.timeframe == self._timeframe
 
     async def on_receive(self, event: OrderEventType):
         handlers = {

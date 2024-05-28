@@ -1,7 +1,7 @@
 import asyncio
 from typing import Optional, Union
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     PositionAdjusted,
@@ -22,26 +22,23 @@ from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
+TrailEvent = Union[
+    GoLongSignalReceived,
+    GoShortSignalReceived,
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+]
+
 RiskEvent = Union[
     NewMarketDataReceived,
     PositionOpened,
     PositionAdjusted,
     PositionClosed,
-    ExitLongSignalReceived,
-    ExitShortSignalReceived,
-    GoLongSignalReceived,
-    GoShortSignalReceived,
-]
-
-TrailEvent = Union[
-    ExitLongSignalReceived,
-    ExitShortSignalReceived,
-    GoLongSignalReceived,
-    GoShortSignalReceived,
+    TrailEvent,
 ]
 
 
-class RiskActor(Actor):
+class RiskActor(StrategyActor):
     _EVENTS = [
         NewMarketDataReceived,
         PositionOpened,
@@ -64,10 +61,6 @@ class RiskActor(Actor):
         self._position = (None, None)
         self.config = config_service.get("position")
         self._store = repository
-
-    def pre_receive(self, event: RiskEvent):
-        symbol, timeframe = self._get_event_key(event)
-        return self.symbol == symbol and self.timeframe == timeframe
 
     async def on_receive(self, event: RiskEvent):
         handlers = {
@@ -178,15 +171,3 @@ class RiskActor(Actor):
                     break
 
         return next_position
-
-    @staticmethod
-    def _get_event_key(event: RiskEvent):
-        signal = (
-            event.signal
-            if hasattr(event, "signal")
-            else event.position.signal
-            if hasattr(event, "position")
-            else event
-        )
-
-        return (signal.symbol, signal.timeframe)

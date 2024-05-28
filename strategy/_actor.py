@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class SignalActor(Actor):
+class SignalActor(StrategyActor):
     _EVENTS = [NewMarketDataReceived]
 
     def __init__(
@@ -47,7 +47,7 @@ class SignalActor(Actor):
     def pre_receive(self, event: NewMarketDataReceived):
         return (
             event.symbol == self.symbol
-            and event.timeframe == self._timeframe
+            and event.timeframe == self.timeframe
             and event.closed
         )
 
