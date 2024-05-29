@@ -70,6 +70,24 @@ class OHLCV:
         return self.high - self.low
 
     @property
+    def price_movement(self) -> float:
+        return self.close - self.open
+
+    @property
+    def body_range_ratio(self) -> float:
+        return self.real_body / self.price_range if self.price_range != 0 else 0
+
+    @property
+    def body_shadow_ratio(self) -> float:
+        total_shadow = self.upper_shadow + self.lower_shadow
+        return self.real_body / total_shadow if total_shadow != 0 else 0
+
+    @property
+    def shadow_range_ratio(self) -> float:
+        total_shadow = self.upper_shadow + self.lower_shadow
+        return total_shadow / self.price_range if self.price_range != 0 else 0
+
+    @property
     def type(self) -> CandleType:
         if self.close > self.open:
             return CandleType.BULLISH
@@ -109,6 +127,10 @@ class OHLCV:
             "upper_shadow": self.upper_shadow,
             "lower_shadow": self.lower_shadow,
             "price_range": self.price_range,
+            "price_movement": self.price_movement,
+            "body_range_ratio": self.body_range_ratio,
+            "body_shadow_ratio": self.body_shadow_ratio,
+            "shadow_range_ratio": self.shadow_range_ratio,
             "type": str(self.type),
         }
 
@@ -124,20 +146,12 @@ class OHLCV:
             f"upper_shadow={self.upper_shadow:.8f}, "
             f"lower_shadow={self.lower_shadow:.8f}, "
             f"price_range={self.price_range:.8f}, "
+            f"price_movement={self.price_movement:.8f}, "
+            f"body_range_ratio={self.body_range_ratio:.8f}, "
+            f"body_shadow_ratio={self.body_shadow_ratio:.8f}, "
+            f"shadow_range_ratio={self.shadow_range_ratio:.8f}, "
             f"type={self.type}"
         )
 
     def __repr__(self) -> str:
-        return (
-            f"OHLCV(timestamp={self.timestamp}, "
-            f"open={self.open}, "
-            f"high={self.high}, "
-            f"low={self.low}, "
-            f"close={self.close}, "
-            f"volume={self.volume}, "
-            f"real_body={self.real_body:.8f}, "
-            f"upper_shadow={self.upper_shadow:.8f}, "
-            f"lower_shadow={self.lower_shadow:.8f}, "
-            f"price_range={self.price_range:.8f}, "
-            f"type={self.type})"
-        )
+        return f"OHLCV({str(self)})"
