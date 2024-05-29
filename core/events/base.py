@@ -1,22 +1,22 @@
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import Enum, auto
 
 
 class EventGroup(Enum):
-    account = "account"
-    backtest = "backtest"
-    market = "market"
-    portfolio = "portfolio"
-    position = "position"
-    risk = "risk"
-    service = "service"
-    signal = "signal"
-    system = "system"
+    account = auto()
+    backtest = auto()
+    market = auto()
+    portfolio = auto()
+    position = auto()
+    risk = auto()
+    service = auto()
+    signal = auto()
+    system = auto()
 
     def __str__(self):
-        return self.value
+        return self.name
 
 
 @dataclass

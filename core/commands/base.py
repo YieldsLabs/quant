@@ -2,19 +2,19 @@ import asyncio
 import hashlib
 from dataclasses import dataclass, field, fields
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import Enum, auto
 
 from core.events.base import Event, EventMeta
 
 
 class CommandGroup(Enum):
-    account = "account"
-    broker = "broker"
-    portfolio = "portfolio"
-    feed = "feed"
+    account = auto()
+    broker = auto()
+    portfolio = auto()
+    feed = auto()
 
     def __str__(self):
-        return self.value
+        return self.name
 
 
 @dataclass(frozen=True)
