@@ -23,14 +23,16 @@ class LLMService(AbstractLLMService):
 
     async def call(self, system_prompt: str, user_prompt: str) -> str:
         async with self._lock:
-            output = self._llm(
-                f"<|system|>{system_prompt}<|end|><|user|>\n{user_prompt}<|end|>\n<|assistant|>",
-                max_tokens=self.config["max_tokens"],
-                temperature=self.config["temperature"],
-                stop=["<|end|>"],
-                stream=False,
-                echo=False,
-            )
+            llama_input = {
+                "prompt": f"<|system|>{system_prompt}<|end|><|user|>\n{user_prompt}<|end|>\n<|assistant|>",
+                "max_tokens": self.config["max_tokens"],
+                "temperature": self.config["temperature"],
+                "stop": ["<|end|>"],
+                "stream": False,
+                "echo": False,
+            }
+
+            output = self._llm(**llama_input)
 
             answer = output["choices"][0]["text"].strip()
             return answer
