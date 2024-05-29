@@ -77,4 +77,4 @@ class RealtimeActor(StrategyActor):
                     )
 
                 if bar and bar.closed:
-                    logger.info(f"Bar: {symbol}_{timeframe}:{bar}")
+                    logger.info(f"{symbol}_{timeframe}:{bar}")

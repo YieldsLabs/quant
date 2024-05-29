@@ -20,9 +20,11 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
+from core.models.risk_type import SignalRiskType
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.copilot import EvaluateSignal
 
 from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
@@ -83,6 +85,13 @@ class PositionActor(StrategyActor):
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         if int(event.meta.timestamp) < int(time.time()) - TIME_BUFF:
             logger.warn(f"Stale Signal: {event}, {time.time()}")
+            return False
+
+        risk_level = await self.ask(EvaluateSignal(event.signal))
+
+        logger.info(f"Risk level: {risk_level}")
+
+        if risk_level == SignalRiskType.HIGH or risk_level == SignalRiskType.NONE:
             return False
 
         async def create_and_store_position(event: SignalEvent):

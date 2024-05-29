@@ -53,5 +53,9 @@ class SignalActor(StrategyActor):
             self.symbol, self.timeframe, self.strategy, event.ohlcv
         )
 
-        if signal_event:
-            await self.tell(signal_event)
+        if not signal_event:
+            return
+
+        logger.debug(signal_event)
+
+        await self.tell(signal_event)

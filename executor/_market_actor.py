@@ -11,7 +11,6 @@ from core.events.position import (
 )
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.copilot import EvaluateSignal
 from core.queries.position import GetClosePosition, GetOpenPosition
 
 logger = logging.getLogger(__name__)
@@ -41,10 +40,6 @@ class MarketOrderActor(StrategyActor):
         current_position = event.position
 
         logger.debug(f"New Position: {current_position}")
-
-        risk_level = await self.ask(EvaluateSignal(current_position.signal))
-
-        logger.info(f"Risk Level: {risk_level}")
 
         await self.ask(OpenPosition(current_position))
 
