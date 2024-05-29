@@ -14,13 +14,15 @@ class LLMService(AbstractLLMService):
         self._llm = self._initialize_llm(self.config)
         self._lock = asyncio.Lock()
 
-    async def call(self, system_prompt: str, user_prompt: str) -> str:
+    async def call(
+        self, system_prompt: str, user_prompt: str, stop_words: tuple[str] = ("<|end|>")
+    ) -> str:
         async with self._lock:
             llama_input = {
                 "prompt": f"<|system|>{system_prompt}<|end|><|user|>\n{user_prompt}<|end|>\n<|assistant|>",
                 "max_tokens": self.config["max_tokens"],
                 "temperature": self.config["temperature"],
-                "stop": ["<|end|>"],
+                "stop": list(stop_words),
                 "stream": False,
                 "echo": False,
             }
