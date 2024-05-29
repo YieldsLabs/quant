@@ -10,7 +10,7 @@ from core.interfaces.abstract_llm_service import AbstractLLMService
 class LLMService(AbstractLLMService):
     def __init__(self, config_service: AbstractConfig):
         super().__init__()
-        self.config = config_service.get("llm")
+        self.config = config_service.get("copilot")
         self._llm = self._initialize_llm(self.config)
         self._lock = asyncio.Lock()
 
@@ -27,7 +27,7 @@ class LLMService(AbstractLLMService):
                 "echo": False,
             }
 
-            output = await asyncio.to_thread(self._llm, **llama_input)
+            output = self._llm(**llama_input)
             answer = output["choices"][0]["text"].strip()
             return answer
 

@@ -89,12 +89,13 @@ class OHLCV:
 
     @property
     def type(self) -> CandleType:
-        if self.close > self.open:
+        if self.price_movement > 0:
             return CandleType.BULLISH
-        elif self.close < self.open:
+
+        if self.price_movement < 0:
             return CandleType.BEARISH
-        else:
-            return CandleType.NEUTRAL
+
+        return CandleType.NEUTRAL
 
     def __lt__(self, other: object):
         if not isinstance(other, OHLCV):
@@ -154,4 +155,4 @@ class OHLCV:
         )
 
     def __repr__(self) -> str:
-        return f"OHLCV({str(self)})"
+        return f"OHLCV({self})"
