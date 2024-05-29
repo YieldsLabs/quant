@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Dict
 
 from llama_cpp import Llama
 
@@ -10,15 +11,7 @@ class LLMService(AbstractLLMService):
     def __init__(self, config_service: AbstractConfig):
         super().__init__()
         self.config = config_service.get("llm")
-        self._llm = Llama(
-            model_path=self.config["model_path"],
-            n_ctx=self.config["n_ctx"],
-            n_threads=self.config["n_threads"],
-            n_gpu_layers=self.config["n_gpu_layers"],
-            n_batch=self.config["n_batch"],
-            seed=1337,
-            verbose=False,
-        )
+        self._llm = self._initialize_llm(self.config)
         self._lock = asyncio.Lock()
 
     async def call(self, system_prompt: str, user_prompt: str) -> str:
@@ -32,7 +25,18 @@ class LLMService(AbstractLLMService):
                 "echo": False,
             }
 
-            output = self._llm(**llama_input)
-
+            output = await asyncio.to_thread(self._llm, **llama_input)
             answer = output["choices"][0]["text"].strip()
             return answer
+
+    @staticmethod
+    def _initialize_llm(config: Dict[str, Any]) -> Llama:
+        return Llama(
+            model_path=config["model_path"],
+            n_ctx=config["n_ctx"],
+            n_threads=config["n_threads"],
+            n_gpu_layers=config["n_gpu_layers"],
+            n_batch=config["n_batch"],
+            seed=1337,
+            verbose=False,
+        )
