@@ -3,7 +3,8 @@ from dataclasses import dataclass, field
 from core.events.base import EventMeta
 from core.models.risk_type import SignalRiskType
 from core.models.signal import Signal
-from core.queries.base import Query, QueryGroup
+
+from .base import Query, QueryGroup
 
 
 @dataclass(frozen=True)

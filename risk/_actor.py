@@ -16,11 +16,12 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.interfaces.abstract_config import AbstractConfig
-from core.interfaces.abstract_market_repository import AbstractMarketRepository
+from core.models.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.ohlcv import TA, NextBar
 
 TrailEvent = Union[
     GoLongSignalReceived,
@@ -50,34 +51,28 @@ class RiskActor(StrategyActor):
     ]
 
     def __init__(
-        self,
-        symbol: Symbol,
-        timeframe: Timeframe,
-        config_service: AbstractConfig,
-        repository: AbstractMarketRepository,
+        self, symbol: Symbol, timeframe: Timeframe, config_service: AbstractConfig
     ):
         super().__init__(symbol, timeframe)
         self._lock = asyncio.Lock()
         self._position = (None, None)
         self.config = config_service.get("position")
-        self._store = repository
 
     async def on_receive(self, event: RiskEvent):
         handlers = {
-            NewMarketDataReceived: [self._handle_market, self._handle_position_risk],
-            PositionOpened: [self._open_position],
-            PositionClosed: [self._close_position],
-            ExitLongSignalReceived: [self._trail_position],
-            ExitShortSignalReceived: [self._trail_position],
-            GoLongSignalReceived: [self._trail_position],
-            GoShortSignalReceived: [self._trail_position],
+            NewMarketDataReceived: self._handle_position_risk,
+            PositionOpened: self._open_position,
+            PositionClosed: self._close_position,
+            ExitLongSignalReceived: self._trail_position,
+            ExitShortSignalReceived: self._trail_position,
+            GoLongSignalReceived: self._trail_position,
+            GoShortSignalReceived: self._trail_position,
         }
 
         handler = handlers.get(type(event))
 
         if handler:
-            for h in handler:
-                await h(event)
+            await handler(event)
 
     async def _open_position(self, event: PositionOpened):
         async with self._lock:
@@ -101,18 +96,15 @@ class RiskActor(StrategyActor):
                 None if event.position.side == PositionSide.SHORT else short_position,
             )
 
-    async def _handle_market(self, event: NewMarketDataReceived):
-        await self._store.upsert(self.symbol, self.timeframe, event.ohlcv)
-
-    async def _handle_position_risk(self, _event: NewMarketDataReceived):
+    async def _handle_position_risk(self, event: NewMarketDataReceived):
         async with self._lock:
             long_position, short_position = self._position
 
             if long_position or short_position:
                 long_position, short_position = await asyncio.gather(
                     *[
-                        self._process_market(long_position),
-                        self._process_market(short_position),
+                        self._process_market(event.ohlcv, long_position),
+                        self._process_market(event.ohlcv, short_position),
                     ]
                 )
 
@@ -152,17 +144,20 @@ class RiskActor(StrategyActor):
 
             self._position = (long_position, short_position)
 
-    async def _process_market(self, position: Optional[Position]):
+    async def _process_market(self, curr_bar: OHLCV, position: Optional[Position]):
         next_position = position
+        bars = [curr_bar]
 
         if position and not position.has_risk:
-            async for next_bar in self._store.find_next_bar(
-                self.symbol, self.timeframe, next_position.risk_bar
-            ):
-                if not next_bar:
-                    continue
+            next_bar = await self.ask(
+                NextBar(self.symbol, self.timeframe, next_position.risk_bar)
+            )
 
-                ta = await self._store.ta(self.symbol, self.timeframe, next_bar)
+            if next_bar:
+                bars.append(next_bar)
+
+            for bar in bars:
+                ta = await self.ask(TA(self.symbol, self.timeframe, bar))
 
                 next_position = next_position.next(next_bar, ta)
 

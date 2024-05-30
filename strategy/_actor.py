@@ -28,17 +28,17 @@ class SignalActor(StrategyActor):
         service: AbstractSignalService,
     ):
         super().__init__(symbol, timeframe)
-
-        self.strategy_ref: Optional[StrategyRef] = None
         self.service = service
         self._strategy = strategy
         self._wasm = wasm
+        self.strategy_ref: Optional[StrategyRef] = None
 
     @property
     def strategy(self):
         return self._strategy
 
     def on_start(self):
+        self.service.load_instance(self._wasm)
         self.strategy_ref = self.service.register(self.strategy, self._wasm)
 
     def on_stop(self):
@@ -49,6 +49,16 @@ class SignalActor(StrategyActor):
         return SignalPolicy.should_process(self, event)
 
     async def on_receive(self, event: NewMarketDataReceived):
+        handlers = {
+            NewMarketDataReceived: self._handle_market,
+        }
+
+        handler = handlers.get(type(event))
+
+        if handler:
+            await handler(event)
+
+    async def _handle_market(self, event: NewMarketDataReceived):
         signal_event = self.strategy_ref.next(
             self.symbol, self.timeframe, self.strategy, event.ohlcv
         )

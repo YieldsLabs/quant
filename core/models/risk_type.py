@@ -17,6 +17,7 @@ class SignalRiskType(Enum):
     LOW = auto()
     MODERATE = auto()
     HIGH = auto()
+    INSANE = auto()
 
     @classmethod
     def from_string(cls, risk_string):
@@ -25,6 +26,7 @@ class SignalRiskType(Enum):
             "LOW": cls.LOW,
             "MODERATE": cls.MODERATE,
             "HIGH": cls.HIGH,
+            "INSANE": cls.INSANE,
         }
 
         return risk_mapping.get(risk_string.upper(), None)

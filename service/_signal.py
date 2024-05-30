@@ -22,13 +22,13 @@ class SignalService(AbstractSignalService):
         self.linker.define_wasi()
         self.instance: Optional[Instance] = None
 
-    def _load(self, type: WasmType):
+    def load_instance(self, type: WasmType):
         module = self.wasm_service.get_module(type, self.store.engine)
         self.instance = self.linker.instantiate(self.store, module)
 
     def register(self, strategy: Strategy, wasm: WasmType) -> StrategyRef:
         if not self.instance:
-            self._load(wasm)
+            self.load_instance(wasm)
 
         exports = self.instance.exports(self.store)
 

@@ -1,3 +1,3 @@
-from ._repository import MarketRepository
+from ._actor import MarketActor
 
-__all__ = [MarketRepository]
+__all__ = [MarketActor]

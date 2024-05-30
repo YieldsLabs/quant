@@ -15,7 +15,7 @@ from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
-from market import MarketRepository
+from market import MarketActor
 from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
@@ -38,7 +38,7 @@ REGIME = os.getenv("REGIME")
 LOG_DIR = os.getenv("LOG_DIR")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 WASM_FOLDER = os.getenv("WASM_FOLDER")
-LLM_MODEL_PATH = os.getenv("LLM_MODEL_PATH")
+COPILOT_MODEL_PATH = os.getenv("COPILOT_MODEL_PATH")
 
 configure_logging(LOG_LEVEL)
 
@@ -58,7 +58,7 @@ async def main():
     config = {
         "bus": {"num_workers": os.cpu_count()},
         "store": {"base_dir": LOG_DIR},
-        "llm": {"model_path": LLM_MODEL_PATH},
+        "copilot": {"model_path": COPILOT_MODEL_PATH},
     }
 
     config_service.update(config)
@@ -68,20 +68,19 @@ async def main():
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
     ws_factory = WSFactory(EnvironmentSecretService())
     wasm = WasmFileService(WASM_FOLDER)
-    market_data = MarketRepository(wasm)
     position_factory = PositionFactory(
         config_service,
         PositionFixedSizeStrategy(),
     )
-
-    CopilotActor(LLMService(config_service), market_data).start()
+    MarketActor(wasm).start()
+    CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
     SmartRouter(exchange_factory, config_service)
 
     signal_actor_factory = SignalActorFactory(SignalService(wasm))
     position_actor_factory = PositionActorFactory(position_factory, config_service)
-    risk_actor_factory = RiskActorFactory(config_service, market_data)
-    executor_actor_factory = OrderExecutorActorFactory(market_data)
+    risk_actor_factory = RiskActorFactory(config_service)
+    executor_actor_factory = OrderExecutorActorFactory()
     feed_actor_factory = FeedActorFactory(exchange_factory, ws_factory, config_service)
 
     trend_context = SystemContext(

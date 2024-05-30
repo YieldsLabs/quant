@@ -1,20 +1,25 @@
 import asyncio
-from typing import Optional
+from typing import Optional, Union
 
 from wasmtime import Instance, Linker, Store, WasiConfig
 
-from core.event_decorators import event_handler
+from core.actors import BaseActor
 from core.events.ohlcv import NewMarketDataReceived
-from core.interfaces.abstract_market_repository import AbstractMarketRepository
 from core.interfaces.abstract_wasm_service import AbstractWasmService
 from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
+from core.models.ta import TechAnalysis
 from core.models.timeframe import Timeframe
 from core.models.timeseries_ref import TimeSeriesRef
 from core.models.wasm_type import WasmType
+from core.queries.ohlcv import TA, NextBar, PrevBar
+
+MarketEvent = Union[NewMarketDataReceived, NextBar, PrevBar]
 
 
-class MarketRepository(AbstractMarketRepository):
+class MarketActor(BaseActor):
+    _EVENTS = [NewMarketDataReceived, NextBar, PrevBar, TA]
+
     def __init__(self, wasm_service: AbstractWasmService):
         super().__init__()
         self._lock = asyncio.Lock()
@@ -28,28 +33,48 @@ class MarketRepository(AbstractMarketRepository):
         self.linker.define_wasi()
         self.instance: Optional[Instance] = None
 
-        self._load()
+    def on_start(self):
+        self.load_instance()
 
-    def _load(self):
+    def load_instance(self):
         module = self.wasm_service.get_module(WasmType.TIMESERIES, self.store.engine)
         self.instance = self.linker.instantiate(self.store, module)
 
-    @event_handler(NewMarketDataReceived)
-    async def _market_handler(self, event: NewMarketDataReceived):
+    async def on_receive(self, event: MarketEvent):
+        handlers = {
+            NewMarketDataReceived: self._handle_market,
+            NextBar: self._handle_next_bar,
+            PrevBar: self._handle_prev_bar,
+            TA: self._handle_ta,
+        }
+
+        handler = handlers.get(type(event))
+
+        if handler:
+            return await handler(event)
+
+    async def _handle_market(self, event: NewMarketDataReceived):
         await self.upsert(event.symbol, event.timeframe, event.ohlcv)
+
+    async def _handle_next_bar(self, event: NextBar) -> OHLCV:
+        return await self.find_next_bar(event.symbol, event.timeframe, event.ohlcv)
+
+    async def _handle_prev_bar(self, event: NextBar) -> OHLCV:
+        await asyncio.sleep(0.1337)
+
+    async def _handle_ta(self, event: TA) -> TechAnalysis:
+        return await self.ta(event.symbol, event.timeframe, event.ohlcv)
 
     async def upsert(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         timeseries = await self._get_timeseries(symbol, timeframe)
         timeseries.add(bar)
 
-    async def find_next_bar(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
+    async def find_next_bar(
+        self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV
+    ) -> Optional[OHLCV]:
         timeseries = await self._get_timeseries(symbol, timeframe)
         next_bar = timeseries.find_next_bar(bar)
-
-        while next_bar:
-            yield next_bar
-            await asyncio.sleep(0.0001)
-            next_bar = timeseries.find_next_bar(next_bar)
+        return next_bar
 
     async def ta(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         timeseries = await self._get_timeseries(symbol, timeframe)

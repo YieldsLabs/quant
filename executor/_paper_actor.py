@@ -1,27 +1,23 @@
-import asyncio
 import logging
 from enum import Enum, auto
 from typing import Optional, Union
 
 from core.actors import StrategyActor
-from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
     PositionCloseRequested,
     PositionInitialized,
 )
-from core.interfaces.abstract_market_repository import AbstractMarketRepository
 from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.ohlcv import NextBar
 
-OrderEventType = Union[
-    NewMarketDataReceived, PositionInitialized, PositionCloseRequested
-]
+OrderEventType = Union[PositionInitialized, PositionCloseRequested]
 
 logger = logging.getLogger(__name__)
 
@@ -33,22 +29,17 @@ class PriceDirection(Enum):
 
 class PaperOrderActor(StrategyActor):
     _EVENTS = [
-        NewMarketDataReceived,
         PositionInitialized,
         PositionCloseRequested,
     ]
 
-    def __init__(
-        self, symbol: Symbol, timeframe: Timeframe, repository: AbstractMarketRepository
-    ):
+    def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
-        self.repository = repository
 
     async def on_receive(self, event: OrderEventType):
         handlers = {
             PositionInitialized: self._execute_order,
             PositionCloseRequested: self._close_position,
-            NewMarketDataReceived: self._update_bar,
         }
 
         handler = handlers.get(type(event))
@@ -56,26 +47,16 @@ class PaperOrderActor(StrategyActor):
         if handler:
             await handler(event)
 
-    async def _update_bar(self, event: NewMarketDataReceived):
-        await self.repository.upsert(self.symbol, self.timeframe, event.ohlcv)
-
-    async def _find_next_bar(self, curr_bar: OHLCV) -> Optional[OHLCV]:
-        for _ in range(4):
-            async for next_bar in self.repository.find_next_bar(
-                self.symbol, self.timeframe, curr_bar
-            ):
-                return next_bar
-            await asyncio.sleep(0.001)
-
-        return None
-
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position
 
-        logger.info(f"New Position: {current_position}")
+        logger.debug(f"New Position: {current_position}")
 
         entry_order = current_position.entry_order()
-        next_bar = await self._find_next_bar(current_position.signal_bar)
+
+        next_bar = await self.ask(
+            NextBar(self.symbol, self.timeframe, current_position.signal_bar)
+        )
 
         price = self._find_open_price(current_position, entry_order, next_bar)
         size = entry_order.size
@@ -126,7 +107,7 @@ class PaperOrderActor(StrategyActor):
 
         next_position = current_position.fill_order(order)
 
-        logger.info(f"Closed Position: {next_position}")
+        logger.debug(f"Closed Position: {next_position}")
 
         await self.tell(BrokerPositionClosed(next_position))
 
