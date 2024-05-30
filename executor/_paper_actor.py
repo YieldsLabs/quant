@@ -9,6 +9,7 @@ from core.events.position import (
     PositionCloseRequested,
     PositionInitialized,
 )
+from core.mixins import EventHandlerMixin
 from core.models.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position
@@ -27,7 +28,7 @@ class PriceDirection(Enum):
     OLHC = auto()
 
 
-class PaperOrderActor(StrategyActor):
+class PaperOrderActor(StrategyActor, EventHandlerMixin):
     _EVENTS = [
         PositionInitialized,
         PositionCloseRequested,
@@ -35,17 +36,13 @@ class PaperOrderActor(StrategyActor):
 
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
+        EventHandlerMixin.__init__(self)
+
+        self.register_handler(PositionInitialized, self._execute_order)
+        self.register_handler(PositionCloseRequested, self._close_position)
 
     async def on_receive(self, event: OrderEventType):
-        handlers = {
-            PositionInitialized: self._execute_order,
-            PositionCloseRequested: self._close_position,
-        }
-
-        handler = handlers.get(type(event))
-
-        if handler:
-            await handler(event)
+        return await self.handle_event(event)
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position

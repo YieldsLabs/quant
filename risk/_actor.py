@@ -16,6 +16,7 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.interfaces.abstract_config import AbstractConfig
+from core.mixins import EventHandlerMixin
 from core.models.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.side import PositionSide
@@ -39,7 +40,7 @@ RiskEvent = Union[
 ]
 
 
-class RiskActor(StrategyActor):
+class RiskActor(StrategyActor, EventHandlerMixin):
     _EVENTS = [
         NewMarketDataReceived,
         PositionOpened,
@@ -54,25 +55,21 @@ class RiskActor(StrategyActor):
         self, symbol: Symbol, timeframe: Timeframe, config_service: AbstractConfig
     ):
         super().__init__(symbol, timeframe)
+        EventHandlerMixin.__init__(self)
         self._lock = asyncio.Lock()
         self._position = (None, None)
         self.config = config_service.get("position")
 
+        self.register_handler(NewMarketDataReceived, self._handle_position_risk)
+        self.register_handler(PositionOpened, self._open_position)
+        self.register_handler(PositionClosed, self._close_position)
+        self.register_handler(ExitLongSignalReceived, self._trail_position)
+        self.register_handler(ExitShortSignalReceived, self._trail_position)
+        self.register_handler(GoLongSignalReceived, self._trail_position)
+        self.register_handler(GoShortSignalReceived, self._trail_position)
+
     async def on_receive(self, event: RiskEvent):
-        handlers = {
-            NewMarketDataReceived: self._handle_position_risk,
-            PositionOpened: self._open_position,
-            PositionClosed: self._close_position,
-            ExitLongSignalReceived: self._trail_position,
-            ExitShortSignalReceived: self._trail_position,
-            GoLongSignalReceived: self._trail_position,
-            GoShortSignalReceived: self._trail_position,
-        }
-
-        handler = handlers.get(type(event))
-
-        if handler:
-            await handler(event)
+        return await self.handle_event(event)
 
     async def _open_position(self, event: PositionOpened):
         async with self._lock:

@@ -6,6 +6,7 @@ from wasmtime import Instance, Linker, Store, WasiConfig
 from core.actors import BaseActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_wasm_service import AbstractWasmService
+from core.mixins import EventHandlerMixin
 from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.ta import TechAnalysis
@@ -17,13 +18,14 @@ from core.queries.ohlcv import TA, NextBar, PrevBar
 MarketEvent = Union[NewMarketDataReceived, NextBar, PrevBar]
 
 
-class MarketActor(BaseActor):
+class MarketActor(BaseActor, EventHandlerMixin):
     _EVENTS = [NewMarketDataReceived, NextBar, PrevBar, TA]
 
     def __init__(self, wasm_service: AbstractWasmService):
         super().__init__()
-        self._lock = asyncio.Lock()
+        EventHandlerMixin.__init__(self)
         self._bucket = {}
+        self._lock = asyncio.Lock()
         self.wasm_service = wasm_service
         self.store = Store()
         wasi_config = WasiConfig()
@@ -33,6 +35,11 @@ class MarketActor(BaseActor):
         self.linker.define_wasi()
         self.instance: Optional[Instance] = None
 
+        self.register_handler(NewMarketDataReceived, self._handle_market)
+        self.register_handler(NextBar, self._handle_next_bar)
+        self.register_handler(PrevBar, self._handle_prev_bar)
+        self.register_handler(TA, self._handle_ta)
+
     def on_start(self):
         self.load_instance()
 
@@ -41,17 +48,7 @@ class MarketActor(BaseActor):
         self.instance = self.linker.instantiate(self.store, module)
 
     async def on_receive(self, event: MarketEvent):
-        handlers = {
-            NewMarketDataReceived: self._handle_market,
-            NextBar: self._handle_next_bar,
-            PrevBar: self._handle_prev_bar,
-            TA: self._handle_ta,
-        }
-
-        handler = handlers.get(type(event))
-
-        if handler:
-            return await handler(event)
+        return await self.handle_event(event)
 
     async def _handle_market(self, event: NewMarketDataReceived):
         await self.upsert(event.symbol, event.timeframe, event.ohlcv)
@@ -59,7 +56,7 @@ class MarketActor(BaseActor):
     async def _handle_next_bar(self, event: NextBar) -> OHLCV:
         return await self.find_next_bar(event.symbol, event.timeframe, event.ohlcv)
 
-    async def _handle_prev_bar(self, event: NextBar) -> OHLCV:
+    async def _handle_prev_bar(self, event: PrevBar) -> OHLCV:
         await asyncio.sleep(0.1337)
 
     async def _handle_ta(self, event: TA) -> TechAnalysis:
