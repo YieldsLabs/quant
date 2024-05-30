@@ -398,8 +398,8 @@ class Position:
         total_price = sum(order.price for order in orders)
         return total_price / len(orders) if orders else 0.0
 
-    def __repr__(self):
-        return f"Position(signal={self.signal}, risk={self.risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid})"
-
     def __str__(self):
         return f"signal={self.signal}, risk={self.risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}"
+
+    def __repr__(self):
+        return f"Position({self})"

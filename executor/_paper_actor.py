@@ -37,12 +37,14 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
         EventHandlerMixin.__init__(self)
-
-        self.register_handler(PositionInitialized, self._execute_order)
-        self.register_handler(PositionCloseRequested, self._close_position)
+        self._register_event_handlers()
 
     async def on_receive(self, event: OrderEventType):
         return await self.handle_event(event)
+
+    def _register_event_handlers(self):
+        self.register_handler(PositionInitialized, self._execute_order)
+        self.register_handler(PositionCloseRequested, self._close_position)
 
     async def _execute_order(self, event: PositionInitialized):
         current_position = event.position

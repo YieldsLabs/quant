@@ -24,6 +24,7 @@ class MarketActor(BaseActor, EventHandlerMixin):
     def __init__(self, wasm_service: AbstractWasmService):
         super().__init__()
         EventHandlerMixin.__init__(self)
+        self._register_event_handlers()
         self._bucket = {}
         self._lock = asyncio.Lock()
         self.wasm_service = wasm_service
@@ -35,11 +36,6 @@ class MarketActor(BaseActor, EventHandlerMixin):
         self.linker.define_wasi()
         self.instance: Optional[Instance] = None
 
-        self.register_handler(NewMarketDataReceived, self._handle_market)
-        self.register_handler(NextBar, self._handle_next_bar)
-        self.register_handler(PrevBar, self._handle_prev_bar)
-        self.register_handler(TA, self._handle_ta)
-
     def on_start(self):
         self.load_instance()
 
@@ -49,6 +45,12 @@ class MarketActor(BaseActor, EventHandlerMixin):
 
     async def on_receive(self, event: MarketEvent):
         return await self.handle_event(event)
+
+    def _register_event_handlers(self):
+        self.register_handler(NewMarketDataReceived, self._handle_market)
+        self.register_handler(NextBar, self._handle_next_bar)
+        self.register_handler(PrevBar, self._handle_prev_bar)
+        self.register_handler(TA, self._handle_ta)
 
     async def _handle_market(self, event: NewMarketDataReceived):
         await self.upsert(event.symbol, event.timeframe, event.ohlcv)

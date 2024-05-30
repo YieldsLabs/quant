@@ -32,4 +32,4 @@ class Timeframe(Enum):
         return self.value
 
     def __repr__(self) -> str:
-        return f"Timeframe({self.value})"
+        return f"Timeframe({self})"

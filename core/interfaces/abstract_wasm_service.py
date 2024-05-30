@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 from wasmtime import Engine, Module
+
+Pointer = Tuple[int]
 
 
 class AbstractWasmService(ABC):

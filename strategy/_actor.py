@@ -5,7 +5,6 @@ from core.actors import StrategyActor
 from core.actors.policy.signal import SignalPolicy
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_signal_service import AbstractSignalService
-from core.mixins import EventHandlerMixin
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -17,7 +16,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class SignalActor(StrategyActor, EventHandlerMixin):
+class SignalActor(StrategyActor):
     _EVENTS = [NewMarketDataReceived]
 
     def __init__(
@@ -25,12 +24,10 @@ class SignalActor(StrategyActor, EventHandlerMixin):
         symbol: Symbol,
         timeframe: Timeframe,
         strategy: Strategy,
-        wasm_type: WasmType,
         service: AbstractSignalService,
     ):
         super().__init__(symbol, timeframe)
         self._strategy = strategy
-        self._wasm_type = wasm_type
         self.service = service
         self.strategy_ref: Optional[StrategyRef] = None
 
@@ -39,8 +36,8 @@ class SignalActor(StrategyActor, EventHandlerMixin):
         return self._strategy
 
     def on_start(self):
-        self.service.load_instance(self._wasm_type)
-        self.strategy_ref = self.service.register(self.strategy, self._wasm_type)
+        self.service.load_instance(WasmType.TREND)
+        self.strategy_ref = self.service.register(self.strategy)
 
     def on_stop(self):
         self.strategy_ref.unregister()

@@ -56,10 +56,15 @@ class RiskActor(StrategyActor, EventHandlerMixin):
     ):
         super().__init__(symbol, timeframe)
         EventHandlerMixin.__init__(self)
+        self._register_event_handlers()
         self._lock = asyncio.Lock()
         self._position = (None, None)
         self.config = config_service.get("position")
 
+    async def on_receive(self, event: RiskEvent):
+        return await self.handle_event(event)
+
+    def _register_event_handlers(self):
         self.register_handler(NewMarketDataReceived, self._handle_position_risk)
         self.register_handler(PositionOpened, self._open_position)
         self.register_handler(PositionClosed, self._close_position)
@@ -67,9 +72,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         self.register_handler(ExitShortSignalReceived, self._trail_position)
         self.register_handler(GoLongSignalReceived, self._trail_position)
         self.register_handler(GoShortSignalReceived, self._trail_position)
-
-    async def on_receive(self, event: RiskEvent):
-        return await self.handle_event(event)
 
     async def _open_position(self, event: PositionOpened):
         async with self._lock:

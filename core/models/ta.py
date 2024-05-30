@@ -12,7 +12,7 @@ class VolumeAnalysis:
         return f"obv={self.obv}, vo={self.vo}, nvol={self.nvol}"
 
     def __repr__(self) -> str:
-        return f"VolumeAnalysis(obv={self.obv}, vo={self.vo}, nvol={self.nvol})"
+        return f"VolumeAnalysis({self})"
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,7 @@ class VolatilityAnalysis:
         return f"tr={self.tr}"
 
     def __repr__(self) -> str:
-        return f"VolatilityAnalysis(tr={self.tr})"
+        return f"VolatilityAnalysis({self})"
 
 
 @dataclass(frozen=True)
@@ -39,7 +39,7 @@ class TrendAnalysis:
         return f"fma={self.fma}, sma={self.sma}, macd={self.macd}, ppo={self.ppo}, hh={self.hh}, ll={self.ll}"
 
     def __repr__(self) -> str:
-        return f"TrendAnalysis(fma={self.fma}, sma={self.sma}, macd={self.macd}, ppo={self.ppo}, hh={self.hh}, ll={self.ll})"
+        return f"TrendAnalysis({self})"
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,7 @@ class MomentumAnalysis:
         return f"froc={self.froc}, sroc={self.sroc}, cci={self.cci}"
 
     def __repr__(self) -> str:
-        return f"MomentumAnalysis(froc={self.froc}, sroc={self.sroc}, cci={self.cci})"
+        return f"MomentumAnalysis({self})"
 
 
 @dataclass(frozen=True)
@@ -67,7 +67,7 @@ class OscillatorAnalysis:
         return f"frsi={self.frsi}, srsi={self.srsi}, bbp={self.bbp}, k={self.k}, d={self.d}"
 
     def __repr__(self) -> str:
-        return f"OscillatorAnalysis(frsi={self.frsi}, srsi={self.srsi}, bbp={self.bbp}, k={self.k}, d={self.d})"
+        return f"OscillatorAnalysis({self})"
 
 
 @dataclass(frozen=True)
@@ -116,7 +116,4 @@ class TechAnalysis:
         )
 
     def __repr__(self) -> str:
-        return (
-            f"TechAnalysis(trend={self.trend}, momentum={self.momentum}, oscillator={self.oscillator}, "
-            f"volume={self.volume}, volatility={self.volatility})"
-        )
+        return f"TechAnalysis({self})"

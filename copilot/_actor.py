@@ -22,13 +22,16 @@ class CopilotActor(BaseActor, EventHandlerMixin):
     def __init__(self, llm: AbstractLLMService):
         super().__init__()
         EventHandlerMixin.__init__(self)
-        self.llm = llm
+        self._register_event_handlers()
 
-        self.register_handler(EvaluateSignal, self._evaluate_signal)
-        self.register_handler(EvaluateSession, self._evaluate_session)
+        self.llm = llm
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)
+
+    def _register_event_handlers(self):
+        self.register_handler(EvaluateSignal, self._evaluate_signal)
+        self.register_handler(EvaluateSession, self._evaluate_session)
 
     async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRiskType:
         signal = msg.signal

@@ -11,11 +11,11 @@ class Symbol:
     position_precision: int
     price_precision: int
 
+    def __hash__(self) -> int:
+        return hash(self.name)
+
     def __str__(self):
         return self.name
 
     def __repr__(self) -> str:
-        return f"Symbol({self.name})"
-
-    def __hash__(self) -> int:
-        return hash(self.name)
+        return f"Symbol({self})"

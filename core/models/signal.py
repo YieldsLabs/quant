@@ -32,12 +32,6 @@ class Signal:
             and self.strategy == other.strategy
         )
 
-    def __str__(self) -> str:
-        return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
-
-    def __repr__(self) -> str:
-        return f"Signal(symbol={self.symbol}, timeframe={self.timeframe}, side={self.side}, strategy={self.strategy})"
-
     def to_dict(self):
         return {
             "symbol": str(self.symbol),
@@ -48,3 +42,9 @@ class Signal:
             "entry": self.entry,
             "stop_loss": self.stop_loss,
         }
+
+    def __str__(self) -> str:
+        return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
+
+    def __repr__(self) -> str:
+        return f"Signal({self})"

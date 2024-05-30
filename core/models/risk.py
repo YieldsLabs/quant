@@ -98,7 +98,7 @@ class TaMixin:
 class Risk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(2.8, 5.8))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(3.2, 5.8))
 
     @property
     def last_bar(self):
@@ -258,8 +258,8 @@ class Risk(TaMixin):
             "ohlcv": self.last_bar.to_dict(),
         }
 
-    def __repr__(self):
-        return f"Risk(type={self.type}, ohlcv={self.last_bar})"
-
     def __str__(self):
         return f"type={self.type}, ohlcv={self.last_bar}"
+
+    def __repr__(self):
+        return f"Risk({self})"
