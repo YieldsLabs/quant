@@ -110,8 +110,8 @@ impl Series<f32> {
         Series::fill(1., len)
     }
 
-    pub fn change(&self, length: usize) -> Self {
-        self - self.shift(length)
+    pub fn change(&self, period: usize) -> Self {
+        self - self.shift(period)
     }
 
     pub fn highest(&self, period: usize) -> Self {
