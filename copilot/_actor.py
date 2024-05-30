@@ -36,7 +36,9 @@ class CopilotActor(BaseActor, EventHandlerMixin):
     async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRiskType:
         signal = msg.signal
         side = "LONG" if signal.side == SignalSide.BUY else "SHORT"
-        prompt = signal_risk_prompt.format(current_bar=str(signal.ohlcv), side=side)
+        prompt = signal_risk_prompt.format(
+            current_bar=str(signal.ohlcv), side=side, timeframe=signal.timeframe
+        )
 
         logger.info(f"Signal Prompt: {prompt}")
 
