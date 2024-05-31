@@ -116,7 +116,7 @@ class PositionRisk(TaMixin):
         sl: float,
         open_timestamp: float,
         expiration: float,
-    ) -> "Risk":
+    ) -> "PositionRisk":
         curr_bar = self.last_bar
 
         expiration = curr_bar.timestamp - open_timestamp - expiration
