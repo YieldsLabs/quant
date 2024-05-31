@@ -59,7 +59,7 @@ class MarketActor(BaseActor, EventHandlerMixin):
         return await self.find_next_bar(event.symbol, event.timeframe, event.ohlcv)
 
     async def _handle_prev_bar(self, event: PrevBar) -> OHLCV:
-        await asyncio.sleep(0.1337)
+        return await self.find_next_bar(event.symbol, event.timeframe, event.ohlcv)
 
     async def _handle_ta(self, event: TA) -> TechAnalysis:
         return await self.ta(event.symbol, event.timeframe, event.ohlcv)
@@ -73,6 +73,13 @@ class MarketActor(BaseActor, EventHandlerMixin):
     ) -> Optional[OHLCV]:
         timeseries = await self._get_timeseries(symbol, timeframe)
         next_bar = timeseries.find_next_bar(bar)
+        return next_bar
+
+    async def find_prev_bar(
+        self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV
+    ) -> Optional[OHLCV]:
+        timeseries = await self._get_timeseries(symbol, timeframe)
+        next_bar = timeseries.find_prev_bar(bar)
         return next_bar
 
     async def ta(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):

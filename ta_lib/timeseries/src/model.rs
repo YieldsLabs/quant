@@ -66,6 +66,12 @@ impl TimeSeries for BaseTimeSeries {
             .and_then(|&idx| self.data.get(idx + 1).copied())
     }
 
+    fn prev_bar(&self, bar: &OHLCV) -> Option<OHLCV> {
+        self.index
+            .get(&bar.ts)
+            .and_then(|&idx| self.data.get(idx - 1).copied())
+    }
+
     #[inline]
     fn len(&self) -> usize {
         self.index.len()

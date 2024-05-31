@@ -90,6 +90,42 @@ pub fn timeseries_find_next_bar(
 }
 
 #[no_mangle]
+pub fn timeseries_find_prev_bar(
+    timeseries_id: i32,
+    ts: i64,
+    open: f32,
+    high: f32,
+    low: f32,
+    close: f32,
+    volume: f32,
+) -> (i32, i32) {
+    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
+    if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
+        let curr_bar = OHLCV {
+            ts,
+            open,
+            high,
+            low,
+            close,
+            volume,
+        };
+
+        if let Some(next_bar) = timeseries.next_bar(&curr_bar) {
+            let next_bar_json = serde_json::to_string(&next_bar).unwrap();
+            let next_bar_bytes = next_bar_json.as_bytes();
+            let next_bar_ptr = next_bar_bytes.as_ptr() as i32;
+            let next_bar_len = next_bar_bytes.len() as i32;
+
+            (next_bar_ptr, next_bar_len)
+        } else {
+            (0, 0)
+        }
+    } else {
+        (-1, 0)
+    }
+}
+
+#[no_mangle]
 pub fn timeseries_ta(
     timeseries_id: i32,
     ts: i64,

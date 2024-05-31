@@ -60,6 +60,33 @@ class TimeSeriesRef:
 
         return bar
 
+    def find_prev_bar(self, bar: OHLCV) -> Optional[OHLCV]:
+        exports = self.instance_ref.exports(self.store_ref)
+
+        [bar_ptr, bar_len] = exports["timeseries_find_prev_bar"](
+            self.store_ref,
+            self.id,
+            bar.timestamp,
+            bar.open,
+            bar.high,
+            bar.low,
+            bar.close,
+            bar.volume,
+        )
+
+        if bar_ptr == -1 and bar_len == 0:
+            return None
+
+        buff = exports["memory"].data_ptr(self.store_ref)[bar_ptr : bar_ptr + bar_len]
+
+        try:
+            raw_bar = json.loads("".join(chr(val) for val in buff))
+            bar = OHLCV.from_list(raw_bar.values())
+        except Exception:
+            bar = None
+
+        return bar
+
     def ta(self, bar: OHLCV) -> Optional[TechAnalysis]:
         exports = self.instance_ref.exports(self.store_ref)
 
