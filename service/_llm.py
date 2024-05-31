@@ -30,7 +30,7 @@ class LLMService(AbstractLLMService):
             answer = ""
 
             for output in self._llm(**llama_input):
-                answer += output["choices"][0]["text"].strip()
+                answer += output["choices"][0]["text"]
 
             return answer
 
