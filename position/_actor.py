@@ -20,7 +20,6 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
-from core.models.risk_type import SignalRiskType
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -88,18 +87,15 @@ class PositionActor(StrategyActor):
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 
-        prev_bar = await self.ask(
-            PrevBar(self.symbol, self.timeframe, event.signal.ohlcv)
-        )
-        risk_level = await self.ask(EvaluateSignal(event.signal, prev_bar))
-
-        logger.info(f"Risk level: {risk_level}")
-
-        if risk_level == SignalRiskType.NONE or risk_level == SignalRiskType.HIGH:
-            return False
-
         async def create_and_store_position(event: SignalEvent):
-            position = await self.position_factory.create(event.signal)
+            prev_bar = await self.ask(
+                PrevBar(event.signal.symbol, event.signal.timeframe, event.signal.ohlcv)
+            )
+            signal_risk_level = await self.ask(EvaluateSignal(event.signal, prev_bar))
+
+            position = await self.position_factory.create(
+                event.signal, signal_risk_level
+            )
 
             await self.state.store_position(position)
             await self.tell(PositionInitialized(position))

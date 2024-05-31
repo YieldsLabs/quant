@@ -8,8 +8,8 @@ import numpy as np
 
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
-from .risk import Risk
-from .risk_type import PositionRiskType
+from .position_risk import PositionRisk
+from .risk_type import PositionRiskType, SignalRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
 from .ta import TechAnalysis
@@ -19,7 +19,8 @@ from .ta import TechAnalysis
 class Position:
     initial_size: float
     signal: Signal
-    risk: Risk
+    signal_risk_type: SignalRiskType
+    position_risk: PositionRisk
     orders: Tuple[Order] = ()
     expiration: int = field(default_factory=lambda: 900000)  # 15min
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
@@ -95,7 +96,7 @@ class Position:
 
     @property
     def close_timestamp(self) -> int:
-        return self.risk.last_bar.timestamp
+        return self.position_risk.last_bar.timestamp
 
     @property
     def signal_bar(self) -> OHLCV:
@@ -103,7 +104,7 @@ class Position:
 
     @property
     def risk_bar(self) -> OHLCV:
-        return self.risk.last_bar
+        return self.position_risk.last_bar
 
     @property
     def trade_time(self) -> int:
@@ -137,7 +138,7 @@ class Position:
 
     @property
     def has_risk(self) -> bool:
-        return self.risk.type != PositionRiskType.NONE
+        return self.position_risk.type != PositionRiskType.NONE
 
     @property
     def adj_count(self) -> int:
@@ -238,7 +239,9 @@ class Position:
         size = self._average_size(self.open_orders) - self._average_size(
             self.closed_orders
         )
-        price = self.risk.exit_price(self.side, self.take_profit, self.stop_loss)
+        price = self.position_risk.exit_price(
+            self.side, self.take_profit, self.stop_loss
+        )
 
         return Order(
             status=OrderStatus.PENDING,
@@ -289,8 +292,8 @@ class Position:
 
         print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms")
 
-        next_risk = self.risk.next(ohlcv)
-        next_position = replace(self, risk=next_risk)
+        next_risk = self.position_risk.next(ohlcv)
+        next_position = replace(self, position_risk=next_risk)
 
         next_tp = self.take_profit
         next_sl = self.stop_loss
@@ -314,7 +317,7 @@ class Position:
 
         return replace(
             next_position,
-            risk=next_risk,
+            position_risk=next_risk,
             _tp=next_tp,
             _sl=next_sl,
         )
@@ -364,10 +367,21 @@ class Position:
     def theo_maker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.maker_fee
 
+    @staticmethod
+    def _average_size(orders: List[Order]) -> float:
+        total_size = sum(order.size for order in orders)
+        return total_size / len(orders) if orders else 0.0
+
+    @staticmethod
+    def _average_price(orders: List[Order]) -> float:
+        total_price = sum(order.price for order in orders)
+        return total_price / len(orders) if orders else 0.0
+
     def to_dict(self):
         return {
             "signal": self.signal.to_dict(),
-            "risk": self.risk.to_dict(),
+            "signal_risk_type": str(self.signal_risk_type),
+            "position_risk": self.position_risk.to_dict(),
             "side": str(self.side),
             "size": self.size,
             "entry_price": self.entry_price,
@@ -388,18 +402,8 @@ class Position:
             "tt": self.third_take_profit,
         }
 
-    @staticmethod
-    def _average_size(orders: List[Order]) -> float:
-        total_size = sum(order.size for order in orders)
-        return total_size / len(orders) if orders else 0.0
-
-    @staticmethod
-    def _average_price(orders: List[Order]) -> float:
-        total_price = sum(order.price for order in orders)
-        return total_price / len(orders) if orders else 0.0
-
     def __str__(self):
-        return f"signal={self.signal}, risk={self.risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}"
+        return f"signal={self.signal}, signal_risk={self.signal_risk_type}, position_risk={self.position_risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}"
 
     def __repr__(self):
         return f"Position({self})"

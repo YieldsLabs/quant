@@ -2,7 +2,8 @@ from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrategy
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.position import Position
-from core.models.risk import Risk
+from core.models.position_risk import PositionRisk
+from core.models.risk_type import SignalRiskType
 from core.models.signal import Signal
 
 
@@ -19,13 +20,15 @@ class PositionFactory(AbstractPositionFactory):
     async def create(
         self,
         signal: Signal,
+        signal_risk_type: SignalRiskType,
     ) -> Position:
         size = await self.size_strategy.calculate(signal)
-        risk = Risk().next(signal.ohlcv)
+        position_risk = PositionRisk().next(signal.ohlcv)
 
         return Position(
             signal=signal,
-            risk=risk,
+            signal_risk_type=signal_risk_type,
+            position_risk=position_risk,
             initial_size=size,
             expiration=self.config["trade_duration"] * 1000,
         )

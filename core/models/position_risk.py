@@ -95,7 +95,7 @@ class TaMixin:
 
 
 @dataclass(frozen=True)
-class Risk(TaMixin):
+class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
     trail_factor: float = field(default_factory=lambda: np.random.uniform(3.2, 5.8))
