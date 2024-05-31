@@ -1,3 +1,4 @@
+import re
 from enum import Enum, auto
 
 
@@ -20,14 +21,12 @@ class SignalRiskType(Enum):
 
     @classmethod
     def from_string(cls, risk_string):
-        risk_mapping = {
-            "NONE": cls.NONE,
-            "LOW": cls.LOW,
-            "MODERATE": cls.MODERATE,
-            "HIGH": cls.HIGH,
-        }
+        match = re.search(r"\b(NONE|LOW|MODERATE|HIGH)\b(?![a-zA-Z0-9])", risk_string)
 
-        return risk_mapping.get(risk_string.upper(), None)
+        if match:
+            return cls[match.group()]
+        else:
+            return cls.NONE
 
     def __str__(self):
         return self.name.upper()
