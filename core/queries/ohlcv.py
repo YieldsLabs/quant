@@ -15,7 +15,7 @@ class NextBar(Query[OHLCV]):
     timeframe: Timeframe
     ohlcv: OHLCV
     meta: EventMeta = field(
-        default_factory=lambda: EventMeta(priority=6, group=QueryGroup.market),
+        default_factory=lambda: EventMeta(priority=3, group=QueryGroup.market),
         init=False,
     )
 
@@ -26,7 +26,7 @@ class PrevBar(Query[OHLCV]):
     timeframe: Timeframe
     ohlcv: OHLCV
     meta: EventMeta = field(
-        default_factory=lambda: EventMeta(priority=6, group=QueryGroup.market),
+        default_factory=lambda: EventMeta(priority=4, group=QueryGroup.market),
         init=False,
     )
 
@@ -37,6 +37,6 @@ class TA(Query[TechAnalysis]):
     timeframe: Timeframe
     ohlcv: OHLCV
     meta: EventMeta = field(
-        default_factory=lambda: EventMeta(priority=7, group=QueryGroup.ta),
+        default_factory=lambda: EventMeta(priority=2, group=QueryGroup.ta),
         init=False,
     )

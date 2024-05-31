@@ -56,7 +56,7 @@ async def main():
     config_service = ConfigService()
     config_service.load(config_path=f"config.{REGIME}.ini")
     config = {
-        "bus": {"num_workers": os.cpu_count()},
+        "bus": {"num_workers": os.cpu_count() + 1},
         "store": {"base_dir": LOG_DIR},
         "copilot": {"model_path": COPILOT_MODEL_PATH},
     }

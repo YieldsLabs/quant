@@ -26,8 +26,8 @@ class EventDispatcher(metaclass=SingletonMeta):
         self.cancel_event = asyncio.Event()
 
         self.config = config_service.get("bus")
-        self._store = EventStore(config_service)
 
+        self._store = EventStore(config_service)
         self._command_worker_pool = None
         self._query_worker_pool = None
         self._event_worker_pool = None
@@ -97,9 +97,8 @@ class EventDispatcher(metaclass=SingletonMeta):
     ) -> None:
         if isinstance(event, EventEnded):
             self.cancel_event.set()
-            return
-
-        await worker_pool.dispatch_to_worker(event, *args, **kwargs)
+        else:
+            await worker_pool.dispatch_to_worker(event, *args, **kwargs)
 
     def _create_worker_pool(self) -> WorkerPool:
         return WorkerPool(

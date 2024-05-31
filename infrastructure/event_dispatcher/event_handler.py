@@ -39,22 +39,16 @@ class EventHandler:
         ]
 
     async def handle_event(self, event: Event, *args, **kwargs) -> None:
-        event_type = type(event)
-        handlers = self._event_handlers.get(event_type, [])
+        handlers = self._event_handlers.get(type(event), [])
 
         for handler, filter_fn in handlers:
             if not filter_fn or filter_fn(event):
-                await self._call_handler(handler, event, *args, **kwargs)
+                try:
+                    await self._call_handler(handler, event, *args, **kwargs)
+                except Exception as e:
+                    self._handle_exception(handler, event, e)
 
     async def _call_handler(
-        self, handler: HandlerType, event: Event, *args, **kwargs
-    ) -> None:
-        try:
-            await self._execute_handler(handler, event, *args, **kwargs)
-        except Exception as e:
-            self._handle_exception(handler, event, e)
-
-    async def _execute_handler(
         self, handler: HandlerType, event: Event, *args, **kwargs
     ) -> None:
         if asyncio.iscoroutinefunction(handler):
