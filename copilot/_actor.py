@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from typing import Union
 
 from core.actors import BaseActor
@@ -7,9 +8,10 @@ from core.interfaces.abstract_llm_service import AbstractLLMService
 from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
 from core.models.side import SignalSide
+from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
-from ._prompt import signal_risk_prompt, system_prompt
+from ._prompt import signal_risk_pattern, signal_risk_prompt, system_prompt
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
@@ -33,7 +35,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         self.register_handler(EvaluateSignal, self._evaluate_signal)
         self.register_handler(EvaluateSession, self._evaluate_session)
 
-    async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRiskType:
+    async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRisk:
         signal = msg.signal
 
         prev_bar = msg.prev_bar
@@ -51,8 +53,22 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         logger.info(f"LLM Answer: {answer}")
 
-        risk_level_enum = SignalRiskType.from_string(answer)
-        return risk_level_enum
+        match = re.search(signal_risk_pattern, answer)
+
+        if not match:
+            risk = SignalRisk(
+                type=SignalRiskType.NONE,
+            )
+        else:
+            risk = SignalRisk(
+                type=SignalRiskType.from_string(match.group(1)),
+                tp=float(match.group(2)),
+                sl=float(match.group(3)),
+            )
+
+        logger.info(f"Signal Risk: {risk}")
+
+        return risk
 
     async def _evaluate_session(self, msg: EvaluateSession) -> SessionRiskType:
         await asyncio.sleep(0.1337)

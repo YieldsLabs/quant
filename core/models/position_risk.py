@@ -262,4 +262,4 @@ class PositionRisk(TaMixin):
         return f"type={self.type}, ohlcv={self.last_bar}"
 
     def __repr__(self):
-        return f"Risk({self})"
+        return f"PositionRisk({self})"

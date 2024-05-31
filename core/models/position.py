@@ -9,9 +9,10 @@ import numpy as np
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
-from .risk_type import PositionRiskType, SignalRiskType
+from .risk_type import PositionRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
+from .signal_risk import SignalRisk
 from .ta import TechAnalysis
 
 
@@ -19,7 +20,7 @@ from .ta import TechAnalysis
 class Position:
     initial_size: float
     signal: Signal
-    signal_risk_type: SignalRiskType
+    signal_risk: SignalRisk
     position_risk: PositionRisk
     orders: Tuple[Order] = ()
     expiration: int = field(default_factory=lambda: 900000)  # 15min
@@ -28,8 +29,8 @@ class Position:
     first_factor: float = field(default_factory=lambda: np.random.uniform(0.13, 0.3))
     second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.8))
     third_factor: float = field(default_factory=lambda: np.random.uniform(0.9, 1.8))
-    _tp: Optional[int] = None
-    _sl: Optional[int] = None
+    _tp: Optional[float] = None
+    _sl: Optional[float] = None
 
     @property
     def side(self) -> PositionSide:
@@ -81,14 +82,26 @@ class Position:
     @property
     def take_profit(self) -> float:
         p = self.signal.symbol.price_precision
-        tp = self.third_take_profit if not self._tp else self._tp
-        return round(tp, p)
+
+        if self._tp:
+            return round(self._tp, p)
+
+        if self.signal_risk.tp:
+            return round(self.signal_risk.tp, p)
+
+        return round(self.third_take_profit, p)
 
     @property
     def stop_loss(self) -> float:
         p = self.signal.symbol.price_precision
-        sl = self.signal.stop_loss if not self._sl else self._sl
-        return round(sl, p)
+
+        if self._sl:
+            return round(self._sl, p)
+
+        # if self.signal_risk.sl and self.signal_risk.type in [SignalRiskType.MODERATE, SignalRiskType.LOW]:
+        #     return round(self.signal_risk.sl, p)
+
+        return round(self.signal.stop_loss, p)
 
     @property
     def open_timestamp(self) -> int:
@@ -380,7 +393,7 @@ class Position:
     def to_dict(self):
         return {
             "signal": self.signal.to_dict(),
-            "signal_risk_type": str(self.signal_risk_type),
+            "signal_risk": self.signal_risk.to_dict(),
             "position_risk": self.position_risk.to_dict(),
             "side": str(self.side),
             "size": self.size,
@@ -403,7 +416,7 @@ class Position:
         }
 
     def __str__(self):
-        return f"signal={self.signal}, signal_risk={self.signal_risk_type}, position_risk={self.position_risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}"
+        return f"signal={self.signal}, signal_risk={self.signal_risk.type}, position_risk={self.position_risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}"
 
     def __repr__(self):
         return f"Position({self})"
