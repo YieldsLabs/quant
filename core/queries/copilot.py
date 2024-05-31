@@ -3,14 +3,15 @@ from dataclasses import dataclass, field
 from core.events.base import EventMeta
 from core.models.ohlcv import OHLCV
 from core.models.position_risk import PositionRisk
-from core.models.risk_type import SessionRiskType, SignalRiskType
+from core.models.risk_type import SessionRiskType
 from core.models.signal import Signal
+from core.models.signal_risk import SignalRisk
 
 from .base import Query, QueryGroup
 
 
 @dataclass(frozen=True)
-class EvaluateSignal(Query[SignalRiskType]):
+class EvaluateSignal(Query[SignalRisk]):
     signal: Signal
     prev_bar: OHLCV
     meta: EventMeta = field(
