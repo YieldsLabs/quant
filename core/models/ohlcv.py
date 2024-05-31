@@ -88,6 +88,10 @@ class OHLCV:
         return total_shadow / self.price_range if self.price_range != 0 else 0
 
     @property
+    def real_body_normalized(self) -> float:
+        return self.real_body / self.price_range if self.price_range != 0 else 0
+
+    @property
     def type(self) -> CandleType:
         if self.price_movement > 0:
             return CandleType.BULLISH
@@ -132,6 +136,7 @@ class OHLCV:
             "body_range_ratio": self.body_range_ratio,
             "body_shadow_ratio": self.body_shadow_ratio,
             "shadow_range_ratio": self.shadow_range_ratio,
+            "real_body_normalized": self.real_body_normalized,
             "type": str(self.type),
         }
 
@@ -151,6 +156,7 @@ class OHLCV:
             f"body_range_ratio={self.body_range_ratio:.8f}, "
             f"body_shadow_ratio={self.body_shadow_ratio:.8f}, "
             f"shadow_range_ratio={self.shadow_range_ratio:.8f}, "
+            f"real_body_normalized={self.real_body_normalized:.8f}, "
             f"type={self.type}"
         )
 
