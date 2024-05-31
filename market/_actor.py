@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from typing import Optional, Union
 
 from wasmtime import Instance, Linker, Store, WasiConfig
@@ -56,40 +57,36 @@ class MarketActor(BaseActor, EventHandlerMixin):
         await self.upsert(event.symbol, event.timeframe, event.ohlcv)
 
     async def _handle_next_bar(self, event: NextBar) -> OHLCV:
-        return await self.find_next_bar(event.symbol, event.timeframe, event.ohlcv)
+        return await self.next_bar(event.symbol, event.timeframe, event.ohlcv)
 
     async def _handle_prev_bar(self, event: PrevBar) -> OHLCV:
-        return await self.find_next_bar(event.symbol, event.timeframe, event.ohlcv)
+        return await self.prev_bar(event.symbol, event.timeframe, event.ohlcv)
 
     async def _handle_ta(self, event: TA) -> TechAnalysis:
         return await self.ta(event.symbol, event.timeframe, event.ohlcv)
 
     async def upsert(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
-        timeseries = await self._get_timeseries(symbol, timeframe)
-        timeseries.add(bar)
+        async with self._get_timeseries(symbol, timeframe) as timeseries:
+            timeseries.add(bar)
 
-    async def find_next_bar(
+    async def next_bar(
         self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV
     ) -> Optional[OHLCV]:
-        timeseries = await self._get_timeseries(symbol, timeframe)
-        next_bar = timeseries.find_next_bar(bar)
-        return next_bar
+        async with self._get_timeseries(symbol, timeframe) as timeseries:
+            return timeseries.next_bar(bar)
 
-    async def find_prev_bar(
+    async def prev_bar(
         self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV
     ) -> Optional[OHLCV]:
-        timeseries = await self._get_timeseries(symbol, timeframe)
-        next_bar = timeseries.find_prev_bar(bar)
-        return next_bar
+        async with self._get_timeseries(symbol, timeframe) as timeseries:
+            return timeseries.prev_bar(bar)
 
     async def ta(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
-        timeseries = await self._get_timeseries(symbol, timeframe)
-        ta = timeseries.ta(bar)
-        return ta
+        async with self._get_timeseries(symbol, timeframe) as timeseries:
+            return timeseries.ta(bar)
 
-    async def _get_timeseries(
-        self, symbol: Symbol, timeframe: Timeframe
-    ) -> TimeSeriesRef:
+    @asynccontextmanager
+    async def _get_timeseries(self, symbol: Symbol, timeframe: Timeframe):
         async with self._lock:
             key = (symbol, timeframe)
 
@@ -101,4 +98,4 @@ class MarketActor(BaseActor, EventHandlerMixin):
                     id=id, instance_ref=self.instance, store_ref=self.store
                 )
 
-            return self._bucket[key]
+            yield self._bucket[key]

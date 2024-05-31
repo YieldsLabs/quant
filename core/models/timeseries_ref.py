@@ -33,10 +33,10 @@ class TimeSeriesRef:
             bar.volume,
         )
 
-    def find_next_bar(self, bar: OHLCV) -> Optional[OHLCV]:
+    def next_bar(self, bar: OHLCV) -> Optional[OHLCV]:
         exports = self.instance_ref.exports(self.store_ref)
 
-        [bar_ptr, bar_len] = exports["timeseries_find_next_bar"](
+        [bar_ptr, bar_len] = exports["timeseries_next_bar"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -60,10 +60,10 @@ class TimeSeriesRef:
 
         return bar
 
-    def find_prev_bar(self, bar: OHLCV) -> Optional[OHLCV]:
+    def prev_bar(self, bar: OHLCV) -> Optional[OHLCV]:
         exports = self.instance_ref.exports(self.store_ref)
 
-        [bar_ptr, bar_len] = exports["timeseries_find_prev_bar"](
+        [bar_ptr, bar_len] = exports["timeseries_prev_bar"](
             self.store_ref,
             self.id,
             bar.timestamp,

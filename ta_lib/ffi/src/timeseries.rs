@@ -54,7 +54,7 @@ pub fn timeseries_add(
 }
 
 #[no_mangle]
-pub fn timeseries_find_next_bar(
+pub fn timeseries_next_bar(
     timeseries_id: i32,
     ts: i64,
     open: f32,
@@ -90,7 +90,7 @@ pub fn timeseries_find_next_bar(
 }
 
 #[no_mangle]
-pub fn timeseries_find_prev_bar(
+pub fn timeseries_prev_bar(
     timeseries_id: i32,
     ts: i64,
     open: f32,
