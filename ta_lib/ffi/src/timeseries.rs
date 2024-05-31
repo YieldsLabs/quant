@@ -110,13 +110,13 @@ pub fn timeseries_prev_bar(
             volume,
         };
 
-        if let Some(next_bar) = timeseries.next_bar(&curr_bar) {
-            let next_bar_json = serde_json::to_string(&next_bar).unwrap();
-            let next_bar_bytes = next_bar_json.as_bytes();
-            let next_bar_ptr = next_bar_bytes.as_ptr() as i32;
-            let next_bar_len = next_bar_bytes.len() as i32;
+        if let Some(prev_bar) = timeseries.prev_bar(&curr_bar) {
+            let prev_bar_json = serde_json::to_string(&prev_bar).unwrap();
+            let prev_bar_bytes = prev_bar_json.as_bytes();
+            let prev_bar_ptr = prev_bar_bytes.as_ptr() as i32;
+            let prev_bar_len = prev_bar_bytes.len() as i32;
 
-            (next_bar_ptr, next_bar_len)
+            (prev_bar_ptr, prev_bar_len)
         } else {
             (0, 0)
         }
