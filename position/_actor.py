@@ -25,6 +25,7 @@ from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.copilot import EvaluateSignal
+from core.queries.ohlcv import PrevBar
 
 from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
@@ -87,11 +88,14 @@ class PositionActor(StrategyActor):
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 
-        risk_level = await self.ask(EvaluateSignal(event.signal))
+        prev_bar = await self.ask(
+            PrevBar(self.symbol, self.timeframe, event.signal.ohlcv)
+        )
+        risk_level = await self.ask(EvaluateSignal(event.signal, prev_bar))
 
         logger.info(f"Risk level: {risk_level}")
 
-        if risk_level == SignalRiskType.HIGH or risk_level == SignalRiskType.NONE:
+        if risk_level == SignalRiskType.NONE or risk_level == SignalRiskType.HIGH:
             return False
 
         async def create_and_store_position(event: SignalEvent):

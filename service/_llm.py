@@ -23,12 +23,15 @@ class LLMService(AbstractLLMService):
                 "max_tokens": self.config["max_tokens"],
                 "temperature": self.config["temperature"],
                 "stop": list(stop_words),
-                "stream": False,
+                "stream": True,
                 "echo": False,
             }
 
-            output = self._llm(**llama_input)
-            answer = output["choices"][0]["text"].strip()
+            answer = ""
+
+            for output in self._llm(**llama_input):
+                answer += output["choices"][0]["text"].strip()
+
             return answer
 
     @staticmethod

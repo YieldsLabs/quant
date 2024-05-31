@@ -8,7 +8,6 @@ from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
 from core.models.side import SignalSide
 from core.queries.copilot import EvaluateSession, EvaluateSignal
-from core.queries.ohlcv import PrevBar
 
 from ._prompt import signal_risk_prompt, system_prompt
 
@@ -37,8 +36,9 @@ class CopilotActor(BaseActor, EventHandlerMixin):
     async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRiskType:
         signal = msg.signal
 
+        prev_bar = msg.prev_bar
         curr_bar = signal.ohlcv
-        prev_bar = await self.ask(PrevBar(signal.symbol, signal.timeframe, curr_bar))
+
         side = "LONG" if signal.side == SignalSide.BUY else "SHORT"
 
         prompt = signal_risk_prompt.format(
