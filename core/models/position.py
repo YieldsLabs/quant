@@ -9,7 +9,7 @@ import numpy as np
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
-from .risk_type import PositionRiskType
+from .risk_type import PositionRiskType, SignalRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
 from .signal_risk import SignalRisk
@@ -87,7 +87,12 @@ class Position:
             return round(self._tp, p)
 
         if self.signal_risk.tp:
-            return round(self.signal_risk.tp, p)
+            if (
+                self.side == PositionSide.LONG and self.signal_risk.tp > self.stop_loss
+            ) or (
+                self.side == PositionSide.SHORT and self.signal_risk.tp < self.stop_loss
+            ):
+                return round(self.signal_risk.tp, p)
 
         return round(self.third_take_profit, p)
 
@@ -312,7 +317,13 @@ class Position:
         next_sl = self.stop_loss
 
         next_sl = next_position.break_even()
-        next_sl = next_risk.sl_low(self.side, ta, next_sl)
+
+        if self.signal_risk.type in [
+            SignalRiskType.MODERATE,
+            SignalRiskType.HIGH,
+            SignalRiskType.VERY_HIGH,
+        ]:
+            next_sl = next_risk.sl_low(self.side, ta, next_sl)
 
         next_risk = next_risk.assess(
             self.side,

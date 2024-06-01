@@ -16,12 +16,17 @@ class PositionRiskType(Enum):
 class SignalRiskType(Enum):
     NONE = auto()
     LOW = auto()
+    VERY_LOW = auto()
     MODERATE = auto()
     HIGH = auto()
+    VERY_HIGH = auto()
 
     @classmethod
     def from_string(cls, risk_string):
-        match = re.search(r"\b(NONE|LOW|MODERATE|HIGH)\b(?![a-zA-Z0-9])", risk_string)
+        match = re.search(
+            r"\b(NONE|LOW|VERY_LOW|MODERATE|HIGH|VERY_HIGH)\b(?![a-zA-Z0-9])",
+            risk_string,
+        )
 
         if match:
             return cls[match.group()]

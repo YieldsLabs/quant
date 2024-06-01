@@ -16,6 +16,7 @@ from ._prompt import signal_risk_pattern, signal_risk_prompt, system_prompt
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
 logger = logging.getLogger(__name__)
+LOOKBACK = 2
 
 
 class CopilotActor(BaseActor, EventHandlerMixin):
@@ -38,13 +39,22 @@ class CopilotActor(BaseActor, EventHandlerMixin):
     async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRisk:
         signal = msg.signal
 
-        prev_bar = msg.prev_bar
         curr_bar = signal.ohlcv
-
+        prev_bar = msg.prev_bar
         side = "LONG" if signal.side == SignalSide.BUY else "SHORT"
+        trend = msg.ta.trend
+        osc = msg.ta.oscillator
+        volatility = msg.ta.volatility
 
         prompt = signal_risk_prompt.format(
-            curr_bar=curr_bar, prev_bar=prev_bar, side=side, timeframe=signal.timeframe
+            curr_bar=curr_bar,
+            prev_bar=prev_bar,
+            side=side,
+            timeframe=signal.timeframe,
+            macd_histogram=trend.macd[-LOOKBACK:],
+            rsi=osc.srsi[-LOOKBACK:],
+            k=osc.k[-LOOKBACK:],
+            bbp=volatility.bbp[-LOOKBACK:],
         )
 
         logger.info(f"Signal Prompt: {prompt}")

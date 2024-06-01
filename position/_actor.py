@@ -24,7 +24,7 @@ from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.copilot import EvaluateSignal
-from core.queries.ohlcv import PrevBar
+from core.queries.ohlcv import TA, PrevBar
 
 from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
@@ -88,10 +88,17 @@ class PositionActor(StrategyActor):
             return False
 
         async def create_and_store_position(event: SignalEvent):
-            prev_bar = await self.ask(
-                PrevBar(event.signal.symbol, event.signal.timeframe, event.signal.ohlcv)
+            symbol, timeframe, ohlcv = (
+                event.signal.symbol,
+                event.signal.timeframe,
+                event.signal.ohlcv,
             )
-            signal_risk_level = await self.ask(EvaluateSignal(event.signal, prev_bar))
+
+            prev_bar = await self.ask(PrevBar(symbol, timeframe, ohlcv))
+            ta = await self.ask(TA(symbol, timeframe, ohlcv))
+            signal_risk_level = await self.ask(
+                EvaluateSignal(event.signal, prev_bar, ta)
+            )
 
             position = await self.position_factory.create(
                 event.signal, signal_risk_level
