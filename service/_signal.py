@@ -1,6 +1,8 @@
 from ctypes import addressof, c_ubyte
 from typing import Tuple
 
+import orjson as json
+
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.interfaces.abstract_wasm_manager import AbstractWasmManager
 from core.models.strategy import Strategy
@@ -28,7 +30,8 @@ class SignalService(AbstractSignalService):
         exports = instance.exports(store)
 
         allocation_data = {
-            key: self._write(store, exports, data) for key, data in data.items()
+            key: self._write(store, exports, json.dumps(data))
+            for key, data in data.items()
         }
 
         id = exports["register"](

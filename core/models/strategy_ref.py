@@ -1,8 +1,10 @@
 import logging
+import typing
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from wasmtime import Instance, Store
+if typing.TYPE_CHECKING:
+    from wasmtime import Instance, Store
 
 from core.events.signal import (
     ExitLongSignalReceived,
