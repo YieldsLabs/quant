@@ -8,7 +8,6 @@ from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.models.wasm_type import WasmType
 
 if TYPE_CHECKING:
     from core.models.strategy_ref import StrategyRef
