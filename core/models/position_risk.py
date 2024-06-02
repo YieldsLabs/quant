@@ -12,7 +12,7 @@ from .risk_type import PositionRiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 25000
+TIME_THRESHOLD = 15000
 
 
 def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
@@ -98,7 +98,7 @@ class TaMixin:
 class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(3.2, 5.8))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.8, 3.8))
 
     @property
     def last_bar(self):

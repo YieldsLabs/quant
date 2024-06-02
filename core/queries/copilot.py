@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 from core.events.base import EventMeta
 from core.models.ohlcv import OHLCV
-from core.models.position_risk import PositionRisk
 from core.models.risk_type import SessionRiskType
+from core.models.side import PositionSide
 from core.models.signal import Signal
 from core.models.signal_risk import SignalRisk
 from core.models.ta import TechAnalysis
@@ -24,7 +24,9 @@ class EvaluateSignal(Query[SignalRisk]):
 
 @dataclass(frozen=True)
 class EvaluateSession(Query[SessionRiskType]):
-    risk: PositionRisk
+    side: PositionSide
+    bar: OHLCV
+    ta: TechAnalysis
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=5, group=QueryGroup.copilot),
         init=False,

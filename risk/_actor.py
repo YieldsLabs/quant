@@ -22,6 +22,7 @@ from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.copilot import EvaluateSession
 from core.queries.ohlcv import TA, NextBar
 
 TrailEvent = Union[
@@ -145,7 +146,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     async def _process_market(self, curr_bar: OHLCV, position: Optional[Position]):
         next_position = position
-        bars = [curr_bar]
+        # bars = [curr_bar]
 
         if position and not position.has_risk:
             next_bar = await self.ask(
@@ -153,15 +154,14 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             )
 
             if next_bar:
-                bars.append(next_bar)
+                ta = await self.ask(TA(self.symbol, self.timeframe, next_bar))
+                session_risk = await self.ask(
+                    EvaluateSession(next_position.side, next_bar, ta)
+                )
 
-            for bar in bars:
-                ta = await self.ask(TA(self.symbol, self.timeframe, bar))
-
-                next_position = next_position.next(next_bar, ta)
+                next_position = next_position.next(next_bar, ta, session_risk)
 
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))
-                    break
 
         return next_position

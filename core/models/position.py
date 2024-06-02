@@ -9,7 +9,7 @@ import numpy as np
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
-from .risk_type import PositionRiskType, SignalRiskType
+from .risk_type import PositionRiskType, SessionRiskType, SignalRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
 from .signal_risk import SignalRisk
@@ -26,7 +26,7 @@ class Position:
     expiration: int = field(default_factory=lambda: 900000)  # 15min
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    first_factor: float = field(default_factory=lambda: np.random.uniform(0.13, 0.3))
+    first_factor: float = field(default_factory=lambda: np.random.uniform(0.09, 0.3))
     second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.8))
     third_factor: float = field(default_factory=lambda: np.random.uniform(0.9, 1.8))
     _tp: Optional[float] = None
@@ -88,9 +88,13 @@ class Position:
 
         if self.signal_risk.tp:
             if (
-                self.side == PositionSide.LONG and self.signal_risk.tp > self.stop_loss
+                self.side == PositionSide.LONG
+                and self.signal_risk.tp > self.stop_loss
+                and self.signal_risk.tp <= self.third_take_profit
             ) or (
-                self.side == PositionSide.SHORT and self.signal_risk.tp < self.stop_loss
+                self.side == PositionSide.SHORT
+                and self.signal_risk.tp < self.stop_loss
+                and self.signal_risk.tp >= self.third_take_profit
             ):
                 return round(self.signal_risk.tp, p)
 
@@ -299,7 +303,9 @@ class Position:
                 last_modified=execution_time,
             )
 
-    def next(self, ohlcv: OHLCV, ta: TechAnalysis) -> "Position":
+    def next(
+        self, ohlcv: OHLCV, ta: TechAnalysis, session_risk: SessionRiskType
+    ) -> "Position":
         if self.closed:
             return self
 
@@ -307,23 +313,28 @@ class Position:
             return self
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
+        pnl_perc = (self.curr_pnl / self.curr_price) * 100
 
-        print(f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms")
+        print(
+            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, PnL%: {pnl_perc}"
+        )
 
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
+        next_position = next_position.break_even()
+        next_position = next_position.trail(ta)
 
-        next_tp = self.take_profit
-        next_sl = self.stop_loss
+        next_tp = next_position.take_profit
+        next_sl = next_position.stop_loss
 
-        next_sl = next_position.break_even()
 
-        if self.signal_risk.type in [
-            SignalRiskType.MODERATE,
-            SignalRiskType.HIGH,
-            SignalRiskType.VERY_HIGH,
-        ]:
-            next_sl = next_risk.sl_low(self.side, ta, next_sl)
+        # dist_sl = abs(self.entry_price - next_sl)
+        # dist_tp = abs(self.entry_price - next_tp)
+
+        # if session_risk == SessionRiskType.EXIT and (
+        #     dist_sl < dist_tp or pnl_perc >= 0.0
+        # ):
+        #     next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
 
         next_risk = next_risk.assess(
             self.side,
@@ -333,11 +344,9 @@ class Position:
             self.expiration,
         )
 
-        pnl_perc = (self.curr_pnl / self.curr_price) * 100
-
-        print(
-            f"RISK: {next_risk}, " f"TP: {next_tp}, SL: {next_sl}, " f"PnL%: {pnl_perc}"
-        )
+        # print(
+        #     f"RISK: {next_risk}, " f"TP: {next_tp}, SL: {next_sl}, " f"PnL%: {pnl_perc}"
+        # )
 
         return replace(
             next_position,
@@ -346,7 +355,7 @@ class Position:
             _sl=next_sl,
         )
 
-    def break_even(self) -> float:
+    def break_even(self) -> "Position":
         curr_price = self.curr_price
         curr_sl = self.stop_loss
 
@@ -355,33 +364,36 @@ class Position:
         third_break_even = self.third_take_profit
 
         if self.side == PositionSide.LONG:
-            if curr_price >= first_break_even:
-                curr_sl = min(curr_sl, self.entry_price)
+            # if curr_price >= first_break_even:
+            #     curr_sl = min(curr_sl, self.entry_price)
 
             if curr_price >= second_break_even:
-                curr_sl = min(curr_sl, first_break_even)
+                curr_sl = min(curr_sl, self.entry_price)
 
             if curr_price >= third_break_even:
-                curr_sl = min(curr_sl, second_break_even)
+                curr_sl = min(curr_sl, first_break_even)
 
         if self.side == PositionSide.SHORT:
-            if curr_price <= first_break_even:
-                curr_sl = max(curr_sl, self.entry_price)
+            # if curr_price <= first_break_even:
+            #     curr_sl = max(curr_sl, self.entry_price)
 
             if curr_price <= second_break_even:
-                curr_sl = max(curr_sl, first_break_even)
+                curr_sl = max(curr_sl, self.entry_price)
 
             if curr_price <= third_break_even:
-                curr_sl = max(curr_sl, second_break_even)
+                curr_sl = max(curr_sl, first_break_even)
 
-        return curr_sl
+        return replace(self, _sl=curr_sl)
+    
+    def trail(self, ta: TechAnalysis) -> "Position":
+        return replace(self, _sl=self.position_risk.sl_low(self.side, ta, self.stop_loss))
 
     def force_exit(self, price: float) -> "Position":
-        if self.side == PositionSide.LONG and price > self.first_take_profit:
-            return replace(self, _tp=price)
+        # if self.side == PositionSide.LONG and price > self.first_take_profit:
+        #     return replace(self, _tp=price)
 
-        if self.side == PositionSide.SHORT and price < self.first_take_profit:
-            return replace(self, _tp=price)
+        # if self.side == PositionSide.SHORT and price < self.first_take_profit:
+        #     return replace(self, _tp=price)
 
         return self
 
