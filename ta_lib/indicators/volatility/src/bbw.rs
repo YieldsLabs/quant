@@ -1,11 +1,8 @@
+use crate::bb;
 use core::prelude::*;
 
 pub fn bbw(source: &Series<f32>, smooth_type: Smooth, period: usize, factor: f32) -> Series<f32> {
-    let middle_band = source.smooth(smooth_type, period);
-    let std_mul = source.std(period) * factor;
-
-    let upper_band = &middle_band + &std_mul;
-    let lower_band = &middle_band - &std_mul;
+    let (upper_band, middle_band, lower_band) = bb(source, smooth_type, period, factor);
 
     (upper_band - lower_band) / &middle_band
 }
