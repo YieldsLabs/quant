@@ -9,7 +9,7 @@ import numpy as np
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
-from .risk_type import PositionRiskType, SessionRiskType, SignalRiskType
+from .risk_type import PositionRiskType, SessionRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
 from .signal_risk import SignalRisk
@@ -327,7 +327,6 @@ class Position:
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
 
-
         # dist_sl = abs(self.entry_price - next_sl)
         # dist_tp = abs(self.entry_price - next_tp)
 
@@ -384,9 +383,11 @@ class Position:
                 curr_sl = max(curr_sl, first_break_even)
 
         return replace(self, _sl=curr_sl)
-    
+
     def trail(self, ta: TechAnalysis) -> "Position":
-        return replace(self, _sl=self.position_risk.sl_low(self.side, ta, self.stop_loss))
+        return replace(
+            self, _sl=self.position_risk.sl_low(self.side, ta, self.stop_loss)
+        )
 
     def force_exit(self, price: float) -> "Position":
         # if self.side == PositionSide.LONG and price > self.first_take_profit:

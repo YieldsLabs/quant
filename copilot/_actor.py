@@ -11,7 +11,7 @@ from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
 from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
-from core.models.side import PositionSide, SignalSide
+from core.models.side import SignalSide
 from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
@@ -50,8 +50,12 @@ class CustomKMeans(KMeans):
             self.labels_, distances = self._e_step(X)
 
             new_centers = np.array(
-                [X[self.labels_ == j].mean(axis=0) if len(X[self.labels_ == j]) > 0 else self.cluster_centers_[j]
-                for j in range(self.n_clusters)]
+                [
+                    X[self.labels_ == j].mean(axis=0)
+                    if len(X[self.labels_ == j]) > 0
+                    else self.cluster_centers_[j]
+                    for j in range(self.n_clusters)
+                ]
             )
 
             if np.all(np.abs(new_centers - self.cluster_centers_) <= self.tol):
@@ -71,7 +75,9 @@ class CustomKMeans(KMeans):
         centers[0] = X[center_id]
 
         closest_dist_sq = np.full(n_samples, np.inf)
-        closest_dist_sq = np.minimum(closest_dist_sq, np.sum((X - centers[0]) ** 2, axis=1))
+        closest_dist_sq = np.minimum(
+            closest_dist_sq, np.sum((X - centers[0]) ** 2, axis=1)
+        )
 
         for c in range(1, self.n_clusters):
             probabilities = closest_dist_sq / closest_dist_sq.sum()
@@ -143,7 +149,9 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         most_common_cluster = np.argmax(cluster_counts)
         least_common_cluster = np.argmin(cluster_counts)
 
-        logger.info(f"Common cluster: {most_common_cluster}, Least Common: {least_common_cluster}")
+        logger.info(
+            f"Common cluster: {most_common_cluster}, Least Common: {least_common_cluster}"
+        )
 
         # prompt = signal_risk_prompt.format(
         #     curr_bar=curr_bar,
@@ -180,15 +188,19 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         # logger.info(f"Signal Risk: {risk}")
         tp = ta.trend.hh[-1] if signal.side == SignalSide.BUY else ta.trend.ll[-1]
         sl = ta.trend.ll[-1] if signal.side == SignalSide.BUY else ta.trend.hh[-1]
-        risk_type = SignalRiskType.LOW if (most_common_cluster == 1 and least_common_cluster == 0) else SignalRiskType.HIGH
-        
+        risk_type = (
+            SignalRiskType.LOW
+            if (most_common_cluster == 1 and least_common_cluster == 0)
+            else SignalRiskType.HIGH
+        )
+
         if risk_type == SignalRiskType.HIGH:
             risk = SignalRisk(
                 type=risk_type,
                 tp=tp,
                 sl=sl,
             )
-        
+
         return risk
 
     async def _evaluate_session(self, msg: EvaluateSession) -> SessionRiskType:
@@ -196,13 +208,11 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         cci = np.array(ta.momentum.cci[-LOOKBACK:])
         bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
-        tr = np.array(ta.volatility.tr[-LOOKBACK:])
         slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
-        macd = np.array(ta.trend.macd[-LOOKBACK:])
         stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
-        nvol = np.array(ta.volume.nvol[-LOOKBACK:])
+        mfi = np.array(ta.volume.mfi[-LOOKBACK:])
 
-        features = np.column_stack((cci, bbp, slow_rsi, macd, stoch_k, tr, nvol))
+        features = np.column_stack((cci, bbp, slow_rsi, stoch_k, mfi))
         features = MinMaxScaler().fit_transform(features)
         kmeans = CustomKMeans(n_clusters=N_CLUSTERS, random_state=1337).fit(features)
         cluster_counts = np.bincount(kmeans.labels_)
@@ -211,28 +221,24 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         body_range_ratio = msg.bar.body_range_ratio
 
-        fast_rsi = np.array(ta.oscillator.frsi[-LOOKBACK:])
-        
-        exit_long = (cci < 100) | (bbp > 0.8) | ((fast_rsi > 70) & (slow_rsi > 70))
-        exit_short = (cci > -100) | (bbp < 0.2) | ((fast_rsi < 30) & (slow_rsi < 30))
+        # fast_rsi = np.array(ta.oscillator.frsi[-LOOKBACK:])
 
-        signal_exit = exit_long[-1] if msg.side == PositionSide.LONG else exit_short[-1]
-        should_exit = (
-            (most_common_cluster == 0 and least_common_cluster == 1)
-            or (most_common_cluster == 1 and least_common_cluster == 2)
-            or (most_common_cluster == 0 and least_common_cluster == 2)
-            or (most_common_cluster == 2 and least_common_cluster == 0)
-            or (most_common_cluster == 1 and least_common_cluster == 0)
-        )
+        # exit_long = (cci < 100) | (bbp > 0.8) | ((fast_rsi > 70) & (slow_rsi > 70))
+        # exit_short = (cci > -100) | (bbp < 0.2) | ((fast_rsi < 30) & (slow_rsi < 30))
+
+        # signal_exit = exit_long[-1] if msg.side == PositionSide.LONG else exit_short[-1]
+        should_exit = False
 
         logger.info(
             f"CCI: {cci[-1]}, "
             f"RSI SLOW: {slow_rsi[-1]}, "
             f"BB%: {bbp[-1]}, "
             f"Body Range Ratio: {body_range_ratio}, "
-            f"Signal Exit {signal_exit}, "
-            f"Common Cluster {most_common_cluster}, "
-            f"Anomaly Cluster {least_common_cluster}"
+            # f"Signal Exit {signal_exit}, "
+            f"Clusters: {kmeans.labels_}, "
+            # f"Centers: {kmeans.cluster_centers_}, "
+            # f"Common Cluster {most_common_cluster}, "
+            # f"Anomaly Cluster {least_common_cluster}"
         )
 
         if should_exit:

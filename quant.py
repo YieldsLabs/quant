@@ -21,7 +21,13 @@ from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
 from position.size.fixed import PositionFixedSizeStrategy
 from risk import RiskActorFactory
-from service import EnvironmentSecretService, LLMService, SignalService, WasmFileService
+from service import (
+    EnvironmentSecretService,
+    LLMService,
+    SignalService,
+    TimeSeriesService,
+    WasmManager,
+)
 from sor import SmartRouter
 from strategy import SignalActorFactory
 from strategy.generator import StrategyGeneratorFactory
@@ -67,12 +73,12 @@ async def main():
 
     exchange_factory = ExchangeFactory(EnvironmentSecretService())
     ws_factory = WSFactory(EnvironmentSecretService())
-    wasm = WasmFileService(WASM_FOLDER)
+    wasm = WasmManager(WASM_FOLDER)
     position_factory = PositionFactory(
         config_service,
         PositionFixedSizeStrategy(),
     )
-    MarketActor(wasm).start()
+    MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
     SmartRouter(exchange_factory, config_service)

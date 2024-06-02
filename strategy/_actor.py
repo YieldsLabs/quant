@@ -36,7 +36,6 @@ class SignalActor(StrategyActor):
         return self._strategy
 
     def on_start(self):
-        self.service.load_instance(WasmType.TREND)
         self.strategy_ref = self.service.register(self.strategy)
 
     def on_stop(self):

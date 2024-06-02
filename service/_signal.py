@@ -1,34 +1,20 @@
 from ctypes import addressof, c_ubyte
-from typing import Optional, Tuple
-
-from wasmtime import Instance, Linker, Store, WasiConfig
+from typing import Tuple
 
 from core.interfaces.abstract_signal_service import AbstractSignalService
-from core.interfaces.abstract_wasm_service import AbstractWasmService
+from core.interfaces.abstract_wasm_manager import AbstractWasmManager
 from core.models.strategy import Strategy
 from core.models.strategy_ref import StrategyRef
 from core.models.wasm_type import WasmType
 
 
 class SignalService(AbstractSignalService):
-    def __init__(self, wasm_service: AbstractWasmService):
+    def __init__(self, wasm_manager: AbstractWasmManager):
         super().__init__()
-        self.wasm_service = wasm_service
-        self.store = Store()
-        wasi_config = WasiConfig()
-        wasi_config.wasm_multi_value = True
-        self.store.set_wasi(wasi_config)
-        self.linker = Linker(self.store.engine)
-        self.linker.define_wasi()
-        self.instance: Optional[Instance] = None
-
-    def load_instance(self, type: WasmType):
-        module = self.wasm_service.get_module(type, self.store.engine)
-        self.instance = self.linker.instantiate(self.store, module)
+        self._wasm_manager = wasm_manager
+        self._wasm = WasmType.TREND
 
     def register(self, strategy: Strategy) -> StrategyRef:
-        exports = self.instance.exports(self.store)
-
         data = {
             "signal": strategy.parameters[0],
             "filter": strategy.parameters[1],
@@ -38,15 +24,18 @@ class SignalService(AbstractSignalService):
             "exit": strategy.parameters[5],
         }
 
+        instance, store = self._wasm_manager.get_instance(self._wasm)
+        exports = instance.exports(store)
+
         allocation_data = {
-            key: self._write(self.store, exports, data) for key, data in data.items()
+            key: self._write(store, exports, data) for key, data in data.items()
         }
 
         id = exports["register"](
-            self.store, *[item for pair in allocation_data.values() for item in pair]
+            store, *[item for pair in allocation_data.values() for item in pair]
         )
 
-        return StrategyRef(id=id, instance_ref=self.instance, store_ref=self.store)
+        return StrategyRef(id=id, instance_ref=instance, store_ref=store)
 
     @staticmethod
     def _write(store, exports, data: bytes) -> Tuple[int]:

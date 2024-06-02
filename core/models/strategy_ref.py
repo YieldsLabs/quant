@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class StrategyRef:
     id: int
-    instance_ref: Instance
-    store_ref: Store
+    instance_ref: "Instance"
+    store_ref: "Store"
 
     def unregister(self):
         exports = self.instance_ref.exports(self.store_ref)
