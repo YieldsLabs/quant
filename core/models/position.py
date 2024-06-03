@@ -306,10 +306,7 @@ class Position:
     def next(
         self, ohlcv: OHLCV, ta: TechAnalysis, session_risk: SessionRiskType
     ) -> "Position":
-        if self.closed:
-            return self
-
-        if ohlcv.timestamp <= self.risk_bar.timestamp:
+        if self.closed or ohlcv.timestamp <= self.risk_bar.timestamp:
             return self
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
@@ -322,7 +319,10 @@ class Position:
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
         next_position = next_position.break_even()
-        next_position = next_position.trail(ta)
+
+        if session_risk == SessionRiskType.EXIT and pnl_perc < 0.0:
+            print("TRAILLL")
+            next_position = next_position.trail(ta)
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
@@ -330,7 +330,10 @@ class Position:
         # dist_sl = abs(self.entry_price - next_sl)
         # dist_tp = abs(self.entry_price - next_tp)
 
-        # if session_risk == SessionRiskType.EXIT and (
+        if session_risk == SessionRiskType.EXIT and pnl_perc >= 0.0:
+            print("EXIITT")
+            next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
+
         #     dist_sl < dist_tp or pnl_perc >= 0.0
         # ):
         #     next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low

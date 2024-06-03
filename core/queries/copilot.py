@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import List
 
 from core.events.base import EventMeta
 from core.models.ohlcv import OHLCV
@@ -25,7 +26,7 @@ class EvaluateSignal(Query[SignalRisk]):
 @dataclass(frozen=True)
 class EvaluateSession(Query[SessionRiskType]):
     side: PositionSide
-    bar: OHLCV
+    session: List[OHLCV]
     ta: TechAnalysis
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=5, group=QueryGroup.copilot),

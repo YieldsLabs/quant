@@ -19,7 +19,15 @@ CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
 logger = logging.getLogger(__name__)
 LOOKBACK = 5
-N_CLUSTERS = 3
+N_CLUSTERS = 4
+
+
+def pad_bars(bars, length):
+    if len(bars) < length:
+        padding = [None] * (length - len(bars))
+        return padding + bars
+    else:
+        return bars[-length:]
 
 
 def lorentzian_distance(u, v):
@@ -31,16 +39,13 @@ class CustomKMeans(KMeans):
         super().__init__(
             n_clusters=n_clusters, max_iter=max_iter, tol=tol, random_state=random_state
         )
-        self.n_clusters = n_clusters
 
     def _e_step(self, X):
-        """E-step implementation to assign clusters using Lorentzian distance."""
         distances = cdist(X, self.cluster_centers_, metric=lorentzian_distance)
         labels = distances.argmin(axis=1)
         return labels, distances
 
     def fit(self, X, y=None):
-        """Overriding the fit method to use the custom _e_step."""
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X, accept_sparse="csr", reset=True)
 
@@ -118,40 +123,40 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             type=SignalRiskType.NONE,
         )
 
-        cci = np.array(ta.momentum.cci[-LOOKBACK:])
-        bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
-        tr = np.array(ta.volatility.tr[-LOOKBACK:])
-        fast_rsi = np.array(ta.oscillator.frsi[-LOOKBACK:])
-        slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
-        macd = np.array(ta.trend.macd[-LOOKBACK:])
-        ppo = np.array(ta.trend.ppo[-LOOKBACK:])
-        stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
-        nvol = np.array(ta.volume.nvol[-LOOKBACK:])
-        slow_ema = np.array(ta.trend.sma[-LOOKBACK:])
-        fast_ema = np.array(ta.trend.fma[-LOOKBACK:])
+        # cci = np.array(ta.momentum.cci[-LOOKBACK:])
+        # bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
+        # tr = np.array(ta.volatility.tr[-LOOKBACK:])
+        # fast_rsi = np.array(ta.oscillator.frsi[-LOOKBACK:])
+        # slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
+        # macd = np.array(ta.trend.macd[-LOOKBACK:])
+        # ppo = np.array(ta.trend.ppo[-LOOKBACK:])
+        # stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
+        # nvol = np.array(ta.volume.nvol[-LOOKBACK:])
+        # slow_ema = np.array(ta.trend.sma[-LOOKBACK:])
+        # fast_ema = np.array(ta.trend.fma[-LOOKBACK:])
 
-        features = np.column_stack(
-            (
-                cci,
-                bbp,
-                macd,
-                slow_rsi,
-                ppo,
-                stoch_k,
-                slow_ema,
-                tr,
-                nvol,
-            )
-        )
-        features = MinMaxScaler().fit_transform(features)
-        kmeans = CustomKMeans(n_clusters=N_CLUSTERS, random_state=1337).fit(features)
-        cluster_counts = np.bincount(kmeans.labels_)
-        most_common_cluster = np.argmax(cluster_counts)
-        least_common_cluster = np.argmin(cluster_counts)
+        # features = np.column_stack(
+        #     (
+        #         cci,
+        #         bbp,
+        #         macd,
+        #         slow_rsi,
+        #         ppo,
+        #         stoch_k,
+        #         slow_ema,
+        #         tr,
+        #         nvol,
+        #     )
+        # )
+        # features = MinMaxScaler().fit_transform(features)
+        # kmeans = CustomKMeans(n_clusters=N_CLUSTERS, random_state=1337).fit(features)
+        # cluster_counts = np.bincount(kmeans.labels_)
+        # most_common_cluster = np.argmax(cluster_counts)
+        # least_common_cluster = np.argmin(cluster_counts)
 
-        logger.info(
-            f"Common cluster: {most_common_cluster}, Least Common: {least_common_cluster}"
-        )
+        # logger.info(
+        #     f"Common cluster: {most_common_cluster}, Least Common: {least_common_cluster}"
+        # )
 
         # prompt = signal_risk_prompt.format(
         #     curr_bar=curr_bar,
@@ -186,59 +191,65 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         #     )
 
         # logger.info(f"Signal Risk: {risk}")
-        tp = ta.trend.hh[-1] if signal.side == SignalSide.BUY else ta.trend.ll[-1]
-        sl = ta.trend.ll[-1] if signal.side == SignalSide.BUY else ta.trend.hh[-1]
-        risk_type = (
-            SignalRiskType.LOW
-            if (most_common_cluster == 1 and least_common_cluster == 0)
-            else SignalRiskType.HIGH
-        )
+        # tp = ta.trend.hh[-1] if signal.side == SignalSide.BUY else ta.trend.ll[-1]
+        # sl = ta.trend.ll[-1] if signal.side == SignalSide.BUY else ta.trend.hh[-1]
+        # risk_type = (
+        #     SignalRiskType.LOW
+        #     if (most_common_cluster == 1 and least_common_cluster == 0)
+        #     else SignalRiskType.HIGH
+        # )
 
-        if risk_type == SignalRiskType.HIGH:
-            risk = SignalRisk(
-                type=risk_type,
-                tp=tp,
-                sl=sl,
-            )
+        # if risk_type == SignalRiskType.HIGH:
+        #     risk = SignalRisk(
+        #         type=risk_type,
+        #         tp=tp,
+        #         sl=sl,
+        #     )
 
         return risk
 
     async def _evaluate_session(self, msg: EvaluateSession) -> SessionRiskType:
         ta = msg.ta
+        bars = pad_bars(msg.session, LOOKBACK)
 
         cci = np.array(ta.momentum.cci[-LOOKBACK:])
         bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
         slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
         stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
         mfi = np.array(ta.volume.mfi[-LOOKBACK:])
+        ema = np.array(ta.trend.sma[-LOOKBACK:])
+        brr = np.array(
+            [
+                bar.body_range_ratio if bar is not None else 0.0
+                for bar in bars[-LOOKBACK:]
+            ]
+        )
 
-        features = np.column_stack((cci, bbp, slow_rsi, stoch_k, mfi))
+        features = np.column_stack((cci, bbp, slow_rsi, stoch_k, mfi, ema, brr))
         features = MinMaxScaler().fit_transform(features)
         kmeans = CustomKMeans(n_clusters=N_CLUSTERS, random_state=1337).fit(features)
         cluster_counts = np.bincount(kmeans.labels_)
         most_common_cluster = np.argmax(cluster_counts)
         least_common_cluster = np.argmin(cluster_counts)
 
-        body_range_ratio = msg.bar.body_range_ratio
-
-        # fast_rsi = np.array(ta.oscillator.frsi[-LOOKBACK:])
-
-        # exit_long = (cci < 100) | (bbp > 0.8) | ((fast_rsi > 70) & (slow_rsi > 70))
-        # exit_short = (cci > -100) | (bbp < 0.2) | ((fast_rsi < 30) & (slow_rsi < 30))
-
-        # signal_exit = exit_long[-1] if msg.side == PositionSide.LONG else exit_short[-1]
-        should_exit = False
+        should_exit = (
+            (most_common_cluster == 3 and least_common_cluster == 0)
+            or (most_common_cluster == 0 and least_common_cluster == 1)
+            or (most_common_cluster == 2 and least_common_cluster == 0)
+        )
 
         logger.info(
             f"CCI: {cci[-1]}, "
-            f"RSI SLOW: {slow_rsi[-1]}, "
+            f"RSI: {slow_rsi[-1]}, "
             f"BB%: {bbp[-1]}, "
-            f"Body Range Ratio: {body_range_ratio}, "
+            f"MFI: {mfi[-1]}, "
+            f"Stoch K: {stoch_k[-1]}, "
+            f"EMA: {ema[-1]}, "
+            f"Body Range Ratio: {brr[-1]}, "
             # f"Signal Exit {signal_exit}, "
             f"Clusters: {kmeans.labels_}, "
-            # f"Centers: {kmeans.cluster_centers_}, "
-            # f"Common Cluster {most_common_cluster}, "
-            # f"Anomaly Cluster {least_common_cluster}"
+            f"Common: {most_common_cluster}, "
+            f"Anomaly: {least_common_cluster}"
         )
 
         if should_exit:
