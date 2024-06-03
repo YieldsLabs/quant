@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -16,8 +17,8 @@ class StrategyStorage:
     def __init__(self, n_neighbors=3, max_data_size=1000):
         self.scaler = MinMaxScaler()
         self.imputer = KNNImputer(n_neighbors=n_neighbors)
-        self.data: Dict[Tuple[Symbol, Timeframe, Strategy], Tuple[np.array, int]] = {}
-        self.lock = asyncio.Lock()
+        self._data: Dict[Tuple[Symbol, Timeframe, Strategy], Tuple[np.array, int]] = {}
+        self._lock = asyncio.Lock()
         self.max_data_size = max_data_size
 
     async def next(
@@ -27,38 +28,39 @@ class StrategyStorage:
         strategy: Strategy,
         metrics: np.array,
     ):
-        async with self.lock:
+        async with self._state() as state:
             key = (symbol, timeframe, strategy)
-            self.data[key] = (metrics, -1)
+            state[key] = (metrics, -1)
 
-            if len(self.data) > self.max_data_size:
-                oldest_key = next(iter(self.data))
-                self.data.pop(oldest_key)
+            if len(state) > self.max_data_size:
+                oldest_key = next(iter(state))
+                state.pop(oldest_key)
 
-            if len(self.data) >= 2:
-                self._update_clusters()
+            if len(state) >= 2:
+                self._update_clusters(state)
 
     async def reset(self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy):
-        async with self.lock:
-            self.data.pop((symbol, timeframe, strategy), None)
+        async with self._state() as state:
+            state.pop((symbol, timeframe, strategy), None)
 
     async def reset_all(self):
-        async with self.lock:
-            self.data = {}
+        async with self._state() as state:
+            state.clear()
 
     async def get_top(self, num: int = 10) -> List[Tuple[Symbol, Timeframe, Strategy]]:
-        async with self.lock:
+        async with self._state() as state:
             sorted_strategies = sorted(
-                self.data.keys(), key=self._sorting_key, reverse=True
+                state.keys(), key=self._sorting_key, reverse=True
             )
+
             return sorted_strategies[:num]
 
-    def _update_clusters(self):
-        if len(self.data) < 3:
+    def _update_clusters(self, state):
+        if len(state) < 3:
             return
 
-        data_keys = list(self.data.keys())
-        data_matrix = np.array([self.data[key][0] for key in data_keys])
+        data_keys = list(state.keys())
+        data_matrix = np.array([state[key][0] for key in data_keys])
 
         imputed_data = self.imputer.fit_transform(data_matrix)
         normalized_data = self.scaler.fit_transform(imputed_data)
@@ -67,7 +69,7 @@ class StrategyStorage:
         cluster_indices = kmeans.fit_predict(normalized_data)
 
         for key, idx in zip(data_keys, cluster_indices):
-            self.data[key] = (
+            state[key] = (
                 self.data[key][0],
                 idx,
             )
@@ -92,6 +94,11 @@ class StrategyStorage:
                 optimal_clusters = k
 
         return optimal_clusters
+
+    @asynccontextmanager
+    async def _state(self):
+        async with self._lock:
+            yield self._data
 
     def _sorting_key(self, key):
         return self.data[key][1], self.data[key][0][0]
