@@ -70,7 +70,7 @@ class StrategyStorage:
 
         for key, idx in zip(data_keys, cluster_indices):
             state[key] = (
-                self.data[key][0],
+                state[key][0],
                 idx,
             )
 
@@ -101,4 +101,4 @@ class StrategyStorage:
             yield self._data
 
     def _sorting_key(self, key):
-        return self.data[key][1], self.data[key][0][0]
+        return self._data[key][1], self._data[key][0][0]
