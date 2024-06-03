@@ -146,19 +146,20 @@ class Portfolio(AbstractEventManager):
         risk_per_trade = self.config["risk_per_trade"]
 
         equity = await self.state.get_equity(symbol, timeframe, strategy)
+        fixed_size = equity * risk_per_trade
 
         if query.type == PositionSizeType.Fixed:
-            return equity * risk_per_trade
+            return fixed_size
 
         if query.type == PositionSizeType.Kelly:
             kelly = await self.state.get_kelly(symbol, timeframe, strategy)
-            return equity * kelly if kelly > 0 else equity * risk_per_trade
+            return equity * kelly if kelly > 0 else fixed_size
 
         if query.type == PositionSizeType.Optimalf:
             optimalf = await self.state.get_optimalf(symbol, timeframe, strategy)
-            return optimalf * equity if optimalf > 0 else equity * risk_per_trade
+            return optimalf * equity if optimalf > 0 else fixed_size
 
-        return risk_per_trade
+        return fixed_size
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):

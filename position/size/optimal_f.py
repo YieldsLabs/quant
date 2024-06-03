@@ -28,6 +28,4 @@ class PositionOptimalFSizeStrategy(AbstractOrderSizeStrategy):
 
         position_size = risk_amount / price_difference
 
-        print(f"Risk {risk_amount}, Size {position_size}")
-
         return position_size
