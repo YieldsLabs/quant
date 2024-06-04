@@ -20,19 +20,19 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
         data = data.reshape(-1, 1)
 
     scaler = MinMaxScaler()
-    data_scaled = scaler.fit_transform(data.reshape(-1, 1))
+    X = scaler.fit_transform(data.reshape(-1, 1))
 
     best_score = float("-inf")
     best_centroids = []
 
     for n_clusters in range(*n_clusters_range):
         kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=None)
-        kmeans.fit(data_scaled)
+        kmeans.fit(X)
 
         if len(np.unique(kmeans.labels_)) < n_clusters:
             continue
 
-        silhouette_avg = silhouette_score(data_scaled, kmeans.labels_)
+        silhouette_avg = silhouette_score(X, kmeans.labels_)
 
         if silhouette_avg > best_score:
             best_score = silhouette_avg
