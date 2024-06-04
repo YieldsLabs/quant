@@ -7,7 +7,7 @@ pub fn gkyz(
     close: &Series<f32>,
     period: usize,
 ) -> Series<f32> {
-    let gkyzl = (open / close.shift(1).nz(Some(0.0))).log();
+    let gkyzl = (open / close.shift(1).nz(Some(ZERO))).log();
     let pkl = (high / low).log();
     let gkl = (close / open).log();
     let gm = 2.0 * 2.0_f32.ln() - 1.0;

@@ -8,9 +8,9 @@ pub fn vi(
 ) -> (Series<f32>, Series<f32>) {
     let vmp = (high - low.shift(1)).abs().sum(period);
     let vmm = (low - high.shift(1)).abs().sum(period);
-    let sum_atr = atr.sum(period);
+    let atrs = atr.sum(period);
 
-    (vmp / &sum_atr, vmm / &sum_atr)
+    (vmp / &atrs, vmm / &atrs)
 }
 
 #[cfg(test)]
