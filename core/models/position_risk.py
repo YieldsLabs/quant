@@ -41,14 +41,10 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
     return int(round(np.mean(best_centroids))) if len(best_centroids) else 2
 
 
-def optimize_window_polyorder(
-    ll_data: np.ndarray, hh_data: np.ndarray, atr_data: np.ndarray
-) -> tuple:
-    all_data = np.concatenate([ll_data, hh_data, atr_data])
-
-    window_length = optimize_params(all_data)
+def optimize_window_polyorder(data: np.ndarray) -> tuple:
+    window_length = optimize_params(data)
     polyorder_range = (2, window_length - 1 if window_length > 2 else 2)
-    polyorder = optimize_params(all_data, n_clusters_range=polyorder_range)
+    polyorder = optimize_params(data, n_clusters_range=polyorder_range)
 
     window_length += 1 if window_length % 2 == 0 else 0
     polyorder = min(polyorder, window_length - 1)
@@ -82,23 +78,13 @@ class TaMixin:
 
         return stop_prices
 
-    @staticmethod
-    def _ema(data: List[float], period: int) -> List[float]:
-        ema = np.zeros_like(data)
-        alpha = 2 / (period + 1)
-        ema[0] = data[0]
-
-        for i in range(1, len(data)):
-            ema[i] = alpha * data[i] + (1 - alpha) * ema[i - 1]
-
-        return ema
-
 
 @dataclass(frozen=True)
 class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.8, 3.8))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(0.684, 2.382))
+    tp_min: float = field(default_factory=lambda: np.random.uniform(0.384, 0.684))
 
     @property
     def last_bar(self):
@@ -174,7 +160,8 @@ class PositionRisk(TaMixin):
         if min_length < 3:
             return sl
 
-        window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
+        all_data = np.concatenate([ll, hh, tr])
+        window_length, polyorder = optimize_window_polyorder(all_data)
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)
@@ -211,7 +198,8 @@ class PositionRisk(TaMixin):
         if min_length < 3:
             return tp
 
-        window_length, polyorder = optimize_window_polyorder(ll, hh, tr)
+        all_data = np.concatenate([ll, hh, tr])
+        window_length, polyorder = optimize_window_polyorder(all_data)
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)
@@ -239,10 +227,23 @@ class PositionRisk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
-        closes = np.array([candle.close for candle in self.ohlcv])
-        atr = self.trail_factor * self._ema(np.array(ta.volatility.tr), 5)
+        close = np.array([candle.close for candle in self.ohlcv])
+        tr = np.array(ta.volatility.tr)
 
-        ats = self._ats(closes, atr)
+        min_length = min(len(close), len(tr))
+
+        if min_length < 3:
+            return sl
+
+        all_data = np.concatenate([close, tr])
+        window_length, polyorder = optimize_window_polyorder(all_data)
+
+        close_smooth = savgol_filter(close, window_length, polyorder)
+        atr_smooth = savgol_filter(tr, window_length, polyorder)
+
+        atr_smooth = self.trail_factor * atr_smooth[-min_length:]
+
+        ats = self._ats(close_smooth, atr_smooth)
 
         if side == PositionSide.LONG:
             return max(sl, np.min(ats))

@@ -153,10 +153,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
             if next_bar:
                 ta = await self.ask(TA(self.symbol, self.timeframe, next_bar))
+                ohlcv = next_position.position_risk.ohlcv
                 session_risk = await self.ask(
-                    EvaluateSession(
-                        next_position.side, next_position.position_risk.ohlcv, ta
-                    )
+                    EvaluateSession(next_position.side, ohlcv, ta)
                 )
 
                 next_position = next_position.next(next_bar, ta, session_risk)

@@ -22,7 +22,9 @@ impl MaBaseLine {
             period: period as usize,
             signal: vec![
                 Box::new(MaSurpassSignal::new(source_type, ma, period)),
-                // Box::new(MaQuadrupleSignal::new(source_type, ma, period)),
+                Box::new(MaQuadrupleSignal::new(source_type, ma, period)),
+                Box::new(MaTestingGroundSignal::new(source_type, ma, period)),
+                Box::new(MaCrossSignal::new(source_type, ma, period)),
             ],
         }
     }

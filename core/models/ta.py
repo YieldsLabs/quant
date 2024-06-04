@@ -19,6 +19,7 @@ class VolumeAnalysis:
 @dataclass(frozen=True)
 class VolatilityAnalysis:
     tr: List[float]
+    gkyz: List[float]
     bbp: List[float]
 
     def __str__(self) -> str:
@@ -96,6 +97,7 @@ class TechAnalysis:
             nvol,
             mfi,
             tr,
+            gkyz,
             bbp,
             k,
             d,
@@ -107,7 +109,7 @@ class TechAnalysis:
         momentum = MomentumAnalysis(froc, sroc, cci)
         oscillator = OscillatorAnalysis(frsi, srsi, k, d)
         volume = VolumeAnalysis(obv, vo, nvol, mfi)
-        volatility = VolatilityAnalysis(tr, bbp)
+        volatility = VolatilityAnalysis(tr, gkyz, bbp)
 
         return cls(trend, momentum, oscillator, volume, volatility)
 

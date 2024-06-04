@@ -18,8 +18,8 @@ from core.queries.copilot import EvaluateSession, EvaluateSignal
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
 logger = logging.getLogger(__name__)
-LOOKBACK = 5
-N_CLUSTERS = 4
+LOOKBACK = 8
+N_CLUSTERS = 5
 
 
 def pad_bars(bars, length):
@@ -218,6 +218,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
         mfi = np.array(ta.volume.mfi[-LOOKBACK:])
         ema = np.array(ta.trend.sma[-LOOKBACK:])
+        tr = np.array(ta.volatility.tr[-LOOKBACK:])
+        gkyz = np.array(ta.volatility.gkyz[-LOOKBACK:])
         brr = np.array(
             [
                 bar.body_range_ratio if bar is not None else 0.0
@@ -225,31 +227,35 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             ]
         )
 
-        features = np.column_stack((cci, bbp, slow_rsi, stoch_k, mfi, ema, brr))
+        features = np.column_stack(
+            (ema, cci, bbp, slow_rsi, stoch_k, mfi, tr, gkyz, brr)
+        )
         features = MinMaxScaler().fit_transform(features)
         kmeans = CustomKMeans(n_clusters=N_CLUSTERS, random_state=1337).fit(features)
         cluster_counts = np.bincount(kmeans.labels_)
         most_common_cluster = np.argmax(cluster_counts)
         least_common_cluster = np.argmin(cluster_counts)
 
-        should_exit = (
-            (most_common_cluster == 3 and least_common_cluster == 0)
-            or (most_common_cluster == 0 and least_common_cluster == 1)
-            or (most_common_cluster == 2 and least_common_cluster == 0)
-        )
+        should_exit = False
+        # (most_common_cluster == 3 and least_common_cluster == 0)
+        # or (most_common_cluster == 2 and least_common_cluster == 0)
+        # (most_common_cluster == 1 and least_common_cluster == 0)
+        # or (most_common_cluster == 0 and least_common_cluster == 1)
 
         logger.info(
-            f"CCI: {cci[-1]}, "
-            f"RSI: {slow_rsi[-1]}, "
-            f"BB%: {bbp[-1]}, "
-            f"MFI: {mfi[-1]}, "
-            f"Stoch K: {stoch_k[-1]}, "
             f"EMA: {ema[-1]}, "
+            f"CCI: {cci[-1]}, "
+            f"BB%: {bbp[-1]}, "
+            f"RSI: {slow_rsi[-1]}, "
+            f"Stoch K: {stoch_k[-1]}, "
+            f"MFI: {mfi[-1]}, "
+            f"True Range: {tr[-1]}, "
+            f"Garman-Klass-Yang-Zhang: {tr[-1]}, "
             f"Body Range Ratio: {brr[-1]}, "
             # f"Signal Exit {signal_exit}, "
             f"Clusters: {kmeans.labels_}, "
-            f"Common: {most_common_cluster}, "
-            f"Anomaly: {least_common_cluster}"
+            # f"Common: {most_common_cluster}, "
+            # f"Anomaly: {least_common_cluster}"
         )
 
         if should_exit:
