@@ -6,6 +6,7 @@ from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import check_random_state
+from sklearn.metrics import calinski_harabasz_score
 
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
@@ -212,14 +213,19 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         ta = msg.ta
         bars = pad_bars(msg.session, LOOKBACK)
 
+        ema = np.array(ta.trend.sma[-LOOKBACK:])
+        hh = np.array(ta.trend.hh[-LOOKBACK:])
+        ll = np.array(ta.trend.ll[-LOOKBACK:])
+
         cci = np.array(ta.momentum.cci[-LOOKBACK:])
         bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
         slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
         stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
         mfi = np.array(ta.volume.mfi[-LOOKBACK:])
-        ema = np.array(ta.trend.sma[-LOOKBACK:])
+
         tr = np.array(ta.volatility.tr[-LOOKBACK:])
         gkyz = np.array(ta.volatility.gkyz[-LOOKBACK:])
+
         brr = np.array(
             [
                 bar.body_range_ratio if bar is not None else 0.0
@@ -228,13 +234,31 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         )
 
         features = np.column_stack(
-            (ema, cci, bbp, slow_rsi, stoch_k, mfi, tr, gkyz, brr)
+            (ema, hh, ll, cci, bbp, slow_rsi, stoch_k, mfi, tr, gkyz, brr)
         )
         features = MinMaxScaler().fit_transform(features)
-        kmeans = CustomKMeans(n_clusters=N_CLUSTERS, random_state=1337).fit(features)
-        cluster_counts = np.bincount(kmeans.labels_)
-        most_common_cluster = np.argmax(cluster_counts)
-        least_common_cluster = np.argmin(cluster_counts)
+
+        max_clusters = min(len(features) - 1, 10)
+        min_clusters = min(2, max_clusters)
+        best_score = float("-inf")
+        optimal_clusters = 0
+
+        for k in range(min_clusters, max_clusters + 1):
+            kmeans = CustomKMeans(n_clusters=k, random_state=None).fit(features)
+
+            if len(np.unique(kmeans.labels_)) < k:
+                continue
+
+            score = calinski_harabasz_score(features, kmeans.labels_)
+
+            if score > best_score:
+                best_score = score
+                optimal_clusters = k
+
+        kmeans = CustomKMeans(n_clusters=optimal_clusters, random_state=1337).fit(features)
+        # cluster_counts = np.bincount(kmeans.labels_)
+        # most_common_cluster = np.argmax(cluster_counts)
+        # least_common_cluster = np.argmin(cluster_counts)
 
         should_exit = False
         # (most_common_cluster == 3 and least_common_cluster == 0)
@@ -244,13 +268,18 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         logger.info(
             f"EMA: {ema[-1]}, "
+            f"HH: {hh[-1]}, "
+            f"LL: {ll[-1]}, "
+
             f"CCI: {cci[-1]}, "
             f"BB%: {bbp[-1]}, "
             f"RSI: {slow_rsi[-1]}, "
             f"Stoch K: {stoch_k[-1]}, "
             f"MFI: {mfi[-1]}, "
+            
             f"True Range: {tr[-1]}, "
-            f"Garman-Klass-Yang-Zhang: {tr[-1]}, "
+            f"Garman-Klass-Yang-Zhang: {gkyz[-1]}, "
+            
             f"Body Range Ratio: {brr[-1]}, "
             # f"Signal Exit {signal_exit}, "
             f"Clusters: {kmeans.labels_}, "
