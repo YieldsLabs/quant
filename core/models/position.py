@@ -107,9 +107,6 @@ class Position:
         if self._sl:
             return round(self._sl, p)
 
-        # if self.signal_risk.sl and self.signal_risk.type in [SignalRiskType.MODERATE, SignalRiskType.LOW]:
-        #     return round(self.signal_risk.sl, p)
-
         return round(self.signal.stop_loss, p)
 
     @property
@@ -320,23 +317,20 @@ class Position:
         next_position = replace(self, position_risk=next_risk)
         next_position = next_position.break_even()
 
-        if session_risk == SessionRiskType.EXIT and pnl_perc < 0.0:
-            print("TRAILLL")
+        if session_risk == SessionRiskType.EXIT and pnl_perc <= next_risk.tp_min:
+            print(
+                f"TRAILLL prev sl: {next_position.stop_loss}, tf: {next_risk.trail_factor}"
+            )
             next_position = next_position.trail(ta)
+            print(f"TRAILLL next sl: {next_position.stop_loss}")
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
 
-        # dist_sl = abs(self.entry_price - next_sl)
-        # dist_tp = abs(self.entry_price - next_tp)
-
-        if session_risk == SessionRiskType.EXIT and pnl_perc >= 0.0:
-            print("EXIITT")
+        if session_risk == SessionRiskType.EXIT and pnl_perc > next_risk.tp_min:
+            print(f"EXIITT: {next_risk.tp_min}")
             next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
-
-        #     dist_sl < dist_tp or pnl_perc >= 0.0
-        # ):
-        #     next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
+            # next_tp = next_risk.tp_low(self.side, ta, next_tp)
 
         next_risk = next_risk.assess(
             self.side,
@@ -345,10 +339,6 @@ class Position:
             self.open_timestamp,
             self.expiration,
         )
-
-        # print(
-        #     f"RISK: {next_risk}, " f"TP: {next_tp}, SL: {next_sl}, " f"PnL%: {pnl_perc}"
-        # )
 
         return replace(
             next_position,
@@ -389,7 +379,7 @@ class Position:
 
     def trail(self, ta: TechAnalysis) -> "Position":
         return replace(
-            self, _sl=self.position_risk.sl_low(self.side, ta, self.stop_loss)
+            self, _sl=self.position_risk.sl_ats(self.side, ta, self.stop_loss)
         )
 
     def force_exit(self, price: float) -> "Position":
