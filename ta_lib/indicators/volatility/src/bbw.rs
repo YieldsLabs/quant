@@ -2,9 +2,9 @@ use crate::bb;
 use core::prelude::*;
 
 pub fn bbw(source: &Series<f32>, smooth_type: Smooth, period: usize, factor: f32) -> Series<f32> {
-    let (upper_band, middle_band, lower_band) = bb(source, smooth_type, period, factor);
+    let (upb, mb, lb) = bb(source, smooth_type, period, factor);
 
-    (upper_band - lower_band) / &middle_band
+    (upb - mb) / lb
 }
 
 #[cfg(test)]
