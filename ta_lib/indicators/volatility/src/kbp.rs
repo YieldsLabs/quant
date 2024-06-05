@@ -2,7 +2,7 @@ use crate::kb;
 use core::prelude::*;
 
 pub fn kbp(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
-    let (upb, mb, lb) = kb(source, period, factor);
+    let (upb, _, lb) = kb(source, period, factor);
 
     (source - &lb) / (upb - &lb)
 }

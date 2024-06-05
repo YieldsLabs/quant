@@ -19,8 +19,8 @@ mod tests {
 
         let expected = vec![0.0, 1.0, 2.0, 2.0, 2.0];
 
-        let dchw: Vec<f32> = dchw(&high, &low, period).into();
+        let result: Vec<f32> = dchw(&high, &low, period).into();
 
-        assert_eq!(dchw, expected);
+        assert_eq!(result, expected);
     }
 }
