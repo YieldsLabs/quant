@@ -5,7 +5,7 @@ from functools import cached_property
 import numpy as np
 from scipy.stats import kurtosis, norm, skew
 
-TOTAL_TRADES_THRESHOLD = 2
+TOTAL_TRADES_THRESHOLD = 3
 GAMMA = 0.57721566
 
 
@@ -19,16 +19,16 @@ class Performance:
     updated_at: float = field(default_factory=lambda: datetime.now().timestamp())
 
     @cached_property
+    def equity(self):
+        return np.array([self._account_size]) + np.cumsum(self._pnl)
+
+    @cached_property
     def total_trades(self) -> int:
         return len(self._pnl)
 
     @cached_property
     def total_pnl(self) -> float:
         return np.sum(self._pnl)
-
-    @cached_property
-    def total_fee(self) -> float:
-        return np.sum(self._fee)
 
     @cached_property
     def average_pnl(self) -> float:
@@ -38,22 +38,43 @@ class Performance:
         return np.mean(self._pnl)
 
     @cached_property
-    def average_win(self) -> float:
-        win = self._pnl[self._pnl > 0]
+    def win(self):
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return np.array([0.0])
 
-        if len(win) < 2:
+        return self._pnl[self._pnl > 0]
+
+    @cached_property
+    def loss(self):
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return np.array([0.0])
+
+        return self._pnl[self._pnl < 0]
+
+    @cached_property
+    def total_fee(self) -> float:
+        return np.sum(self._fee)
+
+    @cached_property
+    def hit_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        return np.mean(win)
+        return np.sum(self.win) / self.total_trades
+
+    @cached_property
+    def average_win(self) -> float:
+        if len(self.win) == 0:
+            return 0.0
+
+        return np.mean(self.win)
 
     @cached_property
     def average_loss(self) -> float:
-        loss = self._pnl[self._pnl < 0]
-
-        if len(loss) < 2:
+        if len(self.loss) == 0:
             return 0.0
 
-        return np.mean(loss)
+        return np.mean(self.loss)
 
     @cached_property
     def max_consecutive_wins(self) -> int:
@@ -64,46 +85,43 @@ class Performance:
         return self._max_streak(self._pnl, False)
 
     @cached_property
-    def hit_ratio(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return 0.0
-
-        return np.sum(self._pnl > 0) / self.total_trades
-
-    @property
-    def equity(self):
-        return np.array([self._account_size]) + np.cumsum(self._pnl)
-
-    @cached_property
     def drawdown(self):
-        if len(self.equity) < 2:
-            return np.array([0, 0])
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return np.array([0.0])
 
         peak = np.maximum.accumulate(self.equity)
         return (peak - self.equity) / peak
 
     @cached_property
-    def runup(self) -> float:
-        if len(self.equity) < 2:
-            return np.array([0, 0])
+    def runup(self):
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return np.array([0.0])
 
         trough = np.minimum.accumulate(self.equity)
         return (self.equity - trough) / trough
 
     @cached_property
     def max_runup(self) -> float:
+        if len(self.runup) == 0:
+            return 0.0
+
         return np.max(self.runup)
 
     @cached_property
     def max_drawdown(self) -> float:
+        if len(self.drawdown) == 0:
+            return 0.0
+
         return np.max(self.drawdown)
 
     @cached_property
     def calmar_ratio(self) -> float:
-        if self.max_drawdown == 0:
+        denom = abs(self.max_drawdown)
+
+        if denom == 0:
             return 0.0
 
-        return self.cagr / abs(self.max_drawdown)
+        return self.cagr / denom
 
     @cached_property
     def sharpe_ratio(self) -> float:
@@ -124,10 +142,12 @@ class Performance:
         std_return = np.std(self._pnl, ddof=1)
         penalty = self._penalty(self._pnl)
 
-        if std_return == 0 or penalty is None or np.isnan(penalty):
-            return 0
+        denom = std_return * penalty
 
-        return self.average_pnl / (std_return * penalty)
+        if denom == 0:
+            return 0.0
+
+        return self.average_pnl / denom
 
     @cached_property
     def deflated_sharpe_ratio(self) -> float:
@@ -161,11 +181,8 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        downside_returns = self._pnl[self._pnl < 0]
-        if len(downside_returns) < 2:
-            return 0.0
+        downside = np.sqrt(np.sum(self.loss**2) / self.total_trades)
 
-        downside = np.sqrt(np.sum(downside_returns**2) / self.total_trades)
         if downside == 0:
             return 0.0
 
@@ -176,17 +193,15 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        downside_returns = self._pnl[self._pnl < 0]
-        if len(downside_returns) < 2:
-            return 0.0
-
-        downside = np.sqrt(np.sum(downside_returns**2) / self.total_trades)
+        downside = np.sqrt(np.sum(self.loss**2) / self.total_trades)
         penalty = self._penalty(self._pnl)
 
-        if downside == 0 or penalty is None or np.isnan(penalty):
+        denom = downside * penalty
+
+        if denom == 0:
             return 0.0
 
-        return self.average_pnl / (downside * penalty)
+        return self.average_pnl / denom
 
     @cached_property
     def payoff_ratio(self) -> float:
@@ -194,6 +209,7 @@ class Performance:
             return 0.0
 
         denom = np.abs(self.average_loss)
+
         if denom == 0:
             return 0.0
 
@@ -202,9 +218,6 @@ class Performance:
     @cached_property
     def cagr(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return 0.0
-
-        if len(self.equity) < 2:
             return 0.0
 
         final_value = self.equity[-1]
@@ -238,6 +251,9 @@ class Performance:
     def time_weighted_return(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
+        
+        if len(self.equity) < 2:
+            return 0.0
 
         return (self.equity[-1] / self.equity[0]) - 1
 
@@ -253,11 +269,8 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        pnl_positive = self._pnl[self._pnl > 0]
-        if len(pnl_positive) == 0:
-            return 0.0
+        log_prod = np.sum(np.log(1.0 + self.win))
 
-        log_prod = np.sum(np.log(1.0 + pnl_positive))
         if log_prod <= 0:
             return 0.0
 
@@ -279,7 +292,7 @@ class Performance:
         if self.max_drawdown == 0:
             return 0.0
 
-        total_profit = np.sum(self._pnl[self._pnl > 0])
+        total_profit = np.sum(self.win)
 
         return total_profit / self.max_drawdown
 
@@ -288,13 +301,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        pnl_positive = self._pnl > 0
-        profit, loss = self._pnl[pnl_positive], self._pnl[~pnl_positive]
-
-        if len(profit) < 2 or len(loss) < 2:
-            return 0.0
-
-        gross_profit, gross_loss = np.sum(profit), np.abs(np.sum(loss))
+        gross_profit, gross_loss = np.sum(self.win), np.abs(np.sum(self.loss))
 
         if gross_loss == 0:
             return 0.0
@@ -350,9 +357,6 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        if len(self.drawdown) < 2:
-            return 0
-
         return np.sqrt(np.mean(self.drawdown**2))
 
     @cached_property
@@ -381,12 +385,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        if len(self.equity) < 2:
-            return 0.0
-
-        peaks = np.maximum.accumulate(self.equity)
-        drawdowns = (peaks - self.equity) / peaks
-        underwater_time = np.sum(drawdowns < 0) / self._periods_per_year
+        underwater_time = np.sum(self.drawdown < 0) / self._periods_per_year
 
         return 1 - underwater_time
 
@@ -425,12 +424,9 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        gains, losses = self._pnl[self._pnl > 0], self._pnl[self._pnl < 0]
-        if len(losses) < 2 or len(gains) < 2:
-            return 0.0
-
-        upside_potential = np.mean(gains)
-        downside_risk = np.sqrt(np.mean(losses**2))
+        upside_potential, downside_risk = np.mean(self.win), np.sqrt(
+            np.mean(self.loss**2)
+        )
 
         if downside_risk == 0:
             return 0.0
@@ -453,35 +449,25 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        gains, losses = self._pnl[self._pnl > 0], self._pnl[self._pnl < 0]
-
-        if len(losses) < 2 or len(gains) < 2:
-            return 0.0
-
-        sum_losses = np.sum(np.abs(losses))
+        sum_losses = abs(np.sum(self.loss))
 
         if sum_losses == 0:
             return 0.0
 
-        return np.sum(gains) / sum_losses
+        return np.sum(self.win) / sum_losses
 
     @cached_property
     def kappa_three_ratio(self) -> float:
-        total_trades = self.total_trades
-        if total_trades < TOTAL_TRADES_THRESHOLD:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        gains, losses = self._pnl[self._pnl > 0], self._pnl[self._pnl < 0]
+        threshold = self.average_win - self.average_loss
 
-        if len(losses) < 2 or len(gains) < 2:
+        if threshold == 0:
             return 0.0
 
-        avg_gain, avg_loss = np.mean(gains), np.mean(losses)
-
-        threshold = avg_gain - avg_loss
-
-        up_proportion = np.sum(gains > threshold) / total_trades
-        down_proportion = np.sum(losses < threshold) / total_trades
+        up_proportion = np.sum(self.win > threshold) / self.total_trades
+        down_proportion = np.sum(self.loss < threshold) / self.total_trades
 
         denom = np.sqrt(np.mean(self._pnl**2))
 
