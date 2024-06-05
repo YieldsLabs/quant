@@ -8,7 +8,7 @@ pub fn kch(
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let middle_band = source.smooth(smooth_type, period);
-    let volatility = atr * factor;
+    let volatility = factor * atr;
 
     let upper_band = &middle_band + &volatility;
     let lower_band = &middle_band - &volatility;

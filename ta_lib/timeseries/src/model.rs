@@ -3,7 +3,7 @@ use core::prelude::*;
 use momentum::{cci, macd, ppo, roc, rsi, stochosc};
 use price::typical_price;
 use std::collections::HashMap;
-use volatility::{bb, gkyz, tr};
+use volatility::{bbp, gkyz, tr};
 use volume::{mfi, nvol, obv, vo};
 
 const BUFF_FACTOR: f32 = 1.3;
@@ -124,8 +124,7 @@ impl TimeSeries for BaseTimeSeries {
         let mfi = mfi(&hlc3, volume, periods[1]);
         let tr = tr(high, low, source);
         let gkyz = gkyz(open, high, low, source, periods[3]);
-        let (bbup, _, bbdn) = bb(source, Smooth::SMA, periods[5], factors[0]);
-        let bbp = (source - &bbdn) / (bbup - &bbdn);
+        let bbp = bbp(source, Smooth::SMA, periods[5], factors[0]);
         let (k, d) = stochosc(
             source,
             high,

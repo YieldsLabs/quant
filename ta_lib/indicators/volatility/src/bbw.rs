@@ -4,7 +4,7 @@ use core::prelude::*;
 pub fn bbw(source: &Series<f32>, smooth_type: Smooth, period: usize, factor: f32) -> Series<f32> {
     let (upb, mb, lb) = bb(source, smooth_type, period, factor);
 
-    (upb - mb) / lb
+    SCALE * (upb - lb) / mb
 }
 
 #[cfg(test)]
@@ -17,8 +17,8 @@ mod tests {
         let period = 3;
         let factor = 2.0;
         let expected = [
-            0.0, 1.3333334, 1.632993, 1.0886625, 0.81649613, 0.36288664, 0.36288664, 0.40824747,
-            0.4665699, 0.54433155,
+            0.0, 133.33333, 163.2993, 108.86625, 81.64961, 36.288662, 36.288662, 40.824745,
+            46.65699, 54.433155,
         ];
         let result: Vec<f32> = bbw(&source, Smooth::SMA, period, factor).into();
 

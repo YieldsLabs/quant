@@ -7,7 +7,7 @@ pub fn bb(
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let middle_band = source.smooth(smooth_type, period);
-    let volatility = source.std(period) * factor;
+    let volatility = factor * source.std(period);
 
     let upper_band = &middle_band + &volatility;
     let lower_band = &middle_band - &volatility;

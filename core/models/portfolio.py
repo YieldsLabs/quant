@@ -5,7 +5,7 @@ from functools import cached_property
 import numpy as np
 from scipy.stats import kurtosis, norm, skew
 
-TOTAL_TRADES_THRESHOLD = 3
+TOTAL_TRADES_THRESHOLD = 2
 GAMMA = 0.57721566
 
 
@@ -72,7 +72,7 @@ class Performance:
 
     @property
     def equity(self):
-        return [self._account_size] + self._pnl.cumsum()
+        return np.array([self._account_size]) + np.cumsum(self._pnl)
 
     @cached_property
     def drawdown(self):
@@ -221,37 +221,32 @@ class Performance:
         return np.power(compound_factor, time_factor) - 1
 
     @cached_property
-    def optimal_f(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return self._risk_per_trade
-
-        equity = self.equity
-
-        max_loss = abs(np.min(self._pnl))
-        initial_value = self._account_size
-        growth_factor = equity[-1] / initial_value
-
-        if growth_factor <= 0:
-            return self._risk_per_trade
-
-        return max_loss / abs(initial_value) * np.sqrt(growth_factor)
-
-    @cached_property
     def kelly(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return self._risk_per_trade
 
-        wl_ratio = self.payoff_ratio
-        if wl_ratio == 0:
+        if self.payoff_ratio == 0:
             return self._risk_per_trade
 
-        win_prob = self.hit_ratio
-
-        return win_prob - (1 - win_prob) / wl_ratio
+        return self.hit_ratio - (1 - self.hit_ratio) / self.payoff_ratio
 
     @cached_property
     def ann_sharpe_ratio(self) -> float:
         return self.sharpe_ratio * np.sqrt(self._periods_per_year)
+
+    @cached_property
+    def time_weighted_return(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        return (self.equity[-1] / self.equity[0]) - 1
+
+    @cached_property
+    def geometric_holding_period_return(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        return (1 + self.time_weighted_return) ** (1 / self.total_trades) - 1
 
     @cached_property
     def expected_return(self) -> float:
@@ -557,9 +552,10 @@ class Performance:
             "smart_sortino_ratio": self.smart_sortino_ratio,
             "payoff_ratio": self.payoff_ratio,
             "cagr": self.cagr,
-            "optimal_f": self.optimal_f,
             "kelly": self.kelly,
             "expected_return": self.expected_return,
+            "time_weighted_return": self.time_weighted_return,
+            "geometric_holding_period_return": self.geometric_holding_period_return,
             "annualized_volatility": self.ann_volatility,
             "annualized_sharpe_ratio": self.ann_sharpe_ratio,
             "recovery_factor": self.recovery_factor,
@@ -584,12 +580,12 @@ class Performance:
         return (
             f"total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, "
             + f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, smart_sortino_ratio={self.smart_sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
-            + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, optimal_f={self.optimal_f}, "
+            + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, "
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, total_fee={self.total_fee}, sharpe_ratio={self.sharpe_ratio}, smart_sharpe_ratio={self.smart_sharpe_ratio}, deflated_sharpe_ratio={self.deflated_sharpe_ratio}, "
             + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, average_win={self.average_win}, average_loss={self.average_loss}, "
-            + f"cagr={self.cagr}, expected_return={self.expected_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, payoff_ratio={self.payoff_ratio}, "
+            + f"cagr={self.cagr}, expected_return={self.expected_return}, time_weighted_return={self.time_weighted_return}, geometric_holding_period_return={self.geometric_holding_period_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, "
             + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, upi={self.upi}, kelly={self.kelly}, "
-            + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, "
+            + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, payoff_ratio={self.payoff_ratio}, "
             + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, cpc_ratio={self.cpc_ratio}, common_sense_ratio={self.common_sense_ratio}, "
             + f"skew={self.skew}, kurtosis={self.kurtosis}"
         )

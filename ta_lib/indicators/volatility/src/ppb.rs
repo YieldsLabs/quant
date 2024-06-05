@@ -8,8 +8,8 @@ pub fn ppb(
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let ppvih = high.std(period).highest(period) * factor;
-    let ppvil = low.std(period).lowest(period) * factor;
+    let ppvih = factor * high.std(period).highest(period);
+    let ppvil = factor * low.std(period).lowest(period);
 
     let middle_band = close.smooth(smooth_type, period);
 

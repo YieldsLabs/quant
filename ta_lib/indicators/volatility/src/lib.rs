@@ -1,5 +1,6 @@
 mod atr;
 mod bb;
+mod bbp;
 mod bbw;
 mod dch;
 mod gkyz;
@@ -11,6 +12,7 @@ mod tr;
 
 pub use atr::atr;
 pub use bb::bb;
+pub use bbp::bbp;
 pub use bbw::bbw;
 pub use dch::dch;
 pub use gkyz::gkyz;
