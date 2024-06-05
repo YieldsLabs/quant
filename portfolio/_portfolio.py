@@ -50,12 +50,6 @@ class PortfolioStorage:
         performance = await self.get(symbol, timeframe, strategy)
         return performance.kelly if performance else 0
 
-    async def get_optimalf(
-        self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
-    ):
-        performance = await self.get(symbol, timeframe, strategy)
-        return performance.optimal_f if performance else 0
-
     async def get_fitness(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy
     ):

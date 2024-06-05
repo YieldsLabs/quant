@@ -44,7 +44,7 @@ class Portfolio(AbstractEventManager):
         )
 
     @event_handler(TradeStarted)
-    async def trade_started(self, event: TradeStarted):
+    async def handle_trade_started(self, event: TradeStarted):
         await asyncio.gather(
             *[
                 self.state.reset(
@@ -154,10 +154,6 @@ class Portfolio(AbstractEventManager):
         if query.type == PositionSizeType.Kelly:
             kelly = await self.state.get_kelly(symbol, timeframe, strategy)
             return equity * kelly if kelly > 0 else fixed_size
-
-        if query.type == PositionSizeType.Optimalf:
-            optimalf = await self.state.get_optimalf(symbol, timeframe, strategy)
-            return optimalf * equity if optimalf > 0 else fixed_size
 
         return fixed_size
 
