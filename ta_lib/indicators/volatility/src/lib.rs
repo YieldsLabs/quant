@@ -12,6 +12,8 @@ mod kch;
 mod kchp;
 mod kchw;
 mod ppb;
+mod ppbp;
+mod ppbw;
 mod snatr;
 mod tr;
 
@@ -29,5 +31,7 @@ pub use kch::kch;
 pub use kchp::kchp;
 pub use kchw::kchw;
 pub use ppb::ppb;
+pub use ppbp::ppbp;
+pub use ppbw::ppbw;
 pub use snatr::snatr;
 pub use tr::tr;

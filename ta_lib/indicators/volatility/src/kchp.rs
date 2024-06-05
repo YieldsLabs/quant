@@ -35,7 +35,6 @@ mod tests {
         let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
         let hlc3 = typical_price(&high, &low, &close);
         let factor = 2.0;
-        let epsilon = 0.001;
         let expected = [
             0.5, 0.47801208, 0.5513957, 0.6472284, 0.55733025, 0.6086896, 0.6256523, 0.64774823,
             0.6573705,
