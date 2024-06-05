@@ -52,6 +52,14 @@ class Performance:
         return self._pnl[self._pnl < 0]
 
     @cached_property
+    def total_profit(self):
+        return np.sum(self.win)
+
+    @cached_property
+    def total_loss(self):
+        return np.sum(self.loss)
+
+    @cached_property
     def total_fee(self) -> float:
         return np.sum(self._fee)
 
@@ -208,7 +216,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        denom = np.abs(self.average_loss)
+        denom = abs(self.average_loss)
 
         if denom == 0:
             return 0.0
@@ -292,21 +300,19 @@ class Performance:
         if self.max_drawdown == 0:
             return 0.0
 
-        total_profit = np.sum(self.win)
-
-        return total_profit / self.max_drawdown
+        return self.total_profit / self.max_drawdown
 
     @cached_property
     def profit_factor(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        gross_profit, gross_loss = np.sum(self.win), np.abs(np.sum(self.loss))
+        gross_loss = abs(self.total_loss)
 
         if gross_loss == 0:
             return 0.0
 
-        return gross_profit / gross_loss
+        return self.total_profit / gross_loss
 
     @cached_property
     def risk_of_ruin(self) -> float:
@@ -424,14 +430,12 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        upside_potential, downside_risk = np.mean(self.win), np.sqrt(
-            np.mean(self.loss**2)
-        )
+        downside_risk = np.sqrt(np.mean(self.loss**2))
 
         if downside_risk == 0:
             return 0.0
 
-        return upside_potential / downside_risk
+        return self.average_win / downside_risk
 
     @cached_property
     def tail_ratio(self, cutoff=95) -> float:
@@ -449,12 +453,12 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        sum_losses = abs(np.sum(self.loss))
+        gross_loss = abs(self.total_loss)
 
-        if sum_losses == 0:
+        if gross_loss == 0:
             return 0.0
 
-        return np.sum(self.win) / sum_losses
+        return self.total_profit / gross_loss
 
     @cached_property
     def kappa_three_ratio(self) -> float:
@@ -526,6 +530,8 @@ class Performance:
             "equity": self.equity,
             "win": self.win,
             "loss": self.loss,
+            "total_profit": self.total_profit,
+            "total_loss": self.total_loss,
             "runup": self.runup,
             "max_runup": self.max_runup,
             "drawdown": self.drawdown,
@@ -568,7 +574,7 @@ class Performance:
         return (
             f"total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, win={self.win}, loss={self.loss}, "
             + f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, smart_sortino_ratio={self.smart_sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
-            + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, "
+            + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, total_profit={self.total_profit}, total_loss={self.total_loss}, "
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, total_fee={self.total_fee}, sharpe_ratio={self.sharpe_ratio}, smart_sharpe_ratio={self.smart_sharpe_ratio}, deflated_sharpe_ratio={self.deflated_sharpe_ratio}, "
             + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, average_win={self.average_win}, average_loss={self.average_loss}, "
             + f"cagr={self.cagr}, expected_return={self.expected_return}, time_weighted_return={self.time_weighted_return}, geometric_holding_period_return={self.geometric_holding_period_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, "
