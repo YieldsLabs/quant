@@ -48,12 +48,28 @@ impl OHLCVSeries {
 
 impl<'a> From<&'a [OHLCV]> for OHLCVSeries {
     fn from(data: &'a [OHLCV]) -> Self {
+        let len = data.len();
+
+        let mut open = Vec::with_capacity(len);
+        let mut high = Vec::with_capacity(len);
+        let mut low = Vec::with_capacity(len);
+        let mut close = Vec::with_capacity(len);
+        let mut volume = Vec::with_capacity(len);
+
+        for bar in data {
+            open.push(bar.open);
+            high.push(bar.high);
+            low.push(bar.low);
+            close.push(bar.close);
+            volume.push(bar.volume);
+        }
+
         Self {
-            open: Series::from(data.iter().map(|bar| bar.open).collect::<Vec<_>>()),
-            high: Series::from(data.iter().map(|bar| bar.high).collect::<Vec<_>>()),
-            low: Series::from(data.iter().map(|bar| bar.low).collect::<Vec<_>>()),
-            close: Series::from(data.iter().map(|bar| bar.close).collect::<Vec<_>>()),
-            volume: Series::from(data.iter().map(|bar| bar.volume).collect::<Vec<_>>()),
+            open: Series::from(open),
+            high: Series::from(high),
+            low: Series::from(low),
+            close: Series::from(close),
+            volume: Series::from(volume),
         }
     }
 }
