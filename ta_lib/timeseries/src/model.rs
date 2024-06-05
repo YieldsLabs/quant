@@ -290,6 +290,16 @@ mod tests {
             volume: 100.0,
         };
 
+        let prev_bar = OHLCV {
+            ts: 1679825700,
+            open: 5.993,
+            high: 6.000,
+            low: 5.983,
+            close: 5.997,
+            volume: 100.0,
+        };
+
         assert_eq!(ts.next_bar(&curr_bar).unwrap(), next_bar);
+        assert_eq!(ts.prev_bar(&curr_bar).unwrap(), prev_bar);
     }
 }
