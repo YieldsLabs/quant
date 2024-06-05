@@ -251,7 +251,7 @@ class Performance:
     def time_weighted_return(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
-        
+
         if len(self.equity) < 2:
             return 0.0
 
@@ -524,6 +524,8 @@ class Performance:
             "max_consecutive_losses": self.max_consecutive_losses,
             "hit_ratio": self.hit_ratio,
             "equity": self.equity,
+            "win": self.win,
+            "loss": self.loss,
             "runup": self.runup,
             "max_runup": self.max_runup,
             "drawdown": self.drawdown,
@@ -564,7 +566,7 @@ class Performance:
 
     def __str__(self):
         return (
-            f"total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, "
+            f"total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, win={self.win}, loss={self.loss}, "
             + f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, smart_sortino_ratio={self.smart_sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
             + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, "
             + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, total_fee={self.total_fee}, sharpe_ratio={self.sharpe_ratio}, smart_sharpe_ratio={self.smart_sharpe_ratio}, deflated_sharpe_ratio={self.deflated_sharpe_ratio}, "
