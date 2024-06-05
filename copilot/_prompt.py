@@ -21,7 +21,7 @@ Step-by-Step Analysis:
   - **Assess Body Range Ratio**:
     - High ratio indicates significant body, higher risk if against the position side.
     - Low ratio indicates insignificant body, lower risk if against the position side.
-  - **Calculate Body Shadow Ratio**:
+  - **Evaluate Body Shadow Ratio**:
     - High ratio indicates strong pressure, higher risk if against the position side.
     - Low ratio indicates weak pressure, lower risk if against the position side.
 
