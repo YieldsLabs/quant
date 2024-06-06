@@ -461,6 +461,13 @@ class Performance:
         return self.total_profit / gross_loss
 
     @cached_property
+    def martin_ratio(self) -> float:
+        if self.ulcer_index == 0:
+            return 0.0
+
+        return self.average_pnl / self.ulcer_index
+
+    @cached_property
     def kappa_three_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
@@ -524,14 +531,11 @@ class Performance:
             "average_pnl": self.average_pnl,
             "average_profit": self.average_profit,
             "average_loss": self.average_loss,
-            "max_consecutive_wins": self.max_consecutive_wins,
-            "max_consecutive_losses": self.max_consecutive_losses,
-            "hit_ratio": self.hit_ratio,
-            "equity": self.equity,
             "profit": self.profit,
             "loss": self.loss,
             "total_profit": self.total_profit,
             "total_loss": self.total_loss,
+            "equity": self.equity,
             "runup": self.runup,
             "max_runup": self.max_runup,
             "drawdown": self.drawdown,
@@ -539,11 +543,9 @@ class Performance:
             "sharpe_ratio": self.sharpe_ratio,
             "smart_sharpe_ratio": self.smart_sharpe_ratio,
             "deflated_sharpe_ratio": self.deflated_sharpe_ratio,
-            "calmar_ratio": self.calmar_ratio,
-            "cpc_ratio": self.cpc_ratio,
-            "common_sense_ratio": self.common_sense_ratio,
             "sortino_ratio": self.sortino_ratio,
             "smart_sortino_ratio": self.smart_sortino_ratio,
+            "calmar_ratio": self.calmar_ratio,
             "payoff_ratio": self.payoff_ratio,
             "cagr": self.cagr,
             "kelly": self.kelly,
@@ -567,21 +569,30 @@ class Performance:
             "sterling_ratio": self.sterling_ratio,
             "tail_ratio": self.tail_ratio,
             "omega_ratio": self.omega_ratio,
+            "martin_ratio": self.martin_ratio,
             "kappa_three_ratio": self.kappa_three_ratio,
+            "max_consecutive_wins": self.max_consecutive_wins,
+            "max_consecutive_losses": self.max_consecutive_losses,
+            "hit_ratio": self.hit_ratio,
+            "cpc_ratio": self.cpc_ratio,
+            "common_sense_ratio": self.common_sense_ratio,
         }
 
     def __str__(self):
         return (
             f"total_trades={self.total_trades}, hit_ratio={self.hit_ratio}, profit_factor={self.profit_factor}, profit={self.profit}, loss={self.loss}, "
-            + f"max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, sortino_ratio={self.sortino_ratio}, smart_sortino_ratio={self.smart_sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
-            + f"risk_of_ruin={self.risk_of_ruin}, recovery_factor={self.recovery_factor}, total_profit={self.total_profit}, total_loss={self.total_loss}, "
-            + f"total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, total_fee={self.total_fee}, sharpe_ratio={self.sharpe_ratio}, smart_sharpe_ratio={self.smart_sharpe_ratio}, deflated_sharpe_ratio={self.deflated_sharpe_ratio}, "
-            + f"max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, average_profit={self.average_profit}, average_loss={self.average_loss}, "
-            + f"cagr={self.cagr}, expected_return={self.expected_return}, time_weighted_return={self.time_weighted_return}, geometric_holding_period_return={self.geometric_holding_period_return}, annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, "
-            + f"var={self.var}, cvar={self.cvar}, ulcer_index={self.ulcer_index}, upi={self.upi}, kelly={self.kelly}, "
-            + f"lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, payoff_ratio={self.payoff_ratio}, "
-            + f"sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, cpc_ratio={self.cpc_ratio}, common_sense_ratio={self.common_sense_ratio}, "
-            + f"skew={self.skew}, kurtosis={self.kurtosis}"
+            f"total_profit={self.total_profit}, total_loss={self.total_loss}, total_pnl={self.total_pnl}, average_pnl={self.average_pnl}, average_profit={self.average_profit}, average_loss={self.average_loss}, "
+            f"total_fee={self.total_fee}, max_consecutive_wins={self.max_consecutive_wins}, max_consecutive_losses={self.max_consecutive_losses}, "
+            f"equity={self.equity}, max_runup={self.max_runup}, max_drawdown={self.max_drawdown}, "
+            f"sharpe_ratio={self.sharpe_ratio}, smart_sharpe_ratio={self.smart_sharpe_ratio}, deflated_sharpe_ratio={self.deflated_sharpe_ratio}, sortino_ratio={self.sortino_ratio}, smart_sortino_ratio={self.smart_sortino_ratio}, calmar_ratio={self.calmar_ratio}, "
+            f"expected_return={self.expected_return}, cagr={self.cagr}, time_weighted_return={self.time_weighted_return}, geometric_holding_period_return={self.geometric_holding_period_return}, "
+            f"annualized_volatility={self.ann_volatility}, annualized_sharpe_ratio={self.ann_sharpe_ratio}, "
+            f"recovery_factor={self.recovery_factor}, risk_of_ruin={self.risk_of_ruin}, "
+            f"skew={self.skew}, kurtosis={self.kurtosis}, var={self.var}, cvar={self.cvar}, "
+            f"ulcer_index={self.ulcer_index}, upi={self.upi}, "
+            f"kelly={self.kelly}, lake_ratio={self.lake_ratio}, burke_ratio={self.burke_ratio}, rachev_ratio={self.rachev_ratio}, kappa_three_ratio={self.kappa_three_ratio}, "
+            f"payoff_ratio={self.payoff_ratio}, sterling_ratio={self.sterling_ratio}, tail_ratio={self.tail_ratio}, omega_ratio={self.omega_ratio}, "
+            f"cpc_ratio={self.cpc_ratio}, common_sense_ratio={self.common_sense_ratio}"
         )
 
     def __repr__(self):
