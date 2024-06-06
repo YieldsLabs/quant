@@ -2,16 +2,21 @@ use crate::stoch;
 use core::prelude::*;
 
 pub fn dso(
-    close: &Series<f32>,
+    source: &Series<f32>,
     smooth_type: Smooth,
     smooth_period: usize,
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let close_smooth = close.smooth(smooth_type, k_period);
+    let source_smooth = source.smooth(smooth_type, k_period);
 
-    let k = stoch(&close_smooth, &close_smooth, &close_smooth, smooth_period)
-        .smooth(smooth_type, k_period);
+    let k = stoch(
+        &source_smooth,
+        &source_smooth,
+        &source_smooth,
+        smooth_period,
+    )
+    .smooth(smooth_type, k_period);
     let d = k.smooth(smooth_type, d_period);
 
     (k, d)
