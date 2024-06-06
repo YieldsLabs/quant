@@ -86,7 +86,6 @@ class HistoricalActor(StrategyActor):
         self.exchange = exchange
         self.config_service = config_service.get("backtest")
         self.buffer: List[Bar] = []
-        self._lock = asyncio.Semaphore(3)
 
     async def on_receive(self, msg: StartHistoricalFeed):
         symbol, timeframe = msg.symbol, msg.timeframe
@@ -112,8 +111,7 @@ class HistoricalActor(StrategyActor):
 
         while len(self.buffer) >= buff_size:
             bars = [self.buffer.pop(0) for _ in range(buff_size)]
-            async with self._lock:
-                await self._handle_market(bars)
+            await self._handle_market(bars)
 
     async def _handle_market(self, bars: List[Bar]) -> None:
         for bar in bars:
@@ -122,6 +120,7 @@ class HistoricalActor(StrategyActor):
                     self.symbol, self.timeframe, bar.ohlcv, bar.closed
                 )
             )
+        await asyncio.sleep(0.00001)
 
     @staticmethod
     async def batched(stream: AsyncIterator[Bar], batch_size: int):
