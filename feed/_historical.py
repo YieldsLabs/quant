@@ -1,5 +1,5 @@
 import asyncio
-from collections import deque
+import bisect
 from typing import AsyncIterator, List
 
 from core.actors import StrategyActor
@@ -85,7 +85,8 @@ class HistoricalActor(StrategyActor):
         super().__init__(symbol, timeframe)
         self.exchange = exchange
         self.config_service = config_service.get("backtest")
-        self.buffer: deque[Bar] = deque()
+        self.buffer: List[Bar] = []
+        self._lock = asyncio.Semaphore(3)
 
     async def on_receive(self, msg: StartHistoricalFeed):
         symbol, timeframe = msg.symbol, msg.timeframe
@@ -99,36 +100,28 @@ class HistoricalActor(StrategyActor):
             self.config_service["batch_size"],
         ) as stream:
             async for bars in self.batched(stream, self.config_service["buff_size"]):
-                self.process_bars(bars)
-                await self.process_buffer()
+                self._update_buffer(bars)
+                await self._process_buffer()
 
-    def process_bars(self, batch: List[Bar]):
+    def _update_buffer(self, batch: List[Bar]):
         for bar in batch:
-            self.insert_into_buffer(bar)
+            bisect.insort(self.buffer, bar, key=lambda x: x.ohlcv.timestamp)
 
-    def insert_into_buffer(self, bar: Bar):
-        index = 0
-
-        while (
-            index < len(self.buffer)
-            and self.buffer[index].ohlcv.timestamp < bar.ohlcv.timestamp
-        ):
-            index += 1
-
-        self.buffer.insert(index, bar)
-
-    async def process_buffer(self):
+    async def _process_buffer(self):
         buff_size = self.config_service["buff_size"]
 
         while len(self.buffer) >= buff_size:
-            bars = [self.buffer.popleft() for _ in range(buff_size)]
-            for bar in bars:
-                await self.tell(
-                    NewMarketDataReceived(
-                        self.symbol, self.timeframe, bar.ohlcv, bar.closed
-                    )
+            bars = [self.buffer.pop(0) for _ in range(buff_size)]
+            async with self._lock:
+                await self._handle_market(bars)
+
+    async def _handle_market(self, bars: List[Bar]) -> None:
+        for bar in bars:
+            await self.tell(
+                NewMarketDataReceived(
+                    self.symbol, self.timeframe, bar.ohlcv, bar.closed
                 )
-            await asyncio.sleep(0.0001)
+            )
 
     @staticmethod
     async def batched(stream: AsyncIterator[Bar], batch_size: int):
