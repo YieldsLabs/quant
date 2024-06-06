@@ -14,6 +14,18 @@ pub fn kb(
     (upper_band, middle_band, lower_band)
 }
 
+pub fn kbp(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
+    let (upb, _, lb) = kb(source, period, factor);
+
+    (source - &lb) / (upb - &lb)
+}
+
+pub fn kbw(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
+    let (upb, mb, lb) = kb(source, period, factor);
+
+    SCALE * (upb - lb) / mb
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -53,5 +65,35 @@ mod tests {
             let b = expected_lower_band[i];
             assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b);
         }
+    }
+
+    #[test]
+    fn test_kbp() {
+        let source = Series::from([2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0]);
+        let period = 3;
+        let factor = 2.0;
+        let expected = [
+            0.0, 0.75, 0.80618626, 0.80618614, 0.80618614, 0.5, 0.3469068, 0.19381316, 0.19381405,
+            0.19381405,
+        ];
+
+        let result: Vec<f32> = kbp(&source, period, factor).into();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_kbw() {
+        let source = Series::from([2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0]);
+        let period = 3;
+        let factor = 2.0;
+        let expected = [
+            0.0, 133.33333, 163.2993, 108.86625, 81.64969, 72.5775, 72.57743, 40.824745, 46.65699,
+            54.433155,
+        ];
+
+        let result: Vec<f32> = kbw(&source, period, factor).into();
+
+        assert_eq!(result, expected);
     }
 }
