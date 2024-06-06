@@ -8,7 +8,7 @@ from core.models.ohlcv import OHLCV
 from core.models.ta import TechAnalysis
 from core.queries.ohlcv import TA, NextBar, PrevBar
 
-MarketEvent = Union[NewMarketDataReceived, NextBar, PrevBar]
+MarketEvent = Union[NewMarketDataReceived, NextBar, PrevBar, TA]
 
 
 class MarketActor(BaseActor, EventHandlerMixin):
