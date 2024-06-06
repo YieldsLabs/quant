@@ -1,4 +1,6 @@
 use once_cell::sync::Lazy;
+use serde::Serialize;
+use serde_json::to_string;
 use std::collections::HashMap;
 use std::sync::RwLock;
 use timeseries::prelude::*;
@@ -8,6 +10,16 @@ static TIMESERIES_ID_TO_INSTANCE: Lazy<
 > = Lazy::new(|| RwLock::new(HashMap::new()));
 
 static TIMESERIES_ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
+
+fn serialize<T: Serialize>(data: &T) -> (i32, i32) {
+    match to_string(data) {
+        Ok(json) => {
+            let bytes = json.as_bytes();
+            (bytes.as_ptr() as i32, bytes.len() as i32)
+        }
+        Err(_) => (-1, 0),
+    }
+}
 
 #[no_mangle]
 pub fn timeseries_register() -> i32 {
@@ -75,12 +87,7 @@ pub fn timeseries_next_bar(
         };
 
         if let Some(next_bar) = timeseries.next_bar(&curr_bar) {
-            let next_bar_json = serde_json::to_string(&next_bar).unwrap();
-            let next_bar_bytes = next_bar_json.as_bytes();
-            let next_bar_ptr = next_bar_bytes.as_ptr() as i32;
-            let next_bar_len = next_bar_bytes.len() as i32;
-
-            (next_bar_ptr, next_bar_len)
+            serialize(&next_bar)
         } else {
             (0, 0)
         }
@@ -111,12 +118,7 @@ pub fn timeseries_prev_bar(
         };
 
         if let Some(prev_bar) = timeseries.prev_bar(&curr_bar) {
-            let prev_bar_json = serde_json::to_string(&prev_bar).unwrap();
-            let prev_bar_bytes = prev_bar_json.as_bytes();
-            let prev_bar_ptr = prev_bar_bytes.as_ptr() as i32;
-            let prev_bar_len = prev_bar_bytes.len() as i32;
-
-            (prev_bar_ptr, prev_bar_len)
+            serialize(&prev_bar)
         } else {
             (0, 0)
         }
@@ -147,12 +149,8 @@ pub fn timeseries_ta(
         };
 
         let ta = timeseries.ta(&curr_bar);
-        let ta_json = serde_json::to_string(&ta).unwrap();
-        let ta_bytes = ta_json.as_bytes();
-        let ta_ptr = ta_bytes.as_ptr() as i32;
-        let ta_len = ta_bytes.len() as i32;
 
-        (ta_ptr, ta_len)
+        serialize(&ta)
     } else {
         (-1, 0)
     }
