@@ -3,6 +3,7 @@ use core::prelude::*;
 use momentum::{cci, macd, ppo, roc, rsi, stochosc};
 use price::typical_price;
 use std::collections::HashMap;
+use trend::spp;
 use volatility::{bbp, gkyz, tr};
 use volume::{mfi, nvol, obv, vo};
 
@@ -139,6 +140,7 @@ impl TimeSeries for BaseTimeSeries {
         let roc14 = roc(source, periods[1]);
         let hh = high.highest(periods[5]);
         let ll = low.lowest(periods[5]);
+        let (support, resistance) = spp(high, low, source, Smooth::SMA, periods[2]);
 
         TechAnalysis {
             frsi: rsi2.into(),
@@ -161,6 +163,8 @@ impl TimeSeries for BaseTimeSeries {
             d: d.into(),
             hh: hh.into(),
             ll: ll.into(),
+            support: support.into(),
+            resistance: resistance.into(),
         }
     }
 }

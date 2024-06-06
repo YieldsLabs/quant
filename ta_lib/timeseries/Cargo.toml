@@ -12,6 +12,7 @@ version.workspace = true
 core = { path = "../core" }
 momentum = { path = "../indicators/momentum" }
 volume = { path = "../indicators/volume" }
+trend = { path = "../indicators/trend" }
 price = { path = "../price" }
 volatility = { path = "../indicators/volatility" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
