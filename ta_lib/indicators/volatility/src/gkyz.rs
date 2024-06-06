@@ -27,11 +27,11 @@ mod tests {
     fn test_garman_klass_yang_zhang() {
         let open = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let high = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let low = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let low = Series::from([3.0, 2.0, 3.0, 4.0, 5.0]);
         let close = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let period = 3;
 
-        let expected = vec![0.0, 0.4001887, 0.4636288, 0.49248216, 0.31461933];
+        let expected = vec![0.0, 0.60109, 0.6450658, 0.49248216, 0.31461933];
 
         let result: Vec<f32> = gkyz(&open, &high, &low, &close, period).into();
 
