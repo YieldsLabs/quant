@@ -46,8 +46,6 @@ pub fn cpp(
     low: &Series<f32>,
     close: &Series<f32>,
 ) -> (Series<f32>, Series<f32>) {
-    let pp = (high + low + close) / 3.;
-
     let hl = 1.1 * (high - low) / 12.;
 
     let support = close - &hl;
