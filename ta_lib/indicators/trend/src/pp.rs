@@ -33,10 +33,24 @@ pub fn wpp(
     high: &Series<f32>,
     low: &Series<f32>,
 ) -> (Series<f32>, Series<f32>) {
-    let pp = (high + low + open + open) / 4.;
+    let pp = (high + low + 2. * open) / 4.;
 
     let support = 2. * &pp - high;
     let resistance = 2. * &pp - low;
+
+    (support, resistance)
+}
+
+pub fn cpp(
+    high: &Series<f32>,
+    low: &Series<f32>,
+    close: &Series<f32>,
+) -> (Series<f32>, Series<f32>) {
+    let pp = (high + low + close) / 3.;
+    let hl = 1.1 * (high - low) / 12.;
+
+    let support = close - &hl;
+    let resistance = close + &hl;
 
     (support, resistance)
 }
@@ -141,15 +155,46 @@ mod tests {
             6.4560, 6.4614, 6.4798, 6.4903, 6.5066,
         ]);
         let expected_support = vec![
-            6.5449996, 6.5614505, 6.50245, 6.4570503, 6.5089, 6.5334506, 6.4971004, 6.5211005,
+            6.5449996, 6.5614505, 6.50245, 6.4570503, 6.5089, 6.5334506, 6.4970994, 6.5211005,
             6.53055, 6.5128503, 6.48665, 6.43615, 6.4727, 6.4597, 6.49975, 6.5158005,
         ];
         let expected_resistance = vec![
-            6.5631995, 6.6269503, 6.5665503, 6.5329504, 6.5507, 6.5903506, 6.5475006, 6.5389004,
+            6.5631995, 6.6269503, 6.5665503, 6.5329504, 6.5507, 6.5903506, 6.5474997, 6.5389004,
             6.55965, 6.53795, 6.52095, 6.48665, 6.4979, 6.5334997, 6.52365, 6.5386004,
         ];
 
         let (support, resistance) = wpp(&open, &high, &low);
+        let result_support: Vec<f32> = support.into();
+        let result_resistance: Vec<f32> = resistance.into();
+
+        assert_eq!(result_support, expected_support);
+        assert_eq!(result_resistance, expected_resistance);
+    }
+
+    #[test]
+    fn test_camarilla_pivot_points() {
+        let high = Series::from([
+            6.5600, 6.6049, 6.5942, 6.5541, 6.5300, 6.5700, 6.5630, 6.5362, 6.5497, 6.5480, 6.5325,
+            6.5065, 6.4866, 6.5536, 6.5142, 6.5294,
+        ]);
+        let low = Series::from([
+            6.5418, 6.5394, 6.5301, 6.4782, 6.4882, 6.5131, 6.5126, 6.5184, 6.5206, 6.5229, 6.4982,
+            6.4560, 6.4614, 6.4798, 6.4903, 6.5066,
+        ]);
+        let close = Series::from([
+            6.5541, 6.5942, 6.5348, 6.4950, 6.5298, 6.5616, 6.5223, 6.5300, 6.5452, 6.5254, 6.5038,
+            6.4614, 6.4854, 6.4966, 6.5117, 6.5270,
+        ]);
+        let expected_support = vec![
+            6.5524316, 6.588196, 6.528924, 6.4880424, 6.525968, 6.5563846, 6.5176797, 6.5283685,
+            6.5425324, 6.5230994, 6.5006557, 6.456771, 6.4830904, 6.4898353, 6.509509, 6.52491,
+        ];
+        let expected_resistance = vec![
+            6.5557685, 6.6002045, 6.540676, 6.5019574, 6.533632, 6.566816, 6.52692, 6.531632,
+            6.5478673, 6.527701, 6.506944, 6.466029, 6.48771, 6.503365, 6.513891, 6.52909,
+        ];
+
+        let (support, resistance) = cpp(&high, &low, &close);
         let result_support: Vec<f32> = support.into();
         let result_resistance: Vec<f32> = resistance.into();
 
