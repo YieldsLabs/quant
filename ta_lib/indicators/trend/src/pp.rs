@@ -28,6 +28,19 @@ pub fn fpp(
     (support, resistance)
 }
 
+pub fn wpp(
+    open: &Series<f32>,
+    high: &Series<f32>,
+    low: &Series<f32>,
+) -> (Series<f32>, Series<f32>) {
+    let pp = (high + low + open + open) / 4.;
+
+    let support = 2. * &pp - high;
+    let resistance = 2. * &pp - low;
+
+    (support, resistance)
+}
+
 pub fn spp(
     high: &Series<f32>,
     low: &Series<f32>,
@@ -106,6 +119,37 @@ mod tests {
         ];
 
         let (support, resistance) = fpp(&high, &low, &close);
+        let result_support: Vec<f32> = support.into();
+        let result_resistance: Vec<f32> = resistance.into();
+
+        assert_eq!(result_support, expected_support);
+        assert_eq!(result_resistance, expected_resistance);
+    }
+
+    #[test]
+    fn test_woodie_pivot_points() {
+        let open = Series::from([
+            6.5541, 6.5942, 6.5345, 6.4950, 6.5298, 6.5619, 6.5223, 6.5300, 6.5451, 6.5254, 6.5038,
+            6.4614, 6.4853, 6.4966, 6.5117, 6.5272,
+        ]);
+        let high = Series::from([
+            6.5600, 6.6049, 6.5942, 6.5541, 6.5300, 6.5700, 6.5630, 6.5362, 6.5497, 6.5480, 6.5325,
+            6.5065, 6.4866, 6.5536, 6.5142, 6.5294,
+        ]);
+        let low = Series::from([
+            6.5418, 6.5394, 6.5301, 6.4782, 6.4882, 6.5131, 6.5126, 6.5184, 6.5206, 6.5229, 6.4982,
+            6.4560, 6.4614, 6.4798, 6.4903, 6.5066,
+        ]);
+        let expected_support = vec![
+            6.5449996, 6.5614505, 6.50245, 6.4570503, 6.5089, 6.5334506, 6.4971004, 6.5211005,
+            6.53055, 6.5128503, 6.48665, 6.43615, 6.4727, 6.4597, 6.49975, 6.5158005,
+        ];
+        let expected_resistance = vec![
+            6.5631995, 6.6269503, 6.5665503, 6.5329504, 6.5507, 6.5903506, 6.5475006, 6.5389004,
+            6.55965, 6.53795, 6.52095, 6.48665, 6.4979, 6.5334997, 6.52365, 6.5386004,
+        ];
+
+        let (support, resistance) = wpp(&open, &high, &low);
         let result_support: Vec<f32> = support.into();
         let result_resistance: Vec<f32> = resistance.into();
 

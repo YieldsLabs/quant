@@ -50,7 +50,7 @@ pub use kama::kama;
 pub use kjs::kjs;
 pub use lsma::lsma;
 pub use md::md;
-pub use pp::{fpp, pp, spp};
+pub use pp::{fpp, pp, spp, wpp};
 pub use qstick::qstick;
 pub use rmsma::rmsma;
 pub use sinwma::sinwma;
