@@ -110,7 +110,7 @@ impl Series<f32> {
         let l = self.lowest(period);
         let h = self.highest(period);
 
-        (self - &l) / (h - &l)
+        (self - &l) / (h - l)
     }
 }
 
