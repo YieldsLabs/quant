@@ -12,11 +12,11 @@ pub fn stc(
 ) -> Series<f32> {
     let macd_line =
         source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period);
-    let k = stoch(&macd_line, &macd_line, &macd_line, cycle);
-    let d = k.smooth(smooth_type, d_first);
-    let kd = stoch(&d, &d, &d, cycle);
 
-    let stc = kd.smooth(smooth_type, d_second);
+    let k = SCALE * macd_line.normalize(cycle);
+    let d = k.smooth(smooth_type, d_first);
+
+    let stc = (SCALE * d.normalize(cycle)).smooth(smooth_type, d_second);
 
     stc.min(&SCALE).max(&ZERO)
 }

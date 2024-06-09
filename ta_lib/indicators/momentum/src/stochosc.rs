@@ -10,10 +10,7 @@ pub fn stochosc(
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let stoch = stoch(source, high, low, period);
-
-    let k = stoch.smooth(smooth_type, k_period);
-
+    let k = stoch(source, high, low, period).smooth(smooth_type, k_period);
     let d = k.smooth(smooth_type, d_period);
 
     (k, d)
@@ -44,10 +41,9 @@ pub fn dso(
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let source_smooth = source.smooth(smooth_type, k_period);
+    let source = source.smooth(smooth_type, k_period);
 
-    let k =
-        stoch(&source_smooth, &source_smooth, &source_smooth, period).smooth(smooth_type, k_period);
+    let k = (SCALE * source.normalize(period)).smooth(smooth_type, k_period);
     let d = k.smooth(smooth_type, d_period);
 
     (k, d)
