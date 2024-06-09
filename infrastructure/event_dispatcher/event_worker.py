@@ -2,6 +2,7 @@ import asyncio
 from typing import Any, AsyncIterable, Dict, Tuple
 
 from core.events.base import Event
+from infrastructure.event_dispatcher.event_dedup import EventDedup
 
 from .event_handler import EventHandler
 
@@ -11,11 +12,11 @@ class EventWorker:
         self,
         event_handler: EventHandler,
         cancel_event: asyncio.Event,
-        events_in_queue: set,
+        events_in_queue: EventDedup,
     ):
         self.event_handler = event_handler
         self.cancel_event = cancel_event
-        self.events_in_queue = events_in_queue
+        self.dedup = events_in_queue
 
         self.queue = asyncio.Queue()
         self.tasks = asyncio.create_task(self._process_events())
@@ -32,17 +33,13 @@ class EventWorker:
 
             yield event, args, kwargs
 
-            self.events_in_queue.remove(event.meta.key)
+            await self.dedup.remove_event(event)
+
             self.queue.task_done()
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
-        event_key = event.meta.key
-
-        if event_key in self.events_in_queue:
-            return
-
-        self.events_in_queue.add(event_key)
-        await self.queue.put((event, args, kwargs))
+        if await self.dedup.add_event(event):
+            await self.queue.put((event, args, kwargs))
 
     async def wait(self) -> None:
         await self.queue.join()

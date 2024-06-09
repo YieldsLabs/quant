@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 class EventHandler:
     def __init__(self):
         self._event_handlers: Dict[Type[Event], List[HandlerType]] = defaultdict(list)
-        self._dead_letter_queue: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
+        self._dlq: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
 
     @property
     def dlq(self):
-        return self._dead_letter_queue
+        return self._dlq
 
     def register(
         self,
@@ -73,4 +73,4 @@ class EventHandler:
         elif isinstance(event, Query):
             event.set_response(None)
 
-        self._dead_letter_queue.append((event, exception))
+        self._dlq.append((event, exception))

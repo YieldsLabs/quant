@@ -2,6 +2,7 @@ import asyncio
 
 from core.events.base import Event
 
+from .event_dedup import EventDedup
 from .event_handler import EventHandler
 from .event_worker import EventWorker
 from .load_balancer import LoadBalancer
@@ -15,16 +16,16 @@ class WorkerPool:
         event_handler: EventHandler,
         cancel_event: asyncio.Event,
     ):
-        self.events_in_queue = set()
         self.workers = []
         self.load_balancer = LoadBalancer(num_piority_groups)
+        self.dedup = EventDedup()
         self.event_handler = event_handler
         self.cancel_event = cancel_event
         self._initialize_workers(num_workers)
 
     def _initialize_workers(self, num_workers):
         self.workers = [
-            EventWorker(self.event_handler, self.cancel_event, self.events_in_queue)
+            EventWorker(self.event_handler, self.cancel_event, self.dedup)
             for _ in range(num_workers)
         ]
 
@@ -32,7 +33,6 @@ class WorkerPool:
         priority_group = self.load_balancer.determine_priority_group(
             event.meta.priority
         )
-
         worker = self.workers[priority_group % len(self.workers)]
 
         await worker.dispatch(event, *args, **kwargs)
