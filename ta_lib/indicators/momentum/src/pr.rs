@@ -9,7 +9,7 @@ pub fn pr(
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
-    SCALE * (source - &hh) / (&hh - &ll)
+    SCALE * (source - &hh) / (hh - ll)
 }
 
 #[cfg(test)]

@@ -9,7 +9,7 @@ pub fn stoch(
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
-    SCALE * (source - &ll) / (&hh - &ll)
+    SCALE * (source - &ll) / (hh - ll)
 }
 
 #[cfg(test)]

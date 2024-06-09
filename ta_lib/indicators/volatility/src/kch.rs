@@ -25,7 +25,7 @@ pub fn kchp(
 ) -> Series<f32> {
     let (upb, _, lb) = kch(source, atr, smooth_type, period, factor);
 
-    (source - &lb) / (upb - &lb)
+    (source - &lb) / (upb - lb)
 }
 
 pub fn kchw(

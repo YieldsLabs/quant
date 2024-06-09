@@ -29,7 +29,7 @@ pub fn ppbp(
 ) -> Series<f32> {
     let (upb, _, lb) = ppb(source, high, low, smooth_type, period, factor);
 
-    (source - &lb) / (upb - &lb)
+    (source - &lb) / (upb - lb)
 }
 
 pub fn ppbw(

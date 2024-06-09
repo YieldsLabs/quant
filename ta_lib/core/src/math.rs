@@ -105,6 +105,13 @@ impl Series<f32> {
     pub fn slope(&self, period: usize) -> Self {
         self.change(period) / period as f32
     }
+
+    pub fn normalize(&self, period: usize) -> Self {
+        let l = self.lowest(period);
+        let h = self.highest(period);
+
+        (self - &l) / (h - &l)
+    }
 }
 
 #[cfg(test)]
@@ -297,6 +304,17 @@ mod tests {
         let n = 3;
 
         let result = source.slope(n);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_normalize() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]);
+        let n = 3;
+
+        let result = source.normalize(n);
 
         assert_eq!(result, expected);
     }

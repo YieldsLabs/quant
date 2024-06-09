@@ -9,7 +9,7 @@ pub fn ppo(
     let fast = source.smooth(smooth_type, fast_period);
     let slow = source.smooth(smooth_type, slow_period);
 
-    SCALE * (fast - &slow) / &slow
+    SCALE * (fast - &slow) / slow
 }
 
 #[cfg(test)]

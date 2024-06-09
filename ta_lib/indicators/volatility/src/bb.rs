@@ -18,7 +18,7 @@ pub fn bb(
 pub fn bbp(source: &Series<f32>, smooth_type: Smooth, period: usize, factor: f32) -> Series<f32> {
     let (upb, _, lb) = bb(source, smooth_type, period, factor);
 
-    (source - &lb) / (upb - &lb)
+    (source - &lb) / (upb - lb)
 }
 
 pub fn bbw(source: &Series<f32>, smooth_type: Smooth, period: usize, factor: f32) -> Series<f32> {

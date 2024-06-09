@@ -2,12 +2,11 @@ use core::prelude::*;
 
 pub fn snatr(
     atr: &Series<f32>,
-    atr_period: usize,
+    period: usize,
     smooth_type: Smooth,
     smooth_period: usize,
 ) -> Series<f32> {
-    ((atr - atr.lowest(atr_period)) / (atr.highest(atr_period) - atr.lowest(atr_period)))
-        .smooth(smooth_type, smooth_period)
+    atr.normalize(period).smooth(smooth_type, smooth_period)
 }
 
 #[test]

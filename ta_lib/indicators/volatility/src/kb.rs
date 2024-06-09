@@ -17,7 +17,7 @@ pub fn kb(
 pub fn kbp(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
     let (upb, _, lb) = kb(source, period, factor);
 
-    (source - &lb) / (upb - &lb)
+    (source - &lb) / (upb - lb)
 }
 
 pub fn kbw(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
