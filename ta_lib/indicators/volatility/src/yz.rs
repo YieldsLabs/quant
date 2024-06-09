@@ -8,7 +8,7 @@ pub fn yz(
     close: &Series<f32>,
     period: usize,
 ) -> Series<f32> {
-    let oc = (open / close.shift(1).nz(Some(0.0))).log();
+    let oc = (open / close.shift(1).nz(Some(ZERO))).log();
     let ochat = oc.ma(period);
 
     let co = (close / open).log();
