@@ -12,11 +12,11 @@ class EventWorker:
         self,
         event_handler: EventHandler,
         cancel_event: asyncio.Event,
-        events_in_queue: EventDedup,
+        dedup: EventDedup,
     ):
         self.event_handler = event_handler
         self.cancel_event = cancel_event
-        self.dedup = events_in_queue
+        self.dedup = dedup
 
         self.queue = asyncio.Queue()
         self.tasks = asyncio.create_task(self._process_events())
