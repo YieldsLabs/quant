@@ -6,10 +6,10 @@ pub fn ppo(
     fast_period: usize,
     slow_period: usize,
 ) -> Series<f32> {
-    let fast = source.smooth(smooth_type, fast_period);
-    let slow = source.smooth(smooth_type, slow_period);
+    let po_fast = source.smooth(smooth_type, fast_period);
+    let po_slow = source.smooth(smooth_type, slow_period);
 
-    SCALE * (fast - &slow) / slow
+    SCALE * (po_fast - &po_slow) / po_slow
 }
 
 #[cfg(test)]
