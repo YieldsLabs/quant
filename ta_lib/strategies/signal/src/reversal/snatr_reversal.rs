@@ -3,8 +3,8 @@ use core::prelude::*;
 use timeseries::prelude::*;
 use volatility::snatr;
 
-const SNATR_UPPER_BARRIER: f32 = 0.8;
-const SNATR_LOWER_BARRIER: f32 = 0.2;
+const SNATR_UPPER_BARRIER: f32 = 80.;
+const SNATR_LOWER_BARRIER: f32 = 20.;
 
 pub struct SnatrReversalSignal {
     smooth_type: Smooth,

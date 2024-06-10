@@ -6,7 +6,7 @@ pub fn snatr(
     smooth_type: Smooth,
     smooth_period: usize,
 ) -> Series<f32> {
-    atr.normalize(period).smooth(smooth_type, smooth_period)
+    (SCALE * atr.normalize(period)).smooth(smooth_type, smooth_period)
 }
 
 #[test]
@@ -27,7 +27,7 @@ fn test_snatr() {
     let period = 3;
     let epsilon = 0.001;
     let expected = [
-        0.0, 0.0, 0.5, 0.8257546, 0.99494743, 0.9974737, 1.0, 0.9014031, 0.5520136,
+        0.0, 0.0, 50., 82.57546, 99.494743, 99.74737, 100.0, 90.14031, 55.20136,
     ];
 
     let result: Vec<f32> = snatr(&atr, atr_period, Smooth::WMA, period).into();
