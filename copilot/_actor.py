@@ -4,16 +4,15 @@ from typing import Union
 import numpy as np
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics import calinski_harabasz_score
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import check_random_state
-from sklearn.mixture import GaussianMixture
 
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
 from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
-from core.models.side import SignalSide
+from core.models.side import PositionSide, SignalSide
 from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
@@ -106,6 +105,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         self._register_event_handlers()
 
         self.llm = llm
+        self.prev_txn = (None, None)
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)
@@ -218,6 +218,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         support = np.array(ta.trend.support[-LOOKBACK:])
         resistance = np.array(ta.trend.resistance[-LOOKBACK:])
 
+        macd = np.array(ta.trend.macd[-LOOKBACK:])
+
         cci = np.array(ta.momentum.cci[-LOOKBACK:])
         bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
         slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
@@ -233,16 +235,26 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             ]
         )
         close = np.array(
-            [
-                bar.close if bar is not None else 0.0
-                for bar in bars[-LOOKBACK:]
-            ]
+            [bar.close if bar is not None else 0.0 for bar in bars[-LOOKBACK:]]
         )
 
         features = np.column_stack(
-            (ema, support, resistance, close, brr, cci, bbp, slow_rsi, stoch_k, mfi, gkyz)
+            (
+                ema,
+                support,
+                resistance,
+                macd,
+                brr,
+                cci,
+                bbp,
+                slow_rsi,
+                stoch_k,
+                mfi,
+                gkyz,
+            )
         )
-        features = MinMaxScaler().fit_transform(features)
+
+        features = PCA(n_components=3).fit_transform(features)
 
         max_clusters = min(len(features) - 1, 10)
         min_clusters = min(2, max_clusters)
@@ -264,35 +276,64 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         kmeans = CustomKMeans(n_clusters=optimal_clusters, random_state=1337).fit(
             features
         )
-        gmm = GaussianMixture(n_components=optimal_clusters, random_state=1337)
-        gmm_labels = gmm.fit_predict(features, kmeans.labels_)
+
+        knn_transaction = "".join(map(str, kmeans.labels_))
+
+        prev_long, prev_short = self.prev_txn
 
         should_exit = False
-        # (most_common_cluster == 3 and least_common_cluster == 0)
-        # or (most_common_cluster == 2 and least_common_cluster == 0)
-        # (most_common_cluster == 1 and least_common_cluster == 0)
-        # or (most_common_cluster == 0 and least_common_cluster == 1)
+
+        if (
+            msg.side == PositionSide.LONG
+            and prev_long
+            and (
+                (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
+                or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
+                or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 1)
+            )
+        ):
+            should_exit = True
+
+        if (
+            msg.side == PositionSide.SHORT
+            and prev_short
+            and (
+                (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
+                or (int(prev_short[0]) == 6 and int(knn_transaction[0]) == 4)
+                or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
+            )
+        ):
+            should_exit = True
+
+        if msg.side == PositionSide.LONG:
+            if not should_exit:
+                prev_long = knn_transaction
+            else:
+                prev_long = None
+        else:
+            if not should_exit:
+                prev_short = knn_transaction
+            else:
+                prev_short = None
+
+        self.prev_txn = (prev_long, prev_short)
 
         logger.info(
+            f"SIDE: {msg.side}, "
+            f"Close: {close[-1]}, "
             f"EMA: {ema[-1]}, "
             f"Support: {support[-1]}, "
             f"Resistance: {resistance[-1]}, "
-            f"Close: {close[-1]}, "
+            f"MACD: {macd[-1]}, "
             f"Body Range Ratio: {brr[-1]}, "
-            
             f"CCI: {cci[-1]}, "
             f"BB%: {bbp[-1]}, "
             f"RSI: {slow_rsi[-1]}, "
             f"Stoch K: {stoch_k[-1]}, "
             f"MFI: {mfi[-1]}, "
-            
             f"Garman-Klass-Yang-Zhang: {gkyz[-1]}, "
-            
-            # f"Signal Exit {signal_exit}, "
-            f"Transaction: {kmeans.labels_}, "
-            f"GMM Labels: {gmm_labels}, "
-            # f"Common: {most_common_cluster}, "
-            # f"Anomaly: {least_common_cluster}"
+            f"KNN Transaction: {knn_transaction}, "
+            f"Exit: {should_exit}"
         )
 
         if should_exit:

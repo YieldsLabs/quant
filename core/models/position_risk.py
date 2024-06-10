@@ -85,6 +85,7 @@ class PositionRisk(TaMixin):
     type: PositionRiskType = PositionRiskType.NONE
     trail_factor: float = field(default_factory=lambda: np.random.uniform(0.684, 2.382))
     tp_min: float = field(default_factory=lambda: np.random.uniform(0.384, 0.684))
+    loss_max: float = field(default_factory=lambda: np.random.uniform(3, 5))
 
     @property
     def last_bar(self):
@@ -153,26 +154,26 @@ class PositionRisk(TaMixin):
 
         ll = np.array(ta.trend.ll)
         hh = np.array(ta.trend.hh)
-        tr = np.array(ta.volatility.tr)
+        volatility = np.array(ta.volatility.tr)
 
-        min_length = min(len(ll), len(hh), len(tr))
+        min_length = min(len(ll), len(hh), len(volatility))
 
         if min_length < 3:
             return sl
 
-        all_data = np.concatenate([ll, hh, tr])
+        all_data = np.concatenate([ll, hh, volatility])
         window_length, polyorder = optimize_window_polyorder(all_data)
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)
-        atr_smooth = savgol_filter(tr, window_length, polyorder)
+        volatility_smooth = savgol_filter(volatility, window_length, polyorder)
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
-        atr_smooth = self.trail_factor * atr_smooth[-min_length:]
+        volatility_smooth = self.trail_factor * volatility_smooth[-min_length:]
 
-        ll_atr = ll_smooth - atr_smooth
-        hh_atr = hh_smooth + atr_smooth
+        ll_atr = ll_smooth - volatility_smooth
+        hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
             return max(sl, np.max(ll_atr))
@@ -191,26 +192,26 @@ class PositionRisk(TaMixin):
 
         ll = np.array(ta.trend.ll)
         hh = np.array(ta.trend.hh)
-        tr = np.array(ta.volatility.tr)
+        volatility = np.array(ta.volatility.gkyz)
 
-        min_length = min(len(ll), len(hh), len(tr))
+        min_length = min(len(ll), len(hh), len(volatility))
 
         if min_length < 3:
             return tp
 
-        all_data = np.concatenate([ll, hh, tr])
+        all_data = np.concatenate([ll, hh, volatility])
         window_length, polyorder = optimize_window_polyorder(all_data)
 
         ll_smooth = savgol_filter(ll, window_length, polyorder)
         hh_smooth = savgol_filter(hh, window_length, polyorder)
-        atr_smooth = savgol_filter(tr, window_length, polyorder)
+        volatility_smooth = savgol_filter(volatility, window_length, polyorder)
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
-        atr_smooth = self.trail_factor * atr_smooth[-min_length:]
+        volatility_smooth = self.trail_factor * volatility_smooth[-min_length:]
 
-        ll_atr = ll_smooth - atr_smooth
-        hh_atr = hh_smooth + atr_smooth
+        ll_atr = ll_smooth - volatility_smooth
+        hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
             return min(tp, np.min(hh_atr))
@@ -228,22 +229,22 @@ class PositionRisk(TaMixin):
             return sl
 
         close = np.array([candle.close for candle in self.ohlcv])
-        tr = np.array(ta.volatility.tr)
+        volatility = np.array(ta.volatility.gkyz)
 
-        min_length = min(len(close), len(tr))
+        min_length = min(len(close), len(volatility))
 
         if min_length < 3:
             return sl
 
-        all_data = np.concatenate([close, tr])
+        all_data = np.concatenate([close, volatility])
         window_length, polyorder = optimize_window_polyorder(all_data)
 
         close_smooth = savgol_filter(close, window_length, polyorder)
-        atr_smooth = savgol_filter(tr, window_length, polyorder)
+        volatility_smooth = savgol_filter(volatility, window_length, polyorder)
 
-        atr_smooth = self.trail_factor * atr_smooth[-min_length:]
+        volatility_smooth = self.trail_factor * volatility_smooth[-min_length:]
 
-        ats = self._ats(close_smooth, atr_smooth)
+        ats = self._ats(close_smooth, volatility_smooth)
 
         if side == PositionSide.LONG:
             return max(sl, np.min(ats))

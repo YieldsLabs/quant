@@ -1,3 +1,4 @@
+import logging
 import uuid
 from dataclasses import dataclass, field, replace
 from datetime import datetime
@@ -15,6 +16,8 @@ from .signal import Signal
 from .signal_risk import SignalRisk
 from .ta import TechAnalysis
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class Position:
@@ -28,7 +31,7 @@ class Position:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     first_factor: float = field(default_factory=lambda: np.random.uniform(0.09, 0.3))
     second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.8))
-    third_factor: float = field(default_factory=lambda: np.random.uniform(0.9, 1.8))
+    third_factor: float = field(default_factory=lambda: np.random.uniform(0.85, 2.5))
     _tp: Optional[float] = None
     _sl: Optional[float] = None
 
@@ -195,14 +198,14 @@ class Position:
         if not self.closed:
             return pnl
 
-        factor = -1 if self.side == PositionSide.SHORT else 1
+        factor = -1.0 if self.side == PositionSide.SHORT else 1
         pnl = factor * (self.exit_price - self.entry_price) * self.size
 
         return pnl
 
     @property
     def curr_pnl(self) -> float:
-        factor = -1 if self.side == PositionSide.SHORT else 1
+        factor = -1.0 if self.side == PositionSide.SHORT else 1
         pnl = factor * (self.curr_price - self.entry_price) * self.size
 
         return pnl
@@ -309,7 +312,7 @@ class Position:
         gap = ohlcv.timestamp - self.risk_bar.timestamp
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
 
-        print(
+        logger.info(
             f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, PnL%: {pnl_perc}"
         )
 
@@ -317,7 +320,7 @@ class Position:
         next_position = replace(self, position_risk=next_risk)
         next_position = next_position.break_even()
 
-        if session_risk == SessionRiskType.EXIT and pnl_perc <= next_risk.tp_min:
+        if session_risk == SessionRiskType.EXIT and pnl_perc < 0.0:
             print(
                 f"TRAILLL prev sl: {next_position.stop_loss}, tf: {next_risk.trail_factor}"
             )
@@ -327,10 +330,16 @@ class Position:
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
 
-        if session_risk == SessionRiskType.EXIT and pnl_perc > next_risk.tp_min:
-            print(f"EXIITT: {next_risk.tp_min}")
+        if session_risk == SessionRiskType.EXIT and pnl_perc > 0.0:
+            if pnl_perc < 0.1:
+                print(f"TRAILLL pev TP: {next_position.take_profit}")
+                next_tp = next_risk.tp_low(self.side, ta, next_tp)
+                print(f"TRAILLL next TP: {next_tp}")
+            else:
+                next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
+
+        if pnl_perc < -next_risk.loss_max:
             next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
-            # next_tp = next_risk.tp_low(self.side, ta, next_tp)
 
         next_risk = next_risk.assess(
             self.side,
