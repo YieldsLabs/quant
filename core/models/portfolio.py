@@ -18,7 +18,7 @@ class Performance:
     _fee: np.array = field(default_factory=lambda: np.array([], dtype=np.float64))
     updated_at: float = field(default_factory=lambda: datetime.now().timestamp())
 
-    @cached_property
+    @property
     def equity(self):
         return np.array([self._account_size]) + np.cumsum(self._pnl)
 
@@ -37,14 +37,14 @@ class Performance:
 
         return np.mean(self._pnl)
 
-    @cached_property
+    @property
     def profit(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return np.array([0.0])
 
         return self._pnl[self._pnl > 0]
 
-    @cached_property
+    @property
     def loss(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return np.array([0.0])
@@ -68,7 +68,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        return np.sum(self.profit) / self.total_trades
+        return np.sum(self._pnl > 0) / self.total_trades
 
     @cached_property
     def average_profit(self) -> float:
@@ -92,7 +92,7 @@ class Performance:
     def max_consecutive_losses(self) -> int:
         return self._max_streak(self._pnl, False)
 
-    @cached_property
+    @property
     def drawdown(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return np.array([0.0])
@@ -100,7 +100,7 @@ class Performance:
         peak = np.maximum.accumulate(self.equity)
         return (peak - self.equity) / peak
 
-    @cached_property
+    @property
     def runup(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return np.array([0.0])
