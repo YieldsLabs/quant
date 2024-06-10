@@ -1,4 +1,3 @@
-use crate::stoch;
 use core::prelude::*;
 
 pub fn stc(
