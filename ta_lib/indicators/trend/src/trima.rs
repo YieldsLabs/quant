@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn tma(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn trima(source: &Series<f32>, period: usize) -> Series<f32> {
     let n = (0.5 * period as f32).signum() as usize;
     let m = (0.5 * period as f32 + 1.) as usize;
 
@@ -12,11 +12,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_tma() {
+    fn test_trima() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = vec![1.0, 1.5, 2.5, 3.5, 4.5];
 
-        let result: Vec<f32> = tma(&source, 3).into();
+        let result: Vec<f32> = trima(&source, 3).into();
 
         assert_eq!(result, expected);
     }

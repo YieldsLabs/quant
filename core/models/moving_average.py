@@ -20,7 +20,7 @@ class MovingAverageType(Enum):
     SMMA = 16
     T3 = 17
     TEMA = 18
-    TMA = 19
+    TRIMA = 19
     VIDYA = 20
     VWMA = 21
     VWEMA = 22

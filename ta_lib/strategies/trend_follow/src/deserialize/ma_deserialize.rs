@@ -21,7 +21,7 @@ pub fn ma_deserialize(ma: usize) -> MovingAverageType {
         16 => MovingAverageType::SMMA,
         17 => MovingAverageType::TTHREE,
         18 => MovingAverageType::TEMA,
-        19 => MovingAverageType::TMA,
+        19 => MovingAverageType::TRIMA,
         20 => MovingAverageType::VIDYA,
         21 => MovingAverageType::VWMA,
         22 => MovingAverageType::VWEMA,

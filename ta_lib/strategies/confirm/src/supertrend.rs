@@ -32,6 +32,6 @@ impl Confirm for SupertrendConfirm {
             self.factor,
         );
 
-        (direction.seq(&ONE), direction.seq(&MINUS_ONE))
+        (direction.sgt(&ZERO), direction.slt(&ZERO))
     }
 }
