@@ -45,11 +45,15 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
 
 def optimize_window_polyorder(data: np.ndarray) -> tuple:
     window_length = optimize_params(data)
+
+    if window_length % 2 == 0:
+        window_length += 1
+
+    window_length = min(window_length, len(data))
+
     polyorder_range = (2, window_length - 1 if window_length > 2 else 2)
     polyorder = optimize_params(data, n_clusters_range=polyorder_range)
 
-    window_length += 1 if window_length % 2 == 0 else 0
-    window_length = min(window_length, len(data) - 1)
     polyorder = min(polyorder, window_length - 1)
 
     return window_length, polyorder
