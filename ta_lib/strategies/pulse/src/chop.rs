@@ -131,12 +131,10 @@ mod tests {
 
         let (long_signal, short_signal) = pulse.assess(&series);
 
-        let expected_long_signal = vec![
-            true, true, true, true, false, true, true, true, true, true,
-        ];
-        let expected_short_signal = vec![
-            true, true, true, true, false, true, true, true, true, true,
-        ];
+        let expected_long_signal =
+            vec![true, true, true, true, false, true, true, true, true, true];
+        let expected_short_signal =
+            vec![true, true, true, true, false, true, true, true, true, true];
 
         let result_long_signal: Vec<bool> = long_signal.into();
         let result_short_signal: Vec<bool> = short_signal.into();
