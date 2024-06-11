@@ -29,9 +29,9 @@ class Position:
     expiration: int = field(default_factory=lambda: 900000)  # 15min
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    first_factor: float = field(default_factory=lambda: np.random.uniform(0.09, 0.3))
-    second_factor: float = field(default_factory=lambda: np.random.uniform(0.32, 0.8))
-    third_factor: float = field(default_factory=lambda: np.random.uniform(0.85, 2.5))
+    first_factor: float = field(default_factory=lambda: np.random.uniform(0.55, 1.05))
+    second_factor: float = field(default_factory=lambda: np.random.uniform(1.1, 1.5))
+    third_factor: float = field(default_factory=lambda: np.random.uniform(1.55, 2.5))
     _tp: Optional[float] = None
     _sl: Optional[float] = None
 
@@ -45,42 +45,15 @@ class Position:
 
     @cached_property
     def first_take_profit(self):
-        p = self.signal.symbol.price_precision
-        entry_price = self.entry_price
-        stop_loss = self.signal.stop_loss
-        dist = self.first_factor * abs(entry_price - stop_loss)
-        dist = round(dist, p)
-
-        if self.side == PositionSide.LONG:
-            return entry_price + dist
-        if self.side == PositionSide.SHORT:
-            return entry_price - dist
+        return self.take_profit_level(self.first_factor)
 
     @cached_property
     def second_take_profit(self):
-        p = self.signal.symbol.price_precision
-        entry_price = self.entry_price
-        stop_loss = self.signal.stop_loss
-        dist = self.second_factor * abs(entry_price - stop_loss)
-        dist = round(dist, p)
-
-        if self.side == PositionSide.LONG:
-            return entry_price + dist
-        if self.side == PositionSide.SHORT:
-            return entry_price - dist
+        return self.take_profit_level(self.second_factor)
 
     @cached_property
     def third_take_profit(self):
-        p = self.signal.symbol.price_precision
-        entry_price = self.entry_price
-        stop_loss = self.signal.stop_loss
-        dist = self.third_factor * abs(entry_price - stop_loss)
-        dist = round(dist, p)
-
-        if self.side == PositionSide.LONG:
-            return entry_price + dist
-        if self.side == PositionSide.SHORT:
-            return entry_price - dist
+        return self.take_profit_level(self.third_factor)
 
     @property
     def take_profit(self) -> float:
@@ -118,7 +91,7 @@ class Position:
 
     @property
     def close_timestamp(self) -> int:
-        return self.position_risk.last_bar.timestamp
+        return self.position_risk.curr_bar.timestamp
 
     @property
     def signal_bar(self) -> OHLCV:
@@ -126,7 +99,7 @@ class Position:
 
     @property
     def risk_bar(self) -> OHLCV:
-        return self.position_risk.last_bar
+        return self.position_risk.curr_bar
 
     @property
     def trade_time(self) -> int:
@@ -229,7 +202,7 @@ class Position:
         last_bar = self.risk_bar
         pr = self.signal.symbol.price_precision
 
-        return round((last_bar.high + last_bar.low + last_bar.close) / 3, pr)
+        return round((last_bar.high + last_bar.low + 2.0 * last_bar.close) / 4, pr)
 
     @property
     def is_valid(self) -> bool:
@@ -313,33 +286,36 @@ class Position:
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
 
         logger.info(
-            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, PnL%: {pnl_perc}"
+            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {self.entry_price}, SL: {self.stop_loss}, TP: {self.take_profit}, PnL%: {pnl_perc}"
         )
 
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
         next_position = next_position.break_even()
 
-        if session_risk == SessionRiskType.EXIT and pnl_perc < 0.0:
+        if (
+            session_risk == SessionRiskType.EXIT
+            or session_risk == SessionRiskType.CONTINUE
+        ) and pnl_perc <= 0.0:
             print(
-                f"TRAILLL prev sl: {next_position.stop_loss}, tf: {next_risk.trail_factor}"
+                f"TRAILLL prev SL: {next_position.stop_loss}, tf: {next_risk.trail_factor}"
             )
             next_position = next_position.trail(ta)
-            print(f"TRAILLL next sl: {next_position.stop_loss}")
+            print(f"TRAILLL next SL: {next_position.stop_loss}")
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
+        dstp = abs(self.curr_price - self.take_profit)
+        dssl = abs(self.curr_price - self.stop_loss)
 
         if session_risk == SessionRiskType.EXIT and pnl_perc > 0.0:
-            if pnl_perc < 0.1:
-                print(f"TRAILLL pev TP: {next_position.take_profit}")
-                next_tp = next_risk.tp_low(self.side, ta, next_tp)
-                print(f"TRAILLL next TP: {next_tp}")
-            else:
-                next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
-
-        if pnl_perc < -next_risk.loss_max:
-            next_tp = ohlcv.high if self.side == PositionSide.LONG else ohlcv.low
+            if self.curr_pnl > 1.5 * self.fee:
+                print(
+                    f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
+                )
+                next_tp = next_risk.tp_low(self.side, ta, dstp, next_tp)
+                next_sl = next_risk.sl_low(self.side, ta, dssl, next_sl)
+                print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
 
         next_risk = next_risk.assess(
             self.side,
@@ -365,24 +341,24 @@ class Position:
         third_break_even = self.third_take_profit
 
         if self.side == PositionSide.LONG:
-            # if curr_price >= first_break_even:
-            #     curr_sl = min(curr_sl, self.entry_price)
-
-            if curr_price >= second_break_even:
+            if curr_price > first_break_even:
                 curr_sl = min(curr_sl, self.entry_price)
 
-            if curr_price >= third_break_even:
+            if curr_price > second_break_even:
                 curr_sl = min(curr_sl, first_break_even)
 
-        if self.side == PositionSide.SHORT:
-            # if curr_price <= first_break_even:
-            #     curr_sl = max(curr_sl, self.entry_price)
+            if curr_price > third_break_even:
+                curr_sl = min(curr_sl, second_break_even)
 
-            if curr_price <= second_break_even:
+        if self.side == PositionSide.SHORT:
+            if curr_price < first_break_even:
                 curr_sl = max(curr_sl, self.entry_price)
 
-            if curr_price <= third_break_even:
+            if curr_price < second_break_even:
                 curr_sl = max(curr_sl, first_break_even)
+
+            if curr_price < third_break_even:
+                curr_sl = max(curr_sl, second_break_even)
 
         return replace(self, _sl=curr_sl)
 
@@ -405,6 +381,17 @@ class Position:
 
     def theo_maker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.maker_fee
+
+    def take_profit_level(self, factor: float):
+        entry_price = self.entry_price
+        stop_loss = self.signal.stop_loss
+        dist = factor * abs(entry_price - stop_loss)
+        dist = round(dist, self.signal.symbol.price_precision)
+
+        if self.side == PositionSide.LONG:
+            return entry_price + dist
+        if self.side == PositionSide.SHORT:
+            return entry_price - dist
 
     @staticmethod
     def _average_size(orders: List[Order]) -> float:
@@ -442,7 +429,7 @@ class Position:
         }
 
     def __str__(self):
-        return f"signal={self.signal}, signal_risk={self.signal_risk.type}, position_risk={self.position_risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}"
+        return f"signal={self.signal}, signal_risk={self.signal_risk.type}, position_risk={self.position_risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}, break_even={self.has_break_even}"
 
     def __repr__(self):
         return f"Position({self})"

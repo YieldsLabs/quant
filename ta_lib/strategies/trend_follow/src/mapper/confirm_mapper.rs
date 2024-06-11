@@ -102,5 +102,14 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             d_first,
             d_second,
         )),
+        ConfirmConfig::Sup {
+            source_type,
+            atr_period,
+            factor,
+        } => Box::new(SupertrendConfirm::new(
+            source_deserialize(source_type as usize),
+            atr_period,
+            factor,
+        )),
     }
 }

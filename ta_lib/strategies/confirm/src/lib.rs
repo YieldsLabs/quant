@@ -7,6 +7,7 @@ mod roc;
 mod rsi_neutrality;
 mod rsi_signalline;
 mod stc;
+mod supertrend;
 mod vi;
 
 pub use cci::CciConfirm;
@@ -18,4 +19,5 @@ pub use roc::RocConfirm;
 pub use rsi_neutrality::RsiNeutralityConfirm;
 pub use rsi_signalline::RsiSignalLineConfirm;
 pub use stc::StcConfirm;
+pub use supertrend::SupertrendConfirm;
 pub use vi::ViConfirm;

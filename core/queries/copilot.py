@@ -29,6 +29,6 @@ class EvaluateSession(Query[SessionRiskType]):
     session: List[OHLCV]
     ta: TechAnalysis
     meta: EventMeta = field(
-        default_factory=lambda: EventMeta(priority=5, group=QueryGroup.copilot),
+        default_factory=lambda: EventMeta(priority=1, group=QueryGroup.copilot),
         init=False,
     )

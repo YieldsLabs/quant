@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Union
 
@@ -106,6 +107,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         self.llm = llm
         self.prev_txn = (None, None)
+        self._lock = asyncio.Lock()
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)
@@ -211,132 +213,162 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         return risk
 
     async def _evaluate_session(self, msg: EvaluateSession) -> SessionRiskType:
-        ta = msg.ta
-        bars = pad_bars(msg.session, LOOKBACK)
+        async with self._lock:
+            ta = msg.ta
+            bars = pad_bars(msg.session, LOOKBACK)
 
-        ema = np.array(ta.trend.sma[-LOOKBACK:])
-        support = np.array(ta.trend.support[-LOOKBACK:])
-        resistance = np.array(ta.trend.resistance[-LOOKBACK:])
+            ema = np.array(ta.trend.sma[-LOOKBACK:])
+            support = np.array(ta.trend.support[-LOOKBACK:])
+            resistance = np.array(ta.trend.resistance[-LOOKBACK:])
 
-        macd = np.array(ta.trend.macd[-LOOKBACK:])
+            macd = np.array(ta.trend.macd[-LOOKBACK:])
 
-        cci = np.array(ta.momentum.cci[-LOOKBACK:])
-        bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
-        slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
-        stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
-        mfi = np.array(ta.volume.mfi[-LOOKBACK:])
+            cci = np.array(ta.momentum.cci[-LOOKBACK:])
+            bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
+            slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
+            stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
+            mfi = np.array(ta.volume.mfi[-LOOKBACK:])
 
-        gkyz = np.array(ta.volatility.gkyz[-LOOKBACK:])
+            volatility = np.array(ta.volatility.yz[-LOOKBACK:])
 
-        brr = np.array(
-            [
-                bar.body_range_ratio if bar is not None else 0.0
-                for bar in bars[-LOOKBACK:]
-            ]
-        )
-        close = np.array(
-            [bar.close if bar is not None else 0.0 for bar in bars[-LOOKBACK:]]
-        )
-
-        features = np.column_stack(
-            (
-                ema,
-                support,
-                resistance,
-                macd,
-                brr,
-                cci,
-                bbp,
-                slow_rsi,
-                stoch_k,
-                mfi,
-                gkyz,
+            brr = np.array(
+                [
+                    bar.body_range_ratio if bar is not None else 0.0
+                    for bar in bars[-LOOKBACK:]
+                ]
             )
-        )
-
-        features = PCA(n_components=3).fit_transform(features)
-
-        max_clusters = min(len(features) - 1, 10)
-        min_clusters = min(2, max_clusters)
-        best_score = float("-inf")
-        optimal_clusters = 0
-
-        for k in range(min_clusters, max_clusters + 1):
-            kmeans = CustomKMeans(n_clusters=k, random_state=None).fit(features)
-
-            if len(np.unique(kmeans.labels_)) < k:
-                continue
-
-            score = calinski_harabasz_score(features, kmeans.labels_)
-
-            if score > best_score:
-                best_score = score
-                optimal_clusters = k
-
-        kmeans = CustomKMeans(n_clusters=optimal_clusters, random_state=1337).fit(
-            features
-        )
-
-        knn_transaction = "".join(map(str, kmeans.labels_))
-
-        prev_long, prev_short = self.prev_txn
-
-        should_exit = False
-
-        if (
-            msg.side == PositionSide.LONG
-            and prev_long
-            and (
-                (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
-                or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
-                or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 1)
+            close = np.array(
+                [bar.close if bar is not None else 0.0 for bar in bars[-LOOKBACK:]]
             )
-        ):
-            should_exit = True
 
-        if (
-            msg.side == PositionSide.SHORT
-            and prev_short
-            and (
-                (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
-                or (int(prev_short[0]) == 6 and int(knn_transaction[0]) == 4)
-                or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
+            features = np.column_stack(
+                (
+                    ema,
+                    support,
+                    resistance,
+                    macd,
+                    brr,
+                    cci,
+                    bbp,
+                    slow_rsi,
+                    stoch_k,
+                    mfi,
+                    volatility,
+                )
             )
-        ):
-            should_exit = True
 
-        if msg.side == PositionSide.LONG:
-            if not should_exit:
-                prev_long = knn_transaction
+            features = PCA(n_components=3).fit_transform(features)
+
+            max_clusters = min(len(features) - 1, 10)
+            min_clusters = min(2, max_clusters)
+            best_score = float("-inf")
+            optimal_clusters = 0
+
+            for k in range(min_clusters, max_clusters + 1):
+                kmeans = CustomKMeans(n_clusters=k, random_state=None).fit(features)
+
+                if len(np.unique(kmeans.labels_)) < k:
+                    continue
+
+                score = calinski_harabasz_score(features, kmeans.labels_)
+
+                if score > best_score:
+                    best_score = score
+                    optimal_clusters = k
+
+            kmeans = CustomKMeans(n_clusters=optimal_clusters, random_state=1337).fit(
+                features
+            )
+
+            knn_transaction = "".join(map(str, kmeans.labels_))
+
+            prev_long, prev_short = self.prev_txn
+
+            should_exit = False
+
+            # if msg.side == PositionSide.LONG and not prev_long and int(knn_transaction[0]) == 2:
+            #     should_exit = True
+
+            # if msg.side == PositionSide.SHORT and not prev_short and int(knn_transaction[0]) == 4:
+            #     should_exit = True
+
+            if (
+                msg.side == PositionSide.LONG
+                and prev_long
+                and (
+                    (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
+                    # or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
+                    # or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 1)
+                    # or (int(prev_long[0]) == 0 and int(knn_transaction[0]) == 4)
+                    # or (int(prev_long[0]) == 3 and int(knn_transaction[0]) == 4)
+                    # or (int(prev_long[0]) == 3 and int(knn_transaction[0]) == 1)
+                    # or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 4)
+                )
+            ):
+                should_exit = True
+
+            if (
+                msg.side == PositionSide.SHORT
+                and prev_short
+                and (
+                    (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
+                    # or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 1)
+                    # or (int(prev_short[0]) == 0 and int(knn_transaction[0]) == 2)
+                    # or (int(prev_short[0]) == 0 and int(knn_transaction[0]) == 4)
+                    # or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 2)
+                    # or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 4)
+                    # or (int(prev_short[0]) == 6 and int(knn_transaction[0]) == 4)
+                    # or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
+                    # or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 0)
+                )
+            ):
+                should_exit = True
+
+            if knn_transaction in set(
+                [
+                    "01100000",
+                    "11110000",
+                    "10001100",
+                    "01111001",
+                    "11111100",
+                    "00011000",
+                    "10001100",
+                ]
+            ):
+                should_exit = True
+
+            if msg.side == PositionSide.LONG:
+                if not should_exit:
+                    prev_long = knn_transaction
+                else:
+                    prev_long = None
             else:
-                prev_long = None
-        else:
-            if not should_exit:
-                prev_short = knn_transaction
-            else:
-                prev_short = None
+                if not should_exit:
+                    prev_short = knn_transaction
+                else:
+                    prev_short = None
 
-        self.prev_txn = (prev_long, prev_short)
+            self.prev_txn = (prev_long, prev_short)
 
-        logger.info(
-            f"SIDE: {msg.side}, "
-            f"Close: {close[-1]}, "
-            f"EMA: {ema[-1]}, "
-            f"Support: {support[-1]}, "
-            f"Resistance: {resistance[-1]}, "
-            f"MACD: {macd[-1]}, "
-            f"Body Range Ratio: {brr[-1]}, "
-            f"CCI: {cci[-1]}, "
-            f"BB%: {bbp[-1]}, "
-            f"RSI: {slow_rsi[-1]}, "
-            f"Stoch K: {stoch_k[-1]}, "
-            f"MFI: {mfi[-1]}, "
-            f"Garman-Klass-Yang-Zhang: {gkyz[-1]}, "
-            f"KNN Transaction: {knn_transaction}, "
-            f"Exit: {should_exit}"
-        )
+            logger.info(
+                f"SIDE: {msg.side}, "
+                f"Close: {close[-1]}, "
+                f"EMA: {ema[-1]}, "
+                f"Support: {support[-1]}, "
+                f"Resistance: {resistance[-1]}, "
+                f"MACD: {macd[-1]}, "
+                f"Body Range Ratio: {brr[-1]}, "
+                f"CCI: {cci[-1]}, "
+                f"BB%: {bbp[-1]}, "
+                f"RSI: {slow_rsi[-1]}, "
+                f"Stoch K: {stoch_k[-1]}, "
+                f"MFI: {mfi[-1]}, "
+                f"Volatility: {volatility[-1]}, "
+                f"KNN Transaction: {knn_transaction}, "
+                f"Exit: {should_exit}"
+            )
 
-        if should_exit:
-            return SessionRiskType.EXIT
+            if should_exit:
+                return SessionRiskType.EXIT
 
-        return SessionRiskType.CONTINUE
+            return SessionRiskType.CONTINUE

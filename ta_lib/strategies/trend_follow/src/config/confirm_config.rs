@@ -50,6 +50,11 @@ pub enum ConfirmConfig {
         d_first: f32,
         d_second: f32,
     },
+    Sup {
+        source_type: f32,
+        atr_period: f32,
+        factor: f32,
+    },
     Dso {
         source_type: f32,
         smooth_type: f32,
