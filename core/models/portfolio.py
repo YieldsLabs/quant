@@ -33,7 +33,10 @@ class Performance:
     @cached_property
     def average_pnl(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return 0
+            return 0.0
+
+        if len(self._pnl) < 2:
+            return 0.0
 
         return np.mean(self._pnl)
 
@@ -72,14 +75,14 @@ class Performance:
 
     @cached_property
     def average_profit(self) -> float:
-        if len(self.profit) == 0:
+        if len(self.profit) < 2:
             return 0.0
 
         return np.mean(self.profit)
 
     @cached_property
     def average_loss(self) -> float:
-        if len(self.loss) == 0:
+        if len(self.loss) < 2:
             return 0.0
 
         return np.mean(self.loss)
@@ -363,6 +366,9 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
+        if len(self.drawdown) < 2:
+            return 0.0
+
         return np.sqrt(np.mean(self.drawdown**2))
 
     @cached_property
@@ -430,6 +436,9 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
+        if len(self.loss) < 2:
+            return 0.0
+
         downside_risk = np.sqrt(np.mean(self.loss**2))
 
         if downside_risk == 0:
@@ -479,6 +488,9 @@ class Performance:
 
         up_proportion = np.sum(self.profit > threshold) / self.total_trades
         down_proportion = np.sum(self.loss < threshold) / self.total_trades
+
+        if len(self._pnl) < 2:
+            return 0.0
 
         denom = np.sqrt(np.mean(self._pnl**2))
 

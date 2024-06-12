@@ -329,12 +329,24 @@ class Position:
             if curr_price > self.profit_target.second:
                 curr_sl = min(curr_sl, self.profit_target.first)
 
+            if curr_price > self.profit_target.third:
+                curr_sl = min(curr_sl, self.profit_target.second)
+
+            if curr_price > self.profit_target.fourth:
+                curr_sl = min(curr_sl, self.profit_target.third)
+
         if self.side == PositionSide.SHORT:
             if curr_price < self.profit_target.first:
                 curr_sl = max(curr_sl, self.entry_price)
 
             if curr_price < self.profit_target.second:
                 curr_sl = max(curr_sl, self.profit_target.first)
+
+            if curr_price < self.profit_target.third:
+                curr_sl = max(curr_sl, self.profit_target.second)
+
+            if curr_price < self.profit_target.fourth:
+                curr_sl = max(curr_sl, self.profit_target.third)
 
         return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 
