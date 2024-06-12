@@ -101,7 +101,7 @@ class PositionActor(StrategyActor):
             )
 
             position = await self.position_factory.create(
-                event.signal, signal_risk_level
+                event.signal, signal_risk_level, ta
             )
 
             await self.state.store_position(position)

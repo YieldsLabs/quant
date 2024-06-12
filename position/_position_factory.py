@@ -3,8 +3,10 @@ from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrate
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.position import Position
 from core.models.position_risk import PositionRisk
+from core.models.profit_target import ProfitTarget
 from core.models.signal import Signal
 from core.models.signal_risk import SignalRisk
+from core.models.ta import TechAnalysis
 
 
 class PositionFactory(AbstractPositionFactory):
@@ -21,14 +23,17 @@ class PositionFactory(AbstractPositionFactory):
         self,
         signal: Signal,
         signal_risk: SignalRisk,
+        ta: TechAnalysis,
     ) -> Position:
         size = await self.size_strategy.calculate(signal)
         position_risk = PositionRisk().next(signal.ohlcv)
+        profit_target = ProfitTarget(signal, ta.volatility.yz[-1])
 
         return Position(
             signal=signal,
             signal_risk=signal_risk,
             position_risk=position_risk,
             initial_size=size,
+            profit_target=profit_target,
             expiration=self.config["trade_duration"] * 1000,
         )
