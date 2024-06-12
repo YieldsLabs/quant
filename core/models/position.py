@@ -2,14 +2,12 @@ import logging
 import uuid
 from dataclasses import dataclass, field, replace
 from datetime import datetime
-from functools import cached_property
 from typing import List, Optional, Tuple
-
-import numpy as np
 
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
+from .profit_target import ProfitTarget
 from .risk_type import PositionRiskType, SessionRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
@@ -25,13 +23,11 @@ class Position:
     signal: Signal
     signal_risk: SignalRisk
     position_risk: PositionRisk
+    profit_target: ProfitTarget
     orders: Tuple[Order] = ()
     expiration: int = field(default_factory=lambda: 900000)  # 15min
     last_modified: float = field(default_factory=lambda: datetime.now().timestamp())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    first_factor: float = field(default_factory=lambda: np.random.uniform(0.55, 1.05))
-    second_factor: float = field(default_factory=lambda: np.random.uniform(1.1, 1.5))
-    third_factor: float = field(default_factory=lambda: np.random.uniform(1.55, 2.5))
     _tp: Optional[float] = None
     _sl: Optional[float] = None
 
@@ -42,18 +38,6 @@ class Position:
 
         if self.signal.side == SignalSide.SELL:
             return PositionSide.SHORT
-
-    @cached_property
-    def first_take_profit(self):
-        return self.take_profit_level(self.first_factor)
-
-    @cached_property
-    def second_take_profit(self):
-        return self.take_profit_level(self.second_factor)
-
-    @cached_property
-    def third_take_profit(self):
-        return self.take_profit_level(self.third_factor)
 
     @property
     def take_profit(self) -> float:
@@ -66,15 +50,15 @@ class Position:
             if (
                 self.side == PositionSide.LONG
                 and self.signal_risk.tp > self.stop_loss
-                and self.signal_risk.tp <= self.third_take_profit
+                and self.signal_risk.tp <= self.profit_target.last
             ) or (
                 self.side == PositionSide.SHORT
                 and self.signal_risk.tp < self.stop_loss
-                and self.signal_risk.tp >= self.third_take_profit
+                and self.signal_risk.tp >= self.profit_target.last
             ):
                 return round(self.signal_risk.tp, p)
 
-        return round(self.third_take_profit, p)
+        return round(self.profit_target.last, p)
 
     @property
     def stop_loss(self) -> float:
@@ -291,22 +275,24 @@ class Position:
 
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
+
         next_position = next_position.break_even()
 
-        if session_risk == SessionRiskType.EXIT and pnl_perc <= 0.0:
+        if (
+            self.side == PositionSide.LONG
+            and self.curr_price > self.profit_target.first
+        ) or (
+            self.side == PositionSide.SHORT
+            and self.curr_price < self.profit_target.first
+        ):
             next_position = next_position.trail(ta)
 
-        if (
-            self.side == PositionSide.LONG and self.curr_price > self.first_take_profit
-        ) or (
-            self.side == PositionSide.SHORT and self.curr_price < self.first_take_profit
-        ):
+        if session_risk == SessionRiskType.EXIT and pnl_perc <= 0.0:
             next_position = next_position.trail(ta)
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
         dstp = abs(self.curr_price - self.take_profit)
-        # dssl = abs(self.curr_price - self.stop_loss)
 
         if session_risk == SessionRiskType.EXIT and pnl_perc > 0.0:
             if self.curr_pnl > self.fee:
@@ -314,7 +300,6 @@ class Position:
                     f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
                 )
                 next_tp = next_risk.tp_low(self.side, ta, dstp, next_tp)
-                # next_sl = next_risk.sl_low(self.side, ta, dssl, next_sl)
                 print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
 
         next_risk = next_risk.assess(
@@ -338,24 +323,18 @@ class Position:
         curr_sl = self.stop_loss
 
         if self.side == PositionSide.LONG:
-            if curr_price > self.first_take_profit:
+            if curr_price > self.profit_target.first:
                 curr_sl = min(curr_sl, self.entry_price)
 
-            if curr_price > self.second_take_profit:
-                curr_sl = min(curr_sl, self.first_take_profit)
-
-            if curr_price > self.third_take_profit:
-                curr_sl = min(curr_sl, self.second_take_profit)
+            if curr_price > self.profit_target.second:
+                curr_sl = min(curr_sl, self.profit_target.first)
 
         if self.side == PositionSide.SHORT:
-            if curr_price < self.first_take_profit:
+            if curr_price < self.profit_target.first:
                 curr_sl = max(curr_sl, self.entry_price)
 
-            if curr_price < self.second_take_profit:
-                curr_sl = max(curr_sl, self.first_take_profit)
-
-            if curr_price < self.third_take_profit:
-                curr_sl = max(curr_sl, self.second_take_profit)
+            if curr_price < self.profit_target.second:
+                curr_sl = max(curr_sl, self.profit_target.first)
 
         return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 
@@ -401,6 +380,7 @@ class Position:
             "signal": self.signal.to_dict(),
             "signal_risk": self.signal_risk.to_dict(),
             "position_risk": self.position_risk.to_dict(),
+            "profit_target": self.profit_target.to_dict(),
             "side": str(self.side),
             "size": self.size,
             "entry_price": self.entry_price,
@@ -413,12 +393,6 @@ class Position:
             "stop_loss": self.stop_loss,
             "trade_time": self.trade_time,
             "break_even": self.has_break_even,
-            "ff": self.first_factor,
-            "sf": self.second_factor,
-            "tf": self.third_factor,
-            "ft": self.first_take_profit,
-            "st": self.second_take_profit,
-            "tt": self.third_take_profit,
         }
 
     def __str__(self):
