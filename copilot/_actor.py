@@ -23,6 +23,19 @@ logger = logging.getLogger(__name__)
 LOOKBACK = 8
 N_CLUSTERS = 5
 
+def binary_strings(n):
+    def backtrack(current):
+        if len(current) == n:
+            results.append(current)
+            return
+        
+        backtrack(current + '0')
+        
+        backtrack(current + '1')
+
+    results = []
+    backtrack('')
+    return results
 
 def pad_bars(bars, length):
     if len(bars) < length:
@@ -108,6 +121,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         self.llm = llm
         self.prev_txn = (None, None)
         self._lock = asyncio.Lock()
+        self.anomaly = set(binary_strings(8))
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)
@@ -318,21 +332,26 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             ):
                 should_exit = True
 
-            if knn_transaction in set(
-                [
-                    "01100000",
-                    "11110000",
-                    "10001100",
-                    "01111001",
-                    "11111100",
-                    "00011000",
-                    "10001100",
-                    "00111000",
-                    "10000110",
-                    "11100000",
-                    "11111000",
-                ]
-            ):
+            # if knn_transaction in set(
+            #     [
+            #         "01100000",
+            #         "11110000",
+            #         "10001100",
+            #         "01111001",
+            #         "11111100",
+            #         "00011000",
+            #         "10001100",
+            #         "00111000",
+            #         "10000110",
+            #         "11100000",
+            #         "11111000",
+            #         "00111100",
+            #         "01111100"
+            #     ]
+            # ):
+            #     should_exit = True
+                
+            if knn_transaction in self.anomaly:
                 should_exit = True
 
             if msg.side == PositionSide.LONG:
