@@ -3,6 +3,9 @@ use core::prelude::*;
 use timeseries::prelude::*;
 use trend::dpo;
 
+const DPO_UPPER_BARRIER: f32 = 0.005;
+const DPO_LOWER_BARRIER: f32 = -0.005;
+
 pub struct DpoConfirm {
     source_type: SourceType,
     smooth_type: Smooth,
@@ -31,6 +34,6 @@ impl Confirm for DpoConfirm {
             self.period,
         );
 
-        (dpo.sgt(&ZERO_LINE), dpo.slt(&ZERO_LINE))
+        (dpo.sgt(&DPO_UPPER_BARRIER), dpo.slt(&DPO_LOWER_BARRIER))
     }
 }

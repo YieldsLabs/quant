@@ -286,35 +286,35 @@ class Position:
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
 
         logger.info(
-            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {self.entry_price}, SL: {self.stop_loss}, TP: {self.take_profit}, PnL%: {pnl_perc}"
+            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {self.entry_price}, SL: {self.stop_loss}, TP: {self.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {self.has_break_even}"
         )
 
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
         next_position = next_position.break_even()
 
-        if (
-            session_risk == SessionRiskType.EXIT
-            or session_risk == SessionRiskType.CONTINUE
-        ) and pnl_perc <= 0.0:
-            print(
-                f"TRAILLL prev SL: {next_position.stop_loss}, tf: {next_risk.trail_factor}"
-            )
+        if session_risk == SessionRiskType.EXIT and pnl_perc <= 0.0:
             next_position = next_position.trail(ta)
-            print(f"TRAILLL next SL: {next_position.stop_loss}")
+
+        if (
+            self.side == PositionSide.LONG and self.curr_price > self.first_take_profit
+        ) or (
+            self.side == PositionSide.SHORT and self.curr_price < self.first_take_profit
+        ):
+            next_position = next_position.trail(ta)
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
         dstp = abs(self.curr_price - self.take_profit)
-        dssl = abs(self.curr_price - self.stop_loss)
+        # dssl = abs(self.curr_price - self.stop_loss)
 
         if session_risk == SessionRiskType.EXIT and pnl_perc > 0.0:
-            if self.curr_pnl > 1.5 * self.fee:
+            if self.curr_pnl > self.fee:
                 print(
                     f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
                 )
                 next_tp = next_risk.tp_low(self.side, ta, dstp, next_tp)
-                next_sl = next_risk.sl_low(self.side, ta, dssl, next_sl)
+                # next_sl = next_risk.sl_low(self.side, ta, dssl, next_sl)
                 print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
 
         next_risk = next_risk.assess(
@@ -330,51 +330,44 @@ class Position:
             position_risk=next_risk,
             _tp=next_tp,
             _sl=next_sl,
+            last_modified=datetime.now().timestamp(),
         )
 
     def break_even(self) -> "Position":
         curr_price = self.curr_price
         curr_sl = self.stop_loss
 
-        first_break_even = self.first_take_profit
-        second_break_even = self.second_take_profit
-        third_break_even = self.third_take_profit
-
         if self.side == PositionSide.LONG:
-            if curr_price > first_break_even:
+            if curr_price > self.first_take_profit:
                 curr_sl = min(curr_sl, self.entry_price)
 
-            if curr_price > second_break_even:
-                curr_sl = min(curr_sl, first_break_even)
+            if curr_price > self.second_take_profit:
+                curr_sl = min(curr_sl, self.first_take_profit)
 
-            if curr_price > third_break_even:
-                curr_sl = min(curr_sl, second_break_even)
+            if curr_price > self.third_take_profit:
+                curr_sl = min(curr_sl, self.second_take_profit)
 
         if self.side == PositionSide.SHORT:
-            if curr_price < first_break_even:
+            if curr_price < self.first_take_profit:
                 curr_sl = max(curr_sl, self.entry_price)
 
-            if curr_price < second_break_even:
-                curr_sl = max(curr_sl, first_break_even)
+            if curr_price < self.second_take_profit:
+                curr_sl = max(curr_sl, self.first_take_profit)
 
-            if curr_price < third_break_even:
-                curr_sl = max(curr_sl, second_break_even)
+            if curr_price < self.third_take_profit:
+                curr_sl = max(curr_sl, self.second_take_profit)
 
-        return replace(self, _sl=curr_sl)
+        return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 
     def trail(self, ta: TechAnalysis) -> "Position":
-        return replace(
-            self, _sl=self.position_risk.sl_ats(self.side, ta, self.stop_loss)
+        prev_sl = self.stop_loss
+        next_sl = self.position_risk.sl_ats(self.side, ta, self.stop_loss)
+
+        logger.info(
+            f"<---- &&&&&&TRAIL&&&&& -->>> prevSL: {prev_sl}, nextSL: {next_sl}"
         )
 
-    def force_exit(self, price: float) -> "Position":
-        # if self.side == PositionSide.LONG and price > self.first_take_profit:
-        #     return replace(self, _tp=price)
-
-        # if self.side == PositionSide.SHORT and price < self.first_take_profit:
-        #     return replace(self, _tp=price)
-
-        return self
+        return replace(self, _sl=next_sl, last_modified=datetime.now().timestamp())
 
     def theo_taker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.taker_fee

@@ -17,6 +17,7 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
+from core.models.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
@@ -113,33 +114,33 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         async with self._lock:
             long_position, short_position = self._position
 
-            if (
-                isinstance(event, ExitLongSignalReceived)
-                and long_position
-                and not long_position.has_risk
-            ):
-                long_position = long_position.force_exit(event.signal.exit)
+            async def handle_trail(position: Position, risk_bar: OHLCV):
+                ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
+                return position.trail(ta)
 
-            if (
-                isinstance(event, ExitShortSignalReceived)
-                and short_position
-                and not short_position.has_risk
-            ):
-                short_position = short_position.force_exit(event.signal.exit)
+            if isinstance(event, ExitLongSignalReceived):
+                if long_position and not long_position.has_risk:
+                    long_position = await handle_trail(
+                        long_position, long_position.risk_bar
+                    )
 
-            if (
-                isinstance(event, GoLongSignalReceived)
-                and short_position
-                and not short_position.has_risk
-            ):
-                short_position = short_position.force_exit(event.signal.entry)
+            elif isinstance(event, ExitShortSignalReceived):
+                if short_position and not short_position.has_risk:
+                    short_position = await handle_trail(
+                        short_position, short_position.risk_bar
+                    )
 
-            if (
-                isinstance(event, GoShortSignalReceived)
-                and long_position
-                and not long_position.has_risk
-            ):
-                long_position = long_position.force_exit(event.signal.entry)
+            elif isinstance(event, GoLongSignalReceived):
+                if short_position and not short_position.has_risk:
+                    short_position = await handle_trail(
+                        short_position, short_position.risk_bar
+                    )
+
+            elif isinstance(event, GoShortSignalReceived):
+                if long_position and not long_position.has_risk:
+                    long_position = await handle_trail(
+                        long_position, long_position.risk_bar
+                    )
 
             self._position = (long_position, short_position)
 
@@ -154,6 +155,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             if next_bar:
                 ta = await self.ask(TA(self.symbol, self.timeframe, next_bar))
                 ohlcv = next_position.position_risk.ohlcv
+
                 session_risk = await self.ask(
                     EvaluateSession(next_position.side, ohlcv, ta)
                 )

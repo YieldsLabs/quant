@@ -3,6 +3,8 @@ use core::prelude::*;
 use timeseries::prelude::*;
 use trend::chop;
 
+const CHOP_LINE: f32 = 38.2;
+
 pub struct ChopPulse {
     period: usize,
     atr_period: usize,
@@ -32,9 +34,9 @@ impl Pulse for ChopPulse {
             self.period,
         );
 
-        let neutrality_barrier = NEUTRALITY_LINE - self.threshold;
+        let barrier = CHOP_LINE + self.threshold;
 
-        (chop.slt(&neutrality_barrier), chop.slt(&neutrality_barrier))
+        (chop.slt(&barrier), chop.slt(&barrier))
     }
 }
 
@@ -131,10 +133,12 @@ mod tests {
 
         let (long_signal, short_signal) = pulse.assess(&series);
 
-        let expected_long_signal =
-            vec![true, true, true, true, false, true, true, true, true, true];
-        let expected_short_signal =
-            vec![true, true, true, true, false, true, true, true, true, true];
+        let expected_long_signal = vec![
+            true, true, false, false, false, false, true, true, true, true,
+        ];
+        let expected_short_signal = vec![
+            true, true, false, false, false, false, true, true, true, true,
+        ];
 
         let result_long_signal: Vec<bool> = long_signal.into();
         let result_short_signal: Vec<bool> = short_signal.into();

@@ -591,7 +591,7 @@ fn trend(c: &mut Criterion) {
         )
     });
 
-    group.bench_function("kjs", |b| {
+    group.bench_function("midpoint", |b| {
         b.iter_batched_ref(
             || {
                 let high = Series::from(&high);
@@ -600,7 +600,7 @@ fn trend(c: &mut Criterion) {
 
                 (high, low, period)
             },
-            |(high, low, period)| kjs(high, low, *period),
+            |(high, low, period)| midpoint(high, low, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -742,7 +742,7 @@ fn trend(c: &mut Criterion) {
         )
     });
 
-    group.bench_function("tma", |b| {
+    group.bench_function("trima", |b| {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
@@ -750,7 +750,7 @@ fn trend(c: &mut Criterion) {
 
                 (source, period)
             },
-            |(source, period)| tma(source, *period),
+            |(source, period)| trima(source, *period),
             criterion::BatchSize::SmallInput,
         )
     });
