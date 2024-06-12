@@ -286,18 +286,12 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             should_exit = False
 
-            # if msg.side == PositionSide.LONG and not prev_long and int(knn_transaction[0]) == 2:
-            #     should_exit = True
-
-            # if msg.side == PositionSide.SHORT and not prev_short and int(knn_transaction[0]) == 4:
-            #     should_exit = True
-
             if (
                 msg.side == PositionSide.LONG
                 and prev_long
                 and (
                     (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
+                    or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
                     # or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 1)
                     # or (int(prev_long[0]) == 0 and int(knn_transaction[0]) == 4)
                     # or (int(prev_long[0]) == 3 and int(knn_transaction[0]) == 4)
@@ -312,13 +306,13 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 and prev_short
                 and (
                     (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
+                    or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
                     # or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 1)
                     # or (int(prev_short[0]) == 0 and int(knn_transaction[0]) == 2)
                     # or (int(prev_short[0]) == 0 and int(knn_transaction[0]) == 4)
                     # or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 2)
                     # or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 4)
                     # or (int(prev_short[0]) == 6 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
                     # or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 0)
                 )
             ):
@@ -333,6 +327,10 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     "11111100",
                     "00011000",
                     "10001100",
+                    "00111000",
+                    "10000110",
+                    "11100000",
+                    "11111000",
                 ]
             ):
                 should_exit = True
