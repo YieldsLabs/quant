@@ -27,8 +27,18 @@ class ProfitTarget:
         return self._pt(scale)
 
     @cached_property
+    def third(self):
+        scale = np.random.uniform(1.6, 2.5)
+        return self._pt(scale)
+
+    @cached_property
+    def fourth(self):
+        scale = np.random.uniform(2.6, 3.8)
+        return self._pt(scale)
+
+    @cached_property
     def last(self):
-        return self.second
+        return self.fourth
 
     def _pt(self, scale: float) -> float:
         return self.signal.ohlcv.close * (
@@ -39,4 +49,6 @@ class ProfitTarget:
         return {
             "ft": self.first,
             "st": self.second,
+            "tt": self.third,
+            "ft": self.fourth,
         }
