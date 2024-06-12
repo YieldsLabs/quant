@@ -253,6 +253,7 @@ class PositionRisk(TaMixin):
         close_smooth, volatility_smooth = smooth(close, volatility)
 
         volatility_smooth = self.trail_factor * volatility_smooth[-min_length:]
+        close_smooth = close_smooth[-min_length:]
 
         ats = self._ats(close_smooth, volatility_smooth)
 
