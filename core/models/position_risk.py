@@ -105,7 +105,7 @@ class TaMixin:
 class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(2.684, 3.382))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(2.382, 3.382))
 
     @property
     def curr_bar(self):
@@ -116,8 +116,8 @@ class PositionRisk(TaMixin):
         return self.ohlcv[-2]
 
     def next(self, bar: OHLCV):
-        self.ohlcv.append(bar)
-        ohlcv = sorted(self.ohlcv, key=lambda x: x.timestamp)
+        ohlcv = self.ohlcv + [bar]
+        ohlcv.sort(key=lambda x: x.timestamp)
         return replace(self, ohlcv=ohlcv)
 
     def assess(
@@ -131,39 +131,34 @@ class PositionRisk(TaMixin):
         expiration = self.curr_bar.timestamp - open_timestamp - expiration
 
         if expiration >= 0:
-            if side == PositionSide.LONG:
-                return replace(self, type=PositionRiskType.TIME)
-            if side == PositionSide.SHORT:
-                return replace(self, type=PositionRiskType.TIME)
+            return replace(self, type=PositionRiskType.TIME)
+
+        high, low = self.curr_bar.high, self.curr_bar.low
 
         if side == PositionSide.LONG:
-            if self.curr_bar.high > tp:
+            if high > tp:
                 return replace(self, type=PositionRiskType.TP)
-            if self.curr_bar.low < sl:
+            if low < sl:
                 return replace(self, type=PositionRiskType.SL)
 
         if side == PositionSide.SHORT:
-            if self.curr_bar.low < tp:
+            if low < tp:
                 return replace(self, type=PositionRiskType.TP)
-            if self.curr_bar.high > sl:
+            if high > sl:
                 return replace(self, type=PositionRiskType.SL)
 
         return replace(self, type=PositionRiskType.NONE)
 
     def exit_price(self, side: PositionSide, tp: float, sl: float) -> "float":
+        high, low, close = self.curr_bar.high, self.curr_bar.low, self.curr_bar.close
+
         if self.type == PositionRiskType.TP:
-            if side == PositionSide.LONG:
-                return min(tp, self.curr_bar.high)
-            elif side == PositionSide.SHORT:
-                return max(tp, self.curr_bar.low)
+            return min(tp, high) if side == PositionSide.LONG else max(tp, low)
 
         elif self.type == PositionRiskType.SL:
-            if side == PositionSide.LONG:
-                return max(sl, self.curr_bar.low)
-            elif side == PositionSide.SHORT:
-                return min(sl, self.curr_bar.high)
+            return max(sl, low) if side == PositionSide.LONG else min(sl, high)
 
-        return self.curr_bar.close
+        return close
 
     def sl_low(
         self, side: PositionSide, ta: TechAnalysis, dist: float, sl: float
