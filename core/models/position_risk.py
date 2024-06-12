@@ -59,6 +59,19 @@ def optimize_window_polyorder(data: np.ndarray) -> tuple:
     return window_length, polyorder
 
 
+def smooth(*arrays: np.ndarray) -> List[np.ndarray]:
+    all_data = np.concatenate(arrays)
+    window_length, polyorder = optimize_window_polyorder(all_data)
+    return [
+        savgol_filter(
+            array,
+            min(window_length, len(array)),
+            min(polyorder, min(window_length, len(array)) - 1),
+        )
+        for array in arrays
+    ]
+
+
 class TaMixin:
     @staticmethod
     def _ats(closes: List[float], atr: List[float]) -> List[float]:
@@ -170,12 +183,7 @@ class PositionRisk(TaMixin):
         if min_length < 3:
             return sl
 
-        all_data = np.concatenate([ll, hh, volatility])
-        window_length, polyorder = optimize_window_polyorder(all_data)
-
-        ll_smooth = savgol_filter(ll, window_length, polyorder)
-        hh_smooth = savgol_filter(hh, window_length, polyorder)
-        volatility_smooth = savgol_filter(volatility, window_length, polyorder)
+        ll_smooth, hh_smooth, volatility_smooth = smooth(ll, hh, volatility)
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
@@ -210,12 +218,7 @@ class PositionRisk(TaMixin):
         if min_length < 3:
             return tp
 
-        all_data = np.concatenate([ll, hh, volatility])
-        window_length, polyorder = optimize_window_polyorder(all_data)
-
-        ll_smooth = savgol_filter(ll, window_length, polyorder)
-        hh_smooth = savgol_filter(hh, window_length, polyorder)
-        volatility_smooth = savgol_filter(volatility, window_length, polyorder)
+        ll_smooth, hh_smooth, volatility_smooth = smooth(ll, hh, volatility)
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
@@ -247,11 +250,7 @@ class PositionRisk(TaMixin):
         if min_length < 3:
             return sl
 
-        all_data = np.concatenate([close, volatility])
-        window_length, polyorder = optimize_window_polyorder(all_data)
-
-        close_smooth = savgol_filter(close, window_length, polyorder)
-        volatility_smooth = savgol_filter(volatility, window_length, polyorder)
+        close_smooth, volatility_smooth = smooth(close, volatility)
 
         volatility_smooth = self.trail_factor * volatility_smooth[-min_length:]
 
