@@ -8,5 +8,5 @@ from .base import StopLoss, StopLossType
 @dataclass(frozen=True)
 class DchStopLoss(StopLoss):
     type: StopLossType = StopLossType.Dch
-    period: Parameter = StaticParameter(21.0)
+    period: Parameter = StaticParameter(8.0)
     factor: Parameter = StaticParameter(0.3)

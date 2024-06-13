@@ -5,7 +5,7 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class ViReversalSignal(Signal):
-    type: SignalType = SignalType.ViReversal
+class ViDmiLines2CrossSignal(Signal):
+    type: SignalType = SignalType.ViLines2Cross
     atr_period: Parameter = StaticParameter(1.0)
-    period: Parameter = StaticParameter(6.0)
+    period: Parameter = StaticParameter(14.0)

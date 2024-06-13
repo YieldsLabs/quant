@@ -140,7 +140,7 @@ pub enum SignalConfig {
         bb_period: f32,
         factor: f32,
     },
-    // 2 lines Cross
+    // 2 lines cross
     DmiLines2Cross {
         smooth_type: f32,
         adx_period: f32,
@@ -223,7 +223,7 @@ pub enum SignalConfig {
         slow_period: f32,
         signal_period: f32,
     },
-    // Contratian
+    // Contrarian
     Snatr {
         smooth_type: f32,
         atr_period: f32,

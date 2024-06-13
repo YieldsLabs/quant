@@ -9,8 +9,8 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class DmiReversalSignal(Signal):
-    type: SignalType = SignalType.DmiReversal
+class DmiLines2CrossSignal(Signal):
+    type: SignalType = SignalType.DmiLines2Cross
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)
     adx_period: Parameter = StaticParameter(8.0)
-    di_period: Parameter = StaticParameter(4.0)
+    di_period: Parameter = StaticParameter(14.0)

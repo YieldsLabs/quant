@@ -62,7 +62,7 @@ class Portfolio(AbstractEventManager):
     async def handle_close_positon(self, event: PositionClosed):
         position = event.position
 
-        if not position.closed or not position.is_valid:
+        if not position.is_valid:
             logger.warn(f"Wrong position: {position}")
             return
 

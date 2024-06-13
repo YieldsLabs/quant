@@ -123,18 +123,18 @@ impl BaseStrategy {
         let (baseline_confirm_long, baseline_confirm_short) = self.base_line.filter(ohlcv);
         let (primary_confirm_long, primary_confirm_short) = self.primary_confirm.filter(ohlcv);
         let (pulse_confirm_long, pulse_confirm_short) = self.pulse.assess(ohlcv);
-        
+
         let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);
         let (baseline_close_long, baseline_close_short) = self.base_line.close(ohlcv);
 
         let confirm_long = primary_confirm_long & pulse_confirm_long;
         let confirm_short = primary_confirm_short & pulse_confirm_short;
 
-        let base_go_long_confirm = signal_go_long & baseline_confirm_long & confirm_long;
-        let base_go_short_confirm = signal_go_short & baseline_confirm_short & confirm_short;
+        let base_go_long = signal_go_long & baseline_confirm_long & confirm_long;
+        let base_go_short = signal_go_short & baseline_confirm_short & confirm_short;
 
-        let go_long = base_go_long_confirm.last().unwrap_or(false);
-        let go_short = base_go_short_confirm.last().unwrap_or(false);
+        let go_long = base_go_long.last().unwrap_or(false);
+        let go_short = base_go_short.last().unwrap_or(false);
 
         let exit_long = (exit_close_long | baseline_close_long)
             .last()

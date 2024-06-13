@@ -24,9 +24,7 @@ class TWAP:
             time_interval = self._volatility_time_interval(timepoints)
             current_time += time_interval
 
-            twap_value = self._twap(timepoints)
-
-            yield twap_value
+            yield self._twap(timepoints)
 
             await sleep(time_interval)
 

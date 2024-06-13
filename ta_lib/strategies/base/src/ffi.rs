@@ -17,7 +17,7 @@ static ALLOC_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 pub fn register_strategy(
     timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
-    confirm: Box<dyn Confirm>,
+    primary_confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
@@ -30,7 +30,13 @@ pub fn register_strategy(
     STRATEGY_ID_TO_INSTANCE.write().unwrap().insert(
         current_id,
         Box::new(BaseStrategy::new(
-            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
+            timeseries,
+            signal,
+            primary_confirm,
+            pulse,
+            base_line,
+            stop_loss,
+            exit,
         )),
     );
 

@@ -12,6 +12,6 @@ from strategy.generator.signal.base import Signal, SignalType
 class CeFlipSignal(Signal):
     type: SignalType = SignalType.CeFlip
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
-    period: Parameter = StaticParameter(15.0)
-    atr_period: Parameter = StaticParameter(15.0)
-    factor: Parameter = StaticParameter(3.0)
+    period: Parameter = StaticParameter(22.0)
+    atr_period: Parameter = StaticParameter(22.0)
+    factor: Parameter = StaticParameter(6.8)

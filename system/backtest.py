@@ -25,7 +25,7 @@ from strategy.generator.baseline.ma import MaBaseLine
 from strategy.generator.confirm.cci import CciConfirm
 from strategy.generator.exit.cci import CciExit
 from strategy.generator.pulse.chop import ChopPulse
-from strategy.generator.signal.reversal.vi_reversal import ViReversalSignal
+from strategy.generator.signal.linestwocross.vi import ViDmiLines2CrossSignal
 from strategy.generator.stop_loss.dch import DchStopLoss
 
 from .context import SystemContext
@@ -128,14 +128,15 @@ class BacktestSystem(AbstractSystem):
             # "LUNA2USDT",
             # "ALGOUSDT",
             # "WAVESUSDT",
-            # "NEARUSDT",
+            # "NEARUSDT"
             # "DOTUSDT",
-            # "SOLUSDT",
-            # "FILUSDT"
-            "TONUSDT"
+            # "SOLUSDT"
+            "FILUSDT",
+            # "TONUSDT"
+            # "RAREUSDT"
             # "ATOMUSDT",
             # "SCUSDT"
-            # "FTMUSDT",
+            # "FTMUSDT"
             # "BOMEUSDT"
             # "APEUSDT"
             # "BTCUSDT"
@@ -158,7 +159,7 @@ class BacktestSystem(AbstractSystem):
                 Timeframe.FIVE_MINUTES,
                 Strategy(
                     *(
-                        ViReversalSignal(),
+                        ViDmiLines2CrossSignal(),
                         CciConfirm(),
                         ChopPulse(),
                         MaBaseLine(ma=StaticParameter(MovingAverageType.VIDYA)),
@@ -167,34 +168,6 @@ class BacktestSystem(AbstractSystem):
                     )
                 ),
             ),
-            # (
-            #     futures_symbols[0],
-            #     Timeframe.FIVE_MINUTES,
-            #     Strategy(
-            #         *(
-            #             SupertrendFlipSignal(),
-            #             CciConfirm(),
-            #             TdfiPulse(),
-            #             MaBaseLine(ma=StaticParameter(MovingAverageType.LSMA)),
-            #             AtrStopLoss(),
-            #             MfiExit(),
-            #         )
-            #     ),
-            # ),
-            # (
-            #     futures_symbols[0],
-            #     Timeframe.FIVE_MINUTES,
-            #     Strategy(
-            #         *(
-            #             VwapBbSignal(),
-            #             CciConfirm(),
-            #             TdfiPulse(),
-            #             MaBaseLine(ma=StaticParameter(MovingAverageType.LSMA)),
-            #             AtrStopLoss(),
-            #             MfiExit(),
-            #         )
-            #     ),
-            # ),
         ]
 
         # await self.dispatch(DeployStrategy(strategy=strategies))

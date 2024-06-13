@@ -9,5 +9,5 @@ from strategy.generator.signal.base import Signal, SignalType
 class SupertrendFlipSignal(Signal):
     type: SignalType = SignalType.SupFlip
     source_type: Parameter = StaticParameter(SourceType.HL2)
-    atr_period: Parameter = StaticParameter(10.0)
-    factor: Parameter = StaticParameter(2.0)
+    atr_period: Parameter = StaticParameter(15.0)
+    factor: Parameter = StaticParameter(1.36)

@@ -269,10 +269,6 @@ class Position:
         gap = ohlcv.timestamp - self.risk_bar.timestamp
         pnl_perc = (self.curr_pnl / self.curr_price) * 100
 
-        logger.info(
-            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {self.entry_price}, SL: {self.stop_loss}, TP: {self.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {self.has_break_even}"
-        )
-
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
 
@@ -294,8 +290,8 @@ class Position:
         next_sl = next_position.stop_loss
         dstp = abs(self.curr_price - self.take_profit)
 
-        if session_risk == SessionRiskType.EXIT and pnl_perc > 0.0:
-            if self.curr_pnl > self.fee:
+        if session_risk == SessionRiskType.EXIT:
+            if self.curr_pnl > 2.5 * self.fee:
                 print(
                     f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
                 )
@@ -308,6 +304,10 @@ class Position:
             next_sl,
             self.open_timestamp,
             self.expiration,
+        )
+
+        logger.info(
+            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {self.entry_price}, SL: {self.stop_loss}, TP: {self.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {self.has_break_even}"
         )
 
         return replace(

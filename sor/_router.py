@@ -217,12 +217,6 @@ class SmartRouter(AbstractEventManager):
                 f"Trying to reduce order -> algo price: {price}, theo price: {exit_order.price}, spread: {spread}, max spread: {max_spread}"
             )
 
-            if max_spread < 0 or spread < max_spread or spread < 0:
-                if num_orders > 2:
-                    self.exchange.close_half_position(symbol, position_side)
-                else:
-                    self.exchange.close_full_position(symbol, position_side)
-
             curr_time = time.time()
             expired_orders = [
                 order_id
@@ -252,6 +246,12 @@ class SmartRouter(AbstractEventManager):
                 )
                 if order_id:
                     order_timestamps[order_id] = time.time()
+
+            if spread < max_spread and not len(order_timestamps.keys()):
+                if num_orders > 2:
+                    self.exchange.close_half_position(symbol, position_side)
+                else:
+                    self.exchange.close_full_position(symbol, position_side)
 
         for order_id in list(order_timestamps.keys()):
             self.exchange.cancel_order(order_id, symbol)

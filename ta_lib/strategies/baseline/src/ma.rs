@@ -42,8 +42,7 @@ impl BaseLine for MaBaseLine {
 
     fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
-        let prev_ma = ma.shift(1);
 
-        (ma.slt(&prev_ma), ma.sgt(&prev_ma))
+        (data.close().cross_under(&ma), data.close().cross_over(&ma))
     }
 }

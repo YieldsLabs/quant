@@ -6,8 +6,8 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class SnatrReversalSignal(Signal):
-    type: SignalType = SignalType.SnatrReversal
+class SnatrSignal(Signal):
+    type: SignalType = SignalType.Snatr
     smooth_type: Parameter = StaticParameter(Smooth.WMA)
     atr_period: Parameter = StaticParameter(60.0)
     atr_smooth_period: Parameter = StaticParameter(13.0)

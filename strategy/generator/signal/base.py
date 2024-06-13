@@ -34,16 +34,17 @@ class SignalType(Enum):
     AoSaucer = "AoSaucer"
     HighLow = "HighLow"
     MacdColorSwitch = "MacdColorSwitch"
+    CandlestickTrend = "CandlestickTrend"
+    # Contrarian
+    Snatr = "Snatr"
     RsiV = "RsiV"
     TiiV = "TiiV"
-    CandlestickTrend = "CandlestickTrend"
     # Flip
     CeFlip = "CeFlip"
     SupFlip = "SupFlip"
-    # Reversal
-    DmiReversal = "DmiReversal"
-    SnatrReversal = "SnatrReversal"
-    ViReversal = "ViReversal"
+    # Lines2Cross
+    DmiLines2Cross = "DmiLines2Cross"
+    ViLines2Cross = "ViLines2Cross"
     # Ma
     Ma3Cross = "Ma3Cross"
     MaTestingGround = "MaTestingGround"
