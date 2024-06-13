@@ -3,8 +3,8 @@ use core::prelude::*;
 use momentum::stc;
 use timeseries::prelude::*;
 
-const LOWER_LINE: f32 = 25.;
 const UPPER_LINE: f32 = 75.;
+const LOWER_LINE: f32 = 25.;
 
 pub struct StcConfirm {
     source_type: SourceType,
@@ -46,7 +46,7 @@ impl Confirm for StcConfirm {
         std::cmp::max(adj_lookback_three, self.d_second)
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let stc = stc(
             &data.source(self.source_type),
             self.smooth_type,
@@ -59,8 +59,8 @@ impl Confirm for StcConfirm {
         let prev_stc = stc.shift(1);
 
         (
-            stc.sgt(&prev_stc) & stc.sgt(&UPPER_LINE),
-            stc.slt(&prev_stc) & stc.slt(&LOWER_LINE),
+            stc.sgt(&prev_stc) & stc.slt(&UPPER_LINE),
+            stc.slt(&prev_stc) & stc.sgt(&LOWER_LINE),
         )
     }
 }

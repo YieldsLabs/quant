@@ -37,8 +37,8 @@ impl Exit for CciExit {
         self.period
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = cci(
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let cci = cci(
             &data.source(self.source_type),
             self.smooth_type,
             self.period,
@@ -47,6 +47,6 @@ impl Exit for CciExit {
         let upper_bound = CCI_OVERBOUGHT - self.threshold;
         let lower_bound = CCI_OVERSOLD + self.threshold;
 
-        (rsi.cross_under(&upper_bound), rsi.cross_over(&lower_bound))
+        (cci.cross_under(&upper_bound), cci.cross_over(&lower_bound))
     }
 }

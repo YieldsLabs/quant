@@ -37,10 +37,6 @@ pub enum ConfirmConfig {
         smooth_period: f32,
         threshold: f32,
     },
-    Roc {
-        source_type: f32,
-        period: f32,
-    },
     Stc {
         source_type: f32,
         smooth_type: f32,
@@ -54,16 +50,5 @@ pub enum ConfirmConfig {
         source_type: f32,
         atr_period: f32,
         factor: f32,
-    },
-    Dso {
-        source_type: f32,
-        smooth_type: f32,
-        smooth_period: f32,
-        k_period: f32,
-        d_period: f32,
-    },
-    Vi {
-        atr_period: f32,
-        period: f32,
     },
 }

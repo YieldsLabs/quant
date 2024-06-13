@@ -24,7 +24,7 @@ impl Exit for AstExit {
         self.atr_period
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = ast(
             &data.source(self.source_type),
             &data.atr(self.atr_period),

@@ -45,7 +45,7 @@ impl Signal for Ma2RsiSignal {
         std::cmp::max(adj_lookback, self.rsi_period)
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(
             &data.source(self.source_type),
             self.smooth_type,

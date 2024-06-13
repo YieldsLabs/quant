@@ -1,5 +1,4 @@
 use crate::series::Series;
-use crate::smoothing::Smooth;
 use crate::ZERO;
 use std::ops::Neg;
 

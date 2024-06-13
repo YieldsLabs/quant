@@ -19,7 +19,7 @@ impl Signal for HighLowSignal {
         self.period
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         (
             data.low().seq(&data.low().shift(1)),
             data.high().seq(&data.high().shift(1)),

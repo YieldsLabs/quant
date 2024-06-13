@@ -26,7 +26,7 @@ impl Confirm for EomConfirm {
         self.period
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let eom = eom(
             &data.source(self.source_type),
             data.high(),

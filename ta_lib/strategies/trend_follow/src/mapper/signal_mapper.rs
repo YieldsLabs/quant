@@ -271,6 +271,22 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             slow_period,
             signal_period,
         )),
+        SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
+        SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
+            candletrend_deserialize(candle as usize),
+        )),
+        // Contrarian
+        SignalConfig::Snatr {
+            smooth_type,
+            atr_period,
+            atr_smooth_period,
+            threshold,
+        } => Box::new(SnatrSignal::new(
+            smooth_deserialize(smooth_type as usize),
+            atr_period,
+            atr_smooth_period,
+            threshold,
+        )),
         SignalConfig::TiiV {
             source_type,
             smooth_type,
@@ -292,10 +308,6 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             smooth_deserialize(smooth_type as usize),
             rsi_period,
             threshold,
-        )),
-        SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
-        SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
-            candletrend_deserialize(candle as usize),
         )),
         // BB
         SignalConfig::MacdBb {
@@ -462,29 +474,18 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             source_deserialize(source_type as usize),
             period,
         )),
-        // Reversal
-        SignalConfig::SnatrReversal {
-            smooth_type,
-            atr_period,
-            atr_smooth_period,
-            threshold,
-        } => Box::new(SnatrReversalSignal::new(
-            smooth_deserialize(smooth_type as usize),
-            atr_period,
-            atr_smooth_period,
-            threshold,
-        )),
-        SignalConfig::DmiReversal {
+        // 2 lines cross
+        SignalConfig::DmiLines2Cross {
             smooth_type,
             adx_period,
             di_period,
-        } => Box::new(DmiReversalSignal::new(
+        } => Box::new(DmiLines2CrossSignal::new(
             smooth_deserialize(smooth_type as usize),
             adx_period,
             di_period,
         )),
-        SignalConfig::ViReversal { period, atr_period } => {
-            Box::new(ViReversalSignal::new(period, atr_period))
+        SignalConfig::ViLines2Cross { period, atr_period } => {
+            Box::new(ViLines2CrossSignal::new(period, atr_period))
         }
         // Breakout
         SignalConfig::DchMa2Breakout {

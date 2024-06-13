@@ -4,12 +4,12 @@ use timeseries::prelude::*;
 
 pub trait Signal: Send + Sync {
     fn lookback(&self) -> usize;
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait Confirm: Send + Sync {
     fn lookback(&self) -> usize;
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait Pulse: Send + Sync {
@@ -20,12 +20,12 @@ pub trait Pulse: Send + Sync {
 pub trait BaseLine: Send + Sync {
     fn lookback(&self) -> usize;
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait Exit: Send + Sync {
     fn lookback(&self) -> usize;
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
 }
 
 pub trait StopLoss: Send + Sync {

@@ -140,19 +140,13 @@ pub enum SignalConfig {
         bb_period: f32,
         factor: f32,
     },
-    // Reversal
-    DmiReversal {
+    // 2 lines Cross
+    DmiLines2Cross {
         smooth_type: f32,
         adx_period: f32,
         di_period: f32,
     },
-    SnatrReversal {
-        smooth_type: f32,
-        atr_period: f32,
-        atr_smooth_period: f32,
-        threshold: f32,
-    },
-    ViReversal {
+    ViLines2Cross {
         atr_period: f32,
         period: f32,
     },
@@ -228,6 +222,13 @@ pub enum SignalConfig {
         fast_period: f32,
         slow_period: f32,
         signal_period: f32,
+    },
+    // Contratian
+    Snatr {
+        smooth_type: f32,
+        atr_period: f32,
+        atr_smooth_period: f32,
+        threshold: f32,
     },
     RsiV {
         source_type: f32,

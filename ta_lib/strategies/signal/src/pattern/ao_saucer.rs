@@ -31,7 +31,7 @@ impl Signal for AoSaucerSignal {
         std::cmp::max(self.fast_period, self.slow_period)
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ao = ao(
             &data.source(self.source_type),
             self.smooth_type,

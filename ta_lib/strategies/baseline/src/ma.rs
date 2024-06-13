@@ -1,17 +1,15 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
-use signal::{MaCrossSignal, MaQuadrupleSignal, MaSurpassSignal, MaTestingGroundSignal};
 use timeseries::prelude::*;
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
-const DEFAULT_ATR_FACTOR: f32 = 1.236;
+const DEFAULT_ATR_FACTOR: f32 = 1.1;
 
 pub struct MaBaseLine {
     source_type: SourceType,
     ma: MovingAverageType,
     period: usize,
-    signal: Vec<Box<dyn Signal>>,
 }
 
 impl MaBaseLine {
@@ -20,25 +18,13 @@ impl MaBaseLine {
             source_type,
             ma,
             period: period as usize,
-            signal: vec![
-                Box::new(MaSurpassSignal::new(source_type, ma, period)),
-                Box::new(MaQuadrupleSignal::new(source_type, ma, period)),
-                Box::new(MaTestingGroundSignal::new(source_type, ma, period)),
-                // Box::new(MaCrossSignal::new(source_type, ma, period)),
-            ],
         }
     }
 }
 
 impl BaseLine for MaBaseLine {
     fn lookback(&self) -> usize {
-        let mut m = std::cmp::max(DEFAULT_ATR_LOOKBACK, self.period);
-
-        for signal in &self.signal {
-            m = std::cmp::max(m, signal.lookback());
-        }
-
-        m
+        std::cmp::max(DEFAULT_ATR_LOOKBACK, self.period)
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -54,19 +40,10 @@ impl BaseLine for MaBaseLine {
         )
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let lookback = self.lookback();
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
+        let prev_ma = ma.shift(1);
 
-        let mut go_long_signal: Series<bool> = Series::zero(lookback).into();
-        let mut go_short_signal: Series<bool> = Series::zero(lookback).into();
-
-        for signal in &self.signal {
-            let (go_long, go_short) = signal.generate(data);
-
-            go_long_signal = go_long_signal | go_long;
-            go_short_signal = go_short_signal | go_short;
-        }
-
-        (go_long_signal, go_short_signal)
+        (ma.slt(&prev_ma), ma.sgt(&prev_ma))
     }
 }

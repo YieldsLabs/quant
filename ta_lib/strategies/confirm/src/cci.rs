@@ -29,7 +29,7 @@ impl Confirm for CciConfirm {
         self.period
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let cci = cci(
             &data.source(self.source_type),
             self.smooth_type,

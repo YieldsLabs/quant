@@ -23,7 +23,7 @@ pub struct StopLossLevels {
 pub struct BaseStrategy {
     timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
-    confirm: Box<dyn Confirm>,
+    primary_confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
@@ -35,7 +35,7 @@ impl BaseStrategy {
     pub fn new(
         timeseries: Box<dyn TimeSeries>,
         signal: Box<dyn Signal>,
-        confirm: Box<dyn Confirm>,
+        primary_confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
         base_line: Box<dyn BaseLine>,
         stop_loss: Box<dyn StopLoss>,
@@ -43,7 +43,7 @@ impl BaseStrategy {
     ) -> Self {
         let lookbacks = [
             signal.lookback(),
-            confirm.lookback(),
+            primary_confirm.lookback(),
             pulse.lookback(),
             base_line.lookback(),
             stop_loss.lookback(),
@@ -55,7 +55,7 @@ impl BaseStrategy {
         Self {
             timeseries,
             signal,
-            confirm,
+            primary_confirm,
             pulse,
             base_line,
             stop_loss,
@@ -118,33 +118,37 @@ impl Strategy for BaseStrategy {
 
 impl BaseStrategy {
     fn trade_signals(&self, ohlcv: &OHLCVSeries) -> (bool, bool, bool, bool) {
-        let (go_long_trigger, go_short_trigger) = self.signal.generate(ohlcv);
-        let (go_long_baseline, go_short_baseline) = self.base_line.generate(ohlcv);
-        let (go_long_confirm, go_short_confirm) = self.confirm.validate(ohlcv);
-        let (go_long_momentum, go_short_momentum) = self.pulse.assess(ohlcv);
-        let (filter_long_baseline, filter_short_baseline) = self.base_line.filter(ohlcv);
-        let (exit_long_eval, exit_short_eval) = self.exit.evaluate(ohlcv);
+        let (signal_go_long, signal_go_short) = self.signal.trigger(ohlcv);
 
-        let go_long_signal = go_long_trigger | go_long_baseline;
-        let go_short_signal = go_short_trigger | go_short_baseline;
+        let (baseline_confirm_long, baseline_confirm_short) = self.base_line.filter(ohlcv);
+        let (primary_confirm_long, primary_confirm_short) = self.primary_confirm.filter(ohlcv);
+        let (pulse_confirm_long, pulse_confirm_short) = self.pulse.assess(ohlcv);
+        
+        let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);
+        let (baseline_close_long, baseline_close_short) = self.base_line.close(ohlcv);
 
-        let go_long = (go_long_signal & filter_long_baseline & go_long_confirm & go_long_momentum)
+        let confirm_long = primary_confirm_long & pulse_confirm_long;
+        let confirm_short = primary_confirm_short & pulse_confirm_short;
+
+        let base_go_long_confirm = signal_go_long & baseline_confirm_long & confirm_long;
+        let base_go_short_confirm = signal_go_short & baseline_confirm_short & confirm_short;
+
+        let go_long = base_go_long_confirm.last().unwrap_or(false);
+        let go_short = base_go_short_confirm.last().unwrap_or(false);
+
+        let exit_long = (exit_close_long | baseline_close_long)
             .last()
             .unwrap_or(false);
-        let go_short =
-            (go_short_signal & filter_short_baseline & go_short_confirm & go_short_momentum)
-                .last()
-                .unwrap_or(false);
-
-        let exit_long = exit_long_eval.last().unwrap_or(false);
-        let exit_short = exit_short_eval.last().unwrap_or(false);
+        let exit_short = (exit_close_short | baseline_close_short)
+            .last()
+            .unwrap_or(false);
 
         (go_long, go_short, exit_long, exit_short)
     }
 
     fn suggested_entry(&self, ohlcv: &OHLCVSeries) -> f32 {
         ohlcv
-            .source(SourceType::CLOSE)
+            .source(SourceType::HLCC4)
             .last()
             .unwrap_or(std::f32::NAN)
     }
@@ -177,7 +181,7 @@ mod tests {
             self.fast_period
         }
 
-        fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
@@ -192,7 +196,7 @@ mod tests {
             self.period
         }
 
-        fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
@@ -222,14 +226,14 @@ mod tests {
             self.period
         }
 
-        fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
 
-        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
-            (Series::one(len).into(), Series::zero(len).into())
+            (Series::zero(len).into(), Series::one(len).into())
         }
     }
 
@@ -259,7 +263,7 @@ mod tests {
             0
         }
 
-        fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }

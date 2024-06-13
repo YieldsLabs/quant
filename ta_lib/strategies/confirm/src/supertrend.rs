@@ -24,7 +24,7 @@ impl Confirm for SupertrendConfirm {
         self.atr_period
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = supertrend(
             &data.source(self.source_type),
             data.close(),

@@ -35,7 +35,7 @@ impl Signal for MacdColorSwitchSignal {
         std::cmp::max(adj_lookback, self.signal_period)
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (_, _, histogram) = macd(
             &data.source(self.source_type),
             self.smooth_type,

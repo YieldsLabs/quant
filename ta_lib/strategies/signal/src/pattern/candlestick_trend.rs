@@ -20,7 +20,7 @@ impl Signal for CandlestickTrendSignal {
         DEFAULT_LOOKBACK
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         candlestick_trend_indicator(&self.candle, data)
     }
 }

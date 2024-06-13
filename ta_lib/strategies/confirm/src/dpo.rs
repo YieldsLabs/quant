@@ -27,7 +27,7 @@ impl Confirm for DpoConfirm {
         self.period
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let dpo = dpo(
             &data.source(self.source_type),
             self.smooth_type,
