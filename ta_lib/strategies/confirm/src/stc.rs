@@ -59,8 +59,8 @@ impl Confirm for StcConfirm {
         let prev_stc = stc.shift(1);
 
         (
-            stc.sgt(&prev_stc) & stc.slt(&UPPER_LINE),
-            stc.slt(&prev_stc) & stc.sgt(&LOWER_LINE),
+            stc.sgt(&UPPER_LINE) & stc.sgte(&prev_stc),
+            stc.slt(&LOWER_LINE) & stc.slte(&prev_stc),
         )
     }
 }
