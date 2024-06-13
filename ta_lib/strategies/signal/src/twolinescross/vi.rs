@@ -3,12 +3,12 @@ use core::prelude::*;
 use timeseries::prelude::*;
 use trend::vi;
 
-pub struct ViLines2CrossSignal {
+pub struct Vi2LinesCrossSignal {
     atr_period: usize,
     period: usize,
 }
 
-impl ViLines2CrossSignal {
+impl Vi2LinesCrossSignal {
     pub fn new(atr_period: f32, period: f32) -> Self {
         Self {
             atr_period: atr_period as usize,
@@ -17,7 +17,7 @@ impl ViLines2CrossSignal {
     }
 }
 
-impl Signal for ViLines2CrossSignal {
+impl Signal for Vi2LinesCrossSignal {
     fn lookback(&self) -> usize {
         std::cmp::max(self.atr_period, self.period)
     }
@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn test_signal_vi_cross() {
-        let signal = ViLines2CrossSignal::new(1.0, 2.0);
+        let signal = Vi2LinesCrossSignal::new(1.0, 2.0);
         let data = vec![
             OHLCV {
                 ts: 1679827200,

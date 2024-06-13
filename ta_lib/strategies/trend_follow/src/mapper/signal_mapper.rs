@@ -475,17 +475,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period,
         )),
         // 2 lines cross
-        SignalConfig::DmiLines2Cross {
+        SignalConfig::Dmi2LinesCross {
             smooth_type,
             adx_period,
             di_period,
-        } => Box::new(DmiLines2CrossSignal::new(
+        } => Box::new(Dmi2LinesCrossSignal::new(
             smooth_deserialize(smooth_type as usize),
             adx_period,
             di_period,
         )),
-        SignalConfig::ViLines2Cross { period, atr_period } => {
-            Box::new(ViLines2CrossSignal::new(period, atr_period))
+        SignalConfig::Vi2LinesCross { period, atr_period } => {
+            Box::new(Vi2LinesCrossSignal::new(period, atr_period))
         }
         // Breakout
         SignalConfig::DchMa2Breakout {

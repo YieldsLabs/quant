@@ -42,9 +42,9 @@ class SignalType(Enum):
     # Flip
     CeFlip = "CeFlip"
     SupFlip = "SupFlip"
-    # Lines2Cross
-    DmiLines2Cross = "DmiLines2Cross"
-    ViLines2Cross = "ViLines2Cross"
+    # Two Lines Cross
+    Dmi2LinesCross = "Dmi2LinesCross"
+    Vi2LinesCross = "Vi2LinesCross"
     # Ma
     Ma3Cross = "Ma3Cross"
     MaTestingGround = "MaTestingGround"

@@ -5,7 +5,7 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class ViDmiLines2CrossSignal(Signal):
-    type: SignalType = SignalType.ViLines2Cross
+class Vi2LinesCrossSignal(Signal):
+    type: SignalType = SignalType.Vi2LinesCross
     atr_period: Parameter = StaticParameter(1.0)
     period: Parameter = StaticParameter(14.0)

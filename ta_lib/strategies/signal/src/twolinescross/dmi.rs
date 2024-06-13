@@ -3,13 +3,13 @@ use core::prelude::*;
 use momentum::dmi;
 use timeseries::prelude::*;
 
-pub struct DmiLines2CrossSignal {
+pub struct Dmi2LinesCrossSignal {
     smooth_type: Smooth,
     adx_period: usize,
     di_period: usize,
 }
 
-impl DmiLines2CrossSignal {
+impl Dmi2LinesCrossSignal {
     pub fn new(smooth_type: Smooth, adx_period: f32, di_period: f32) -> Self {
         Self {
             smooth_type,
@@ -19,7 +19,7 @@ impl DmiLines2CrossSignal {
     }
 }
 
-impl Signal for DmiLines2CrossSignal {
+impl Signal for Dmi2LinesCrossSignal {
     fn lookback(&self) -> usize {
         std::cmp::max(self.adx_period, self.di_period)
     }
@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_signal_dmi_cross() {
-        let signal = DmiLines2CrossSignal::new(Smooth::SMMA, 3.0, 3.0);
+        let signal = Dmi2LinesCrossSignal::new(Smooth::SMMA, 3.0, 3.0);
         let data = vec![
             OHLCV {
                 ts: 1679827200,

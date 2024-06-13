@@ -141,12 +141,12 @@ pub enum SignalConfig {
         factor: f32,
     },
     // 2 lines cross
-    DmiLines2Cross {
+    Dmi2LinesCross {
         smooth_type: f32,
         adx_period: f32,
         di_period: f32,
     },
-    ViLines2Cross {
+    Vi2LinesCross {
         atr_period: f32,
         period: f32,
     },
