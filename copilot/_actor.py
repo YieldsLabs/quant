@@ -23,19 +23,20 @@ logger = logging.getLogger(__name__)
 LOOKBACK = 8
 N_CLUSTERS = 5
 
+
 def binary_strings(n):
     def backtrack(current):
         if len(current) == n:
             results.append(current)
             return
-        
-        backtrack(current + '0')
-        
-        backtrack(current + '1')
+
+        backtrack(current + "0")
+        backtrack(current + "1")
 
     results = []
-    backtrack('')
+    backtrack("")
     return results
+
 
 def pad_bars(bars, length):
     if len(bars) < length:
@@ -306,11 +307,6 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 and (
                     (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
                     or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
-                    # or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 1)
-                    # or (int(prev_long[0]) == 0 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_long[0]) == 3 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_long[0]) == 3 and int(knn_transaction[0]) == 1)
-                    # or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 4)
                 )
             ):
                 should_exit = True
@@ -321,36 +317,10 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 and (
                     (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
                     or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 1)
-                    # or (int(prev_short[0]) == 0 and int(knn_transaction[0]) == 2)
-                    # or (int(prev_short[0]) == 0 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 2)
-                    # or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_short[0]) == 6 and int(knn_transaction[0]) == 4)
-                    # or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 0)
                 )
             ):
                 should_exit = True
 
-            # if knn_transaction in set(
-            #     [
-            #         "01100000",
-            #         "11110000",
-            #         "10001100",
-            #         "01111001",
-            #         "11111100",
-            #         "00011000",
-            #         "10001100",
-            #         "00111000",
-            #         "10000110",
-            #         "11100000",
-            #         "11111000",
-            #         "00111100",
-            #         "01111100"
-            #     ]
-            # ):
-            #     should_exit = True
-                
             if knn_transaction in self.anomaly:
                 should_exit = True
 
