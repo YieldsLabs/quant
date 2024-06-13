@@ -47,8 +47,8 @@ class ProfitTarget:
 
     def to_dict(self):
         return {
-            "ft": self.first,
-            "st": self.second,
-            "tt": self.third,
-            "ft": self.fourth,
+            "first": self.first,
+            "second": self.second,
+            "third": self.third,
+            "fourth": self.fourth,
         }

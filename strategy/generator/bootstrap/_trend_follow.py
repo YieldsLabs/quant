@@ -35,6 +35,7 @@ class TrendSignalType(Enum):
     # CONTRARIAN = auto()
     # BB = auto()
     # PATTERN = auto()
+    # COLOR_SWITCH = auto()
     FLIP = auto()
     MA = auto()
     # BREAKOUT = auto()
@@ -329,7 +330,12 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         #             AoSaucerSignal(),
         #             CandlestickTrendSignal(),
         #             # HighLowSignal(),
+        #     )
+        # if signal == TrendSignalType.COLOR_SWITCH:
+        #     return np.random.choice(
+        #         [
         #             MacdColorSwitchSignal(),
+        #           ]
         #     )
         # if signal == TrendSignalType.CONTRARIAN:
         #     return np.random.choice(

@@ -11,8 +11,8 @@ class StrategyOptimizationType(Enum):
 
 @dataclass(frozen=True)
 class Strategy:
-    entry: Indicator
-    confirm: Indicator
+    signal: Indicator
+    primary_confirm: Indicator
     pulse: Indicator
     baseline: Indicator
     stop_loss: Indicator
@@ -21,8 +21,8 @@ class Strategy:
     @property
     def parameters(self):
         return (
-            self.entry.to_dict(),
-            self.confirm.to_dict(),
+            self.signal.to_dict(),
+            self.primary_confirm.to_dict(),
             self.pulse.to_dict(),
             self.baseline.to_dict(),
             self.stop_loss.to_dict(),
@@ -45,10 +45,8 @@ class Strategy:
         return parameters if parameters else "NONE"
 
     def __str__(self) -> str:
-        entry_ = f"_SGNL{self.entry.type}:{self._format_parameters(self.entry)}"
-        confirmation_ = (
-            f"_CNFRM{self.confirm.type}:{self._format_parameters(self.confirm)}"
-        )
+        signal_ = f"_SGNL{self.signal.type}:{self._format_parameters(self.signal)}"
+        primary_confirmation_ = f"_PCNFRM{self.primary_confirm.type}:{self._format_parameters(self.primary_confirm)}"
         pulse_ = f"_PLS{self.pulse.type}:{self._format_parameters(self.pulse)}"
         baseline_ = (
             f"_BSLN{self.baseline.type}:{self._format_parameters(self.baseline)}"
@@ -58,7 +56,7 @@ class Strategy:
         )
         exit_ = f"_EXT{self.exit.type}:{self._format_parameters(self.exit)}"
 
-        return f"{entry_}{confirmation_}{pulse_}{baseline_}{stop_loss}{exit_}"
+        return f"{signal_}{primary_confirmation_}{pulse_}{baseline_}{stop_loss}{exit_}"
 
     def __hash__(self) -> int:
         return hash(str(self))

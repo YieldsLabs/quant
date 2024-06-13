@@ -258,6 +258,11 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             fast_period,
             slow_period,
         )),
+        SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
+        SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
+            candletrend_deserialize(candle as usize),
+        )),
+        // Color Switch
         SignalConfig::MacdColorSwitch {
             source_type,
             smooth_type,
@@ -270,10 +275,6 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             fast_period,
             slow_period,
             signal_period,
-        )),
-        SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
-        SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
-            candletrend_deserialize(candle as usize),
         )),
         // Contrarian
         SignalConfig::Snatr {

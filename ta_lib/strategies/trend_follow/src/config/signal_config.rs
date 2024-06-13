@@ -216,6 +216,7 @@ pub enum SignalConfig {
     HighLow {
         period: f32,
     },
+    // Color Switch
     MacdColorSwitch {
         source_type: f32,
         smooth_type: f32,

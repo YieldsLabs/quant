@@ -1,5 +1,6 @@
 mod bb;
 mod breakout;
+mod colorswitch;
 mod contrarian;
 mod flip;
 mod ma;
@@ -11,6 +12,7 @@ mod zerocross;
 
 pub use bb::*;
 pub use breakout::*;
+pub use colorswitch::*;
 pub use contrarian::*;
 pub use flip::*;
 pub use ma::*;

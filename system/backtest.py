@@ -25,7 +25,7 @@ from strategy.generator.baseline.ma import MaBaseLine
 from strategy.generator.confirm.cci import CciConfirm
 from strategy.generator.exit.cci import CciExit
 from strategy.generator.pulse.chop import ChopPulse
-from strategy.generator.signal.linestwocross.vi import ViDmiLines2CrossSignal
+from strategy.generator.signal.twolinescross.vi import Vi2LinesCrossSignal
 from strategy.generator.stop_loss.dch import DchStopLoss
 
 from .context import SystemContext
@@ -159,7 +159,7 @@ class BacktestSystem(AbstractSystem):
                 Timeframe.FIVE_MINUTES,
                 Strategy(
                     *(
-                        ViDmiLines2CrossSignal(),
+                        Vi2LinesCrossSignal(),
                         CciConfirm(),
                         ChopPulse(),
                         MaBaseLine(ma=StaticParameter(MovingAverageType.VIDYA)),
