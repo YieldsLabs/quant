@@ -105,7 +105,7 @@ class TaMixin:
 class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(2.382, 3.382))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.382, 2.382))
 
     @property
     def curr_bar(self):
@@ -188,10 +188,12 @@ class PositionRisk(TaMixin):
         hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
-            return max(sl, np.max(ll_atr) - dist)
+            new_sl = np.min(ll_atr + self.trail_factor * dist)
+            return max(sl, new_sl)
 
         if side == PositionSide.SHORT:
-            return min(sl, np.min(hh_atr) + dist)
+            new_sl = np.max(hh_atr - self.trail_factor * dist)
+            return min(sl, new_sl)
 
         return sl
 
@@ -223,10 +225,9 @@ class PositionRisk(TaMixin):
         hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
-            return min(tp, np.min(hh_atr) + dist)
-
-        if side == PositionSide.SHORT:
-            return max(tp, np.max(ll_atr) - dist)
+            return np.max(hh_atr - self.trail_factor * dist)
+        elif side == PositionSide.SHORT:
+            return np.min(ll_atr + self.trail_factor * dist)
 
         return tp
 

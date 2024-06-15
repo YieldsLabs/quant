@@ -41,10 +41,8 @@ class Position:
 
     @property
     def take_profit(self) -> float:
-        p = self.signal.symbol.price_precision
-
         if self._tp:
-            return round(self._tp, p)
+            return self._tp
 
         if self.signal_risk.tp:
             if (
@@ -56,18 +54,16 @@ class Position:
                 and self.signal_risk.tp < self.stop_loss
                 and self.signal_risk.tp >= self.profit_target.last
             ):
-                return round(self.signal_risk.tp, p)
+                return self.signal_risk.tp
 
-        return round(self.profit_target.last, p)
+        return self.profit_target.last
 
     @property
     def stop_loss(self) -> float:
-        p = self.signal.symbol.price_precision
-
         if self._sl:
-            return round(self._sl, p)
+            return self._sl
 
-        return round(self.signal.stop_loss, p)
+        return self.signal.stop_loss
 
     @property
     def open_timestamp(self) -> int:
@@ -289,14 +285,15 @@ class Position:
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
         dstp = abs(self.curr_price - self.take_profit)
+        dssl = abs(self.curr_price - self.stop_loss)
 
-        if session_risk == SessionRiskType.EXIT:
-            if self.curr_pnl > 1.2 * self.fee:
-                print(
-                    f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
-                )
-                next_tp = next_risk.tp_low(self.side, ta, dstp, next_tp)
-                print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
+        if session_risk == SessionRiskType.EXIT and self.curr_pnl > 1.2 * self.fee:
+            print(
+                f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
+            )
+            next_tp = next_risk.tp_low(self.side, ta, dstp, next_tp)
+            next_sl = next_risk.sl_low(self.side, ta, dssl, next_sl)
+            print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
 
         next_risk = next_risk.assess(
             self.side,
