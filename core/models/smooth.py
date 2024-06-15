@@ -14,3 +14,11 @@ class Smooth(Enum):
 
     def __str__(self):
         return self.name.upper()
+
+
+class SmoothATR(Enum):
+    EMA = 1
+    SMMA = 3
+
+    def __str__(self):
+        return self.name.upper()

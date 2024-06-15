@@ -5,7 +5,8 @@ use serde::Deserialize;
 pub enum ExitConfig {
     Ast {
         source_type: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
         factor: f32,
     },
     Cci {

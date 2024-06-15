@@ -5,7 +5,7 @@ from core.models.parameter import (
     Parameter,
     StaticParameter,
 )
-from core.models.smooth import Smooth
+from core.models.smooth import Smooth, SmoothATR
 
 from .base import Confirm, ConfirmType
 
@@ -18,5 +18,5 @@ class BraidConfirm(Confirm):
     slow_period: Parameter = StaticParameter(14.0)
     open_period: Parameter = StaticParameter(7.0)
     strength: Parameter = StaticParameter(40.0)
-    smooth_atr: Parameter = StaticParameter(Smooth.SMMA)
+    smooth_atr: Parameter = CategoricalParameter(SmoothATR)
     period_atr: Parameter = StaticParameter(14.0)
