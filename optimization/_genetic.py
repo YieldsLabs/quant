@@ -184,7 +184,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent2.strategy.primary_confirm
                 if chosen_attr == GeneticAttributes.PCONFIRM
                 else parent1.strategy.primary_confirm,
-                 parent2.strategy.secondary_confirm
+                parent2.strategy.secondary_confirm
                 if chosen_attr == GeneticAttributes.SCONFIRM
                 else parent1.strategy.secondary_confirm,
                 parent2.strategy.pulse

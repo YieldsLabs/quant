@@ -291,7 +291,7 @@ class Position:
         dstp = abs(self.curr_price - self.take_profit)
 
         if session_risk == SessionRiskType.EXIT:
-            if self.curr_pnl > 2.5 * self.fee:
+            if self.curr_pnl > 1.2 * self.fee:
                 print(
                     f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
                 )

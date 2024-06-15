@@ -41,4 +41,9 @@ pub enum PulseConfig {
         factor: f32,
         strength: f32,
     },
+    Yz {
+        period: f32,
+        smooth_signal: f32,
+        period_signal: f32,
+    },
 }

@@ -67,5 +67,14 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             factor,
             strength,
         )),
+        PulseConfig::Yz {
+            period,
+            smooth_signal,
+            period_signal,
+        } => Box::new(YzPulse::new(
+            period,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
+        )),
     }
 }

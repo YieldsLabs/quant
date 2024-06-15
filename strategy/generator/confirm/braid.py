@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from core.models.parameter import (
+    CategoricalParameter,
     Parameter,
     StaticParameter,
 )
@@ -12,7 +13,7 @@ from .base import Confirm, ConfirmType
 @dataclass(frozen=True)
 class BraidConfirm(Confirm):
     type: Confirm = ConfirmType.Braid
-    smooth_type: Parameter = StaticParameter(Smooth.LSMA)
+    smooth_type: Parameter = CategoricalParameter(Smooth)
     fast_period: Parameter = StaticParameter(3.0)
     slow_period: Parameter = StaticParameter(14.0)
     open_period: Parameter = StaticParameter(7.0)

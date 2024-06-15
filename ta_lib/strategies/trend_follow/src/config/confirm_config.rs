@@ -54,4 +54,9 @@ pub enum ConfirmConfig {
         strength: f32,
         atr_period: f32,
     },
+    Wpr {
+        source_type: f32,
+        period: f32,
+        threshold: f32,
+    },
 }

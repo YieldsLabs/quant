@@ -21,10 +21,10 @@ class VolatilityAnalysis:
     tr: List[float]
     gkyz: List[float]
     yz: List[float]
-    bbp: List[float]
+    e: List[float]
 
     def __str__(self) -> str:
-        return f"tr={self.tr}, yz={self.yz}, bbp={self.bbp},"
+        return f"tr={self.tr}, yz={self.yz}, e={self.e},"
 
     def __repr__(self) -> str:
         return f"VolatilityAnalysis({self})"
@@ -102,7 +102,7 @@ class TechAnalysis:
             tr,
             gkyz,
             yz,
-            bbp,
+            e,
             k,
             d,
             hh,
@@ -115,7 +115,7 @@ class TechAnalysis:
         momentum = MomentumAnalysis(froc, sroc, cci)
         oscillator = OscillatorAnalysis(frsi, srsi, k, d)
         volume = VolumeAnalysis(obv, vo, nvol, mfi)
-        volatility = VolatilityAnalysis(tr, gkyz, yz, bbp)
+        volatility = VolatilityAnalysis(tr, gkyz, yz, e)
 
         return cls(trend, momentum, oscillator, volume, volatility)
 

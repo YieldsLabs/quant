@@ -4,7 +4,7 @@ use momentum::{cci, macd, ppo, roc, rsi, stochosc};
 use price::typical_price;
 use std::collections::HashMap;
 use trend::spp;
-use volatility::{bbp, gkyz, tr, yz};
+use volatility::{bb, gkyz, tr, yz};
 use volume::{mfi, nvol, obv, vo};
 
 const BUFF_FACTOR: f32 = 1.3;
@@ -126,7 +126,8 @@ impl TimeSeries for BaseTimeSeries {
         let tr = tr(high, low, source);
         let gkyz = gkyz(open, high, low, source, periods[3]);
         let yz = yz(open, high, low, source, periods[3]);
-        let bbp = bbp(source, Smooth::SMA, periods[5], factors[0]);
+        let (upb, _, lwb) = bb(source, Smooth::SMA, periods[5], factors[0]);
+        let e = upb - lwb;
         let (k, d) = stochosc(
             source,
             high,
@@ -160,7 +161,7 @@ impl TimeSeries for BaseTimeSeries {
             tr: tr.into(),
             gkyz: gkyz.into(),
             yz: yz.into(),
-            bbp: bbp.into(),
+            e: e.into(),
             k: k.into(),
             d: d.into(),
             hh: hh.into(),

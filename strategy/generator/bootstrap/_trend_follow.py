@@ -21,14 +21,20 @@ from strategy.generator.confirm.cci import CciConfirm
 from strategy.generator.confirm.dpo import DpoConfirm
 from strategy.generator.confirm.eom import EomConfirm
 from strategy.generator.confirm.rsi_neutrality import RsiNeutralityConfirm
+from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
 from strategy.generator.confirm.stc import StcConfirm
+from strategy.generator.confirm.wpr import WprConfirm
 from strategy.generator.exit.trix import TrixExit
 from strategy.generator.pulse.adx import AdxPulse
 from strategy.generator.pulse.chop import ChopPulse
 from strategy.generator.pulse.nvol import NvolPulse
+from strategy.generator.pulse.tdfi import TdfiPulse
+from strategy.generator.pulse.vo import VoPulse
 from strategy.generator.pulse.wae import WaePulse
+from strategy.generator.pulse.yz import YzPulse
 from strategy.generator.signal.flip.supertrend import SupertrendFlipSignal
 from strategy.generator.signal.ma.ma_cross import MaCrossSignal
+from strategy.generator.signal.ma.ma_surpass import MaSurpassSignal
 from strategy.generator.signal.neutrality.rsi_rejection import (
     RsiNautralityRejectionSignal,
 )
@@ -121,27 +127,29 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         baseline = np.random.choice([MaBaseLine()])
         primary_confirm = np.random.choice(
             [
-                # DpoConfirm(),
+                DpoConfirm(),
                 EomConfirm(),
-                # RsiSignalLineConfirm(),
-                RsiNeutralityConfirm(),
+                RsiSignalLineConfirm(),
+                StcConfirm(),
+                BraidConfirm(),
             ]
         )
         secondary_confirm = np.random.choice(
             [
-                StcConfirm(),
-                # BraidConfirm(),
                 CciConfirm(),
+                WprConfirm(),
+                RsiNeutralityConfirm(),
             ]
         )
         pulse = np.random.choice(
             [
                 AdxPulse(),
                 ChopPulse(),
-                # VoPulse(),
+                VoPulse(),
                 NvolPulse(),
-                # TdfiPulse(),
-                # WaePulse(),
+                TdfiPulse(),
+                WaePulse(),
+                YzPulse(),
             ]
         )
         stop_loss = np.random.choice([AtrStopLoss(), DchStopLoss()])
@@ -379,7 +387,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     # Ma2RsiSignal(),
                     # MaTestingGroundSignal(),
                     # MaQuadrupleSignal(),
-                    # MaSurpassSignal(),
+                    MaSurpassSignal(),
                     MaCrossSignal(),
                 ]
             )

@@ -26,6 +26,15 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             period,
             factor,
         )),
+        ConfirmConfig::Wpr {
+            source_type,
+            period,
+            threshold,
+        } => Box::new(WprConfirm::new(
+            source_deserialize(source_type as usize),
+            period,
+            threshold,
+        )),
         ConfirmConfig::Eom {
             source_type,
             smooth_type,

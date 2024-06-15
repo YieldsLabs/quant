@@ -239,7 +239,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             macd = np.array(ta.trend.macd[-LOOKBACK:])
 
             cci = np.array(ta.momentum.cci[-LOOKBACK:])
-            bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
+            e = np.array(ta.volatility.e[-LOOKBACK:])
             slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
             stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
             mfi = np.array(ta.volume.mfi[-LOOKBACK:])
@@ -264,10 +264,10 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     macd,
                     brr,
                     cci,
-                    bbp,
                     slow_rsi,
                     stoch_k,
                     mfi,
+                    e,
                     volatility,
                 )
             )
@@ -321,6 +321,20 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             ):
                 should_exit = True
 
+            if (
+                msg.side == PositionSide.LONG
+                and not prev_long
+                and int(knn_transaction[0]) == 2
+            ):
+                should_exit = True
+
+            if (
+                msg.side == PositionSide.SHORT
+                and not prev_short
+                and int(knn_transaction[0]) == 4
+            ):
+                should_exit = True
+
             if knn_transaction in self.anomaly:
                 should_exit = True
 
@@ -346,7 +360,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 f"MACD: {macd[-1]}, "
                 f"Body Range Ratio: {brr[-1]}, "
                 f"CCI: {cci[-1]}, "
-                f"BB%: {bbp[-1]}, "
+                f"E: {e[-1]}, "
                 f"RSI: {slow_rsi[-1]}, "
                 f"Stoch K: {stoch_k[-1]}, "
                 f"MFI: {mfi[-1]}, "

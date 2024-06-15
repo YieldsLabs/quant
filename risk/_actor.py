@@ -119,25 +119,41 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 return position.trail(ta)
 
             if isinstance(event, ExitLongSignalReceived):
-                if long_position and not long_position.has_risk:
+                if (
+                    long_position
+                    and not long_position.has_risk
+                    and long_position.last_modified < event.meta.timestamp
+                ):
                     long_position = await handle_trail(
                         long_position, long_position.risk_bar
                     )
 
             elif isinstance(event, ExitShortSignalReceived):
-                if short_position and not short_position.has_risk:
+                if (
+                    short_position
+                    and not short_position.has_risk
+                    and short_position.last_modified < event.meta.timestamp
+                ):
                     short_position = await handle_trail(
                         short_position, short_position.risk_bar
                     )
 
             elif isinstance(event, GoLongSignalReceived):
-                if short_position and not short_position.has_risk:
+                if (
+                    short_position
+                    and not short_position.has_risk
+                    and short_position.last_modified < event.meta.timestamp
+                ):
                     short_position = await handle_trail(
                         short_position, short_position.risk_bar
                     )
 
             elif isinstance(event, GoShortSignalReceived):
-                if long_position and not long_position.has_risk:
+                if (
+                    long_position
+                    and not long_position.has_risk
+                    and long_position.last_modified < event.meta.timestamp
+                ):
                     long_position = await handle_trail(
                         long_position, long_position.risk_bar
                     )
