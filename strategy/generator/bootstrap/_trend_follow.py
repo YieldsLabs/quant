@@ -16,9 +16,17 @@ from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from strategy.generator.baseline.ma import MaBaseLine
+from strategy.generator.confirm.braid import BraidConfirm
+from strategy.generator.confirm.cci import CciConfirm
 from strategy.generator.confirm.dpo import DpoConfirm
+from strategy.generator.confirm.eom import EomConfirm
+from strategy.generator.confirm.rsi_neutrality import RsiNeutralityConfirm
+from strategy.generator.confirm.stc import StcConfirm
 from strategy.generator.exit.trix import TrixExit
+from strategy.generator.pulse.adx import AdxPulse
 from strategy.generator.pulse.chop import ChopPulse
+from strategy.generator.pulse.nvol import NvolPulse
+from strategy.generator.pulse.wae import WaePulse
 from strategy.generator.signal.flip.supertrend import SupertrendFlipSignal
 from strategy.generator.signal.ma.ma_cross import MaCrossSignal
 from strategy.generator.signal.neutrality.rsi_rejection import (
@@ -111,24 +119,27 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         signal_groups = list(TrendSignalType)
         entry_signal = self._generate_signal(np.random.choice(signal_groups))
         baseline = np.random.choice([MaBaseLine()])
-        confirm = np.random.choice(
+        primary_confirm = np.random.choice(
             [
-                DpoConfirm(),
-                # EomConfirm(),
+                # DpoConfirm(),
+                EomConfirm(),
                 # RsiSignalLineConfirm(),
-                # RsiNeutralityConfirm(),
-                # StcConfirm(),
-                # CciConfirm(),
-                # SupertrendConfirm(),
+                RsiNeutralityConfirm(),
+            ]
+        )
+        secondary_confirm = np.random.choice(
+            [
+                StcConfirm(),
+                # BraidConfirm(),
+                CciConfirm(),
             ]
         )
         pulse = np.random.choice(
             [
-                # AdxPulse(),
+                AdxPulse(),
                 ChopPulse(),
-                # BraidPulse(),
                 # VoPulse(),
-                # NvolPulse(),
+                NvolPulse(),
                 # TdfiPulse(),
                 # WaePulse(),
             ]
@@ -148,7 +159,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         return Strategy(
             *(
                 entry_signal,
-                confirm,
+                primary_confirm,
+                secondary_confirm,
                 pulse,
                 baseline,
                 stop_loss,

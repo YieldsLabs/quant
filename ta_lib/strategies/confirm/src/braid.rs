@@ -2,7 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use timeseries::prelude::*;
 
-pub struct BraidPulse {
+pub struct BraidConfirm {
     smooth_type: Smooth,
     fast_period: usize,
     slow_period: usize,
@@ -11,7 +11,7 @@ pub struct BraidPulse {
     atr_period: usize,
 }
 
-impl BraidPulse {
+impl BraidConfirm {
     pub fn new(
         smooth_type: Smooth,
         fast_period: f32,
@@ -31,13 +31,13 @@ impl BraidPulse {
     }
 }
 
-impl Pulse for BraidPulse {
+impl Confirm for BraidConfirm {
     fn lookback(&self) -> usize {
         let adj_lookback = std::cmp::max(self.fast_period, self.slow_period);
         std::cmp::max(adj_lookback, self.open_period)
     }
 
-    fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let fast_ma = data.close().smooth(self.smooth_type, self.fast_period);
         let open_ma = data.open().smooth(self.smooth_type, self.open_period);
         let slow_ma = data.close().smooth(self.smooth_type, self.slow_period);
@@ -50,12 +50,8 @@ impl Pulse for BraidPulse {
         let histogram = max - min;
 
         (
-            histogram.sgt(&filter)
-                & (fast_ma.cross_over(&open_ma)
-                    | (histogram.cross_over(&filter) & fast_ma.sgt(&open_ma))),
-            histogram.sgt(&filter)
-                & (fast_ma.cross_under(&open_ma)
-                    | (histogram.cross_over(&filter) & fast_ma.slt(&open_ma))),
+            histogram.sgt(&filter) & fast_ma.sgt(&open_ma),
+            histogram.sgt(&filter) & fast_ma.slt(&open_ma),
         )
     }
 }
@@ -65,8 +61,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_pulse_braid() {
-        let pulse = BraidPulse::new(Smooth::LSMA, 3.0, 14.0, 7.0, 40.0, 14.0);
+    fn test_confirm_braid() {
+        let confirm = BraidConfirm::new(Smooth::LSMA, 3.0, 14.0, 7.0, 40.0, 14.0);
         let data = vec![
             OHLCV {
                 ts: 1679827200,
@@ -191,15 +187,15 @@ mod tests {
         ];
         let series = OHLCVSeries::from(data);
 
-        let (long_signal, short_signal) = pulse.assess(&series);
+        let (long_signal, short_signal) = confirm.filter(&series);
 
         let expected_long_signal = vec![
-            false, false, false, false, false, false, false, false, false, false, false, false,
+            true, true, false, false, false, false, false, false, false, false, false, false,
             false, false, true,
         ];
         let expected_short_signal = vec![
-            false, false, false, false, false, false, true, false, false, false, false, false,
-            false, false, false,
+            false, false, false, false, false, false, true, true, true, true, true, true, true,
+            true, false,
         ];
 
         let result_long_signal: Vec<bool> = long_signal.into();

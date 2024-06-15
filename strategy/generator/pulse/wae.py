@@ -16,5 +16,3 @@ class WaePulse(Pulse):
     bb_period: Parameter = StaticParameter(15.0)
     factor: Parameter = StaticParameter(2.0)
     strength: Parameter = StaticParameter(150.0)
-    atr_period: Parameter = StaticParameter(100.0)
-    dz_factor: Parameter = StaticParameter(3.7)

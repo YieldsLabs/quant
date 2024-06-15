@@ -24,6 +24,7 @@ pub struct BaseStrategy {
     timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
     primary_confirm: Box<dyn Confirm>,
+    secondary_confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
@@ -36,6 +37,7 @@ impl BaseStrategy {
         timeseries: Box<dyn TimeSeries>,
         signal: Box<dyn Signal>,
         primary_confirm: Box<dyn Confirm>,
+        secondary_confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
         base_line: Box<dyn BaseLine>,
         stop_loss: Box<dyn StopLoss>,
@@ -44,6 +46,7 @@ impl BaseStrategy {
         let lookbacks = [
             signal.lookback(),
             primary_confirm.lookback(),
+            secondary_confirm.lookback(),
             pulse.lookback(),
             base_line.lookback(),
             stop_loss.lookback(),
@@ -56,6 +59,7 @@ impl BaseStrategy {
             timeseries,
             signal,
             primary_confirm,
+            secondary_confirm,
             pulse,
             base_line,
             stop_loss,
@@ -122,13 +126,15 @@ impl BaseStrategy {
 
         let (baseline_confirm_long, baseline_confirm_short) = self.base_line.filter(ohlcv);
         let (primary_confirm_long, primary_confirm_short) = self.primary_confirm.filter(ohlcv);
+        let (secondary_confirm_long, secondary_confirm_short) =
+            self.secondary_confirm.filter(ohlcv);
         let (pulse_confirm_long, pulse_confirm_short) = self.pulse.assess(ohlcv);
 
         let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);
         let (baseline_close_long, baseline_close_short) = self.base_line.close(ohlcv);
 
-        let confirm_long = primary_confirm_long & pulse_confirm_long;
-        let confirm_short = primary_confirm_short & pulse_confirm_short;
+        let confirm_long = pulse_confirm_long & primary_confirm_long & secondary_confirm_long;
+        let confirm_short = pulse_confirm_short & primary_confirm_short & secondary_confirm_short;
 
         let base_go_long = signal_go_long & baseline_confirm_long & confirm_long;
         let base_go_short = signal_go_short & baseline_confirm_short & confirm_short;
@@ -148,7 +154,7 @@ impl BaseStrategy {
 
     fn suggested_entry(&self, ohlcv: &OHLCVSeries) -> f32 {
         ohlcv
-            .source(SourceType::HLCC4)
+            .source(SourceType::CLOSE)
             .last()
             .unwrap_or(std::f32::NAN)
     }
@@ -187,11 +193,26 @@ mod tests {
         }
     }
 
-    struct MockConfirm {
+    struct MockPrimaryConfirm {
         period: usize,
     }
 
-    impl Confirm for MockConfirm {
+    impl Confirm for MockPrimaryConfirm {
+        fn lookback(&self) -> usize {
+            self.period
+        }
+
+        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+            let len = data.len();
+            (Series::one(len).into(), Series::zero(len).into())
+        }
+    }
+
+    struct MockSecondaryConfirm {
+        period: usize,
+    }
+
+    impl Confirm for MockSecondaryConfirm {
         fn lookback(&self) -> usize {
             self.period
         }
@@ -274,7 +295,8 @@ mod tests {
         let strategy = BaseStrategy::new(
             Box::<BaseTimeSeries>::default(),
             Box::new(MockSignal { fast_period: 10 }),
-            Box::new(MockConfirm { period: 1 }),
+            Box::new(MockPrimaryConfirm { period: 1 }),
+            Box::new(MockSecondaryConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
             Box::new(MockStopLoss {

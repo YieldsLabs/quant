@@ -17,21 +17,6 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             di_period,
             threshold,
         )),
-        PulseConfig::Braid {
-            smooth_type,
-            fast_period,
-            slow_period,
-            open_period,
-            strength,
-            atr_period,
-        } => Box::new(BraidPulse::new(
-            smooth_deserialize(smooth_type as usize),
-            fast_period,
-            slow_period,
-            open_period,
-            strength,
-            atr_period,
-        )),
         PulseConfig::Chop {
             period,
             atr_period,
@@ -73,8 +58,6 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             bb_period,
             factor,
             strength,
-            atr_period,
-            dz_factor,
         } => Box::new(WaePulse::new(
             smooth_deserialize(smooth_type as usize),
             fast_period,
@@ -83,8 +66,6 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             bb_period,
             factor,
             strength,
-            atr_period,
-            dz_factor,
         )),
     }
 }

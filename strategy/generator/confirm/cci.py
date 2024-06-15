@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from core.models.parameter import Parameter, StaticParameter
 from core.models.smooth import Smooth
 from core.models.source import SourceType
-from strategy.generator.confirm.base import Confirm, ConfirmType
+
+from .base import Confirm, ConfirmType
 
 
 @dataclass(frozen=True)

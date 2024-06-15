@@ -13,6 +13,7 @@ class StrategyOptimizationType(Enum):
 class Strategy:
     signal: Indicator
     primary_confirm: Indicator
+    secondary_confirm: Indicator
     pulse: Indicator
     baseline: Indicator
     stop_loss: Indicator
@@ -23,6 +24,7 @@ class Strategy:
         return (
             self.signal.to_dict(),
             self.primary_confirm.to_dict(),
+            self.secondary_confirm.to_dict(),
             self.pulse.to_dict(),
             self.baseline.to_dict(),
             self.stop_loss.to_dict(),
@@ -47,6 +49,7 @@ class Strategy:
     def __str__(self) -> str:
         signal_ = f"_SGNL{self.signal.type}:{self._format_parameters(self.signal)}"
         primary_confirmation_ = f"_PCNFRM{self.primary_confirm.type}:{self._format_parameters(self.primary_confirm)}"
+        secondary_confirmation_ = f"_SCNFRM{self.secondary_confirm.type}:{self._format_parameters(self.secondary_confirm)}"
         pulse_ = f"_PLS{self.pulse.type}:{self._format_parameters(self.pulse)}"
         baseline_ = (
             f"_BSLN{self.baseline.type}:{self._format_parameters(self.baseline)}"
@@ -56,7 +59,7 @@ class Strategy:
         )
         exit_ = f"_EXT{self.exit.type}:{self._format_parameters(self.exit)}"
 
-        return f"{signal_}{primary_confirmation_}{pulse_}{baseline_}{stop_loss}{exit_}"
+        return f"{signal_}{primary_confirmation_}{secondary_confirmation_}{pulse_}{baseline_}{stop_loss}{exit_}"
 
     def __hash__(self) -> int:
         return hash(str(self))

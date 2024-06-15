@@ -9,14 +9,6 @@ pub enum PulseConfig {
         di_period: f32,
         threshold: f32,
     },
-    Braid {
-        smooth_type: f32,
-        fast_period: f32,
-        slow_period: f32,
-        open_period: f32,
-        strength: f32,
-        atr_period: f32,
-    },
     Dumb {
         period: f32,
     },
@@ -48,7 +40,5 @@ pub enum PulseConfig {
         bb_period: f32,
         factor: f32,
         strength: f32,
-        atr_period: f32,
-        dz_factor: f32,
     },
 }

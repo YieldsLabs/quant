@@ -1,5 +1,4 @@
 mod adx;
-mod braid;
 mod chop;
 mod dumb;
 mod nvol;
@@ -8,7 +7,6 @@ mod vo;
 mod wae;
 
 pub use adx::AdxPulse;
-pub use braid::BraidPulse;
 pub use chop::ChopPulse;
 pub use dumb::DumbPulse;
 pub use nvol::NvolPulse;

@@ -81,14 +81,20 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             d_first,
             d_second,
         )),
-        ConfirmConfig::Sup {
-            source_type,
+        ConfirmConfig::Braid {
+            smooth_type,
+            fast_period,
+            slow_period,
+            open_period,
+            strength,
             atr_period,
-            factor,
-        } => Box::new(SupertrendConfirm::new(
-            source_deserialize(source_type as usize),
+        } => Box::new(BraidConfirm::new(
+            smooth_deserialize(smooth_type as usize),
+            fast_period,
+            slow_period,
+            open_period,
+            strength,
             atr_period,
-            factor,
         )),
     }
 }

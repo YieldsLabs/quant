@@ -23,6 +23,7 @@ from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
 from strategy.generator.baseline.ma import MaBaseLine
 from strategy.generator.confirm.cci import CciConfirm
+from strategy.generator.confirm.dpo import DpoConfirm
 from strategy.generator.exit.cci import CciExit
 from strategy.generator.pulse.chop import ChopPulse
 from strategy.generator.signal.twolinescross.vi import Vi2LinesCrossSignal
@@ -160,6 +161,7 @@ class BacktestSystem(AbstractSystem):
                 Strategy(
                     *(
                         Vi2LinesCrossSignal(),
+                        DpoConfirm(),
                         CciConfirm(),
                         ChopPulse(),
                         MaBaseLine(ma=StaticParameter(MovingAverageType.VIDYA)),
