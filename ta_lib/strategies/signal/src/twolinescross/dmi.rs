@@ -28,7 +28,7 @@ impl Signal for Dmi2LinesCrossSignal {
         let (_, di_plus, di_minus) = dmi(
             data.high(),
             data.low(),
-            &data.atr(self.di_period),
+            &data.atr(self.smooth_type, self.di_period),
             self.smooth_type,
             self.adx_period,
             self.di_period,

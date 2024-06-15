@@ -147,19 +147,22 @@ pub enum SignalConfig {
         di_period: f32,
     },
     Vi2LinesCross {
-        atr_period: f32,
         period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
     },
     // Flip
     CeFlip {
         source_type: f32,
         period: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
         factor: f32,
     },
     SupFlip {
         source_type: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
         factor: f32,
     },
     // Ma
@@ -234,7 +237,7 @@ pub enum SignalConfig {
     RsiV {
         source_type: f32,
         smooth_type: f32,
-        rsi_period: f32,
+        period: f32,
         threshold: f32,
     },
     TiiV {

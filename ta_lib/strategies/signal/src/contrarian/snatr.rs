@@ -36,7 +36,7 @@ impl Signal for SnatrSignal {
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let snatr = snatr(
-            &data.atr(self.atr_period),
+            &data.atr(Smooth::SMMA, self.atr_period),
             self.atr_period,
             self.smooth_type,
             self.atr_smooth_period,

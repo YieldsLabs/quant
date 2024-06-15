@@ -9,21 +9,16 @@ const RSI_LOWER_BARRIER: f32 = 20.0;
 pub struct RsiVSignal {
     source_type: SourceType,
     smooth_type: Smooth,
-    rsi_period: usize,
+    period: usize,
     threshold: f32,
 }
 
 impl RsiVSignal {
-    pub fn new(
-        source_type: SourceType,
-        smooth_type: Smooth,
-        rsi_period: f32,
-        threshold: f32,
-    ) -> Self {
+    pub fn new(source_type: SourceType, smooth_type: Smooth, period: f32, threshold: f32) -> Self {
         Self {
             source_type,
             smooth_type,
-            rsi_period: rsi_period as usize,
+            period: period as usize,
             threshold,
         }
     }
@@ -31,14 +26,14 @@ impl RsiVSignal {
 
 impl Signal for RsiVSignal {
     fn lookback(&self) -> usize {
-        self.rsi_period
+        self.period
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(
             &data.source(self.source_type),
             self.smooth_type,
-            self.rsi_period,
+            self.period,
         );
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;

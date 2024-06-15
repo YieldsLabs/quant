@@ -18,20 +18,10 @@ from core.models.timeframe import Timeframe
 from strategy.generator.baseline.ma import MaBaseLine
 from strategy.generator.confirm.braid import BraidConfirm
 from strategy.generator.confirm.cci import CciConfirm
-from strategy.generator.confirm.dpo import DpoConfirm
-from strategy.generator.confirm.eom import EomConfirm
 from strategy.generator.confirm.rsi_neutrality import RsiNeutralityConfirm
-from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
-from strategy.generator.confirm.stc import StcConfirm
 from strategy.generator.confirm.wpr import WprConfirm
 from strategy.generator.exit.trix import TrixExit
-from strategy.generator.pulse.adx import AdxPulse
 from strategy.generator.pulse.chop import ChopPulse
-from strategy.generator.pulse.nvol import NvolPulse
-from strategy.generator.pulse.tdfi import TdfiPulse
-from strategy.generator.pulse.vo import VoPulse
-from strategy.generator.pulse.wae import WaePulse
-from strategy.generator.pulse.yz import YzPulse
 from strategy.generator.signal.flip.supertrend import SupertrendFlipSignal
 from strategy.generator.signal.ma.ma_surpass import MaSurpassSignal
 from strategy.generator.signal.neutrality.rsi_rejection import (
@@ -126,10 +116,10 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         baseline = np.random.choice([MaBaseLine()])
         primary_confirm = np.random.choice(
             [
-                DpoConfirm(),
-                EomConfirm(),
-                RsiSignalLineConfirm(),
-                StcConfirm(),
+                # DpoConfirm(),
+                # EomConfirm(),
+                # RsiSignalLineConfirm(),
+                # StcConfirm(),
                 BraidConfirm(),
             ]
         )
@@ -142,13 +132,13 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
         pulse = np.random.choice(
             [
-                AdxPulse(),
+                # AdxPulse(),
                 ChopPulse(),
-                VoPulse(),
-                NvolPulse(),
-                TdfiPulse(),
-                WaePulse(),
-                YzPulse(),
+                # VoPulse(),
+                # NvolPulse(),
+                # TdfiPulse(),
+                # WaePulse(),
+                # YzPulse(),
             ]
         )
         stop_loss = np.random.choice([AtrStopLoss(), DchStopLoss()])

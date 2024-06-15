@@ -96,14 +96,16 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             slow_period,
             open_period,
             strength,
-            atr_period,
+            smooth_atr,
+            period_atr,
         } => Box::new(BraidConfirm::new(
             smooth_deserialize(smooth_type as usize),
             fast_period,
             slow_period,
             open_period,
             strength,
-            atr_period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
         )),
     }
 }

@@ -52,7 +52,8 @@ pub enum ConfirmConfig {
         slow_period: f32,
         open_period: f32,
         strength: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
     },
     Wpr {
         source_type: f32,

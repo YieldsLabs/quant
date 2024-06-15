@@ -8,7 +8,8 @@ pub struct BraidConfirm {
     slow_period: usize,
     open_period: usize,
     strength: f32,
-    atr_period: usize,
+    smooth_atr: Smooth,
+    period_atr: usize,
 }
 
 impl BraidConfirm {
@@ -18,7 +19,8 @@ impl BraidConfirm {
         slow_period: f32,
         open_period: f32,
         strength: f32,
-        atr_period: f32,
+        smooth_atr: Smooth,
+        period_atr: f32,
     ) -> Self {
         Self {
             smooth_type,
@@ -26,7 +28,8 @@ impl BraidConfirm {
             slow_period: slow_period as usize,
             open_period: open_period as usize,
             strength,
-            atr_period: atr_period as usize,
+            smooth_atr,
+            period_atr: period_atr as usize,
         }
     }
 }
@@ -42,7 +45,7 @@ impl Confirm for BraidConfirm {
         let open_ma = data.open().smooth(self.smooth_type, self.open_period);
         let slow_ma = data.close().smooth(self.smooth_type, self.slow_period);
 
-        let filter = data.atr(self.atr_period) * self.strength / 100.0;
+        let filter = data.atr(self.smooth_atr, self.period_atr) * self.strength / 100.0;
 
         let max = fast_ma.max(&open_ma).max(&slow_ma);
         let min = fast_ma.min(&open_ma).min(&slow_ma);
@@ -62,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_confirm_braid() {
-        let confirm = BraidConfirm::new(Smooth::LSMA, 3.0, 14.0, 7.0, 40.0, 14.0);
+        let confirm = BraidConfirm::new(Smooth::LSMA, 3.0, 14.0, 7.0, 40.0, Smooth::SMMA, 14.0);
         let data = vec![
             OHLCV {
                 ts: 1679827200,

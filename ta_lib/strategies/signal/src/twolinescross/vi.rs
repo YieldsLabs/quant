@@ -4,29 +4,31 @@ use timeseries::prelude::*;
 use trend::vi;
 
 pub struct Vi2LinesCrossSignal {
-    atr_period: usize,
     period: usize,
+    smooth_atr: Smooth,
+    period_atr: usize,
 }
 
 impl Vi2LinesCrossSignal {
-    pub fn new(atr_period: f32, period: f32) -> Self {
+    pub fn new(period: f32, smooth_atr: Smooth, period_atr: f32) -> Self {
         Self {
-            atr_period: atr_period as usize,
             period: period as usize,
+            smooth_atr,
+            period_atr: period_atr as usize,
         }
     }
 }
 
 impl Signal for Vi2LinesCrossSignal {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.atr_period, self.period)
+        std::cmp::max(self.period_atr, self.period)
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (vip, vim) = vi(
             data.high(),
             data.low(),
-            &data.atr(self.atr_period),
+            &data.atr(self.smooth_atr, self.period_atr),
             self.period,
         );
 
@@ -40,7 +42,7 @@ mod tests {
 
     #[test]
     fn test_signal_vi_cross() {
-        let signal = Vi2LinesCrossSignal::new(1.0, 2.0);
+        let signal = Vi2LinesCrossSignal::new(2.0, Smooth::SMMA, 1.0);
         let data = vec![
             OHLCV {
                 ts: 1679827200,

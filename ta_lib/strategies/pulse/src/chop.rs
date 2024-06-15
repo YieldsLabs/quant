@@ -7,15 +7,17 @@ const CHOP_LINE: f32 = 38.2;
 
 pub struct ChopPulse {
     period: usize,
-    atr_period: usize,
+    smooth_atr: Smooth,
+    period_atr: usize,
     threshold: f32,
 }
 
 impl ChopPulse {
-    pub fn new(period: f32, atr_period: f32, threshold: f32) -> Self {
+    pub fn new(period: f32, smooth_atr: Smooth, period_atr: f32, threshold: f32) -> Self {
         Self {
             period: period as usize,
-            atr_period: atr_period as usize,
+            smooth_atr,
+            period_atr: period_atr as usize,
             threshold,
         }
     }
@@ -23,14 +25,14 @@ impl ChopPulse {
 
 impl Pulse for ChopPulse {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.period, self.atr_period)
+        std::cmp::max(self.period, self.period_atr)
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let chop = chop(
             data.high(),
             data.low(),
-            &data.atr(self.atr_period),
+            &data.atr(self.smooth_atr, self.period_atr),
             self.period,
         );
 
@@ -46,7 +48,7 @@ mod tests {
 
     #[test]
     fn test_pulse_chop() {
-        let pulse = ChopPulse::new(6.0, 1.0, 0.0);
+        let pulse = ChopPulse::new(6.0, Smooth::SMMA, 1.0, 0.0);
         let data = vec![
             OHLCV {
                 ts: 1679825700,

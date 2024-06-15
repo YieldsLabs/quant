@@ -19,9 +19,15 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
         )),
         PulseConfig::Chop {
             period,
-            atr_period,
+            smooth_atr,
+            period_atr,
             threshold,
-        } => Box::new(ChopPulse::new(period, atr_period, threshold)),
+        } => Box::new(ChopPulse::new(
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            threshold,
+        )),
         PulseConfig::Dumb { period } => Box::new(DumbPulse::new(period)),
         PulseConfig::Nvol {
             smooth_type,

@@ -5,6 +5,7 @@ use timeseries::prelude::*;
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
 const DEFAULT_ATR_FACTOR: f32 = 1.1;
+const DEFAULT_ATR_SMOOTH: Smooth = Smooth::EMA;
 
 pub struct MaBaseLine {
     source_type: SourceType,
@@ -32,7 +33,7 @@ impl BaseLine for MaBaseLine {
         let prev_ma = ma.shift(1);
 
         let dist = (&ma - data.close()).abs();
-        let atr = data.atr(DEFAULT_ATR_LOOKBACK) * DEFAULT_ATR_FACTOR;
+        let atr = data.atr(DEFAULT_ATR_SMOOTH, DEFAULT_ATR_LOOKBACK) * DEFAULT_ATR_FACTOR;
 
         (
             ma.sgt(&prev_ma) & dist.slt(&atr),

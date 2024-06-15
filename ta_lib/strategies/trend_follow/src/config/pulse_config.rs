@@ -14,7 +14,8 @@ pub enum PulseConfig {
     },
     Chop {
         period: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
         threshold: f32,
     },
     Nvol {

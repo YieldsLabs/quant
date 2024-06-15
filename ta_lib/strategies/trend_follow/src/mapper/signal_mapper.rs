@@ -229,21 +229,25 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::CeFlip {
             source_type,
             period,
-            atr_period,
+            smooth_atr,
+            period_atr,
             factor,
         } => Box::new(CeFlipSignal::new(
             source_deserialize(source_type as usize),
             period,
-            atr_period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
             factor,
         )),
         SignalConfig::SupFlip {
             source_type,
-            atr_period,
+            smooth_atr,
+            period_atr,
             factor,
         } => Box::new(SupertrendFlipSignal::new(
             source_deserialize(source_type as usize),
-            atr_period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
             factor,
         )),
         // Pattern
@@ -302,12 +306,12 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::RsiV {
             source_type,
             smooth_type,
-            rsi_period,
+            period,
             threshold,
         } => Box::new(RsiVSignal::new(
             source_deserialize(source_type as usize),
             smooth_deserialize(smooth_type as usize),
-            rsi_period,
+            period,
             threshold,
         )),
         // BB
@@ -485,9 +489,15 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             adx_period,
             di_period,
         )),
-        SignalConfig::Vi2LinesCross { period, atr_period } => {
-            Box::new(Vi2LinesCrossSignal::new(period, atr_period))
-        }
+        SignalConfig::Vi2LinesCross {
+            period,
+            smooth_atr,
+            period_atr,
+        } => Box::new(Vi2LinesCrossSignal::new(
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+        )),
         // Breakout
         SignalConfig::DchMa2Breakout {
             source_type,

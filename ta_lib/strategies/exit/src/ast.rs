@@ -27,7 +27,7 @@ impl Exit for AstExit {
     fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = ast(
             &data.source(self.source_type),
-            &data.atr(self.atr_period),
+            &data.atr(Smooth::SMMA, self.atr_period),
             self.factor,
         );
 

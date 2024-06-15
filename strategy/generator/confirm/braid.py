@@ -18,4 +18,5 @@ class BraidConfirm(Confirm):
     slow_period: Parameter = StaticParameter(14.0)
     open_period: Parameter = StaticParameter(7.0)
     strength: Parameter = StaticParameter(40.0)
-    atr_period: Parameter = StaticParameter(14.0)
+    smooth_atr: Parameter = StaticParameter(Smooth.SMMA)
+    period_atr: Parameter = StaticParameter(14.0)
