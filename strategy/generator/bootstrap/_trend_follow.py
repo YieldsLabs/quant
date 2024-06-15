@@ -33,7 +33,6 @@ from strategy.generator.pulse.vo import VoPulse
 from strategy.generator.pulse.wae import WaePulse
 from strategy.generator.pulse.yz import YzPulse
 from strategy.generator.signal.flip.supertrend import SupertrendFlipSignal
-from strategy.generator.signal.ma.ma_cross import MaCrossSignal
 from strategy.generator.signal.ma.ma_surpass import MaSurpassSignal
 from strategy.generator.signal.neutrality.rsi_rejection import (
     RsiNautralityRejectionSignal,
@@ -388,7 +387,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                     # MaTestingGroundSignal(),
                     # MaQuadrupleSignal(),
                     MaSurpassSignal(),
-                    MaCrossSignal(),
+                    # MaCrossSignal(),
                 ]
             )
         # if signal == TrendSignalType.BREAKOUT:
