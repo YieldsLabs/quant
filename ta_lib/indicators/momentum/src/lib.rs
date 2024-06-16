@@ -17,6 +17,7 @@ mod tdfi;
 mod tii;
 mod trix;
 mod tsi;
+mod uo;
 mod wpr;
 
 pub use ao::ao;
@@ -38,4 +39,5 @@ pub use tdfi::tdfi;
 pub use tii::tii;
 pub use trix::trix;
 pub use tsi::tsi;
+pub use uo::uo;
 pub use wpr::wpr;
