@@ -188,11 +188,11 @@ class PositionRisk(TaMixin):
         hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
-            new_sl = np.min(ll_atr + self.trail_factor * dist)
+            new_sl = np.min(ll_atr)
             return max(sl, new_sl)
 
         if side == PositionSide.SHORT:
-            new_sl = np.max(hh_atr - self.trail_factor * dist)
+            new_sl = np.max(hh_atr)
             return min(sl, new_sl)
 
         return sl
