@@ -25,7 +25,7 @@ impl Signal for Dmi2LinesCrossSignal {
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (_, di_plus, di_minus) = dmi(
+        let (_, dip, dim) = dmi(
             data.high(),
             data.low(),
             &data.atr(self.smooth_type, self.di_period),
@@ -33,10 +33,8 @@ impl Signal for Dmi2LinesCrossSignal {
             self.adx_period,
             self.di_period,
         );
-        (
-            di_plus.cross_over(&di_minus),
-            di_plus.cross_under(&di_minus),
-        )
+
+        (dip.cross_over(&dim), dip.cross_under(&dim))
     }
 }
 

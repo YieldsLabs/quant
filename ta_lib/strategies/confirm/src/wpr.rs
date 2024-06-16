@@ -1,6 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
-use momentum::pr;
+use momentum::wpr;
 use timeseries::prelude::*;
 
 const WRP_UPPER_BARRIER: f32 = -20.;
@@ -28,7 +28,7 @@ impl Confirm for WprConfirm {
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let wrp = pr(
+        let wrp = wpr(
             &data.source(self.source_type),
             data.high(),
             data.low(),
