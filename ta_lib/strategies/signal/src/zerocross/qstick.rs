@@ -1,7 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
+use momentum::qstick;
 use timeseries::prelude::*;
-use trend::qstick;
 
 pub struct QstickZeroCrossSignal {
     smooth_type: Smooth,
