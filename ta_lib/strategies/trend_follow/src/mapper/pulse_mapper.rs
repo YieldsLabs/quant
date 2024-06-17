@@ -82,5 +82,22 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             smooth_deserialize(smooth_signal as usize),
             period_signal,
         )),
+        PulseConfig::Sqz {
+            source,
+            smooth,
+            period,
+            smooth_atr,
+            period_atr,
+            factor_bb,
+            factor_kch,
+        } => Box::new(SqzPulse::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor_bb,
+            factor_kch,
+        )),
     }
 }

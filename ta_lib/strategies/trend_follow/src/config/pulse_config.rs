@@ -47,4 +47,13 @@ pub enum PulseConfig {
         smooth_signal: f32,
         period_signal: f32,
     },
+    Sqz {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
+        factor_bb: f32,
+        factor_kch: f32,
+    },
 }
