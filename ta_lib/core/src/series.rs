@@ -133,6 +133,10 @@ impl Series<f32> {
             })
             .collect()
     }
+
+    pub fn range(&self, period: usize) -> Self {
+        self.highest(period) - self.lowest(period)
+    }
 }
 
 #[cfg(test)]
@@ -248,6 +252,17 @@ mod tests {
         let period = 3;
 
         let result = source.lowest(period);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_range() {
+        let source = Series::from([4.0, 2.0, 3.0, 1.0, 5.0]);
+        let expected = Series::from([0.0, 2.0, 2.0, 2.0, 4.0]);
+        let period = 3;
+
+        let result = source.range(period);
 
         assert_eq!(result, expected);
     }
