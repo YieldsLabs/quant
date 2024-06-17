@@ -68,17 +68,17 @@ impl Series<f32> {
     }
 
     pub fn sum(&self, period: usize) -> Self {
-        self.window(period).map(|w| self.wsum(&w)).collect()
+        self.window(period).map(|w| self.wsum(w)).collect()
     }
 
     pub fn ma(&self, period: usize) -> Self {
-        self.window(period).map(|w| self.wmean(&w)).collect()
+        self.window(period).map(|w| self.wmean(w)).collect()
     }
 
     pub fn mad(&self, period: usize) -> Self {
         self.window(period)
             .map(|w| {
-                self.wmean(&w).map(|mean| {
+                self.wmean(w).map(|mean| {
                     w.iter()
                         .flatten()
                         .map(|value| (value - mean).abs())
