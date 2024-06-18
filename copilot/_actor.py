@@ -239,7 +239,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             macd = np.array(ta.trend.macd[-LOOKBACK:])
 
             cci = np.array(ta.momentum.cci[-LOOKBACK:])
-            e = np.array(ta.volatility.e[-LOOKBACK:])
+            ebb = np.array(ta.volatility.ebb[-LOOKBACK:])
+            ekch = np.array(ta.volatility.ekch[-LOOKBACK:])
             slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
             stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
             mfi = np.array(ta.volume.mfi[-LOOKBACK:])
@@ -267,7 +268,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     slow_rsi,
                     stoch_k,
                     mfi,
-                    e,
+                    ebb,
+                    ekch,
                     volatility,
                 )
             )
@@ -306,6 +308,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 and prev_long
                 and (
                     (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
+                    or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 1)
                     or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
                 )
             ):
@@ -316,26 +319,11 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 and prev_short
                 and (
                     (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
+                    or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 3)
                     or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
+                    or (int(prev_short[0]) == 3 and int(knn_transaction[0]) == 2)
                 )
             ):
-                should_exit = True
-
-            if (
-                msg.side == PositionSide.LONG
-                and not prev_long
-                and int(knn_transaction[0]) == 2
-            ):
-                should_exit = True
-
-            if (
-                msg.side == PositionSide.SHORT
-                and not prev_short
-                and int(knn_transaction[0]) == 4
-            ):
-                should_exit = True
-
-            if knn_transaction in self.anomaly:
                 should_exit = True
 
             if msg.side == PositionSide.LONG:
@@ -351,6 +339,41 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             self.prev_txn = (prev_long, prev_short)
 
+            if knn_transaction in self.anomaly:
+                should_exit = True
+
+            if knn_transaction[:3] in [
+                "120",
+                "121",
+                "123",
+                "124",
+                "142",
+                "112",
+                "102",
+                "211",
+                "214",
+                "234",
+                "241",
+                "242",
+                "243",
+                "245",
+                "246",
+                "411",
+                "412",
+                "413",
+                "415",
+                "421",
+                "422",
+                "423",
+                "425",
+                "441",
+                "455",
+                "003",
+                "021",
+                "041",
+            ]:
+                should_exit = True
+
             logger.info(
                 f"SIDE: {msg.side}, "
                 f"Close: {close[-1]}, "
@@ -360,11 +383,12 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 f"MACD: {macd[-1]}, "
                 f"Body Range Ratio: {brr[-1]}, "
                 f"CCI: {cci[-1]}, "
-                f"E: {e[-1]}, "
                 f"RSI: {slow_rsi[-1]}, "
                 f"Stoch K: {stoch_k[-1]}, "
                 f"MFI: {mfi[-1]}, "
                 f"Volatility: {volatility[-1]}, "
+                f"EBB: {ebb[-1]}, "
+                f"EKCH: {ekch[-1]}, "
                 f"KNN Transaction: {knn_transaction}, "
                 f"Exit: {should_exit}"
             )
