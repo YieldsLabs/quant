@@ -1,5 +1,5 @@
 use crate::series::Series;
-use crate::ZERO;
+use crate::{NEUTRALITY, SCALE, ZERO};
 use std::ops::Neg;
 
 impl Series<f32> {
@@ -78,7 +78,7 @@ impl Series<f32> {
         values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         let len = values.len();
-        let idx = (percentile as f32 / 100.) * (len as f32 - 1.0);
+        let idx = (percentile as f32 / SCALE) * (len as f32 - 1.0);
         let idx_lower = idx.floor() as usize;
         let idx_upper = idx.ceil() as usize;
 
@@ -113,7 +113,7 @@ impl Series<f32> {
     }
 
     pub fn median(&self, period: usize) -> Self {
-        self.percentile(period, 50)
+        self.percentile(period, NEUTRALITY)
     }
 
     pub fn mad(&self, period: usize) -> Self {

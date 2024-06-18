@@ -1,3 +1,4 @@
+use crate::{ONE, ZERO};
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -103,11 +104,11 @@ impl Series<f32> {
     }
 
     pub fn zero(len: usize) -> Series<f32> {
-        Series::fill(0., len)
+        Series::fill(ZERO, len)
     }
 
     pub fn one(len: usize) -> Series<f32> {
-        Series::fill(1., len)
+        Series::fill(ONE, len)
     }
 
     pub fn change(&self, period: usize) -> Self {
