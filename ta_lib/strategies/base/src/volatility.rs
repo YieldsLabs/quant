@@ -1,6 +1,6 @@
 use core::prelude::*;
 use timeseries::prelude::*;
-use volatility::{atr, tr};
+use volatility::tr;
 
 pub trait Volatility {
     fn atr(&self, smooth: Smooth, period: usize) -> Series<f32>;
@@ -10,7 +10,7 @@ pub trait Volatility {
 impl Volatility for OHLCVSeries {
     #[inline]
     fn atr(&self, smooth: Smooth, period: usize) -> Series<f32> {
-        tr(self.high(), self.low(), self.close()).smooth(smooth, period)
+        self.tr().smooth(smooth, period)
     }
 
     #[inline]
