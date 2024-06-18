@@ -53,18 +53,49 @@ impl Series<f32> {
 }
 
 impl Series<f32> {
-    fn wsum(&self, window: &[Option<f32>]) -> Option<f32> {
-        let sum: f32 = window.iter().flatten().sum();
+    fn all_none(window: &[Option<f32>]) -> bool {
+        window.iter().all(|&x| x.is_none())
+    }
 
-        if window.iter().all(|&x| x.is_none()) {
-            None
-        } else {
-            Some(sum)
+    fn wsum(&self, window: &[Option<f32>]) -> Option<f32> {
+        if Self::all_none(window) {
+            return None;
         }
+
+        Some(window.iter().flatten().sum())
     }
 
     fn wmean(&self, window: &[Option<f32>]) -> Option<f32> {
         self.wsum(window).map(|sum| sum / window.len() as f32)
+    }
+
+    fn wpercentile(&self, window: &[Option<f32>], percentile: usize) -> Option<f32> {
+        if Self::all_none(window) {
+            return None;
+        }
+
+        let mut values: Vec<f32> = window.iter().flatten().copied().collect();
+        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+        let len = values.len();
+        let idx = (percentile as f32 / 100.) * (len as f32 - 1.0);
+        let idx_lower = idx.floor() as usize;
+        let idx_upper = idx.ceil() as usize;
+
+        if idx_upper >= len {
+            Some(values[len - 1]);
+        }
+
+        let value_lower = values[idx_lower];
+        let value_upper = values[idx_upper];
+
+        if idx_lower == idx_upper {
+            Some(values[idx_lower]);
+        }
+
+        let fraction = idx.fract();
+
+        Some(value_lower + fraction * (value_upper - value_lower))
     }
 
     pub fn sum(&self, period: usize) -> Self {
@@ -73,6 +104,16 @@ impl Series<f32> {
 
     pub fn ma(&self, period: usize) -> Self {
         self.window(period).map(|w| self.wmean(w)).collect()
+    }
+
+    pub fn percentile(&self, period: usize, percentage: usize) -> Self {
+        self.window(period)
+            .map(|w| self.wpercentile(w, percentage))
+            .collect()
+    }
+
+    pub fn median(&self, period: usize) -> Self {
+        self.percentile(period, 50)
     }
 
     pub fn mad(&self, period: usize) -> Self {
@@ -248,6 +289,16 @@ mod tests {
         let expected = Series::from([f32::NAN, 1.0, 1.6666666, 3.0, 4.0]);
 
         let result = source.ma(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_median() {
+        let source = Series::from([3.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([3.0, 2.5, 3.0, 3.0, 4.0]);
+
+        let result = source.median(3);
 
         assert_eq!(result, expected);
     }
