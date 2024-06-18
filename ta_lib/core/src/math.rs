@@ -146,7 +146,33 @@ impl Series<f32> {
         self.change(period) / period as f32
     }
 
-    
+    pub fn change(&self, period: usize) -> Self {
+        self - self.shift(period)
+    }
+
+    pub fn highest(&self, period: usize) -> Self {
+        self.window(period)
+            .map(|w| {
+                w.iter()
+                    .flatten()
+                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            })
+            .collect()
+    }
+
+    pub fn lowest(&self, period: usize) -> Self {
+        self.window(period)
+            .map(|w| {
+                w.iter()
+                    .flatten()
+                    .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            })
+            .collect()
+    }
+
+    pub fn range(&self, period: usize) -> Self {
+        self.highest(period) - self.lowest(period)
+    }
 
     pub fn normalize(&self, period: usize) -> Self {
         let l = self.lowest(period);
@@ -356,6 +382,71 @@ mod tests {
         let n = 3;
 
         let result = source.slope(n);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_range() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 1.0, 2.0, 2.0, 2.0]);
+        let n = 3;
+
+        let result = source.range(n);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_change() {
+        let source = Series::from([
+            44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
+        ]);
+        let length = 1;
+        let epsilon = 0.001;
+        let expected = Series::from([
+            f32::NAN,
+            -0.25,
+            0.0599,
+            -0.540,
+            0.7199,
+            0.5,
+            0.2700,
+            0.3200,
+            0.4200,
+        ]);
+
+        let result = source.change(length);
+
+        for i in 0..result.len() {
+            match (result[i], expected[i]) {
+                (Some(a), Some(b)) => {
+                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
+                }
+                (None, None) => {}
+                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
+            }
+        }
+    }
+
+    #[test]
+    fn test_highest() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let period = 3;
+
+        let result = source.highest(period);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_lowest() {
+        let source = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
+        let expected = Series::from([f32::NAN, 2.0, 2.0, 1.0, 1.0]);
+        let period = 3;
+
+        let result = source.lowest(period);
 
         assert_eq!(result, expected);
     }
