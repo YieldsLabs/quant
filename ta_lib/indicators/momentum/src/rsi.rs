@@ -1,15 +1,13 @@
 use core::prelude::*;
 
-pub fn rsi(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
-    let len = source.len();
-
+pub fn rsi(source: &Series<f32>, smooth: Smooth, period: usize) -> Series<f32> {
     let mom = source.change(1);
-    let up = mom.max(&ZERO).smooth(smooth_type, period);
-    let down = mom.min(&ZERO).negate().smooth(smooth_type, period);
+    let up = mom.max(&ZERO).smooth(smooth, period);
+    let down = mom.min(&ZERO).negate().smooth(smooth, period);
 
-    let oneh = Series::fill(SCALE, len);
+    let default = Series::fill(SCALE, source.len());
 
-    iff!(down.seq(&ZERO), oneh, SCALE - (SCALE / (1. + up / down)))
+    iff!(down.seq(&ZERO), default, SCALE - (SCALE / (1. + up / down)))
 }
 
 #[cfg(test)]
