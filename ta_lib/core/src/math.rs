@@ -69,7 +69,7 @@ impl Series<f32> {
         self.wsum(window).map(|sum| sum / window.len() as f32)
     }
 
-    fn wpercentile(&self, window: &[Option<f32>], percentile: usize) -> Option<f32> {
+    fn wpercentile(&self, window: &[Option<f32>], percentile: f32) -> Option<f32> {
         if Self::all_none(window) {
             return None;
         }
@@ -78,7 +78,7 @@ impl Series<f32> {
         values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         let len = values.len();
-        let idx = (percentile as f32 / SCALE) * (len as f32 - 1.0);
+        let idx = (percentile / SCALE) * (len as f32 - 1.0);
         let idx_lower = idx.floor() as usize;
         let idx_upper = idx.ceil() as usize;
 
@@ -106,7 +106,7 @@ impl Series<f32> {
         self.window(period).map(|w| self.wmean(w)).collect()
     }
 
-    pub fn percentile(&self, period: usize, percentage: usize) -> Self {
+    pub fn percentile(&self, period: usize, percentage: f32) -> Self {
         self.window(period)
             .map(|w| self.wpercentile(w, percentage))
             .collect()
