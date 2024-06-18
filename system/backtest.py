@@ -130,18 +130,19 @@ class BacktestSystem(AbstractSystem):
             # "ALGOUSDT",
             # "WAVESUSDT",
             # "NEARUSDT"
-            # "DOTUSDT",
+            # "DOTUSDT"
             # "SOLUSDT"
-            "FILUSDT",
+            # "FILUSDT"
             # "TONUSDT"
             # "RAREUSDT"
             # "ATOMUSDT",
             # "SCUSDT"
-            # "FTMUSDT"
+            "FTMUSDT"
             # "BOMEUSDT"
             # "APEUSDT"
             # "BTCUSDT"
             # "ADAUSDT"
+            # "XRPUSDT"
         ]
 
         futures_symbols = [symbol for symbol in futures_symbols if symbol.name in scalp]
@@ -164,7 +165,7 @@ class BacktestSystem(AbstractSystem):
                         DpoConfirm(),
                         CciConfirm(),
                         ChopPulse(),
-                        MaBaseLine(ma=StaticParameter(MovingAverageType.VIDYA)),
+                        MaBaseLine(ma=StaticParameter(MovingAverageType.FRAMA)),
                         DchStopLoss(),
                         CciExit(),
                     )

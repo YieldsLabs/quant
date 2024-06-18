@@ -1,5 +1,6 @@
 mod braid;
 mod cci;
+mod didi;
 mod dpo;
 mod dumb;
 mod eom;
@@ -10,6 +11,7 @@ mod wpr;
 
 pub use braid::BraidConfirm;
 pub use cci::CciConfirm;
+pub use didi::DidiConfirm;
 pub use dpo::DpoConfirm;
 pub use dumb::DumbConfirm;
 pub use eom::EomConfirm;

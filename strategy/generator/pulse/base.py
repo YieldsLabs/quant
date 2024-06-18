@@ -13,6 +13,7 @@ class PulseType(Enum):
     Tdfi = "Tdfi"
     Wae = "Wae"
     Yz = "Yz"
+    Sqz = "Sqz"
 
     def __str__(self):
         return self.value.upper()

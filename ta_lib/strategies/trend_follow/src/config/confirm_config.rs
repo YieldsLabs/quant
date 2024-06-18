@@ -60,4 +60,12 @@ pub enum ConfirmConfig {
         period: f32,
         threshold: f32,
     },
+    Didi {
+        source: f32,
+        smooth: f32,
+        period_med: f32,
+        period_slow: f32,
+        smooth_signal: f32,
+        period_signal: f32,
+    },
 }

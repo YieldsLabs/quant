@@ -12,7 +12,7 @@ class RsiSignalLineConfirm(Confirm):
     type: Confirm = ConfirmType.RsiSignalLine
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)
-    period: Parameter = StaticParameter(14.0)
+    period: Parameter = StaticParameter(18.0)
     smooth_signal: Parameter = StaticParameter(Smooth.WMA)
-    smooth_period: Parameter = RandomParameter(7.0, 10.0, 1.0)
+    smooth_period: Parameter = RandomParameter(9.0, 15.0, 2.0)
     threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)

@@ -16,4 +16,4 @@ class SqzPulse(Pulse):
     smooth_atr: Parameter = CategoricalParameter(SmoothATR)
     period_atr: Parameter = StaticParameter(20.0)
     factor_bb: Parameter = StaticParameter(2.0)
-    factor_kch: Parameter = StaticParameter(1.0)
+    factor_kch: Parameter = StaticParameter(1.2)

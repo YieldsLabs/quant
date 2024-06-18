@@ -10,5 +10,5 @@ from .base import Confirm, ConfirmType
 class WprConfirm(Confirm):
     type: Confirm = ConfirmType.Wpr
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
-    period: Parameter = StaticParameter(14.0)
+    period: Parameter = StaticParameter(28.0)
     threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)

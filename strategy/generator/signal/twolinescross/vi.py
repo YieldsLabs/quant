@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-from core.models.parameter import Parameter, StaticParameter
-from core.models.smooth import Smooth
+from core.models.parameter import CategoricalParameter, Parameter, StaticParameter
+from core.models.smooth import SmoothATR
 from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
 class Vi2LinesCrossSignal(Signal):
     type: SignalType = SignalType.Vi2LinesCross
-    period: Parameter = StaticParameter(14.0)
-    smooth_atr: Parameter = StaticParameter(Smooth)
+    period: Parameter = StaticParameter(6.0)
+    smooth_atr: Parameter = CategoricalParameter(SmoothATR)
     period_atr: Parameter = StaticParameter(1.0)

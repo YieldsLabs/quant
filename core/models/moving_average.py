@@ -2,11 +2,11 @@ from enum import Enum
 
 
 class MovingAverageType(Enum):
-    ALMA = 1
+    # ALMA = 1
     # CAMA = 2
     # DEMA = 3
     # EMA = 4
-    # FRAMA = 5
+    FRAMA = 5
     # GMA = 6
     # HMA = 7
     # HEMA = 8
@@ -21,14 +21,14 @@ class MovingAverageType(Enum):
     # T3 = 17
     # TEMA = 18
     # TL = 19
-    TRIMA = 20
-    VIDYA = 21
+    # TRIMA = 20
+    # VIDYA = 21
     # VWMA = 22
     # VWEMA = 23
     # WMA = 24
     # ZLEMA = 25
     # ZLSMA = 26
-    # ZLTEMA = 27
+    ZLTEMA = 27
     # ZLHMA = 28
 
     def __str__(self):

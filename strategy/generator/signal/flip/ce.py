@@ -17,4 +17,4 @@ class CeFlipSignal(Signal):
     period: Parameter = StaticParameter(22.0)
     smooth_atr: Parameter = CategoricalParameter(SmoothATR)
     period_atr: Parameter = StaticParameter(22.0)
-    factor: Parameter = StaticParameter(6.8)
+    factor: Parameter = StaticParameter(1.8)

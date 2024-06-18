@@ -186,11 +186,11 @@
         },
         "ccxt": {
             "hashes": [
-                "sha256:020d1835c34dbd9b150d427afd2340efa5e569377565a8649d87007de33d1c23",
-                "sha256:5e28340b96cf519896665490ba46e97839efe07c499c475211573edbf86af0d3"
+                "sha256:1500e63a68c76ab8ce85c9839544991e5202a854e15e2338dea8110e7323b09f",
+                "sha256:ba0793dc3e3d341103a5582c1bb9f9e0b384f0bb036d6f40c7bf8cd8c5a19648"
             ],
             "index": "pypi",
-            "version": "==4.3.45"
+            "version": "==4.3.46"
         },
         "certifi": {
             "hashes": [
@@ -460,10 +460,10 @@
         },
         "fastjsonschema": {
             "hashes": [
-                "sha256:3672b47bc94178c9f23dbb654bf47440155d4db9df5f7bc47643315f9c405cd0",
-                "sha256:e3126a94bdc4623d3de4485f8d468a12f02a67921315ddc87836d6e456dc789d"
+                "sha256:3d48fc5300ee96f5d116f10fe6f28d938e6008f59a6a025c2649475b87f76a23",
+                "sha256:5875f0b0fa7a0043a91e93a9b8f793bcbbba9691e7fd83dca95c28ba26d21f0a"
             ],
-            "version": "==2.19.1"
+            "version": "==2.20.0"
         },
         "fonttools": {
             "hashes": [

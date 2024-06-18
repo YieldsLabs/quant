@@ -4,7 +4,7 @@ use momentum::{cci, macd, ppo, roc, rsi, stochosc};
 use price::typical_price;
 use std::collections::HashMap;
 use trend::spp;
-use volatility::{bb, gkyz, tr, yz};
+use volatility::{bb, gkyz, kch, tr, yz};
 use volume::{mfi, nvol, obv, vo};
 
 const BUFF_FACTOR: f32 = 1.3;
@@ -92,7 +92,7 @@ impl TimeSeries for BaseTimeSeries {
 
     fn ta(&self, bar: &OHLCV) -> TechAnalysis {
         let periods = [2, 14, 12, 26, 9, 5, 10, 1, 3, 11];
-        let factors = [1.8, 0.015];
+        let factors = [1.8, 0.015, 1.0];
 
         let end_index = *self.index.get(&bar.ts).unwrap_or(&self.data.len());
         let max_period = periods.into_iter().max().unwrap_or(0);
@@ -127,7 +127,15 @@ impl TimeSeries for BaseTimeSeries {
         let gkyz = gkyz(open, high, low, source, periods[3]);
         let yz = yz(open, high, low, source, periods[3]);
         let (upb, _, lwb) = bb(source, Smooth::SMA, periods[5], factors[0]);
-        let e = upb - lwb;
+        let (upkch, _, lwkch) = kch(
+            source,
+            &gkyz.smooth(Smooth::SMA, periods[1]),
+            Smooth::SMA,
+            periods[5],
+            factors[2],
+        );
+        let ebb = upb - lwb;
+        let ekch = upkch - lwkch;
         let (k, d) = stochosc(
             source,
             high,
@@ -161,7 +169,8 @@ impl TimeSeries for BaseTimeSeries {
             tr: tr.into(),
             gkyz: gkyz.into(),
             yz: yz.into(),
-            e: e.into(),
+            ebb: ebb.into(),
+            ekch: ekch.into(),
             k: k.into(),
             d: d.into(),
             hh: hh.into(),
