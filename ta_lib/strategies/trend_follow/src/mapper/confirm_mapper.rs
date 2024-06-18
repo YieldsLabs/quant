@@ -110,14 +110,14 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
         ConfirmConfig::Didi {
             source,
             smooth,
-            period_med,
+            period_medium,
             period_slow,
             smooth_signal,
             period_signal,
         } => Box::new(DidiConfirm::new(
             source_deserialize(source as usize),
             smooth_deserialize(smooth as usize),
-            period_med,
+            period_medium,
             period_slow,
             smooth_deserialize(smooth_signal as usize),
             period_signal,

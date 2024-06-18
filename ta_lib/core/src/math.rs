@@ -146,6 +146,8 @@ impl Series<f32> {
         self.change(period) / period as f32
     }
 
+    
+
     pub fn normalize(&self, period: usize) -> Self {
         let l = self.lowest(period);
         let h = self.highest(period);
