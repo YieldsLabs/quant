@@ -23,7 +23,7 @@ pub trait Comparator<T> {
 
     fn compare<F>(&self, rhs: &T, comparator: F) -> Self::Output
     where
-        F: Fn(&f32, &f32) -> bool;
+        F: Fn(f32, f32) -> bool;
 
     fn seq(&self, rhs: &T) -> Self::Output;
     fn sne(&self, rhs: &T) -> Self::Output;
@@ -38,7 +38,7 @@ pub trait Operation<T, U, V> {
 
     fn ops<F>(&self, rhs: &T, op: F) -> Self::Output
     where
-        F: Fn(&U, &V) -> f32;
+        F: Fn(U, V) -> f32;
 
     fn sadd(&self, rhs: &T) -> Self::Output;
     fn ssub(&self, rhs: &T) -> Self::Output;
@@ -51,7 +51,7 @@ pub trait Bitwise<T> {
 
     fn op<F>(&self, rhs: &T, op: F) -> Self::Output
     where
-        F: Fn(&bool, &bool) -> bool;
+        F: Fn(bool, bool) -> bool;
 
     fn sand(&self, rhs: &T) -> Self::Output;
     fn sor(&self, rhs: &T) -> Self::Output;

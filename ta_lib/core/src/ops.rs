@@ -8,9 +8,9 @@ impl Operation<f32, f32, f32> for Series<f32> {
 
     fn ops<F>(&self, scalar: &f32, op: F) -> Self::Output
     where
-        F: Fn(&f32, &f32) -> f32,
+        F: Fn(f32, f32) -> f32,
     {
-        self.fmap(|val| val.map(|v| op(v, scalar)))
+        self.fmap(|val| val.map(|v| op(*v, *scalar)))
     }
 
     fn sadd(&self, scalar: &f32) -> Series<f32> {
@@ -22,7 +22,7 @@ impl Operation<f32, f32, f32> for Series<f32> {
     }
 
     fn sdiv(&self, scalar: &f32) -> Series<f32> {
-        self.ops(scalar, |v, s| if *s != ZERO { v / s } else { ZERO })
+        self.ops(scalar, |v, s| if s != ZERO { v / s } else { ZERO })
     }
 
     fn ssub(&self, scalar: &f32) -> Series<f32> {
@@ -35,10 +35,10 @@ impl Operation<Series<f32>, f32, f32> for Series<f32> {
 
     fn ops<F>(&self, rhs: &Series<f32>, op: F) -> Self::Output
     where
-        F: Fn(&f32, &f32) -> f32,
+        F: Fn(f32, f32) -> f32,
     {
         self.zip_with(rhs, |a, b| {
-            a.and_then(|a_val| b.map(|b_val| op(a_val, b_val)))
+            a.and_then(|a_val| b.map(|b_val| op(*a_val, *b_val)))
         })
     }
 
@@ -68,10 +68,10 @@ impl Operation<Series<f32>, bool, f32> for Series<bool> {
 
     fn ops<F>(&self, rhs: &Series<f32>, op: F) -> Series<f32>
     where
-        F: Fn(&bool, &f32) -> f32,
+        F: Fn(bool, f32) -> f32,
     {
         self.zip_with(rhs, |b, a| match (b, a) {
-            (Some(b_val), Some(a_val)) => Some(op(b_val, a_val)),
+            (Some(b_val), Some(a_val)) => Some(op(*b_val, *a_val)),
             _ => None,
         })
     }
@@ -81,7 +81,7 @@ impl Operation<Series<f32>, bool, f32> for Series<bool> {
     }
 
     fn smul(&self, rhs: &Series<f32>) -> Series<f32> {
-        self.ops(rhs, |b, a| if *b { *a } else { 0.0 })
+        self.ops(rhs, |b, a| if b { a } else { 0.0 })
     }
 
     fn sdiv(&self, _rhs: &Series<f32>) -> Series<f32> {

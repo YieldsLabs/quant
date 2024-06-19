@@ -153,17 +153,14 @@ impl BaseStrategy {
     }
 
     fn suggested_entry(&self, ohlcv: &OHLCVSeries) -> f32 {
-        ohlcv
-            .source(SourceType::CLOSE)
-            .last()
-            .unwrap_or(std::f32::NAN)
+        ohlcv.source(SourceType::CLOSE).last().unwrap_or(f32::NAN)
     }
 
     fn stop_loss_levels(&self, ohlcv: &OHLCVSeries) -> (f32, f32) {
         let (sl_long_find, sl_short_find) = self.stop_loss.find(ohlcv);
 
-        let stop_loss_long = sl_long_find.last().unwrap_or(std::f32::NAN);
-        let stop_loss_short = sl_short_find.last().unwrap_or(std::f32::NAN);
+        let stop_loss_long = sl_long_find.last().unwrap_or(f32::NAN);
+        let stop_loss_short = sl_short_find.last().unwrap_or(f32::NAN);
 
         (stop_loss_long, stop_loss_short)
     }
