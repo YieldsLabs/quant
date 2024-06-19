@@ -1,9 +1,7 @@
 use core::prelude::*;
 
 pub fn dema(source: &Series<f32>, period: usize) -> Series<f32> {
-    let ema = source.smooth(Smooth::EMA, period);
-
-    2. * &ema - ema.smooth(Smooth::EMA, period)
+    source.smooth(Smooth::DEMA, period)
 }
 
 #[cfg(test)]

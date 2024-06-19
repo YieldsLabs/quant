@@ -11,6 +11,7 @@ class Smooth(Enum):
     ZLEMA = 7
     LSMA = 8
     TEMA = 9
+    DEMA = 10
 
     def __str__(self):
         return self.name.upper()
