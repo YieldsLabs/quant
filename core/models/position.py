@@ -180,9 +180,8 @@ class Position:
     @property
     def curr_price(self) -> float:
         last_bar = self.risk_bar
-        pr = self.signal.symbol.price_precision
 
-        return round((last_bar.high + last_bar.low + 2.0 * last_bar.close) / 4, pr)
+        return (last_bar.open + last_bar.close) / 2.0
 
     @property
     def is_valid(self) -> bool:
@@ -268,14 +267,12 @@ class Position:
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
 
-        next_position = next_position.break_even()
-
         if (
-            self.side == PositionSide.LONG
-            and self.curr_price > self.profit_target.first
+            next_position.side == PositionSide.LONG
+            and next_position.curr_price > next_position.profit_target.first
         ) or (
-            self.side == PositionSide.SHORT
-            and self.curr_price < self.profit_target.first
+            next_position.side == PositionSide.SHORT
+            and next_position.curr_price < next_position.profit_target.first
         ):
             next_position = next_position.trail(ta)
 
@@ -284,30 +281,36 @@ class Position:
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
-        dstp = abs(self.curr_price - self.take_profit)
-        dssl = abs(self.curr_price - self.stop_loss)
 
-        if session_risk == SessionRiskType.EXIT and self.curr_pnl > 1.2 * self.fee:
+        if (
+            session_risk == SessionRiskType.EXIT
+            and next_position.curr_pnl > 1.2 * next_position.fee
+        ):
             print(
                 f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
             )
-            next_tp = next_risk.tp_low(self.side, ta, dstp, next_tp)
-            next_sl = next_risk.sl_low(self.side, ta, dssl, next_sl)
+
+            dtp = abs(next_position.curr_price - next_position.take_profit)
+            dsl = abs(next_position.curr_price - next_position.stop_loss)
+
+            next_tp = next_risk.tp_low(next_position.side, ta, dtp, next_tp)
+            next_sl = next_risk.sl_low(next_position.side, ta, dsl, next_sl)
+
             print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
 
         next_risk = next_risk.assess(
-            self.side,
+            next_position.side,
             next_tp,
             next_sl,
-            self.open_timestamp,
-            self.expiration,
+            next_position.open_timestamp,
+            next_position.expiration,
         )
 
         logger.info(
-            f"SIDE: {self.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {self.entry_price}, SL: {self.stop_loss}, TP: {self.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {self.has_break_even}"
+            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}"
         )
 
-        return replace(
+        next_position = replace(
             next_position,
             position_risk=next_risk,
             _tp=next_tp,
@@ -315,41 +318,51 @@ class Position:
             last_modified=datetime.now().timestamp(),
         )
 
+        next_position = next_position.break_even()
+
+        return next_position
+
     def break_even(self) -> "Position":
         curr_price = self.curr_price
         curr_sl = self.stop_loss
 
         if self.side == PositionSide.LONG:
             if curr_price > self.profit_target.first:
-                curr_sl = min(curr_sl, self.entry_price)
+                curr_sl = max(curr_sl, self.entry_price)
 
             if curr_price > self.profit_target.second:
-                curr_sl = min(curr_sl, self.profit_target.first)
+                curr_sl = max(curr_sl, self.profit_target.first)
 
             if curr_price > self.profit_target.third:
-                curr_sl = min(curr_sl, self.profit_target.second)
+                curr_sl = max(curr_sl, self.profit_target.second)
 
             if curr_price > self.profit_target.fourth:
-                curr_sl = min(curr_sl, self.profit_target.third)
+                curr_sl = max(curr_sl, self.profit_target.third)
+
+            if curr_price > self.profit_target.fifth:
+                curr_sl = max(curr_sl, self.profit_target.fourth)
 
         if self.side == PositionSide.SHORT:
             if curr_price < self.profit_target.first:
-                curr_sl = max(curr_sl, self.entry_price)
+                curr_sl = min(curr_sl, self.entry_price)
 
             if curr_price < self.profit_target.second:
-                curr_sl = max(curr_sl, self.profit_target.first)
+                curr_sl = min(curr_sl, self.profit_target.first)
 
             if curr_price < self.profit_target.third:
-                curr_sl = max(curr_sl, self.profit_target.second)
+                curr_sl = min(curr_sl, self.profit_target.second)
 
             if curr_price < self.profit_target.fourth:
-                curr_sl = max(curr_sl, self.profit_target.third)
+                curr_sl = min(curr_sl, self.profit_target.third)
+
+            if curr_price < self.profit_target.fifth:
+                curr_sl = min(curr_sl, self.profit_target.fourth)
 
         return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 
     def trail(self, ta: TechAnalysis) -> "Position":
         prev_sl = self.stop_loss
-        next_sl = self.position_risk.sl_ats(self.side, ta, self.stop_loss)
+        next_sl = self.position_risk.sl_ats(self.side, ta, prev_sl)
 
         logger.info(
             f"<---- &&&&&&TRAIL&&&&& -->>> prevSL: {prev_sl}, nextSL: {next_sl}"
@@ -362,17 +375,6 @@ class Position:
 
     def theo_maker_fee(self, size: float, price: float) -> float:
         return size * price * self.signal.symbol.maker_fee
-
-    def take_profit_level(self, factor: float):
-        entry_price = self.entry_price
-        stop_loss = self.signal.stop_loss
-        dist = factor * abs(entry_price - stop_loss)
-        dist = round(dist, self.signal.symbol.price_precision)
-
-        if self.side == PositionSide.LONG:
-            return entry_price + dist
-        if self.side == PositionSide.SHORT:
-            return entry_price - dist
 
     @staticmethod
     def _average_size(orders: List[Order]) -> float:

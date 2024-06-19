@@ -120,6 +120,9 @@ class PositionRisk(TaMixin):
         ohlcv.sort(key=lambda x: x.timestamp)
         return replace(self, ohlcv=ohlcv)
 
+    def reset(self):
+        return replace(self, type=PositionRiskType.NONE)
+
     def assess(
         self,
         side: PositionSide,

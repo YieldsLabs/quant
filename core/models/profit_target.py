@@ -37,8 +37,13 @@ class ProfitTarget:
         return self._pt(scale)
 
     @cached_property
+    def fifth(self):
+        scale = np.random.uniform(3.9, 4.8)
+        return self._pt(scale)
+
+    @cached_property
     def last(self):
-        return self.fourth
+        return self.fifth
 
     def _pt(self, scale: float) -> float:
         return self.signal.ohlcv.close * (
