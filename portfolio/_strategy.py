@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.impute import KNNImputer
-from sklearn.metrics import calinski_harabasz_score
+from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import MinMaxScaler
 
 from core.models.strategy import Strategy
@@ -78,16 +78,16 @@ class StrategyStorage:
         max_clusters = min(len(data) - 1, 10)
         min_clusters = min(2, max_clusters)
         best_score = float("-inf")
-        optimal_clusters = 0
+        optimal_clusters = min_clusters
 
         for k in range(min_clusters, max_clusters + 1):
-            kmeans = KMeans(n_clusters=k, n_init="auto", random_state=None)
-            kmeans.fit_predict(data)
+            kmeans = KMeans(n_clusters=k, n_init="auto", random_state=1337)
+            cluster_labels = kmeans.fit_predict(data)
 
-            if len(np.unique(kmeans.labels_)) < k:
+            if len(np.unique(cluster_labels)) < k:
                 continue
 
-            score = calinski_harabasz_score(data, kmeans.labels_)
+            score = silhouette_score(data, cluster_labels)
 
             if score > best_score:
                 best_score = score
