@@ -15,6 +15,7 @@ pub trait Extremum<T> {
 
     fn max(&self, rhs: &T) -> Self::Output;
     fn min(&self, rhs: &T) -> Self::Output;
+    fn clip(&self, lhs: &T, rhs: &T) -> Self::Output;
 }
 
 pub trait Comparator<T> {

@@ -17,7 +17,7 @@ pub fn stc(
 
     let stc = (SCALE * d.normalize(cycle)).smooth(smooth_type, d_second);
 
-    stc.min(&SCALE).max(&ZERO)
+    stc.clip(&ZERO, &SCALE)
 }
 
 #[cfg(test)]

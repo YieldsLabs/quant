@@ -18,6 +18,10 @@ impl Extremum<f32> for Series<f32> {
     fn min(&self, scalar: &f32) -> Self::Output {
         self.extremum(scalar, f32::min)
     }
+
+    fn clip(&self, lhs: &f32, rhs: &f32) -> Self {
+        self.min(rhs).max(lhs)
+    }
 }
 
 impl Extremum<Series<f32>> for Series<f32> {
@@ -40,6 +44,10 @@ impl Extremum<Series<f32>> for Series<f32> {
 
     fn min(&self, rhs: &Series<f32>) -> Self::Output {
         self.extremum(rhs, f32::min)
+    }
+
+    fn clip(&self, lhs: &Series<f32>, rhs: &Series<f32>) -> Self {
+        self.min(rhs).max(lhs)
     }
 }
 
@@ -183,6 +191,18 @@ mod tests {
         let expected = Series::from([44.34, 44.0, 44.15, 43.60, 14.33, 44.83, 45.10, 45.42, 45.84]);
 
         let result = a.min(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_clip() {
+        let source = Series::from([-1.0, 0.0, 1.0, 3.0, 5.0]);
+        let expected = Series::from([0.0, 0.0, 1.0, 3.0, 3.0]);
+        let min = 0.;
+        let max = 3.;
+
+        let result = source.clip(&min, &max);
 
         assert_eq!(result, expected);
     }
