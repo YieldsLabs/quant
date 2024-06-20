@@ -3,10 +3,11 @@ import logging
 from typing import Union
 
 import numpy as np
+import umap as up
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 from sklearn.metrics import calinski_harabasz_score
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import check_random_state
 
 from core.actors import BaseActor
@@ -44,6 +45,23 @@ def pad_bars(bars, length):
         return padding + bars
     else:
         return bars[-length:]
+
+
+def fisher_transform(prices, lookback=10):
+    import numpy as np
+
+    prices = np.array(prices)
+    high = np.max(prices[-lookback:])
+    low = np.min(prices[-lookback:])
+
+    if high != low:
+        value = 2 * ((prices - low) / (high - low)) - 1
+    else:
+        value = 0
+
+    value = np.clip(value, -0.99, 0.99)
+    fisher = 0.5 * np.log((1 + value) / (1 - value))
+    return fisher
 
 
 def lorentzian_distance(u, v):
@@ -274,12 +292,15 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 )
             )
 
-            features = PCA(n_components=3).fit_transform(features)
+            features = MinMaxScaler(feature_range=(-1, 1)).fit_transform(features)
+            features = up.UMAP(
+                n_components=2, n_neighbors=len(features) - 1
+            ).fit_transform(features)
 
             max_clusters = min(len(features) - 1, 10)
             min_clusters = min(2, max_clusters)
             best_score = float("-inf")
-            optimal_clusters = 0
+            optimal_clusters = min_clusters
 
             for k in range(min_clusters, max_clusters + 1):
                 kmeans = CustomKMeans(n_clusters=k, random_state=None).fit(features)
@@ -340,41 +361,6 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             self.prev_txn = (prev_long, prev_short)
 
             if knn_transaction in self.anomaly:
-                should_exit = True
-
-            if knn_transaction[:3] in [
-                "120",
-                "121",
-                "123",
-                "124",
-                "142",
-                "112",
-                "102",
-                "211",
-                "214",
-                "234",
-                "241",
-                "242",
-                "243",
-                "244",
-                "245",
-                "246",
-                "411",
-                "412",
-                "413",
-                "414",
-                "415",
-                "421",
-                "422",
-                "423",
-                "424",
-                "425",
-                "441",
-                "455",
-                "003",
-                "021",
-                "041",
-            ]:
                 should_exit = True
 
             logger.info(

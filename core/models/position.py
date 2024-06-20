@@ -44,18 +44,6 @@ class Position:
         if self._tp:
             return self._tp
 
-        if self.signal_risk.tp:
-            if (
-                self.side == PositionSide.LONG
-                and self.signal_risk.tp > self.stop_loss
-                and self.signal_risk.tp <= self.profit_target.last
-            ) or (
-                self.side == PositionSide.SHORT
-                and self.signal_risk.tp < self.stop_loss
-                and self.signal_risk.tp >= self.profit_target.last
-            ):
-                return self.signal_risk.tp
-
         return self.profit_target.last
 
     @property
@@ -105,9 +93,9 @@ class Position:
     @property
     def has_break_even(self) -> bool:
         if self.side == PositionSide.LONG:
-            return self.stop_loss >= self.entry_price
+            return self.stop_loss > self.entry_price
         if self.side == PositionSide.SHORT:
-            return self.stop_loss <= self.entry_price
+            return self.stop_loss < self.entry_price
 
         return False
 
@@ -181,7 +169,7 @@ class Position:
     def curr_price(self) -> float:
         last_bar = self.risk_bar
 
-        return (last_bar.open + last_bar.close) / 2.0
+        return 0.5 * (last_bar.open + last_bar.close)
 
     @property
     def is_valid(self) -> bool:
@@ -238,6 +226,7 @@ class Position:
             return replace(
                 self,
                 orders=orders,
+                profit_target=replace(self.profit_target, entry=order.price),
                 last_modified=execution_time,
             )
 
@@ -262,10 +251,10 @@ class Position:
             return self
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
-        pnl_perc = (self.curr_pnl / self.curr_price) * 100
 
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
+        next_position = next_position.break_even(ta)
 
         if (
             next_position.side == PositionSide.LONG
@@ -275,6 +264,8 @@ class Position:
             and next_position.curr_price < next_position.profit_target.first
         ):
             next_position = next_position.trail(ta)
+
+        pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
 
         if session_risk == SessionRiskType.EXIT and pnl_perc <= 0.0:
             next_position = next_position.trail(ta)
@@ -290,11 +281,8 @@ class Position:
                 f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
             )
 
-            dtp = abs(next_position.curr_price - next_position.take_profit)
-            dsl = abs(next_position.curr_price - next_position.stop_loss)
-
-            next_tp = next_risk.tp_low(next_position.side, ta, dtp, next_tp)
-            next_sl = next_risk.sl_low(next_position.side, ta, dsl, next_sl)
+            next_tp = next_risk.tp_low(next_position.side, ta, next_tp)
+            next_sl = next_risk.sl_low(next_position.side, ta, next_sl)
 
             print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
 
@@ -306,9 +294,12 @@ class Position:
             next_position.expiration,
         )
 
-        logger.info(
-            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}"
-        )
+        if (
+            next_risk.type == PositionRiskType.TP
+            and pnl_perc > 0.0
+            and next_position.has_break_even
+        ):
+            next_risk = next_risk.reset()
 
         next_position = replace(
             next_position,
@@ -318,45 +309,50 @@ class Position:
             last_modified=datetime.now().timestamp(),
         )
 
-        next_position = next_position.break_even()
+        logger.info(
+            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, PT: {next_position.profit_target.first}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
+        )
 
         return next_position
 
-    def break_even(self) -> "Position":
+    def break_even(self, ta: TechAnalysis) -> "Position":
         curr_price = self.curr_price
         curr_sl = self.stop_loss
+        volatility = ta.volatility.yz[-1]
+        duration = self.trade_time / 100000 // len(self.position_risk.ohlcv)
+        factor = volatility * duration
 
         if self.side == PositionSide.LONG:
             if curr_price > self.profit_target.first:
-                curr_sl = max(curr_sl, self.entry_price)
+                curr_sl = max(curr_sl, self.entry_price + factor)
 
             if curr_price > self.profit_target.second:
-                curr_sl = max(curr_sl, self.profit_target.first)
+                curr_sl = max(curr_sl, self.profit_target.first + factor)
 
-            if curr_price > self.profit_target.third:
-                curr_sl = max(curr_sl, self.profit_target.second)
+            elif curr_price > self.profit_target.third:
+                curr_sl = max(curr_sl, self.profit_target.second + factor)
 
-            if curr_price > self.profit_target.fourth:
-                curr_sl = max(curr_sl, self.profit_target.third)
+            elif curr_price > self.profit_target.fourth:
+                curr_sl = max(curr_sl, self.profit_target.third + factor)
 
-            if curr_price > self.profit_target.fifth:
+            elif curr_price > self.profit_target.fifth:
                 curr_sl = max(curr_sl, self.profit_target.fourth)
 
         if self.side == PositionSide.SHORT:
             if curr_price < self.profit_target.first:
-                curr_sl = min(curr_sl, self.entry_price)
+                curr_sl = min(curr_sl, self.entry_price - factor)
 
-            if curr_price < self.profit_target.second:
-                curr_sl = min(curr_sl, self.profit_target.first)
+            elif curr_price < self.profit_target.second:
+                curr_sl = min(curr_sl, self.profit_target.first - factor)
 
-            if curr_price < self.profit_target.third:
-                curr_sl = min(curr_sl, self.profit_target.second)
+            elif curr_price < self.profit_target.third:
+                curr_sl = min(curr_sl, self.profit_target.second - factor)
 
-            if curr_price < self.profit_target.fourth:
-                curr_sl = min(curr_sl, self.profit_target.third)
+            elif curr_price < self.profit_target.fourth:
+                curr_sl = min(curr_sl, self.profit_target.third - factor)
 
-            if curr_price < self.profit_target.fifth:
-                curr_sl = min(curr_sl, self.profit_target.fourth)
+            elif curr_price < self.profit_target.fifth:
+                curr_sl = min(curr_sl, self.profit_target.fourth - factor)
 
         return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 

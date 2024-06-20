@@ -22,7 +22,7 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
         data = data.reshape(-1, 1)
 
     scaler = MinMaxScaler()
-    X = scaler.fit_transform(data.reshape(-1, 1))
+    X = scaler.fit_transform(data)
 
     best_score = float("-inf")
     best_centroids = []
@@ -163,18 +163,20 @@ class PositionRisk(TaMixin):
 
         return close
 
-    def sl_low(
-        self, side: PositionSide, ta: TechAnalysis, dist: float, sl: float
-    ) -> "float":
+    def sl_low(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
         if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
-        ll = np.array(ta.trend.ll)[-SL_LOOKBACK:]
-        hh = np.array(ta.trend.hh)[-SL_LOOKBACK:]
+        trend = ta.trend
+
+        ll = np.array(trend.ll)[-SL_LOOKBACK:]
+        hh = np.array(trend.hh)[-SL_LOOKBACK:]
         volatility = np.array(ta.volatility.yz)[-SL_LOOKBACK:]
+        sup = np.array(trend.support)[-SL_LOOKBACK:]
+        res = np.array(trend.resistance)[-SL_LOOKBACK:]
 
         min_length = min(len(ll), len(hh), len(volatility))
 
@@ -190,28 +192,31 @@ class PositionRisk(TaMixin):
         ll_atr = ll_smooth - volatility_smooth
         hh_atr = hh_smooth + volatility_smooth
 
+        lr = sup - volatility_smooth
+        sr = res + volatility_smooth
+
         if side == PositionSide.LONG:
-            new_sl = np.min(ll_atr)
-            return max(sl, new_sl)
+            return max(sl, lr[-1], np.min(ll_atr))
 
         if side == PositionSide.SHORT:
-            new_sl = np.max(hh_atr)
-            return min(sl, new_sl)
+            return min(sl, sr[-1], np.max(hh_atr))
 
         return sl
 
-    def tp_low(
-        self, side: PositionSide, ta: TechAnalysis, dist: float, tp: float
-    ) -> "float":
+    def tp_low(self, side: PositionSide, ta: TechAnalysis, tp: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
         if ts_diff.sum() < TIME_THRESHOLD:
             return tp
 
-        ll = np.array(ta.trend.ll)[-SL_LOOKBACK:]
-        hh = np.array(ta.trend.hh)[-SL_LOOKBACK:]
+        trend = ta.trend
+
+        ll = np.array(trend.ll)[-SL_LOOKBACK:]
+        hh = np.array(trend.hh)[-SL_LOOKBACK:]
         volatility = np.array(ta.volatility.yz)[-SL_LOOKBACK:]
+        res = np.array(trend.resistance)[-SL_LOOKBACK:]
+        sup = np.array(trend.support)[-SL_LOOKBACK:]
 
         min_length = min(len(ll), len(hh), len(volatility))
 
@@ -227,10 +232,13 @@ class PositionRisk(TaMixin):
         ll_atr = ll_smooth - volatility_smooth
         hh_atr = hh_smooth + volatility_smooth
 
+        lr = res + volatility_smooth
+        sr = sup - volatility_smooth
+
         if side == PositionSide.LONG:
-            return np.max(hh_atr - self.trail_factor * dist)
+            return min(lr[-1], np.max(hh_atr))
         elif side == PositionSide.SHORT:
-            return np.min(ll_atr + self.trail_factor * dist)
+            return max(sr[-1], np.min(ll_atr))
 
         return tp
 

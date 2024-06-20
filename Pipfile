@@ -23,6 +23,7 @@ orjson = "*"
 scipy = "*"
 cbor2 = "*"
 llama-cpp-python = "*"
+umap-learn = "*"
 
 [dev-packages]
 mypy = "*"

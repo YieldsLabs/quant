@@ -27,7 +27,9 @@ class PositionFactory(AbstractPositionFactory):
     ) -> Position:
         size = await self.size_strategy.calculate(signal)
         position_risk = PositionRisk().next(signal.ohlcv)
-        profit_target = ProfitTarget(signal, ta.volatility.yz[-1])
+        profit_target = ProfitTarget(
+            signal.side, signal.ohlcv.close, ta.volatility.yz[-1]
+        )
 
         return Position(
             signal=signal,
