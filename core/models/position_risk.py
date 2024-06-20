@@ -265,9 +265,9 @@ class PositionRisk(TaMixin):
         ats = self._ats(close_smooth, volatility_smooth)
 
         if side == PositionSide.LONG:
-            return ats[-1]
+            return max(sl, ats[-1])
         if side == PositionSide.SHORT:
-            return ats[-1]
+            return min(sl, ats[-1])
 
         return sl
 

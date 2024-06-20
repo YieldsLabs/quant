@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabasz_score
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import check_random_state
+from sklearn.manifold import Isomap
 
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
@@ -293,9 +294,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             )
 
             features = MinMaxScaler(feature_range=(-1, 1)).fit_transform(features)
-            features = up.UMAP(
-                n_components=2, n_neighbors=len(features) - 1
-            ).fit_transform(features)
+            features = Isomap(n_components=2, n_neighbors=len(features) - 1).fit_transform(features)
 
             max_clusters = min(len(features) - 1, 10)
             min_clusters = min(2, max_clusters)
