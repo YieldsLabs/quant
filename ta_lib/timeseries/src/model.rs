@@ -2,7 +2,7 @@ use crate::{OHLCVSeries, TechAnalysis, TimeSeries, OHLCV};
 use core::prelude::*;
 use momentum::{cci, macd, ppo, roc, rsi, stochosc};
 use price::typical_price;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use trend::spp;
 use volatility::{bb, gkyz, kch, tr, yz};
 use volume::{mfi, nvol, obv, vo};
@@ -11,8 +11,7 @@ const BUFF_FACTOR: f32 = 1.3;
 
 #[derive(Debug, Clone)]
 pub struct BaseTimeSeries {
-    index: HashMap<i64, usize>,
-    data: Vec<OHLCV>,
+    data: BTreeMap<i64, OHLCV>,
 }
 
 impl Default for BaseTimeSeries {
@@ -22,60 +21,35 @@ impl Default for BaseTimeSeries {
 }
 
 impl BaseTimeSeries {
-    const CAPACITY: usize = 600000;
-
     pub fn new() -> Self {
         Self {
-            index: HashMap::with_capacity(Self::CAPACITY),
-            data: Vec::with_capacity(Self::CAPACITY),
+            data: BTreeMap::new(),
         }
-    }
-
-    fn shift_up(&mut self, mut index: usize) {
-        while index > 0 {
-            let parent_index = index - 1;
-
-            if self.data[parent_index].ts <= self.data[index].ts {
-                break;
-            }
-
-            self.data.swap(index, parent_index);
-            self.index.insert(self.data[index].ts, index);
-            self.index.insert(self.data[parent_index].ts, parent_index);
-            index = parent_index;
-        }
-
-        self.index.insert(self.data[index].ts, index);
     }
 }
 
 impl TimeSeries for BaseTimeSeries {
     fn add(&mut self, bar: &OHLCV) {
-        if let Some(&existing_idx) = self.index.get(&bar.ts) {
-            self.data[existing_idx] = *bar;
-        } else {
-            let idx = self.len();
-            self.index.insert(bar.ts, idx);
-            self.data.push(*bar);
-            self.shift_up(idx);
-        }
+        self.data.insert(bar.ts, *bar);
     }
 
     fn next_bar(&self, bar: &OHLCV) -> Option<OHLCV> {
-        self.index
-            .get(&bar.ts)
-            .and_then(|&idx| self.data.get(idx + 1).copied())
+        self.data
+            .range(bar.ts + 1..)
+            .next()
+            .map(|(_, &v)| v.clone())
     }
 
     fn prev_bar(&self, bar: &OHLCV) -> Option<OHLCV> {
-        self.index
-            .get(&bar.ts)
-            .and_then(|&idx| self.data.get(idx - 1).copied())
+        self.data
+            .range(..bar.ts)
+            .next_back()
+            .map(|(_, &v)| v.clone())
     }
 
     #[inline]
     fn len(&self) -> usize {
-        self.index.len()
+        self.data.len()
     }
 
     fn ohlcv(&self, size: usize) -> OHLCVSeries {
@@ -87,23 +61,40 @@ impl TimeSeries for BaseTimeSeries {
             0
         };
 
-        OHLCVSeries::from(&self.data[start_index..])
+        OHLCVSeries::from(
+            self.data
+                .values()
+                .skip(start_index)
+                .copied()
+                .collect::<Vec<_>>(),
+        )
     }
 
     fn ta(&self, bar: &OHLCV) -> TechAnalysis {
         let periods = [2, 14, 12, 26, 9, 5, 10, 1, 3, 11];
         let factors = [1.8, 0.015, 1.0];
 
-        let end_index = *self.index.get(&bar.ts).unwrap_or(&self.data.len());
-        let max_period = periods.into_iter().max().unwrap_or(0);
+        let end_index = self
+            .data
+            .keys()
+            .position(|&ts| ts == bar.ts)
+            .unwrap_or_else(|| self.len());
+        let max_period = periods.iter().max().unwrap_or(&0);
 
-        let start_index = if end_index > max_period {
+        let start_index = if end_index > *max_period {
             end_index - max_period
         } else {
             0
         };
 
-        let series = OHLCVSeries::from(&self.data[start_index..end_index]);
+        let series = OHLCVSeries::from(
+            self.data
+                .values()
+                .skip(start_index)
+                .take(end_index - start_index)
+                .copied()
+                .collect::<Vec<_>>(),
+        );
 
         let open = series.open();
         let high = series.high();
