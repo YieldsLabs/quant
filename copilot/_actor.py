@@ -3,13 +3,12 @@ import logging
 from typing import Union
 
 import numpy as np
-import umap as up
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
+from sklearn.manifold import Isomap
 from sklearn.metrics import calinski_harabasz_score
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import check_random_state
-from sklearn.manifold import Isomap
 
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
@@ -294,7 +293,9 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             )
 
             features = MinMaxScaler(feature_range=(-1, 1)).fit_transform(features)
-            features = Isomap(n_components=2, n_neighbors=len(features) - 1).fit_transform(features)
+            features = Isomap(
+                n_components=2, n_neighbors=len(features) - 1
+            ).fit_transform(features)
 
             max_clusters = min(len(features) - 1, 10)
             min_clusters = min(2, max_clusters)
@@ -328,6 +329,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 and prev_long
                 and (
                     (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
+                    or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 4)
+                    or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 2)
                     or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 1)
                     or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
                 )
@@ -340,8 +343,10 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 and (
                     (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
                     or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 3)
+                    or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 4)
                     or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
                     or (int(prev_short[0]) == 3 and int(knn_transaction[0]) == 2)
+                    or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 2)
                 )
             ):
                 should_exit = True

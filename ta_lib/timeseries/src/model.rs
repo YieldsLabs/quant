@@ -34,17 +34,11 @@ impl TimeSeries for BaseTimeSeries {
     }
 
     fn next_bar(&self, bar: &OHLCV) -> Option<OHLCV> {
-        self.data
-            .range(bar.ts + 1..)
-            .next()
-            .map(|(_, &v)| v.clone())
+        self.data.range(bar.ts..).nth(1).map(|(_, &v)| v)
     }
 
     fn prev_bar(&self, bar: &OHLCV) -> Option<OHLCV> {
-        self.data
-            .range(..bar.ts)
-            .next_back()
-            .map(|(_, &v)| v.clone())
+        self.data.range(..bar.ts).next_back().map(|(_, &v)| v)
     }
 
     #[inline]
@@ -77,7 +71,7 @@ impl TimeSeries for BaseTimeSeries {
         let end_index = self
             .data
             .keys()
-            .position(|&ts| ts == bar.ts)
+            .position(|&ts| ts >= bar.ts)
             .unwrap_or_else(|| self.len());
         let max_period = periods.iter().max().unwrap_or(&0);
 

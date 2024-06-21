@@ -1,6 +1,8 @@
 import asyncio
 from typing import Optional, Union
 
+import numpy as np
+
 from core.actors import StrategyActor
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
@@ -23,7 +25,7 @@ from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.copilot import EvaluateSession
-from core.queries.ohlcv import TA, NextBar
+from core.queries.ohlcv import TA, NextBar, PrevBar
 
 TrailEvent = Union[
     GoLongSignalReceived,
@@ -103,8 +105,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             if long_position or short_position:
                 long_position, short_position = await asyncio.gather(
                     *[
-                        self._process_market(long_position),
-                        self._process_market(short_position),
+                        self._process_market(event, long_position),
+                        self._process_market(event, short_position),
                     ]
                 )
 
@@ -160,25 +162,66 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
             self._position = (long_position, short_position)
 
-    async def _process_market(self, position: Optional[Position]):
+    async def _process_market(
+        self, event: NewMarketDataReceived, position: Optional[Position]
+    ):
         next_position = position
 
         if position and not position.has_risk:
-            next_bar = await self.ask(
-                NextBar(self.symbol, self.timeframe, next_position.risk_bar)
-            )
+            prev_bar = next_position.risk_bar
+            next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
+            
+            if not next_bar:
+                return next_position
 
-            if next_bar:
-                ta = await self.ask(TA(self.symbol, self.timeframe, next_bar))
+            diff = event.ohlcv.timestamp - next_bar.timestamp
+
+            if diff < 0:
+                while diff < 0:
+                    new_prev_bar = await self.ask(
+                        PrevBar(self.symbol, self.timeframe, prev_bar)
+                    )
+
+                    if new_prev_bar:
+                        diff = event.ohlcv.timestamp - new_prev_bar.timestamp
+                        prev_bar = new_prev_bar
+
+            bars = [next_bar]
+
+            if diff > 0:
+                for _ in range(6):
+                    next_bar = await self.ask(
+                        NextBar(self.symbol, self.timeframe, prev_bar)
+                    )
+
+                    if not next_bar:
+                        break
+
+                    bars.append(next_bar)
+                    prev_bar = next_bar
+
+            print(f"BARS: {len(bars)}")
+
+            for bar in sorted(bars, key=lambda x: x.timestamp):
                 ohlcv = next_position.position_risk.ohlcv
+
+                timestamps = np.array([o.timestamp for o in ohlcv])
+                ts_diff = np.diff(timestamps)
+                bar_diff = abs(bar.timestamp - ohlcv[-1].timestamp)
+
+                if len(ts_diff) and bar_diff > np.mean(ts_diff):
+                    break
+
+                ta = await self.ask(TA(self.symbol, self.timeframe, bar))
 
                 session_risk = await self.ask(
                     EvaluateSession(next_position.side, ohlcv, ta)
                 )
 
-                next_position = next_position.next(next_bar, ta, session_risk)
+                next_position = next_position.next(bar, ta, session_risk)
 
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))
+                    break
 
         return next_position

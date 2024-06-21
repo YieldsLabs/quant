@@ -159,7 +159,11 @@ class PositionRisk(TaMixin):
             return min(tp, high) if side == PositionSide.LONG else max(tp, low)
 
         elif self.type == PositionRiskType.SL:
-            return max(sl, low) if side == PositionSide.LONG else min(sl, high)
+            return (
+                max(min(sl, high), low)
+                if side == PositionSide.LONG
+                else min(max(sl, low), high)
+            )
 
         return close
 
@@ -192,14 +196,11 @@ class PositionRisk(TaMixin):
         ll_atr = ll_smooth - volatility_smooth
         hh_atr = hh_smooth + volatility_smooth
 
-        lr = sup - volatility_smooth
-        sr = res + volatility_smooth
-
         if side == PositionSide.LONG:
-            return max(sl, lr[-1], np.min(ll_atr))
+            return max(sl, np.min(sup), np.min(ll_atr))
 
         if side == PositionSide.SHORT:
-            return min(sl, sr[-1], np.max(hh_atr))
+            return min(sl, np.max(res), np.max(hh_atr))
 
         return sl
 
@@ -232,13 +233,10 @@ class PositionRisk(TaMixin):
         ll_atr = ll_smooth - volatility_smooth
         hh_atr = hh_smooth + volatility_smooth
 
-        lr = res + volatility_smooth
-        sr = sup - volatility_smooth
-
         if side == PositionSide.LONG:
-            return min(lr[-1], np.max(hh_atr))
+            return min(np.max(res), np.max(hh_atr))
         elif side == PositionSide.SHORT:
-            return max(sr[-1], np.min(ll_atr))
+            return max(np.min(sup), np.min(ll_atr))
 
         return tp
 
@@ -265,9 +263,9 @@ class PositionRisk(TaMixin):
         ats = self._ats(close_smooth, volatility_smooth)
 
         if side == PositionSide.LONG:
-            return max(sl, ats[-1])
+            return ats[-1]
         if side == PositionSide.SHORT:
-            return min(sl, ats[-1])
+            return ats[-1]
 
         return sl
 
