@@ -1,5 +1,4 @@
 mod ast;
-mod cci;
 mod dumb;
 mod highlow;
 mod ma;
@@ -8,7 +7,6 @@ mod rsi;
 mod trix;
 
 pub use ast::AstExit;
-pub use cci::CciExit;
 pub use dumb::DumbExit;
 pub use highlow::HighLowExit;
 pub use ma::MaExit;

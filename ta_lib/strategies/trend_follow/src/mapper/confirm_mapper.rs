@@ -16,15 +16,17 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             period,
         )),
         ConfirmConfig::Cci {
-            source_type,
-            smooth_type,
+            source,
             period,
             factor,
+            smooth,
+            period_smooth,
         } => Box::new(CciConfirm::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
+            source_deserialize(source as usize),
             period,
             factor,
+            smooth_deserialize(smooth as usize),
+            period_smooth,
         )),
         ConfirmConfig::Wpr {
             source_type,

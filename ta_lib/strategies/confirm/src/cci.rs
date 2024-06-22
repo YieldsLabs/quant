@@ -7,35 +7,39 @@ const CCI_UPPER_BARRIER: f32 = 50.;
 const CCI_LOWER_BARRIER: f32 = -50.;
 
 pub struct CciConfirm {
-    source_type: SourceType,
-    smooth_type: Smooth,
+    source: SourceType,
     period: usize,
     factor: f32,
+    smooth: Smooth,
+    period_smooth: usize,
 }
 
 impl CciConfirm {
-    pub fn new(source_type: SourceType, smooth_type: Smooth, period: f32, factor: f32) -> Self {
+    pub fn new(
+        source: SourceType,
+        period: f32,
+        factor: f32,
+        smooth: Smooth,
+        period_smooth: f32,
+    ) -> Self {
         Self {
-            source_type,
-            smooth_type,
+            source,
             period: period as usize,
             factor,
+            smooth,
+            period_smooth: period_smooth as usize,
         }
     }
 }
 
 impl Confirm for CciConfirm {
     fn lookback(&self) -> usize {
-        self.period
+        std::cmp::max(self.period, self.period_smooth)
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let cci = cci(
-            &data.source(self.source_type),
-            self.smooth_type,
-            self.period,
-            self.factor,
-        );
+        let cci = cci(&data.source(self.source), self.period, self.factor)
+            .smooth(self.smooth, self.period_smooth);
 
         (cci.sgt(&CCI_UPPER_BARRIER), cci.slt(&CCI_LOWER_BARRIER))
     }

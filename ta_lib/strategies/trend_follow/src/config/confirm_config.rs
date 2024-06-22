@@ -15,10 +15,11 @@ pub enum ConfirmConfig {
         divisor: f32,
     },
     Cci {
-        source_type: f32,
-        smooth_type: f32,
+        source: f32,
         period: f32,
         factor: f32,
+        smooth: f32,
+        period_smooth: f32,
     },
     Dumb {
         period: f32,

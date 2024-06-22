@@ -9,13 +9,6 @@ pub enum ExitConfig {
         period_atr: f32,
         factor: f32,
     },
-    Cci {
-        source_type: f32,
-        smooth_type: f32,
-        period: f32,
-        factor: f32,
-        threshold: f32,
-    },
     Dumb {},
     HighLow {
         period: f32,

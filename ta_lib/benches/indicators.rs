@@ -113,12 +113,11 @@ fn momentum(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let hlc3 = typical_price(&high, &low, &close);
-                let smooth_type = Smooth::SMA;
                 let period = 14;
                 let factor = 0.015;
-                (hlc3, smooth_type, period, factor)
+                (hlc3, period, factor)
             },
-            |(hlc3, smooth_type, period, factor)| cci(hlc3, *smooth_type, *period, *factor),
+            |(hlc3, period, factor)| cci(hlc3, *period, *factor),
             criterion::BatchSize::SmallInput,
         )
     });

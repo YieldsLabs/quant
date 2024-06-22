@@ -130,7 +130,7 @@ impl TimeSeries for BaseTimeSeries {
             periods[7],
             periods[8],
         );
-        let cci = cci(&hlc3, Smooth::SMA, periods[5], factors[1]);
+        let cci = cci(&hlc3, periods[5], factors[1]);
         let roc9 = roc(source, periods[4]);
         let roc14 = roc(source, periods[1]);
         let hh = high.highest(periods[5]);
