@@ -11,7 +11,6 @@ class ExitType(Enum):
     Rsi = "Rsi"
     Ma = "Ma"
     Mfi = "Mfi"
-    Cci = "Cci"
     Trix = "Trix"
 
     def __str__(self):

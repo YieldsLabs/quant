@@ -17,19 +17,6 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
             period_atr,
             factor,
         )),
-        ExitConfig::Cci {
-            source_type,
-            smooth_type,
-            period,
-            factor,
-            threshold,
-        } => Box::new(CciExit::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
-            period,
-            factor,
-            threshold,
-        )),
         ExitConfig::Dumb {} => Box::new(DumbExit {}),
         ExitConfig::HighLow { period } => Box::new(HighLowExit::new(period)),
         ExitConfig::Rsi {
