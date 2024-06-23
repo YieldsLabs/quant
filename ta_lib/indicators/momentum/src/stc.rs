@@ -11,10 +11,10 @@ pub fn stc(
 ) -> Series<f32> {
     let macd_line = source.spread(smooth_type, fast_period, slow_period);
 
-    let k = SCALE * macd_line.normalize(cycle);
+    let k = macd_line.normalize(cycle, SCALE);
     let d = k.smooth(smooth_type, d_first);
 
-    let stc = (SCALE * d.normalize(cycle)).smooth(smooth_type, d_second);
+    let stc = d.normalize(cycle, SCALE).smooth(smooth_type, d_second);
 
     stc.clip(&ZERO, &SCALE)
 }

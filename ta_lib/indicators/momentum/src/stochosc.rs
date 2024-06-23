@@ -54,7 +54,9 @@ pub fn dso(
 ) -> (Series<f32>, Series<f32>) {
     let source = source.smooth(smooth_type, k_period);
 
-    let k = (SCALE * source.normalize(period)).smooth(smooth_type, k_period);
+    let k = source
+        .normalize(period, SCALE)
+        .smooth(smooth_type, k_period);
     let d = k.smooth(smooth_type, d_period);
 
     (k, d)

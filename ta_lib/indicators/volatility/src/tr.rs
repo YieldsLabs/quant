@@ -28,7 +28,8 @@ pub fn snatr(
     smooth_type: Smooth,
     smooth_period: usize,
 ) -> Series<f32> {
-    (SCALE * atr.normalize(period)).smooth(smooth_type, smooth_period)
+    atr.normalize(period, SCALE)
+        .smooth(smooth_type, smooth_period)
 }
 
 #[cfg(test)]

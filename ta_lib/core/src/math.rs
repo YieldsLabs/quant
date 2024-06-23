@@ -174,11 +174,11 @@ impl Series<f32> {
         self.highest(period) - self.lowest(period)
     }
 
-    pub fn normalize(&self, period: usize) -> Self {
+    pub fn normalize(&self, period: usize, scale: f32) -> Self {
         let l = self.lowest(period);
         let h = self.highest(period);
 
-        (self - &l) / (h - l)
+        scale * (self - &l) / (h - l)
     }
 }
 
@@ -456,8 +456,9 @@ mod tests {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]);
         let n = 3;
+        let scale = 1.;
 
-        let result = source.normalize(n);
+        let result = source.normalize(n, scale);
 
         assert_eq!(result, expected);
     }
