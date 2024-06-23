@@ -41,9 +41,10 @@ class TrendAnalysis:
     ll: List[float]
     support: List[float]
     resistance: List[float]
+    dmi: List[float]
 
     def __str__(self) -> str:
-        return f"fma={self.fma}, sma={self.sma}, macd={self.macd}, ppo={self.ppo}, hh={self.hh}, ll={self.ll}, support={self.support}, resistance={self.resistance}"
+        return f"fma={self.fma}, sma={self.sma}, macd={self.macd}, ppo={self.ppo}, hh={self.hh}, ll={self.ll}, support={self.support}, resistance={self.resistance}, dmi={self.dmi}"
 
     def __repr__(self) -> str:
         return f"TrendAnalysis({self})"
@@ -111,9 +112,10 @@ class TechAnalysis:
             ll,
             support,
             resistance,
+            dmi,
         ) = data
 
-        trend = TrendAnalysis(fma, sma, macd, ppo, hh, ll, support, resistance)
+        trend = TrendAnalysis(fma, sma, macd, ppo, hh, ll, support, resistance, dmi)
         momentum = MomentumAnalysis(froc, sroc, cci)
         oscillator = OscillatorAnalysis(frsi, srsi, k, d)
         volume = VolumeAnalysis(obv, vo, nvol, mfi)

@@ -253,6 +253,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             ema = np.array(ta.trend.sma[-LOOKBACK:])
             support = np.array(ta.trend.support[-LOOKBACK:])
             resistance = np.array(ta.trend.resistance[-LOOKBACK:])
+            dmi = np.array(ta.trend.dmi[-LOOKBACK:])
 
             macd = np.array(ta.trend.macd[-LOOKBACK:])
 
@@ -280,6 +281,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     ema,
                     support,
                     resistance,
+                    dmi,
                     macd,
                     brr,
                     cci,
@@ -292,7 +294,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 )
             )
 
-            features = MinMaxScaler(feature_range=(-1, 1)).fit_transform(features)
+            features = MinMaxScaler(feature_range=(-1.0, 1.0)).fit_transform(features)
             features = Isomap(
                 n_components=2, n_neighbors=len(features) - 1
             ).fit_transform(features)
@@ -375,6 +377,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 f"Resistance: {resistance[-1]}, "
                 f"MACD: {macd[-1]}, "
                 f"Body Range Ratio: {brr[-1]}, "
+                f"DMI: {dmi[-1]}, "
                 f"CCI: {cci[-1]}, "
                 f"RSI: {slow_rsi[-1]}, "
                 f"Stoch K: {stoch_k[-1]}, "

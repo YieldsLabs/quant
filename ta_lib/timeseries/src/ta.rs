@@ -26,4 +26,5 @@ pub struct TechAnalysis {
     pub ll: Vec<f32>,
     pub support: Vec<f32>,
     pub resistance: Vec<f32>,
+    pub dmi: Vec<f32>,
 }

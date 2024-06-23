@@ -10,7 +10,8 @@ from .base import Confirm, ConfirmType
 @dataclass(frozen=True)
 class CciConfirm(Confirm):
     type: Confirm = ConfirmType.Cci
-    source_type: Parameter = StaticParameter(SourceType.HLC3)
-    smooth_type: Parameter = StaticParameter(Smooth.SMA)
+    source: Parameter = StaticParameter(SourceType.HLC3)
     period: Parameter = StaticParameter(100.0)
     factor: Parameter = StaticParameter(0.015)
+    smooth: Parameter = StaticParameter(Smooth.EMA)
+    period_smooth: Parameter = StaticParameter(14.0)

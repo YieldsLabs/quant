@@ -189,7 +189,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             bars = [next_bar]
 
             if diff > 0:
-                for _ in range(6):
+                for _ in range(4):
                     next_bar = await self.ask(
                         NextBar(self.symbol, self.timeframe, prev_bar)
                     )
@@ -205,14 +205,16 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             for bar in sorted(bars, key=lambda x: x.timestamp):
                 ohlcv = next_position.position_risk.ohlcv
                 ts = np.array([o.timestamp for o in ohlcv])
-                std = np.std(ts)
-                mean = np.mean(ts)
+                dist = 0
 
-                anomaly = abs(bar.timestamp - mean) / std if std != 0 else 0.000001
+                if len(ts) > 1:
+                    dist = np.mean(np.diff(ts))
 
-                print(f"Anomaly score: {anomaly}")
+                bd = abs(bar.timestamp - ts[-1])
 
-                if anomaly >= 3.01:
+                print(f"Dist: {dist}, Bar dist: {bd}")
+
+                if dist != 0 and bd > 1.8 * dist:
                     break
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
@@ -226,5 +228,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))
                     break
+
+                await asyncio.sleep(0.000001)
 
         return next_position

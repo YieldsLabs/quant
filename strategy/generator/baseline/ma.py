@@ -17,4 +17,4 @@ class MaBaseLine(BaseLine):
     type: BaseLineType = BaseLineType.Ma
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = RandomParameter(8.0, 21.0)
+    period: Parameter = RandomParameter(8.0, 16.0)

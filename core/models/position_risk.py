@@ -234,9 +234,9 @@ class PositionRisk(TaMixin):
         hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
-            return min(np.max(res), np.max(hh_atr))
+            return max(np.min(res), np.min(hh_atr))
         elif side == PositionSide.SHORT:
-            return max(np.min(sup), np.min(ll_atr))
+            return min(np.max(sup), np.max(ll_atr))
 
         return tp
 
