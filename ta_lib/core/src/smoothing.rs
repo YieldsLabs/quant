@@ -124,8 +124,8 @@ impl Series<f32> {
         (self + (self - self.shift(lag))).ema(period)
     }
 
-    pub fn smooth(&self, smooth_type: Smooth, period: usize) -> Self {
-        match smooth_type {
+    pub fn smooth(&self, smooth: Smooth, period: usize) -> Self {
+        match smooth {
             Smooth::EMA => self.ema(period),
             Smooth::SMA => self.ma(period),
             Smooth::SMMA => self.smma(period),
@@ -137,6 +137,10 @@ impl Series<f32> {
             Smooth::TEMA => self.tema(period),
             Smooth::DEMA => self.dema(period),
         }
+    }
+
+    pub fn spread(&self, smooth: Smooth, period_fast: usize, period_slow: usize) -> Self {
+        self.smooth(smooth, period_fast) - self.smooth(smooth, period_slow)
     }
 }
 
@@ -216,6 +220,19 @@ mod tests {
         let result = source.linreg(3);
 
         assert_eq!(result.len(), expected.len());
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_spread() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 0.16666675, 0.30555558, 0.39351845, 0.44367313]);
+        let period_fast = 2;
+        let period_slow = 3;
+        let smooth = Smooth::EMA;
+
+        let result = source.spread(smooth, period_fast, period_slow);
+
         assert_eq!(result, expected);
     }
 }

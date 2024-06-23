@@ -9,8 +9,7 @@ pub fn stc(
     d_first: usize,
     d_second: usize,
 ) -> Series<f32> {
-    let macd_line =
-        source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period);
+    let macd_line = source.spread(smooth_type, fast_period, slow_period);
 
     let k = SCALE * macd_line.normalize(cycle);
     let d = k.smooth(smooth_type, d_first);

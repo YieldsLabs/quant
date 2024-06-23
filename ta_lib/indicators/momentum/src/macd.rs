@@ -7,8 +7,7 @@ pub fn macd(
     slow_period: usize,
     signal_period: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let macd_line =
-        source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period);
+    let macd_line = source.spread(smooth_type, fast_period, slow_period);
 
     let signal_line = macd_line.smooth(smooth_type, signal_period);
 

@@ -6,7 +6,7 @@ pub fn ao(
     fast_period: usize,
     slow_period: usize,
 ) -> Series<f32> {
-    source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period)
+    source.spread(smooth_type, fast_period, slow_period)
 }
 
 #[cfg(test)]
