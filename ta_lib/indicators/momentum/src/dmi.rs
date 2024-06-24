@@ -27,7 +27,7 @@ pub fn dmi(
         * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum))
             .smooth(smooth_type, adx_period);
 
-    (adx, di_plus, di_minus)
+    (di_plus, di_minus, adx)
 }
 
 #[cfg(test)]
@@ -74,7 +74,7 @@ mod tests {
             38.785717, 57.523396, 68.031395, 42.329178, 33.812767, 37.56404, 50.37606, 26.629393,
         ];
 
-        let (result_adx, result_di_plus, result_di_minus) =
+        let (result_di_plus, result_di_minus, result_adx) =
             dmi(&high, &low, &atr, Smooth::SMMA, adx_period, di_period);
 
         let adx: Vec<f32> = result_adx.into();
