@@ -3,8 +3,10 @@ use core::prelude::*;
 use momentum::cci;
 use timeseries::prelude::*;
 
-const CCI_UPPER_BARRIER: f32 = 50.;
-const CCI_LOWER_BARRIER: f32 = -50.;
+const CCI_UPPER_NEUTRALITY: f32 = 50.;
+const CCI_LOWER_NEUTRALITY: f32 = -50.;
+const CCI_UPPER_BARRIER: f32 = 100.;
+const CCI_LOWER_BARRIER: f32 = -100.;
 
 pub struct CciConfirm {
     source: SourceType,
@@ -41,6 +43,9 @@ impl Confirm for CciConfirm {
         let cci = cci(&data.source(self.source), self.period, self.factor)
             .smooth(self.smooth, self.period_smooth);
 
-        (cci.sgt(&CCI_UPPER_BARRIER), cci.slt(&CCI_LOWER_BARRIER))
+        (
+            cci.sgt(&CCI_UPPER_NEUTRALITY) & cci.slt(&CCI_UPPER_BARRIER),
+            cci.slt(&CCI_LOWER_NEUTRALITY) & cci.sgt(&CCI_LOWER_BARRIER),
+        )
     }
 }

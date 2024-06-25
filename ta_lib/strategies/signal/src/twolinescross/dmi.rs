@@ -4,34 +4,34 @@ use momentum::dmi;
 use timeseries::prelude::*;
 
 pub struct Dmi2LinesCrossSignal {
-    smooth_type: Smooth,
-    adx_period: usize,
-    di_period: usize,
+    smooth: Smooth,
+    period_adx: usize,
+    period_di: usize,
 }
 
 impl Dmi2LinesCrossSignal {
-    pub fn new(smooth_type: Smooth, adx_period: f32, di_period: f32) -> Self {
+    pub fn new(smooth: Smooth, period_adx: f32, period_di: f32) -> Self {
         Self {
-            smooth_type,
-            adx_period: adx_period as usize,
-            di_period: di_period as usize,
+            smooth,
+            period_adx: period_adx as usize,
+            period_di: period_di as usize,
         }
     }
 }
 
 impl Signal for Dmi2LinesCrossSignal {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.adx_period, self.di_period)
+        std::cmp::max(self.period_adx, self.period_di)
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (dip, dim, _) = dmi(
             data.high(),
             data.low(),
-            &data.atr(self.smooth_type, self.di_period),
-            self.smooth_type,
-            self.adx_period,
-            self.di_period,
+            &data.atr(self.smooth, self.period_di),
+            self.smooth,
+            self.period_adx,
+            self.period_di,
         );
 
         (dip.cross_over(&dim), dip.cross_under(&dim))
