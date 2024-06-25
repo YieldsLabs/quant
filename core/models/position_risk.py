@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, replace
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from scipy.signal import savgol_filter
@@ -13,15 +13,16 @@ from .side import PositionSide
 from .ta import TechAnalysis
 
 TIME_THRESHOLD = 15000
-SL_LOOKBACK = 8
-AST_LOOKBACK = 12
+LOOKBACK = 12
 
 
-def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
+def optimize_params(
+    data: np.ndarray, n_clusters_range: Tuple[int, int] = (2, 10)
+) -> int:
     if data.ndim == 1:
         data = data.reshape(-1, 1)
 
-    scaler = MinMaxScaler()
+    scaler = MinMaxScaler(feature_range=(0, 1))
     X = scaler.fit_transform(data)
 
     best_score = float("-inf")
@@ -40,10 +41,10 @@ def optimize_params(data: np.ndarray, n_clusters_range: tuple = (2, 10)) -> int:
             best_score = silhouette_avg
             best_centroids = scaler.inverse_transform(kmeans.cluster_centers_).flatten()
 
-    return int(round(np.mean(best_centroids))) if len(best_centroids) else 2
+    return int(round(np.mean(best_centroids))) if len(best_centroids) > 1 else 2
 
 
-def optimize_window_polyorder(data: np.ndarray) -> tuple:
+def optimize_window_polyorder(data: np.ndarray) -> Tuple[int, int]:
     window_length = optimize_params(data)
 
     if window_length % 2 == 0:
@@ -174,17 +175,19 @@ class PositionRisk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
+        max_lookback = max(len(timestamps), LOOKBACK)
+
         trend = ta.trend
 
-        ll = np.array(trend.ll)[-SL_LOOKBACK:]
-        hh = np.array(trend.hh)[-SL_LOOKBACK:]
-        volatility = np.array(ta.volatility.yz)[-SL_LOOKBACK:]
-        sup = np.array(trend.support)[-SL_LOOKBACK:]
-        res = np.array(trend.resistance)[-SL_LOOKBACK:]
+        ll = np.array(trend.ll)[-max_lookback:]
+        hh = np.array(trend.hh)[-max_lookback:]
+        volatility = np.array(ta.volatility.yz)[-max_lookback:]
+        res = np.array(trend.resistance)[-max_lookback:]
+        sup = np.array(trend.support)[-max_lookback:]
 
-        min_length = min(len(ll), len(hh), len(volatility))
+        min_length = min(len(ll), len(hh), len(volatility), len(timestamps))
 
-        if min_length < 3:
+        if min_length < 1:
             return sl
 
         ll_smooth, hh_smooth, volatility_smooth = smooth(ll, hh, volatility)
@@ -197,10 +200,10 @@ class PositionRisk(TaMixin):
         hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
-            return max(sl, np.min(sup), np.min(ll_atr))
+            return max(sl, np.max(sup), np.max(ll_atr))
 
         if side == PositionSide.SHORT:
-            return min(sl, np.max(res), np.max(hh_atr))
+            return min(sl, np.min(res), np.min(hh_atr))
 
         return sl
 
@@ -211,17 +214,19 @@ class PositionRisk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return tp
 
+        max_lookback = max(len(timestamps), LOOKBACK)
+
         trend = ta.trend
 
-        ll = np.array(trend.ll)[-SL_LOOKBACK:]
-        hh = np.array(trend.hh)[-SL_LOOKBACK:]
-        volatility = np.array(ta.volatility.yz)[-SL_LOOKBACK:]
-        res = np.array(trend.resistance)[-SL_LOOKBACK:]
-        sup = np.array(trend.support)[-SL_LOOKBACK:]
+        ll = np.array(trend.ll)[-max_lookback:]
+        hh = np.array(trend.hh)[-max_lookback:]
+        volatility = np.array(ta.volatility.yz)[-max_lookback:]
+        res = np.array(trend.resistance)[-max_lookback:]
+        sup = np.array(trend.support)[-max_lookback:]
 
-        min_length = min(len(ll), len(hh), len(volatility))
+        min_length = min(len(ll), len(hh), len(volatility), len(timestamps))
 
-        if min_length < 3:
+        if min_length < 1:
             return tp
 
         ll_smooth, hh_smooth, volatility_smooth = smooth(ll, hh, volatility)
@@ -234,9 +239,9 @@ class PositionRisk(TaMixin):
         hh_atr = hh_smooth + volatility_smooth
 
         if side == PositionSide.LONG:
-            return max(np.min(res), np.min(hh_atr))
+            return min(np.min(res), np.min(hh_atr))
         elif side == PositionSide.SHORT:
-            return min(np.max(sup), np.max(ll_atr))
+            return max(np.max(sup), np.max(ll_atr))
 
         return tp
 
@@ -247,8 +252,10 @@ class PositionRisk(TaMixin):
         if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
-        close = np.array([candle.close for candle in self.ohlcv])[-AST_LOOKBACK:]
-        volatility = np.array(ta.volatility.yz)[-AST_LOOKBACK:]
+        max_lookback = max(len(timestamps), LOOKBACK)
+
+        close = np.array([candle.close for candle in self.ohlcv])
+        volatility = np.array(ta.volatility.yz)[-max_lookback:]
 
         min_length = min(len(close), len(volatility))
 
@@ -262,11 +269,28 @@ class PositionRisk(TaMixin):
 
         ats = self._ats(close_smooth, volatility_smooth)
 
-        if side == PositionSide.LONG:
-            return ats[-1]
-        if side == PositionSide.SHORT:
-            return ats[-1]
+        low = np.array([candle.low for candle in self.ohlcv])
+        high = np.array([candle.high for candle in self.ohlcv])
 
+        rising_low = low[-1] > low[-2] and low[-2] > low[-3]
+        failing_high = high[-1] < high[-2] and high[-2] < high[-3]
+
+        bullish = rising_low and (ta.trend.dmi[-1] > 0.0 or ta.momentum.cci[-1] > 100.0)
+        bearish = failing_high and (
+            ta.trend.dmi[-1] < 0.0 or ta.momentum.cci[-1] < -100.0
+        )
+
+        if side == PositionSide.LONG:
+            if bullish:
+                return ats[-1]
+
+            return max(sl, ats[-1])
+
+        if side == PositionSide.SHORT:
+            if bearish:
+                return ats[-1]
+
+            return min(sl, ats[-1])
         return sl
 
     def to_dict(self):
