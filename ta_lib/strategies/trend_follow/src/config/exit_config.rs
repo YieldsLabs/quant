@@ -35,4 +35,11 @@ pub enum ExitConfig {
         period: f32,
         signal_period: f32,
     },
+    Rex {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        smooth_signal: f32,
+        period_signal: f32,
+    },
 }

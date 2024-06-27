@@ -12,6 +12,7 @@ class ExitType(Enum):
     Ma = "Ma"
     Mfi = "Mfi"
     Trix = "Trix"
+    Rex = "Rex"
 
     def __str__(self):
         return self.value.upper()

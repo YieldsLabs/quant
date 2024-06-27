@@ -59,5 +59,18 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
             ma_deserialize(ma as usize),
             period,
         )),
+        ExitConfig::Rex {
+            source,
+            smooth,
+            period,
+            smooth_signal,
+            period_signal,
+        } => Box::new(RexExit::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
+        )),
     }
 }
