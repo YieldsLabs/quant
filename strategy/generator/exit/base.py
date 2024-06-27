@@ -6,6 +6,7 @@ from core.models.indicator import Indicator
 
 class ExitType(Enum):
     Ast = "Ast"
+    Mad = "Mad"
     Dumb = "Dumb"
     HighLow = "HighLow"
     Rsi = "Rsi"

@@ -72,5 +72,14 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
             smooth_deserialize(smooth_signal as usize),
             period_signal,
         )),
+        ExitConfig::Mad {
+            source,
+            period_fast,
+            period_slow,
+        } => Box::new(MadExit::new(
+            source_deserialize(source as usize),
+            period_fast,
+            period_slow,
+        )),
     }
 }

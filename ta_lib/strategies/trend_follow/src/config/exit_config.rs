@@ -42,4 +42,9 @@ pub enum ExitConfig {
         smooth_signal: f32,
         period_signal: f32,
     },
+    Mad {
+        source: f32,
+        period_fast: f32,
+        period_slow: f32,
+    },
 }

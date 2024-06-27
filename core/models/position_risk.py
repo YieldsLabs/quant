@@ -110,12 +110,13 @@ class PositionRisk(TaMixin):
 
     @property
     def curr_bar(self):
-        if len(self.ohlcv) < 2:
+        l = len(self.ohlcv)
+
+        if l < 2:
             return self.ohlcv[0]
 
-        for i in range(len(self.ohlcv) - 1, 0, -1):
-            curr = self.ohlcv[i]
-            prev = self.ohlcv[i - 1]
+        for i in range(l - 1, 0, -1):
+            curr, prev = self.ohlcv[i], self.ohlcv[i - 1]
 
             if curr.timestamp - prev.timestamp >= TIME_THRESHOLD:
                 return curr
@@ -124,12 +125,13 @@ class PositionRisk(TaMixin):
 
     @property
     def prev_bar(self):
-        if len(self.ohlcv) < 2:
+        l = len(self.ohlcv)
+
+        if l < 2:
             return self.ohlcv[0]
 
-        for i in range(len(self.ohlcv) - 2, -1, -1):
-            prev = self.ohlcv[i]
-            curr = self.ohlcv[i + 1]
+        for i in range(l - 2, -1, -1):
+            prev, curr = self.ohlcv[i], self.ohlcv[i + 1]
 
             if curr.timestamp - prev.timestamp >= TIME_THRESHOLD:
                 return prev

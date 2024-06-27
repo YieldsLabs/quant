@@ -26,6 +26,7 @@ from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
 from strategy.generator.confirm.stc import StcConfirm
 from strategy.generator.confirm.wpr import WprConfirm
 from strategy.generator.exit.highlow import HighLowExit
+from strategy.generator.exit.mad import MadExit
 from strategy.generator.exit.rex import RexExit
 from strategy.generator.exit.trix import TrixExit
 from strategy.generator.pulse.adx import AdxPulse
@@ -254,6 +255,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 HighLowExit(),
                 TrixExit(),
                 RexExit(),
+                MadExit(),
             ]
         )
 
