@@ -3,12 +3,12 @@ use core::prelude::*;
 
 pub fn cc(
     source: &Series<f32>,
-    fast_period: usize,
-    slow_period: usize,
-    smooth_type: Smooth,
-    smoothing_period: usize,
+    period_fast: usize,
+    period_slow: usize,
+    smooth: Smooth,
+    period_smooth: usize,
 ) -> Series<f32> {
-    (roc(source, fast_period) + roc(source, slow_period)).smooth(smooth_type, smoothing_period)
+    (roc(source, period_fast) + roc(source, period_slow)).smooth(smooth, period_smooth)
 }
 
 #[cfg(test)]

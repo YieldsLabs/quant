@@ -22,12 +22,11 @@ from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
 from strategy.generator.baseline.ma import MaBaseLine
-from strategy.generator.confirm.cci import CciConfirm
-from strategy.generator.confirm.dpo import DpoConfirm
-from strategy.generator.exit.cci import CciExit
-from strategy.generator.pulse.chop import ChopPulse
-from strategy.generator.signal.twolinescross.vi import Vi2LinesCrossSignal
-from strategy.generator.stop_loss.dch import DchStopLoss
+from strategy.generator.confirm.dumb import DumbConfirm
+from strategy.generator.exit.highlow import HighLowExit
+from strategy.generator.pulse.vo import VoPulse
+from strategy.generator.signal.twolinescross.dmi import Dmi2LinesCrossSignal
+from strategy.generator.stop_loss.atr import AtrStopLoss
 
 from .context import SystemContext
 
@@ -126,7 +125,7 @@ class BacktestSystem(AbstractSystem):
         futures_symbols = await self.query(GetSymbols())
 
         scalp = [
-            # "LUNA2USDT",
+            # "LUNA2USDT"
             # "ALGOUSDT",
             # "WAVESUSDT",
             # "NEARUSDT"
@@ -135,10 +134,13 @@ class BacktestSystem(AbstractSystem):
             # "FILUSDT"
             # "TONUSDT"
             # "RAREUSDT"
-            # "ATOMUSDT",
+            # "ATOMUSDT"
             # "SCUSDT"
             "FTMUSDT"
             # "BOMEUSDT"
+            # "ORNUSDT"
+            # "MEWUSDT"
+            # "THETAUSDT"
             # "APEUSDT"
             # "BTCUSDT"
             # "ADAUSDT"
@@ -161,16 +163,42 @@ class BacktestSystem(AbstractSystem):
                 Timeframe.FIVE_MINUTES,
                 Strategy(
                     *(
-                        Vi2LinesCrossSignal(),
-                        DpoConfirm(),
-                        CciConfirm(),
-                        ChopPulse(),
-                        MaBaseLine(ma=StaticParameter(MovingAverageType.FRAMA)),
-                        DchStopLoss(),
-                        CciExit(),
+                        # SupertrendFlipSignal(
+                        #     smooth_atr=StaticParameter(SmoothATR.SMMA),
+                        #     factor=StaticParameter(0.8),
+                        # ),
+                        # RsiVSignal(),
+                        Dmi2LinesCrossSignal(),
+                        DumbConfirm(),
+                        DumbConfirm(),
+                        VoPulse(),
+                        MaBaseLine(
+                            ma=StaticParameter(MovingAverageType.ZLSMA),
+                            period=StaticParameter(15.0),
+                        ),
+                        AtrStopLoss(),
+                        HighLowExit(),
                     )
                 ),
             ),
+            # (
+            #     futures_symbols[0],
+            #     Timeframe.FIVE_MINUTES,
+            #     Strategy(
+            #         *(
+            #             BopZeroCrossSignal(),
+            #             RsiSignalLineConfirm(),
+            #             CciConfirm(),
+            #             WaePulse(),
+            #             MaBaseLine(
+            #                 ma=StaticParameter(MovingAverageType.T3),
+            #                 period=StaticParameter(20.0),
+            #             ),
+            #             DchStopLoss(),
+            #             TrixExit(),
+            #         )
+            #     ),
+            # ),
         ]
 
         # await self.dispatch(DeployStrategy(strategy=strategies))

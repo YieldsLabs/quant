@@ -4,8 +4,6 @@ from .strategy import Strategy
 from .symbol import Symbol
 from .timeframe import Timeframe
 
-# TODO: use private fields
-
 
 @dataclass
 class Individual:

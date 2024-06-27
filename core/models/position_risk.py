@@ -12,7 +12,7 @@ from .risk_type import PositionRiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 15000
+TIME_THRESHOLD = 60000
 LOOKBACK = 12
 
 
@@ -110,10 +110,30 @@ class PositionRisk(TaMixin):
 
     @property
     def curr_bar(self):
+        if len(self.ohlcv) < 2:
+            return self.ohlcv[0]
+
+        for i in range(len(self.ohlcv) - 1, 0, -1):
+            curr = self.ohlcv[i]
+            prev = self.ohlcv[i - 1]
+
+            if curr.timestamp - prev.timestamp >= TIME_THRESHOLD:
+                return curr
+
         return self.ohlcv[-1]
 
     @property
     def prev_bar(self):
+        if len(self.ohlcv) < 2:
+            return self.ohlcv[0]
+
+        for i in range(len(self.ohlcv) - 2, -1, -1):
+            prev = self.ohlcv[i]
+            curr = self.ohlcv[i + 1]
+
+            if curr.timestamp - prev.timestamp >= TIME_THRESHOLD:
+                return prev
+
         return self.ohlcv[-2]
 
     def next(self, bar: OHLCV):
@@ -140,12 +160,16 @@ class PositionRisk(TaMixin):
         high, low = self.curr_bar.high, self.curr_bar.low
 
         if side == PositionSide.LONG:
+            tp, sl = max(tp, sl), min(tp, sl)
+
             if high > tp:
                 return replace(self, type=PositionRiskType.TP)
             if low < sl:
                 return replace(self, type=PositionRiskType.SL)
 
         if side == PositionSide.SHORT:
+            tp, sl = min(tp, sl), max(tp, sl)
+
             if low < tp:
                 return replace(self, type=PositionRiskType.TP)
             if high > sl:
@@ -277,20 +301,21 @@ class PositionRisk(TaMixin):
 
         bullish = rising_low and (ta.trend.dmi[-1] > 0.0 or ta.momentum.cci[-1] > 100.0)
         bearish = failing_high and (
-            ta.trend.dmi[-1] < 0.0 or ta.momentum.cci[-1] < -100.0
+            ta.trend.dmi[-1] <= 0.0 or ta.momentum.cci[-1] < -100.0
         )
 
         if side == PositionSide.LONG:
             if bullish:
                 return ats[-1]
 
-            return max(sl, ats[-1])
+            return max(sl, np.max(ats))
 
         if side == PositionSide.SHORT:
             if bearish:
                 return ats[-1]
 
-            return min(sl, ats[-1])
+            return min(sl, np.min(ats))
+
         return sl
 
     def to_dict(self):

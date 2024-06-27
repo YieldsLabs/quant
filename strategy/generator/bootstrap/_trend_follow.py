@@ -9,15 +9,22 @@ import numpy as np
 from core.interfaces.abstract_strategy_generator import AbstractStrategyGenerator
 from core.models.candle import CandleTrendType
 from core.models.moving_average import MovingAverageType
-from core.models.parameter import CategoricalParameter, RandomParameter
-from core.models.smooth import Smooth
+from core.models.parameter import CategoricalParameter, RandomParameter, StaticParameter
+from core.models.smooth import Smooth, SmoothATR
 from core.models.source import SourceType
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from strategy.generator.baseline.ma import MaBaseLine
+from strategy.generator.confirm.braid import BraidConfirm
+from strategy.generator.confirm.cc import CcConfirm
 from strategy.generator.confirm.cci import CciConfirm
 from strategy.generator.confirm.didi import DidiConfirm
+from strategy.generator.confirm.dpo import DpoConfirm
+from strategy.generator.confirm.eom import EomConfirm
+from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
+from strategy.generator.confirm.stc import StcConfirm
+from strategy.generator.confirm.wpr import WprConfirm
 from strategy.generator.exit.highlow import HighLowExit
 from strategy.generator.exit.trix import TrixExit
 from strategy.generator.pulse.adx import AdxPulse
@@ -28,32 +35,30 @@ from strategy.generator.pulse.tdfi import TdfiPulse
 from strategy.generator.pulse.vo import VoPulse
 from strategy.generator.pulse.wae import WaePulse
 from strategy.generator.pulse.yz import YzPulse
-from strategy.generator.signal.bb.macd import MacdBbSignal
 from strategy.generator.signal.bb.vwap import VwapBbSignal
 from strategy.generator.signal.colorswitch.macd import MacdColorSwitchSignal
 from strategy.generator.signal.flip.ce import CeFlipSignal
 from strategy.generator.signal.flip.supertrend import SupertrendFlipSignal
-from strategy.generator.signal.neutrality.dso_cross import DsoNeutralityCrossSignal
+from strategy.generator.signal.neutrality.rsi_cross import RsiNautralityCrossSignal
 from strategy.generator.signal.neutrality.rsi_rejection import (
     RsiNautralityRejectionSignal,
 )
-from strategy.generator.signal.neutrality.tii_cross import TiiNeutralityCrossSignal
-from strategy.generator.signal.signalline.dso import DsoSignalLineSignal
-from strategy.generator.signal.signalline.tsi import TsiSignalLineSignal
-from strategy.generator.signal.zerocross.tsi import TsiZeroCrossSignal
+from strategy.generator.signal.pattern.hl import HighLowSignal
+from strategy.generator.signal.zerocross.bop import BopZeroCrossSignal
+from strategy.generator.signal.zerocross.qstick import QstickZeroCrossSignal
 from strategy.generator.stop_loss.atr import AtrStopLoss
 from strategy.generator.stop_loss.dch import DchStopLoss
 
 
 class TrendSignalType(Enum):
     ZERO_CROSS = auto()
-    SIGNAL_LINE = auto()
+    # SIGNAL_LINE = auto()
     # LINES_TWO_CROSS = auto()
     # CONTRARIAN = auto()
     BB = auto()
     # PATTERN = auto()
     COLOR_SWITCH = auto()
-    FLIP = auto()
+    # FLIP = auto()
     # MA = auto()
     # BREAKOUT = auto()
     NEUTRALITY = auto()
@@ -98,7 +103,92 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         )
 
     def _diversified_strategies(self):
-        return []
+        return [
+            Strategy(
+                *(
+                    SupertrendFlipSignal(smooth_atr=StaticParameter(SmoothATR.EMA)),
+                    EomConfirm(),
+                    StcConfirm(),
+                    ChopPulse(smooth_atr=StaticParameter(SmoothATR.EMA)),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.TRIMA),
+                        period=StaticParameter(10.0),
+                    ),
+                    AtrStopLoss(smooth=StaticParameter(SmoothATR.EMA)),
+                    HighLowExit(),
+                )
+            ),
+            Strategy(
+                *(
+                    CeFlipSignal(),
+                    EomConfirm(),
+                    StcConfirm(),
+                    SqzPulse(source=StaticParameter(SourceType.HL2)),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.ZLTEMA),
+                        period=StaticParameter(15.0),
+                    ),
+                    DchStopLoss(),
+                    HighLowExit(),
+                )
+            ),
+            Strategy(
+                *(
+                    VwapBbSignal(),
+                    EomConfirm(),
+                    DidiConfirm(),
+                    WaePulse(),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.TRIMA),
+                        period=StaticParameter(10.0),
+                    ),
+                    AtrStopLoss(smooth=StaticParameter(SmoothATR.EMA)),
+                    TrixExit(),
+                )
+            ),
+            Strategy(
+                *(
+                    HighLowSignal(),
+                    RsiSignalLineConfirm(),
+                    DidiConfirm(),
+                    YzPulse(),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.CAMA),
+                        period=StaticParameter(10.0),
+                    ),
+                    AtrStopLoss(smooth=StaticParameter(SmoothATR.EMA)),
+                    HighLowExit(),
+                )
+            ),
+            Strategy(
+                *(
+                    MacdColorSwitchSignal(),
+                    CcConfirm(),
+                    StcConfirm(),
+                    WaePulse(),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.TEMA),
+                        period=StaticParameter(10.0),
+                    ),
+                    AtrStopLoss(smooth=StaticParameter(SmoothATR.SMMA)),
+                    TrixExit(),
+                )
+            ),
+            Strategy(
+                *(
+                    RsiNautralityCrossSignal(),
+                    EomConfirm(),
+                    WprConfirm(),
+                    SqzPulse(),
+                    MaBaseLine(
+                        ma=StaticParameter(MovingAverageType.VIDYA),
+                        period=StaticParameter(15.0),
+                    ),
+                    DchStopLoss(),
+                    HighLowExit(),
+                )
+            ),
+        ]
 
     def _random_strategies(self):
         strategies_set = set()
@@ -130,19 +220,19 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         baseline = np.random.choice([MaBaseLine()])
         primary_confirm = np.random.choice(
             [
-                # DpoConfirm(),
-                # EomConfirm(),
-                # RsiSignalLineConfirm(),
-                # RsiNeutralityConfirm(),
-                DidiConfirm(),
+                DpoConfirm(),
+                EomConfirm(),
+                RsiSignalLineConfirm(),
+                CcConfirm(),
             ]
         )
         secondary_confirm = np.random.choice(
             [
                 CciConfirm(),
-                # WprConfirm(),
-                # StcConfirm(),
-                # BraidConfirm(),
+                StcConfirm(),
+                DidiConfirm(),
+                BraidConfirm(),
+                WprConfirm(),
             ]
         )
         pulse = np.random.choice(
@@ -320,37 +410,37 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     # AoZeroCrossSignal(),
-                    # BopZeroCrossSignal(),
                     # MacdZeroCrossSignal(),
                     # RocZeroCrossSignal(),
-                    TsiZeroCrossSignal(),
+                    # TsiZeroCrossSignal(),
                     # TrixZeroCrossSignal(),
-                    # QstickZeroCrossSignal(),
+                    QstickZeroCrossSignal(),
                     # CcZeroCrossSignal(),
-                    # BopZeroCrossSignal(),
+                    BopZeroCrossSignal(),
                     # CfoZeroCrossSignal(),
                 ]
             )
-        if signal == TrendSignalType.SIGNAL_LINE:
-            return np.random.choice(
-                [
-                    # DiSignalLineSignal(),
-                    DsoSignalLineSignal(),
-                    # KstSignalLineSignal(),
-                    # MacdSignalLineSignal(),
-                    # QstickSignalLineSignal(),
-                    # RsiSignalLineSignal(),
-                    # StochSignalLineSignal(),
-                    # TrixSignalLineSignal(),
-                    TsiSignalLineSignal(),
-                ]
-            )
+        # if signal == TrendSignalType.SIGNAL_LINE:
+        #     return np.random.choice(
+        #         [
+        #             # DiSignalLineSignal(),
+        #             # DsoSignalLineSignal(),
+        #             # KstSignalLineSignal(),
+        #             # MacdSignalLineSignal(),
+        #             # QstickSignalLineSignal(),
+        #             # RsiSignalLineSignal(),
+        #             # StochSignalLineSignal(),
+        #             # TrixSignalLineSignal(),
+        #             # TsiSignalLineSignal(),
+        #         ]
+        # )
         # if signal == TrendSignalType.PATTERN:
         #     return np.random.choice(
         #         [
-        #             AoSaucerSignal(),
+        #             # AoSaucerSignal(),
         #             CandlestickTrendSignal(),
-        #             # HighLowSignal(),
+        #             HighLowSignal(),
+        #         ]
         #     )
         if signal == TrendSignalType.COLOR_SWITCH:
             return np.random.choice(
@@ -361,25 +451,25 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         # if signal == TrendSignalType.CONTRARIAN:
         #     return np.random.choice(
         #         [
-        #             TiiVSignal(),
-        #             RsiVSignal(),
+        #             # TiiVSignal(),
+        #             # RsiVSignal(),
         #             SnatrSignal(),
         #         ]
         #     )
         if signal == TrendSignalType.BB:
             return np.random.choice(
                 [
-                    MacdBbSignal(),
+                    # MacdBbSignal(),
                     VwapBbSignal(),
                 ]
             )
-        if signal == TrendSignalType.FLIP:
-            return np.random.choice(
-                [
-                    CeFlipSignal(),
-                    SupertrendFlipSignal(),
-                ]
-            )
+        # if signal == TrendSignalType.FLIP:
+        #     return np.random.choice(
+        #         [
+        #             CeFlipSignal(),
+        #             SupertrendFlipSignal(),
+        #         ]
+        #     )
         # if signal == TrendSignalType.MA:
         #     return np.random.choice(
         #         [
@@ -388,8 +478,8 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         #             # Ma2RsiSignal(),
         #             # MaTestingGroundSignal(),
         #             # MaQuadrupleSignal(),
-        #             MaSurpassSignal(),
-        #             # MaCrossSignal(),
+        #             # MaSurpassSignal(),
+        #             MaCrossSignal(),
         #         ]
         #     )
         # if signal == TrendSignalType.BREAKOUT:
@@ -402,17 +492,17 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
         #     return np.random.choice(
         #         [
         #             Dmi2LinesCrossSignal(),
-        #             # Vi2LinesCrossSignal(),
+        #             Vi2LinesCrossSignal(),
         #         ]
         #     )
         if signal == TrendSignalType.NEUTRALITY:
             return np.random.choice(
                 [
-                    DsoNeutralityCrossSignal(),
-                    # RsiNautralityCrossSignal(),
+                    # DsoNeutralityCrossSignal(),
+                    RsiNautralityCrossSignal(),
                     # RsiNautralityPullbackSignal(),
-                    RsiNautralityRejectionSignal(),
-                    TiiNeutralityCrossSignal(),
+                    # RsiNautralityRejectionSignal(),
+                    # TiiNeutralityCrossSignal(),
                 ]
             )
         return np.random.choice(

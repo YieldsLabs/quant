@@ -252,8 +252,12 @@ class Position:
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
 
+        if gap > 300000:
+            print("NOOOOOOOOOOO________>>>>>>>>>>>>")
+
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
+
         next_position = next_position.break_even(ta)
 
         if (
@@ -268,23 +272,31 @@ class Position:
         pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
 
         if session_risk == SessionRiskType.EXIT and pnl_perc <= 0.0:
+            print(
+                f"TRAILLL PREV SL: {next_position.stop_loss}, CURR: {next_position.risk_bar.close}"
+            )
             next_position = next_position.trail(ta)
+            print(
+                f"TRAILLL NEXT SL: {next_position.stop_loss}, CURR: {next_position.risk_bar.close}"
+            )
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
 
         if (
             session_risk == SessionRiskType.EXIT
-            and next_position.curr_pnl > 1.2 * next_position.fee
+            and next_position.curr_pnl > next_position.fee
         ):
             print(
-                f"TRAILLL prev TP: {next_position.take_profit}, prev SL: {next_position.stop_loss}"
+                f"TRAILLL prev TP: {next_tp}, prev SL: {next_sl}, CURR: {next_position.risk_bar.close}"
             )
 
             next_tp = next_risk.tp_low(next_position.side, ta, next_tp)
             next_sl = next_risk.sl_low(next_position.side, ta, next_sl)
 
-            print(f"TRAILLL next TP: {next_tp}, next SL: {next_sl}")
+            print(
+                f"TRAILLL next TP: {next_tp}, next SL: {next_sl}, CURR: {next_position.risk_bar.close}"
+            )
 
         next_risk = next_risk.assess(
             next_position.side,

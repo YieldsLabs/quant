@@ -8,9 +8,12 @@ from .base import Confirm, ConfirmType
 
 
 @dataclass(frozen=True)
-class WprConfirm(Confirm):
-    type: Confirm = ConfirmType.Wpr
+class CcConfirm(Confirm):
+    type: Confirm = ConfirmType.Cc
     source: Parameter = StaticParameter(SourceType.CLOSE)
-    period: Parameter = StaticParameter(28.0)
+    period_fast: Parameter = StaticParameter(14.0)
+    period_slow: Parameter = StaticParameter(28.0)
+    smooth: Parameter = StaticParameter(Smooth.WMA)
+    period_smooth: Parameter = StaticParameter(14.0)
     smooth_signal: Parameter = StaticParameter(Smooth.SMA)
     period_signal: Parameter = StaticParameter(14.0)

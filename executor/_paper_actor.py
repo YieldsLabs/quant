@@ -57,6 +57,11 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
             NextBar(self.symbol, self.timeframe, current_position.signal_bar)
         )
 
+        if next_bar:
+            print(
+                f"Open position gap: {next_bar.timestamp - current_position.signal_bar.timestamp}"
+            )
+
         price = self._find_open_price(current_position, entry_order, next_bar)
         size = entry_order.size
         fee = current_position.theo_taker_fee(size, price)
@@ -106,7 +111,7 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         next_position = current_position.fill_order(order)
 
-        logger.debug(f"Closed Position: {next_position}")
+        logger.info(f"Closed Position: {next_position}")
 
         await self.tell(BrokerPositionClosed(next_position))
 
@@ -129,6 +134,12 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
         self, position: Position, order: Order, bar: Optional[OHLCV] = None
     ) -> float:
         if bar is None:
+            bar = position.signal_bar
+
+        diff = bar.timestamp - position.signal_bar.timestamp
+
+        if diff > 300000:
+            logger.warn("Next bar is too far")
             bar = position.signal_bar
 
         return self._find_fill_price(position.side, bar, order.price)

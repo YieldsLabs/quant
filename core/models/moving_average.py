@@ -3,7 +3,7 @@ from enum import Enum
 
 class MovingAverageType(Enum):
     # ALMA = 1
-    # CAMA = 2
+    CAMA = 2
     # DEMA = 3
     # EMA = 4
     FRAMA = 5
@@ -18,16 +18,16 @@ class MovingAverageType(Enum):
     # SINWMA = 14
     # SMA = 15
     # SMMA = 16
-    # T3 = 17
-    # TEMA = 18
+    T3 = 17
+    TEMA = 18
     # TL = 19
-    # TRIMA = 20
-    # VIDYA = 21
+    TRIMA = 20
+    VIDYA = 21
     # VWMA = 22
     # VWEMA = 23
     # WMA = 24
     # ZLEMA = 25
-    # ZLSMA = 26
+    ZLSMA = 26
     ZLTEMA = 27
     # ZLHMA = 28
 

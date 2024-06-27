@@ -15,6 +15,23 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             smooth_deserialize(smooth_type as usize),
             period,
         )),
+        ConfirmConfig::Cc {
+            source,
+            period_fast,
+            period_slow,
+            smooth,
+            period_smooth,
+            smooth_signal,
+            period_signal,
+        } => Box::new(CcConfirm::new(
+            source_deserialize(source as usize),
+            period_fast,
+            period_slow,
+            smooth_deserialize(smooth as usize),
+            period_smooth,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
+        )),
         ConfirmConfig::Cci {
             source,
             period,
@@ -29,13 +46,15 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             period_smooth,
         )),
         ConfirmConfig::Wpr {
-            source_type,
+            source,
             period,
-            threshold,
+            smooth_signal,
+            period_signal,
         } => Box::new(WprConfirm::new(
-            source_deserialize(source_type as usize),
+            source_deserialize(source as usize),
             period,
-            threshold,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
         )),
         ConfirmConfig::Eom {
             source_type,

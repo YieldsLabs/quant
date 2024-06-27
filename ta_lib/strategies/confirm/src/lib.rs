@@ -1,4 +1,5 @@
 mod braid;
+mod cc;
 mod cci;
 mod didi;
 mod dpo;
@@ -10,6 +11,7 @@ mod stc;
 mod wpr;
 
 pub use braid::BraidConfirm;
+pub use cc::CcConfirm;
 pub use cci::CciConfirm;
 pub use didi::DidiConfirm;
 pub use dpo::DpoConfirm;

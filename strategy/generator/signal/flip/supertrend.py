@@ -11,5 +11,5 @@ class SupertrendFlipSignal(Signal):
     type: SignalType = SignalType.SupFlip
     source_type: Parameter = StaticParameter(SourceType.HL2)
     smooth_atr: Parameter = CategoricalParameter(SmoothATR)
-    period_atr: Parameter = StaticParameter(8.0)
-    factor: Parameter = StaticParameter(0.89)
+    period_atr: Parameter = StaticParameter(10.0)
+    factor: Parameter = StaticParameter(0.8)

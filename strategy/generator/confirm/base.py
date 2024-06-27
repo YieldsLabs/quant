@@ -9,6 +9,7 @@ class ConfirmType(Enum):
     Dumb = "Dumb"
     Dpo = "Dpo"
     Cci = "Cci"
+    Cc = "Cc"
     Eom = "Eom"
     RsiSignalLine = "RsiSignalLine"
     RsiNeutrality = "RsiNeutrality"

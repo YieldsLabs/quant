@@ -214,7 +214,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
                 print(f"Dist: {dist}, Bar dist: {bd}")
 
-                if dist != 0 and bd > 1.8 * dist:
+                if bd > 300000:
                     break
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
@@ -228,7 +228,5 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 if next_position.has_risk:
                     await self.tell(RiskThresholdBreached(next_position))
                     break
-
-                await asyncio.sleep(0.000001)
 
         return next_position

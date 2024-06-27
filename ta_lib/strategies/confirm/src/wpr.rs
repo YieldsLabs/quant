@@ -3,41 +3,39 @@ use core::prelude::*;
 use momentum::wpr;
 use timeseries::prelude::*;
 
-const WRP_UPPER_BARRIER: f32 = -20.;
-const WRP_LOWER_BARRIER: f32 = -80.;
-
 pub struct WprConfirm {
-    source_type: SourceType,
+    source: SourceType,
     period: usize,
-    threshold: f32,
+    smooth_signal: Smooth,
+    period_signal: usize,
 }
 
 impl WprConfirm {
-    pub fn new(source_type: SourceType, period: f32, threshold: f32) -> Self {
+    pub fn new(source: SourceType, period: f32, smooth_signal: Smooth, period_signal: f32) -> Self {
         Self {
-            source_type,
+            source,
             period: period as usize,
-            threshold,
+            smooth_signal,
+            period_signal: period_signal as usize,
         }
     }
 }
 
 impl Confirm for WprConfirm {
     fn lookback(&self) -> usize {
-        self.period
+        std::cmp::max(self.period, self.period_signal)
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let wrp = wpr(
-            &data.source(self.source_type),
+            &data.source(self.source),
             data.high(),
             data.low(),
             self.period,
         );
 
-        let upper_barrier = WRP_UPPER_BARRIER + self.threshold;
-        let lower_barrier = WRP_LOWER_BARRIER - self.threshold;
+        let signal = wrp.smooth(self.smooth_signal, self.period_signal);
 
-        (wrp.sgt(&upper_barrier), wrp.slt(&lower_barrier))
+        (wrp.sgt(&signal), wrp.slt(&signal))
     }
 }

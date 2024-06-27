@@ -334,6 +334,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 4)
                     or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 2)
                     or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 1)
+                    or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 3)
                     or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
                 )
             ):

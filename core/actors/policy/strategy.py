@@ -24,4 +24,5 @@ class StrategyPolicy(EventPolicy):
             return event.signal
         elif hasattr(event, "position") and hasattr(event.position, "signal"):
             return event.position.signal
+
         return event
