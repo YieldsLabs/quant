@@ -51,13 +51,12 @@ impl Confirm for CcConfirm {
             self.smooth,
             self.period_smooth,
         );
-        let prev_cc = cc.shift(1);
 
         let signal = cc.smooth(self.smooth_signal, self.period_signal);
 
         (
-            cc.sgt(&signal) & cc.sgt(&prev_cc),
-            cc.slt(&signal) & cc.slt(&prev_cc),
+            cc.sgt(&signal) & cc.sgt(&ZERO),
+            cc.slt(&signal) & cc.slt(&ZERO),
         )
     }
 }

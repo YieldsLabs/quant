@@ -7,16 +7,16 @@ const DPO_UPPER_BARRIER: f32 = 0.005;
 const DPO_LOWER_BARRIER: f32 = -0.005;
 
 pub struct DpoConfirm {
-    source_type: SourceType,
-    smooth_type: Smooth,
+    source: SourceType,
+    smooth: Smooth,
     period: usize,
 }
 
 impl DpoConfirm {
-    pub fn new(source_type: SourceType, smooth_type: Smooth, period: f32) -> Self {
+    pub fn new(source: SourceType, smooth: Smooth, period: f32) -> Self {
         Self {
-            source_type,
-            smooth_type,
+            source,
+            smooth,
             period: period as usize,
         }
     }
@@ -28,11 +28,7 @@ impl Confirm for DpoConfirm {
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let dpo = dpo(
-            &data.source(self.source_type),
-            self.smooth_type,
-            self.period,
-        );
+        let dpo = dpo(&data.source(self.source), self.smooth, self.period);
 
         (dpo.sgt(&DPO_UPPER_BARRIER), dpo.slt(&DPO_LOWER_BARRIER))
     }
