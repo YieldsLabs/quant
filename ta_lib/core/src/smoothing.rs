@@ -1,7 +1,7 @@
 use crate::series::Series;
 use crate::traits::Comparator;
-use crate::ZERO;
 use crate::{iff, nz};
+use crate::{SCALE, ZERO};
 
 #[derive(Copy, Clone)]
 pub enum Smooth {
@@ -142,6 +142,13 @@ impl Series<f32> {
     pub fn spread(&self, smooth: Smooth, period_fast: usize, period_slow: usize) -> Self {
         self.smooth(smooth, period_fast) - self.smooth(smooth, period_slow)
     }
+
+    pub fn pspread(&self, smooth: Smooth, period_fast: usize, period_slow: usize) -> Self {
+        let fsm = self.smooth(smooth, period_fast);
+        let ssm = self.smooth(smooth, period_slow);
+
+        SCALE * (fsm - &ssm) / &ssm
+    }
 }
 
 #[cfg(test)]
@@ -232,6 +239,19 @@ mod tests {
         let smooth = Smooth::EMA;
 
         let result = source.spread(smooth, period_fast, period_slow);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_percent_of_spread() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 11.111117, 13.580248, 12.59259, 10.921185]);
+        let period_fast = 2;
+        let period_slow = 3;
+        let smooth = Smooth::EMA;
+
+        let result = source.pspread(smooth, period_fast, period_slow);
 
         assert_eq!(result, expected);
     }

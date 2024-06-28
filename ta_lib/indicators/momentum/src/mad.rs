@@ -1,8 +1,8 @@
 use core::prelude::*;
 
 pub fn mad(source: &Series<f32>, period_fast: usize, period_slow: usize) -> Series<f32> {
-    let fad = source.ad(period_fast);
-    let sad = source.ad(period_slow);
+    let fad = source.ma(period_fast);
+    let sad = source.ma(period_slow);
 
     SCALE * (fad - &sad) / &sad
 }
@@ -18,8 +18,21 @@ mod tests {
             6.8360, 6.8345, 6.8285, 6.8395,
         ]);
         let expected = vec![
-            0.0, 0.0, -18.180635, 103.59698, -56.669632, 32.346012, -44.06944, -93.74106,
-            -27.147879, -57.692024, 92.80752, -86.342354, -9.959931, -33.333332, 3.138412,
+            0.0,
+            0.0,
+            -0.019448167,
+            -0.035259355,
+            0.0619857,
+            0.01336108,
+            -0.0632135,
+            -0.05474333,
+            -0.023143804,
+            -0.05484238,
+            -0.015844958,
+            0.023157505,
+            -0.0012138351,
+            -0.021954188,
+            -0.002449016,
         ];
         let period_fast = 2;
         let period_slow = 3;

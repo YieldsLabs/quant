@@ -13,4 +13,3 @@ class EomConfirm(Confirm):
     source_type: Parameter = StaticParameter(SourceType.HL2)
     smooth_type: Parameter = StaticParameter(Smooth.SMA)
     period: Parameter = StaticParameter(14.0)
-    divisor: Parameter = StaticParameter(10000.0)

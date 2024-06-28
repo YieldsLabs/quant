@@ -1016,12 +1016,11 @@ fn volume(c: &mut Criterion) {
                 let hl2 = median_price(&high, &low);
                 let smooth_type = Smooth::SMA;
                 let period = 14;
-                let divisor = 10000.0;
 
-                (hl2, high, low, volume, smooth_type, period, divisor)
+                (hl2, high, low, volume, smooth_type, period)
             },
-            |(hl2, high, low, volume, smooth_type, period, divisor)| {
-                eom(hl2, high, low, volume, *smooth_type, *period, *divisor)
+            |(hl2, high, low, volume, smooth_type, period)| {
+                eom(hl2, high, low, volume, *smooth_type, *period)
             },
             criterion::BatchSize::SmallInput,
         )

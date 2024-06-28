@@ -60,12 +60,10 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             source_type,
             smooth_type,
             period,
-            divisor,
         } => Box::new(EomConfirm::new(
             source_deserialize(source_type as usize),
             smooth_deserialize(smooth_type as usize),
             period,
-            divisor,
         )),
         ConfirmConfig::Dumb { period } => Box::new(DumbConfirm::new(period)),
         ConfirmConfig::RsiSignalLine {

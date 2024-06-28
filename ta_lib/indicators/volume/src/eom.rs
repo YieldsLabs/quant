@@ -7,9 +7,8 @@ pub fn eom(
     volume: &Series<f32>,
     smooth_type: Smooth,
     period: usize,
-    divisor: f32,
 ) -> Series<f32> {
-    (divisor * hl2.change(1) * (high - low) / volume).smooth(smooth_type, period)
+    (SCALE * SCALE * hl2.change(1) * (high - low) / volume).smooth(smooth_type, period)
 }
 
 #[cfg(test)]
@@ -35,9 +34,8 @@ mod tests {
 
         let hlc = median_price(&high, &low);
         let period = 2;
-        let divisor = 10000.0;
 
-        let result: Vec<f32> = eom(&hlc, &high, &low, &volume, Smooth::SMA, period, divisor).into();
+        let result: Vec<f32> = eom(&hlc, &high, &low, &volume, Smooth::SMA, period).into();
 
         assert_eq!(result, expected);
     }

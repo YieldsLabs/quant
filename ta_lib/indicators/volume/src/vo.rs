@@ -6,10 +6,10 @@ pub fn vo(
     fast_period: usize,
     slow_period: usize,
 ) -> Series<f32> {
-    let vo_fast = source.smooth(smooth_type, fast_period);
-    let vo_slow = source.smooth(smooth_type, slow_period);
+    let fast = source.smooth(smooth_type, fast_period);
+    let slow = source.smooth(smooth_type, slow_period);
 
-    SCALE * (vo_fast - &vo_slow) / vo_slow
+    SCALE * (fast - &slow) / slow
 }
 
 #[cfg(test)]

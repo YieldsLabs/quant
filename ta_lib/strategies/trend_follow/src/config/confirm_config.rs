@@ -12,7 +12,6 @@ pub enum ConfirmConfig {
         source_type: f32,
         smooth_type: f32,
         period: f32,
-        divisor: f32,
     },
     Cci {
         source: f32,
