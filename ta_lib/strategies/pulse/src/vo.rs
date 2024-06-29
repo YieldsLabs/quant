@@ -26,7 +26,7 @@ impl Pulse for VoPulse {
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let vo = data
             .volume()
-            .pspread(self.smooth, self.period_fast, self.period_slow);
+            .spread_pct(self.smooth, self.period_fast, self.period_slow);
 
         (vo.sgt(&ZERO_LINE), vo.sgt(&ZERO_LINE))
     }

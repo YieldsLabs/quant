@@ -143,7 +143,7 @@ impl Series<f32> {
         self.smooth(smooth, period_fast) - self.smooth(smooth, period_slow)
     }
 
-    pub fn pspread(&self, smooth: Smooth, period_fast: usize, period_slow: usize) -> Self {
+    pub fn spread_pct(&self, smooth: Smooth, period_fast: usize, period_slow: usize) -> Self {
         let fsm = self.smooth(smooth, period_fast);
         let ssm = self.smooth(smooth, period_slow);
 
@@ -251,7 +251,7 @@ mod tests {
         let period_slow = 3;
         let smooth = Smooth::EMA;
 
-        let result = source.pspread(smooth, period_fast, period_slow);
+        let result = source.spread_pct(smooth, period_fast, period_slow);
 
         assert_eq!(result, expected);
     }

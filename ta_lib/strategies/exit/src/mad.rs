@@ -24,9 +24,9 @@ impl Exit for MadExit {
     }
 
     fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let mad = data
-            .source(self.source)
-            .pspread(Smooth::SMA, self.period_fast, self.period_slow);
+        let mad =
+            data.source(self.source)
+                .spread_pct(Smooth::SMA, self.period_fast, self.period_slow);
 
         (mad.cross_under(&ZERO), mad.cross_over(&ZERO))
     }

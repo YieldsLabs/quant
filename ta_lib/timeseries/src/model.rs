@@ -103,8 +103,8 @@ impl TimeSeries for BaseTimeSeries {
         let ema11 = source.smooth(Smooth::EMA, periods[9]);
 
         let (_, _, histogram) = macd(source, Smooth::EMA, periods[2], periods[3], periods[4]);
-        let ppo = source.pspread(Smooth::EMA, periods[2], periods[3]);
-        let vo = volume.pspread(Smooth::EMA, periods[5], periods[6]);
+        let ppo = source.spread_pct(Smooth::EMA, periods[2], periods[3]);
+        let vo = volume.spread_pct(Smooth::EMA, periods[5], periods[6]);
         let nvol = nvol(volume, Smooth::SMA, periods[4]);
         let obv = obv(source, volume);
         let mfi = mfi(&hlc3, volume, periods[1]);
