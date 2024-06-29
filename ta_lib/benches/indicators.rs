@@ -1056,23 +1056,6 @@ fn volume(c: &mut Criterion) {
         )
     });
 
-    group.bench_function("vo", |b| {
-        b.iter_batched_ref(
-            || {
-                let volume = Series::from(&volume);
-                let fast_period = 5;
-                let slow_period = 10;
-                let smooth_type = Smooth::EMA;
-
-                (volume, smooth_type, fast_period, slow_period)
-            },
-            |(volume, smooth_type, fast_period, slow_period)| {
-                vo(volume, *smooth_type, *fast_period, *slow_period)
-            },
-            criterion::BatchSize::SmallInput,
-        )
-    });
-
     group.bench_function("vwap", |b| {
         b.iter_batched_ref(
             || {

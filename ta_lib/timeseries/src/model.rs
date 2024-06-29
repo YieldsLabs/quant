@@ -5,7 +5,7 @@ use price::typical_price;
 use std::collections::BTreeMap;
 use trend::spp;
 use volatility::{bb, gkyz, kch, tr, yz};
-use volume::{mfi, nvol, obv, vo};
+use volume::{mfi, nvol, obv};
 
 const BUFF_FACTOR: f32 = 1.3;
 
@@ -104,7 +104,7 @@ impl TimeSeries for BaseTimeSeries {
 
         let (_, _, histogram) = macd(source, Smooth::EMA, periods[2], periods[3], periods[4]);
         let ppo = ppo(source, Smooth::EMA, periods[2], periods[3]);
-        let vo = vo(volume, Smooth::EMA, periods[5], periods[6]);
+        let vo = volume.pspread(Smooth::EMA, periods[5], periods[6]);
         let nvol = nvol(volume, Smooth::SMA, periods[4]);
         let obv = obv(source, volume);
         let mfi = mfi(&hlc3, volume, periods[1]);

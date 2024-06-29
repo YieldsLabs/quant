@@ -1,36 +1,32 @@
 use base::prelude::*;
 use core::prelude::*;
 use timeseries::prelude::*;
-use volume::vo;
 
 pub struct VoPulse {
-    smooth_type: Smooth,
-    fast_period: usize,
-    slow_period: usize,
+    smooth: Smooth,
+    period_fast: usize,
+    period_slow: usize,
 }
 
 impl VoPulse {
-    pub fn new(smooth_type: Smooth, fast_period: f32, slow_period: f32) -> Self {
+    pub fn new(smooth: Smooth, period_fast: f32, period_slow: f32) -> Self {
         Self {
-            smooth_type,
-            fast_period: fast_period as usize,
-            slow_period: slow_period as usize,
+            smooth,
+            period_fast: period_fast as usize,
+            period_slow: period_slow as usize,
         }
     }
 }
 
 impl Pulse for VoPulse {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.fast_period, self.slow_period)
+        std::cmp::max(self.period_fast, self.period_slow)
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let vo = vo(
-            data.volume(),
-            self.smooth_type,
-            self.fast_period,
-            self.slow_period,
-        );
+        let vo = data
+            .volume()
+            .pspread(self.smooth, self.period_fast, self.period_slow);
 
         (vo.sgt(&ZERO_LINE), vo.sgt(&ZERO_LINE))
     }
