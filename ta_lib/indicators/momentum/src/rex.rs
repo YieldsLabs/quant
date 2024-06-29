@@ -8,9 +8,7 @@ pub fn rex(
     smooth: Smooth,
     period: usize,
 ) -> Series<f32> {
-    let source = 3. * source - (open + high + low);
-
-    source.smooth(smooth, period)
+    (3. * source - (open + high + low)).smooth(smooth, period)
 }
 
 #[cfg(test)]
