@@ -1,6 +1,5 @@
 use base::prelude::*;
 use core::prelude::*;
-use momentum::mad;
 use timeseries::prelude::*;
 
 pub struct MadExit {
@@ -25,11 +24,9 @@ impl Exit for MadExit {
     }
 
     fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let mad = mad(
-            &data.source(self.source),
-            self.period_fast,
-            self.period_slow,
-        );
+        let mad = data
+            .source(self.source)
+            .pspread(Smooth::SMA, self.period_fast, self.period_slow);
 
         (mad.cross_under(&ZERO), mad.cross_over(&ZERO))
     }
