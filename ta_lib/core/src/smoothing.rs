@@ -149,6 +149,17 @@ impl Series<f32> {
 
         SCALE * (fsm - &ssm) / &ssm
     }
+
+    pub fn spread_diff(
+        &self,
+        smooth: Smooth,
+        period_fast: usize,
+        period_slow: usize,
+        n: usize,
+    ) -> Self {
+        self.spread(smooth, period_fast, period_slow)
+            - self.shift(n).spread(smooth, period_fast, period_slow)
+    }
 }
 
 #[cfg(test)]
@@ -252,6 +263,20 @@ mod tests {
         let smooth = Smooth::EMA;
 
         let result = source.spread_pct(smooth, period_fast, period_slow);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_spread_diff() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([f32::NAN, 0.16666675, 0.13888884, 0.087962866, 0.050154686]);
+        let period_fast = 2;
+        let period_slow = 3;
+        let n = 1;
+        let smooth = Smooth::EMA;
+
+        let result = source.spread_diff(smooth, period_fast, period_slow, n);
 
         assert_eq!(result, expected);
     }

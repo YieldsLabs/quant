@@ -42,24 +42,19 @@ impl Pulse for WaePulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (upper_bb, _, lower_bb) = bb(data.close(), self.smooth_bb, self.period_bb, self.factor);
+        let source = data.close();
+
+        let (upper_bb, _, lower_bb) = bb(&source, self.smooth_bb, self.period_bb, self.factor);
 
         let e = upper_bb - lower_bb;
 
-        let spread = data
-            .close()
-            .spread(self.smooth, self.period_fast, self.period_slow);
-        let prev_spread =
-            data.close()
-                .shift(1)
-                .spread(self.smooth, self.period_fast, self.period_slow);
-
-        let t = (spread - prev_spread) * self.strength;
+        let diff =
+            source.spread_diff(self.smooth, self.period_fast, self.period_slow, 1) * self.strength;
 
         let zero = Series::zero(data.len());
 
-        let up = iff!(t.sgte(&ZERO), t, zero);
-        let down = iff!(t.slt(&ZERO), t.negate(), zero);
+        let up = iff!(diff.sgte(&ZERO), diff, zero);
+        let down = iff!(diff.slt(&ZERO), diff.negate(), zero);
 
         (
             up.sgt(&up.shift(1)) & up.sgt(&e),
