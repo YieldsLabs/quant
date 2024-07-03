@@ -14,6 +14,7 @@ from core.models.moving_average import MovingAverageType
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
 from core.models.parameter import StaticParameter
+from core.models.smooth import Smooth
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -22,9 +23,10 @@ from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
 from strategy.generator.baseline.ma import MaBaseLine
-from strategy.generator.confirm.dumb import DumbConfirm
-from strategy.generator.exit.highlow import HighLowExit
-from strategy.generator.pulse.vo import VoPulse
+from strategy.generator.confirm.didi import DidiConfirm
+from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
+from strategy.generator.exit.mad import MadExit
+from strategy.generator.pulse.chop import ChopPulse
 from strategy.generator.signal.twolinescross.dmi import Dmi2LinesCrossSignal
 from strategy.generator.stop_loss.atr import AtrStopLoss
 
@@ -125,7 +127,7 @@ class BacktestSystem(AbstractSystem):
         futures_symbols = await self.query(GetSymbols())
 
         scalp = [
-            # "LUNA2USDT"
+            # "LUNA2USDT",
             # "ALGOUSDT",
             # "WAVESUSDT",
             # "NEARUSDT"
@@ -163,21 +165,16 @@ class BacktestSystem(AbstractSystem):
                 Timeframe.FIVE_MINUTES,
                 Strategy(
                     *(
-                        # SupertrendFlipSignal(
-                        #     smooth_atr=StaticParameter(SmoothATR.SMMA),
-                        #     factor=StaticParameter(0.8),
-                        # ),
-                        # RsiVSignal(),
                         Dmi2LinesCrossSignal(),
-                        DumbConfirm(),
-                        DumbConfirm(),
-                        VoPulse(),
+                        RsiSignalLineConfirm(),
+                        DidiConfirm(),
+                        ChopPulse(smooth_atr=StaticParameter(Smooth.EMA)),
                         MaBaseLine(
-                            ma=StaticParameter(MovingAverageType.ZLSMA),
-                            period=StaticParameter(15.0),
+                            ma=StaticParameter(MovingAverageType.TEMA),
+                            period=StaticParameter(10.0),
                         ),
                         AtrStopLoss(),
-                        HighLowExit(),
+                        MadExit(),
                     )
                 ),
             ),
@@ -201,8 +198,8 @@ class BacktestSystem(AbstractSystem):
             # ),
         ]
 
-        # await self.dispatch(DeployStrategy(strategy=strategies))
-        await self.event_queue.put(Event.GENERATE_COMPLETE)
+        await self.dispatch(DeployStrategy(strategy=strategies))
+        # await self.event_queue.put(Event.GENERATE_COMPLETE)
 
     async def _run_backtest(self):
         population = self.optimizer.population

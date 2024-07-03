@@ -12,4 +12,4 @@ class SupertrendFlipSignal(Signal):
     source_type: Parameter = StaticParameter(SourceType.HL2)
     smooth_atr: Parameter = CategoricalParameter(SmoothATR)
     period_atr: Parameter = StaticParameter(10.0)
-    factor: Parameter = StaticParameter(0.8)
+    factor: Parameter = StaticParameter(0.618)

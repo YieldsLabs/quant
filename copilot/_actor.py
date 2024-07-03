@@ -14,7 +14,7 @@ from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
 from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
-from core.models.side import PositionSide, SignalSide
+from core.models.side import SignalSide
 from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
@@ -322,50 +322,50 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             knn_transaction = "".join(map(str, kmeans.labels_))
 
-            prev_long, prev_short = self.prev_txn
+            # prev_long, prev_short = self.prev_txn
 
             should_exit = False
 
-            if (
-                msg.side == PositionSide.LONG
-                and prev_long
-                and (
-                    (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
-                    or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 4)
-                    or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 2)
-                    or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 1)
-                    or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 3)
-                    or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
-                )
-            ):
-                should_exit = True
+            # if (
+            #     msg.side == PositionSide.LONG
+            #     and prev_long
+            #     and (
+            #         (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
+            #         or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 4)
+            #         or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 2)
+            #         or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 1)
+            #         or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 3)
+            #         or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
+            #     )
+            # ):
+            #     should_exit = True
 
-            if (
-                msg.side == PositionSide.SHORT
-                and prev_short
-                and (
-                    (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
-                    or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 3)
-                    or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 4)
-                    or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
-                    or (int(prev_short[0]) == 3 and int(knn_transaction[0]) == 2)
-                    or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 2)
-                )
-            ):
-                should_exit = True
+            # if (
+            #     msg.side == PositionSide.SHORT
+            #     and prev_short
+            #     and (
+            #         (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
+            #         or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 3)
+            #         or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 4)
+            #         or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
+            #         or (int(prev_short[0]) == 3 and int(knn_transaction[0]) == 2)
+            #         or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 2)
+            #     )
+            # ):
+            #     should_exit = True
 
-            if msg.side == PositionSide.LONG:
-                if not should_exit:
-                    prev_long = knn_transaction
-                else:
-                    prev_long = None
-            else:
-                if not should_exit:
-                    prev_short = knn_transaction
-                else:
-                    prev_short = None
+            # if msg.side == PositionSide.LONG:
+            #     if not should_exit:
+            #         prev_long = knn_transaction
+            #     else:
+            #         prev_long = None
+            # else:
+            #     if not should_exit:
+            #         prev_short = knn_transaction
+            #     else:
+            #         prev_short = None
 
-            self.prev_txn = (prev_long, prev_short)
+            # self.prev_txn = (prev_long, prev_short)
 
             if knn_transaction in self.anomaly:
                 should_exit = True

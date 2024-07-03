@@ -12,7 +12,7 @@ from .risk_type import PositionRiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 60000
+TIME_THRESHOLD = 35000
 LOOKBACK = 12
 
 
@@ -106,37 +106,11 @@ class TaMixin:
 class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.382, 2.382))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.682, 2.382))
 
     @property
     def curr_bar(self):
-        l = len(self.ohlcv)
-
-        if l < 2:
-            return self.ohlcv[0]
-
-        for i in range(l - 1, 0, -1):
-            curr, prev = self.ohlcv[i], self.ohlcv[i - 1]
-
-            if curr.timestamp - prev.timestamp >= TIME_THRESHOLD:
-                return curr
-
         return self.ohlcv[-1]
-
-    @property
-    def prev_bar(self):
-        l = len(self.ohlcv)
-
-        if l < 2:
-            return self.ohlcv[0]
-
-        for i in range(l - 2, -1, -1):
-            prev, curr = self.ohlcv[i], self.ohlcv[i + 1]
-
-            if curr.timestamp - prev.timestamp >= TIME_THRESHOLD:
-                return prev
-
-        return self.ohlcv[-2]
 
     def next(self, bar: OHLCV):
         ohlcv = self.ohlcv + [bar]
@@ -198,7 +172,7 @@ class PositionRisk(TaMixin):
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
-        if len(ts_diff) < 2 or np.mean(ts_diff) < TIME_THRESHOLD:
+        if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
         max_lookback = max(len(timestamps), LOOKBACK)
@@ -237,7 +211,7 @@ class PositionRisk(TaMixin):
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
-        if len(ts_diff) < 2 or np.mean(ts_diff) < TIME_THRESHOLD:
+        if ts_diff.sum() < TIME_THRESHOLD:
             return tp
 
         max_lookback = max(len(timestamps), LOOKBACK)
@@ -275,7 +249,7 @@ class PositionRisk(TaMixin):
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
-        if len(ts_diff) < 2 or np.mean(ts_diff) < TIME_THRESHOLD:
+        if ts_diff.sum() < TIME_THRESHOLD:
             return sl
 
         max_lookback = max(len(timestamps), LOOKBACK)
@@ -308,15 +282,17 @@ class PositionRisk(TaMixin):
 
         if side == PositionSide.LONG:
             if bullish:
-                return ats[-1]
+                print("BULLLLLISHHHHHH-------------------------->")
+                return max(sl, np.max(ats))
 
-            return max(sl, np.max(ats))
+            return ats[-1]
 
         if side == PositionSide.SHORT:
             if bearish:
-                return ats[-1]
+                print("BEARISHHHHHHHHH-------------------------->")
+                return min(sl, np.min(ats))
 
-            return min(sl, np.min(ats))
+            return ats[-1]
 
         return sl
 

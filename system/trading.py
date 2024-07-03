@@ -6,6 +6,7 @@ from enum import Enum, auto
 from core.commands.broker import UpdateSettings
 from core.commands.feed import StartHistoricalFeed, StartRealtimeFeed
 from core.event_decorators import event_handler
+from core.events.signal import GoLongSignalReceived, GoShortSignalReceived
 from core.events.system import DeployStrategy
 from core.events.trade import TradeStarted
 from core.interfaces.abstract_config import AbstractConfig
@@ -19,7 +20,11 @@ from core.models.broker import MarginMode, PositionMode
 from core.models.exchange import ExchangeType
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
+from core.models.ohlcv import OHLCV
 from core.models.order import OrderType
+from core.models.side import SignalSide
+from core.models.signal import Signal
+from core.models.timeframe import Timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -177,3 +182,32 @@ class TradingSystem(AbstractSystem):
             await self.execute(StartRealtimeFeed(actors[0].symbol, actors[0].timeframe))
 
             logger.info(f"Started feed: {actors[0].symbol}_{actors[0].timeframe}")
+
+        await asyncio.sleep(1.0)
+
+        curr_ohlcv = OHLCV(timestamp=1720017600523, open=0.5326, high=0.5328, low=0.5313, close=0.5313, volume=412642.0)
+        side = SignalSide.SELL
+        hl2 = (curr_ohlcv.low + curr_ohlcv.high) / 2.0
+        factor = 0.04
+
+        stop_loss = (
+            curr_ohlcv.low - factor * hl2
+            if side == SignalSide.BUY
+            else curr_ohlcv.high + factor * hl2
+        )
+        signal = Signal(
+            actors[0].symbol,
+            Timeframe.FIVE_MINUTES,
+            actors[0].strategy,
+            side,
+            curr_ohlcv,
+            entry=curr_ohlcv.close,
+            stop_loss=stop_loss,
+        )
+
+        long = GoLongSignalReceived(signal=signal)
+        short = GoShortSignalReceived(signal=signal)
+
+        trigger = long if side == SignalSide.BUY else short
+
+        await self.dispatch(trigger)

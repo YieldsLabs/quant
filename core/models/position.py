@@ -248,6 +248,7 @@ class Position:
         self, ohlcv: OHLCV, ta: TechAnalysis, session_risk: SessionRiskType
     ) -> "Position":
         if self.closed or ohlcv.timestamp <= self.risk_bar.timestamp:
+            print("Wrong update")
             return self
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
@@ -270,33 +271,20 @@ class Position:
             next_position = next_position.trail(ta)
 
         pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
+        dist_sl = abs(next_position.curr_price - next_position.stop_loss)
+        dist_tp = abs(next_position.curr_price - next_position.take_profit)
 
-        if session_risk == SessionRiskType.EXIT and pnl_perc <= 0.0:
+        if session_risk == SessionRiskType.EXIT and dist_sl < dist_tp:
             print(
-                f"TRAILLL PREV SL: {next_position.stop_loss}, CURR: {next_position.risk_bar.close}"
+                f"TRAILLL PREV SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
             )
             next_position = next_position.trail(ta)
             print(
-                f"TRAILLL NEXT SL: {next_position.stop_loss}, CURR: {next_position.risk_bar.close}"
+                f"TRAILLL NEXT SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
             )
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
-
-        if (
-            session_risk == SessionRiskType.EXIT
-            and next_position.curr_pnl > next_position.fee
-        ):
-            print(
-                f"TRAILLL prev TP: {next_tp}, prev SL: {next_sl}, CURR: {next_position.risk_bar.close}"
-            )
-
-            next_tp = next_risk.tp_low(next_position.side, ta, next_tp)
-            next_sl = next_risk.sl_low(next_position.side, ta, next_sl)
-
-            print(
-                f"TRAILLL next TP: {next_tp}, next SL: {next_sl}, CURR: {next_position.risk_bar.close}"
-            )
 
         next_risk = next_risk.assess(
             next_position.side,
@@ -322,7 +310,7 @@ class Position:
         )
 
         logger.info(
-            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, PT: {next_position.profit_target.first}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
+            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, PT: {next_position.profit_target.first}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
         )
 
         return next_position

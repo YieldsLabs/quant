@@ -205,17 +205,23 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             for bar in sorted(bars, key=lambda x: x.timestamp):
                 ohlcv = next_position.position_risk.ohlcv
                 ts = np.array([o.timestamp for o in ohlcv])
-                dist = 0
 
-                if len(ts) > 1:
-                    dist = np.mean(np.diff(ts))
+                if len(ts) > 2:
+                    ts_diff = np.diff(ts)
+                    mean_diff = np.mean(ts_diff)
+                    std_diff = np.std(ts_diff)
+                    current_diff = abs(bar.timestamp - ts[-1])
 
-                bd = abs(bar.timestamp - ts[-1])
+                    if std_diff == 0:
+                        std_diff = 0.00000001
 
-                print(f"Dist: {dist}, Bar dist: {bd}")
+                    anomaly = (current_diff - mean_diff) / std_diff
 
-                if bd > 300000:
-                    break
+                    print(f"Current score: {anomaly}")
+
+                    if abs(anomaly) > 3:
+                        print("Anomalyyyyy")
+                        break
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
 

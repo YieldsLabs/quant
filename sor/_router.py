@@ -140,7 +140,7 @@ class SmartRouter(AbstractEventManager):
                 else entry_price - price
             )
 
-            spread_percentage = (spread / entry_price) * 100
+            spread_percentage = 100 * (spread / entry_price)
 
             logging.info(
                 f"Trying to open order -> algo price: {price}, theo price: {entry_price}, spread: {spread_percentage}%"
@@ -247,7 +247,7 @@ class SmartRouter(AbstractEventManager):
                 if order_id:
                     order_timestamps[order_id] = time.time()
 
-            if spread < max_spread and not len(order_timestamps.keys()):
+            if (spread < 0 or spread < max_spread) and not len(order_timestamps.keys()):
                 if num_orders > 2:
                     self.exchange.close_half_position(symbol, position_side)
                 else:

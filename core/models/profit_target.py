@@ -34,7 +34,7 @@ class ProfitTarget:
 
     @cached_property
     def fifth(self):
-        return self._pt(3.9, 4.8)
+        return self._pt(3.9, 5.8)
 
     @cached_property
     def last(self):
