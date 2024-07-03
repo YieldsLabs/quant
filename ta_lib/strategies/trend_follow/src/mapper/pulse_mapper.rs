@@ -57,6 +57,7 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             slow_period,
         )),
         PulseConfig::Wae {
+            source,
             smooth_type,
             fast_period,
             slow_period,
@@ -65,6 +66,7 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             factor,
             strength,
         } => Box::new(WaePulse::new(
+            source_deserialize(source as usize),
             smooth_deserialize(smooth_type as usize),
             fast_period,
             slow_period,

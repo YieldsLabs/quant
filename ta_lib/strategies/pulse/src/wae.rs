@@ -4,6 +4,7 @@ use timeseries::prelude::*;
 use volatility::bb;
 
 pub struct WaePulse {
+    source: SourceType,
     smooth: Smooth,
     period_fast: usize,
     period_slow: usize,
@@ -15,6 +16,7 @@ pub struct WaePulse {
 
 impl WaePulse {
     pub fn new(
+        source: SourceType,
         smooth: Smooth,
         period_fast: f32,
         period_slow: f32,
@@ -24,6 +26,7 @@ impl WaePulse {
         strength: f32,
     ) -> Self {
         Self {
+            source,
             smooth,
             period_fast: period_fast as usize,
             period_slow: period_slow as usize,
@@ -42,7 +45,7 @@ impl Pulse for WaePulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let source = data.close();
+        let source = data.source(self.source);
 
         let (upper_bb, _, lower_bb) = bb(&source, self.smooth_bb, self.period_bb, self.factor);
 
