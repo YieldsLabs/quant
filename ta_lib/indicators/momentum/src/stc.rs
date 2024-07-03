@@ -9,14 +9,13 @@ pub fn stc(
     d_first: usize,
     d_second: usize,
 ) -> Series<f32> {
-    let macd_line = source.spread(smooth_type, fast_period, slow_period);
-
-    let k = macd_line.normalize(cycle, SCALE);
-    let d = k.smooth(smooth_type, d_first);
-
-    let stc = d.normalize(cycle, SCALE).smooth(smooth_type, d_second);
-
-    stc.clip(&ZERO, &SCALE)
+    source
+        .spread(smooth_type, fast_period, slow_period)
+        .normalize(cycle, SCALE)
+        .smooth(smooth_type, d_first)
+        .normalize(cycle, SCALE)
+        .smooth(smooth_type, d_second)
+        .clip(&ZERO, &SCALE)
 }
 
 #[cfg(test)]
