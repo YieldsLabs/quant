@@ -18,19 +18,19 @@ class ProfitTarget:
 
     @cached_property
     def first(self):
-        return self._pt(0.3, 0.6)
+        return self._pt(0.236, 0.382)
 
     @cached_property
     def second(self):
-        return self._pt(0.8, 1.5)
+        return self._pt(0.618, 0.786)
 
     @cached_property
     def third(self):
-        return self._pt(1.6, 2.5)
+        return self._pt(1.0, 1.5)
 
     @cached_property
     def fourth(self):
-        return self._pt(2.6, 3.8)
+        return self._pt(1.8, 3.6)
 
     @cached_property
     def fifth(self):
