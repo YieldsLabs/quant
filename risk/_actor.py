@@ -42,6 +42,16 @@ RiskEvent = Union[
     TrailEvent,
 ]
 
+ANOMALY_THRESHOLD = 3
+
+
+def mad(data, factor=1.4826):
+    median = np.median(data)
+    deviations = np.abs(data - median)
+    mad_value = np.median(deviations)
+
+    return mad_value * factor
+
 
 class RiskActor(StrategyActor, EventHandlerMixin):
     _EVENTS = [
@@ -209,19 +219,19 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 if len(ts) > 2:
                     ts_diff = np.diff(ts)
                     mean_diff = np.mean(ts_diff)
-                    std_diff = np.std(ts_diff)
+                    mad_diff = mad(ts_diff)
                     current_diff = abs(bar.timestamp - ts[-1])
 
-                    if std_diff == 0:
-                        std_diff = 0.00000001
+                    if mad_diff == 0:
+                        mad_diff = 0.00000001
 
-                    anomaly = (current_diff - mean_diff) / std_diff
+                    anomaly = (current_diff - mean_diff) / mad_diff
 
                     print(f"Current score: {anomaly}")
 
-                    if abs(anomaly) > 3:
+                    if abs(anomaly) > ANOMALY_THRESHOLD:
                         print("Anomalyyyyy")
-                        break
+                        continue
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
 
