@@ -17,43 +17,35 @@ class ProfitTarget:
         return 1.0 if self.side == SignalSide.BUY else -1.0
 
     @cached_property
-    def first(self):
-        return self._pt(0.236, 0.382)
+    def targets(self):
+        levels = [
+            (0.236, 0.382),
+            (0.618, 0.786),
+            (1.0, 1.5),
+            (1.786, 3.618),
+            (4.0, 5.786),
+            (6.0, 7.618),
+            (8.0, 9.236),
+            (9.618, 10.236),
+        ]
 
-    @cached_property
-    def second(self):
-        return self._pt(0.618, 0.786)
-
-    @cached_property
-    def third(self):
-        return self._pt(1.0, 1.5)
-
-    @cached_property
-    def fourth(self):
-        return self._pt(1.8, 3.6)
-
-    @cached_property
-    def fifth(self):
-        return self._pt(3.9, 5.8)
+        return list({self._pt(min_scale, max_scale) for min_scale, max_scale in levels})
 
     @cached_property
     def last(self):
-        return self.fifth
+        return self.targets[-1]
 
     def _pt(self, min_scale: float, max_scale: float) -> float:
         scale = np.random.uniform(min_scale, max_scale)
         target_price = self.entry * (1 + self.volatility * self.context_factor * scale)
 
-        if self.context_factor == 1:
-            return max(target_price, self.entry)
-        else:
-            return min(target_price, self.entry)
+        return (
+            max(target_price, self.entry)
+            if self.context_factor == 1
+            else min(target_price, self.entry)
+        )
 
     def to_dict(self):
         return {
-            "first": self.first,
-            "second": self.second,
-            "third": self.third,
-            "fourth": self.fourth,
-            "fifth": self.fifth,
+            "targets": self.targets,
         }

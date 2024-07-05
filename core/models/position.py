@@ -172,6 +172,26 @@ class Position:
         return 0.5 * (last_bar.open + last_bar.close)
 
     @property
+    def curr_target(self) -> float:
+        targets = self.profit_target.targets
+        curr_price = self.curr_price
+        idx = 0
+
+        if self.side == PositionSide.LONG:
+            for i, target in enumerate(targets):
+                if curr_price > target:
+                    idx = i
+                    break
+
+        elif self.side == PositionSide.SHORT:
+            for i, target in enumerate(targets):
+                if curr_price < target:
+                    idx = i
+                    break
+
+        return targets[idx]
+
+    @property
     def is_valid(self) -> bool:
         if self.closed:
             return self.size != 0 and self.open_timestamp < self.close_timestamp
@@ -261,13 +281,16 @@ class Position:
 
         next_position = next_position.break_even(ta)
 
+        trail_target = next_position.profit_target.targets[1]
+
         if (
             next_position.side == PositionSide.LONG
-            and next_position.curr_price > next_position.profit_target.first
+            and next_position.curr_price > trail_target
         ) or (
             next_position.side == PositionSide.SHORT
-            and next_position.curr_price < next_position.profit_target.first
+            and next_position.curr_price < trail_target
         ):
+            print("Target traillllllllll")
             next_position = next_position.trail(ta)
 
         pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
@@ -310,7 +333,7 @@ class Position:
         )
 
         logger.info(
-            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, PT: {next_position.profit_target.first}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
+            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, PT: {next_position.curr_target}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
         )
 
         return next_position
@@ -321,38 +344,28 @@ class Position:
         volatility = ta.volatility.yz[-1]
         duration = self.trade_time / 100000 // len(self.position_risk.ohlcv)
         factor = volatility * duration
+        targets = self.profit_target.targets
 
         if self.side == PositionSide.LONG:
-            if curr_price > self.profit_target.first:
-                curr_sl = max(curr_sl, self.entry_price + factor)
+            for i, target in enumerate(targets):
+                if curr_price > target:
+                    curr_sl = max(
+                        curr_sl,
+                        (self.entry_price if i == 0 else targets[i - 1]) - factor,
+                    )
+                    break
 
-            if curr_price > self.profit_target.second:
-                curr_sl = max(curr_sl, self.profit_target.first + factor)
+        elif self.side == PositionSide.SHORT:
+            for i, target in enumerate(targets):
+                if curr_price < target:
+                    curr_sl = min(
+                        curr_sl,
+                        (self.entry_price if i == 0 else targets[i - 1]) + factor,
+                    )
+                    break
 
-            elif curr_price > self.profit_target.third:
-                curr_sl = max(curr_sl, self.profit_target.second + factor)
-
-            elif curr_price > self.profit_target.fourth:
-                curr_sl = max(curr_sl, self.profit_target.third + factor)
-
-            elif curr_price > self.profit_target.fifth:
-                curr_sl = max(curr_sl, self.profit_target.fourth)
-
-        if self.side == PositionSide.SHORT:
-            if curr_price < self.profit_target.first:
-                curr_sl = min(curr_sl, self.entry_price - factor)
-
-            elif curr_price < self.profit_target.second:
-                curr_sl = min(curr_sl, self.profit_target.first - factor)
-
-            elif curr_price < self.profit_target.third:
-                curr_sl = min(curr_sl, self.profit_target.second - factor)
-
-            elif curr_price < self.profit_target.fourth:
-                curr_sl = min(curr_sl, self.profit_target.third - factor)
-
-            elif curr_price < self.profit_target.fifth:
-                curr_sl = min(curr_sl, self.profit_target.fourth - factor)
+        if curr_sl != self.stop_loss:
+            print("BREAK EVEEEEENNNNN")
 
         return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 
@@ -387,7 +400,7 @@ class Position:
             "signal": self.signal.to_dict(),
             "signal_risk": self.signal_risk.to_dict(),
             "position_risk": self.position_risk.to_dict(),
-            "profit_target": self.profit_target.to_dict(),
+            "curr_target": self.curr_target,
             "side": str(self.side),
             "size": self.size,
             "entry_price": self.entry_price,
