@@ -43,6 +43,8 @@ RiskEvent = Union[
 ]
 
 ANOMALY_THRESHOLD = 4
+MAX_ATTEMPTS = 5
+MAX_BARS = 4
 
 
 def mad(data, factor=1.4826):
@@ -185,21 +187,22 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 return next_position
 
             diff = event.ohlcv.timestamp - next_bar.timestamp
+            attempts = 0
 
-            if diff < 0:
-                while diff < 0:
-                    new_prev_bar = await self.ask(
-                        PrevBar(self.symbol, self.timeframe, prev_bar)
-                    )
+            while diff < 0 and attempts < MAX_ATTEMPTS:
+                new_prev_bar = await self.ask(
+                    PrevBar(self.symbol, self.timeframe, prev_bar)
+                )
+                attempts += 1
 
-                    if new_prev_bar:
-                        diff = event.ohlcv.timestamp - new_prev_bar.timestamp
-                        prev_bar = new_prev_bar
+                if new_prev_bar:
+                    diff = event.ohlcv.timestamp - new_prev_bar.timestamp
+                    prev_bar = new_prev_bar
 
             bars = [next_bar]
 
             if diff > 0:
-                for _ in range(4):
+                for _ in range(MAX_BARS):
                     next_bar = await self.ask(
                         NextBar(self.symbol, self.timeframe, prev_bar)
                     )
@@ -223,7 +226,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     current_diff = abs(bar.timestamp - ts[-1])
 
                     if dev == 0:
-                        dev = 0.00000001
+                        dev = np.finfo(float).eps
 
                     anomaly = (current_diff - mean) / dev
 
