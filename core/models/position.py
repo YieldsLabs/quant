@@ -169,7 +169,7 @@ class Position:
     def curr_price(self) -> float:
         last_bar = self.risk_bar
 
-        return 0.5 * (last_bar.open + last_bar.close)
+        return (last_bar.high + last_bar.low + last_bar.close) / 3.0
 
     @property
     def curr_target(self) -> float:

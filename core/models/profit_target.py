@@ -27,9 +27,15 @@ class ProfitTarget:
             (6.0, 7.618),
             (8.0, 9.236),
             (9.618, 10.236),
+            (10.618, 11.236),
+            (11.618, 12.236),
+            (12.618, 13.236),
+            (13.618, 14.236),
         ]
 
-        return list({self._pt(min_scale, max_scale) for min_scale, max_scale in levels})
+        return sorted(
+            {self._pt(min_scale, max_scale) for min_scale, max_scale in levels}
+        )
 
     @cached_property
     def last(self):
