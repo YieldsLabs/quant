@@ -52,7 +52,7 @@ impl Pulse for WaePulse {
         let e = upper_bb - lower_bb;
 
         let diff =
-            source.spread_diff(self.smooth, self.period_fast, self.period_slow, 1) * self.strength;
+            self.strength * source.spread_diff(self.smooth, self.period_fast, self.period_slow, 1);
 
         let zero = Series::zero(data.len());
 
