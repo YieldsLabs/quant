@@ -43,7 +43,9 @@ class TWAP:
             ask_volume
         )
 
-        return (bid_weighted_average + ask_weighted_average) / 2
+        spread = np.mean(np.array(ask_prices) - np.array(bid_prices))
+
+        return (bid_weighted_average + ask_weighted_average) / 2.0 + 0.01 * spread
 
     @staticmethod
     def _volatility_time_interval(timepoints):
