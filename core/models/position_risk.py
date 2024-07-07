@@ -285,14 +285,14 @@ class PositionRisk(TaMixin):
                 print("BULLLLLISHHHHHH-------------------------->")
                 return max(sl, np.max(ats))
 
-            return ats[-1]
+            return max(sl, ats[-1])
 
         if side == PositionSide.SHORT:
             if bearish:
                 print("BEARISHHHHHHHHH-------------------------->")
                 return min(sl, np.min(ats))
 
-            return ats[-1]
+            return min(sl, ats[-1])
 
         return sl
 
