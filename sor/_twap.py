@@ -44,9 +44,11 @@ class TWAP:
         bid_weighted_average = np.sum(bid_prices * bid_volume) / total_bid_volume
         ask_weighted_average = np.sum(ask_prices * ask_volume) / total_ask_volume
 
-        spread = np.mean(ask_prices - bid_prices)
+        diff = ask_prices - bid_prices
+        
+        spread, volatility = np.mean(diff), np.std(diff)
 
-        return (bid_weighted_average + ask_weighted_average) / 2.0 + 0.01 * spread
+        return (bid_weighted_average + ask_weighted_average) / 2.0 + spread * volatility
 
     @staticmethod
     def _volatility_time_interval(timepoints):
