@@ -36,14 +36,15 @@ class TWAP:
     def _twap(order_book):
         bid_prices, ask_prices, bid_volume, ask_volume = zip(*order_book)
 
-        bid_weighted_average = np.sum(np.multiply(bid_prices, bid_volume)) / np.sum(
-            bid_volume
-        )
-        ask_weighted_average = np.sum(np.multiply(ask_prices, ask_volume)) / np.sum(
-            ask_volume
-        )
+        bid_prices, ask_prices = np.array(bid_prices), np.array(ask_prices)
+        bid_volume, ask_volume = np.array(bid_volume), np.array(ask_volume)
 
-        spread = np.mean(np.array(ask_prices) - np.array(bid_prices))
+        total_bid_volume, total_ask_volume = np.sum(bid_volume), np.sum(ask_volume)
+
+        bid_weighted_average = np.sum(bid_prices * bid_volume) / total_bid_volume
+        ask_weighted_average = np.sum(ask_prices * ask_volume) / total_ask_volume
+
+        spread = np.mean(ask_prices - bid_prices)
 
         return (bid_weighted_average + ask_weighted_average) / 2.0 + 0.01 * spread
 
