@@ -44,7 +44,7 @@ RiskEvent = Union[
 
 ANOMALY_THRESHOLD = 4
 MAX_ATTEMPTS = 5
-MAX_BARS = 4
+MAX_BARS = 8
 
 
 def mad(data, factor=1.4826):
@@ -229,6 +229,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                         dev = np.finfo(float).eps
 
                     anomaly = (current_diff - mean) / dev
+
+                    anomaly = np.clip(
+                        anomaly, -2 * ANOMALY_THRESHOLD, 2 * ANOMALY_THRESHOLD
+                    )
 
                     print(f"Current score: {anomaly}")
 
