@@ -169,7 +169,7 @@ class Position:
     def curr_price(self) -> float:
         last_bar = self.risk_bar
 
-        return (last_bar.high + last_bar.low + last_bar.close) / 3.0
+        return (last_bar.high + last_bar.low + 2.0 * last_bar.close) / 4.0
 
     @property
     def curr_target(self) -> float:
@@ -317,11 +317,7 @@ class Position:
             next_position.expiration,
         )
 
-        if (
-            next_risk.type == PositionRiskType.TP
-            and pnl_perc > 0.0
-            and next_position.has_break_even
-        ):
+        if next_risk.type == PositionRiskType.TP:
             next_risk = next_risk.reset()
 
         next_position = replace(
@@ -348,24 +344,24 @@ class Position:
 
         if self.side == PositionSide.LONG:
             for i, target in enumerate(targets):
-                if curr_price > target:
-                    curr_sl = max(
+                if curr_price + factor > target:
+                    curr_sl = min(
                         curr_sl,
-                        (self.entry_price if i == 0 else targets[i - 1]) - factor,
+                        (self.entry_price if i == 0 else targets[i - 1]),
                     )
                     break
 
         elif self.side == PositionSide.SHORT:
             for i, target in enumerate(targets):
-                if curr_price < target:
-                    curr_sl = min(
+                if curr_price - factor < target:
+                    curr_sl = max(
                         curr_sl,
-                        (self.entry_price if i == 0 else targets[i - 1]) + factor,
+                        (self.entry_price if i == 0 else targets[i - 1]),
                     )
                     break
 
         if curr_sl != self.stop_loss:
-            print("BREAK EVEEEEENNNNN")
+            print(f"BREAK EVEEEEENNNNN: {factor}")
 
         return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 
