@@ -221,15 +221,11 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
                 if len(ts) > 2:
                     ts_diff = np.diff(ts)
-                    mean = np.mean(ts_diff)
-                    dev = np.std(ts_diff)
+                    mean, std = np.mean(ts_diff), np.std(ts_diff)
+                    std = np.finfo(float).eps if std == 0 else std
+
                     current_diff = abs(bar.timestamp - ts[-1])
-
-                    if dev == 0:
-                        dev = np.finfo(float).eps
-
-                    anomaly = (current_diff - mean) / dev
-
+                    anomaly = (current_diff - mean) / std
                     anomaly = np.clip(
                         anomaly, -2 * ANOMALY_THRESHOLD, 2 * ANOMALY_THRESHOLD
                     )
