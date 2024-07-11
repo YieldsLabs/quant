@@ -46,7 +46,7 @@ MAX_ATTEMPTS = 5
 MAX_BARS = 8
 MAX_CONSECUTIVE_ANOMALIES = 2
 DYNAMIC_THRESHOLD_MULTIPLIER = 2
-DEFAULT_ANOMALY_THRESHOLD = 3.5
+DEFAULT_ANOMALY_THRESHOLD = 6
 
 
 def _ema(values, alpha=0.1):
@@ -215,7 +215,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     prev_bar = next_bar
 
             print(f"BARS: {len(bars)}")
-            consc = 0
+            consc = 1
             anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
 
             for bar in sorted(bars, key=lambda x: x.timestamp):
@@ -245,7 +245,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                             anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
                         continue
                     else:
-                        consc = 0
+                        consc = 1
                         anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
