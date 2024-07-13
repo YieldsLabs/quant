@@ -31,3 +31,7 @@ format:
 	cargo fmt --all --manifest-path=$(TA_LIB_PATH)
 	pipenv run black .
 	pipenv run ruff . --fix
+
+update:
+	cargo update --manifest-path=$(TA_LIB_PATH)
+	pipenv update
