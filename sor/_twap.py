@@ -29,7 +29,7 @@ class TWAP:
             await sleep(time_interval)
 
     def _fetch_book(self, symbol: Symbol, exchange: AbstractExchange):
-        bids, asks = exchange.fetch_order_book(symbol, depth=self.config["depth"])
+        bids, asks = exchange.fetch_order_book(symbol, depth=self.config["dom"])
         return np.array(bids), np.array(asks)
 
     @staticmethod
@@ -46,9 +46,15 @@ class TWAP:
 
         diff = ask_prices - bid_prices
 
+        mid_price = (bid_weighted_average + ask_weighted_average) / 2.0
         spread, volatility = np.mean(diff), np.std(diff)
 
-        return (bid_weighted_average + ask_weighted_average) / 2.0 + spread * volatility
+        adj_spread = spread * volatility
+
+        bid_price = mid_price - adj_spread / 2.0
+        ask_price = mid_price + adj_spread / 2.0
+
+        return bid_price, ask_price
 
     @staticmethod
     def _volatility_time_interval(timepoints):

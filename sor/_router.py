@@ -109,14 +109,17 @@ class SmartRouter(AbstractEventManager):
 
         distance_to_stop_loss = abs(entry_price - stop_loss)
 
-        min_size = symbol.min_position_size
-        num_orders = min(max(1, int(size / min_size)), self.config["max_order_slice"])
+        num_orders = min(
+            max(1, int(size / symbol.min_position_size)), self.config["max_order_slice"]
+        )
         size = round(size / num_orders, symbol.position_precision)
         order_counter = 0
         num_order_breach = 0
         order_timestamps = {}
 
-        async for price in self.algo_price.next_value(symbol, self.exchange):
+        async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
+            price = ask if position.side == PositionSide.LONG else bid
+
             current_distance_to_stop_loss = abs(stop_loss - price)
 
             threshold_breach = (
@@ -193,18 +196,20 @@ class SmartRouter(AbstractEventManager):
         exit_order = position.exit_order()
         position_side = position.side
 
-        min_size = symbol.min_position_size
         num_orders = min(
-            max(1, int(exit_order.size / min_size)), self.config["max_order_slice"]
+            max(1, int(exit_order.size / symbol.min_position_size)),
+            self.config["max_order_slice"],
         )
         size = round(exit_order.size / num_orders, symbol.position_precision)
         order_counter = 0
         order_timestamps = {}
         max_spread = float("-inf")
 
-        async for price in self.algo_price.next_value(symbol, self.exchange):
+        async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             if not self.exchange.fetch_position(symbol, position_side):
                 break
+
+            price = bid if position.side == PositionSide.LONG else ask
 
             spread = (
                 price - exit_order.price
@@ -247,7 +252,7 @@ class SmartRouter(AbstractEventManager):
                 if order_id:
                     order_timestamps[order_id] = time.time()
 
-            if (spread < 0 or spread < max_spread) and not len(order_timestamps.keys()):
+            if spread < max_spread and not len(order_timestamps.keys()):
                 if num_orders > 2:
                     self.exchange.close_half_position(symbol, position_side)
                 else:

@@ -245,7 +245,9 @@ class PositionRisk(TaMixin):
 
         return tp
 
-    def sl_ats(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
+    def sl_ats(
+        self, side: PositionSide, curr_price: float, ta: TechAnalysis, sl: float
+    ) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
@@ -283,16 +285,16 @@ class PositionRisk(TaMixin):
         if side == PositionSide.LONG:
             if bullish:
                 print("BULLLLLISHHHHHH-------------------------->")
-                return max(sl, np.max(ats))
+                return min(curr_price, max(sl, np.max(ats)))
 
-            return max(sl, ats[-1])
+            return min(curr_price, max(sl, ats[-1]))
 
         if side == PositionSide.SHORT:
             if bearish:
                 print("BEARISHHHHHHHHH-------------------------->")
-                return min(sl, np.min(ats))
+                return max(curr_price, min(sl, np.min(ats)))
 
-            return min(sl, ats[-1])
+            return max(curr_price, min(sl, ats[-1]))
 
         return sl
 

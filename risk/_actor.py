@@ -249,7 +249,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                         anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
-
                 session_risk = await self.ask(
                     EvaluateSession(next_position.side, ohlcv, ta)
                 )

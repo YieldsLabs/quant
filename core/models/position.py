@@ -169,7 +169,7 @@ class Position:
     def curr_price(self) -> float:
         last_bar = self.risk_bar
 
-        return (last_bar.high + last_bar.low + 2.0 * last_bar.close) / 4.0
+        return (last_bar.close + last_bar.high + last_bar.low) / 3.0
 
     @property
     def curr_target(self) -> float:
@@ -279,9 +279,12 @@ class Position:
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
 
-        next_position = next_position.break_even(ta)
+        # next_position = next_position.break_even(ta)
 
         trail_target = next_position.profit_target.targets[1]
+
+        print(next_position.profit_target.targets)
+        print(f"Trail target: {trail_target}")
 
         if (
             next_position.side == PositionSide.LONG
@@ -294,17 +297,23 @@ class Position:
             next_position = next_position.trail(ta)
 
         pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
-        dist_sl = abs(next_position.curr_price - next_position.stop_loss)
-        dist_tp = abs(next_position.curr_price - next_position.take_profit)
+        exit_target = next_position.profit_target.targets[3]
 
-        if session_risk == SessionRiskType.EXIT and dist_sl < dist_tp:
-            print(
-                f"TRAILLL PREV SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
-            )
-            next_position = next_position.trail(ta)
-            print(
-                f"TRAILLL NEXT SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
-            )
+        if session_risk == SessionRiskType.EXIT:
+            if (
+                next_position.side == PositionSide.LONG
+                and next_position.curr_price > exit_target
+            ) or (
+                next_position.side == PositionSide.SHORT
+                and next_position.curr_price < exit_target
+            ):
+                print(
+                    f"TRAILLL PREV SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
+                )
+                next_position = next_position.trail(ta)
+                print(
+                    f"TRAILLL NEXT SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
+                )
 
         next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
@@ -344,8 +353,8 @@ class Position:
 
         if self.side == PositionSide.LONG:
             for i, target in enumerate(targets):
-                if curr_price + factor > target:
-                    curr_sl = min(
+                if curr_price > target:
+                    curr_sl = max(
                         curr_sl,
                         (self.entry_price if i == 0 else targets[i - 1]),
                     )
@@ -353,8 +362,8 @@ class Position:
 
         elif self.side == PositionSide.SHORT:
             for i, target in enumerate(targets):
-                if curr_price - factor < target:
-                    curr_sl = max(
+                if curr_price < target:
+                    curr_sl = min(
                         curr_sl,
                         (self.entry_price if i == 0 else targets[i - 1]),
                     )
@@ -367,7 +376,7 @@ class Position:
 
     def trail(self, ta: TechAnalysis) -> "Position":
         prev_sl = self.stop_loss
-        next_sl = self.position_risk.sl_ats(self.side, ta, prev_sl)
+        next_sl = self.position_risk.sl_ats(self.side, self.curr_price, ta, prev_sl)
 
         logger.info(
             f"<---- &&&&&&TRAIL&&&&& -->>> prevSL: {prev_sl}, nextSL: {next_sl}"
