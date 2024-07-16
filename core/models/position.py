@@ -279,9 +279,9 @@ class Position:
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
 
-        # next_position = next_position.break_even(ta)
+        next_position = next_position.break_even(ta)
 
-        trail_target = next_position.profit_target.targets[1]
+        trail_target = next_position.profit_target.targets[3]
 
         print(next_position.profit_target.targets)
         print(f"Trail target: {trail_target}")
@@ -297,7 +297,7 @@ class Position:
             next_position = next_position.trail(ta)
 
         pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
-        exit_target = next_position.profit_target.targets[3]
+        exit_target = next_position.profit_target.targets[2]
 
         if session_risk == SessionRiskType.EXIT:
             if (
@@ -349,7 +349,7 @@ class Position:
         volatility = ta.volatility.yz[-1]
         duration = self.trade_time / 100000 // len(self.position_risk.ohlcv)
         factor = volatility * duration
-        targets = self.profit_target.targets
+        targets = self.profit_target.targets[1:]
 
         if self.side == PositionSide.LONG:
             for i, target in enumerate(targets):
