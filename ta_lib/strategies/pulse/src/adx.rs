@@ -3,7 +3,7 @@ use core::prelude::*;
 use momentum::dmi;
 use timeseries::prelude::*;
 
-const ADX_LOWER_BARRIER: f32 = 25.;
+const ADX_THRESHOLD: f32 = 30.;
 
 pub struct AdxPulse {
     smooth: Smooth,
@@ -37,13 +37,7 @@ impl Pulse for AdxPulse {
             self.period_adx,
             self.period_di,
         );
-        let prev_adx = adx.shift(1);
 
-        let adx_lower = ADX_LOWER_BARRIER + self.threshold;
-
-        (
-            adx.sgt(&adx_lower) & adx.sgt(&prev_adx),
-            adx.sgt(&adx_lower) & adx.sgt(&prev_adx),
-        )
+        (adx.sgt(&ADX_THRESHOLD), adx.sgt(&ADX_THRESHOLD))
     }
 }
