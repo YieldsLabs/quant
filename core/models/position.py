@@ -281,7 +281,7 @@ class Position:
 
         next_position = next_position.break_even(ta)
 
-        trail_target = next_position.profit_target.targets[3]
+        trail_target = next_position.profit_target.targets[2]
 
         print(next_position.profit_target.targets)
         print(f"Trail target: {trail_target}")
@@ -297,7 +297,7 @@ class Position:
             next_position = next_position.trail(ta)
 
         pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
-        exit_target = next_position.profit_target.targets[2]
+        exit_target = next_position.profit_target.targets[1]
 
         if session_risk == SessionRiskType.EXIT:
             if (
