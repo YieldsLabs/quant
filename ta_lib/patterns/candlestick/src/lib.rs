@@ -23,6 +23,7 @@ pub mod master_candle;
 pub mod on_neck;
 pub mod piercing;
 pub mod quintuplets;
+pub mod r;
 pub mod shrinking;
 pub mod slingshot;
 pub mod split;
