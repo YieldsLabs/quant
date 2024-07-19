@@ -1,5 +1,5 @@
 use candlestick::{
-    bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets,
+    bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets, r,
     slingshot, tasuki, three_candles, three_methods, three_one_two,
 };
 use core::prelude::*;
@@ -83,6 +83,23 @@ pub fn candlestick_trend_indicator(
         CandleTrendType::THREE_ONE_TWO => (
             three_one_two::bullish(data.open(), data.high(), data.low(), data.close()),
             three_one_two::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum CandleContrarianType {
+    R,
+}
+
+pub fn candlestick_contrarian_indicator(
+    candle: &CandleContrarianType,
+    data: &OHLCVSeries,
+) -> (Series<bool>, Series<bool>) {
+    match candle {
+        CandleContrarianType::R => (
+            r::bullish(data.low(), data.close()),
+            r::bearish(data.high(), data.close()),
         ),
     }
 }

@@ -19,3 +19,10 @@ class CandleTrendType(Enum):
 
     def __str__(self):
         return self.name.upper()
+
+
+class CandleContrarianType(Enum):
+    R = 1
+
+    def __str__(self):
+        return self.name.upper()

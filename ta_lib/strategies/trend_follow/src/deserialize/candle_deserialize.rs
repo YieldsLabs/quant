@@ -1,4 +1,4 @@
-use indicator::CandleTrendType;
+use indicator::{CandleContrarianType, CandleTrendType};
 
 #[inline]
 pub fn candletrend_deserialize(candle: usize) -> CandleTrendType {
@@ -18,5 +18,13 @@ pub fn candletrend_deserialize(candle: usize) -> CandleTrendType {
         13 => CandleTrendType::TASUKI,
         14 => CandleTrendType::THREE_ONE_TWO,
         _ => CandleTrendType::THREE_CANDLES,
+    }
+}
+
+#[inline]
+pub fn candlecontrarian_deserialize(candle: usize) -> CandleContrarianType {
+    match candle {
+        1 => CandleContrarianType::R,
+        _ => CandleContrarianType::R,
     }
 }

@@ -1,6 +1,7 @@
 use crate::config::SignalConfig;
 use crate::deserialize::{
-    candletrend_deserialize, ma_deserialize, smooth_deserialize, source_deserialize,
+    candlecontrarian_deserialize, candletrend_deserialize, ma_deserialize, smooth_deserialize,
+    source_deserialize,
 };
 use base::prelude::*;
 use signal::*;
@@ -266,6 +267,9 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
             candletrend_deserialize(candle as usize),
         )),
+        SignalConfig::CandlestickContrarian { candle } => Box::new(
+            CandlestickContrarianSignal::new(candlecontrarian_deserialize(candle as usize)),
+        ),
         // Color Switch
         SignalConfig::MacdColorSwitch {
             source_type,
