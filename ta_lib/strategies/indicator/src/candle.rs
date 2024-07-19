@@ -88,16 +88,16 @@ pub fn candlestick_trend_indicator(
 }
 
 #[derive(Copy, Clone)]
-pub enum CandleContrarianType {
+pub enum CandleReversalType {
     R,
 }
 
-pub fn candlestick_contrarian_indicator(
-    candle: &CandleContrarianType,
+pub fn candlestick_reversal_indicator(
+    candle: &CandleReversalType,
     data: &OHLCVSeries,
 ) -> (Series<bool>, Series<bool>) {
     match candle {
-        CandleContrarianType::R => (
+        CandleReversalType::R => (
             r::bullish(data.low(), data.close()),
             r::bearish(data.high(), data.close()),
         ),

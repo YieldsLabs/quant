@@ -216,7 +216,7 @@ pub enum SignalConfig {
     CandlestickTrend {
         candle: f32,
     },
-    CandlestickContrarian {
+    CandlestickReversal {
         candle: f32,
     },
     HighLow {

@@ -35,6 +35,7 @@ class SignalType(Enum):
     HighLow = "HighLow"
     MacdColorSwitch = "MacdColorSwitch"
     CandlestickTrend = "CandlestickTrend"
+    CandlestickReversal = "CandlestickReversal"
     # Contrarian
     Snatr = "Snatr"
     RsiV = "RsiV"

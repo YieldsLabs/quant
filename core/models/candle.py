@@ -21,7 +21,7 @@ class CandleTrendType(Enum):
         return self.name.upper()
 
 
-class CandleContrarianType(Enum):
+class CandleReversalType(Enum):
     R = 1
 
     def __str__(self):
