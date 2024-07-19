@@ -38,6 +38,8 @@ impl Pulse for AdxPulse {
             self.period_di,
         );
 
-        (adx.sgt(&ADX_THRESHOLD), adx.sgt(&ADX_THRESHOLD))
+        let barrier = ADX_THRESHOLD - self.threshold;
+
+        (adx.sgt(&barrier), adx.sgt(&barrier))
     }
 }
