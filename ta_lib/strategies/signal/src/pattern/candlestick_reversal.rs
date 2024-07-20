@@ -3,7 +3,7 @@ use core::prelude::*;
 use indicator::{candlestick_reversal_indicator, CandleReversalType};
 use timeseries::prelude::*;
 
-const DEFAULT_LOOKBACK: usize = 13;
+const DEFAULT_LOOKBACK: usize = 200;
 
 pub struct CandlestickReversalSignal {
     candle: CandleReversalType,
