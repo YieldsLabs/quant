@@ -1,6 +1,7 @@
 use candlestick::{
-    bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets, r,
-    slingshot, tasuki, three_candles, three_methods, three_one_two,
+    bottle, doji, double_trouble, engulfing, euphoria, golden, h, hexad, hikkake, kangaroo_tail,
+    marubozu, master_candle, quintuplets, r, slingshot, split, tasuki, three_candles,
+    three_methods, three_one_two,
 };
 use core::prelude::*;
 use timeseries::prelude::*;
@@ -89,7 +90,12 @@ pub fn candlestick_trend_indicator(
 
 #[derive(Copy, Clone)]
 pub enum CandleReversalType {
+    DOJI,
+    ENGULFING,
+    EUPHORIA,
+    KANGAROO,
     R,
+    SPLIT,
 }
 
 pub fn candlestick_reversal_indicator(
@@ -97,9 +103,29 @@ pub fn candlestick_reversal_indicator(
     data: &OHLCVSeries,
 ) -> (Series<bool>, Series<bool>) {
     match candle {
+        CandleReversalType::DOJI => (
+            doji::bullish(data.open(), data.close()),
+            doji::bearish(data.open(), data.close()),
+        ),
+        CandleReversalType::ENGULFING => (
+            engulfing::bullish(data.open(), data.high(), data.low(), data.close()),
+            engulfing::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+        CandleReversalType::EUPHORIA => (
+            euphoria::bullish(data.open(), data.close()),
+            euphoria::bearish(data.open(), data.close()),
+        ),
+        CandleReversalType::KANGAROO => (
+            kangaroo_tail::bullish(data.open(), data.high(), data.low(), data.close()),
+            kangaroo_tail::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
         CandleReversalType::R => (
             r::bullish(data.low(), data.close()),
             r::bearish(data.high(), data.close()),
+        ),
+        CandleReversalType::SPLIT => (
+            split::bullish(data.open(), data.high(), data.low(), data.close()),
+            split::bearish(data.open(), data.high(), data.low(), data.close()),
         ),
     }
 }

@@ -22,7 +22,12 @@ class CandleTrendType(Enum):
 
 
 class CandleReversalType(Enum):
-    R = 1
+    DOJI = 1
+    ENGULFING = 2
+    EUPHORIA = 3
+    KANGAROO = 4
+    R = 5
+    SPLIT = 6
 
     def __str__(self):
         return self.name.upper()

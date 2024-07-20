@@ -24,7 +24,12 @@ pub fn candletrend_deserialize(candle: usize) -> CandleTrendType {
 #[inline]
 pub fn candlereversal_deserialize(candle: usize) -> CandleReversalType {
     match candle {
-        1 => CandleReversalType::R,
+        1 => CandleReversalType::DOJI,
+        2 => CandleReversalType::ENGULFING,
+        3 => CandleReversalType::EUPHORIA,
+        4 => CandleReversalType::KANGAROO,
+        5 => CandleReversalType::R,
+        6 => CandleReversalType::SPLIT,
         _ => CandleReversalType::R,
     }
 }
