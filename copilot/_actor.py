@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from typing import Union
 
 import numpy as np
@@ -14,9 +15,11 @@ from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
 from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
-from core.models.side import SignalSide
+from core.models.side import PositionSide, SignalSide
 from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
+
+from ._prompt import signal_risk_pattern, signal_risk_prompt, system_prompt
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
@@ -45,23 +48,6 @@ def pad_bars(bars, length):
         return padding + bars
     else:
         return bars[-length:]
-
-
-def fisher_transform(prices, lookback=10):
-    import numpy as np
-
-    prices = np.array(prices)
-    high = np.max(prices[-lookback:])
-    low = np.min(prices[-lookback:])
-
-    if high != low:
-        value = 2 * ((prices - low) / (high - low)) - 1
-    else:
-        value = 0
-
-    value = np.clip(value, -0.99, 0.99)
-    fisher = 0.5 * np.log((1 + value) / (1 - value))
-    return fisher
 
 
 def lorentzian_distance(u, v):
@@ -151,97 +137,46 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
     async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRisk:
         signal = msg.signal
-        ta = msg.ta
 
         curr_bar = signal.ohlcv
         prev_bar = msg.prev_bar
-        side = "LONG" if signal.side == SignalSide.BUY else "SHORT"
+        side = PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
         risk = SignalRisk(
             type=SignalRiskType.NONE,
         )
 
-        # cci = np.array(ta.momentum.cci[-LOOKBACK:])
-        # bbp = np.array(ta.volatility.bbp[-LOOKBACK:])
-        # tr = np.array(ta.volatility.tr[-LOOKBACK:])
-        # fast_rsi = np.array(ta.oscillator.frsi[-LOOKBACK:])
-        # slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
-        # macd = np.array(ta.trend.macd[-LOOKBACK:])
-        # ppo = np.array(ta.trend.ppo[-LOOKBACK:])
-        # stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
-        # nvol = np.array(ta.volume.nvol[-LOOKBACK:])
-        # slow_ema = np.array(ta.trend.sma[-LOOKBACK:])
-        # fast_ema = np.array(ta.trend.fma[-LOOKBACK:])
+        prompt = signal_risk_prompt.format(
+            curr_bar=curr_bar,
+            prev_bar=prev_bar,
+            side=side,
+            timeframe=signal.timeframe,
+        )
 
-        # features = np.column_stack(
-        #     (
-        #         cci,
-        #         bbp,
-        #         macd,
-        #         slow_rsi,
-        #         ppo,
-        #         stoch_k,
-        #         slow_ema,
-        #         tr,
-        #         nvol,
-        #     )
-        # )
-        # features = MinMaxScaler().fit_transform(features)
-        # kmeans = CustomKMeans(n_clusters=N_CLUSTERS, random_state=1337).fit(features)
-        # cluster_counts = np.bincount(kmeans.labels_)
-        # most_common_cluster = np.argmax(cluster_counts)
-        # least_common_cluster = np.argmin(cluster_counts)
+        logger.info(f"Signal Prompt: {prompt}")
 
-        # logger.info(
-        #     f"Common cluster: {most_common_cluster}, Least Common: {least_common_cluster}"
-        # )
+        answer = await self.llm.call(system_prompt, prompt)
 
-        # prompt = signal_risk_prompt.format(
-        #     curr_bar=curr_bar,
-        #     prev_bar=prev_bar,
-        #     side=side,
-        #     timeframe=signal.timeframe,
-        #     # macd_histogram=trend.macd[-LOOKBACK:],
-        #     # rsi=osc.srsi[-LOOKBACK:],
-        #     # k=osc.k[-LOOKBACK:],
-        #     # bbp=volatility.bbp[-LOOKBACK:],
-        #     # ema=trend.sma[-LOOKBACK:],
-        #     # cci=momentum.cci[-LOOKBACK:]
-        # )
+        logger.info(f"LLM Answer: {answer}")
 
-        # logger.info(f"Signal Prompt: {prompt}")
+        match = re.search(signal_risk_pattern, answer)
+        risk_type = SignalRiskType.NONE
 
-        # answer = await self.llm.call(system_prompt, prompt)
+        if not match:
+            risk = SignalRisk(type=risk_type)
+        else:
+            risk_type = SignalRiskType.from_string(match.group(1))
 
-        # logger.info(f"LLM Answer: {answer}")
+            tp = float(match.group(2))
+            sl = float(match.group(3))
 
-        # match = re.search(signal_risk_pattern, answer)
+            if (side == PositionSide.LONG and tp < curr_bar.close) or (
+                side == PositionSide.SHORT and tp > curr_bar.close
+            ):
+                risk_type = SignalRiskType.VERY_HIGH
 
-        # if not match:
-        #     risk = SignalRisk(
-        #         type=SignalRiskType.NONE,
-        #     )
-        # else:
-        #     risk = SignalRisk(
-        #         type=SignalRiskType.from_string(match.group(1)),
-        #         tp=float(match.group(2)),
-        #         sl=float(match.group(3)),
-        #     )
+            risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
-        # logger.info(f"Signal Risk: {risk}")
-        # tp = ta.trend.hh[-1] if signal.side == SignalSide.BUY else ta.trend.ll[-1]
-        # sl = ta.trend.ll[-1] if signal.side == SignalSide.BUY else ta.trend.hh[-1]
-        # risk_type = (
-        #     SignalRiskType.LOW
-        #     if (most_common_cluster == 1 and least_common_cluster == 0)
-        #     else SignalRiskType.HIGH
-        # )
-
-        # if risk_type == SignalRiskType.HIGH:
-        #     risk = SignalRisk(
-        #         type=risk_type,
-        #         tp=tp,
-        #         sl=sl,
-        #     )
+        logger.info(f"Signal Risk: {risk}")
 
         return risk
 
@@ -322,50 +257,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             knn_transaction = "".join(map(str, kmeans.labels_))
 
-            # prev_long, prev_short = self.prev_txn
-
             should_exit = False
-
-            # if (
-            #     msg.side == PositionSide.LONG
-            #     and prev_long
-            #     and (
-            #         (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 4)
-            #         or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 4)
-            #         or (int(prev_long[0]) == 1 and int(knn_transaction[0]) == 2)
-            #         or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 1)
-            #         or (int(prev_long[0]) == 2 and int(knn_transaction[0]) == 3)
-            #         or (int(prev_long[0]) == 4 and int(knn_transaction[0]) == 2)
-            #     )
-            # ):
-            #     should_exit = True
-
-            # if (
-            #     msg.side == PositionSide.SHORT
-            #     and prev_short
-            #     and (
-            #         (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 2)
-            #         or (int(prev_short[0]) == 4 and int(knn_transaction[0]) == 3)
-            #         or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 4)
-            #         or (int(prev_short[0]) == 2 and int(knn_transaction[0]) == 4)
-            #         or (int(prev_short[0]) == 3 and int(knn_transaction[0]) == 2)
-            #         or (int(prev_short[0]) == 1 and int(knn_transaction[0]) == 2)
-            #     )
-            # ):
-            #     should_exit = True
-
-            # if msg.side == PositionSide.LONG:
-            #     if not should_exit:
-            #         prev_long = knn_transaction
-            #     else:
-            #         prev_long = None
-            # else:
-            #     if not should_exit:
-            #         prev_short = knn_transaction
-            #     else:
-            #         prev_short = None
-
-            # self.prev_txn = (prev_long, prev_short)
 
             if knn_transaction in self.anomaly:
                 should_exit = True

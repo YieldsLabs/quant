@@ -20,6 +20,7 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
+from core.models.risk_type import SignalRiskType
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -99,6 +100,9 @@ class PositionActor(StrategyActor):
             signal_risk_level = await self.ask(
                 EvaluateSignal(event.signal, prev_bar, ta)
             )
+
+            if signal_risk_level.type == SignalRiskType.VERY_HIGH:
+                return False
 
             position = await self.position_factory.create(
                 event.signal, signal_risk_level, ta

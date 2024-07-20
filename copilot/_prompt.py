@@ -30,6 +30,9 @@ Step-by-Step Analysis:
     - Significant deviation from normal patterns: Higher risk for both sides.
     - No significant deviation: Lower risk for both sides.
 
+3. **Pattern Detection**:
+  - Identify and evaluate any one or two candlestick reversal patterns that may impact the risk level
+
 Risk Level Explanation:
 - **NONE**: No significant risk factors.
 - **VERY_LOW**: Minor risk factors, generally favorable.
@@ -41,9 +44,10 @@ Risk Level Explanation:
 Final Output:
 1. Overall Risk Level for {side} position: NONE, VERY_LOW, LOW, MODERATE, HIGH, VERY_HIGH
 2. Take Profit (TP) and Stop Loss (SL) predictions for {side} position based on risk level and market data.
+- Take Profit (TP) Prediction: For LONG positions, set TP greater than the current close price to ensure profits are locked in above the entry point. For SHORT positions, set TP less than the current close price to secure profits before the market potentially reverses.
+- Stop Loss (SL) Prediction: Determine the price level at which the position should be closed to limit potential losses. This is based on risk tolerance and market conditions, ensuring that losses are minimized if the market moves unfavorably.
 
-Result Format:
+Return the result only in format:
 RISK_LEVEL: [Risk Level], TP: [Take Profit Value], SL: [Stop Loss Value]
-Return the result only.
 """
 signal_risk_pattern = r"RISK_LEVEL: (NONE|LOW|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH), TP: ([\d.]+), SL: ([\d.]+)"
