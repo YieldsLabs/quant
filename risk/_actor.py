@@ -43,9 +43,9 @@ RiskEvent = Union[
 ]
 
 MAX_ATTEMPTS = 5
-MAX_BARS = 8
+MAX_BARS = 4
 MAX_CONSECUTIVE_ANOMALIES = 2
-DYNAMIC_THRESHOLD_MULTIPLIER = 2
+DYNAMIC_THRESHOLD_MULTIPLIER = 2.0
 DEFAULT_ANOMALY_THRESHOLD = 6
 
 
@@ -242,7 +242,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                             print(
                                 "Too many consecutive anomalies, increasing threshold temporarily"
                             )
-                            anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
+                            anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD * (
+                                DYNAMIC_THRESHOLD_MULTIPLIER**consc
+                            )
                         continue
                     else:
                         consc = 1
