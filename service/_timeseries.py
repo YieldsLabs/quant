@@ -34,6 +34,12 @@ class TimeSeriesService(AbstractTimeSeriesService):
         async with self._get_timeseries(symbol, timeframe) as timeseries:
             return timeseries.prev_bar(bar)
 
+    async def back_n_bars(
+        self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV, n: int
+    ) -> Optional[OHLCV]:
+        async with self._get_timeseries(symbol, timeframe) as timeseries:
+            return timeseries.back_n_bars(bar, n)
+
     async def ta(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         async with self._get_timeseries(symbol, timeframe) as timeseries:
             return timeseries.ta(bar)

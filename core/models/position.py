@@ -8,7 +8,7 @@ from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
 from .profit_target import ProfitTarget
-from .risk_type import PositionRiskType, SessionRiskType
+from .risk_type import PositionRiskType, SessionRiskType, SignalRiskType
 from .side import PositionSide, SignalSide
 from .signal import Signal
 from .signal_risk import SignalRisk
@@ -281,7 +281,21 @@ class Position:
 
         next_position = next_position.break_even(ta)
 
-        trail_target = next_position.profit_target.targets[2]
+        if next_position.signal_risk.type == SignalRiskType.NONE:
+            trail_target = next_position.profit_target.targets[2]
+        else:
+            stp = next_position.signal_risk.tp
+            index = next(
+                (
+                    i
+                    for i, target in enumerate(next_position.profit_target.targets)
+                    if target >= stp
+                ),
+                -1,
+            )
+            tidx = max(1, index)
+
+            trail_target = next_position.profit_target.targets[tidx]
 
         print(next_position.profit_target.targets)
         print(f"Trail target: {trail_target}")
@@ -297,7 +311,7 @@ class Position:
             next_position = next_position.trail(ta)
 
         pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
-        exit_target = next_position.profit_target.targets[1]
+        exit_target = next_position.profit_target.targets[3]
 
         if session_risk == SessionRiskType.EXIT:
             if (
@@ -338,7 +352,7 @@ class Position:
         )
 
         logger.info(
-            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, PT: {next_position.curr_target}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
+            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, PT: {next_position.curr_target}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, LLM_TP: {next_position.signal_risk.tp}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
         )
 
         return next_position

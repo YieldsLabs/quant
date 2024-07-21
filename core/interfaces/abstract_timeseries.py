@@ -24,5 +24,11 @@ class AbstractTimeSeriesService(ABC):
         pass
 
     @abstractmethod
+    async def back_n_bars(
+        self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV, n: int
+    ) -> Optional[OHLCV]:
+        pass
+
+    @abstractmethod
     async def ta(self, symbol: Symbol, timeframe: Timeframe, bar: OHLCV):
         pass

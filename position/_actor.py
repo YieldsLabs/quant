@@ -25,7 +25,7 @@ from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.copilot import EvaluateSignal
-from core.queries.ohlcv import TA, PrevBar
+from core.queries.ohlcv import TA, BackNBars
 
 from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
@@ -40,6 +40,7 @@ PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent, BacktestSign
 logger = logging.getLogger(__name__)
 
 TIME_BUFF = 3
+N_BACK_BARS = 4
 
 
 class PositionActor(StrategyActor):
@@ -95,10 +96,10 @@ class PositionActor(StrategyActor):
                 event.signal.ohlcv,
             )
 
-            prev_bar = await self.ask(PrevBar(symbol, timeframe, ohlcv))
+            back_bars = await self.ask(BackNBars(symbol, timeframe, ohlcv, N_BACK_BARS))
             ta = await self.ask(TA(symbol, timeframe, ohlcv))
             signal_risk_level = await self.ask(
-                EvaluateSignal(event.signal, prev_bar, ta)
+                EvaluateSignal(event.signal, back_bars, ta)
             )
 
             if signal_risk_level.type == SignalRiskType.VERY_HIGH:

@@ -140,14 +140,16 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         curr_bar = signal.ohlcv
         prev_bar = msg.prev_bar
-        side = PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
+
+        side = (
+            PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
+        )
         risk = SignalRisk(
             type=SignalRiskType.NONE,
         )
 
         prompt = signal_risk_prompt.format(
-            curr_bar=curr_bar,
-            prev_bar=prev_bar,
+            bar=sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp),
             side=side,
             timeframe=signal.timeframe,
         )

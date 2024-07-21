@@ -15,7 +15,7 @@ from .base import Query, QueryGroup
 @dataclass(frozen=True)
 class EvaluateSignal(Query[SignalRisk]):
     signal: Signal
-    prev_bar: OHLCV
+    prev_bar: List[OHLCV]
     ta: TechAnalysis
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=5, group=QueryGroup.copilot),

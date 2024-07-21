@@ -5,8 +5,7 @@ signal_risk_prompt = """
 Evaluate the risk for an open {side} position within the {timeframe} timeframe using the provided data:
 
 1. Candlestick Data:
-  - Previous Bar: {prev_bar}
-  - Current Bar: {curr_bar}
+  - {bar}
 
 Risk Evaluation Framework:
 Step-by-Step Analysis:
@@ -31,7 +30,7 @@ Step-by-Step Analysis:
     - No significant deviation: Lower risk for both sides.
 
 3. **Pattern Detection**:
-  - Identify and evaluate any one or two candlestick reversal patterns that may impact the risk level
+  - Identify and evaluate any one or two candlestick patterns that may impact the risk level
 
 Risk Level Explanation:
 - **NONE**: No significant risk factors.
@@ -47,7 +46,9 @@ Final Output:
 - Take Profit (TP) Prediction: For LONG positions, set TP greater than the current close price to ensure profits are locked in above the entry point. For SHORT positions, set TP less than the current close price to secure profits before the market potentially reverses.
 - Stop Loss (SL) Prediction: Determine the price level at which the position should be closed to limit potential losses. This is based on risk tolerance and market conditions, ensuring that losses are minimized if the market moves unfavorably.
 
-Return the result only in format:
+Result format:
 RISK_LEVEL: [Risk Level], TP: [Take Profit Value], SL: [Stop Loss Value]
+
+Return the result only.
 """
 signal_risk_pattern = r"RISK_LEVEL: (NONE|LOW|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH), TP: ([\d.]+), SL: ([\d.]+)"
