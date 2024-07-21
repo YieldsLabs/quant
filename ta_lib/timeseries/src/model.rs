@@ -41,6 +41,15 @@ impl TimeSeries for BaseTimeSeries {
         self.data.range(..bar.ts).next_back().map(|(_, &v)| v)
     }
 
+    fn back_n_bars(&self, bar: &OHLCV, n: usize) -> Vec<OHLCV> {
+        self.data
+            .range(..bar.ts)
+            .rev()
+            .take(n)
+            .map(|(_, &v)| v)
+            .collect()
+    }
+
     #[inline]
     fn len(&self) -> usize {
         self.data.len()
@@ -305,8 +314,13 @@ mod tests {
             close: 5.997,
             volume: 100.0,
         };
+        let n = 2;
+
+        let back_bars = ts.back_n_bars(&curr_bar, n);
 
         assert_eq!(ts.next_bar(&curr_bar).unwrap(), next_bar);
         assert_eq!(ts.prev_bar(&curr_bar).unwrap(), prev_bar);
+        assert_eq!(back_bars.len(), 1);
+        assert_eq!(back_bars[0], prev_bar);
     }
 }

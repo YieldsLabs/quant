@@ -128,6 +128,36 @@ pub fn timeseries_prev_bar(
 }
 
 #[no_mangle]
+pub fn timeseries_back_n_bars(
+    timeseries_id: i32,
+    ts: i64,
+    open: f32,
+    high: f32,
+    low: f32,
+    close: f32,
+    volume: f32,
+    n: usize,
+) -> (i32, i32) {
+    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
+    if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
+        let curr_bar = OHLCV {
+            ts,
+            open,
+            high,
+            low,
+            close,
+            volume,
+        };
+
+        let bars = timeseries.back_n_bars(&curr_bar, n);
+
+        serialize(&bars)
+    } else {
+        (-1, 0)
+    }
+}
+
+#[no_mangle]
 pub fn timeseries_ta(
     timeseries_id: i32,
     ts: i64,
