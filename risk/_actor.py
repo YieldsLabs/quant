@@ -42,11 +42,11 @@ RiskEvent = Union[
     TrailEvent,
 ]
 
-MAX_ATTEMPTS = 5
-MAX_BARS = 4
+MAX_ATTEMPTS = 8
+DEFAULT_MAX_BARS = 13
 MAX_CONSECUTIVE_ANOMALIES = 3
-DYNAMIC_THRESHOLD_MULTIPLIER = 6.0
-DEFAULT_ANOMALY_THRESHOLD = 6
+DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
+DEFAULT_ANOMALY_THRESHOLD = 4
 
 
 def _ema(values, alpha=0.1):
@@ -179,6 +179,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         self, event: NewMarketDataReceived, position: Optional[Position]
     ):
         next_position = position
+        consc_anomaly_counter = 1
+        anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
+        max_bars = DEFAULT_MAX_BARS
 
         if position and not position.has_risk:
             prev_bar = next_position.risk_bar
@@ -203,7 +206,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             bars = [next_bar]
 
             if diff > 0:
-                for _ in range(MAX_BARS):
+                for _ in range(max_bars):
                     next_bar = await self.ask(
                         NextBar(self.symbol, self.timeframe, prev_bar)
                     )
@@ -215,38 +218,38 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     prev_bar = next_bar
 
             print(f"BARS: {len(bars)}")
-            consc = 1
-            anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
-
+            
             for bar in sorted(bars, key=lambda x: x.timestamp):
                 ohlcv = next_position.position_risk.ohlcv
                 ts = np.array([o.timestamp for o in ohlcv])
 
                 if len(ts) > 2:
                     ts_diff = _ema(np.diff(ts))
-                    mean, std = np.mean(ts_diff), np.std(ts_diff)
-                    std = np.finfo(float).eps if std == 0 else std
+                    mean, std = np.mean(ts_diff), max(np.finfo(float).eps, np.std(ts_diff))
 
                     current_diff = abs(bar.timestamp - ts[-1])
                     anomaly = (current_diff - mean) / std
                     anomaly = np.clip(
-                        anomaly, -2 * anomaly_threshold, 2 * anomaly_threshold
+                        anomaly, -3 * anomaly_threshold, 3 * anomaly_threshold
                     )
 
                     print(f"Current score: {anomaly}")
 
                     if abs(anomaly) > anomaly_threshold:
-                        consc += 1
+                        consc_anomaly_counter += 1
                         print(f"Anomalyyyyy, diff {current_diff}")
-                        if consc > MAX_CONSECUTIVE_ANOMALIES:
+                        if consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
                             print(
                                 "Too many consecutive anomalies, increasing threshold temporarily"
                             )
-                            anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER**consc
+                            anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER**consc_anomaly_counter
+                            consc_anomaly_counter = 1
+                        max_bars += DEFAULT_MAX_BARS
                         continue
                     else:
-                        consc = 1
                         anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
+                        max_bars = DEFAULT_MAX_BARS
+                        consc_anomaly_counter = 1
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
                 session_risk = await self.ask(
