@@ -293,7 +293,7 @@ class Position:
                 ),
                 -1,
             )
-            tidx = max(1, index)
+            tidx = max(0, index)
 
             trail_target = next_position.profit_target.targets[tidx]
 
@@ -363,7 +363,7 @@ class Position:
         volatility = ta.volatility.yz[-1]
         duration = self.trade_time / 100000 // len(self.position_risk.ohlcv)
         factor = volatility * duration
-        targets = self.profit_target.targets[1:]
+        targets = self.profit_target.targets[2:]
 
         if self.side == PositionSide.LONG:
             for i, target in enumerate(targets):

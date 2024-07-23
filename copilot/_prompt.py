@@ -32,6 +32,17 @@ Step-by-Step Analysis:
 3. **Pattern Detection**:
   - Identify and evaluate any one or two candlestick patterns that may impact the risk level
 
+4. **Fibonacci Retracement Analysis**:
+- **Identify Key Levels**:
+  - Calculate Fibonacci retracement levels (23.6%, 38.2%, 50%, 61.8%, 78.6%) based on recent high and low prices.
+- **Evaluate Position Relative to Fibonacci Levels**:
+  - For LONG positions:
+    - Higher risk if price is near or below a retracement level indicating potential resistance.
+    - Lower risk if price is above a retracement level indicating potential support.
+  - For SHORT positions:
+    - Higher risk if price is near or above a retracement level indicating potential support.
+    - Lower risk if price is below a retracement level indicating potential resistance.
+
 Risk Level Explanation:
 - **NONE**: No significant risk factors.
 - **VERY_LOW**: Minor risk factors, generally favorable.
@@ -42,9 +53,12 @@ Risk Level Explanation:
 
 Final Output:
 1. Overall Risk Level for {side} position: NONE, VERY_LOW, LOW, MODERATE, HIGH, VERY_HIGH
-2. Take Profit (TP) and Stop Loss (SL) predictions for {side} position based on risk level and market data.
-- Take Profit (TP) Prediction: For LONG positions, set TP greater than the current close price to ensure profits are locked in above the entry point. For SHORT positions, set TP less than the current close price to secure profits before the market potentially reverses.
-- Stop Loss (SL) Prediction: Determine the price level at which the position should be closed to limit potential losses. This is based on risk tolerance and market conditions, ensuring that losses are minimized if the market moves unfavorably.
+2. Take Profit (TP) and Stop Loss (SL) predictions for {side} position based on risk level, Fibonacci retracement levels, and market data.
+- Take Profit (TP) Prediction:
+  - For LONG positions: Set TP above the current close price, preferably just below a key Fibonacci retracement level to ensure profits are locked in.
+  - For SHORT positions: Set TP below the current close price, preferably just above a key Fibonacci retracement level to secure profits before potential reversal.
+- Stop Loss (SL) Prediction:
+  - Determine the price level at which the position should be closed to limit potential losses, considering the nearest Fibonacci retracement level as a reference for market support/resistance.
 
 Result format:
 RISK_LEVEL: [Risk Level], TP: [Take Profit Value], SL: [Stop Loss Value]
