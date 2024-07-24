@@ -50,6 +50,10 @@ impl Series<f32> {
             })
         })
     }
+
+    pub fn cos(&self) -> Self {
+        self.fmap(|val| val.map(|v| v.cos()))
+    }
 }
 
 impl Series<f32> {
@@ -285,6 +289,16 @@ mod tests {
         let expected = Series::from([1.0, 3.0, 6.0, 10.0, 15.0]);
 
         let result = source.cumsum();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_cos() {
+        let source = Series::from([-1.0, 2.0, -3.0, 4.0, 5.0]);
+        let expected = Series::from([0.5403023, -0.41614684, -0.9899925, -0.6536436, 0.2836622]);
+
+        let result = source.cos();
 
         assert_eq!(result, expected);
     }
