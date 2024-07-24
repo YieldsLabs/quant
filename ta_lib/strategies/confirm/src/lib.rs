@@ -1,3 +1,4 @@
+mod bb;
 mod braid;
 mod cc;
 mod cci;
@@ -10,6 +11,7 @@ mod rsi_signalline;
 mod stc;
 mod wpr;
 
+pub use bb::BbConfirm;
 pub use braid::BraidConfirm;
 pub use cc::CcConfirm;
 pub use cci::CciConfirm;

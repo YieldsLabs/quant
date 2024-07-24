@@ -6,6 +6,17 @@ use confirm::*;
 #[inline]
 pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
     match config {
+        // contrarian
+        ConfirmConfig::BbC {
+            smooth,
+            period,
+            factor,
+        } => Box::new(BbConfirm::new(
+            smooth_deserialize(smooth as usize),
+            period,
+            factor,
+        )),
+        // trend
         ConfirmConfig::Dpo {
             source_type,
             smooth_type,

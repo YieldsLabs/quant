@@ -237,6 +237,12 @@ pub enum SignalConfig {
         atr_smooth_period: f32,
         threshold: f32,
     },
+    RsiC {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
     RsiV {
         source_type: f32,
         smooth_type: f32,

@@ -38,6 +38,7 @@ class SignalType(Enum):
     CandlestickReversal = "CandlestickReversal"
     # Contrarian
     Snatr = "Snatr"
+    RsiC = "RsiC"
     RsiV = "RsiV"
     TiiV = "TiiV"
     # Flip

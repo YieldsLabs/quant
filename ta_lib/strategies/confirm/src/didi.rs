@@ -47,8 +47,8 @@ impl Confirm for DidiConfirm {
         let med_line = source.smooth(self.smooth, self.period_medium);
         let long_line = source.smooth(self.smooth, self.period_slow) / med_line;
 
-        let singal = long_line.smooth(self.smooth_signal, self.period_signal);
+        let signal = long_line.smooth(self.smooth_signal, self.period_signal);
 
-        (singal.sgt(&DIDI_NEUTRALITY), singal.slt(&DIDI_NEUTRALITY))
+        (signal.sgt(&DIDI_NEUTRALITY), signal.slt(&DIDI_NEUTRALITY))
     }
 }

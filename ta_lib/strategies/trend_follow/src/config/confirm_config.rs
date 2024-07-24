@@ -3,6 +3,13 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum ConfirmConfig {
+    // contrarian
+    BbC {
+        smooth: f32,
+        period: f32,
+        factor: f32,
+    },
+    // trend
     Dpo {
         source_type: f32,
         smooth_type: f32,

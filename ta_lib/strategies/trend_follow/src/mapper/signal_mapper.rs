@@ -307,6 +307,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             major_period,
             minor_period,
         )),
+        SignalConfig::RsiC {
+            source,
+            smooth,
+            period,
+            threshold,
+        } => Box::new(RsiCSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            threshold,
+        )),
         SignalConfig::RsiV {
             source_type,
             smooth_type,
