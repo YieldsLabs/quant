@@ -3,7 +3,7 @@ use core::prelude::*;
 use timeseries::prelude::*;
 use trend::{
     alma, cama, dema, ema, frama, gma, hema, hma, kama, lsma, md, midpoint, rmsma, sinwma, sma,
-    smma, t3, tema, trima, vidya, vwema, vwma, wma, zlema, zlhma, zlsma, zltema,
+    smma, t3, tema, trima, ults, vidya, vwema, vwma, wma, zlema, zlhma, zlsma, zltema,
 };
 
 #[derive(Copy, Clone)]
@@ -28,6 +28,7 @@ pub enum MovingAverageType {
     TEMA,
     TL,
     TRIMA,
+    ULTS,
     VIDYA,
     VWMA,
     VWEMA,
@@ -67,6 +68,7 @@ pub fn ma_indicator(
         MovingAverageType::TEMA => tema(&source, period),
         MovingAverageType::TL => midpoint(data.high(), data.low(), 55),
         MovingAverageType::TRIMA => trima(&source, period),
+        MovingAverageType::ULTS => ults(&source, period),
         MovingAverageType::VIDYA => vidya(&source, period, 3 * period),
         MovingAverageType::VWMA => vwma(&source, data.volume(), period),
         MovingAverageType::VWEMA => vwema(&source, data.volume(), period),
