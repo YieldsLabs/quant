@@ -5,32 +5,32 @@ signal_risk_prompt = """
 Evaluate the risk for an open {side} position within the {timeframe} timeframe using the provided data:
 
 1. Candlestick Data:
-  - {bar}
+- {bar}
 
 Risk Evaluation Framework:
 Step-by-Step Analysis:
 
 1. **Candlestick Analysis**:
-  - **Analyze Price Movement**:
-    - If the price is trending upwards, higher risk for SHORT, lower risk for LONG.
-    - If the price is trending downwards, lower risk for SHORT, higher risk for LONG.
-  - **Evaluate Real Body Normalized**:
-    - High value indicates strong movement, higher risk if against the position side.
-    - Low value indicates weak movement, lower risk if against the position side.
-  - **Assess Body Range Ratio**:
-    - High ratio indicates significant body, higher risk if against the position side.
-    - Low ratio indicates insignificant body, lower risk if against the position side.
-  - **Evaluate Body Shadow Ratio**:
-    - High ratio indicates strong pressure, higher risk if against the position side.
-    - Low ratio indicates weak pressure, lower risk if against the position side.
+- **Analyze Price Movement**:
+  - If the price is trending upwards, higher risk for SHORT, lower risk for LONG.
+  - If the price is trending downwards, lower risk for SHORT, higher risk for LONG.
+- **Evaluate Real Body Normalized**:
+  - High value indicates strong movement, higher risk if against the position side.
+  - Low value indicates weak movement, lower risk if against the position side.
+- **Assess Body Range Ratio**:
+  - High ratio indicates significant body, higher risk if against the position side.
+  - Low ratio indicates insignificant body, lower risk if against the position side.
+- **Evaluate Body Shadow Ratio**:
+  - High ratio indicates strong pressure, higher risk if against the position side.
+  - Low ratio indicates weak pressure, lower risk if against the position side.
 
 2. **Anomaly Detection**:
-  - **Identify Price Anomalies**:
-    - Significant deviation from normal patterns: Higher risk for both sides.
-    - No significant deviation: Lower risk for both sides.
+- **Identify Price Anomalies**:
+  - Significant deviation from normal patterns: Higher risk for both sides.
+  - No significant deviation: Lower risk for both sides.
 
 3. **Pattern Detection**:
-  - Identify and evaluate any one or two candlestick patterns that may impact the risk level
+- Identify and evaluate any one or two candlestick patterns that may impact the risk level
 
 4. **Fibonacci Retracement Analysis**:
 - **Identify Key Levels**:
@@ -42,6 +42,11 @@ Step-by-Step Analysis:
   - For SHORT positions:
     - Higher risk if price is near or above a retracement level indicating potential support.
     - Lower risk if price is below a retracement level indicating potential resistance.
+
+5. **Volume Analysis**:
+- **Evaluate Trading Volume**:
+  - High volume during price moves can indicate strong market sentiment and potentially higher risk if against the position.
+  - Low volume during price moves can indicate weak market sentiment and potentially lower risk.
 
 Risk Level Explanation:
 - **NONE**: No significant risk factors.
