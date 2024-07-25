@@ -44,6 +44,7 @@ class SignalType(Enum):
     RsiU = "RsiU"
     RsiNt = "RsiNt"
     TiiV = "TiiV"
+    StochE = "StochE"
     # Flip
     CeFlip = "CeFlip"
     SupFlip = "SupFlip"
