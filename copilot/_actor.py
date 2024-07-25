@@ -175,6 +175,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 side == PositionSide.SHORT and tp > curr_bar.close
             ):
                 risk_type = SignalRiskType.VERY_HIGH
+                tp, sl = sl, tp
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
