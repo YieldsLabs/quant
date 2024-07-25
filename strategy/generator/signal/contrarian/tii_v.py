@@ -9,7 +9,7 @@ from strategy.generator.signal.base import Signal, SignalType
 @dataclass(frozen=True)
 class TiiVSignal(Signal):
     type: SignalType = SignalType.TiiV
-    source_type: Parameter = StaticParameter(SourceType.CLOSE)
-    smooth_type: Parameter = StaticParameter(Smooth.SMA)
+    source: Parameter = StaticParameter(SourceType.CLOSE)
+    smooth: Parameter = StaticParameter(Smooth.SMA)
     major_period: Parameter = StaticParameter(8.0)
     minor_period: Parameter = StaticParameter(2.0)

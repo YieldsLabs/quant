@@ -218,14 +218,16 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     prev_bar = next_bar
 
             print(f"BARS: {len(bars)}")
-            
+
             for bar in sorted(bars, key=lambda x: x.timestamp):
                 ohlcv = next_position.position_risk.ohlcv
                 ts = np.array([o.timestamp for o in ohlcv])
 
                 if len(ts) > 2:
                     ts_diff = _ema(np.diff(ts))
-                    mean, std = np.mean(ts_diff), max(np.finfo(float).eps, np.std(ts_diff))
+                    mean, std = np.mean(ts_diff), max(
+                        np.finfo(float).eps, np.std(ts_diff)
+                    )
 
                     current_diff = abs(bar.timestamp - ts[-1])
                     anomaly = (current_diff - mean) / std
@@ -242,7 +244,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                             print(
                                 "Too many consecutive anomalies, increasing threshold temporarily"
                             )
-                            anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER**consc_anomaly_counter
+                            anomaly_threshold *= (
+                                DYNAMIC_THRESHOLD_MULTIPLIER**consc_anomaly_counter
+                            )
                             consc_anomaly_counter = 1
                         max_bars += DEFAULT_MAX_BARS
                         continue

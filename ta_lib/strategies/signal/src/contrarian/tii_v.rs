@@ -7,22 +7,17 @@ const TII_UPPER_BARRIER: f32 = 100.0;
 const TII_LOWER_BARRIER: f32 = 0.0;
 
 pub struct TiiVSignal {
-    source_type: SourceType,
-    smooth_type: Smooth,
+    source: SourceType,
+    smooth: Smooth,
     major_period: usize,
     minor_period: usize,
 }
 
 impl TiiVSignal {
-    pub fn new(
-        source_type: SourceType,
-        smooth_type: Smooth,
-        major_period: f32,
-        minor_period: f32,
-    ) -> Self {
+    pub fn new(source: SourceType, smooth: Smooth, major_period: f32, minor_period: f32) -> Self {
         Self {
-            source_type,
-            smooth_type,
+            source,
+            smooth,
             major_period: major_period as usize,
             minor_period: minor_period as usize,
         }
@@ -36,8 +31,8 @@ impl Signal for TiiVSignal {
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let tii = tii(
-            &data.source(self.source_type),
-            self.smooth_type,
+            &data.source(self.source),
+            self.smooth,
             self.major_period,
             self.minor_period,
         );

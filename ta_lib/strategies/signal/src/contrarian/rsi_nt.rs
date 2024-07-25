@@ -3,17 +3,17 @@ use core::prelude::*;
 use momentum::rsi;
 use timeseries::prelude::*;
 
-const RSI_UPPER_BARRIER: f32 = 80.0;
-const RSI_LOWER_BARRIER: f32 = 20.0;
+const RSI_UPPER_BARRIER: f32 = 70.0;
+const RSI_LOWER_BARRIER: f32 = 30.0;
 
-pub struct RsiVSignal {
+pub struct RsiNtSignal {
     source: SourceType,
     smooth: Smooth,
     period: usize,
     threshold: f32,
 }
 
-impl RsiVSignal {
+impl RsiNtSignal {
     pub fn new(source: SourceType, smooth: Smooth, period: f32, threshold: f32) -> Self {
         Self {
             source,
@@ -24,26 +24,30 @@ impl RsiVSignal {
     }
 }
 
-impl Signal for RsiVSignal {
+impl Signal for RsiNtSignal {
     fn lookback(&self) -> usize {
         self.period
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.source(self.source), self.smooth, self.period);
+        let low = data.low();
+        let high = data.high();
+
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
 
         let prev_rsi = rsi.shift(1);
-        let rsi_2_back = rsi.shift(2);
 
         (
-            rsi.sgt(&lower_barrier)
-                & prev_rsi.slt(&RSI_LOWER_BARRIER)
-                & rsi_2_back.sgt(&RSI_LOWER_BARRIER),
-            rsi.slt(&upper_barrier)
-                & prev_rsi.sgt(&RSI_UPPER_BARRIER)
-                & rsi_2_back.slt(&RSI_UPPER_BARRIER),
+            rsi.sgt(&prev_rsi)
+                & rsi.slt(&lower_barrier)
+                & prev_rsi.slt(&lower_barrier)
+                & low.slt(&low.shift(1)),
+            rsi.slt(&prev_rsi)
+                & rsi.sgt(&upper_barrier)
+                & prev_rsi.sgt(&upper_barrier)
+                & high.sgt(&high.shift(1)),
         )
     }
 }

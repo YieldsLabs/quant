@@ -16,13 +16,13 @@ pub fn stochosc(
     source: &Series<f32>,
     high: &Series<f32>,
     low: &Series<f32>,
-    smooth_type: Smooth,
+    smooth: Smooth,
     period: usize,
     k_period: usize,
     d_period: usize,
 ) -> (Series<f32>, Series<f32>) {
-    let k = stoch(source, high, low, period).smooth(smooth_type, k_period);
-    let d = k.smooth(smooth_type, d_period);
+    let k = stoch(source, high, low, period).smooth(smooth, k_period);
+    let d = k.smooth(smooth, d_period);
 
     (k, d)
 }

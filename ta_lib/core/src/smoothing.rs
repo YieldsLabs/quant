@@ -129,7 +129,7 @@ impl Series<f32> {
         let a1 = (-1.414 * std::f32::consts::PI / period as f32).exp();
         let c2 = 2.0 * a1 * (1.414 * std::f32::consts::PI / period as f32).cos();
         let c3 = -a1 * a1;
-        let c1 = (1.0 + c2 - c3) / 4.0;
+        let c1 = 0.25 * (1.0 + c2 - c3);
         let mut us = self.clone();
         let len = self.len();
 

@@ -6,14 +6,14 @@ use timeseries::prelude::*;
 const RSI_UPPER_BARRIER: f32 = 80.0;
 const RSI_LOWER_BARRIER: f32 = 20.0;
 
-pub struct RsiVSignal {
+pub struct RsiDSignal {
     source: SourceType,
     smooth: Smooth,
     period: usize,
     threshold: f32,
 }
 
-impl RsiVSignal {
+impl RsiDSignal {
     pub fn new(source: SourceType, smooth: Smooth, period: f32, threshold: f32) -> Self {
         Self {
             source,
@@ -24,7 +24,7 @@ impl RsiVSignal {
     }
 }
 
-impl Signal for RsiVSignal {
+impl Signal for RsiDSignal {
     fn lookback(&self) -> usize {
         self.period
     }
@@ -35,15 +35,21 @@ impl Signal for RsiVSignal {
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
 
         let prev_rsi = rsi.shift(1);
-        let rsi_2_back = rsi.shift(2);
+        let back_2_rsi = rsi.shift(2);
+        let back_3_rsi = rsi.shift(3);
+        let back_4_rsi = rsi.shift(4);
 
         (
-            rsi.sgt(&lower_barrier)
-                & prev_rsi.slt(&RSI_LOWER_BARRIER)
-                & rsi_2_back.sgt(&RSI_LOWER_BARRIER),
-            rsi.slt(&upper_barrier)
-                & prev_rsi.sgt(&RSI_UPPER_BARRIER)
-                & rsi_2_back.slt(&RSI_UPPER_BARRIER),
+            rsi.slt(&prev_rsi)
+                & prev_rsi.slt(&back_2_rsi)
+                & back_2_rsi.slt(&back_3_rsi)
+                & back_3_rsi.slt(&lower_barrier)
+                & back_4_rsi.sgt(&lower_barrier),
+            rsi.sgt(&prev_rsi)
+                & prev_rsi.sgt(&back_2_rsi)
+                & back_2_rsi.sgt(&back_3_rsi)
+                & back_3_rsi.sgt(&upper_barrier)
+                & back_4_rsi.slt(&upper_barrier),
         )
     }
 }

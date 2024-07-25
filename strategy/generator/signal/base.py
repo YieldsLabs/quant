@@ -39,7 +39,10 @@ class SignalType(Enum):
     # Contrarian
     Snatr = "Snatr"
     RsiC = "RsiC"
+    RsiD = "RsiD"
     RsiV = "RsiV"
+    RsiU = "RsiU"
+    RsiNt = "RsiNt"
     TiiV = "TiiV"
     # Flip
     CeFlip = "CeFlip"

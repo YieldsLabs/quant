@@ -11,8 +11,8 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RsiVSignal(Signal):
-    type: SignalType = SignalType.RsiV
+class RsiNtSignal(Signal):
+    type: SignalType = SignalType.RsiNt
     source: Parameter = StaticParameter(SourceType.CLOSE)
     smooth: Parameter = StaticParameter(Smooth.SMMA)
     period: Parameter = StaticParameter(8.0)

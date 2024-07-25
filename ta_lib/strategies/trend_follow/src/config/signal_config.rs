@@ -243,17 +243,43 @@ pub enum SignalConfig {
         period: f32,
         threshold: f32,
     },
+    RsiD {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
+    RsiNt {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
     RsiV {
-        source_type: f32,
-        smooth_type: f32,
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
+    RsiU {
+        source: f32,
+        smooth: f32,
         period: f32,
         threshold: f32,
     },
     TiiV {
-        source_type: f32,
-        smooth_type: f32,
+        source: f32,
+        smooth: f32,
         major_period: f32,
         minor_period: f32,
+    },
+    StochE {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        period_k: f32,
+        period_d: f32,
+        threshold: f32,
     },
     // Neutrality
     DsoNeutralityCross {
