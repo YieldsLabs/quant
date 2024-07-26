@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
+use osc::v;
 use timeseries::prelude::*;
 
 const RSI_UPPER_BARRIER: f32 = 80.0;
@@ -31,19 +32,10 @@ impl Signal for RsiVSignal {
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(&data.source(self.source), self.smooth, self.period);
+
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
 
-        let prev_rsi = rsi.shift(1);
-        let rsi_2_back = rsi.shift(2);
-
-        (
-            rsi.sgt(&lower_barrier)
-                & prev_rsi.slt(&RSI_LOWER_BARRIER)
-                & rsi_2_back.sgt(&RSI_LOWER_BARRIER),
-            rsi.slt(&upper_barrier)
-                & prev_rsi.sgt(&RSI_UPPER_BARRIER)
-                & rsi_2_back.slt(&RSI_UPPER_BARRIER),
-        )
+        v!(rsi, lower_barrier, upper_barrier)
     }
 }

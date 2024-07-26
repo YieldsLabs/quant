@@ -19,4 +19,5 @@ momentum = { path = "../../indicators/momentum" }
 volatility = { path = "../../indicators/volatility" }
 volume = { path = "../../indicators/volume" }
 candlestick = { path = "../../patterns/candlestick" }
+osc = { path = "../../patterns/osc" }
 timeseries = { path = "../../timeseries" }

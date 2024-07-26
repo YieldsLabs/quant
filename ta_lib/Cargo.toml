@@ -11,6 +11,7 @@ members = [
 "indicators/volatility",
 "indicators/volume",
 "patterns/candlestick",
+"patterns/osc",
 "price",
 "strategies/base",
 "strategies/trend_follow",
@@ -19,7 +20,7 @@ members = [
 "strategies/confirm",
 "strategies/pulse",
 "strategies/baseline",
-"strategies/indicator", "timeseries", "ffi",
+"strategies/indicator", "timeseries", "ffi", "patterns/osc",
 ]
 
 [workspace.package]
