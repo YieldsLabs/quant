@@ -135,7 +135,7 @@ impl Series<f32> {
 
         for i in 0..len {
             if i >= 4 {
-                us = (1.0 - c1) * self + (2.0 * c1 - c2) * self.shift(1) - (c1 + c2) * self.shift(2)
+                us = (1.0 - c1) * self + (2.0 * c1 - c2) * self.shift(1) - (c1 + c3) * self.shift(2)
                     + c2 * us.shift(1).nz(Some(0.0))
                     + c3 * us.shift(2).nz(Some(0.0))
             }
@@ -265,7 +265,7 @@ mod tests {
     #[test]
     fn test_ults() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, 2.9073417, 3.8146827, 4.722024]);
+        let expected = Series::from([f32::NAN, f32::NAN, 3.0000002, 4.0, 4.9999995]);
 
         let result = source.ults(3);
 
