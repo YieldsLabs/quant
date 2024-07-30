@@ -12,6 +12,8 @@ members = [
 "indicators/volume",
 "patterns/candlestick",
 "patterns/osc",
+"patterns/bands",
+"patterns/channel",
 "price",
 "strategies/base",
 "strategies/trend_follow",
