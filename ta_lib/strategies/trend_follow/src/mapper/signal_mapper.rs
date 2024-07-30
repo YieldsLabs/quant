@@ -296,6 +296,21 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             signal_period,
         )),
         // Contrarian
+        SignalConfig::KchC {
+            source,
+            smooth,
+            period,
+            smooth_atr,
+            period_atr,
+            factor,
+        } => Box::new(KchCSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor,
+        )),
         SignalConfig::Snatr {
             smooth_type,
             atr_period,

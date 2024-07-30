@@ -19,7 +19,7 @@ from core.models.side import PositionSide, SignalSide
 from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
-from ._prompt import signal_risk_pattern, signal_risk_prompt, system_prompt
+from ._prompt import signal_risk_prompt, system_prompt, signal_risk_pattern
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
@@ -154,28 +154,30 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             type=risk_type,
         )
 
-        # prompt = signal_risk_prompt.format(
-        #     bar=sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)[-self.bars_n :],
-        #     side=side,
-        #     entry=curr_bar.close,
-        #     timeframe=signal.timeframe,
-        #     trend=trend.sma[-self.bars_n :],
-        #     macd=trend.macd[-self.bars_n :],
-        #     rsi=ta.oscillator.srsi[-self.bars_n :],
-        #     nvol=volume.nvol[-self.bars_n :],
-        #     support=trend.support[-self.bars_n :],
-        #     resistance=trend.resistance[-self.bars_n :],
-        #     vwap=volume.vwap[-self.bars_n :],
-        # )
+        prompt = signal_risk_prompt.format(
+            bar=sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)[
+                -self.bars_n :
+            ],
+            side=side,
+            entry=curr_bar.close,
+            timeframe=signal.timeframe,
+            trend=trend.sma[-self.bars_n :],
+            macd=trend.macd[-self.bars_n :],
+            rsi=ta.oscillator.srsi[-self.bars_n :],
+            nvol=volume.nvol[-self.bars_n :],
+            support=trend.support[-self.bars_n :],
+            resistance=trend.resistance[-self.bars_n :],
+            vwap=volume.vwap[-self.bars_n :],
+        )
 
-        # logger.info(f"Signal Prompt: {prompt}")
+        logger.info(f"Signal Prompt: {prompt}")
 
-        # answer = await self.llm.call(system_prompt, prompt)
+        answer = await self.llm.call(system_prompt, prompt)
 
-        # logger.info(f"LLM Answer: {answer}")
+        logger.info(f"LLM Answer: {answer}")
 
-        # match = re.search(signal_risk_pattern, answer)
-        match = None
+        match = re.search(signal_risk_pattern, answer)
+        # match = None
 
         # risk_type = (
         #     SignalRiskType.VERY_HIGH

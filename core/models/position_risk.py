@@ -149,20 +149,26 @@ class PositionRisk(TaMixin):
         high, low = self.curr_bar.high, self.curr_bar.low
         expiration = self.curr_bar.timestamp - open_timestamp - expiration
 
-        print(f"ASSESS => Side: {side}, is long: {side == PositionSide.LONG} is short: {side == PositionSide.SHORT} TP: {tp}, SL: {sl}, H: {high}, L: {low}, E: {expiration}, TF: {self.trail_factor}")
-        
+        print(
+            f"ASSESS => Side: {side}, is long: {side == PositionSide.LONG} is short: {side == PositionSide.SHORT} TP: {tp}, SL: {sl}, H: {high}, L: {low}, E: {expiration}, TF: {self.trail_factor}"
+        )
+
         if expiration >= 0:
             return replace(self, type=PositionRiskType.TIME)
 
         if side == PositionSide.LONG:
-            print(f"CHeCK => Side: {side},  H: {high}, SL: {sl}, L < SL {low < sl}, H > TP {high > tp}")
+            print(
+                f"CHeCK => Side: {side},  H: {high}, SL: {sl}, L < SL {low < sl}, H > TP {high > tp}"
+            )
             if low < sl:
                 return replace(self, type=PositionRiskType.SL)
             if high > tp:
                 return replace(self, type=PositionRiskType.TP)
 
         if side == PositionSide.SHORT:
-            print(f"CHeCK => Side: {side},  H: {high}, SL: {sl}, H > SL {high > sl}, L < TP {low < tp}")
+            print(
+                f"CHeCK => Side: {side},  H: {high}, SL: {sl}, H > SL {high > sl}, L < TP {low < tp}"
+            )
             if high > sl:
                 return replace(self, type=PositionRiskType.SL)
             if low < tp:

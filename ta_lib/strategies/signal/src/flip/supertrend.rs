@@ -4,16 +4,16 @@ use timeseries::prelude::*;
 use trend::supertrend;
 
 pub struct SupertrendFlipSignal {
-    source_type: SourceType,
+    source: SourceType,
     smooth_atr: Smooth,
     period_atr: usize,
     factor: f32,
 }
 
 impl SupertrendFlipSignal {
-    pub fn new(source_type: SourceType, smooth_atr: Smooth, period_atr: f32, factor: f32) -> Self {
+    pub fn new(source: SourceType, smooth_atr: Smooth, period_atr: f32, factor: f32) -> Self {
         Self {
-            source_type,
+            source,
             smooth_atr,
             period_atr: period_atr as usize,
             factor,
@@ -28,7 +28,7 @@ impl Signal for SupertrendFlipSignal {
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = supertrend(
-            &data.source(self.source_type),
+            &data.source(self.source),
             data.close(),
             &data.atr(self.smooth_atr, self.period_atr),
             self.factor,

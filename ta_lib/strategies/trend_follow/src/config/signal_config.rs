@@ -237,6 +237,14 @@ pub enum SignalConfig {
         signal_period: f32,
     },
     // Contrarian
+    KchC {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
+        factor: f32,
+    },
     Snatr {
         smooth_type: f32,
         atr_period: f32,

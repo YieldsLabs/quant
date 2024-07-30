@@ -547,8 +547,10 @@ dependencies = [
 name = "signal"
 version = "0.1.0"
 dependencies = [
+ "bands",
  "base",
  "candlestick",
+ "channel",
  "core",
  "indicator",
  "momentum",

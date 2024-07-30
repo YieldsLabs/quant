@@ -13,6 +13,7 @@ class SignalType(Enum):
     CfoZeroCross = "CfoZeroCross"
     DiZeroCross = "DiZeroCross"
     MacdZeroCross = "MacdZeroCross"
+    MadZeroCross = "MadZeroCross"
     QstickZeroCross = "QstickZeroCross"
     RocZeroCross = "RocZeroCross"
     TrixZeroCross = "TrixZeroCross"
@@ -45,6 +46,7 @@ class SignalType(Enum):
     RsiNt = "RsiNt"
     TiiV = "TiiV"
     StochE = "StochE"
+    KchC = "KchC"
     # Flip
     CeFlip = "CeFlip"
     SupFlip = "SupFlip"

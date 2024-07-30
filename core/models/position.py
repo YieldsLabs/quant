@@ -311,9 +311,7 @@ class Position:
 
         def target_filter(target, tp, close):
             return (
-                target > tp
-                if next_position.side == PositionSide.LONG
-                else target < tp
+                target > tp if next_position.side == PositionSide.LONG else target < tp
             )
 
         index = -1

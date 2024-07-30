@@ -34,19 +34,19 @@ impl Signal for RsiNtSignal {
         let low = data.low();
         let high = data.high();
 
-        // let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
-        // let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
+        let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
+        let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
 
         let prev_rsi = rsi.shift(1);
 
         (
             rsi.sgt(&prev_rsi)
-                & rsi.slt(&RSI_LOWER_BARRIER)
-                & prev_rsi.slt(&RSI_LOWER_BARRIER)
+                & rsi.slt(&lower_barrier)
+                & prev_rsi.slt(&lower_barrier)
                 & low.slt(&low.shift(1)),
             rsi.slt(&prev_rsi)
-                & rsi.sgt(&RSI_UPPER_BARRIER)
-                & prev_rsi.sgt(&RSI_UPPER_BARRIER)
+                & rsi.sgt(&upper_barrier)
+                & prev_rsi.sgt(&upper_barrier)
                 & high.sgt(&high.shift(1)),
         )
     }

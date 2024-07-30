@@ -124,8 +124,8 @@ impl TimeSeries for BaseTimeSeries {
         let (upb, _, lwb) = bb(source, Smooth::SMA, periods[5], factors[0]);
         let (upkch, _, lwkch) = kch(
             source,
-            &gkyz.smooth(Smooth::SMA, periods[1]),
             Smooth::SMA,
+            &gkyz.smooth(Smooth::SMA, periods[1]),
             periods[5],
             factors[2],
         );

@@ -2,12 +2,12 @@ use core::prelude::*;
 
 pub fn kch(
     source: &Series<f32>,
+    smooth: Smooth,
     atr: &Series<f32>,
-    smooth_type: Smooth,
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = source.smooth(smooth_type, period);
+    let middle_band = source.smooth(smooth, period);
     let volatility = factor * atr;
 
     let upper_band = &middle_band + &volatility;
@@ -18,24 +18,24 @@ pub fn kch(
 
 pub fn kchp(
     source: &Series<f32>,
+    smooth: Smooth,
     atr: &Series<f32>,
-    smooth_type: Smooth,
     period: usize,
     factor: f32,
 ) -> Series<f32> {
-    let (upb, _, lb) = kch(source, atr, smooth_type, period, factor);
+    let (upb, _, lb) = kch(source, smooth, atr, period, factor);
 
     (source - &lb) / (upb - lb)
 }
 
 pub fn kchw(
     source: &Series<f32>,
+    smooth: Smooth,
     atr: &Series<f32>,
-    smooth_type: Smooth,
     period: usize,
     factor: f32,
 ) -> Series<f32> {
-    let (upb, mb, lb) = kch(source, atr, smooth_type, period, factor);
+    let (upb, mb, lb) = kch(source, smooth, atr, period, factor);
 
     SCALE * (upb - lb) / mb
 }
@@ -76,7 +76,7 @@ mod tests {
             19.168068,
         ];
 
-        let (upper_band, middle_band, lower_band) = kch(&hlc3, &atr, Smooth::EMA, period, factor);
+        let (upper_band, middle_band, lower_band) = kch(&hlc3, Smooth::EMA, &atr, period, factor);
 
         let result_upper_band: Vec<f32> = upper_band.into();
         let result_middle_band: Vec<f32> = middle_band.into();
@@ -118,7 +118,7 @@ mod tests {
             0.6573705,
         ];
 
-        let result: Vec<f32> = kchp(&hlc3, &atr, Smooth::EMA, period, factor).into();
+        let result: Vec<f32> = kchp(&hlc3, Smooth::EMA, &atr, period, factor).into();
 
         assert_eq!(result, expected);
     }
@@ -144,7 +144,7 @@ mod tests {
             1.9380906,
         ];
 
-        let result: Vec<f32> = kchw(&hlc3, &atr, Smooth::EMA, period, factor).into();
+        let result: Vec<f32> = kchw(&hlc3, Smooth::EMA, &atr, period, factor).into();
 
         assert_eq!(result, expected);
     }

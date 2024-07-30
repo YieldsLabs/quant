@@ -893,7 +893,7 @@ fn volatility(c: &mut Criterion) {
                 (hlc3, atr, smooth_type, period, factor)
             },
             |(hlc3, atr, smooth_type, period, factor)| {
-                kch(hlc3, atr, *smooth_type, *period, *factor)
+                kch(hlc3, *smooth_type, atr, *period, *factor)
             },
             criterion::BatchSize::SmallInput,
         )
