@@ -42,10 +42,10 @@ pub enum MovingAverageType {
 pub fn ma_indicator(
     ma: &MovingAverageType,
     data: &OHLCVSeries,
-    source_type: SourceType,
+    source: SourceType,
     period: usize,
 ) -> Series<f32> {
-    let source = data.source(source_type);
+    let source = data.source(source);
 
     match ma {
         MovingAverageType::ALMA => alma(&source, period, 0.85, 6.0),
