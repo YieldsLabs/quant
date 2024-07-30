@@ -13,6 +13,7 @@ pub fn smooth_deserialize(smooth: usize) -> Smooth {
         8 => Smooth::LSMA,
         9 => Smooth::TEMA,
         10 => Smooth::DEMA,
+        11 => Smooth::ULTS,
         _ => Smooth::EMA,
     }
 }

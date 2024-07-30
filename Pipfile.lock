@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "633429773203b0c158a7ec709afb1084e8b7cc6d52e306780151bc3fde44a908"
+            "sha256": "8696ccc6d535f8f31a55bc1f96c0b17efa445eb6b35674a758195c156d98d976"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -186,11 +186,11 @@
         },
         "ccxt": {
             "hashes": [
-                "sha256:4c194835445880b5e7b4066f180d05da2c844120d9a0cc98bfabbbe77a9befab",
-                "sha256:d5efd8e927b5f102b70580557c06b82ced8cc5573a550ca40468d1da484dfeed"
+                "sha256:2308b659c8ec6627529e7785e73fe6236bc233436046aa7ed541baa32a7efe31",
+                "sha256:fac92fe0f4ea358ed576539b4c05a891cc7eb946e21cd759669e8deedd0d50cc"
             ],
             "index": "pypi",
-            "version": "==4.3.67"
+            "version": "==4.3.68"
         },
         "certifi": {
             "hashes": [
@@ -759,11 +759,11 @@
         },
         "llama-cpp-python": {
             "hashes": [
-                "sha256:b08f070ce787959dcac635aaea93d14bde3b76347a5f8e8fc570735249f36e1c"
+                "sha256:55dbc02342bd128e12be7e6b59ba9f96a1bdb35a4e32b42694134970a6d96060"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==0.2.83"
+            "version": "==0.2.82"
         },
         "llvmlite": {
             "hashes": [

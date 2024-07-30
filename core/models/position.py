@@ -4,6 +4,8 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import List, Optional, Tuple
 
+import numpy as np
+
 from .ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
@@ -15,6 +17,8 @@ from .signal_risk import SignalRisk
 from .ta import TechAnalysis
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_TARGET_IDX = 2
 
 
 @dataclass(frozen=True)
@@ -275,52 +279,72 @@ class Position:
 
         if gap > 300000:
             print("NOOOOOOOOOOO________>>>>>>>>>>>>")
+            return self
 
         next_risk = self.position_risk.next(ohlcv)
         next_position = replace(self, position_risk=next_risk)
 
-        next_position = next_position.break_even(ta)
+        curr_price = next_position.curr_price
+        entry_price = next_position.entry_price
+        curr_pnl = next_position.curr_pnl
+        close = next_position.risk_bar.close
+        targets = next_position.profit_target.targets
+        forecast = next_position.position_risk.forecast
 
-        if next_position.signal_risk.type == SignalRiskType.NONE:
-            trail_target = next_position.profit_target.targets[3]
-        else:
-            stp = next_position.signal_risk.tp
-            index = next(
-                (
-                    i
-                    for i, target in enumerate(next_position.profit_target.targets)
-                    if target >= stp
-                ),
-                -1,
+        stp = (
+            next_position.signal_risk.tp
+            if next_position.signal_risk.type != SignalRiskType.NONE
+            else targets[DEFAULT_TARGET_IDX + 1]
+        )
+        stp = np.clip(stp, targets[0], targets[-1])
+        ftp = forecast if forecast else targets[DEFAULT_TARGET_IDX + 1]
+        ftp = np.clip(ftp, targets[0], targets[-1])
+        sstp = (
+            ta.trend.resistance[-1]
+            if next_position.side == PositionSide.LONG
+            else ta.trend.support[-1]
+        )
+        sstp = np.clip(sstp, targets[0], targets[-1])
+        ttp = (stp + sstp + ftp) / 3.0
+
+        print(f"Signal TP: {stp}, forecast TP: {ftp}, S/R TP: {sstp}, TTP: {ttp}")
+
+        def target_filter(target, tp, close):
+            return (
+                target > tp
+                if next_position.side == PositionSide.LONG
+                else target < tp
             )
-            tidx = max(0, index)
 
-            trail_target = next_position.profit_target.targets[tidx]
+        index = -1
 
-        print(next_position.profit_target.targets)
-        print(f"Trail target: {trail_target}")
+        for i, target in enumerate(targets):
+            if target_filter(target, ttp, close):
+                index = i
+                break
 
-        if (
-            next_position.side == PositionSide.LONG
-            and next_position.curr_price > trail_target
-        ) or (
-            next_position.side == PositionSide.SHORT
-            and next_position.curr_price < trail_target
-        ):
+        tidx = max(DEFAULT_TARGET_IDX, index)
+
+        trail_target = targets[max(0, min(len(targets) // 2 - 1, tidx - 1))]
+        exit_target = targets[max(0, min(len(targets) // 2 - 2, tidx - 2))]
+        next_tp = targets[min(len(targets) - 1, tidx)]
+
+        pnl_perc = (curr_pnl / curr_price) * 100
+        trl_dist = abs(curr_price - trail_target)
+        exit_dist = abs(curr_price - exit_target)
+        dist = abs(curr_price - entry_price)
+
+        print(targets)
+        print(
+            f"Trail target: {trail_target}, PRED_TP: {next_tp}, CURR_DIST: {dist}, TR_DIST: {trl_dist}, EXIT_DIST: {exit_dist}"
+        )
+
+        if dist > trl_dist:
             print("Target traillllllllll")
             next_position = next_position.trail(ta)
 
-        pnl_perc = (next_position.curr_pnl / next_position.curr_price) * 100
-        exit_target = next_position.profit_target.targets[4]
-
         if session_risk == SessionRiskType.EXIT:
-            if (
-                next_position.side == PositionSide.LONG
-                and next_position.curr_price > exit_target
-            ) or (
-                next_position.side == PositionSide.SHORT
-                and next_position.curr_price < exit_target
-            ):
+            if dist > exit_dist:
                 print(
                     f"TRAILLL PREV SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
                 )
@@ -329,8 +353,8 @@ class Position:
                     f"TRAILLL NEXT SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
                 )
 
-        next_tp = next_position.take_profit
         next_sl = next_position.stop_loss
+        next_risk = next_position.position_risk
 
         next_risk = next_risk.assess(
             next_position.side,
@@ -341,7 +365,19 @@ class Position:
         )
 
         if next_risk.type == PositionRiskType.TP:
+            print("RESET RISK")
             next_risk = next_risk.reset()
+            index = -1
+
+            for i, target in enumerate(targets):
+                if target_filter(target, next_tp, close):
+                    index = i
+                    break
+
+            tidx = max(tidx, index)
+            next_tp = targets[tidx]
+
+        print(f"Update TP: {next_tp}, SL: {next_sl}")
 
         next_position = replace(
             next_position,
@@ -352,45 +388,36 @@ class Position:
         )
 
         logger.info(
-            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, PT: {next_position.curr_target}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, LLM_TP: {next_position.signal_risk.tp}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
+            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, CLOSE: {next_position.risk_bar.close}, PT: {next_position.curr_target}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, LLM_TP: {next_position.signal_risk.tp}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
         )
 
         return next_position
 
-    def break_even(self, ta: TechAnalysis) -> "Position":
-        curr_price = self.curr_price
-        curr_sl = self.stop_loss
-        volatility = ta.volatility.yz[-1]
-        duration = self.trade_time / 100000 // len(self.position_risk.ohlcv)
-        factor = volatility * duration
-        targets = self.profit_target.targets[2:]
+        # def break_even(self, targets) -> "Position":
+        #     curr_sl = self.stop_loss
+        #     factor = self.trade_time / 10000000.0 / len(self.position_risk.ohlcv)
+        #     price = self.curr_price * factor
 
-        if self.side == PositionSide.LONG:
-            for i, target in enumerate(targets):
-                if curr_price > target:
-                    curr_sl = max(
-                        curr_sl,
-                        (self.entry_price if i == 0 else targets[i - 1]),
-                    )
-                    break
+        #     if self.side == PositionSide.LONG:
+        #         for i, target in enumerate(targets):
+        #             if self.curr_price > target:
+        #                 curr_sl = max(curr_sl, self.entry_price if i == 0 else targets[i - 1])
+        #                 break
 
-        elif self.side == PositionSide.SHORT:
-            for i, target in enumerate(targets):
-                if curr_price < target:
-                    curr_sl = min(
-                        curr_sl,
-                        (self.entry_price if i == 0 else targets[i - 1]),
-                    )
-                    break
+        #     elif self.side == PositionSide.SHORT:
+        #         for i, target in enumerate(targets):
+        #             if self.curr_price < target:
+        #                 curr_sl = min(curr_sl, self.entry_price if i == 0 else targets[i - 1])
+        #                 break
 
-        if curr_sl != self.stop_loss:
-            print(f"BREAK EVEEEEENNNNN: {factor}")
-
-        return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
+        #     if curr_sl != self.stop_loss:
+        #         print(f"BREAK EVEEEEENNNNN: SL: {curr_sl} PRICE: {price}, FACTOR: {factor}")
+        #
+        # return replace(self, _sl=curr_sl, last_modified=datetime.now().timestamp())
 
     def trail(self, ta: TechAnalysis) -> "Position":
         prev_sl = self.stop_loss
-        next_sl = self.position_risk.sl_ats(self.side, self.curr_price, ta, prev_sl)
+        next_sl = self.position_risk.sl_ats(self.side, ta, prev_sl)
 
         logger.info(
             f"<---- &&&&&&TRAIL&&&&& -->>> prevSL: {prev_sl}, nextSL: {next_sl}"

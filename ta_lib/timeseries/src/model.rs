@@ -5,7 +5,7 @@ use price::typical_price;
 use std::collections::BTreeMap;
 use trend::spp;
 use volatility::{bb, gkyz, kch, tr, yz};
-use volume::{mfi, nvol, obv};
+use volume::{mfi, nvol, obv, vwap};
 
 const BUFF_FACTOR: f32 = 1.3;
 
@@ -150,6 +150,7 @@ impl TimeSeries for BaseTimeSeries {
         let (dp, dm, _) = dmi(high, low, &atr, Smooth::SMMA, periods[1], periods[1]);
 
         let dmi = dp - dm;
+        let vwap = vwap(&hlc3, volume);
 
         TechAnalysis {
             frsi: rsi2.into(),
@@ -177,6 +178,7 @@ impl TimeSeries for BaseTimeSeries {
             support: support.into(),
             resistance: resistance.into(),
             dmi: dmi.into(),
+            vwap: vwap.into(),
         }
     }
 }

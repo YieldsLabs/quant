@@ -127,6 +127,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         self.prev_txn = (None, None)
         self._lock = asyncio.Lock()
         self.anomaly = set(binary_strings(8))
+        self.bars_n = 3
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)
@@ -140,28 +141,47 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         curr_bar = signal.ohlcv
         prev_bar = msg.prev_bar
+        ta = msg.ta
+        trend = ta.trend
+        volume = ta.volume
 
         side = (
             PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
         )
-        risk = SignalRisk(
-            type=SignalRiskType.NONE,
-        )
-
-        prompt = signal_risk_prompt.format(
-            bar=sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp),
-            side=side,
-            timeframe=signal.timeframe,
-        )
-
-        logger.info(f"Signal Prompt: {prompt}")
-
-        answer = await self.llm.call(system_prompt, prompt)
-
-        logger.info(f"LLM Answer: {answer}")
-
-        match = re.search(signal_risk_pattern, answer)
         risk_type = SignalRiskType.NONE
+
+        risk = SignalRisk(
+            type=risk_type,
+        )
+
+        # prompt = signal_risk_prompt.format(
+        #     bar=sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)[-self.bars_n :],
+        #     side=side,
+        #     entry=curr_bar.close,
+        #     timeframe=signal.timeframe,
+        #     trend=trend.sma[-self.bars_n :],
+        #     macd=trend.macd[-self.bars_n :],
+        #     rsi=ta.oscillator.srsi[-self.bars_n :],
+        #     nvol=volume.nvol[-self.bars_n :],
+        #     support=trend.support[-self.bars_n :],
+        #     resistance=trend.resistance[-self.bars_n :],
+        #     vwap=volume.vwap[-self.bars_n :],
+        # )
+
+        # logger.info(f"Signal Prompt: {prompt}")
+
+        # answer = await self.llm.call(system_prompt, prompt)
+
+        # logger.info(f"LLM Answer: {answer}")
+
+        # match = re.search(signal_risk_pattern, answer)
+        match = None
+
+        # risk_type = (
+        #     SignalRiskType.VERY_HIGH
+        #     if ta.momentum.cci[-1] > 100.0 or ta.momentum.cci[-1] < -100.0
+        #     else SignalRiskType.NONE
+        # )
 
         if not match:
             risk = SignalRisk(type=risk_type)
@@ -174,8 +194,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             if (side == PositionSide.LONG and tp < curr_bar.close) or (
                 side == PositionSide.SHORT and tp > curr_bar.close
             ):
-                risk_type = SignalRiskType.VERY_HIGH
-                tp, sl = sl, tp
+                risk_type = SignalRiskType.NONE
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 

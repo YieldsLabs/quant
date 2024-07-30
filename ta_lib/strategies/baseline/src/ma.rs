@@ -4,7 +4,7 @@ use indicator::{ma_indicator, MovingAverageType};
 use timeseries::prelude::*;
 
 const DEFAULT_ATR_LOOKBACK: usize = 14;
-const DEFAULT_ATR_FACTOR: f32 = 1.1;
+const DEFAULT_ATR_FACTOR: f32 = 1.2;
 const DEFAULT_ATR_SMOOTH: Smooth = Smooth::EMA;
 
 pub struct MaBaseLine {
@@ -43,7 +43,8 @@ impl BaseLine for MaBaseLine {
 
     fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
+        let close = data.close();
 
-        (data.close().cross_under(&ma), data.close().cross_over(&ma))
+        (close.cross_under(&ma), close.cross_over(&ma))
     }
 }

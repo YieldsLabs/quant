@@ -31,11 +31,10 @@ impl Signal for RsiVSignal {
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let rsi = rsi(&data.source(self.source), self.smooth, self.period);
-
-        let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
-        let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
-
-        v!(rsi, lower_barrier, upper_barrier)
+        v!(
+            rsi(&data.source(self.source), self.smooth, self.period),
+            RSI_LOWER_BARRIER + self.threshold,
+            RSI_UPPER_BARRIER - self.threshold
+        )
     }
 }

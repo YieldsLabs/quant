@@ -12,6 +12,7 @@ class Smooth(Enum):
     LSMA = 8
     TEMA = 9
     DEMA = 10
+    UTLS = 11
 
     def __str__(self):
         return self.name.upper()
@@ -20,6 +21,7 @@ class Smooth(Enum):
 class SmoothATR(Enum):
     EMA = 1
     SMMA = 3
+    UTLS = 11
 
     def __str__(self):
         return self.name.upper()

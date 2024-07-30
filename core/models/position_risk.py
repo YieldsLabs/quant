@@ -4,6 +4,7 @@ from typing import List, Tuple
 import numpy as np
 from scipy.signal import savgol_filter
 from sklearn.cluster import KMeans
+from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -12,8 +13,8 @@ from .risk_type import PositionRiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 35000
-LOOKBACK = 12
+TIME_THRESHOLD = 15000
+LOOKBACK = 8
 
 
 def optimize_params(
@@ -106,11 +107,28 @@ class TaMixin:
 class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.682, 2.382))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(2.5, 2.786))
+    model = SGDRegressor(max_iter=1, tol=None, warm_start=True)
 
     @property
     def curr_bar(self):
         return self.ohlcv[-1]
+
+    @property
+    def forecast(self):
+        if len(self.ohlcv) < 3:
+            return None
+
+        data = np.array([[ohlcv.high, ohlcv.low, ohlcv.close] for ohlcv in self.ohlcv])
+        hlc3 = (data[:, 0] + data[:, 1] + data[:, 2]) / 3
+        target = data[1:, 2]
+        features = hlc3[:-1].reshape(-1, 1)
+        self.model.partial_fit(features, target)
+
+        hlc3_curr = (self.curr_bar.high + self.curr_bar.low + self.curr_bar.close) / 3
+        X = np.array([[hlc3_curr]])
+
+        return self.model.predict(X)[0]
 
     def next(self, bar: OHLCV):
         ohlcv = self.ohlcv + [bar]
@@ -128,28 +146,27 @@ class PositionRisk(TaMixin):
         open_timestamp: float,
         expiration: float,
     ) -> "PositionRisk":
+        high, low = self.curr_bar.high, self.curr_bar.low
         expiration = self.curr_bar.timestamp - open_timestamp - expiration
 
+        print(f"ASSESS => Side: {side}, is long: {side == PositionSide.LONG} is short: {side == PositionSide.SHORT} TP: {tp}, SL: {sl}, H: {high}, L: {low}, E: {expiration}, TF: {self.trail_factor}")
+        
         if expiration >= 0:
             return replace(self, type=PositionRiskType.TIME)
 
-        high, low = self.curr_bar.high, self.curr_bar.low
-
         if side == PositionSide.LONG:
-            tp, sl = max(tp, sl), min(tp, sl)
-
-            if high > tp:
-                return replace(self, type=PositionRiskType.TP)
+            print(f"CHeCK => Side: {side},  H: {high}, SL: {sl}, L < SL {low < sl}, H > TP {high > tp}")
             if low < sl:
                 return replace(self, type=PositionRiskType.SL)
+            if high > tp:
+                return replace(self, type=PositionRiskType.TP)
 
         if side == PositionSide.SHORT:
-            tp, sl = min(tp, sl), max(tp, sl)
-
-            if low < tp:
-                return replace(self, type=PositionRiskType.TP)
+            print(f"CHeCK => Side: {side},  H: {high}, SL: {sl}, H > SL {high > sl}, L < TP {low < tp}")
             if high > sl:
                 return replace(self, type=PositionRiskType.SL)
+            if low < tp:
+                return replace(self, type=PositionRiskType.TP)
 
         return replace(self, type=PositionRiskType.NONE)
 
@@ -245,9 +262,7 @@ class PositionRisk(TaMixin):
 
         return tp
 
-    def sl_ats(
-        self, side: PositionSide, curr_price: float, ta: TechAnalysis, sl: float
-    ) -> "float":
+    def sl_ats(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
         timestamps = np.array([candle.timestamp for candle in self.ohlcv])
         ts_diff = np.diff(timestamps)
 
@@ -257,25 +272,28 @@ class PositionRisk(TaMixin):
         max_lookback = max(len(timestamps), LOOKBACK)
 
         close = np.array([candle.close for candle in self.ohlcv])
+        low = np.array([candle.low for candle in self.ohlcv])
+        high = np.array([candle.high for candle in self.ohlcv])
         volatility = np.array(ta.volatility.yz)[-max_lookback:]
 
-        min_length = min(len(close), len(volatility))
+        min_length = min(len(close), len(volatility), len(high), len(low))
 
         if min_length < 3:
             return sl
 
-        close_smooth, volatility_smooth = smooth(close, volatility)
+        close_smooth, volatility_smooth, high_smooth, low_smooth = smooth(
+            close, volatility, high, low
+        )
 
         volatility_smooth = self.trail_factor * volatility_smooth[-min_length:]
         close_smooth = close_smooth[-min_length:]
 
         ats = self._ats(close_smooth, volatility_smooth)
 
-        low = np.array([candle.low for candle in self.ohlcv])
-        high = np.array([candle.high for candle in self.ohlcv])
-
-        rising_low = low[-1] > low[-2] and low[-2] > low[-3]
-        failing_high = high[-1] < high[-2] and high[-2] < high[-3]
+        rising_low = low_smooth[-1] > low_smooth[-2] and low_smooth[-2] > low_smooth[-3]
+        failing_high = (
+            high_smooth[-1] < high_smooth[-2] and high_smooth[-2] < high_smooth[-3]
+        )
 
         bullish = rising_low and (ta.trend.dmi[-1] > 0.0 or ta.momentum.cci[-1] > 100.0)
         bearish = failing_high and (
@@ -285,16 +303,16 @@ class PositionRisk(TaMixin):
         if side == PositionSide.LONG:
             if bullish:
                 print("BULLLLLISHHHHHH-------------------------->")
-                return min(curr_price, max(sl, np.max(ats)))
+                return max(sl, min(low_smooth[-1], np.max(ats)))
 
-            return min(curr_price, max(sl, ats[-1]))
+            return max(sl, min(low_smooth[-1], ats[-1]))
 
         if side == PositionSide.SHORT:
             if bearish:
                 print("BEARISHHHHHHHHH-------------------------->")
-                return max(curr_price, min(sl, np.min(ats)))
+                return min(sl, max(high_smooth[-1], np.min(ats)))
 
-            return max(curr_price, min(sl, ats[-1]))
+            return min(sl, max(high_smooth[-1], ats[-1]))
 
         return sl
 

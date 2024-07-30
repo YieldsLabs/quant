@@ -8,9 +8,10 @@ class VolumeAnalysis:
     vo: List[float]
     nvol: List[float]
     mfi: List[float]
+    vwap: List[float]
 
     def __str__(self) -> str:
-        return f"obv={self.obv}, vo={self.vo}, nvol={self.nvol}, mfi={self.mfi}"
+        return f"obv={self.obv}, vo={self.vo}, nvol={self.nvol}, mfi={self.mfi}, vwap={self.vwap}"
 
     def __repr__(self) -> str:
         return f"VolumeAnalysis({self})"
@@ -113,12 +114,13 @@ class TechAnalysis:
             support,
             resistance,
             dmi,
+            vwap,
         ) = data
 
         trend = TrendAnalysis(fma, sma, macd, ppo, hh, ll, support, resistance, dmi)
         momentum = MomentumAnalysis(froc, sroc, cci)
         oscillator = OscillatorAnalysis(frsi, srsi, k, d)
-        volume = VolumeAnalysis(obv, vo, nvol, mfi)
+        volume = VolumeAnalysis(obv, vo, nvol, mfi, vwap)
         volatility = VolatilityAnalysis(tr, gkyz, yz, ebb, ekch)
 
         return cls(trend, momentum, oscillator, volume, volatility)

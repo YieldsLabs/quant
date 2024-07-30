@@ -4,14 +4,14 @@ use momentum::roc;
 use timeseries::prelude::*;
 
 pub struct RocZeroCrossSignal {
-    source_type: SourceType,
+    source: SourceType,
     period: usize,
 }
 
 impl RocZeroCrossSignal {
-    pub fn new(source_type: SourceType, period: f32) -> Self {
+    pub fn new(source: SourceType, period: f32) -> Self {
         Self {
-            source_type,
+            source,
             period: period as usize,
         }
     }
@@ -23,7 +23,7 @@ impl Signal for RocZeroCrossSignal {
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let roc = roc(&data.source(self.source_type), self.period);
+        let roc = roc(&data.source(self.source), self.period);
 
         (roc.cross_over(&ZERO_LINE), roc.cross_under(&ZERO_LINE))
     }

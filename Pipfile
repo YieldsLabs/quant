@@ -22,7 +22,7 @@ cachetools = "*"
 orjson = "*"
 scipy = "*"
 cbor2 = "*"
-llama-cpp-python = "*"
+llama-cpp-python = "0.2.82"
 umap-learn = "*"
 
 [dev-packages]

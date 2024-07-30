@@ -1,7 +1,7 @@
 use candlestick::{
     bottle, doji, double_trouble, engulfing, euphoria, golden, h, hexad, hikkake, kangaroo_tail,
     marubozu, master_candle, quintuplets, r, slingshot, split, tasuki, three_candles,
-    three_methods, three_one_two,
+    three_methods, three_one_two, tweezers,
 };
 use core::prelude::*;
 use timeseries::prelude::*;
@@ -96,6 +96,7 @@ pub enum CandleReversalType {
     KANGAROO,
     R,
     SPLIT,
+    TWEEZERS,
 }
 
 pub fn candlestick_reversal_indicator(
@@ -126,6 +127,10 @@ pub fn candlestick_reversal_indicator(
         CandleReversalType::SPLIT => (
             split::bullish(data.open(), data.high(), data.low(), data.close()),
             split::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+        CandleReversalType::TWEEZERS => (
+            tweezers::bullish(data.open(), data.low(), data.close()),
+            tweezers::bearish(data.open(), data.high(), data.close()),
         ),
     }
 }

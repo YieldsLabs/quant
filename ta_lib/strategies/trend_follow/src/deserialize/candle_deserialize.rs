@@ -30,6 +30,7 @@ pub fn candlereversal_deserialize(candle: usize) -> CandleReversalType {
         4 => CandleReversalType::KANGAROO,
         5 => CandleReversalType::R,
         6 => CandleReversalType::SPLIT,
+        7 => CandleReversalType::TWEEZERS,
         _ => CandleReversalType::R,
     }
 }

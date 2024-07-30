@@ -70,6 +70,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             slow_period,
             signal_period,
         )),
+        SignalConfig::MadZeroCross {
+            source,
+            smooth,
+            period_fast,
+            period_slow,
+        } => Box::new(MadZeroCrossSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period_fast,
+            period_slow,
+        )),
         SignalConfig::RocZeroCross {
             source_type,
             period,

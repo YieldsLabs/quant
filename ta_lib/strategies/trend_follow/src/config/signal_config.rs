@@ -37,6 +37,12 @@ pub enum SignalConfig {
         slow_period: f32,
         signal_period: f32,
     },
+    MadZeroCross {
+        source: f32,
+        smooth: f32,
+        period_fast: f32,
+        period_slow: f32,
+    },
     QstickZeroCross {
         smooth_type: f32,
         period: f32,

@@ -1,10 +1,13 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::stochosc;
+use osc::c;
 use timeseries::prelude::*;
 
-const STOCH_UPPER_BARRIER: f32 = 95.0;
-const STOCH_LOWER_BARRIER: f32 = 5.0;
+const STOCH_E_UPPER_BARRIER: f32 = 95.0;
+const STOCH_E_LOWER_BARRIER: f32 = 5.0;
+const STOCH_OVERBOUGHT: f32 = 70.0;
+const STOCH_OVERSOLD: f32 = 30.0;
 
 pub struct StochESignal {
     source: SourceType,
@@ -51,14 +54,11 @@ impl Signal for StochESignal {
             self.period_d,
         );
 
-        let lower_barrier = STOCH_LOWER_BARRIER + self.threshold;
-        let upper_barrier = STOCH_UPPER_BARRIER - self.threshold;
-
-        let prev_k = k.shift(1);
+        let (st_lg, st_sh) = c!(k, STOCH_E_LOWER_BARRIER, STOCH_E_UPPER_BARRIER);
 
         (
-            k.sgt(&lower_barrier) & prev_k.slt(&lower_barrier),
-            k.slt(&upper_barrier) & prev_k.sgt(&upper_barrier),
+            st_lg & k.slt(&STOCH_OVERSOLD),
+            st_sh & k.sgt(&STOCH_OVERBOUGHT),
         )
     }
 }

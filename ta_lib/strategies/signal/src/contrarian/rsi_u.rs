@@ -32,18 +32,15 @@ impl Signal for RsiUSignal {
         let back_2_rsi = rsi.shift(2);
         let back_3_rsi = rsi.shift(3);
 
-        let upper_neutrality = NEUTRALITY_LINE + self.threshold;
-        let lower_neutrality = NEUTRALITY_LINE - self.threshold;
-
         (
             rsi.sgt(&prev_rsi)
                 & prev_rsi.seq(&back_2_rsi)
                 & back_2_rsi.slt(&back_3_rsi)
-                & rsi.slt(&upper_neutrality),
+                & rsi.slt(&NEUTRALITY_LINE),
             rsi.slt(&prev_rsi)
                 & prev_rsi.seq(&back_2_rsi)
                 & back_2_rsi.sgt(&back_3_rsi)
-                & rsi.sgt(&lower_neutrality),
+                & rsi.sgt(&NEUTRALITY_LINE),
         )
     }
 }

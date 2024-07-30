@@ -28,6 +28,7 @@ class CandleReversalType(Enum):
     KANGAROO = 4
     R = 5
     SPLIT = 6
+    TWEEZERS = 7
 
     def __str__(self):
         return self.name.upper()
