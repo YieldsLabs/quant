@@ -2,7 +2,7 @@ use crate::source::{Source, SourceType};
 use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
 use timeseries::prelude::*;
 
-const DEFAULT_LOOKBACK: usize = 55;
+const DEFAULT_LOOKBACK: usize = 85;
 const DEFAULT_STOP_LEVEL: f32 = -1.0;
 
 #[derive(Debug, PartialEq)]
@@ -92,8 +92,9 @@ impl Strategy for BaseStrategy {
 
         let ohlcv = self.ohlcv();
         let theo_price = self.suggested_entry(&ohlcv);
+        let bar_index = ohlcv.index(bar);
 
-        match self.trade_signals(&ohlcv) {
+        match self.trade_signals(&ohlcv, bar_index) {
             (true, false, false, false) => TradeAction::GoLong(theo_price),
             (false, true, false, false) => TradeAction::GoShort(theo_price),
             (false, false, true, false) => TradeAction::ExitLong(theo_price),
@@ -121,32 +122,30 @@ impl Strategy for BaseStrategy {
 }
 
 impl BaseStrategy {
-    fn trade_signals(&self, ohlcv: &OHLCVSeries) -> (bool, bool, bool, bool) {
+    fn trade_signals(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (bool, bool, bool, bool) {
         let (signal_go_long, signal_go_short) = self.signal.trigger(ohlcv);
 
         let (baseline_confirm_long, baseline_confirm_short) = self.base_line.filter(ohlcv);
         let (primary_confirm_long, primary_confirm_short) = self.primary_confirm.filter(ohlcv);
-        let (secondary_confirm_long, secondary_confirm_short) =
-            self.secondary_confirm.filter(ohlcv);
         let (pulse_confirm_long, pulse_confirm_short) = self.pulse.assess(ohlcv);
 
         let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);
         let (baseline_close_long, baseline_close_short) = self.base_line.close(ohlcv);
 
-        let confirm_long = pulse_confirm_long & primary_confirm_long & secondary_confirm_long;
-        let confirm_short = pulse_confirm_short & primary_confirm_short & secondary_confirm_short;
+        let confirm_long = pulse_confirm_long & primary_confirm_long;
+        let confirm_short = pulse_confirm_short & primary_confirm_short;
 
-        let base_go_long = signal_go_long & baseline_confirm_long & confirm_long;
-        let base_go_short = signal_go_short & baseline_confirm_short & confirm_short;
+        let base_go_long = signal_go_long & confirm_long & baseline_confirm_long;
+        let base_go_short = signal_go_short & confirm_short & baseline_confirm_short;
 
-        let go_long = base_go_long.last().unwrap_or(false);
-        let go_short = base_go_short.last().unwrap_or(false);
+        let go_long = base_go_long.get(bar_index).unwrap_or(false);
+        let go_short = base_go_short.get(bar_index).unwrap_or(false);
 
         let exit_long = (exit_close_long | baseline_close_long)
-            .last()
+            .get(bar_index)
             .unwrap_or(false);
         let exit_short = (exit_close_short | baseline_close_short)
-            .last()
+            .get(bar_index)
             .unwrap_or(false);
 
         (go_long, go_short, exit_long, exit_short)
@@ -302,6 +301,6 @@ mod tests {
             }),
             Box::new(MockExit {}),
         );
-        assert_eq!(strategy.lookback_period, 55);
+        assert_eq!(strategy.lookback_period, 85);
     }
 }

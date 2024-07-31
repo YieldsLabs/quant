@@ -264,8 +264,20 @@ mod tests {
 
     #[test]
     fn test_ults() {
-        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, 3.0000002, 4.0, 4.9999995]);
+        let source = Series::from([
+            0.3847, 0.3863, 0.3885, 0.3839, 0.3834, 0.3843, 0.3840, 0.3834, 0.3832,
+        ]);
+        let expected = Series::from([
+            f32::NAN,
+            f32::NAN,
+            0.39243558,
+            0.4059067,
+            0.38297677,
+            0.3827616,
+            0.38428676,
+            0.3835733,
+            0.38308316,
+        ]);
 
         let result = source.ults(3);
 

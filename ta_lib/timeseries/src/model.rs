@@ -7,8 +7,6 @@ use trend::spp;
 use volatility::{bb, gkyz, kch, tr, yz};
 use volume::{mfi, nvol, obv, vwap};
 
-const BUFF_FACTOR: f32 = 1.3;
-
 #[derive(Debug, Clone)]
 pub struct BaseTimeSeries {
     data: BTreeMap<i64, OHLCV>,
@@ -56,10 +54,8 @@ impl TimeSeries for BaseTimeSeries {
     }
 
     fn ohlcv(&self, size: usize) -> OHLCVSeries {
-        let buff_size = (size as f32 * BUFF_FACTOR) as usize;
-
-        let start_index = if self.len() >= buff_size {
-            self.len() - buff_size
+        let start_index = if self.len() >= size {
+            self.len() - size
         } else {
             0
         };
@@ -324,5 +320,64 @@ mod tests {
         assert_eq!(ts.prev_bar(&curr_bar).unwrap(), prev_bar);
         assert_eq!(back_bars.len(), 1);
         assert_eq!(back_bars[0], prev_bar);
+    }
+
+    #[test]
+    fn test_ohlcv() {
+        let data = vec![
+            OHLCV {
+                ts: 1679825700,
+                open: 5.993,
+                high: 6.000,
+                low: 5.983,
+                close: 5.997,
+                volume: 100.0,
+            },
+            OHLCV {
+                ts: 1679826000,
+                open: 5.997,
+                high: 6.001,
+                low: 5.989,
+                close: 6.001,
+                volume: 100.0,
+            },
+            OHLCV {
+                ts: 1679826300,
+                open: 6.001,
+                high: 6.0013,
+                low: 5.993,
+                close: 6.007,
+                volume: 100.0,
+            },
+            OHLCV {
+                ts: 1679826600,
+                open: 6.007,
+                high: 6.008,
+                low: 5.980,
+                close: 5.992,
+                volume: 100.0,
+            },
+            OHLCV {
+                ts: 1679826900,
+                open: 5.992,
+                high: 5.993,
+                low: 5.976,
+                close: 5.980,
+                volume: 100.0,
+            },
+        ];
+        let mut ts = BaseTimeSeries::new();
+
+        for bar in &data {
+            ts.add(bar);
+        }
+
+        let series = ts.ohlcv(3);
+        let close: Vec<f32> = series.close().clone().into();
+
+        assert_eq!(series.len(), 3);
+        assert_eq!(close[0], 6.007);
+        assert_eq!(close[1], 5.992);
+        assert_eq!(close[2], 5.980);
     }
 }

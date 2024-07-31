@@ -13,6 +13,7 @@ pub struct OHLCV {
 
 #[derive(Debug, Clone)]
 pub struct OHLCVSeries {
+    ts: Vec<i64>,
     open: Series<f32>,
     high: Series<f32>,
     low: Series<f32>,
@@ -44,12 +45,20 @@ impl OHLCVSeries {
     pub fn len(&self) -> usize {
         self.close.len()
     }
+
+    pub fn index(&self, bar: &OHLCV) -> usize {
+        self.ts
+            .iter()
+            .position(|&ts| ts == bar.ts)
+            .unwrap_or_else(|| self.len())
+    }
 }
 
 impl<'a> From<&'a [OHLCV]> for OHLCVSeries {
     fn from(data: &'a [OHLCV]) -> Self {
         let len = data.len();
 
+        let mut ts = Vec::with_capacity(len);
         let mut open = Vec::with_capacity(len);
         let mut high = Vec::with_capacity(len);
         let mut low = Vec::with_capacity(len);
@@ -57,6 +66,7 @@ impl<'a> From<&'a [OHLCV]> for OHLCVSeries {
         let mut volume = Vec::with_capacity(len);
 
         for bar in data {
+            ts.push(bar.ts);
             open.push(bar.open);
             high.push(bar.high);
             low.push(bar.low);
@@ -65,6 +75,7 @@ impl<'a> From<&'a [OHLCV]> for OHLCVSeries {
         }
 
         Self {
+            ts,
             open: Series::from(open),
             high: Series::from(high),
             low: Series::from(low),

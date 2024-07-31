@@ -85,6 +85,14 @@ impl<T: Clone> Series<T> {
     pub fn last(&self) -> Option<T> {
         self.iter().last().cloned().flatten()
     }
+
+    pub fn get(&self, index: usize) -> Option<T> {
+        if index < self.data.len() {
+            self.data[index].clone()
+        } else {
+            None
+        }
+    }
 }
 
 impl Series<f32> {
@@ -145,6 +153,16 @@ mod tests {
     }
 
     #[test]
+    fn test_nz() {
+        let source = Series::from([f32::NAN, f32::NAN, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 0.0, 3.0, 4.0, 5.0]);
+
+        let result = source.nz(Some(0.0));
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_shift() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = Series::from([f32::NAN, f32::NAN, 1.0, 2.0, 3.0]);
@@ -152,6 +170,7 @@ mod tests {
 
         let result = source.shift(n);
 
+        assert_eq!(source.len(), result.len());
         assert_eq!(result, expected);
     }
 
@@ -171,6 +190,16 @@ mod tests {
         let expected = None;
 
         let result = source.last();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_get() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Some(5.0);
+
+        let result = source.get(4);
 
         assert_eq!(result, expected);
     }
