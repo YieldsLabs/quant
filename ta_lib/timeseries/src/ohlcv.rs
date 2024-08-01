@@ -48,9 +48,8 @@ impl OHLCVSeries {
 
     pub fn index(&self, bar: &OHLCV) -> usize {
         self.ts
-            .iter()
-            .position(|&ts| ts == bar.ts)
-            .unwrap_or_else(|| self.len())
+            .binary_search_by(|&ts| ts.cmp(&bar.ts))
+            .unwrap_or_else(|_| self.len())
     }
 }
 
