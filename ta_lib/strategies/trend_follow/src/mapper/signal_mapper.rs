@@ -274,6 +274,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             fast_period,
             slow_period,
         )),
+        SignalConfig::Spread {
+            source,
+            smooth,
+            period_fast,
+            period_slow,
+        } => Box::new(SpreadSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period_fast,
+            period_slow,
+        )),
         SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
         SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
             candletrend_deserialize(candle as usize),
@@ -296,6 +307,21 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             signal_period,
         )),
         // Contrarian
+        SignalConfig::KchA {
+            source,
+            smooth,
+            period,
+            smooth_atr,
+            period_atr,
+            factor,
+        } => Box::new(KchASignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor,
+        )),
         SignalConfig::KchC {
             source,
             smooth,

@@ -4,6 +4,7 @@ import logging
 from core.actors import StrategyActor
 from core.commands.feed import StartRealtimeFeed
 from core.events.ohlcv import NewMarketDataReceived
+from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.interfaces.abstract_ws import AbstractWS
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -52,10 +53,12 @@ class RealtimeActor(StrategyActor):
         symbol: Symbol,
         timeframe: Timeframe,
         ws: AbstractWS,
+        ts_service: AbstractTimeSeriesService,
     ):
         super().__init__(symbol, timeframe)
         self.ws = ws
         self.task = None
+        self.ts_service = ts_service
 
     def on_stop(self):
         if self.task:
@@ -72,9 +75,10 @@ class RealtimeActor(StrategyActor):
         async with AsyncRealTimeData(self.ws, symbol, timeframe) as stream:
             async for bar in stream:
                 if bar:
+                    if bar.closed:
+                        logger.info(f"{symbol}_{timeframe}:{bar}")
+                        await self.ts_service.upsert(symbol, timeframe, bar.ohlcv)
+
                     await self.tell(
                         NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
                     )
-
-                if bar and bar.closed:
-                    logger.info(f"{symbol}_{timeframe}:{bar}")

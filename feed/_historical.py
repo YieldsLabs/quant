@@ -7,6 +7,7 @@ from core.commands.feed import StartHistoricalFeed
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exchange import AbstractExchange
+from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.models.bar import Bar
 from core.models.lookback import Lookback
 from core.models.ohlcv import OHLCV
@@ -80,10 +81,12 @@ class HistoricalActor(StrategyActor):
         symbol: Symbol,
         timeframe: Timeframe,
         exchange: AbstractExchange,
+        ts: AbstractTimeSeriesService,
         config_service: AbstractConfig,
     ):
         super().__init__(symbol, timeframe)
         self.exchange = exchange
+        self.ts = ts
         self.config_service = config_service.get("backtest")
         self.buffer: List[Bar] = []
 
@@ -102,6 +105,8 @@ class HistoricalActor(StrategyActor):
                 self._update_buffer(bars)
                 await self._process_buffer()
 
+            await self._process_remaining_buffer()
+
     def _update_buffer(self, batch: List[Bar]):
         for bar in batch:
             bisect.insort(self.buffer, bar, key=lambda x: x.ohlcv.timestamp)
@@ -111,16 +116,37 @@ class HistoricalActor(StrategyActor):
 
         while len(self.buffer) >= buff_size:
             bars = [self.buffer.pop(0) for _ in range(buff_size)]
+            await self._outbox(bars)
+            await self._handle_market(bars)
+
+    async def _process_remaining_buffer(self):
+        buff_size = self.config_service["buff_size"]
+
+        while self.buffer:
+            bars = [self.buffer.pop(0) for _ in range(min(len(self.buffer), buff_size))]
+            await self._outbox(bars)
             await self._handle_market(bars)
 
     async def _handle_market(self, bars: List[Bar]) -> None:
+        events = []
         for bar in bars:
-            await self.tell(
-                NewMarketDataReceived(
-                    self.symbol, self.timeframe, bar.ohlcv, bar.closed
+            events.append(
+                self.tell(
+                    NewMarketDataReceived(
+                        self.symbol, self.timeframe, bar.ohlcv, bar.closed
+                    )
                 )
             )
-        await asyncio.sleep(0.00001)
+        await asyncio.gather(*events)
+        await asyncio.sleep(0.000001)
+
+    async def _outbox(self, bars: List[Bar]) -> None:
+        ts = []
+        for bar in bars:
+            if bar.closed:
+                ts.append(self.ts.upsert(self.symbol, self.timeframe, bar.ohlcv))
+
+        await asyncio.gather(*ts)
 
     @staticmethod
     async def batched(stream: AsyncIterator[Bar], batch_size: int):

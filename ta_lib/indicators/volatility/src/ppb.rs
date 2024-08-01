@@ -4,14 +4,14 @@ pub fn ppb(
     source: &Series<f32>,
     high: &Series<f32>,
     low: &Series<f32>,
-    smooth_type: Smooth,
+    smooth: Smooth,
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let ppvih = factor * high.std(period).highest(period);
     let ppvil = factor * low.std(period).lowest(period);
 
-    let middle_band = source.smooth(smooth_type, period);
+    let middle_band = source.smooth(smooth, period);
 
     let upper_band = &middle_band + ppvih;
     let lower_band = &middle_band - ppvil;
@@ -23,11 +23,11 @@ pub fn ppbp(
     source: &Series<f32>,
     high: &Series<f32>,
     low: &Series<f32>,
-    smooth_type: Smooth,
+    smooth: Smooth,
     period: usize,
     factor: f32,
 ) -> Series<f32> {
-    let (upb, _, lb) = ppb(source, high, low, smooth_type, period, factor);
+    let (upb, _, lb) = ppb(source, high, low, smooth, period, factor);
 
     (source - &lb) / (upb - lb)
 }
@@ -36,11 +36,11 @@ pub fn ppbw(
     source: &Series<f32>,
     high: &Series<f32>,
     low: &Series<f32>,
-    smooth_type: Smooth,
+    smooth: Smooth,
     period: usize,
     factor: f32,
 ) -> Series<f32> {
-    let (upb, mb, lb) = ppb(source, high, low, smooth_type, period, factor);
+    let (upb, mb, lb) = ppb(source, high, low, smooth, period, factor);
 
     SCALE * (upb - lb) / mb
 }

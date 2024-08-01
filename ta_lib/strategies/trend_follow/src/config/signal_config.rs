@@ -219,6 +219,12 @@ pub enum SignalConfig {
         fast_period: f32,
         slow_period: f32,
     },
+    Spread {
+        source: f32,
+        smooth: f32,
+        period_fast: f32,
+        period_slow: f32,
+    },
     CandlestickTrend {
         candle: f32,
     },
@@ -237,6 +243,14 @@ pub enum SignalConfig {
         signal_period: f32,
     },
     // Contrarian
+    KchA {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
+        factor: f32,
+    },
     KchC {
         source: f32,
         smooth: f32,

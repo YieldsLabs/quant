@@ -2,11 +2,11 @@ use core::prelude::*;
 
 pub fn bb(
     source: &Series<f32>,
-    smooth_type: Smooth,
+    smooth: Smooth,
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = source.smooth(smooth_type, period);
+    let middle_band = source.smooth(smooth, period);
     let volatility = factor * source.std(period);
 
     let upper_band = &middle_band + &volatility;
@@ -15,14 +15,14 @@ pub fn bb(
     (upper_band, middle_band, lower_band)
 }
 
-pub fn bbp(source: &Series<f32>, smooth_type: Smooth, period: usize, factor: f32) -> Series<f32> {
-    let (upb, _, lb) = bb(source, smooth_type, period, factor);
+pub fn bbp(source: &Series<f32>, smooth: Smooth, period: usize, factor: f32) -> Series<f32> {
+    let (upb, _, lb) = bb(source, smooth, period, factor);
 
     (source - &lb) / (upb - lb)
 }
 
-pub fn bbw(source: &Series<f32>, smooth_type: Smooth, period: usize, factor: f32) -> Series<f32> {
-    let (upb, mb, lb) = bb(source, smooth_type, period, factor);
+pub fn bbw(source: &Series<f32>, smooth: Smooth, period: usize, factor: f32) -> Series<f32> {
+    let (upb, mb, lb) = bb(source, smooth, period, factor);
 
     SCALE * (upb - lb) / mb
 }

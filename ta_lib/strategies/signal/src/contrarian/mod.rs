@@ -1,3 +1,4 @@
+mod kch_a;
 mod kch_c;
 mod rsi_c;
 mod rsi_d;
@@ -8,6 +9,7 @@ mod snatr;
 mod stoch_e;
 mod tii_v;
 
+pub use kch_a::KchASignal;
 pub use kch_c::KchCSignal;
 pub use rsi_c::RsiCSignal;
 pub use rsi_d::RsiDSignal;
