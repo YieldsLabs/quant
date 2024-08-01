@@ -39,14 +39,10 @@ impl Signal for KchCSignal {
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (upper, _, lower) = kch(
-            &data.source(self.source),
-            self.smooth,
-            &data.atr(self.smooth_atr, self.period_atr),
-            self.period,
-            self.factor,
-        );
+        let source = data.source(self.source);
+        let atr = data.atr(self.smooth_atr, self.period_atr);
+        let (upper, _, lower) = kch(&source, self.smooth, &atr, self.period, self.factor);
 
-        c!(upper, lower, data.high(), data.low())
+        c!(data.high(), data.low(), upper, lower)
     }
 }

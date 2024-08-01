@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! a {
-    ($upper_channel:expr, $lower_channel:expr, $source:expr) => {{
+    ($source:expr, $upper_channel:expr, $lower_channel:expr) => {{
         let prev_source = $source.shift(1);
 
         (
@@ -12,7 +12,7 @@ macro_rules! a {
 
 #[macro_export]
 macro_rules! c {
-    ($upper_channel:expr, $lower_channel:expr, $high:expr, $low:expr) => {{
+    ($high:expr, $low:expr, $upper_channel:expr, $lower_channel:expr) => {{
         let prev_lwch = $lower_channel.shift(1);
         let prev_upch = $upper_channel.shift(1);
 

@@ -130,15 +130,17 @@ impl Series<f32> {
         let c2 = 2.0 * a1 * (1.414 * std::f32::consts::PI / period as f32).cos();
         let c3 = -a1 * a1;
         let c1 = 0.25 * (1.0 + c2 - c3);
-        let mut us = self.clone();
         let len = self.len();
+        let mut us = self.clone();
 
-        for i in 0..len {
-            if i >= 4 {
-                us = (1.0 - c1) * self + (2.0 * c1 - c2) * self.shift(1) - (c1 + c3) * self.shift(2)
-                    + c2 * us.shift(1).nz(Some(0.0))
-                    + c3 * us.shift(2).nz(Some(0.0))
-            }
+        for _ in 4..len {
+            let a = (1.0 - c1) * self;
+            let b = (2.0 * c1 - c2) * self.shift(1);
+            let c = (c1 + c3) * self.shift(2);
+            let d = c2 * nz!(us.shift(1), us);
+            let e = c3 * nz!(us.shift(2), us);
+
+            us = a + b - c + d + e;
         }
 
         us
@@ -270,13 +272,13 @@ mod tests {
         let expected = Series::from([
             f32::NAN,
             f32::NAN,
-            0.39243558,
-            0.4059067,
-            0.38297677,
-            0.3827616,
-            0.38428676,
-            0.3835733,
-            0.38308316,
+            0.38823238,
+            0.3857738,
+            0.38237053,
+            0.3837785,
+            0.38435972,
+            0.38352364,
+            0.3830772,
         ]);
 
         let result = source.ults(3);

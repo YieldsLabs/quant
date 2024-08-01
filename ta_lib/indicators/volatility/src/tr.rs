@@ -71,6 +71,7 @@ mod tests {
 
         let result: Vec<f32> = tr(&high, &low, &close).into();
 
+        assert_eq!(result.len(), close.len());
         assert_eq!(result, expected);
     }
 
