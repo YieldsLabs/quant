@@ -2,7 +2,7 @@ use crate::source::{Source, SourceType};
 use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
 use timeseries::prelude::*;
 
-const DEFAULT_LOOKBACK: usize = 85;
+const DEFAULT_LOOKBACK: usize = 210;
 const DEFAULT_STOP_LEVEL: f32 = -1.0;
 
 #[derive(Debug, PartialEq)]
@@ -91,14 +91,14 @@ impl Strategy for BaseStrategy {
         }
 
         let ohlcv = self.ohlcv();
+        let bar_index = ohlcv.bar_index(bar);
         let theo_price = self.suggested_entry(&ohlcv);
-        let bar_index = ohlcv.index(bar);
 
         match self.trade_signals(&ohlcv, bar_index) {
-            (true, false, false, false) => TradeAction::GoLong(theo_price),
-            (false, true, false, false) => TradeAction::GoShort(theo_price),
-            (false, false, true, false) => TradeAction::ExitLong(theo_price),
-            (false, false, false, true) => TradeAction::ExitShort(theo_price),
+            (true, _, _, _) => TradeAction::GoLong(theo_price),
+            (_, true, _, _) => TradeAction::GoShort(theo_price),
+            (_, _, true, _) => TradeAction::ExitLong(theo_price),
+            (_, _, _, true) => TradeAction::ExitShort(theo_price),
             _ => TradeAction::DoNothing,
         }
     }
@@ -135,8 +135,8 @@ impl BaseStrategy {
         let confirm_long = pulse_confirm_long & primary_confirm_long;
         let confirm_short = pulse_confirm_short & primary_confirm_short;
 
-        let base_go_long = signal_go_long & confirm_long & baseline_confirm_long;
-        let base_go_short = signal_go_short & confirm_short & baseline_confirm_short;
+        let base_go_long = signal_go_long & baseline_confirm_long & confirm_long;
+        let base_go_short = signal_go_short & baseline_confirm_short & confirm_short;
 
         let go_long = base_go_long.get(bar_index).unwrap_or(false);
         let go_short = base_go_short.get(bar_index).unwrap_or(false);
