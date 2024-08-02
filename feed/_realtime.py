@@ -73,10 +73,11 @@ class RealtimeActor(StrategyActor):
         symbol, timeframe = msg.symbol, msg.timeframe
 
         async with AsyncRealTimeData(self.ws, symbol, timeframe) as stream:
-            async for bar in stream:
-                if bar:
+            async for bars in stream:
+                for bar in bars:
                     if bar.closed:
                         logger.info(f"{symbol}_{timeframe}:{bar}")
+
                         await self.ts_service.upsert(symbol, timeframe, bar.ohlcv)
 
                     await self.tell(

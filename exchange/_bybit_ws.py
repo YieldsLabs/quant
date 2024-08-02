@@ -101,14 +101,14 @@ class BybitWS(AbstractWS):
                 data = json.loads(message)
 
                 if self.TOPIC_KEY not in data:
-                    return
+                    return []
 
                 topic = data["topic"].split(".")
 
                 if symbol.name == topic[2] and timeframe == self.TIMEFRAMES[topic[1]]:
-                    ohlcv = data[self.DATA_KEY][0]
+                    return [Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY]) for ohlcv in data[self.DATA_KEY]]
 
-                    return Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY])
+                return []
 
     async def subscribe(self, symbol, timeframe):
         async with self._lock:
