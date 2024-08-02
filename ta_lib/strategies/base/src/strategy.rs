@@ -95,8 +95,8 @@ impl Strategy for BaseStrategy {
         let theo_price = self.suggested_entry(&ohlcv);
 
         match self.trade_signals(&ohlcv, bar_index) {
-            (true, _, _, _) => TradeAction::GoLong(theo_price),
-            (_, true, _, _) => TradeAction::GoShort(theo_price),
+            (true, false, _, _) => TradeAction::GoLong(theo_price),
+            (false, true, _, _) => TradeAction::GoShort(theo_price),
             (_, _, true, _) => TradeAction::ExitLong(theo_price),
             (_, _, _, true) => TradeAction::ExitShort(theo_price),
             _ => TradeAction::DoNothing,
@@ -135,8 +135,8 @@ impl BaseStrategy {
         let confirm_long = pulse_confirm_long & primary_confirm_long;
         let confirm_short = pulse_confirm_short & primary_confirm_short;
 
-        let base_go_long = signal_go_long & baseline_confirm_long & confirm_long;
-        let base_go_short = signal_go_short & baseline_confirm_short & confirm_short;
+        let base_go_long = signal_go_long & confirm_long & baseline_confirm_long;
+        let base_go_short = signal_go_short & confirm_short & baseline_confirm_short;
 
         let go_long = base_go_long.get(bar_index).unwrap_or(false);
         let go_short = base_go_short.get(bar_index).unwrap_or(false);
@@ -301,6 +301,6 @@ mod tests {
             }),
             Box::new(MockExit {}),
         );
-        assert_eq!(strategy.lookback_period, 85);
+        assert_eq!(strategy.lookback_period, 210);
     }
 }

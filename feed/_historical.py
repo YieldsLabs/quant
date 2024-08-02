@@ -128,16 +128,12 @@ class HistoricalActor(StrategyActor):
             await self._handle_market(bars)
 
     async def _handle_market(self, bars: List[Bar]) -> None:
-        events = []
         for bar in bars:
-            events.append(
-                self.tell(
-                    NewMarketDataReceived(
-                        self.symbol, self.timeframe, bar.ohlcv, bar.closed
-                    )
+            await self.tell(
+                NewMarketDataReceived(
+                    self.symbol, self.timeframe, bar.ohlcv, bar.closed
                 )
             )
-        await asyncio.gather(*events)
         await asyncio.sleep(0.000001)
 
     async def _outbox(self, bars: List[Bar]) -> None:

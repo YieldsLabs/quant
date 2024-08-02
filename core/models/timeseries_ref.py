@@ -24,7 +24,7 @@ class TimeSeriesRef:
 
     def add(self, bar: OHLCV):
         exports = self.instance_ref.exports(self.store_ref)
-        exports["timeseries_add"](
+        [res, _] = exports["timeseries_add"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -34,6 +34,9 @@ class TimeSeriesRef:
             bar.close,
             bar.volume,
         )
+
+        if res == -1:
+            raise ValueError("Can't add new market bar")
 
     def next_bar(self, bar: OHLCV) -> Optional[OHLCV]:
         return self._get_bar("next_bar", bar)

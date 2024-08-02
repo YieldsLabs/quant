@@ -43,6 +43,6 @@ impl Signal for KchCSignal {
         let atr = data.atr(self.smooth_atr, self.period_atr);
         let (upper, _, lower) = kch(&source, self.smooth, &atr, self.period, self.factor);
 
-        c!(data.high(), data.low(), upper, lower)
+        c!(data.low(), data.high(), upper, lower)
     }
 }

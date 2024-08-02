@@ -287,7 +287,7 @@ class Position:
         curr_price = next_position.curr_price
         entry_price = next_position.entry_price
         curr_pnl = next_position.curr_pnl
-        close = next_position.risk_bar.close
+        # close = next_position.risk_bar.close
         targets = next_position.profit_target.targets
         forecast = next_position.position_risk.forecast
 
@@ -309,30 +309,47 @@ class Position:
 
         print(f"Signal TP: {stp}, forecast TP: {ftp}, S/R TP: {sstp}, TTP: {ttp}")
 
-        def target_filter(target, tp, close):
+        def target_filter(target, tp):
             return (
                 target > tp if next_position.side == PositionSide.LONG else target < tp
             )
 
-        index = -1
+        idx_rr = 0
+        risk = abs(entry_price - next_position.stop_loss)
+        rr_factor = 1.1
+        rr = rr_factor * risk
 
         for i, target in enumerate(targets):
-            if target_filter(target, ttp, close):
-                index = i
+            reward = abs(target - entry_price)
+            if (
+                reward > rr
+                if next_position.side == PositionSide.LONG
+                else reward <= rr
+            ):
+                idx_rr = i
                 break
 
-        tidx = max(DEFAULT_TARGET_IDX, index)
+        print(f"RR Idx: {idx_rr}, RR: {rr}")
 
-        trail_target = targets[max(0, min(len(targets) // 2 - 1, tidx - 1))]
-        exit_target = targets[max(0, min(len(targets) // 2 - 2, tidx - 2))]
-        next_tp = targets[min(len(targets) - 1, tidx)]
+        idx_tg = 0
+
+        for i, target in enumerate(targets):
+            if target_filter(target, ttp):
+                idx_tg = i
+                break
+
+        tidx = max(DEFAULT_TARGET_IDX, idx_tg)
+        idx = idx_rr if tidx > len(targets) - 1 else tidx
+        trail_target = targets[max(0, idx - 1)]
+        exit_target = targets[max(0, idx - 2)]
+        next_tp = targets[max(0, idx)]
 
         pnl_perc = (curr_pnl / curr_price) * 100
         trl_dist = abs(curr_price - trail_target)
         exit_dist = abs(curr_price - exit_target)
         dist = abs(curr_price - entry_price)
 
-        print(targets)
+        print(f"Targets: {targets}")
         print(
             f"Trail target: {trail_target}, PRED_TP: {next_tp}, CURR_DIST: {dist}, TR_DIST: {trl_dist}, EXIT_DIST: {exit_dist}"
         )
@@ -362,18 +379,18 @@ class Position:
             next_position.expiration,
         )
 
-        if next_risk.type == PositionRiskType.TP:
+        if next_risk.type == PositionRiskType.TP and rr * 100 < 3:
             print("RESET RISK")
             next_risk = next_risk.reset()
-            index = -1
+            index = 0
 
             for i, target in enumerate(targets):
-                if target_filter(target, next_tp, close):
+                if target_filter(target, next_tp):
                     index = i
                     break
 
-            tidx = max(tidx, index)
-            next_tp = targets[tidx]
+            idx = min(max(DEFAULT_TARGET_IDX, index), len(targets) - 1)
+            next_tp = targets[idx]
 
         print(f"Update TP: {next_tp}, SL: {next_sl}")
 

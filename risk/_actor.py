@@ -43,7 +43,7 @@ RiskEvent = Union[
 ]
 
 MAX_ATTEMPTS = 16
-DEFAULT_MAX_BARS = 8
+DEFAULT_MAX_BARS = 16
 MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
@@ -182,13 +182,12 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         self, event: NewMarketDataReceived, position: Optional[Position]
     ):
         next_position = position
-
         if position and not position.has_risk:
             prev_bar = next_position.risk_bar
             next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
 
             if not next_bar:
-                return next_position
+                next_bar = event.ohlcv
 
             diff = event.ohlcv.timestamp - next_bar.timestamp
             attempts = 0
@@ -216,7 +215,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
                     bars.append(next_bar)
                     prev_bar = next_bar
-                    # await asyncio.sleep(0.0000001)
 
             print(f"BARS: {len(bars)}")
 
@@ -234,8 +232,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     anomaly = (current_diff - mean) / std
                     anomaly = np.clip(
                         anomaly,
-                        -3.0 * DEFAULT_ANOMALY_THRESHOLD,
-                        3.0 * DEFAULT_ANOMALY_THRESHOLD,
+                        -9.0 * DEFAULT_ANOMALY_THRESHOLD,
+                        9.0 * DEFAULT_ANOMALY_THRESHOLD,
                     )
 
                     print(f"Current score: {anomaly}")
@@ -250,6 +248,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                             self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
                             self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
                             self.consc_anomaly_counter = 1
+                        await asyncio.sleep(0.00001)
                         continue
                     else:
                         self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
