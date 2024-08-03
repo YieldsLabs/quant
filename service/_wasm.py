@@ -32,6 +32,7 @@ class WasmManager(AbstractWasmManager):
     def _configure_wasi(self, store: Store):
         wasi_config = WasiConfig()
         wasi_config.wasm_multi_value = True
+        wasi_config.inherit_stdout()
         store.set_wasi(wasi_config)
 
     def _get_module(self, type: WasmType, engine: Engine) -> Module:
