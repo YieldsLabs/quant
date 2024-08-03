@@ -3,16 +3,18 @@ use crate::{
 };
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::sync::{Mutex, MutexGuard, RwLock};
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::{Arc, RwLock};
 use timeseries::prelude::*;
 
-static STRATEGY_ID_TO_INSTANCE: Lazy<
-    RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>,
-> = Lazy::new(|| RwLock::new(HashMap::new()));
+static STRATEGIES: Lazy<Arc<RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
 
-static ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
+static STRATEGIES_ID_COUNTER: Lazy<AtomicI32> = Lazy::new(|| AtomicI32::new(0));
 
-static ALLOC_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+fn generate_strategy_id() -> i32 {
+    STRATEGIES_ID_COUNTER.fetch_add(1, Ordering::SeqCst)
+}
 
 pub fn register_strategy(
     timeseries: Box<dyn TimeSeries>,
@@ -24,30 +26,29 @@ pub fn register_strategy(
     stop_loss: Box<dyn StopLoss>,
     exit: Box<dyn Exit>,
 ) -> i32 {
-    let mut id_counter = ID_COUNTER.write().unwrap();
-    *id_counter += 1;
+    let strategy_id = generate_strategy_id();
 
-    let current_id = *id_counter;
-    STRATEGY_ID_TO_INSTANCE.write().unwrap().insert(
-        current_id,
-        Box::new(BaseStrategy::new(
-            timeseries,
-            signal,
-            primary_confirm,
-            secondary_confirm,
-            pulse,
-            base_line,
-            stop_loss,
-            exit,
-        )),
-    );
+    let strategy = Box::new(BaseStrategy::new(
+        timeseries,
+        signal,
+        primary_confirm,
+        secondary_confirm,
+        pulse,
+        base_line,
+        stop_loss,
+        exit,
+    ));
 
-    current_id
+    let mut strategies = STRATEGIES.write().unwrap();
+
+    strategies.insert(strategy_id, strategy);
+
+    strategy_id
 }
 
 #[no_mangle]
 pub fn unregister_strategy(strategy_id: i32) -> i32 {
-    let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
+    let mut strategies = STRATEGIES.write().unwrap();
     strategies.remove(&strategy_id).is_some() as i32
 }
 
@@ -61,17 +62,17 @@ pub fn strategy_next(
     close: f32,
     volume: f32,
 ) -> (i32, f32) {
-    let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
-    if let Some(strategy) = strategies.get_mut(&strategy_id) {
-        let bar = OHLCV {
-            ts,
-            open,
-            high,
-            low,
-            close,
-            volume,
-        };
+    let bar = OHLCV {
+        ts,
+        open,
+        high,
+        low,
+        close,
+        volume,
+    };
 
+    let mut strategies = STRATEGIES.write().unwrap();
+    if let Some(strategy) = strategies.get_mut(&strategy_id) {
         let result = strategy.next(&bar);
 
         match result {
@@ -88,10 +89,10 @@ pub fn strategy_next(
 
 #[no_mangle]
 pub fn strategy_stop_loss(strategy_id: i32) -> (f32, f32) {
-    let mut strategies = STRATEGY_ID_TO_INSTANCE.write().unwrap();
-    if let Some(strategy) = strategies.get_mut(&strategy_id) {
-        let stop_loss_levels = strategy.stop_loss();
+    let strategies = STRATEGIES.read().unwrap();
 
+    if let Some(strategy) = strategies.get(&strategy_id) {
+        let stop_loss_levels = strategy.stop_loss();
         (stop_loss_levels.long, stop_loss_levels.short)
     } else {
         (-1.0, -1.0)
@@ -100,8 +101,6 @@ pub fn strategy_stop_loss(strategy_id: i32) -> (f32, f32) {
 
 #[no_mangle]
 pub fn allocate(size: usize) -> *mut u8 {
-    let _guard: MutexGuard<_> = ALLOC_MUTEX.lock().unwrap();
-
     let mut buf = Vec::with_capacity(size);
     let ptr = buf.as_mut_ptr();
     std::mem::forget(buf);

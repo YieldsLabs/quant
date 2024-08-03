@@ -2,14 +2,18 @@ use once_cell::sync::Lazy;
 use serde::Serialize;
 use serde_json::to_string;
 use std::collections::HashMap;
-use std::sync::RwLock;
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::{Arc, RwLock};
 use timeseries::prelude::*;
 
-static TIMESERIES_ID_TO_INSTANCE: Lazy<
-    RwLock<HashMap<i32, Box<dyn TimeSeries + Send + Sync + 'static>>>,
-> = Lazy::new(|| RwLock::new(HashMap::new()));
+static TIMESERIES: Lazy<Arc<RwLock<HashMap<i32, Box<dyn TimeSeries + Send + Sync + 'static>>>>> =
+    Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
 
-static TIMESERIES_ID_COUNTER: Lazy<RwLock<i32>> = Lazy::new(|| RwLock::new(0));
+static TIMESERIES_ID_COUNTER: Lazy<AtomicI32> = Lazy::new(|| AtomicI32::new(0));
+
+fn generate_timeseries_id() -> i32 {
+    TIMESERIES_ID_COUNTER.fetch_add(1, Ordering::SeqCst)
+}
 
 fn serialize<T: Serialize>(data: &T) -> (i32, i32) {
     match to_string(data) {
@@ -23,17 +27,13 @@ fn serialize<T: Serialize>(data: &T) -> (i32, i32) {
 
 #[no_mangle]
 pub fn timeseries_register() -> i32 {
-    let mut id_counter = TIMESERIES_ID_COUNTER.write().unwrap();
-    *id_counter += 1;
+    let timeseries_id = generate_timeseries_id();
 
-    let current_id = *id_counter;
+    let mut timeseries = TIMESERIES.write().unwrap();
 
-    TIMESERIES_ID_TO_INSTANCE
-        .write()
-        .unwrap()
-        .insert(current_id, Box::<BaseTimeSeries>::default());
+    timeseries.insert(timeseries_id, Box::<BaseTimeSeries>::default());
 
-    current_id
+    timeseries_id
 }
 
 #[no_mangle]
@@ -46,7 +46,7 @@ pub fn timeseries_add(
     close: f32,
     volume: f32,
 ) -> (i32, i32) {
-    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
+    let mut timeseries = TIMESERIES.write().unwrap();
     if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
         let bar = OHLCV {
             ts,
@@ -75,8 +75,9 @@ pub fn timeseries_next_bar(
     close: f32,
     volume: f32,
 ) -> (i32, i32) {
-    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
-    if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
+    let timeseries = TIMESERIES.read().unwrap();
+
+    if let Some(timeseries) = timeseries.get(&timeseries_id) {
         let curr_bar = OHLCV {
             ts,
             open,
@@ -106,8 +107,9 @@ pub fn timeseries_prev_bar(
     close: f32,
     volume: f32,
 ) -> (i32, i32) {
-    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
-    if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
+    let timeseries = TIMESERIES.read().unwrap();
+
+    if let Some(timeseries) = timeseries.get(&timeseries_id) {
         let curr_bar = OHLCV {
             ts,
             open,
@@ -138,8 +140,9 @@ pub fn timeseries_back_n_bars(
     volume: f32,
     n: usize,
 ) -> (i32, i32) {
-    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
-    if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
+    let timeseries = TIMESERIES.read().unwrap();
+
+    if let Some(timeseries) = timeseries.get(&timeseries_id) {
         let curr_bar = OHLCV {
             ts,
             open,
@@ -167,8 +170,9 @@ pub fn timeseries_ta(
     close: f32,
     volume: f32,
 ) -> (i32, i32) {
-    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
-    if let Some(timeseries) = timeseries.get_mut(&timeseries_id) {
+    let timeseries = TIMESERIES.read().unwrap();
+
+    if let Some(timeseries) = timeseries.get(&timeseries_id) {
         let curr_bar = OHLCV {
             ts,
             open,
@@ -188,6 +192,6 @@ pub fn timeseries_ta(
 
 #[no_mangle]
 pub fn timeseries_unregister(timeseries_id: i32) -> i32 {
-    let mut timeseries = TIMESERIES_ID_TO_INSTANCE.write().unwrap();
+    let mut timeseries = TIMESERIES.write().unwrap();
     timeseries.remove(&timeseries_id).is_some() as i32
 }
