@@ -106,7 +106,10 @@ class BybitWS(AbstractWS):
                 topic = data["topic"].split(".")
 
                 if symbol.name == topic[2] and timeframe == self.TIMEFRAMES[topic[1]]:
-                    return [Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY]) for ohlcv in data[self.DATA_KEY]]
+                    return [
+                        Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY])
+                        for ohlcv in data[self.DATA_KEY]
+                    ]
 
                 return []
 
