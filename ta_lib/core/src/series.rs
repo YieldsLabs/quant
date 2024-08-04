@@ -75,7 +75,7 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn shift(&self, n: usize) -> Self {
-        let shifted_len = self.len() - n;
+        let shifted_len = self.len().saturating_sub(n);
 
         std::iter::repeat(None)
             .take(n)
