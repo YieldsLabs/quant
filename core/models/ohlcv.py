@@ -46,12 +46,26 @@ class OHLCV:
 
     @classmethod
     def from_dict(cls, data: Dict) -> "OHLCV":
-        keys = ["timestamp", "open", "high", "low", "close", "volume"]
+        keys = [
+            "start",
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "confirm",
+        ]
 
         if any(key not in data for key in keys):
             raise ValueError(f"Data dictionary must contain the keys: {keys}")
 
-        return cls.from_list([data[key] for key in keys])
+        confirmed = ["start", "open", "high", "low", "close", "volume"]
+        not_confirmed = ["timestamp", "open", "high", "low", "close", "volume"]
+
+        ohlcv_keys = not_confirmed if not data["confirm"] else confirmed
+
+        return cls.from_list([data[key] for key in ohlcv_keys])
 
     @property
     def real_body(self) -> float:
