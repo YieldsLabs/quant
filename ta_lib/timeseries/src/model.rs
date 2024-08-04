@@ -54,17 +54,14 @@ impl TimeSeries for BaseTimeSeries {
     }
 
     fn ohlcv(&self, size: usize) -> OHLCVSeries {
-        let start_index = if self.len() >= size {
-            self.len() - size
-        } else {
-            0
-        };
+        let len = self.len();
+        let start_index = if len >= size { len - size } else { 0 };
 
         OHLCVSeries::from(
             self.data
-                .values()
+                .range(..)
                 .skip(start_index)
-                .copied()
+                .map(|(_, &v)| v)
                 .collect::<Vec<_>>(),
         )
     }

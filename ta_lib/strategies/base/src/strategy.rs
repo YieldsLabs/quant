@@ -2,7 +2,7 @@ use crate::source::{Source, SourceType};
 use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
 use timeseries::prelude::*;
 
-const DEFAULT_LOOKBACK: usize = 210;
+const DEFAULT_LOOKBACK: usize = 15;
 const DEFAULT_STOP_LEVEL: f32 = -1.0;
 
 #[derive(Debug, PartialEq)]
@@ -91,19 +91,26 @@ impl Strategy for BaseStrategy {
         }
 
         let ohlcv = self.ohlcv();
+
+        println!("{}", ohlcv);
+
         let bar_index = ohlcv.bar_index(bar);
-        let theo_price = self.suggested_entry(&ohlcv);
+
+        println!("Bar: {}, Index: {}", bar, bar_index);
+
+        let (go_long, go_short, exit_long, exit_short) = self.trade_signals(&ohlcv, bar_index);
+        let theo_price = self.suggested_entry(&ohlcv, bar_index);
 
         match self.trade_signals(&ohlcv, bar_index) {
-            (true, false, _, _) => TradeAction::GoLong(theo_price),
-            (false, true, _, _) => TradeAction::GoShort(theo_price),
+            (true, _, _, _) => TradeAction::GoLong(theo_price),
+            (_, true, _, _) => TradeAction::GoShort(theo_price),
             (_, _, true, _) => TradeAction::ExitLong(theo_price),
             (_, _, _, true) => TradeAction::ExitShort(theo_price),
             _ => TradeAction::DoNothing,
         }
     }
 
-    fn stop_loss(&self) -> StopLossLevels {
+    fn stop_loss(&self, bar: &OHLCV) -> StopLossLevels {
         if !self.can_process() {
             return StopLossLevels {
                 long: DEFAULT_STOP_LEVEL,
@@ -112,7 +119,8 @@ impl Strategy for BaseStrategy {
         }
 
         let ohlcv = self.ohlcv();
-        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&ohlcv);
+        let bar_index = ohlcv.bar_index(bar);
+        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&ohlcv, bar_index);
 
         StopLossLevels {
             long: stop_loss_long,
@@ -132,11 +140,11 @@ impl BaseStrategy {
         let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);
         let (baseline_close_long, baseline_close_short) = self.base_line.close(ohlcv);
 
-        let confirm_long = pulse_confirm_long & primary_confirm_long;
-        let confirm_short = pulse_confirm_short & primary_confirm_short;
+        let confirm_long = primary_confirm_long & pulse_confirm_long;
+        let confirm_short = primary_confirm_short & pulse_confirm_short;
 
-        let base_go_long = signal_go_long & confirm_long & baseline_confirm_long;
-        let base_go_short = signal_go_short & confirm_short & baseline_confirm_short;
+        let base_go_long = signal_go_long & baseline_confirm_long & confirm_long;
+        let base_go_short = signal_go_short & baseline_confirm_short & confirm_short;
 
         let go_long = base_go_long.get(bar_index).unwrap_or(false);
         let go_short = base_go_short.get(bar_index).unwrap_or(false);
@@ -151,15 +159,18 @@ impl BaseStrategy {
         (go_long, go_short, exit_long, exit_short)
     }
 
-    fn suggested_entry(&self, ohlcv: &OHLCVSeries) -> f32 {
-        ohlcv.source(SourceType::CLOSE).last().unwrap_or(f32::NAN)
+    fn suggested_entry(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> f32 {
+        ohlcv
+            .source(SourceType::CLOSE)
+            .get(bar_index)
+            .unwrap_or(f32::NAN)
     }
 
-    fn stop_loss_levels(&self, ohlcv: &OHLCVSeries) -> (f32, f32) {
+    fn stop_loss_levels(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (f32, f32) {
         let (sl_long_find, sl_short_find) = self.stop_loss.find(ohlcv);
 
-        let stop_loss_long = sl_long_find.last().unwrap_or(f32::NAN);
-        let stop_loss_short = sl_short_find.last().unwrap_or(f32::NAN);
+        let stop_loss_long = sl_long_find.get(bar_index).unwrap_or(f32::NAN);
+        let stop_loss_short = sl_short_find.get(bar_index).unwrap_or(f32::NAN);
 
         (stop_loss_long, stop_loss_short)
     }
@@ -301,6 +312,6 @@ mod tests {
             }),
             Box::new(MockExit {}),
         );
-        assert_eq!(strategy.lookback_period, 210);
+        assert_eq!(strategy.lookback_period, 15);
     }
 }

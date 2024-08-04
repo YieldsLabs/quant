@@ -35,5 +35,5 @@ pub trait StopLoss: Send + Sync {
 
 pub trait Strategy {
     fn next(&mut self, bar: &OHLCV) -> TradeAction;
-    fn stop_loss(&self) -> StopLossLevels;
+    fn stop_loss(&self, bar: &OHLCV) -> StopLossLevels;
 }

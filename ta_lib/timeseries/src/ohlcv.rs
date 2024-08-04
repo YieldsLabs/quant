@@ -1,5 +1,6 @@
 use core::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OHLCV {
@@ -42,6 +43,7 @@ impl OHLCVSeries {
         &self.volume
     }
 
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.close.len()
     }
@@ -87,5 +89,43 @@ impl<'a> From<&'a [OHLCV]> for OHLCVSeries {
 impl From<Vec<OHLCV>> for OHLCVSeries {
     fn from(data: Vec<OHLCV>) -> Self {
         OHLCVSeries::from(&data[..])
+    }
+}
+
+impl fmt::Display for OHLCV {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "OHLCV {{ ts: {}, open: {}, high: {}, low: {}, close: {}, volume: {} }}",
+            self.ts, self.open, self.high, self.low, self.close, self.volume
+        )
+    }
+}
+
+impl fmt::Display for OHLCVSeries {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "OHLCV:\n")?;
+        write!(
+            f,
+            "Index | Timestamp | Open   | High   | Low    | Close  | Volume\n"
+        )?;
+        write!(
+            f,
+            "------------------------------------------------------------\n"
+        )?;
+        for i in 0..self.len() {
+            write!(
+                f,
+                "{:<5} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8} | {:<8}\n",
+                i,
+                self.ts[i],
+                self.open[i].map_or("None".to_string(), |v| v.to_string()),
+                self.high[i].map_or("None".to_string(), |v| v.to_string()),
+                self.low[i].map_or("None".to_string(), |v| v.to_string()),
+                self.close[i].map_or("None".to_string(), |v| v.to_string()),
+                self.volume[i].map_or("None".to_string(), |v| v.to_string()),
+            )?;
+        }
+        Ok(())
     }
 }
