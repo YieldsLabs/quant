@@ -46,7 +46,7 @@ class StrategyRef:
     ) -> Optional[SignalEvent]:
         exports = self.instance_ref.exports(self.store_ref)
 
-        [raw_action, price] = exports["strategy_next"](
+        strategy_args = [
             self.store_ref,
             self.id,
             ohlcv.timestamp,
@@ -55,7 +55,9 @@ class StrategyRef:
             ohlcv.low,
             ohlcv.close,
             ohlcv.volume,
-        )
+        ]
+
+        [raw_action, price] = exports["strategy_next"](*strategy_args)
 
         action = Action.from_raw(raw_action)
 
@@ -63,7 +65,7 @@ class StrategyRef:
 
         if action in (Action.GO_LONG, Action.GO_SHORT):
             [long_stop_loss, short_stop_loss] = exports["strategy_stop_loss"](
-                self.store_ref, self.id
+                *strategy_args
             )
 
         side = (
