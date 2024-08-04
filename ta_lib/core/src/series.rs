@@ -1,4 +1,5 @@
 use crate::{ONE, ZERO};
+use std::fmt;
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -87,7 +88,7 @@ impl<T: Clone> Series<T> {
     }
 
     pub fn get(&self, index: usize) -> Option<T> {
-        if index < self.data.len() {
+        if index < self.len() {
             self.data[index].clone()
         } else {
             None
@@ -117,6 +118,22 @@ impl Series<f32> {
 
     pub fn one(len: usize) -> Series<f32> {
         Series::fill(ONE, len)
+    }
+}
+
+impl<T: fmt::Display> fmt::Display for Series<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[")?;
+        for (i, item) in self.data.iter().enumerate() {
+            if i > 0 {
+                write!(f, ", ")?;
+            }
+            match item {
+                Some(value) => write!(f, "{}", value)?,
+                None => write!(f, "None")?,
+            }
+        }
+        write!(f, "]")
     }
 }
 
