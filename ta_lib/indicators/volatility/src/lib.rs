@@ -17,5 +17,5 @@ pub use kch::{kch, kchp, kchw};
 pub use pk::pk;
 pub use ppb::{ppb, ppbp, ppbw};
 pub use rs::rs;
-pub use tr::{atr, snatr, tr};
+pub use tr::{atr, snatr, tr, wtr};
 pub use yz::yz;
