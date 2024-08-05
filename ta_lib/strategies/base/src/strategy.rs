@@ -98,7 +98,6 @@ impl Strategy for BaseStrategy {
 
         println!("Bar: {}, Index: {}", bar, bar_index);
 
-        let (go_long, go_short, exit_long, exit_short) = self.trade_signals(&ohlcv, bar_index);
         let theo_price = self.suggested_entry(&ohlcv, bar_index);
 
         match self.trade_signals(&ohlcv, bar_index) {
