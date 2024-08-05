@@ -5,9 +5,11 @@ pub fn rsi(source: &Series<f32>, smooth: Smooth, period: usize) -> Series<f32> {
     let up = mom.max(&ZERO).smooth(smooth, period);
     let down = mom.min(&ZERO).negate().smooth(smooth, period);
 
-    let default = Series::fill(SCALE, source.len());
-
-    iff!(down.seq(&ZERO), default, SCALE - (SCALE / (1. + up / down)))
+    let len = source.len();
+    
+    let rsi = iff!(down.seq(&ZERO), Series::fill(SCALE, len),  SCALE - (SCALE / (1. + &up / down)));
+    
+    iff!(up.seq(&ZERO), Series::fill(ZERO, len), rsi)
 }
 
 #[cfg(test)]
@@ -22,7 +24,7 @@ mod test {
         ]);
         let period = 3;
         let expected = [
-            100.0, 100.0, 100.0, 100.0, 46.885506, 66.75195, 50.889442, 65.60162, 73.53246,
+            0.0, 100.0, 100.0, 100.0, 46.885506, 66.75195, 50.889442, 65.60162, 73.53246,
             23.915344, 57.76078, 71.00006, 46.02974, 25.950226, 25.200401, 14.512299, 10.280083,
             33.926575, 36.707954, 30.863396, 15.785042, 64.06485,
         ];
