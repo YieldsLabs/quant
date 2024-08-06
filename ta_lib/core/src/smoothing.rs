@@ -22,9 +22,10 @@ impl Series<f32> {
     pub fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
         let len = self.len();
         let mut sum = Series::zero(len);
+        let a = alpha * self;
 
         for _ in 0..len {
-            sum = alpha * self + (1. - alpha) * nz!(sum.shift(1), seed)
+            sum = &a + (1. - alpha) * nz!(sum.shift(1), seed)
         }
 
         sum
@@ -35,7 +36,7 @@ impl Series<f32> {
         let norm = weights.iter().sum::<f32>();
 
         for (i, &weight) in weights.iter().enumerate() {
-            sum = sum + self.shift(i) * weight;
+            sum = sum + nz!(self.shift(i), self) * weight;
         }
 
         sum / norm
@@ -75,16 +76,16 @@ impl Series<f32> {
     }
 
     fn swma(&self) -> Self {
-        let x1 = self.shift(1);
-        let x2 = self.shift(2);
-        let x3 = self.shift(3);
+        let x1 = nz!(self.shift(1), self);
+        let x2 = nz!(self.shift(2), self);
+        let x3 = nz!(self.shift(3), self);
 
         x3 * 1. / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * 1. / 6.
     }
 
     fn hma(&self, period: usize) -> Self {
-        let lag = (0.5 * period as f32).round() as usize;
-        let sqrt_period = (period as f32).sqrt() as usize;
+        let lag = (0.5 * period as f32) as usize;
+        let sqrt_period = (period as f32).sqrt().floor() as usize;
 
         (2. * self.wma(lag) - self.wma(period)).wma(sqrt_period)
     }
@@ -114,20 +115,20 @@ impl Series<f32> {
         let volatility = self.change(1).abs().sum(period);
         let er = iff!(volatility.seq(&ZERO), Series::zero(len), mom / volatility);
 
-        let alpha = (er * 0.666_666_7).pow(2);
+        let alpha = (er.nz(Some(ZERO)) * 0.6015 + 0.0645).pow(2);
 
-        self.ew(&alpha, self)
+        self.ew(&alpha, &self)
     }
 
     fn zlema(&self, period: usize) -> Series<f32> {
-        let lag = (0.5 * (period as f32 - 1.)) as usize;
+        let lag = (0.5 * (period as f32 - 1.)).floor() as usize;
 
-        (self + (self - self.shift(lag))).ema(period)
+        (self + (self - nz!(self.shift(lag), self))).ema(period)
     }
 
     fn ults(&self, period: usize) -> Series<f32> {
         let a1 = (-1.414 * std::f32::consts::PI / period as f32).exp();
-        let c2 = 2.0 * a1 * (1.414 * std::f32::consts::PI / period as f32).cos();
+        let c2 = 2. * a1 * (1.414 * std::f32::consts::PI / period as f32).cos();
         let c3 = -a1 * a1;
         let c1 = 0.25 * (1.0 + c2 - c3);
         let len = self.len();
@@ -212,7 +213,7 @@ mod tests {
     #[test]
     fn test_wma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, 2.3333333, 3.3333333, 4.3333335]);
+        let expected = Series::from([1.0, 1.6666666, 2.3333333, 3.3333333, 4.3333335]);
 
         let result = source.wma(3);
 
@@ -222,7 +223,7 @@ mod tests {
     #[test]
     fn test_swma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 2.5, 3.5]);
+        let expected = Series::from([1.0, 1.6666667, 2.0, 2.5, 3.5]);
 
         let result = source.swma();
 
@@ -232,7 +233,7 @@ mod tests {
     #[test]
     fn test_kama() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 4.0, 4.4444447]);
+        let expected = Series::from([1.0, 1.0041603, 1.0124636, 2.337603, 3.5185251]);
 
         let result = source.kama(3);
 

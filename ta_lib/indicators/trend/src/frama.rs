@@ -6,7 +6,7 @@ pub fn frama(
     low: &Series<f32>,
     period: usize,
 ) -> Series<f32> {
-    let len = (0.5 * period as f32).round() as usize;
+    let len = (0.5 * period as f32).floor() as usize;
     let hh = high.highest(len);
     let ll = low.lowest(len);
 
@@ -40,8 +40,8 @@ mod tests {
             5.2000, 5.2169,
         ]);
         let expected = vec![
-            0.0, 0.0, 5.0958, 5.09975, 5.0997515, 5.100709, 5.10147, 5.1022835, 5.130958,
-            5.2076283, 5.172987, 5.1907825, 5.2242994,
+            0.0, 5.0896997, 5.090174, 5.0918617, 5.0919185, 5.092221, 5.092286, 5.092319, 5.094049,
+            5.105295, 5.122919, 5.1347446, 5.152087,
         ];
 
         let result: Vec<f32> = frama(&source, &high, &low, 3).into();

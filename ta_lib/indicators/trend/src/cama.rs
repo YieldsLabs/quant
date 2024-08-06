@@ -18,7 +18,7 @@ pub fn cama(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use volatility::tr;
+    use volatility::wtr;
 
     #[test]
     fn test_cama() {
@@ -52,7 +52,7 @@ mod tests {
             7.1226425, 7.1630764, 7.157433, 7.156123,
         ];
         let period = 2;
-        let tr = tr(&high, &low, &close);
+        let tr = wtr(&high, &low, &close);
 
         let result: Vec<f32> = cama(&close, &high, &low, &tr, period).into();
 

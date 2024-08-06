@@ -50,7 +50,7 @@ pub fn ma_indicator(
 
     match ma {
         MovingAverageType::ALMA => alma(&source, period, 0.85, 6.0),
-        MovingAverageType::CAMA => cama(&source, data.high(), data.low(), &data.tr(), period),
+        MovingAverageType::CAMA => cama(&source, data.high(), data.low(), &data.wtr(), period),
         MovingAverageType::DEMA => dema(&source, period),
         MovingAverageType::EMA => ema(&source, period),
         MovingAverageType::FRAMA => frama(&source, data.high(), data.low(), period),

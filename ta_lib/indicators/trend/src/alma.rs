@@ -1,11 +1,12 @@
 use core::prelude::*;
 
 pub fn alma(source: &Series<f32>, period: usize, offset: f32, sigma: f32) -> Series<f32> {
-    let m = offset * (period as f32 - 1.);
+    let m = (offset * (period as f32 - 1.)).floor();
     let s = period as f32 / sigma;
 
     let weights = (0..period)
-        .map(|i| ((-1. * (i as f32 - m).powi(2)) / (2. * s.powi(2))).exp())
+        .rev()
+        .map(|i| (-1. * (i as f32 - m).powi(2) / (2. * s.powi(2))).exp())
         .collect::<Vec<_>>();
 
     source.wg(&weights)
@@ -21,27 +22,18 @@ mod tests {
             0.01707, 0.01706, 0.01707, 0.01705, 0.01710, 0.01705, 0.01704, 0.01709,
         ]);
         let expected = [
-            0.0,
-            0.0,
-            0.017066907,
-            0.01705621,
-            0.017084463,
-            0.017065462,
-            0.017043246,
-            0.017074436,
+            0.01707,
+            0.017067866,
+            0.01706213,
+            0.017066803,
+            0.017057454,
+            0.01708935,
+            0.01705426,
+            0.01704639,
         ];
-        let epsilon = 0.001;
 
         let result: Vec<f32> = alma(&source, 3, 0.85, 6.0).into();
 
-        for i in 0..source.len() {
-            assert!(
-                (result[i] - expected[i]).abs() < epsilon,
-                "at position {}: {} != {}",
-                i,
-                result[i],
-                expected[i]
-            );
-        }
+        assert_eq!(result, expected);
     }
 }

@@ -13,7 +13,7 @@ mod tests {
     #[test]
     fn test_hema() {
         let source = Series::from([19.099, 19.079, 19.074, 19.139, 19.191]);
-        let expected = vec![0.0, 19.08567, 19.07122, 19.114738, 19.18724];
+        let expected = vec![19.099003, 19.08567, 19.07122, 19.114738, 19.18724];
         let period = 4;
 
         let result: Vec<f32> = hema(&source, period).into();
