@@ -4,9 +4,9 @@ pub fn dmi(
     high: &Series<f32>,
     low: &Series<f32>,
     atr: &Series<f32>,
-    smooth_type: Smooth,
-    adx_period: usize,
-    di_period: usize,
+    smooth: Smooth,
+    period_adx: usize,
+    period_di: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
     let len = high.len();
     let up = high.change(1);
@@ -18,14 +18,14 @@ pub fn dmi(
     let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
     let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
 
-    let di_plus = SCALE * dm_plus.smooth(smooth_type, di_period) / atr;
-    let di_minus = SCALE * dm_minus.smooth(smooth_type, di_period) / atr;
+    let di_plus = SCALE * dm_plus.smooth(smooth, period_di) / atr;
+    let di_minus = SCALE * dm_minus.smooth(smooth, period_di) / atr;
 
     let sum = &di_plus + &di_minus;
 
     let adx = SCALE
         * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum))
-            .smooth(smooth_type, adx_period);
+            .smooth(smooth, period_adx);
 
     (di_plus, di_minus, adx)
 }
