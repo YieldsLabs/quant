@@ -12,7 +12,7 @@ mod tests {
     fn test_ults() {
         let source = Series::from([18.898, 18.838, 18.881, 18.925, 18.846]);
         let period = 3;
-        let expected = vec![0.0, 0.0, 18.855503, 18.92342, 18.88072];
+        let expected = vec![18.898, 18.85439, 18.853537, 18.922752, 18.880928];
 
         let result: Vec<f32> = ults(&source, period).into();
 

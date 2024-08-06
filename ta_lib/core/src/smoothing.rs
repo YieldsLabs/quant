@@ -132,18 +132,23 @@ impl Series<f32> {
         let c2 = 2. * a1 * (1.414 * std::f32::consts::PI / period as f32).cos();
         let c3 = -a1 * a1;
         let c1 = 0.25 * (1. + c2 - c3);
+
         let len = self.len();
-        let mut us = self.clone();
-        
+
+        let mut us = Series::zero(len);
+
+        let src1 = nz!(self.shift(1), self);
+        let src2 = nz!(self.shift(2), src1);
+
         let a = (1. - c1) * self;
-        let b = (2. * c1 - c2) * self.shift(1);
-        let c = (c1 + c3) * self.shift(2);
+        let b = (2. * c1 - c2) * &src1;
+        let c = (c1 + c3) * &src2;
 
         let abc = a + b - c;
 
-        for i in 4..len {
-            let d = c2 * nz!(us.shift(i), self);
-            let e = c3 * nz!(us.shift(i - 1), self);
+        for i in 0..len {
+            let d = c2 * nz!(us.shift(1), src1);
+            let e = c3 * nz!(us.shift(2), src2);
 
             us = &abc + d + e;
         }
@@ -275,15 +280,8 @@ mod tests {
             0.3847, 0.3863, 0.3885, 0.3839, 0.3834, 0.3843, 0.3840, 0.3834, 0.3832,
         ]);
         let expected = Series::from([
-            f32::NAN,
-            f32::NAN,
-            0.3882295,
-            0.3856935,
-            0.38252345,
-            0.3839337,
-            0.38428447,
-            0.38350397,
-            0.38312393
+            0.38469997, 0.38586292, 0.3883182, 0.3857727, 0.38236603, 0.38377836, 0.38435996,
+            0.38352367, 0.38307717,
         ]);
 
         let result = source.ults(3);
