@@ -8,15 +8,15 @@ const DEFAULT_ATR_FACTOR: f32 = 1.2;
 const DEFAULT_ATR_SMOOTH: Smooth = Smooth::EMA;
 
 pub struct MaBaseLine {
-    source_type: SourceType,
+    source: SourceType,
     ma: MovingAverageType,
     period: usize,
 }
 
 impl MaBaseLine {
-    pub fn new(source_type: SourceType, ma: MovingAverageType, period: f32) -> Self {
+    pub fn new(source: SourceType, ma: MovingAverageType, period: f32) -> Self {
         Self {
-            source_type,
+            source,
             ma,
             period: period as usize,
         }
@@ -29,7 +29,7 @@ impl BaseLine for MaBaseLine {
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
+        let ma = ma_indicator(&self.ma, data, self.source, self.period);
         let prev_ma = ma.shift(1);
 
         let dist = (&ma - data.close()).abs();
@@ -42,7 +42,7 @@ impl BaseLine for MaBaseLine {
     }
 
     fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
+        let ma = ma_indicator(&self.ma, data, self.source, self.period);
         let close = data.close();
 
         (close.cross_under(&ma), close.cross_over(&ma))
