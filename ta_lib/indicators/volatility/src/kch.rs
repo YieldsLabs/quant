@@ -7,13 +7,13 @@ pub fn kch(
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = source.smooth(smooth, period);
+    let middle = source.smooth(smooth, period);
     let volatility = factor * atr;
 
-    let upper_band = &middle_band + &volatility;
-    let lower_band = &middle_band - &volatility;
+    let upper = &middle + &volatility;
+    let lower = &middle - &volatility;
 
-    (upper_band, middle_band, lower_band)
+    (upper, middle, lower)
 }
 
 pub fn kchp(
@@ -23,9 +23,9 @@ pub fn kchp(
     period: usize,
     factor: f32,
 ) -> Series<f32> {
-    let (upb, _, lb) = kch(source, smooth, atr, period, factor);
+    let (upc, _, lc) = kch(source, smooth, atr, period, factor);
 
-    (source - &lb) / (upb - lb)
+    (source - &lc) / (upc - lc)
 }
 
 pub fn kchw(
@@ -35,9 +35,9 @@ pub fn kchw(
     period: usize,
     factor: f32,
 ) -> Series<f32> {
-    let (upb, mb, lb) = kch(source, smooth, atr, period, factor);
+    let (upc, mc, lc) = kch(source, smooth, atr, period, factor);
 
-    SCALE * (upb - lb) / mb
+    SCALE * (upc - lc) / mc
 }
 
 #[cfg(test)]

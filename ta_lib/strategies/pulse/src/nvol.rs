@@ -6,14 +6,14 @@ use volume::nvol;
 const NVOL_LINE: f32 = 100.0;
 
 pub struct NvolPulse {
-    smooth_type: Smooth,
+    smooth: Smooth,
     period: usize,
 }
 
 impl NvolPulse {
-    pub fn new(smooth_type: Smooth, period: f32) -> Self {
+    pub fn new(smooth: Smooth, period: f32) -> Self {
         Self {
-            smooth_type,
+            smooth,
             period: period as usize,
         }
     }
@@ -25,7 +25,7 @@ impl Pulse for NvolPulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let nvol = nvol(data.volume(), self.smooth_type, self.period);
+        let nvol = nvol(data.volume(), self.smooth, self.period);
 
         (nvol.sgt(&NVOL_LINE), nvol.sgt(&NVOL_LINE))
     }

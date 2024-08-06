@@ -42,12 +42,13 @@ impl Pulse for SqzPulse {
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let source = data.source(self.source);
+        let atr = data.atr(self.smooth_atr, self.period_atr);
 
         let (upbb, _, lwbb) = bb(&source, self.smooth, self.period, self.factor_bb);
         let (upkch, _, lwkch) = kch(
             &source,
             self.smooth,
-            &data.atr(self.smooth_atr, self.period_atr),
+            &atr,
             self.period,
             self.factor_kch,
         );

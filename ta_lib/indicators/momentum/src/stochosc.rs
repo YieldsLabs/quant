@@ -124,8 +124,8 @@ mod tests {
         let k_period = 3;
         let d_period = 3;
 
-        let expected_k = vec![0.0, 0.0, 58.333336, 41.666668, 41.666668];
-        let expected_d = vec![0.0, 0.0, 0.0, 0.0, 44.444447];
+        let expected_k = vec![50.0, 66.666664, 58.333336, 41.666668, 41.666668];
+        let expected_d = vec![50.0, 61.11111, 59.722218, 51.38889, 44.444447];
 
         let (k, d) = sso(&close, &high, &low, Smooth::WMA, k_period, d_period);
 
