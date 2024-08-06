@@ -6,9 +6,13 @@ pub fn rsi(source: &Series<f32>, smooth: Smooth, period: usize) -> Series<f32> {
     let down = mom.min(&ZERO).negate().smooth(smooth, period);
 
     let len = source.len();
-    
-    let rsi = iff!(down.seq(&ZERO), Series::fill(SCALE, len),  SCALE - (SCALE / (1. + &up / down)));
-    
+
+    let rsi = iff!(
+        down.seq(&ZERO),
+        Series::fill(SCALE, len),
+        SCALE - (SCALE / (1. + &up / down))
+    );
+
     iff!(up.seq(&ZERO), Series::fill(ZERO, len), rsi)
 }
 
