@@ -335,22 +335,14 @@ mod tests {
     fn test_std() {
         let source = Series::from([2.0, 4.0, 6.0, 8.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0]);
         let expected = Series::from([
-            0.0, 1.0, 1.6329, 1.6329, 1.6329, 0.8164, 0.8164, 0.8164, 0.8164, 0.8164, 0.8164,
+            0.0, 1.0, 1.632993, 1.6329936, 1.6329924, 0.816495, 0.816495, 0.816495, 0.8164974,
+            0.8164974,
         ]);
         let period = 3;
-        let epsilon = 0.001;
 
         let result = source.std(period);
 
-        for i in 0..result.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
-        }
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -403,30 +395,21 @@ mod tests {
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
         ]);
         let length = 1;
-        let epsilon = 0.001;
         let expected = Series::from([
             f32::NAN,
             -0.25,
-            0.0599,
-            -0.540,
-            0.7199,
+            0.060001373,
+            -0.5400009,
+            0.7200012,
             0.5,
-            0.2700,
-            0.3200,
-            0.4200,
+            0.26999664,
+            0.3199997,
+            0.42000198,
         ]);
 
         let result = source.change(length);
 
-        for i in 0..result.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
-        }
+        assert_eq!(result, expected);
     }
 
     #[test]

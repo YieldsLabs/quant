@@ -1,5 +1,4 @@
 use crate::{ONE, ZERO};
-use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Series<T> {
@@ -20,20 +19,6 @@ impl<T> FromIterator<Option<T>> for Series<T> {
         Series {
             data: iter.into_iter().collect(),
         }
-    }
-}
-
-impl<T> Index<usize> for Series<T> {
-    type Output = Option<T>;
-
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.data[idx]
-    }
-}
-
-impl<T> IndexMut<usize> for Series<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.data[index]
     }
 }
 

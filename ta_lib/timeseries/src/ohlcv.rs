@@ -119,11 +119,21 @@ impl fmt::Display for OHLCVSeries {
                 "{:<5} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8} | {:<8}\n",
                 i,
                 self.ts[i],
-                self.open[i].map_or("None".to_string(), |v| v.to_string()),
-                self.high[i].map_or("None".to_string(), |v| v.to_string()),
-                self.low[i].map_or("None".to_string(), |v| v.to_string()),
-                self.close[i].map_or("None".to_string(), |v| v.to_string()),
-                self.volume[i].map_or("None".to_string(), |v| v.to_string()),
+                self.open
+                    .get(i)
+                    .map_or("None".to_string(), |v| v.to_string()),
+                self.high
+                    .get(i)
+                    .map_or("None".to_string(), |v| v.to_string()),
+                self.low
+                    .get(i)
+                    .map_or("None".to_string(), |v| v.to_string()),
+                self.close
+                    .get(i)
+                    .map_or("None".to_string(), |v| v.to_string()),
+                self.volume
+                    .get(i)
+                    .map_or("None".to_string(), |v| v.to_string()),
             )?;
         }
         Ok(())

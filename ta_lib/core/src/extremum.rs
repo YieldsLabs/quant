@@ -57,35 +57,25 @@ mod tests {
 
     #[test]
     fn test_smax() {
-        let source = vec![
+        let series = Series::from([
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
-        ];
+        ]);
         let length = 1;
-        let epsilon = 0.001;
-        let expected = [
-            Some(0.0),
-            Some(0.0),
-            Some(0.0599),
-            Some(0.0),
-            Some(0.7199),
-            Some(0.5),
-            Some(0.2700),
-            Some(0.3200),
-            Some(0.4200),
-        ];
-        let series = Series::from(&source);
+        let expected = Series::from([
+            0.,
+            0.,
+            0.060001373,
+            0.,
+            0.7200012,
+            0.5,
+            0.26999664,
+            0.3199997,
+            0.42000198,
+        ]);
 
         let result = series.change(length).max(&0.0);
 
-        for i in 0..result.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
-        }
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -128,35 +118,15 @@ mod tests {
 
     #[test]
     fn test_smin() {
-        let source = vec![
+        let series = Series::from([
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
-        ];
+        ]);
         let length = 1;
-        let epsilon = 0.001;
-        let expected = [
-            Some(0.0),
-            Some(-0.25),
-            Some(0.0),
-            Some(-0.5399),
-            Some(0.0),
-            Some(0.0),
-            Some(0.0),
-            Some(0.0),
-            Some(0.0),
-        ];
-        let series = Series::from(&source);
+        let expected = Series::from([0., -0.25, 0., -0.5400009, 0., 0., 0., 0., 0.]);
 
         let result = series.change(length).min(&0.0);
 
-        for i in 0..result.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
-        }
+        assert_eq!(result, expected);
     }
 
     #[test]
