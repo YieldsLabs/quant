@@ -4,7 +4,7 @@ mod constants;
 mod cross;
 mod distance;
 mod extremum;
-mod format;
+mod fmt;
 mod from;
 mod macros;
 mod math;
