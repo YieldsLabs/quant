@@ -107,11 +107,11 @@ impl fmt::Display for OHLCVSeries {
         writeln!(f, "OHLCV:")?;
         writeln!(
             f,
-            "Index | Timestamp | Open   | High   | Low    | Close  | Volume"
+            "Index | Timestamp     | Open     | High     | Low      | Close    | Volume"
         )?;
         writeln!(
             f,
-            "------------------------------------------------------------"
+            "--------------------------------------------------------------------------"
         )?;
         for i in 0..self.len() {
             writeln!(
