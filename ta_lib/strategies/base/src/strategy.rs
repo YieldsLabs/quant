@@ -177,10 +177,7 @@ impl BaseStrategy {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::{Source, SourceType};
-    use crate::{
-        BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss, Strategy, TradeAction,
-    };
+    use crate::{BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss};
     use core::Series;
     use timeseries::{BaseTimeSeries, OHLCVSeries};
 

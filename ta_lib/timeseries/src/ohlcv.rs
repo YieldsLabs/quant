@@ -104,19 +104,19 @@ impl fmt::Display for OHLCV {
 
 impl fmt::Display for OHLCVSeries {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "OHLCV:\n")?;
-        write!(
+        writeln!(f, "OHLCV:")?;
+        writeln!(
             f,
-            "Index | Timestamp | Open   | High   | Low    | Close  | Volume\n"
+            "Index | Timestamp | Open   | High   | Low    | Close  | Volume"
         )?;
-        write!(
+        writeln!(
             f,
-            "------------------------------------------------------------\n"
+            "------------------------------------------------------------"
         )?;
         for i in 0..self.len() {
-            write!(
+            writeln!(
                 f,
-                "{:<5} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8} | {:<8}\n",
+                "{:<5} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8} | {:<8}",
                 i,
                 self.ts[i],
                 self.open

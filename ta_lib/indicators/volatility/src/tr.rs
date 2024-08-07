@@ -180,21 +180,12 @@ mod tests {
         let atr_period = 3;
         let atr = atr(&high, &low, &close, Smooth::SMMA, atr_period);
         let period = 3;
-        let epsilon = 0.001;
         let expected = [
-            0.0, 0.0, 50., 82.57546, 99.494743, 99.74737, 100.0, 90.14031, 55.20136,
+            0.0, 0.0, 50.0, 82.575455, 99.49475, 99.747375, 100.0, 90.14032, 55.201355,
         ];
 
         let result: Vec<f32> = snatr(&atr, atr_period, Smooth::WMA, period).into();
 
-        for i in 0..high.len() {
-            assert!(
-                (result[i] - expected[i]).abs() < epsilon,
-                "at position {}: {} != {}",
-                i,
-                result[i],
-                expected[i]
-            )
-        }
+        assert_eq!(result, expected);
     }
 }

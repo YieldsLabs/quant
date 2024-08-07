@@ -118,7 +118,7 @@ impl Series<f32> {
 
         let alpha = (er.nz(Some(ZERO)) * 0.6015 + 0.0645).pow(2);
 
-        self.ew(&alpha, &self)
+        self.ew(&alpha, self)
     }
 
     fn zlema(&self, period: usize) -> Series<f32> {

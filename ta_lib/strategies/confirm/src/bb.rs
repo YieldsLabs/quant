@@ -27,7 +27,7 @@ impl Confirm for BbConfirm {
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let close = data.close();
         let prev_close = close.shift(1);
-        let (upper_bb, _, lower_bb) = bb(&close, self.smooth, self.period, self.factor);
+        let (upper_bb, _, lower_bb) = bb(close, self.smooth, self.period, self.factor);
 
         (
             close.sgt(&lower_bb) & prev_close.slt(&lower_bb),

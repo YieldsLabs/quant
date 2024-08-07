@@ -127,11 +127,8 @@ pub fn allocate(size: usize) -> *mut u8 {
 mod tests {
     use super::*;
     use core::prelude::*;
-    use timeseries::prelude::*;
 
     const period: usize = 7;
-
-    struct MockTimeSeries;
 
     struct MockSignal;
     impl Signal for MockSignal {
