@@ -146,7 +146,7 @@ impl Series<f32> {
 
         let abc = a + b - c;
 
-        for i in 0..len {
+        for _ in 0..len {
             let d = c2 * nz!(us.shift(1), src1);
             let e = c3 * nz!(us.shift(2), src2);
 

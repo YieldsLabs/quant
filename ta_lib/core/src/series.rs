@@ -1,5 +1,4 @@
 use crate::{ONE, ZERO};
-use std::fmt;
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -38,7 +37,7 @@ impl<T> IndexMut<usize> for Series<T> {
     }
 }
 
-impl<T: Clone> Series<T> {
+impl<T> Series<T> {
     pub fn iter(&self) -> impl Iterator<Item = &Option<T>> {
         self.data.iter()
     }
@@ -65,15 +64,13 @@ impl<T: Clone> Series<T> {
             .collect()
     }
 
-    pub fn empty(length: usize) -> Self {
-        std::iter::repeat(None).take(length).collect()
-    }
-
     #[inline]
     pub fn len(&self) -> usize {
         self.data.len()
     }
+}
 
+impl<T: Clone> Series<T> {
     pub fn shift(&self, n: usize) -> Self {
         let shifted_len = self.len().saturating_sub(n);
 
@@ -81,6 +78,10 @@ impl<T: Clone> Series<T> {
             .take(n)
             .chain(self.iter().take(shifted_len).cloned())
             .collect()
+    }
+
+    pub fn empty(length: usize) -> Self {
+        std::iter::repeat(None).take(length).collect()
     }
 
     pub fn last(&self) -> Option<T> {
@@ -118,22 +119,6 @@ impl Series<f32> {
 
     pub fn one(len: usize) -> Series<f32> {
         Series::fill(ONE, len)
-    }
-}
-
-impl<T: fmt::Display> fmt::Display for Series<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[")?;
-        for (i, item) in self.data.iter().enumerate() {
-            if i > 0 {
-                write!(f, ", ")?;
-            }
-            match item {
-                Some(value) => write!(f, "{}", value)?,
-                None => write!(f, "None")?,
-            }
-        }
-        write!(f, "]")
     }
 }
 
