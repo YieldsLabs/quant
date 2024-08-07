@@ -182,6 +182,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         self, event: NewMarketDataReceived, position: Optional[Position]
     ):
         next_position = position
+
         if position and not position.has_risk:
             prev_bar = next_position.risk_bar
             next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
@@ -216,7 +217,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     bars.append(next_bar)
                     prev_bar = next_bar
 
-            print(f"BARS: {len(bars)}")
+            print(f"BARS: {bars}")
 
             for bar in sorted(bars, key=lambda x: x.timestamp):
                 ohlcv = next_position.position_risk.ohlcv
@@ -225,7 +226,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 if len(ts) > 2:
                     ts_diff = _ema(np.diff(ts))
                     mean, std = np.mean(ts_diff), max(
-                        np.finfo(float).eps, np.std(ts_diff)
+                        np.std(ts_diff), np.finfo(float).eps
                     )
 
                     current_diff = abs(bar.timestamp - ts[-1])

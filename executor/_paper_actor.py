@@ -53,16 +53,7 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         entry_order = current_position.entry_order()
 
-        next_bar = await self.ask(
-            NextBar(self.symbol, self.timeframe, current_position.signal_bar)
-        )
-
-        if next_bar:
-            print(
-                f"Open position gap: {next_bar.timestamp - current_position.signal_bar.timestamp}"
-            )
-
-        price = self._find_open_price(current_position, entry_order, next_bar)
+        price = self._find_open_price(current_position, entry_order)
         size = entry_order.size
         fee = current_position.theo_taker_fee(size, price)
 
@@ -97,7 +88,11 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         exit_order = current_position.exit_order()
 
-        price = self._find_close_price(current_position, exit_order)
+        next_bar = await self.ask(
+            NextBar(self.symbol, self.timeframe, current_position.risk_bar)
+        )
+
+        price = self._find_close_price(current_position, exit_order, next_bar)
         size = exit_order.size
         fee = current_position.theo_taker_fee(size, price)
 
@@ -138,8 +133,8 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         diff = bar.timestamp - position.signal_bar.timestamp
 
-        if diff > 300000:
-            logger.warn("Next bar is too far")
+        if diff > position.signal.timeframe.to_milliseconds():
+            logger.warn("Open next bar is too far")
             bar = position.signal_bar
 
         return self._find_fill_price(position.side, bar, order.price)
@@ -148,6 +143,12 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
         self, position: Position, order: Order, bar: Optional[OHLCV] = None
     ) -> float:
         if bar is None:
+            bar = position.risk_bar
+
+        diff = bar.timestamp - position.risk_bar.timestamp
+
+        if diff > position.signal.timeframe.to_milliseconds():
+            logger.warn("Close next bar is too far")
             bar = position.risk_bar
 
         return self._find_fill_price(position.side, bar, order.price)

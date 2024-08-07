@@ -107,7 +107,7 @@ class TaMixin:
 class PositionRisk(TaMixin):
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(2.5, 2.786))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.8, 2.2))
     model = SGDRegressor(max_iter=1, tol=None, warm_start=True)
 
     @property
@@ -120,7 +120,7 @@ class PositionRisk(TaMixin):
             return None
 
         data = np.array([[ohlcv.high, ohlcv.low, ohlcv.close] for ohlcv in self.ohlcv])
-        hlc3 = (data[:, 0] + data[:, 1] + data[:, 2]) / 3
+        hlc3 = (data[:, 0] + data[:, 1] + data[:, 2]) / 3.0
         target = data[1:, 2]
         features = hlc3[:-1].reshape(-1, 1)
         self.model.partial_fit(features, target)
@@ -160,7 +160,7 @@ class PositionRisk(TaMixin):
             print(
                 f"CHeCK => Side: {side},  H: {high}, SL: {sl}, L < SL {low < sl}, H > TP {high > tp}"
             )
-            if low < sl:
+            if low <= sl:
                 return replace(self, type=PositionRiskType.SL)
             if high > tp:
                 return replace(self, type=PositionRiskType.TP)
@@ -169,7 +169,7 @@ class PositionRisk(TaMixin):
             print(
                 f"CHeCK => Side: {side},  H: {high}, SL: {sl}, H > SL {high > sl}, L < TP {low < tp}"
             )
-            if high > sl:
+            if high >= sl:
                 return replace(self, type=PositionRiskType.SL)
             if low < tp:
                 return replace(self, type=PositionRiskType.TP)

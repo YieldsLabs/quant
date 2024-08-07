@@ -19,6 +19,7 @@ from .ta import TechAnalysis
 logger = logging.getLogger(__name__)
 
 DEFAULT_TARGET_IDX = 2
+LATENCY_GAP_THRESHOLD = 1.8
 
 
 @dataclass(frozen=True)
@@ -277,8 +278,10 @@ class Position:
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
 
-        if gap > 300000:
-            print("NOOOOOOOOOOO________>>>>>>>>>>>>")
+        print(f"GAP: {gap}")
+
+        if gap > LATENCY_GAP_THRESHOLD * self.signal.timeframe.to_milliseconds():
+            print(f"Big GAP: {gap}")
             return self
 
         next_risk = self.position_risk.next(ohlcv)
@@ -316,16 +319,12 @@ class Position:
 
         idx_rr = 0
         risk = abs(entry_price - next_position.stop_loss)
-        rr_factor = 1.1
+        rr_factor = 2.0
         rr = rr_factor * risk
 
         for i, target in enumerate(targets):
             reward = abs(target - entry_price)
-            if (
-                reward > rr
-                if next_position.side == PositionSide.LONG
-                else reward <= rr
-            ):
+            if reward > rr if next_position.side == PositionSide.LONG else reward < rr:
                 idx_rr = i
                 break
 
