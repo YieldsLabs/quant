@@ -74,14 +74,14 @@ impl<T: Clone> Series<T> {
     pub fn shift(&self, n: usize) -> Self {
         let shifted_len = self.len().saturating_sub(n);
 
-        std::iter::repeat(None)
+        core::iter::repeat(None)
             .take(n)
             .chain(self.iter().take(shifted_len).cloned())
             .collect()
     }
 
     pub fn empty(length: usize) -> Self {
-        std::iter::repeat(None).take(length).collect()
+        core::iter::repeat(None).take(length).collect()
     }
 
     pub fn last(&self) -> Option<T> {
@@ -110,7 +110,7 @@ impl Series<f32> {
     }
 
     pub fn fill(scalar: f32, len: usize) -> Series<f32> {
-        Series::empty(len).nz(Some(scalar))
+        core::iter::repeat(scalar).take(len).collect()
     }
 
     pub fn zero(len: usize) -> Series<f32> {
