@@ -190,7 +190,7 @@ mod tests {
         let (long_signal, short_signal) = signal.trigger(&series);
 
         let expected_long_signal = vec![
-            false, false, false, false, true, false, false, false, false, true, false, false,
+            false, false, false, true, false, false, false, false, false, true, false, false,
             false, false, false, false,
         ];
         let expected_short_signal = vec![
