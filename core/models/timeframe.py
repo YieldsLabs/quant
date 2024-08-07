@@ -17,6 +17,18 @@ class Timeframe(Enum):
 
         raise ValueError(f"No matching Timeframe for value: {value}")
 
+    def to_milliseconds(self) -> int:
+        value = self.value
+
+        if value.endswith("m"):
+            minutes = int(value[:-1])
+            return minutes * 60 * 1000
+        elif value.endswith("h"):
+            hours = int(value[:-1])
+            return hours * 60 * 60 * 1000
+        else:
+            raise ValueError(f"Unsupported timeframe value: {value}")
+
     def __lt__(self, other):
         if not isinstance(other, Timeframe):
             return NotImplemented
