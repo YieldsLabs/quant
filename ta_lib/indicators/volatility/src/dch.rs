@@ -5,12 +5,12 @@ pub fn dch(
     low: &Series<f32>,
     period: usize,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let upper_band = high.highest(period);
-    let lower_band = low.lowest(period);
+    let upper = high.highest(period);
+    let lower = low.lowest(period);
 
-    let middle_band = 0.5 * (&upper_band + &lower_band);
+    let middle = 0.5 * (&upper + &lower);
 
-    (upper_band, middle_band, lower_band)
+    (upper, middle, lower)
 }
 
 pub fn dchw(high: &Series<f32>, low: &Series<f32>, period: usize) -> Series<f32> {

@@ -1,10 +1,10 @@
 use core::prelude::*;
 
 pub fn trima(source: &Series<f32>, period: usize) -> Series<f32> {
-    let half_period = 0.5 * period as f32;
+    let period_half = 0.5 * period as f32;
 
-    let n = half_period.ceil() as usize;
-    let m = (half_period.floor() + 1.) as usize;
+    let n = period_half.ceil() as usize;
+    let m = (period_half.floor() + 1.) as usize;
 
     source.smooth(Smooth::SMA, n).smooth(Smooth::SMA, m)
 }

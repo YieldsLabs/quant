@@ -11,12 +11,12 @@ pub fn ppb(
     let ppvih = factor * high.std(period).highest(period);
     let ppvil = factor * low.std(period).lowest(period);
 
-    let middle_band = source.smooth(smooth, period);
+    let middle = source.smooth(smooth, period);
 
-    let upper_band = &middle_band + ppvih;
-    let lower_band = &middle_band - ppvil;
+    let upper = &middle + ppvih;
+    let lower = &middle - ppvil;
 
-    (upper_band, middle_band, lower_band)
+    (upper, middle, lower)
 }
 
 pub fn ppbp(

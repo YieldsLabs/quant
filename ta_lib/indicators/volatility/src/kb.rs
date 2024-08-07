@@ -5,13 +5,13 @@ pub fn kb(
     period: usize,
     factor: f32,
 ) -> (Series<f32>, Series<f32>, Series<f32>) {
-    let middle_band = 0.5 * (source.highest(period) + source.lowest(period));
+    let middle = 0.5 * (source.highest(period) + source.lowest(period));
     let volatility = factor * source.std(period).highest(period);
 
-    let upper_band = &middle_band + &volatility;
-    let lower_band = &middle_band - &volatility;
+    let upper = &middle + &volatility;
+    let lower = &middle - &volatility;
 
-    (upper_band, middle_band, lower_band)
+    (upper, middle, lower)
 }
 
 pub fn kbp(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
