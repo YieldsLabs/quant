@@ -19,8 +19,7 @@ fn generate_strategy_id() -> i32 {
 pub fn register_strategy(
     timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
-    primary_confirm: Box<dyn Confirm>,
-    secondary_confirm: Box<dyn Confirm>,
+    confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
@@ -31,8 +30,7 @@ pub fn register_strategy(
     let strategy = Box::new(BaseStrategy::new(
         timeseries,
         signal,
-        primary_confirm,
-        secondary_confirm,
+        confirm,
         pulse,
         base_line,
         stop_loss,

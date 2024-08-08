@@ -23,8 +23,7 @@ pub struct StopLossLevels {
 pub struct BaseStrategy {
     timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
-    primary_confirm: Box<dyn Confirm>,
-    secondary_confirm: Box<dyn Confirm>,
+    confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
     stop_loss: Box<dyn StopLoss>,
@@ -36,8 +35,7 @@ impl BaseStrategy {
     pub fn new(
         timeseries: Box<dyn TimeSeries>,
         signal: Box<dyn Signal>,
-        primary_confirm: Box<dyn Confirm>,
-        secondary_confirm: Box<dyn Confirm>,
+        confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
         base_line: Box<dyn BaseLine>,
         stop_loss: Box<dyn StopLoss>,
@@ -45,8 +43,7 @@ impl BaseStrategy {
     ) -> Self {
         let lookbacks = [
             signal.lookback(),
-            primary_confirm.lookback(),
-            secondary_confirm.lookback(),
+            confirm.lookback(),
             pulse.lookback(),
             base_line.lookback(),
             stop_loss.lookback(),
@@ -58,8 +55,7 @@ impl BaseStrategy {
         Self {
             timeseries,
             signal,
-            primary_confirm,
-            secondary_confirm,
+            confirm,
             pulse,
             base_line,
             stop_loss,
@@ -133,7 +129,7 @@ impl BaseStrategy {
         let (signal_go_long, signal_go_short) = self.signal.trigger(ohlcv);
 
         let (baseline_confirm_long, baseline_confirm_short) = self.base_line.filter(ohlcv);
-        let (primary_confirm_long, primary_confirm_short) = self.primary_confirm.filter(ohlcv);
+        let (primary_confirm_long, primary_confirm_short) = self.confirm.filter(ohlcv);
         let (pulse_confirm_long, pulse_confirm_short) = self.pulse.assess(ohlcv);
 
         let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);

@@ -14,8 +14,7 @@ class GeneticAttributes(Enum):
     SYMBOL = auto()
     TIMEFRAME = auto()
     SIGNAL = auto()
-    PCONFIRM = auto()
-    SCONFIRM = auto()
+    CONFIRM = auto()
     PULSE = auto()
     BASELINE = auto()
     STOP_LOSS = auto()
@@ -147,8 +146,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
         if chosen_attr in [
             GeneticAttributes.SIGNAL,
-            GeneticAttributes.PCONFIRM,
-            GeneticAttributes.SCONFIRM,
+            GeneticAttributes.CONFIRM,
             GeneticAttributes.PULSE,
             GeneticAttributes.BASELINE,
             GeneticAttributes.STOP_LOSS,
@@ -158,12 +156,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent2.strategy.signal
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent1.strategy.signal,
-                parent1.strategy.primary_confirm
-                if chosen_attr == GeneticAttributes.PCONFIRM
-                else parent2.strategy.primary_confirm,
-                parent1.strategy.secondary_confirm
-                if chosen_attr == GeneticAttributes.SCONFIRM
-                else parent2.strategy.secondary_confirm,
+                parent1.strategy.confirm
+                if chosen_attr == GeneticAttributes.CONFIRM
+                else parent2.strategy.confirm,
                 parent1.strategy.pulse
                 if chosen_attr == GeneticAttributes.PULSE
                 else parent2.strategy.pulse,
@@ -181,12 +176,9 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
                 parent1.strategy.signal
                 if chosen_attr == GeneticAttributes.SIGNAL
                 else parent2.strategy.signal,
-                parent2.strategy.primary_confirm
-                if chosen_attr == GeneticAttributes.PCONFIRM
-                else parent1.strategy.primary_confirm,
-                parent2.strategy.secondary_confirm
-                if chosen_attr == GeneticAttributes.SCONFIRM
-                else parent1.strategy.secondary_confirm,
+                parent2.strategy.confirm
+                if chosen_attr == GeneticAttributes.CONFIRM
+                else parent1.strategy.confirm,
                 parent2.strategy.pulse
                 if chosen_attr == GeneticAttributes.PULSE
                 else parent1.strategy.pulse,
@@ -222,8 +214,7 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
 
         if mutation_choice in [
             GeneticAttributes.SIGNAL,
-            GeneticAttributes.PCONFIRM,
-            GeneticAttributes.SCONFIRM,
+            GeneticAttributes.CONFIRM,
             GeneticAttributes.PULSE,
             GeneticAttributes.BASELINE,
             GeneticAttributes.STOP_LOSS,

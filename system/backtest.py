@@ -14,7 +14,6 @@ from core.models.moving_average import MovingAverageType
 from core.models.optimizer import Optimizer
 from core.models.order import OrderType
 from core.models.parameter import StaticParameter
-from core.models.smooth import Smooth
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -23,11 +22,10 @@ from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
 from infrastructure.estimator import Estimator
 from strategy.generator.baseline.ma import MaBaseLine
-from strategy.generator.confirm.didi import DidiConfirm
-from strategy.generator.confirm.rsi_signalline import RsiSignalLineConfirm
-from strategy.generator.exit.mad import MadExit
-from strategy.generator.pulse.chop import ChopPulse
-from strategy.generator.signal.twolinescross.dmi import Dmi2LinesCrossSignal
+from strategy.generator.confirm.dumb import DumbConfirm
+from strategy.generator.exit.rex import RexExit
+from strategy.generator.pulse.yz import YzPulse
+from strategy.generator.signal.contrarian.kch_a import KchASignal
 from strategy.generator.stop_loss.atr import AtrStopLoss
 
 from .context import SystemContext
@@ -127,6 +125,7 @@ class BacktestSystem(AbstractSystem):
         futures_symbols = await self.query(GetSymbols())
 
         scalp = [
+            # "AVAXUSDT"
             # "LUNA2USDT",
             # "ALGOUSDT",
             # "WAVESUSDT",
@@ -138,7 +137,7 @@ class BacktestSystem(AbstractSystem):
             # "RAREUSDT"
             # "ATOMUSDT"
             # "SCUSDT"
-            "FTMUSDT"
+            # "FTMUSDT"
             # "BOMEUSDT"
             # "ORNUSDT"
             # "MEWUSDT"
@@ -147,6 +146,9 @@ class BacktestSystem(AbstractSystem):
             # "BTCUSDT"
             # "ADAUSDT"
             # "XRPUSDT"
+            "GLMUSDT"
+            # "LINKUSDT"
+            # "FITFIUSDT"
         ]
 
         futures_symbols = [symbol for symbol in futures_symbols if symbol.name in scalp]
@@ -158,41 +160,328 @@ class BacktestSystem(AbstractSystem):
         )
 
         self.optimizer.init()
+        baseline = MaBaseLine(
+            ma=StaticParameter(MovingAverageType.ALMA),
+            period=StaticParameter(10.0),
+        )
+        pulse = YzPulse()
+        timeframe = Timeframe.FIVE_MINUTES
+        sl = AtrStopLoss()
+        exit = RexExit()
 
         strategies = [
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             CandlestickReversalSignal(
+            #                 candle=StaticParameter(CandleReversalType.R),
+            #             ),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             CandlestickReversalSignal(
+            #                 candle=StaticParameter(CandleReversalType.ENGULFING),
+            #             ),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             CandlestickReversalSignal(
+            #                 candle=StaticParameter(CandleReversalType.SPLIT),
+            #             ),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             CandlestickReversalSignal(
+            #                 candle=StaticParameter(CandleReversalType.DOJI),
+            #             ),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             CandlestickReversalSignal(
+            #                 candle=StaticParameter(CandleReversalType.EUPHORIA),
+            #             ),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             CandlestickReversalSignal(
+            #                 candle=StaticParameter(CandleReversalType.KANGAROO),
+            #             ),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             CandlestickReversalSignal(
+            #                 candle=StaticParameter(CandleReversalType.TWEEZERS),
+            #             ),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             RsiCSignal(),
+            #             BbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             RsiVSignal(),
+            #             BbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             RsiDSignal(),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             RsiNtSignal(),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             RsiUSignal(),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             TiiVSignal(),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             StochESignal(),
+            #             DumbConfirm(),
+            #             pulse,
+            #             baseline,
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # --------
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             SupertrendFlipSignal(
+            #                 smooth_atr=StaticParameter(SmoothATR.EMA),
+            #             ),
+            #             DpoConfirm(),
+            #             VoPulse(smooth_type=StaticParameter(Smooth.WMA)),
+            #             MaBaseLine(
+            #                 ma=StaticParameter(MovingAverageType.ALMA),
+            #                 period=StaticParameter(10.0),
+            #             ),
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
             (
                 futures_symbols[0],
-                Timeframe.FIVE_MINUTES,
+                timeframe,
                 Strategy(
                     *(
-                        Dmi2LinesCrossSignal(),
-                        RsiSignalLineConfirm(),
-                        DidiConfirm(),
-                        ChopPulse(smooth_atr=StaticParameter(Smooth.EMA)),
+                        KchASignal(),
+                        DumbConfirm(),
+                        YzPulse(),
                         MaBaseLine(
-                            ma=StaticParameter(MovingAverageType.TEMA),
-                            period=StaticParameter(10.0),
+                            ma=StaticParameter(MovingAverageType.ZLSMA),
+                            period=StaticParameter(9.0),
                         ),
-                        AtrStopLoss(),
-                        MadExit(),
+                        sl,
+                        exit,
                     )
                 ),
             ),
             # (
             #     futures_symbols[0],
-            #     Timeframe.FIVE_MINUTES,
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             SpreadSignal(),
+            #             EomConfirm(),
+            #             VoPulse(),
+            #             MaBaseLine(
+            #                 ma=StaticParameter(MovingAverageType.KAMA),
+            #                 period=StaticParameter(9.0),
+            #             ),
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             Vi2LinesCrossSignal(),
+            #             DpoConfirm(),
+            #             VoPulse(),
+            #             MaBaseLine(
+            #                 ma=StaticParameter(MovingAverageType.KAMA),
+            #                 period=StaticParameter(9.0),
+            #             ),
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
+            #     Strategy(
+            #         *(
+            #             KchCSignal(),
+            #             DidiConfirm(),
+            #             YzPulse(),
+            #             MaBaseLine(
+            #                 ma=StaticParameter(MovingAverageType.ZLSMA),
+            #                 period=StaticParameter(9.0),
+            #             ),
+            #             sl,
+            #             exit,
+            #         )
+            #     ),
+            # ),
+            # (
+            #     futures_symbols[0],
+            #     timeframe,
             #     Strategy(
             #         *(
             #             BopZeroCrossSignal(),
-            #             RsiSignalLineConfirm(),
-            #             CciConfirm(),
-            #             WaePulse(),
+            #             DpoConfirm(),
+            #             ChopPulse(),
             #             MaBaseLine(
-            #                 ma=StaticParameter(MovingAverageType.T3),
-            #                 period=StaticParameter(20.0),
+            #                 ma=StaticParameter(MovingAverageType.TRIMA),
+            #                 period=StaticParameter(15.0),
             #             ),
-            #             DchStopLoss(),
-            #             TrixExit(),
+            #             sl,
+            #             exit,
             #         )
             #     ),
             # ),
@@ -259,10 +548,10 @@ class BacktestSystem(AbstractSystem):
             GetTopStrategy(num=self.config["active_strategy_num"], positive_pnl=True)
         )
 
-        if not len(strategies):
-            return await self.event_queue.put(Event.REGENERATE)
+        # if not len(strategies):
+        #     return await self.event_queue.put(Event.REGENERATE)
 
-        await self.dispatch(DeployStrategy(strategy=strategies))
+        # await self.dispatch(DeployStrategy(strategy=strategies))
 
     async def _process_backtest(
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False
