@@ -308,7 +308,10 @@ class Position:
             else ta.trend.support[-1]
         )
         sstp = np.clip(sstp, targets[0], targets[-1])
-        ttp = (stp + sstp + ftp) / 3.0
+        w_stp = 0.5
+        w_sstp = 0.3
+        w_ftp = 0.2
+        ttp = (w_stp * stp + w_sstp * sstp + w_ftp * ftp) / (w_stp + w_sstp + w_ftp)
 
         print(f"Signal TP: {stp}, forecast TP: {ftp}, S/R TP: {sstp}, TTP: {ttp}")
 
