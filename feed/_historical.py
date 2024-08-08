@@ -134,7 +134,7 @@ class HistoricalActor(StrategyActor):
                     self.symbol, self.timeframe, bar.ohlcv, bar.closed
                 )
             )
-        await asyncio.sleep(0.000001)
+        await asyncio.sleep(0.0001)
 
     async def _outbox(self, bars: List[Bar]) -> None:
         ts = []
