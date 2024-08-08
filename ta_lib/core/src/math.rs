@@ -1,6 +1,5 @@
 use crate::series::Series;
 use crate::{NEUTRALITY, SCALE, ZERO};
-use std::ops::Neg;
 
 impl Series<f32> {
     pub fn abs(&self) -> Self {
@@ -28,7 +27,7 @@ impl Series<f32> {
     }
 
     pub fn negate(&self) -> Self {
-        self.fmap(|val| val.map(|v| v.neg()))
+        self.fmap(|val| val.map(|v| -v))
     }
 
     pub fn sqrt(&self) -> Self {
