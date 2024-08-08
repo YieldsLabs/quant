@@ -192,26 +192,11 @@ mod tests {
         }
     }
 
-    struct MockPrimaryConfirm {
+    struct MockConfirm {
         period: usize,
     }
 
-    impl Confirm for MockPrimaryConfirm {
-        fn lookback(&self) -> usize {
-            self.period
-        }
-
-        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.len();
-            (Series::one(len).into(), Series::zero(len).into())
-        }
-    }
-
-    struct MockSecondaryConfirm {
-        period: usize,
-    }
-
-    impl Confirm for MockSecondaryConfirm {
+    impl Confirm for MockConfirm {
         fn lookback(&self) -> usize {
             self.period
         }
@@ -294,8 +279,7 @@ mod tests {
         let strategy = BaseStrategy::new(
             Box::<BaseTimeSeries>::default(),
             Box::new(MockSignal { fast_period: 10 }),
-            Box::new(MockPrimaryConfirm { period: 1 }),
-            Box::new(MockSecondaryConfirm { period: 1 }),
+            Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
             Box::new(MockStopLoss {

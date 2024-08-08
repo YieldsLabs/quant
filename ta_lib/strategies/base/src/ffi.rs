@@ -28,13 +28,7 @@ pub fn register_strategy(
     let strategy_id = generate_strategy_id();
 
     let strategy = Box::new(BaseStrategy::new(
-        timeseries,
-        signal,
-        confirm,
-        pulse,
-        base_line,
-        stop_loss,
-        exit,
+        timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
     ));
 
     let mut strategies = STRATEGIES.write().unwrap();
@@ -209,22 +203,14 @@ mod tests {
     fn test_register_strategy() {
         let timeseries = Box::<BaseTimeSeries>::default();
         let signal = Box::new(MockSignal);
-        let primary_confirm = Box::new(MockConfirm);
-        let secondary_confirm = Box::new(MockConfirm);
+        let confirm = Box::new(MockConfirm);
         let pulse = Box::new(MockPulse);
         let base_line = Box::new(MockBaseLine);
         let stop_loss = Box::new(MockStopLoss);
         let exit = Box::new(MockExit);
 
         let strategy_id = register_strategy(
-            timeseries,
-            signal,
-            primary_confirm,
-            secondary_confirm,
-            pulse,
-            base_line,
-            stop_loss,
-            exit,
+            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
         );
 
         assert!(strategy_id >= 0);
@@ -234,22 +220,14 @@ mod tests {
     fn test_unregister_strategy() {
         let timeseries = Box::<BaseTimeSeries>::default();
         let signal = Box::new(MockSignal);
-        let primary_confirm = Box::new(MockConfirm);
-        let secondary_confirm = Box::new(MockConfirm);
+        let confirm = Box::new(MockConfirm);
         let pulse = Box::new(MockPulse);
         let base_line = Box::new(MockBaseLine);
         let stop_loss = Box::new(MockStopLoss);
         let exit = Box::new(MockExit);
 
         let strategy_id = register_strategy(
-            timeseries,
-            signal,
-            primary_confirm,
-            secondary_confirm,
-            pulse,
-            base_line,
-            stop_loss,
-            exit,
+            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
         );
 
         assert_eq!(unregister_strategy(strategy_id), 1);
@@ -259,8 +237,7 @@ mod tests {
     fn test_strategy_next() {
         let timeseries = Box::<BaseTimeSeries>::default();
         let signal = Box::new(MockSignal);
-        let primary_confirm = Box::new(MockConfirm);
-        let secondary_confirm = Box::new(MockConfirm);
+        let confirm = Box::new(MockConfirm);
         let pulse = Box::new(MockPulse);
         let base_line = Box::new(MockBaseLine);
         let stop_loss = Box::new(MockStopLoss);
@@ -437,14 +414,7 @@ mod tests {
         ];
 
         let strategy_id = register_strategy(
-            timeseries,
-            signal,
-            primary_confirm,
-            secondary_confirm,
-            pulse,
-            base_line,
-            stop_loss,
-            exit,
+            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
         );
 
         let mut res = vec![];

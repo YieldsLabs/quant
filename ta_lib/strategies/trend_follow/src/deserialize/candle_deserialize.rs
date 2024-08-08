@@ -27,10 +27,12 @@ pub fn candlereversal_deserialize(candle: usize) -> CandleReversalType {
         1 => CandleReversalType::DOJI,
         2 => CandleReversalType::ENGULFING,
         3 => CandleReversalType::EUPHORIA,
-        4 => CandleReversalType::KANGAROO,
-        5 => CandleReversalType::R,
-        6 => CandleReversalType::SPLIT,
-        7 => CandleReversalType::TWEEZERS,
+        4 => CandleReversalType::HARAMIF,
+        5 => CandleReversalType::HARAMIS,
+        6 => CandleReversalType::KANGAROO,
+        7 => CandleReversalType::R,
+        8 => CandleReversalType::SPLIT,
+        9 => CandleReversalType::TWEEZERS,
         _ => CandleReversalType::R,
     }
 }
