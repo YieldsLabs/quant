@@ -9,36 +9,34 @@ pub fn ce(
     let len = close.len();
     let atr_mul = atr * factor;
 
-    let basic_up = close.highest(period) - &atr_mul;
-    let mut up = Series::empty(len);
-
-    let basic_dn = close.lowest(period) + &atr_mul;
-    let mut dn = Series::empty(len);
+    let mut up = close.highest(period) - &atr_mul;
+    let mut dn = close.lowest(period) + &atr_mul;
 
     let prev_close = close.shift(1);
-    let mut direction = Series::empty(len);
+    let mut direction = Series::one(len);
 
     let trend_bull = Series::one(len);
     let trend_bear = trend_bull.negate();
 
     for _ in 0..len {
-        let prev_up = up.shift(1);
-        up = iff!(prev_close.sgt(&prev_up), basic_up.max(&prev_up), basic_up);
+        let prev_up = nz!(up.shift(1), up);
+        up = iff!(prev_close.sgt(&prev_up), up.max(&prev_up), up);
 
-        let prev_dn = dn.shift(1);
-        dn = iff!(prev_close.slt(&prev_dn), basic_dn.min(&prev_dn), basic_dn);
+        let prev_dn = nz!(dn.shift(1), dn);
+        dn = iff!(prev_close.slt(&prev_dn), dn.min(&prev_dn), dn);
 
         direction = nz!(direction.shift(1), direction);
-        direction = iff!(close.sgte(&prev_dn), trend_bull, direction);
-        direction = iff!(close.slt(&prev_up), trend_bear, direction);
+        direction = iff!(
+            direction.seq(&MINUS_ONE) & close.sgt(&prev_dn),
+            trend_bull,
+            direction
+        );
+        direction = iff!(
+            direction.seq(&ONE) & close.slt(&prev_up),
+            trend_bear,
+            direction
+        );
     }
-
-    let first_non_empty = direction
-        .iter()
-        .find(|&&el| el.is_some())
-        .map(|&el| -el.unwrap());
-
-    direction = direction.nz(first_non_empty);
 
     let trend = iff!(direction.seq(&ONE), up, dn);
 
@@ -69,11 +67,10 @@ mod tests {
 
         let factor = 2.0;
         let expected_trend = vec![
-            4.8592, 4.8566666, 4.8563113, 4.8435073, 4.8271384, 4.8271384, 4.8271384, 4.8271384,
-            4.8271384, 4.784503, 4.815269, 4.815269, 4.81972, 4.81972, 4.81972,
+            4.7652, 4.7667336, 4.767089, 4.767089, 4.767089, 4.767089, 4.767089, 4.767089, 4.767089, 4.784503, 4.815269, 4.815269, 4.81972, 4.81972, 4.81972,
         ];
         let expected_direction = vec![
-            -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
         ];
 
         let (direction, trend) = ce(&close, &atr, period, factor);
@@ -105,11 +102,10 @@ mod tests {
 
         let factor = 2.0;
         let expected_trend = vec![
-            4.946201, 4.9390006, 4.9390006, 4.9390006, 4.8700404, 4.8700404, 4.8700404, 4.8700404,
-            4.959112, 4.949508, 4.9344387, 4.912726,
+            4.7653995, 4.7874, 4.8232665, 4.831711, 4.8700404, 4.8700404, 4.8700404, 4.8700404, 4.959112, 4.949508, 4.9344387, 4.912726
         ];
         let expected_direction = vec![
-            -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0,
         ];
 
         let (direction, trend) = ce(&close, &atr, period, factor);
