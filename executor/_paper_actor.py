@@ -134,7 +134,7 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
         diff = bar.timestamp - position.signal_bar.timestamp
 
         if diff > position.signal.timeframe.to_milliseconds():
-            logger.warn("Open next bar is too far")
+            logger.warn("The open of the next bar is too far from the previous one.")
             bar = position.signal_bar
 
         return self._find_fill_price(position.side, bar, order.price)
@@ -148,7 +148,7 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
         diff = bar.timestamp - position.risk_bar.timestamp
 
         if diff > position.signal.timeframe.to_milliseconds():
-            logger.warn("Close next bar is too far")
+            logger.warn("The close of the next bar is too far from the previous one.")
             bar = position.risk_bar
 
         return self._find_fill_price(position.side, bar, order.price)
