@@ -39,7 +39,7 @@ pub fn register_strategy(
 }
 
 #[no_mangle]
-pub fn unregister_strategy(strategy_id: i32) -> i32 {
+pub fn strategy_unregister(strategy_id: i32) -> i32 {
     let mut strategies = STRATEGIES.write().unwrap();
     strategies.remove(&strategy_id).is_some() as i32
 }
@@ -55,6 +55,7 @@ pub fn strategy_next(
     volume: f32,
 ) -> (i32, f32) {
     let mut strategies = STRATEGIES.write().unwrap();
+
     if let Some(strategy) = strategies.get_mut(&strategy_id) {
         let bar = OHLCV {
             ts,

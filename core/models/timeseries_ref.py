@@ -1,5 +1,6 @@
 import typing
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Any, List, Optional
 
 import orjson as json
@@ -17,14 +18,16 @@ class TimeSeriesRef:
     instance_ref: "Instance"
     store_ref: "Store"
 
+    @cached_property
+    def exports(self):
+        return self.instance_ref.exports(self.store_ref)
+
     def unregister(self):
-        exports = self.instance_ref.exports(self.store_ref)
-        exports["timeseries_unregister"](self.store_ref, self.id)
+        self.exports["timeseries_unregister"](self.store_ref, self.id)
         self.store_ref.gc()
 
     def add(self, bar: OHLCV):
-        exports = self.instance_ref.exports(self.store_ref)
-        [res, _] = exports["timeseries_add"](
+        [res, _] = self.exports["timeseries_add"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -45,8 +48,7 @@ class TimeSeriesRef:
         return self._get_bar("prev_bar", bar)
 
     def back_n_bars(self, bar: OHLCV, n: int) -> List[OHLCV]:
-        exports = self.instance_ref.exports(self.store_ref)
-        ptr, length = exports["timeseries_back_n_bars"](
+        ptr, length = self.exports["timeseries_back_n_bars"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -61,8 +63,7 @@ class TimeSeriesRef:
         if ptr == -1 and length == 0:
             return []
 
-        exports = self.instance_ref.exports(self.store_ref)
-        buff = exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
+        buff = self.exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
 
         try:
             raw_data = json.loads("".join(chr(val) for val in buff))
@@ -73,9 +74,7 @@ class TimeSeriesRef:
         return deserialized_data
 
     def ta(self, bar: OHLCV) -> Optional[TechAnalysis]:
-        exports = self.instance_ref.exports(self.store_ref)
-
-        [bar_ptr, bar_len] = exports["timeseries_ta"](
+        [bar_ptr, bar_len] = self.exports["timeseries_ta"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -89,8 +88,7 @@ class TimeSeriesRef:
         return self._deserialize(TechAnalysis, bar_ptr, bar_len)
 
     def _get_bar(self, method: str, bar: "OHLCV") -> Optional["OHLCV"]:
-        exports = self.instance_ref.exports(self.store_ref)
-        bar_ptr, bar_len = exports[f"timeseries_{method}"](
+        bar_ptr, bar_len = self.exports[f"timeseries_{method}"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -107,8 +105,7 @@ class TimeSeriesRef:
         if ptr == -1 and length == 0:
             return None
 
-        exports = self.instance_ref.exports(self.store_ref)
-        buff = exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
+        buff = self.exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
 
         try:
             raw_data = json.loads("".join(chr(val) for val in buff))

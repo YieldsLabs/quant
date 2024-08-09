@@ -1,6 +1,7 @@
 import logging
 import typing
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Optional, Union
 
 if typing.TYPE_CHECKING:
@@ -36,16 +37,17 @@ class StrategyRef:
     instance_ref: "Instance"
     store_ref: "Store"
 
+    @cached_property
+    def exports(self):
+        return self.instance_ref.exports(self.store_ref)
+
     def unregister(self):
-        exports = self.instance_ref.exports(self.store_ref)
-        exports["unregister_strategy"](self.store_ref, self.id)
+        self.exports["strategy_unregister"](self.store_ref, self.id)
         self.store_ref.gc()
 
     def next(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, ohlcv: OHLCV
     ) -> Optional[SignalEvent]:
-        exports = self.instance_ref.exports(self.store_ref)
-
         strategy_args = [
             self.store_ref,
             self.id,
@@ -57,14 +59,14 @@ class StrategyRef:
             ohlcv.volume,
         ]
 
-        [raw_action, price] = exports["strategy_next"](*strategy_args)
+        [raw_action, price] = self.exports["strategy_next"](*strategy_args)
 
         action = Action.from_raw(raw_action)
 
         long_stop_loss, short_stop_loss = 0.0, 0.0
 
         if action in (Action.GO_LONG, Action.GO_SHORT):
-            [long_stop_loss, short_stop_loss] = exports["strategy_stop_loss"](
+            [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](
                 *strategy_args
             )
 
