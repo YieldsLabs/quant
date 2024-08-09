@@ -78,7 +78,8 @@ async def main():
         config_service,
         PositionFixedSizeStrategy(),
     )
-    MarketActor(TimeSeriesService(wasm)).start()
+    ts_service = TimeSeriesService(wasm)
+    MarketActor(ts_service).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
     SmartRouter(exchange_factory, config_service)
@@ -87,7 +88,9 @@ async def main():
     position_actor_factory = PositionActorFactory(position_factory, config_service)
     risk_actor_factory = RiskActorFactory(config_service)
     executor_actor_factory = OrderExecutorActorFactory()
-    feed_actor_factory = FeedActorFactory(exchange_factory, ws_factory, config_service)
+    feed_actor_factory = FeedActorFactory(
+        exchange_factory, ws_factory, ts_service, config_service
+    )
 
     trend_context = SystemContext(
         signal_actor_factory,

@@ -25,10 +25,12 @@ class CandleReversalType(Enum):
     DOJI = 1
     ENGULFING = 2
     EUPHORIA = 3
-    KANGAROO = 4
-    R = 5
-    SPLIT = 6
-    TWEEZERS = 7
+    HARAMIF = 4
+    HARAMIS = 5
+    KANGAROO = 6
+    R = 7
+    SPLIT = 8
+    TWEEZERS = 9
 
     def __str__(self):
         return self.name.upper()

@@ -33,6 +33,7 @@ class SignalType(Enum):
     VwapBb = "VwapBb"
     # Pattern
     AoSaucer = "AoSaucer"
+    Spread = "Spread"
     HighLow = "HighLow"
     MacdColorSwitch = "MacdColorSwitch"
     CandlestickTrend = "CandlestickTrend"
@@ -46,6 +47,7 @@ class SignalType(Enum):
     RsiNt = "RsiNt"
     TiiV = "TiiV"
     StochE = "StochE"
+    KchA = "KchA"
     KchC = "KchC"
     # Flip
     CeFlip = "CeFlip"
