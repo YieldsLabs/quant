@@ -1,5 +1,5 @@
 system_prompt = """
-You are an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses and provide insights based on numerical information.
+You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
 signal_risk_prompt = """
 Evaluate the risk for an open {side} position within the {timeframe} timeframe for entry {entry} using the provided data:
