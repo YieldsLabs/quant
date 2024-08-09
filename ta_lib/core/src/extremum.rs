@@ -19,7 +19,7 @@ impl Extremum<f32> for Series<f32> {
         self.extremum(scalar, f32::min)
     }
 
-    fn clip(&self, lhs: &f32, rhs: &f32) -> Self {
+    fn clip(&self, lhs: &f32, rhs: &f32) -> Self::Output {
         self.min(rhs).max(lhs)
     }
 }
@@ -46,7 +46,7 @@ impl Extremum<Series<f32>> for Series<f32> {
         self.extremum(rhs, f32::min)
     }
 
-    fn clip(&self, lhs: &Series<f32>, rhs: &Series<f32>) -> Self {
+    fn clip(&self, lhs: &Series<f32>, rhs: &Series<f32>) -> Self::Output {
         self.min(rhs).max(lhs)
     }
 }
