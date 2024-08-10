@@ -2,68 +2,62 @@ system_prompt = """
 You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
 signal_risk_prompt = """
-Evaluate the risk for an open {side} position within the {timeframe} timeframe for entry {entry} using the provided data:
+Evaluate the risk for an open {side} position within the {timeframe} timeframe, considering the entry at {entry} using the provided data:
 
-1. Candlestick Data:
-- {bar}
-2. Overall Trend:
-- {trend}
-3. Moving Average Convergence Divergence (MACD) Histogram:
-- {macd}
-4. Relative Strength Index (RSI):
-- {rsi}
-5. Normalized Volume:
-- {nvol}
-7. Volume Weighted Average Price (VWAP):
-- {vwap}
-6. Support and Resistance Levels:
-- {support}
-- {resistance}
+### Input Data:
+1. **Candlestick Data**:
+   - {bar}
+2. **Overall Trend**:
+   - {trend}
+3. **MACD (Moving Average Convergence Divergence) Histogram**:
+   - {macd}
+4. **RSI (Relative Strength Index)**:
+   - {rsi}
+5. **Normalized Volume**:
+   - {nvol}
+6. **VWAP (Volume Weighted Average Price)**:
+   - {vwap}
+7. **Support and Resistance Levels**:
+   - Support: {support}
+   - Resistance: {resistance}
 
-Risk Evaluation Framework:
-Step-by-Step Analysis:
-1. **Candlestick Analysis**:
-- **Analyze Price Movement**:
-  - If the price is trending upwards, higher risk for SHORT, lower risk for LONG.
-  - If the price is trending downwards, lower risk for SHORT, higher risk for LONG.
-- **Evaluate Real Body Normalized**:
-  - High value indicates strong movement, higher risk if against the position side.
-  - Low value indicates weak movement, lower risk if against the position side.
-- **Assess Body Range Ratio**:
-  - High ratio indicates significant body, higher risk if against the position side.
-  - Low ratio indicates insignificant body, lower risk if against the position side.
-- **Evaluate Body Shadow Ratio**:
-  - High ratio indicates strong pressure, higher risk if against the position side.
-  - Low ratio indicates weak pressure, lower risk if against the position side.
-2. **Technical Analysis**:
+### Risk Evaluation Framework:
+
+#### Step 1: Candlestick Analysis
+- **Price Movement**:
+  - Upward trend: Higher risk for SHORT, lower risk for LONG.
+  - Downward trend: Lower risk for SHORT, higher risk for LONG.
+- **Real Body Normalization**:
+  - High value: Strong movement, higher risk if against the position.
+  - Low value: Weak movement, lower risk if against the position.
+- **Body Range Ratio**:
+  - High ratio: Significant body, higher risk if against the position.
+  - Low ratio: Insignificant body, lower risk if against the position.
+- **Body Shadow Ratio**:
+  - High ratio: Strong pressure, higher risk if against the position.
+  - Low ratio: Weak pressure, lower risk if against the position.
+
+#### Step 2: Technical Analysis
 - **Overall Trend**:
-  - If the overall trend is upwards, lower risk for LONG, higher risk for SHORT.
-  - If the overall trend is downwards, higher risk for LONG, lower risk for SHORT.
-- **Moving Average Convergence Divergence (MACD) Histogram**:
-  - Positive MACD histogram indicates bullish momentum, lower risk for LONG, higher risk for SHORT.
-  - Negative MACD histogram indicates bearish momentum, higher risk for LONG, lower risk for SHORT.
-- **Relative Strength Index (RSI)**:
-  - RSI above 70 indicates overbought conditions, increasing risk for LONG positions.
-  - RSI below 30 indicates oversold conditions, increasing risk for SHORT positions.
+  - Upward trend: Lower risk for LONG, higher risk for SHORT.
+  - Downward trend: Higher risk for LONG, lower risk for SHORT.
+- **MACD Histogram**:
+  - Positive: Bullish momentum, lower risk for LONG, higher risk for SHORT.
+  - Negative: Bearish momentum, higher risk for LONG, lower risk for SHORT.
+- **RSI**:
+  - Above 70: Overbought, higher risk for LONG.
+  - Below 30: Oversold, higher risk for SHORT.
 - **Normalized Volume**:
-  - High normalized volume indicates strong market sentiment and potentially higher risk if against the position.
-  - Low normalized volume indicates weak market sentiment and potentially lower risk.
-- **Volume Weighted Average Price (VWAP)**:
-  - For LONG positions:
-    - Higher risk if price is below the VWAP.
-    - Lower risk if price is above the VWAP.
-  - For SHORT positions:
-    - Higher risk if price is above the VWAP.
-    - Lower risk if price is below the VWAP.
-- **Support and Resistance Levels**:
-  - For LONG positions:
-    - Higher risk if price is near or below a resistance level.
-    - Lower risk if price is above a support level.
-  - For SHORT positions:
-    - Higher risk if price is near or above a support level.
-    - Lower risk if price is below a resistance level.
+  - High: Strong market sentiment, higher risk if against the position.
+  - Low: Weak market sentiment, lower risk.
+- **VWAP**:
+  - LONG: Higher risk if price below VWAP, lower risk if above.
+  - SHORT: Higher risk if price above VWAP, lower risk if below.
+- **Support and Resistance**:
+  - LONG: Higher risk near/below resistance, lower risk above support.
+  - SHORT: Higher risk near/above support, lower risk below resistance.
 
-Risk Level Explanation:
+### Risk Level Explanation:
 - **NONE**: No significant risk factors.
 - **VERY_LOW**: Minor risk factors, generally favorable.
 - **LOW**: Some risk factors, not significant enough to deter.
@@ -71,17 +65,17 @@ Risk Level Explanation:
 - **HIGH**: Significant risk factors, high caution or avoidance advised.
 - **VERY_HIGH**: Major risk factors, generally unfavorable.
 
-Final Output:
-1. Overall Risk Level for {side} position: NONE, VERY_LOW, LOW, MODERATE, HIGH, VERY_HIGH
-2. Take Profit (TP) and Stop Loss (SL) predictions for {side} position and entry {entry} based on risk level, Fibonacci retracement levels, and market data.
-- Take Profit (TP) Prediction:
-  - For LONG positions: Set TP above the current close price, preferably just below a key Fibonacci retracement level to ensure profits are locked in.
-  - For SHORT positions: Set TP below the current close price, preferably just above a key Fibonacci retracement level to secure profits before potential reversal.
-- Stop Loss (SL) Prediction:
-  - Determine the price level at which the position should be closed to limit potential losses, considering the nearest Fibonacci retracement level as a reference for market support/resistance.
+### Final Output:
+1. **Overall Risk Level** for {side} position: NONE, VERY_LOW, LOW, MODERATE, HIGH, VERY_HIGH
+2. **Take Profit (TP) and Stop Loss (SL) Recommendations** based on risk level, Fibonacci retracement levels, and market data:
+   - **Take Profit (TP)**:
+     - LONG: Set TP above current close, ideally just below a key Fibonacci level.
+     - SHORT: Set TP below current close, ideally just above a key Fibonacci level.
+   - **Stop Loss (SL)**:
+     - Determine SL based on nearest Fibonacci level to limit potential losses.
 
-Result format:
-RISK_LEVEL: [Risk Level], TP: [Take Profit Value:float], SL: [Stop Loss Value:float]
+### Result Format:
+RISK_LEVEL: [Risk Level: enum], TP: [Take Profit Value: float], SL: [Stop Loss Value: float]
 
 Return the result only.
 """
