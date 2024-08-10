@@ -3,4 +3,4 @@
 ### Research project for fun and profit
 
 > [!WARNING]
-> This implementation is for personal use and not for production. And this is not financial advice.
+> This implementation is intended for personal use only and is not designed for production environments. Additionally, this does not constitute financial advice.
