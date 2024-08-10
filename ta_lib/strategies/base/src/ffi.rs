@@ -218,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unregister_strategy() {
+    fn test_strategy_unregister() {
         let timeseries = Box::<BaseTimeSeries>::default();
         let signal = Box::new(MockSignal);
         let confirm = Box::new(MockConfirm);
@@ -231,7 +231,7 @@ mod tests {
             timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
         );
 
-        assert_eq!(unregister_strategy(strategy_id), 1);
+        assert_eq!(strategy_unregister(strategy_id), 1);
     }
 
     #[test]

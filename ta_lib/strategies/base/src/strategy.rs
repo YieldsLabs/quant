@@ -2,7 +2,7 @@ use crate::source::{Source, SourceType};
 use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
 use timeseries::prelude::*;
 
-const DEFAULT_LOOKBACK: usize = 15;
+const DEFAULT_LOOKBACK: usize = 16;
 const DEFAULT_STOP_LEVEL: f32 = -1.0;
 
 #[derive(Debug, PartialEq)]
@@ -288,6 +288,6 @@ mod tests {
             }),
             Box::new(MockExit {}),
         );
-        assert_eq!(strategy.lookback_period, 15);
+        assert_eq!(strategy.lookback_period, 16);
     }
 }
