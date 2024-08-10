@@ -59,14 +59,14 @@ class StrategyRef:
             ohlcv.volume,
         ]
 
-        [raw_action, price] = self.exports["strategy_next"](*strategy_args)
+        raw_action, price = self.exports["strategy_next"](*strategy_args)
 
         action = Action.from_raw(raw_action)
 
         long_stop_loss, short_stop_loss = 0.0, 0.0
 
         if action in (Action.GO_LONG, Action.GO_SHORT):
-            [long_stop_loss, short_stop_loss] = self.exports["strategy_stop_loss"](
+            long_stop_loss, short_stop_loss = self.exports["strategy_stop_loss"](
                 *strategy_args
             )
 

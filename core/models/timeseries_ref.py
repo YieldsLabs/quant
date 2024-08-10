@@ -27,7 +27,7 @@ class TimeSeriesRef:
         self.store_ref.gc()
 
     def add(self, bar: OHLCV):
-        [res, _] = self.exports["timeseries_add"](
+        res, _ = self.exports["timeseries_add"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -60,21 +60,12 @@ class TimeSeriesRef:
             n,
         )
 
-        if ptr == -1 and length == 0:
-            return []
+        buff = self._read_from_memory(ptr, length)
 
-        buff = self.exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
-
-        try:
-            raw_data = json.loads("".join(chr(val) for val in buff))
-            deserialized_data = [OHLCV.from_list(d.values()) for d in raw_data]
-        except Exception:
-            deserialized_data = []
-
-        return deserialized_data
+        return self._deserialize_list(OHLCV, buff)
 
     def ta(self, bar: OHLCV) -> Optional[TechAnalysis]:
-        [bar_ptr, bar_len] = self.exports["timeseries_ta"](
+        ptr, length = self.exports["timeseries_ta"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -85,10 +76,12 @@ class TimeSeriesRef:
             bar.volume,
         )
 
-        return self._deserialize(TechAnalysis, bar_ptr, bar_len)
+        buff = self._read_from_memory(ptr, length)
+
+        return self._deserialize_object(TechAnalysis, buff)
 
     def _get_bar(self, method: str, bar: "OHLCV") -> Optional["OHLCV"]:
-        bar_ptr, bar_len = self.exports[f"timeseries_{method}"](
+        ptr, length = self.exports[f"timeseries_{method}"](
             self.store_ref,
             self.id,
             bar.timestamp,
@@ -99,18 +92,26 @@ class TimeSeriesRef:
             bar.volume,
         )
 
-        return self._deserialize(OHLCV, bar_ptr, bar_len)
+        buff = self._read_from_memory(ptr, length)
 
-    def _deserialize(self, data_class: Any, ptr: int, length: int) -> Optional[Any]:
+        return self._deserialize_object(OHLCV, buff)
+
+    def _read_from_memory(self, ptr: int, length: int) -> bytes:
         if ptr == -1 and length == 0:
             return None
 
-        buff = self.exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
+        return self.exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
 
+    def _deserialize_object(self, data_class: Any, buff: bytes) -> Optional[Any]:
         try:
             raw_data = json.loads("".join(chr(val) for val in buff))
-            deserialized_data = data_class.from_list(raw_data.values())
+            return data_class.from_list(raw_data.values())
         except Exception:
-            deserialized_data = None
+            return None
 
-        return deserialized_data
+    def _deserialize_list(self, data_class: Any, buff: bytes) -> List[Any]:
+        try:
+            raw_data = json.loads("".join(chr(val) for val in buff))
+            return [data_class.from_list(d.values()) for d in raw_data]
+        except Exception:
+            return []
