@@ -69,9 +69,6 @@ class AsyncHistoricalData:
         except StopIteration:
             return self.sentinel
 
-    def get_last_bar(self):
-        return self.last_row
-
 
 class HistoricalActor(StrategyActor):
     _EVENTS = [StartHistoricalFeed]
