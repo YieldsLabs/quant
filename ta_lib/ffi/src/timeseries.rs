@@ -6,9 +6,9 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, RwLock};
 use timeseries::prelude::*;
 
-static TIMESERIES: Lazy<Arc<RwLock<HashMap<i32, Box<dyn TimeSeries + Send + Sync + 'static>>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
+type TsTableType = Lazy<Arc<RwLock<HashMap<i32, Box<dyn TimeSeries + Send + Sync + 'static>>>>>;
 
+static TIMESERIES: TsTableType = Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
 static TIMESERIES_ID_COUNTER: Lazy<AtomicI32> = Lazy::new(|| AtomicI32::new(0));
 
 fn generate_timeseries_id() -> i32 {

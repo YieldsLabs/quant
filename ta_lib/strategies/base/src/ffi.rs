@@ -7,9 +7,9 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, RwLock};
 use timeseries::prelude::*;
 
-static STRATEGIES: Lazy<Arc<RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
+type StrgTableType = Lazy<Arc<RwLock<HashMap<i32, Box<dyn Strategy + Send + Sync + 'static>>>>>;
 
+static STRATEGIES: StrgTableType = Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
 static STRATEGIES_ID_COUNTER: Lazy<AtomicI32> = Lazy::new(|| AtomicI32::new(0));
 
 fn generate_strategy_id() -> i32 {
