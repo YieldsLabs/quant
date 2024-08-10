@@ -104,7 +104,7 @@ async def main():
         config_service=config_service,
     )
 
-    trend_system_a = BacktestSystem(trend_context)
+    backtest_system = BacktestSystem(trend_context)
 
     trading_system = TradingSystem(
         signal_actor_factory,
@@ -116,18 +116,17 @@ async def main():
         exchange_type=ExchangeType.BYBIT,
     )
 
-    trend_system_a_task = asyncio.create_task(trend_system_a.start())
+    backtest_system_task = asyncio.create_task(backtest_system.start())
     trading_system_task = asyncio.create_task(trading_system.start())
     shutdown_task = asyncio.create_task(graceful_shutdown.wait_for_exit_signal())
 
     try:
         logging.info("Started")
-        await asyncio.gather(*[trend_system_a_task, shutdown_task])
+        await asyncio.gather(*[backtest_system_task, trading_system_task, shutdown_task])
     finally:
         logging.info("Closing...")
         shutdown_task.cancel()
-        trend_system_a_task.cancel()
-
+        backtest_system_task.cancel()
         trading_system_task.cancel()
 
         trading_system.stop()
