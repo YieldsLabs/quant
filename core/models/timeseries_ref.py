@@ -80,7 +80,7 @@ class TimeSeriesRef:
 
         return self._deserialize_object(TechAnalysis, buff)
 
-    def _get_bar(self, method: str, bar: "OHLCV") -> Optional["OHLCV"]:
+    def _get_bar(self, method: str, bar: OHLCV) -> Optional[OHLCV]:
         ptr, length = self.exports[f"timeseries_{method}"](
             self.store_ref,
             self.id,

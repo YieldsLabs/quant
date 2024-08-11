@@ -162,8 +162,6 @@ class PositionRisk(TaMixin):
             last_hlcc4_lagged_1 = last_hlcc4
             last_hlcc4 = forecast
 
-        print(f"Forecast: {predictions}")
-
         return predictions
 
     def next(self, bar: OHLCV):

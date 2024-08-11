@@ -294,6 +294,7 @@ class Position:
         targets = next_position.profit_target.targets
         raw_forecast = next_position.position_risk.forecast(steps=3)
 
+
         rising = False
         forecast = None
         long = next_position.side == PositionSide.LONG
@@ -301,6 +302,8 @@ class Position:
         if raw_forecast:
             forecast = np.max(raw_forecast) if long else np.min(raw_forecast)
             rising = raw_forecast[0] < raw_forecast[-1] if long else raw_forecast[0] > raw_forecast[-1]
+
+        print(f"Forecast: {raw_forecast}, rising: {rising}")
 
         stp = (
             next_position.signal_risk.tp
