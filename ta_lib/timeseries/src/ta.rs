@@ -28,4 +28,7 @@ pub struct TechAnalysis {
     pub resistance: Vec<f32>,
     pub dmi: Vec<f32>,
     pub vwap: Vec<f32>,
+    pub close: Vec<f32>,
+    pub hlc3: Vec<f32>,
+    pub hlcc4: Vec<f32>,
 }

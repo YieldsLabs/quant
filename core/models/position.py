@@ -292,7 +292,15 @@ class Position:
         curr_pnl = next_position.curr_pnl
         # close = next_position.risk_bar.close
         targets = next_position.profit_target.targets
-        forecast = next_position.position_risk.forecast
+        raw_forecast = next_position.position_risk.forecast(steps=3)
+
+        rising = False
+        forecast = None
+        long = next_position.side == PositionSide.LONG
+
+        if raw_forecast:
+            forecast = np.max(raw_forecast) if long else np.min(raw_forecast)
+            rising = raw_forecast[0] < raw_forecast[-1] if long else raw_forecast[0] > raw_forecast[-1]
 
         stp = (
             next_position.signal_risk.tp
@@ -304,30 +312,30 @@ class Position:
         ftp = np.clip(ftp, targets[0], targets[-1])
         sstp = (
             ta.trend.resistance[-1]
-            if next_position.side == PositionSide.LONG
-            else ta.trend.support[-1]
+            if long else ta.trend.support[-1]
         )
         sstp = np.clip(sstp, targets[0], targets[-1])
-        w_stp = 0.5
-        w_sstp = 0.3
-        w_ftp = 0.2
+
+        w_stp, w_sstp, w_ftp = 0.3, 0.2, 0.5
+
         ttp = (w_stp * stp + w_sstp * sstp + w_ftp * ftp) / (w_stp + w_sstp + w_ftp)
 
         print(f"Signal TP: {stp}, forecast TP: {ftp}, S/R TP: {sstp}, TTP: {ttp}")
 
         def target_filter(target, tp):
             return (
-                target > tp if next_position.side == PositionSide.LONG else target < tp
+                target > tp if long else target < tp
             )
 
         idx_rr = 0
         risk = abs(entry_price - next_position.stop_loss)
-        rr_factor = 2.0
+        rr_factor = 1.8
         rr = rr_factor * risk
 
         for i, target in enumerate(targets):
             reward = abs(target - entry_price)
-            if reward > rr if next_position.side == PositionSide.LONG else reward < rr:
+
+            if reward > rr if long else reward < rr:
                 idx_rr = i
                 break
 
@@ -381,7 +389,7 @@ class Position:
             next_position.expiration,
         )
 
-        if next_risk.type == PositionRiskType.TP and rr * 100 < 3:
+        if next_risk.type == PositionRiskType.TP and rising:
             print("RESET RISK")
             next_risk = next_risk.reset()
             index = 0

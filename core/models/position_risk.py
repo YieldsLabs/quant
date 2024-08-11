@@ -105,30 +105,66 @@ class TaMixin:
 
 @dataclass(frozen=True)
 class PositionRisk(TaMixin):
+    model: SGDRegressor
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
     trail_factor: float = field(default_factory=lambda: np.random.uniform(1.8, 2.2))
-    model = SGDRegressor(max_iter=1, tol=None, warm_start=True)
 
     @property
     def curr_bar(self):
         return self.ohlcv[-1]
 
-    @property
-    def forecast(self):
+    def update_model(self):
         if len(self.ohlcv) < 3:
-            return None
+            return
 
-        data = np.array([[ohlcv.high, ohlcv.low, ohlcv.close] for ohlcv in self.ohlcv])
-        hlc3 = (data[:, 0] + data[:, 1] + data[:, 2]) / 3.0
-        target = data[1:, 2]
-        features = hlc3[:-1].reshape(-1, 1)
+        last_ohlcv = self.ohlcv[-3:]
+        close = [ohlcv.close for ohlcv in last_ohlcv]
+
+        hlcc4 = [(ohlcv.high + ohlcv.low + 2 * ohlcv.close) / 4.0 for ohlcv in last_ohlcv]
+        hlcc4_lagged_1 = [hlcc4[0]] + hlcc4[:-1]
+        hlcc4_lagged_2 = [hlcc4[0], hlcc4[1]] + hlcc4[:-2]
+
+        features = np.array([[
+            hlcc4[-1],
+            hlcc4_lagged_1[-1],
+            hlcc4_lagged_2[-1],
+        ]])
+
+        target = np.array([close[-1]])
+
         self.model.partial_fit(features, target)
 
-        hlc3_curr = (self.curr_bar.high + self.curr_bar.low + self.curr_bar.close) / 3
-        X = np.array([[hlc3_curr]])
+    def forecast(self, steps: int = 3):
+        if len(self.ohlcv) < 1:
+            return []
 
-        return self.model.predict(X)[0]
+        self.update_model()
+
+        last_hlcc4 = (self.curr_bar.high + self.curr_bar.low + 2 * self.curr_bar.close) / 4
+
+        last_hlcc4_lagged_1 = last_hlcc4
+        last_hlcc4_lagged_2 = last_hlcc4
+
+        predictions = []
+
+        for _ in range(steps):
+            X = np.array([[
+                last_hlcc4,
+                last_hlcc4_lagged_1,
+                last_hlcc4_lagged_2,
+            ]])
+
+            forecast = self.model.predict(X)[0]
+            predictions.append(forecast)
+
+            last_hlcc4_lagged_2 = last_hlcc4_lagged_1
+            last_hlcc4_lagged_1 = last_hlcc4
+            last_hlcc4 = forecast
+
+        print(f"Forecast: {predictions}")
+
+        return predictions
 
     def next(self, bar: OHLCV):
         ohlcv = self.ohlcv + [bar]

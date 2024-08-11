@@ -1,6 +1,10 @@
+import numpy as np
+from sklearn.linear_model import SGDRegressor
+
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrategy
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
+from core.models.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.position_risk import PositionRisk
 from core.models.profit_target import ProfitTarget
@@ -26,7 +30,10 @@ class PositionFactory(AbstractPositionFactory):
         ta: TechAnalysis,
     ) -> Position:
         size = await self.size_strategy.calculate(signal)
-        position_risk = PositionRisk().next(signal.ohlcv)
+
+        model = self._create_model(ta, signal.ohlcv)
+
+        position_risk = PositionRisk(model=model).next(signal.ohlcv)
         profit_target = ProfitTarget(
             signal.side, signal.ohlcv.close, ta.volatility.yz[-1]
         )
@@ -39,3 +46,38 @@ class PositionFactory(AbstractPositionFactory):
             profit_target=profit_target,
             expiration=self.config["trade_duration"] * 1000,
         )
+
+    @staticmethod
+    def _create_model(ta: TechAnalysis, ohlcv: OHLCV):
+        model = SGDRegressor(
+            max_iter=69,
+            tol=None,
+            warm_start=True,
+            alpha=0.001,
+        )
+
+        hlcc4 = np.array(
+            ta.trend.hlcc4 + [(ohlcv.high + ohlcv.low + 2 * ohlcv.close) / 4.0]
+        )
+
+        hlcc4_lagged_1 = np.roll(hlcc4, 1)
+        hlcc4_lagged_1[0] = hlcc4[0]
+
+        hlcc4_lagged_2 = np.roll(hlcc4, 2)
+        hlcc4_lagged_2[:2] = hlcc4[:2]
+
+        close = np.array(ta.trend.close + [ohlcv.close])
+
+        features = np.column_stack(
+            (
+                hlcc4[:-2],
+                hlcc4_lagged_1[:-2],
+                hlcc4_lagged_2[:-2],
+            )
+        )
+
+        target = close[2:]
+
+        model.fit(features, target)
+
+        return model

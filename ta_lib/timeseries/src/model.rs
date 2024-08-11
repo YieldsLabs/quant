@@ -1,7 +1,7 @@
 use crate::{OHLCVSeries, TechAnalysis, TimeSeries, OHLCV};
 use core::prelude::*;
 use momentum::{cci, dmi, macd, roc, rsi, stochosc};
-use price::typical_price;
+use price::{typical_price, wcl};
 use std::collections::BTreeMap;
 use trend::spp;
 use volatility::{bb, gkyz, kch, tr, yz};
@@ -98,6 +98,7 @@ impl TimeSeries for BaseTimeSeries {
         let source = series.close();
         let volume = series.volume();
         let hlc3 = typical_price(high, low, source);
+        let hlcc4 = wcl(high, low, source);
 
         let rsi2 = rsi(source, Smooth::SMMA, periods[0]);
         let rsi14 = rsi(source, Smooth::SMMA, periods[1]);
@@ -172,6 +173,9 @@ impl TimeSeries for BaseTimeSeries {
             resistance: resistance.into(),
             dmi: dmi.into(),
             vwap: vwap.into(),
+            close: source.clone().into(),
+            hlc3: hlc3.into(),
+            hlcc4: hlcc4.into(),
         }
     }
 }
