@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Type
 
 import orjson as json
 
@@ -62,7 +62,7 @@ class TimeSeriesRef:
 
         buff = self._read_from_memory(ptr, length)
 
-        return self._deserialize_list(OHLCV, buff)
+        return self._deserialize(OHLCV, buff) or []
 
     def ta(self, bar: OHLCV) -> Optional[TechAnalysis]:
         ptr, length = self.exports["timeseries_ta"](
@@ -78,7 +78,7 @@ class TimeSeriesRef:
 
         buff = self._read_from_memory(ptr, length)
 
-        return self._deserialize_object(TechAnalysis, buff)
+        return self._deserialize(TechAnalysis, buff)
 
     def _get_bar(self, method: str, bar: OHLCV) -> Optional[OHLCV]:
         ptr, length = self.exports[f"timeseries_{method}"](
@@ -94,7 +94,7 @@ class TimeSeriesRef:
 
         buff = self._read_from_memory(ptr, length)
 
-        return self._deserialize_object(OHLCV, buff)
+        return self._deserialize(OHLCV, buff)
 
     def _read_from_memory(self, ptr: int, length: int) -> bytes:
         if ptr == -1 and length == 0:
@@ -102,16 +102,16 @@ class TimeSeriesRef:
 
         return self.exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
 
-    def _deserialize_object(self, data_class: Any, buff: bytes) -> Optional[Any]:
+    def _deserialize(self, data_class: Type[Any], buff: bytes) -> Optional[Any]:
         try:
             raw_data = json.loads("".join(chr(val) for val in buff))
-            return data_class.from_list(raw_data.values())
+
+            if isinstance(raw_data, dict):
+                return data_class.from_list(raw_data.values())
+            elif isinstance(raw_data, list):
+                return [data_class.from_list(d.values()) for d in raw_data]
+            else:
+                raise ValueError("Unexpected data format")
+
         except Exception:
             return None
-
-    def _deserialize_list(self, data_class: Any, buff: bytes) -> List[Any]:
-        try:
-            raw_data = json.loads("".join(chr(val) for val in buff))
-            return [data_class.from_list(d.values()) for d in raw_data]
-        except Exception:
-            return []
