@@ -217,8 +217,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     bars.append(next_bar)
                     prev_bar = next_bar
 
-            print(f"BARS: {bars}")
-
             for bar in sorted(bars, key=lambda x: x.timestamp):
                 ohlcv = next_position.position_risk.ohlcv
                 ts = np.array([o.timestamp for o in ohlcv])
@@ -237,11 +235,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                         9.0 * DEFAULT_ANOMALY_THRESHOLD,
                     )
 
-                    print(f"Current score: {anomaly}")
-
                     if abs(anomaly) > self.anomaly_threshold:
                         self.consc_anomaly_counter += 1
                         print(f"Anomalyyyyy, diff {current_diff}")
+
                         if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
                             print(
                                 "Too many consecutive anomalies, increasing threshold temporarily"
