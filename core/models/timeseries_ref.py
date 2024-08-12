@@ -62,7 +62,7 @@ class TimeSeriesRef:
 
         buff = self._read_from_memory(ptr, length)
 
-        return self._deserialize(OHLCV, buff) or []
+        return self._deserialize(buff, OHLCV) or []
 
     def ta(self, bar: OHLCV) -> Optional[TechAnalysis]:
         ptr, length = self.exports["timeseries_ta"](
@@ -78,7 +78,7 @@ class TimeSeriesRef:
 
         buff = self._read_from_memory(ptr, length)
 
-        return self._deserialize(TechAnalysis, buff)
+        return self._deserialize(buff, TechAnalysis)
 
     def _get_bar(self, method: str, bar: OHLCV) -> Optional[OHLCV]:
         ptr, length = self.exports[f"timeseries_{method}"](
@@ -94,7 +94,7 @@ class TimeSeriesRef:
 
         buff = self._read_from_memory(ptr, length)
 
-        return self._deserialize(OHLCV, buff)
+        return self._deserialize(buff, OHLCV)
 
     def _read_from_memory(self, ptr: int, length: int) -> bytes:
         if ptr == -1 and length == 0:
@@ -102,7 +102,7 @@ class TimeSeriesRef:
 
         return self.exports["memory"].data_ptr(self.store_ref)[ptr : ptr + length]
 
-    def _deserialize(self, data_class: Type[Any], buff: bytes) -> Optional[Any]:
+    def _deserialize(self, buff: bytes, data_class: Type[Any]) -> Optional[Any]:
         try:
             raw_data = json.loads("".join(chr(val) for val in buff))
 
