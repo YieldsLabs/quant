@@ -75,7 +75,10 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe, 
      - Determine SL based on nearest Fibonacci level to limit potential losses.
 
 ### Result Format:
-RISK_LEVEL: [Single Risk Level Enum], TP: [Take Profit Value: float], SL: [Stop Loss Value: float]
+RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
+- **RISK_LEVEL**: The overall risk assessment for the position, expressed as a single risk level enum.
+- **TP (Take Profit Value)**: A precise floating-point number representing the recommended take profit level, formatted to at least four decimal places (e.g., 0.3351).
+- **SL (Stop Loss Value)**: A precise floating-point number representing the recommended stop loss level, formatted to at least four decimal places (e.g., 0.3345).
 
 Return the result only.
 """
