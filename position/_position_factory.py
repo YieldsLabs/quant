@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import RobustScaler, StandardScaler
 
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrategy
@@ -31,9 +32,9 @@ class PositionFactory(AbstractPositionFactory):
     ) -> Position:
         size = await self.size_strategy.calculate(signal)
 
-        model = self._create_model(ta, signal.ohlcv)
+        model, scaler = self._create_model(ta, signal.ohlcv)
 
-        position_risk = PositionRisk(model=model).next(signal.ohlcv)
+        position_risk = PositionRisk(model=model, scaler=scaler).next(signal.ohlcv)
         profit_target = ProfitTarget(
             signal.side, signal.ohlcv.close, ta.volatility.yz[-1]
         )
@@ -50,11 +51,14 @@ class PositionFactory(AbstractPositionFactory):
     @staticmethod
     def _create_model(ta: TechAnalysis, ohlcv: OHLCV):
         model = SGDRegressor(
-            max_iter=69,
+            max_iter=1984,
             tol=None,
             warm_start=True,
             alpha=0.001,
+            penalty='elasticnet',
         )
+
+        scaler = StandardScaler()
 
         hlcc4 = np.array(
             ta.trend.hlcc4 + [(ohlcv.high + ohlcv.low + 2 * ohlcv.close) / 4.0]
@@ -68,16 +72,37 @@ class PositionFactory(AbstractPositionFactory):
 
         close = np.array(ta.trend.close + [ohlcv.close])
 
+        current_tr = max(
+            ohlcv.high - ohlcv.low,
+            abs(ohlcv.high - ta.trend.close[-1]),
+            abs(ohlcv.low - ta.trend.close[-1])
+        )
+
+        true_range = np.array(ta.volatility.tr + [current_tr])
+        
+        true_range_lagged_1 = np.roll(true_range, 1)
+        true_range_lagged_1[0] = true_range[0]
+
+        true_range_lagged_2 = np.roll(true_range, 2)
+        true_range_lagged_2[:2] = true_range[:2]
+
         features = np.column_stack(
             (
                 hlcc4[:-2],
                 hlcc4_lagged_1[:-2],
                 hlcc4_lagged_2[:-2],
+                true_range[:-2],
+                true_range_lagged_1[:-2],
+                true_range_lagged_2[:-2],
+                hlcc4[2:] - hlcc4_lagged_1[2:],
+                true_range[2:] - true_range_lagged_1[2:],
             )
         )
 
         target = close[2:]
 
-        model.fit(features, target)
+        features_scaled = scaler.fit_transform(features)
 
-        return model
+        model.fit(features_scaled, target)
+
+        return model, scaler

@@ -7,6 +7,7 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import RobustScaler
 
 from .ohlcv import OHLCV
 from .risk_type import PositionRiskType
@@ -106,6 +107,7 @@ class TaMixin:
 @dataclass(frozen=True)
 class PositionRisk(TaMixin):
     model: SGDRegressor
+    scaler: RobustScaler
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
     trail_factor: float = field(default_factory=lambda: np.random.uniform(1.8, 2.2))
@@ -119,21 +121,41 @@ class PositionRisk(TaMixin):
             return
 
         last_ohlcv = self.ohlcv[-3:]
+        
         close = [ohlcv.close for ohlcv in last_ohlcv]
+        high = [ohlcv.high for ohlcv in last_ohlcv]
+        low = [ohlcv.low for ohlcv in last_ohlcv]
 
-        hlcc4 = [(ohlcv.high + ohlcv.low + 2 * ohlcv.close) / 4.0 for ohlcv in last_ohlcv]
+        hlcc4 = [(high[i] + low[i] + 2 * close[i]) / 4.0 for i in range(3)]
         hlcc4_lagged_1 = [hlcc4[0]] + hlcc4[:-1]
         hlcc4_lagged_2 = [hlcc4[0], hlcc4[1]] + hlcc4[:-2]
+
+        true_range = [max(high[i] - low[i], abs(high[i] - close[i-1]), abs(low[i] - close[i-1])) for i in range(1, 3)]
+        true_range.insert(0, true_range[0])
+
+        true_range_lagged_1 = [true_range[0]] + true_range[:-1]
+        true_range_lagged_2 = [true_range[0], true_range[1]] + true_range[:-2]
+
+        hlcc4_diff = hlcc4[-1] - hlcc4_lagged_1[-1]
+        true_range_diff = true_range[-1] - true_range_lagged_1[-1]
 
         features = np.array([[
             hlcc4[-1],
             hlcc4_lagged_1[-1],
             hlcc4_lagged_2[-1],
+            true_range[-1],
+            true_range_lagged_1[-1],
+            true_range_lagged_2[-1],
+            hlcc4_diff,
+            true_range_diff,
         ]])
-
         target = np.array([close[-1]])
 
-        self.model.partial_fit(features, target)
+        features_scaled = self.scaler.transform(features)
+
+        # print(f"Updated Features: ----->>>>>. {features_scaled}")
+
+        self.model.partial_fit(features_scaled, target)
 
     def forecast(self, steps: int = 3):
         if len(self.ohlcv) < 1:
@@ -141,10 +163,22 @@ class PositionRisk(TaMixin):
 
         self.update_model()
 
-        last_hlcc4 = (self.curr_bar.high + self.curr_bar.low + 2 * self.curr_bar.close) / 4
+        last_ohlcv = self.ohlcv[-1]
+
+        last_hlcc4 = (last_ohlcv.high + last_ohlcv.low + 2 * last_ohlcv.close) / 4.0
+        last_true_range = max(
+            last_ohlcv.high - last_ohlcv.low,
+            abs(last_ohlcv.high - self.ohlcv[-2].close),
+            abs(last_ohlcv.low - self.ohlcv[-2].close),
+        )
 
         last_hlcc4_lagged_1 = last_hlcc4
         last_hlcc4_lagged_2 = last_hlcc4
+        last_true_range_lagged_1 = last_true_range
+        last_true_range_lagged_2 = last_true_range
+
+        hlcc4_diff = last_hlcc4 - last_hlcc4_lagged_1
+        true_range_diff = last_true_range - last_true_range_lagged_1
 
         predictions = []
 
@@ -153,14 +187,29 @@ class PositionRisk(TaMixin):
                 last_hlcc4,
                 last_hlcc4_lagged_1,
                 last_hlcc4_lagged_2,
+                last_true_range,
+                last_true_range_lagged_1,
+                last_true_range_lagged_2,
+                hlcc4_diff,
+                true_range_diff,
             ]])
 
-            forecast = self.model.predict(X)[0]
+            X_scaled = self.scaler.transform(X)
+
+            forecast = self.model.predict(X_scaled)[0]
             predictions.append(forecast)
 
             last_hlcc4_lagged_2 = last_hlcc4_lagged_1
             last_hlcc4_lagged_1 = last_hlcc4
             last_hlcc4 = forecast
+
+            last_true_range_lagged_2 = last_true_range_lagged_1
+            last_true_range_lagged_1 = last_true_range
+            last_true_range = max(
+                forecast - last_ohlcv.close,
+                abs(forecast - self.ohlcv[-2].close),
+                abs(last_ohlcv.low - self.ohlcv[-2].close),
+            )
 
         return predictions
 
