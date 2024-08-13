@@ -25,7 +25,7 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 
 ### Risk Evaluation Framework:
 
-#### Step 1: Candlestick Analysis
+#### Step 1: Candlestick Data Analysis
 - **Price Movement**:
   - Upward trend: Higher risk for SHORT, lower risk for LONG.
   - Downward trend: Lower risk for SHORT, higher risk for LONG.
@@ -91,4 +91,4 @@ RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 
 Return the result only.
 """
-signal_risk_pattern = r"RISK_LEVEL: (NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH), TP: ([\d.]+), SL: ([\d.]+)\s*\.*"
+signal_risk_pattern = r"RISK_LEVEL: (NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP: ([\d.]+)\s*,\s*SL: ([\d.]+)\s*\.*"

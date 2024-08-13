@@ -158,14 +158,14 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             type=risk_type,
         )
 
+        bar = sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)
+
         prompt = signal_risk_prompt.format(
             horizon=self.horizon,
-            bar=sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)[
-                -self.bars_n :
-            ],
             side=side,
             entry=curr_bar.close,
             timeframe=signal.timeframe,
+            bar=bar[-self.bars_n :],
             trend=trend.sma[-self.bars_n :],
             macd=trend.macd[-self.bars_n :],
             rsi=osc.srsi[-self.bars_n :],
