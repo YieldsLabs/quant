@@ -19,7 +19,7 @@ from core.models.side import PositionSide, SignalSide
 from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
-from ._prompt import signal_risk_prompt, system_prompt, signal_risk_pattern
+from ._prompt import signal_risk_pattern, signal_risk_prompt, system_prompt
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
@@ -128,6 +128,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         self._lock = asyncio.Lock()
         self.anomaly = set(binary_strings(8))
         self.bars_n = 3
+        self.horizon = 8
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)
@@ -138,12 +139,15 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
     async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRisk:
         signal = msg.signal
-
         curr_bar = signal.ohlcv
+        
         prev_bar = msg.prev_bar
         ta = msg.ta
+        
         trend = ta.trend
         volume = ta.volume
+        osc = ta.oscillator
+        momentum = ta.momentum
 
         side = (
             PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
@@ -155,6 +159,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         )
 
         prompt = signal_risk_prompt.format(
+            horizon=self.horizon,
             bar=sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)[
                 -self.bars_n :
             ],
@@ -163,7 +168,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             timeframe=signal.timeframe,
             trend=trend.sma[-self.bars_n :],
             macd=trend.macd[-self.bars_n :],
-            rsi=ta.oscillator.srsi[-self.bars_n :],
+            rsi=osc.srsi[-self.bars_n :],
+            cci=momentum.cci[-self.bars_n :],
             nvol=volume.nvol[-self.bars_n :],
             support=trend.support[-self.bars_n :],
             resistance=trend.resistance[-self.bars_n :],

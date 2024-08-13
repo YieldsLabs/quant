@@ -2,22 +2,24 @@ system_prompt = """
 You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
 signal_risk_prompt = """
-Evaluate the risk for an open {side} position within the {timeframe} timeframe, considering the entry at {entry} using the provided data:
+Evaluate the risk for an open {side} position within the {timeframe} timeframe over the next {horizon} candlesticks, considering the entry at {entry} using the provided data:
 
 ### Input Data:
-1. **Candlestick Data**:
+- **Candlestick Data**:
    - {bar}
-2. **Overall Trend**:
+- **Overall Trend**:
    - {trend}
-3. **MACD (Moving Average Convergence Divergence) Histogram**:
+- **MACD (Moving Average Convergence Divergence) Histogram**:
    - {macd}
-4. **RSI (Relative Strength Index)**:
+- **RSI (Relative Strength Index)**:
    - {rsi}
-5. **Normalized Volume**:
+- **CCI (Commodity Channel Index)**:
+   - {cci}
+- **Normalized Volume**:
    - {nvol}
-6. **VWAP (Volume Weighted Average Price)**:
+- **VWAP (Volume Weighted Average Price)**:
    - {vwap}
-7. **Support and Resistance Levels**:
+- **Support and Resistance Levels**:
    - Support: {support}
    - Resistance: {resistance}
 
@@ -27,6 +29,9 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe, 
 - **Price Movement**:
   - Upward trend: Higher risk for SHORT, lower risk for LONG.
   - Downward trend: Lower risk for SHORT, higher risk for LONG.
+- **Price Range**:
+  - Wide Range: Indicates high volatility, higher risk due to potential price swings.
+  - Narrow Range: Indicates low volatility, lower risk but may suggest a potential breakout.
 - **Real Body Normalization**:
   - High value: Strong movement, higher risk if against the position.
   - Low value: Weak movement, lower risk if against the position.
@@ -47,6 +52,10 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe, 
 - **RSI**:
   - Above 70: Overbought, higher risk for LONG.
   - Below 30: Oversold, higher risk for SHORT.
+- **CCI**:
+  - Above 100: Overbought, higher risk for LONG.
+  - Below -100: Oversold, higher risk for SHORT.
+  - Between -100 and 100: Neutral, moderate risk.
 - **Normalized Volume**:
   - High: Strong market sentiment, higher risk if against the position.
   - Low: Weak market sentiment, lower risk.
