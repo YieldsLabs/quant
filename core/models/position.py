@@ -300,7 +300,7 @@ class Position:
         long = next_position.side == PositionSide.LONG
 
         if raw_forecast:
-            forecast = np.max(raw_forecast) if long else np.min(raw_forecast)
+            forecast = raw_forecast[-1]
             rising = raw_forecast[0] < raw_forecast[-1] if long else raw_forecast[0] > raw_forecast[-1]
 
         print(f"Forecast: {raw_forecast}, rising: {rising}")
@@ -319,20 +319,22 @@ class Position:
         )
         sstp = np.clip(sstp, targets[0], targets[-1])
 
-        w_stp, w_sstp, w_ftp = 0.3, 0.2, 0.5
+        w_stp, w_sstp, w_ftp = 0.4, 0.1, 0.5
 
         ttp = (w_stp * stp + w_sstp * sstp + w_ftp * ftp) / (w_stp + w_sstp + w_ftp)
 
         print(f"Signal TP: {stp}, forecast TP: {ftp}, S/R TP: {sstp}, TTP: {ttp}")
 
         def target_filter(target, tp):
+            sl = next_position.stop_loss
+
             return (
-                target > tp if long else target < tp
+                target > tp and target < sl if long else target < tp and target > sl
             )
 
         idx_rr = 0
         risk = abs(entry_price - next_position.stop_loss)
-        rr_factor = 1.8
+        rr_factor = 2.0
         rr = rr_factor * risk
 
         for i, target in enumerate(targets):
@@ -362,24 +364,73 @@ class Position:
         exit_dist = abs(curr_price - exit_target)
         dist = abs(curr_price - entry_price)
 
-        print(f"Targets: {targets}")
+        trl_ratio = trl_dist / entry_price
+        exit_ratio = exit_dist / entry_price
+        dist_ratio = dist / entry_price
+
+        # print(f"Targets: {targets}")
         print(
-            f"Trail target: {trail_target}, PRED_TP: {next_tp}, CURR_DIST: {dist}, TR_DIST: {trl_dist}, EXIT_DIST: {exit_dist}"
+            f"Trail target: {trail_target}, PRED_TP: {next_tp}, "
+            f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
+            f"TR_DIST: {trl_dist:.6f} ({trl_ratio:.2%}), "
+            f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
         )
 
-        if dist > trl_dist:
-            print("Target traillllllllll")
+        trail_threshold = 0.0046
+
+        print(f"____________RATIO: {trl_ratio}___________")
+
+        if dist > trl_dist and trl_ratio > trail_threshold:
+            print("Activating trailing stop mechanism")
             next_position = next_position.trail(ta)
 
         if session_risk == SessionRiskType.EXIT:
+            exit_ratio = exit_dist / entry_price
+            dist_ratio = dist / entry_price
+
+            exit_threshold = 0.03
+
             if dist > exit_dist:
                 print(
-                    f"TRAILLL PREV SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
+                    f"TRAIL PREV SL: {next_position.stop_loss:.6f}, "
+                    f"CURR PRICE: {next_position.risk_bar.close:.6f}, "
+                    f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
+                    f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
                 )
+                
                 next_position = next_position.trail(ta)
+
                 print(
-                    f"TRAILLL NEXT SL: {next_position.stop_loss}, CURR PRICE: {next_position.risk_bar.close}"
+                    f"TRAIL NEXT SL: {next_position.stop_loss:.6f}, "
+                    f"CURR PRICE: {next_position.risk_bar.close:.6f}"
                 )
+            else:
+                print(
+                    f"Exit condition not met: "
+                    f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
+                    f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
+                )
+
+            # if dist > exit_dist and exit_ratio > exit_threshold:
+            #     print(
+            #         f"TRAIL PREV SL: {next_position.stop_loss:.6f}, "
+            #         f"CURR PRICE: {next_position.risk_bar.close:.6f}, "
+            #         f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
+            #         f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
+            #     )
+                
+            #     next_position = next_position.trail(ta)
+
+            #     print(
+            #         f"TRAIL NEXT SL: {next_position.stop_loss:.6f}, "
+            #         f"CURR PRICE: {next_position.risk_bar.close:.6f}"
+            #     )
+            # else:
+            #     print(
+            #         f"Exit condition not met: "
+            #         f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
+            #         f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
+            #     )
 
         next_sl = next_position.stop_loss
         next_risk = next_position.position_risk
@@ -392,7 +443,7 @@ class Position:
             next_position.expiration,
         )
 
-        if next_risk.type == PositionRiskType.TP and rising:
+        if next_risk.type == PositionRiskType.TP:
             print("RESET RISK")
             next_risk = next_risk.reset()
             index = 0
@@ -416,7 +467,7 @@ class Position:
         )
 
         logger.info(
-            f"SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, CLOSE: {next_position.risk_bar.close}, PT: {next_position.curr_target}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, LLM_TP: {next_position.signal_risk.tp}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
+            f"SYMBOL: {next_position.signal.symbol.name}, SIDE: {next_position.side}, TS: {ohlcv.timestamp}, GAP: {gap}ms, ENTRY: {next_position.entry_price}, CURR: {next_position.curr_price}, HIGH: {next_position.risk_bar.high}, LOW: {next_position.risk_bar.low}, CLOSE: {next_position.risk_bar.close}, PT: {next_position.curr_target}, SL: {next_position.stop_loss}, TP: {next_position.take_profit}, LLM_TP: {next_position.signal_risk.tp}, PnL%: {pnl_perc}, BREAK EVEN: {next_position.has_break_even}, RISK: {next_position.has_risk}"
         )
 
         return next_position
