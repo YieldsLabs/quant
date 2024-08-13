@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.linear_model import SGDRegressor
-from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrategy
@@ -55,7 +55,8 @@ class PositionFactory(AbstractPositionFactory):
             tol=None,
             warm_start=True,
             alpha=0.001,
-            penalty='elasticnet',
+            penalty="elasticnet",
+            l1_ratio=0.69,
         )
 
         scaler = StandardScaler()
@@ -75,11 +76,11 @@ class PositionFactory(AbstractPositionFactory):
         current_tr = max(
             ohlcv.high - ohlcv.low,
             abs(ohlcv.high - ta.trend.close[-1]),
-            abs(ohlcv.low - ta.trend.close[-1])
+            abs(ohlcv.low - ta.trend.close[-1]),
         )
 
         true_range = np.array(ta.volatility.tr + [current_tr])
-        
+
         true_range_lagged_1 = np.roll(true_range, 1)
         true_range_lagged_1[0] = true_range[0]
 

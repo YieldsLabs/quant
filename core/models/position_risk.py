@@ -6,8 +6,7 @@ from scipy.signal import savgol_filter
 from sklearn.cluster import KMeans
 from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from .ohlcv import OHLCV
 from .risk_type import PositionRiskType
@@ -107,7 +106,7 @@ class TaMixin:
 @dataclass(frozen=True)
 class PositionRisk(TaMixin):
     model: SGDRegressor
-    scaler: RobustScaler
+    scaler: StandardScaler
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
     trail_factor: float = field(default_factory=lambda: np.random.uniform(1.8, 2.2))
@@ -121,7 +120,7 @@ class PositionRisk(TaMixin):
             return
 
         last_ohlcv = self.ohlcv[-3:]
-        
+
         close = [ohlcv.close for ohlcv in last_ohlcv]
         high = [ohlcv.high for ohlcv in last_ohlcv]
         low = [ohlcv.low for ohlcv in last_ohlcv]
@@ -130,7 +129,14 @@ class PositionRisk(TaMixin):
         hlcc4_lagged_1 = [hlcc4[0]] + hlcc4[:-1]
         hlcc4_lagged_2 = [hlcc4[0], hlcc4[1]] + hlcc4[:-2]
 
-        true_range = [max(high[i] - low[i], abs(high[i] - close[i-1]), abs(low[i] - close[i-1])) for i in range(1, 3)]
+        true_range = [
+            max(
+                high[i] - low[i],
+                abs(high[i] - close[i - 1]),
+                abs(low[i] - close[i - 1]),
+            )
+            for i in range(1, 3)
+        ]
         true_range.insert(0, true_range[0])
 
         true_range_lagged_1 = [true_range[0]] + true_range[:-1]
@@ -139,16 +145,20 @@ class PositionRisk(TaMixin):
         hlcc4_diff = hlcc4[-1] - hlcc4_lagged_1[-1]
         true_range_diff = true_range[-1] - true_range_lagged_1[-1]
 
-        features = np.array([[
-            hlcc4[-1],
-            hlcc4_lagged_1[-1],
-            hlcc4_lagged_2[-1],
-            true_range[-1],
-            true_range_lagged_1[-1],
-            true_range_lagged_2[-1],
-            hlcc4_diff,
-            true_range_diff,
-        ]])
+        features = np.array(
+            [
+                [
+                    hlcc4[-1],
+                    hlcc4_lagged_1[-1],
+                    hlcc4_lagged_2[-1],
+                    true_range[-1],
+                    true_range_lagged_1[-1],
+                    true_range_lagged_2[-1],
+                    hlcc4_diff,
+                    true_range_diff,
+                ]
+            ]
+        )
         target = np.array([close[-1]])
 
         features_scaled = self.scaler.transform(features)
@@ -183,16 +193,20 @@ class PositionRisk(TaMixin):
         predictions = []
 
         for _ in range(steps):
-            X = np.array([[
-                last_hlcc4,
-                last_hlcc4_lagged_1,
-                last_hlcc4_lagged_2,
-                last_true_range,
-                last_true_range_lagged_1,
-                last_true_range_lagged_2,
-                hlcc4_diff,
-                true_range_diff,
-            ]])
+            X = np.array(
+                [
+                    [
+                        last_hlcc4,
+                        last_hlcc4_lagged_1,
+                        last_hlcc4_lagged_2,
+                        last_true_range,
+                        last_true_range_lagged_1,
+                        last_true_range_lagged_2,
+                        hlcc4_diff,
+                        true_range_diff,
+                    ]
+                ]
+            )
 
             X_scaled = self.scaler.transform(X)
 

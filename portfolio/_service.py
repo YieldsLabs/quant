@@ -85,7 +85,7 @@ class Portfolio(AbstractEventManager):
             f"volatility={performance.ann_volatility * 100:.2f}%, smart_sharpe={performance.smart_sharpe_ratio:.4f}, "
             f"smart_sortino={performance.smart_sortino_ratio:.4f}, skew={performance.skew:.2f}, "
             f"kurtosis={performance.kurtosis:.2f}, omega={performance.omega_ratio:.2f}, "
-            f"upi={performance.upi:.2f}, mdd={performance.max_drawdown * 100:.2f}%, "
+            f"upi={performance.upi:.2f}, mdd={performance.max_drawdown * 100:.4f}%, "
             f"pnl={performance.total_pnl:.4f}, fee={performance.total_fee:.4f}"
         )
 
@@ -149,7 +149,7 @@ class Portfolio(AbstractEventManager):
         fixed_size = equity * risk_per_trade
 
         if query.type == PositionSizeType.Fixed:
-            return fixed_size
+            return risk_per_trade
 
         if query.type == PositionSizeType.Kelly:
             kelly = await self.state.get_kelly(symbol, timeframe, strategy)
