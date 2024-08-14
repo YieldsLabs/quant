@@ -118,7 +118,7 @@ class ProfitTarget:
 
     def _pt(self, min_scale: float, max_scale: float) -> float:
         scale = np.random.uniform(min_scale, max_scale)
-        noise = np.random.normal(0, 0.001)
+        noise = np.random.lognormal(mean=0, sigma=0.001)
         target_price = self.entry * (
             1 + self.volatility * self.context_factor * scale + noise
         )
