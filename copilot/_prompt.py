@@ -62,7 +62,7 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - **VWAP**:
   - LONG: Higher risk if price below VWAP, lower risk if above.
   - SHORT: Higher risk if price above VWAP, lower risk if below.
-- **Support and Resistance**:
+- **Support and Resistance Levels**:
   - LONG: Higher risk near/below resistance, lower risk above support.
   - SHORT: Higher risk near/above support, lower risk below resistance.
 
@@ -89,6 +89,6 @@ RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 - **TP (Take Profit Value)**: A precise floating-point number representing the recommended take profit level, formatted to at least four decimal places (e.g., 0.3351).
 - **SL (Stop Loss Value)**: A precise floating-point number representing the recommended stop loss level, formatted to at least four decimal places (e.g., 0.3345).
 
-Return the result only.
+Return the result only as raw string
 """
-signal_risk_pattern = r"RISK_LEVEL: (NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP: ([\d.]+)\s*,\s*SL: ([\d.]+)\s*\.*"
+signal_risk_pattern = r"RISK_LEVEL:\s*(NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP:\s*([\d.]+)\s*,\s*SL:\s*([\d.]+)\s*\.+"
