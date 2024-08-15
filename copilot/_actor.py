@@ -128,7 +128,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         self._lock = asyncio.Lock()
         self.anomaly = set(binary_strings(8))
         self.bars_n = 3
-        self.horizon = 8
+        self.horizon = 5
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)
@@ -148,6 +148,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         volume = ta.volume
         osc = ta.oscillator
         momentum = ta.momentum
+        volatility = ta.volatility
 
         side = (
             PositionSide.LONG if signal.side == SignalSide.BUY else PositionSide.SHORT
@@ -174,6 +175,9 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             support=trend.support[-self.bars_n :],
             resistance=trend.resistance[-self.bars_n :],
             vwap=volume.vwap[-self.bars_n :],
+            upper_bb=volatility.upb[-self.bars_n :],
+            lower_bb=volatility.lwb[-self.bars_n :],
+            true_range=volatility.tr[-self.bars_n :],
         )
 
         logger.info(f"Signal Prompt: {prompt}")
