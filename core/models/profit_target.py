@@ -11,6 +11,7 @@ class ProfitTarget:
     side: SignalSide
     entry: float
     volatility: float
+    noise_sigma: float = 0.001
 
     @cached_property
     def context_factor(self):
@@ -118,7 +119,7 @@ class ProfitTarget:
 
     def _pt(self, min_scale: float, max_scale: float) -> float:
         scale = np.random.uniform(min_scale, max_scale)
-        noise = np.random.lognormal(mean=0, sigma=0.01) - 1
+        noise = np.random.lognormal(mean=0, sigma=self.noise_sigma) - 1
         target_price = self.entry * (
             1 + self.volatility * self.context_factor * scale + noise
         )
