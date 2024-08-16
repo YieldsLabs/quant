@@ -113,19 +113,21 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             processed_positions = list(self._position)
             num_positions = len(self._position)
             
+            indexes = list(range(num_positions))
+            random.shuffle(indexes)
+            
             current_index = 0
             
             for _ in range(num_positions):
-                processed_positions[current_index] = await self._process_market(event, self._position[current_index])
-                
+                shuffled_index = indexes[current_index]
+                processed_positions[shuffled_index] = await self._process_market(event, self._position[shuffled_index])
+
                 current_index = (current_index + 1) % num_positions
 
             self._position = tuple(processed_positions)
     
     async def _trail_position(self, event: TrailEvent):
         async with self._lock:
-            long_position, short_position = self._position
-
             async def handle_trail(position: Position, risk_bar: OHLCV):
                 ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
                 return position.trail(ta)
@@ -134,6 +136,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 if position and not position.has_risk and position.last_modified < event_meta.timestamp:
                     return await handle_trail(position, position.risk_bar)
                 return position
+
+            long_position, short_position = self._position
 
             if isinstance(event, (ExitLongSignalReceived, GoShortSignalReceived)):
                 long_position = await process_trail(long_position, event.meta)
