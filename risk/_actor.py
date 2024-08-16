@@ -100,17 +100,19 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     async def _open_position(self, event: PositionOpened):
         async with self._lock:
-            if event.position.side == PositionSide.LONG:
-                self._position = (event.position, self._position[1])
-            elif event.position.side == PositionSide.SHORT:
-                self._position = (self._position[0], event.position)
+            match event.position.side:
+                case PositionSide.LONG:
+                    self._position = (event.position, self._position[1])
+                case PositionSide.SHORT:
+                    self._position = (self._position[0], event.position)
 
     async def _close_position(self, event: PositionClosed):
         async with self._lock:
-            if event.position.side == PositionSide.LONG:
-                self._position = (None, self._position[1])
-            elif event.position.side == PositionSide.SHORT:
-                self._position = (self._position[0], None)
+            match event.position.side:
+                case PositionSide.LONG:
+                    self._position = (None, self._position[1])
+                case PositionSide.SHORT:
+                    self._position = (self._position[0], None)
 
     async def _handle_position_risk(self, event: NewMarketDataReceived):
         async with self._lock:
