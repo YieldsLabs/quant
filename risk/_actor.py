@@ -1,9 +1,11 @@
 import asyncio
+import random
 from typing import Optional, Union
 
 import numpy as np
 
 from core.actors import StrategyActor
+from core.events.base import EventMeta
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     PositionAdjusted,
@@ -94,40 +96,32 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     async def _open_position(self, event: PositionOpened):
         async with self._lock:
-            long_position, short_position = self._position
-
-            self._position = (
-                event.position
-                if event.position.side == PositionSide.LONG
-                else long_position,
-                event.position
-                if event.position.side == PositionSide.SHORT
-                else short_position,
-            )
+            if event.position.side == PositionSide.LONG:
+                self._position = (event.position, self._position[1])
+            elif event.position.side == PositionSide.SHORT:
+                self._position = (self._position[0], event.position)
 
     async def _close_position(self, event: PositionClosed):
         async with self._lock:
-            long_position, short_position = self._position
-
-            self._position = (
-                None if event.position.side == PositionSide.LONG else long_position,
-                None if event.position.side == PositionSide.SHORT else short_position,
-            )
+            if event.position.side == PositionSide.LONG:
+                self._position = (None, self._position[1])
+            elif event.position.side == PositionSide.SHORT:
+                self._position = (self._position[0], None)
 
     async def _handle_position_risk(self, event: NewMarketDataReceived):
         async with self._lock:
-            long_position, short_position = self._position
+            processed_positions = list(self._position)
+            num_positions = len(self._position)
+            
+            current_index = 0
+            
+            for _ in range(num_positions):
+                processed_positions[current_index] = await self._process_market(event, self._position[current_index])
+                
+                current_index = (current_index + 1) % num_positions
 
-            if long_position or short_position:
-                long_position, short_position = await asyncio.gather(
-                    *[
-                        self._process_market(event, long_position),
-                        self._process_market(event, short_position),
-                    ]
-                )
-
-                self._position = (long_position, short_position)
-
+            self._position = tuple(processed_positions)
+    
     async def _trail_position(self, event: TrailEvent):
         async with self._lock:
             long_position, short_position = self._position
@@ -136,45 +130,16 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
                 return position.trail(ta)
 
-            if isinstance(event, ExitLongSignalReceived):
-                if (
-                    long_position
-                    and not long_position.has_risk
-                    and long_position.last_modified < event.meta.timestamp
-                ):
-                    long_position = await handle_trail(
-                        long_position, long_position.risk_bar
-                    )
+            async def process_trail(position: Position, event_meta: EventMeta):
+                if position and not position.has_risk and position.last_modified < event_meta.timestamp:
+                    return await handle_trail(position, position.risk_bar)
+                return position
 
-            elif isinstance(event, ExitShortSignalReceived):
-                if (
-                    short_position
-                    and not short_position.has_risk
-                    and short_position.last_modified < event.meta.timestamp
-                ):
-                    short_position = await handle_trail(
-                        short_position, short_position.risk_bar
-                    )
+            if isinstance(event, (ExitLongSignalReceived, GoShortSignalReceived)):
+                long_position = await process_trail(long_position, event.meta)
 
-            elif isinstance(event, GoLongSignalReceived):
-                if (
-                    short_position
-                    and not short_position.has_risk
-                    and short_position.last_modified < event.meta.timestamp
-                ):
-                    short_position = await handle_trail(
-                        short_position, short_position.risk_bar
-                    )
-
-            elif isinstance(event, GoShortSignalReceived):
-                if (
-                    long_position
-                    and not long_position.has_risk
-                    and long_position.last_modified < event.meta.timestamp
-                ):
-                    long_position = await handle_trail(
-                        long_position, long_position.risk_bar
-                    )
+            elif isinstance(event, (ExitShortSignalReceived, GoLongSignalReceived)):
+                short_position = await process_trail(short_position, event.meta)
 
             self._position = (long_position, short_position)
 
@@ -237,7 +202,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
                     if abs(anomaly) > self.anomaly_threshold:
                         self.consc_anomaly_counter += 1
-                        print(f"Anomalyyyyy, diff {current_diff}")
 
                         if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
                             print(
