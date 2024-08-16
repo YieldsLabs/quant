@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import random
 from typing import Optional, Union
 
@@ -58,6 +59,9 @@ def _ema(values, alpha=0.1):
     return np.array(ema)
 
 
+logger = logging.getLogger(__name__)
+
+
 class RiskActor(StrategyActor, EventHandlerMixin):
     _EVENTS = [
         NewMarketDataReceived,
@@ -112,28 +116,35 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         async with self._lock:
             processed_positions = list(self._position)
             num_positions = len(self._position)
-            
+
             indexes = list(range(num_positions))
             random.shuffle(indexes)
-            
+
             current_index = 0
-            
+
             for _ in range(num_positions):
                 shuffled_index = indexes[current_index]
-                processed_positions[shuffled_index] = await self._process_market(event, self._position[shuffled_index])
+                processed_positions[shuffled_index] = await self._process_market(
+                    event, self._position[shuffled_index]
+                )
 
                 current_index = (current_index + 1) % num_positions
 
             self._position = tuple(processed_positions)
-    
+
     async def _trail_position(self, event: TrailEvent):
         async with self._lock:
+
             async def handle_trail(position: Position, risk_bar: OHLCV):
                 ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
                 return position.trail(ta)
 
             async def process_trail(position: Position, event_meta: EventMeta):
-                if position and not position.has_risk and position.last_modified < event_meta.timestamp:
+                if (
+                    position
+                    and not position.has_risk
+                    and position.last_modified < event_meta.timestamp
+                ):
                     return await handle_trail(position, position.risk_bar)
                 return position
 
@@ -208,7 +219,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                         self.consc_anomaly_counter += 1
 
                         if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
-                            print(
+                            logger.warn(
                                 "Too many consecutive anomalies, increasing threshold temporarily"
                             )
                             self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
