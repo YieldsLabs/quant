@@ -19,7 +19,12 @@ from core.models.side import PositionSide, SignalSide
 from core.models.signal_risk import SignalRisk
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
-from ._prompt import signal_risk_pattern, signal_risk_prompt, system_prompt
+from ._prompt import (
+    signal_contrarian_risk_prompt,
+    signal_risk_pattern,
+    signal_trend_risk_prompt,
+    system_prompt,
+)
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
 
@@ -140,10 +145,10 @@ class CopilotActor(BaseActor, EventHandlerMixin):
     async def _evaluate_signal(self, msg: EvaluateSignal) -> SignalRisk:
         signal = msg.signal
         curr_bar = signal.ohlcv
-        
+
         prev_bar = msg.prev_bar
         ta = msg.ta
-        
+
         trend = ta.trend
         volume = ta.volume
         osc = ta.oscillator
@@ -161,10 +166,16 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
         bar = sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)
 
-        prompt = signal_risk_prompt.format(
-            horizon=self.horizon,
+        template = (
+            signal_contrarian_risk_prompt
+            if "SUP" not in str(signal.strategy)
+            else signal_trend_risk_prompt
+        )
+
+        prompt = template.format(
             side=side,
             entry=curr_bar.close,
+            horizon=self.horizon,
             timeframe=signal.timeframe,
             bar=bar[-self.bars_n :],
             trend=trend.sma[-self.bars_n :],
@@ -189,12 +200,6 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         match = re.search(signal_risk_pattern, answer)
         # match = None
 
-        # risk_type = (
-        #     SignalRiskType.VERY_HIGH
-        #     if ta.momentum.cci[-1] > 100.0 or ta.momentum.cci[-1] < -100.0
-        #     else SignalRiskType.NONE
-        # )
-
         if not match:
             risk = SignalRisk(type=risk_type)
         else:
@@ -202,11 +207,6 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             tp = float(match.group(2))
             sl = float(match.group(3))
-
-            if (side == PositionSide.LONG and tp < curr_bar.close) or (
-                side == PositionSide.SHORT and tp > curr_bar.close
-            ):
-                risk_type = SignalRiskType.NONE
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
