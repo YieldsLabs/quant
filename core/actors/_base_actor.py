@@ -13,10 +13,11 @@ class BaseActor(AbstractActor):
         super().__init__()
         self._running = False
         self._mailbox = EventDispatcher()
+        self._id = str(uuid.uuid4())
 
     @property
     def id(self):
-        return str(uuid.uuid4())
+        return self._id
 
     @property
     def running(self):
