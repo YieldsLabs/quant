@@ -18,6 +18,8 @@ pub struct TechAnalysis {
     pub tr: Vec<f32>,
     pub gkyz: Vec<f32>,
     pub yz: Vec<f32>,
+    pub upb: Vec<f32>,
+    pub lwb: Vec<f32>,
     pub ebb: Vec<f32>,
     pub ekch: Vec<f32>,
     pub k: Vec<f32>,

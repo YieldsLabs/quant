@@ -123,8 +123,8 @@ impl TimeSeries for BaseTimeSeries {
             periods[5],
             factors[2],
         );
-        let ebb = upb - lwb;
-        let ekch = upkch - lwkch;
+        let ebb = &upb - &lwb;
+        let ekch = &upkch - &lwkch;
         let (k, d) = stochosc(
             source,
             high,
@@ -163,6 +163,8 @@ impl TimeSeries for BaseTimeSeries {
             tr: tr.into(),
             gkyz: gkyz.into(),
             yz: yz.into(),
+            upb: upb.into(),
+            lwb: lwb.into(),
             ebb: ebb.into(),
             ekch: ekch.into(),
             k: k.into(),
