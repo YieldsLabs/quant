@@ -133,7 +133,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         self._lock = asyncio.Lock()
         self.anomaly = set(binary_strings(8))
         self.bars_n = 3
-        self.horizon = 5
+        self.horizon = 3
 
     async def on_receive(self, event: CopilotEvent):
         return await self.handle_event(event)

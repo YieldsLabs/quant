@@ -2,20 +2,19 @@ system_prompt = """
 You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
 signal_trend_risk_prompt = """
-Evaluate the risk for an open {side} position within the {timeframe} timeframe over the next {horizon} candlesticks, considering the entry at {entry} using the provided data:
+Evaluate the risk for an open {side} position within the {timeframe} timeframe over the next {horizon} candlesticks, considering the ENTRY PRICE at {entry} using the provided data:
 
 [Input Data]
 - Candlestick Data: {bar}
-- Overall Trend: {trend}
-- MACD (Moving Average Convergence Divergence) Histogram: {macd}
+- Overall Trend (Exponential Moving Average): {trend}
+- MACD (Moving Average Convergence/Divergence) Histogram: {macd}
 - RSI (Relative Strength Index): {rsi}
 - CCI (Commodity Channel Index): {cci}
 - Normalized Volume: {nvol}
 - VWAP (Volume Weighted Average Price): {vwap}
-- Support Levels: {support}
-- Resistance Levels: {resistance}
-- Bollinger Bands (Upper, Lower): {upper_bb}, {lower_bb}
-- Volatility (True Range): {true_range}
+- Support/Resistance Levels: {support}/{resistance}
+- Bollinger Bands (UPPER BAND, LOWER BAND): {upper_bb}, {lower_bb}
+- Volatility (TRUE RANGE): {true_range}
 
 [Risk Evaluation Framework]
 
@@ -56,15 +55,15 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - VWAP:
     - LONG: Higher risk if price below VWAP, lower risk if above.
     - SHORT: Higher risk if price above VWAP, lower risk if below.
-- Support and Resistance Levels:
+- Support/Resistance Levels:
     - LONG: Higher risk near/below resistance, lower risk above support.
     - SHORT: Higher risk near/above support, lower risk below resistance.
-- Bollinger Bands:
-    - Price Above Upper Band: Indicates overbought conditions, higher risk for LONG, potential reversal or correction.
-    - Price Below Lower Band: Indicates oversold conditions, higher risk for SHORT, potential reversal or bounce.
-- Volatility (True Range):
-    - High True Range: Indicates high volatility, higher risk due to potential price swings, important for stop loss placement.
-    - Low True Range: Indicates low volatility, lower risk but may suggest a potential breakout or reduced opportunity.
+- Bollinger Bands (UPPER BAND, LOWER BAND):
+    - Price Above UPPER BAND: Indicates overbought conditions, higher risk for LONG, potential reversal or correction.
+    - Price Below LOWER BAND: Indicates oversold conditions, higher risk for SHORT, potential reversal or bounce.
+- Volatility (TRUE RANGE):
+    - High TRUE RANGE: Indicates high volatility, higher risk due to potential price swings, important for stop loss placement.
+    - Low TRUE RANGE: Indicates low volatility, lower risk but may suggest a potential breakout or reduced opportunity.
 
 [Risk Level Explanation]
 - NONE: No significant risk factors.
@@ -75,30 +74,27 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - VERY_HIGH: Major risk factors, generally unfavorable.
 
 [Final Output]
-RISK_LEVEL:[Risk Level Value], TP:[Take Profit Value], SL:[Stop Loss Value]
+- **RISK_LEVEL**: [Risk Level Value]
+- **TP**: [Take Profit Value] (formatted to six decimal places)
+- **SL**: [Stop Loss Value] (formatted to six decimal places)
 
-[Result Format]
-- RISK_LEVEL: The overall risk assessment for the position, expressed as a single risk level enum.
-- TP: A precise floating-point number representing the recommended take profit level, formatted to at least four decimal places (e.g., 0.3351).
-- SL: A precise floating-point number representing the recommended stop loss level, formatted to at least four decimal places (e.g., 0.3345).
-
-Return the result only as raw string.
+Return the result only as raw string:
+RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 """
 signal_contrarian_risk_prompt = """
 Evaluate the risk for an open {side} position within the {timeframe} timeframe over the next {horizon} candlesticks, considering the entry at {entry} using the provided data:
 
 [Input Data]
 - Candlestick Data: {bar}
-- Overall Trend: {trend}
-- MACD (Moving Average Convergence Divergence) Histogram: {macd}
+- Overall Trend (Exponential Moving Average): {trend}
+- MACD (Moving Average Convergence/Divergence) Histogram: {macd}
 - RSI (Relative Strength Index): {rsi}
 - CCI (Commodity Channel Index): {cci}
 - Normalized Volume: {nvol}
 - VWAP (Volume Weighted Average Price): {vwap}
-- Support Levels: {support}
-- Resistance Levels: {resistance}
-- Bollinger Bands (Upper, Lower): {upper_bb}, {lower_bb}
-- Volatility (True Range): {true_range}
+- Support/Resistance Levels: {support} / {resistance}
+- Bollinger Bands (UPPER BAND, LOWER BAND): {upper_bb}, {lower_bb}
+- Volatility (TRUE RANGE): {true_range}
 
 [Risk Evaluation Framework]
 
@@ -141,13 +137,13 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - Support and Resistance Levels:
     - LONG: Higher risk near resistance.
     - SHORT: Higher risk near support.
-- Bollinger Bands:
-    - Above Upper Band: Overbought, reversal risk for LONG.
-    - Below Lower Band: Oversold, rebound risk for SHORT.
+- Bollinger Bands (UPPER BAND, LOWER BAND):
+    - Above UPPER BAND: Overbought, reversal risk for LONG.
+    - Below LOWER BAND: Oversold, rebound risk for SHORT.
     - Bollinger Bands Width:
-        - Wide (Significant gap between Upper and Lower Band): Indicates high volatility, potential breakout risk.
-        - Narrow (Small gap between Upper and Lower Band): Indicates low volatility, potential for explosive movement if bands expand.
-- Volatility (True Range):
+        - Wide (Significant gap between UPPER BAND and LOWER BAND): Indicates high volatility, potential breakout risk.
+        - Narrow (Small gap between UPPER BAND and LOWER BAND): Indicates low volatility, potential for explosive movement if bands expand.
+- Volatility (TRUE RANGE):
     - High: Higher reversal risk.
     - Low: Consolidation with lower risk.
 
@@ -160,13 +156,11 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - VERY_HIGH: Major risk factors, generally unfavorable.
 
 [Final Output]
-RISK_LEVEL:[Risk Level Value], TP:[Take Profit Value], SL:[Stop Loss Value]
+- **RISK_LEVEL**: [Risk Level Value]
+- **TP**: [Take Profit Value] (formatted to six decimal places)
+- **SL**: [Stop Loss Value] (formatted to six decimal places)
 
-[Result Format]
-- RISK_LEVEL: The overall risk assessment for the position, expressed as a single risk level enum.
-- TP: A precise floating-point number representing the recommended take profit level, formatted to at least four decimal places (e.g., 0.3351).
-- SL: A precise floating-point number representing the recommended stop loss level, formatted to at least four decimal places (e.g., 0.3345).
-
-Return the result only as raw string.
+Return the result only as raw string:
+RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 """
 signal_risk_pattern = r"RISK_LEVEL:\s*(NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP:\s*([\d.]+)\s*,\s*SL:\s*([\d.]+)\s*\.*"
