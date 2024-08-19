@@ -49,7 +49,7 @@ impl<T> Series<T> {
             .collect()
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.data.len()
     }
