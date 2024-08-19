@@ -134,7 +134,7 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - VWAP:
     - LONG: Higher risk above VWAP.
     - SHORT: Higher risk below VWAP.
-- Support and Resistance Levels:
+- Support/Resistance Levels:
     - LONG: Higher risk near resistance.
     - SHORT: Higher risk near support.
 - Bollinger Bands (UPPER BAND, LOWER BAND):
