@@ -92,7 +92,7 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - CCI (Commodity Channel Index): {cci}
 - Normalized Volume: {nvol}
 - VWAP (Volume Weighted Average Price): {vwap}
-- Support/Resistance Levels: {support} / {resistance}
+- Support/Resistance Levels: {support}/{resistance}
 - Bollinger Bands (UPPER BAND, LOWER BAND): {upper_bb}, {lower_bb}
 - Volatility (TRUE RANGE): {true_range}
 
