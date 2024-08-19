@@ -12,19 +12,17 @@ class EnvironmentSecretService(AbstractSecretService):
         super().__init__()
 
     def get_api_key(self, identifier: str) -> Optional[str]:
-        key = f"{identifier.upper()}_API_KEY"
-
-        return self._get_env_variable(key)
+        return self._get_env_variable(self._format_key(identifier, "API_KEY"))
 
     def get_secret(self, identifier: str) -> Optional[str]:
-        key = f"{identifier.upper()}_API_SECRET"
-
-        return self._get_env_variable(key)
+        return self._get_env_variable(self._format_key(identifier, "API_SECRET"))
 
     def get_wss(self, identifier: str) -> Optional[str]:
-        key = f"{identifier.upper()}_WSS"
+        return self._get_env_variable(self._format_key(identifier, "WSS"))
 
-        return self._get_env_variable(key)
+    @staticmethod
+    def _format_key(identifier: str, key_type: str) -> str:
+        return f"{identifier.upper()}_{key_type}"
 
     @staticmethod
     def _get_env_variable(key: str) -> Optional[str]:
