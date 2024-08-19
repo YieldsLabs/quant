@@ -1,3 +1,5 @@
+import os
+
 from wasmtime import Engine, Linker, Module, Store, WasiConfig
 
 from core.interfaces.abstract_wasm_manager import AbstractWasmManager
@@ -16,17 +18,17 @@ class WasmManager(AbstractWasmManager):
         self.instances = {}
 
     def load_instance(self, wasm_type: WasmType):
-        if wasm_type not in self.instances:
-            store = Store()
-            self._configure_wasi(store)
-            linker = Linker(store.engine)
-            linker.define_wasi()
-            module = self._get_module(wasm_type, store.engine)
-            instance = linker.instantiate(store, module)
-            self.instances[wasm_type] = (instance, store)
+        store = Store()
+        self._configure_wasi(store)
+        linker = Linker(store.engine)
+        linker.define_wasi()
+        module = self._get_module(wasm_type, store.engine)
+        instance = linker.instantiate(store, module)
+        self.instances[wasm_type] = (instance, store)
 
     def get_instance(self, wasm_type: WasmType):
-        self.load_instance(wasm_type)
+        if wasm_type not in self.instances:
+            self.load_instance(wasm_type)
         return self.instances[wasm_type]
 
     def _configure_wasi(self, store: Store):
@@ -40,5 +42,8 @@ class WasmManager(AbstractWasmManager):
             raise ValueError(f"Unknown Strategy: {type}")
 
         wasm_path = f"./{self.dir}/{self._type.get(type)}"
+
+        if not os.path.exists(wasm_path):
+            raise FileNotFoundError(f"WASM file not found: {wasm_path}")
 
         return Module.from_file(engine, wasm_path)
