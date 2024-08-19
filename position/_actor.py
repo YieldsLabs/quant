@@ -5,6 +5,7 @@ from typing import Union
 
 from core.actors import StrategyActor
 from core.events.backtest import BacktestEnded
+from core.events.base import EventMeta
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
@@ -85,7 +86,7 @@ class PositionActor(StrategyActor):
             )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        if int(event.meta.timestamp) < int(time.time()) - TIME_BUFF:
+        if self._is_stale_signal(event.meta):
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 
@@ -164,7 +165,7 @@ class PositionActor(StrategyActor):
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
         if not event.position.has_risk:
-            logger.warn(f"Try to close not risky position: {event.position}")
+            logger.warn(f"Attempt to close not risky position: {event.position}")
 
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
@@ -199,6 +200,10 @@ class PositionActor(StrategyActor):
             await self.tell(PositionCloseRequested(short_position))
 
         return True
+
+    @staticmethod
+    def _is_stale_signal(meta: EventMeta) -> bool:
+        return int(meta.timestamp) < int(time.time()) - TIME_BUFF
 
     @staticmethod
     def _get_event_key(event: PositionEvent):
