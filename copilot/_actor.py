@@ -204,12 +204,20 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             risk = SignalRisk(type=risk_type)
         else:
             risk_type = SignalRiskType.from_string(match.group(1))
-            _tp, _sl = match.group(2).split('.'), match.group(3).split('.')
+            _tp, _sl = match.group(2).split("."), match.group(3).split(".")
 
             tp, sl = float(f"{_tp[0]}.{_tp[1]}"), float(f"{_sl[0]}.{_sl[1]}")
 
-            risk_type = SignalRiskType.VERY_HIGH if tp < curr_bar.close and side == PositionSide.LONG else risk_type
-            risk_type = SignalRiskType.VERY_HIGH if tp > curr_bar.close and side == PositionSide.SHORT else risk_type
+            risk_type = (
+                SignalRiskType.VERY_HIGH
+                if tp < curr_bar.close and side == PositionSide.LONG
+                else risk_type
+            )
+            risk_type = (
+                SignalRiskType.VERY_HIGH
+                if tp > curr_bar.close and side == PositionSide.SHORT
+                else risk_type
+            )
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
