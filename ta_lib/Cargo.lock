@@ -556,6 +556,7 @@ dependencies = [
  "momentum",
  "osc",
  "timeseries",
+ "trail",
  "trend",
  "volatility",
  "volume",
@@ -603,6 +604,13 @@ checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "trail"
+version = "0.1.0"
+dependencies = [
+ "core",
 ]
 
 [[package]]
