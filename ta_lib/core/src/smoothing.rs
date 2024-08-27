@@ -1,8 +1,8 @@
+use crate::constants::{ONE, PI, SCALE, ZERO};
 use crate::series::Series;
 use crate::traits::Comparator;
 use crate::types::{Period, Price, Scalar};
 use crate::{iff, nz};
-use crate::{ONE, SCALE, ZERO};
 
 #[derive(Copy, Clone)]
 pub enum Smooth {
@@ -51,7 +51,7 @@ impl Price {
     }
 
     fn smma(&self, period: Period) -> Self {
-        let alpha = Series::fill(1. / (period as Scalar), self.len());
+        let alpha = Series::fill(ONE / (period as Scalar), self.len());
         let seed = self.ma(period);
 
         self.ew(&alpha, &seed)
@@ -131,8 +131,8 @@ impl Price {
     }
 
     fn ults(&self, period: Period) -> Self {
-        let a1 = (-1.414 * std::f32::consts::PI / period as Scalar).exp();
-        let c2 = 2. * a1 * (1.414 * std::f32::consts::PI / period as Scalar).cos();
+        let a1 = (-1.414 * PI / period as Scalar).exp();
+        let c2 = 2. * a1 * (1.414 * PI / period as Scalar).cos();
         let c3 = -a1 * a1;
         let c1 = 0.25 * (ONE + c2 - c3);
 
