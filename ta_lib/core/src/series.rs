@@ -87,7 +87,7 @@ impl Price {
     pub fn nz(&self, replacement: Option<Scalar>) -> Self {
         self.fmap(|opt| match opt {
             Some(v) => Some(*v),
-            None => Some(replacement.unwrap_or(0.0)),
+            None => Some(replacement.unwrap_or(ZERO)),
         })
     }
 
@@ -95,16 +95,16 @@ impl Price {
         self.fmap(|val| Some(val.is_none()))
     }
 
-    pub fn fill(scalar: Scalar, len: usize) -> Price {
-        core::iter::repeat(scalar).take(len).collect()
+    pub fn fill(scalar: Scalar, n: usize) -> Price {
+        core::iter::repeat(scalar).take(n).collect()
     }
 
-    pub fn zero(len: usize) -> Price {
-        Series::fill(ZERO, len)
+    pub fn zero(n: usize) -> Price {
+        Series::fill(ZERO, n)
     }
 
-    pub fn one(len: usize) -> Price {
-        Series::fill(ONE, len)
+    pub fn one(n: usize) -> Price {
+        Series::fill(ONE, n)
     }
 }
 

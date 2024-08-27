@@ -1,3 +1,4 @@
+use crate::constants::ZERO;
 use crate::types::{Price, Rule, Scalar};
 
 impl<T: AsRef<[Scalar]>> From<T> for Price {
@@ -37,6 +38,6 @@ impl From<Rule> for Vec<bool> {
 
 impl From<Price> for Rule {
     fn from(val: Price) -> Self {
-        val.fmap(|opt| opt.map(|f| f.is_finite() && *f != 0.))
+        val.fmap(|opt| opt.map(|f| f.is_finite() && *f != ZERO))
     }
 }

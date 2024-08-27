@@ -2,7 +2,7 @@ use crate::series::Series;
 use crate::traits::Comparator;
 use crate::types::{Period, Price, Scalar};
 use crate::{iff, nz};
-use crate::{SCALE, ZERO};
+use crate::{ONE, SCALE, ZERO};
 
 #[derive(Copy, Clone)]
 pub enum Smooth {
@@ -24,7 +24,7 @@ impl Price {
         let len = self.len();
         let mut sum = Series::zero(len);
         let a = alpha * self;
-        let b = 1. - alpha;
+        let b = ONE - alpha;
 
         for _ in 0..len {
             sum = &a + &b * nz!(sum.shift(1), seed)
@@ -45,7 +45,7 @@ impl Price {
     }
 
     fn ema(&self, period: Period) -> Self {
-        let alpha = Series::fill(2. / (period as Scalar + 1.), self.len());
+        let alpha = Series::fill(2. / (period + 1) as Scalar, self.len());
 
         self.ew(&alpha, self)
     }
@@ -84,7 +84,7 @@ impl Price {
         let x2 = nz!(self.shift(2), self);
         let x3 = nz!(self.shift(3), self);
 
-        x3 * 1. / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * 1. / 6.
+        x3 * ONE / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * ONE / 6.
     }
 
     fn hma(&self, period: Period) -> Self {
@@ -125,7 +125,7 @@ impl Price {
     }
 
     fn zlema(&self, period: Period) -> Self {
-        let lag = (0.5 * (period as Scalar - 1.)).floor() as Period;
+        let lag = (0.5 * (period - 1) as Scalar).floor() as Period;
 
         (self + (self - nz!(self.shift(lag), self))).ema(period)
     }
@@ -134,7 +134,7 @@ impl Price {
         let a1 = (-1.414 * std::f32::consts::PI / period as Scalar).exp();
         let c2 = 2. * a1 * (1.414 * std::f32::consts::PI / period as Scalar).cos();
         let c3 = -a1 * a1;
-        let c1 = 0.25 * (1. + c2 - c3);
+        let c1 = 0.25 * (ONE + c2 - c3);
 
         let len = self.len();
 
@@ -143,7 +143,7 @@ impl Price {
         let src1 = nz!(self.shift(1), self);
         let src2 = nz!(self.shift(2), src1);
 
-        let a = (1. - c1) * self;
+        let a = (ONE - c1) * self;
         let b = (2. * c1 - c2) * &src1;
         let c = (c1 + c3) * &src2;
 

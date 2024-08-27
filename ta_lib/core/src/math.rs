@@ -77,7 +77,7 @@ impl Price {
         values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         let len = values.len();
-        let idx = (percentile / SCALE) * (len as Scalar - 1.0);
+        let idx = (percentile / SCALE) * (len - 1) as Scalar;
         let idx_lower = idx.floor() as usize;
         let idx_upper = idx.ceil() as usize;
 

@@ -81,7 +81,7 @@ impl Operation<Series<f32>, bool, f32> for Series<bool> {
     }
 
     fn smul(&self, rhs: &Series<f32>) -> Self::Output {
-        self.ops(rhs, |b, a| if b { a } else { 0.0 })
+        self.ops(rhs, |b, a| if b { a } else { ZERO })
     }
 
     fn sdiv(&self, _rhs: &Series<f32>) -> Self::Output {
