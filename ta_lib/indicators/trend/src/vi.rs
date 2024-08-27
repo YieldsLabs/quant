@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn vi(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    atr: &Series<f32>,
-    period: usize,
-) -> (Series<f32>, Series<f32>) {
+pub fn vi(high: &Price, low: &Price, atr: &Price, period: Period) -> (Price, Price) {
     let vmp = (high - low.shift(1)).abs().sum(period);
     let vmm = (low - high.shift(1)).abs().sum(period);
     let atrs = atr.sum(period);
@@ -50,8 +45,8 @@ mod tests {
         ];
 
         let (vip, vim) = vi(&high, &low, &atr, 2);
-        let vvip: Vec<f32> = vip.into();
-        let vvim: Vec<f32> = vim.into();
+        let vvip: Vec<Scalar> = vip.into();
+        let vvim: Vec<Scalar> = vim.into();
 
         assert_eq!(vvip, expected_vip);
         assert_eq!(vvim, expected_vim);

@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn ce(
-    close: &Series<f32>,
-    atr: &Series<f32>,
-    period: usize,
-    factor: f32,
-) -> (Series<f32>, Series<f32>) {
+pub fn ce(close: &Price, atr: &Price, period: Period, factor: Scalar) -> (Price, Price) {
     let len = close.len();
     let atr_mul = atr * factor;
 
@@ -75,8 +70,8 @@ mod tests {
         ];
 
         let (direction, trend) = ce(&close, &atr, period, factor);
-        let result_direction: Vec<f32> = direction.into();
-        let result_trend: Vec<f32> = trend.into();
+        let result_direction: Vec<Scalar> = direction.into();
+        let result_trend: Vec<Scalar> = trend.into();
 
         assert_eq!(high.len(), low.len());
         assert_eq!(high.len(), close.len());
@@ -111,8 +106,8 @@ mod tests {
         ];
 
         let (direction, trend) = ce(&close, &atr, period, factor);
-        let result_direction: Vec<f32> = direction.into();
-        let result_trend: Vec<f32> = trend.into();
+        let result_direction: Vec<Scalar> = direction.into();
+        let result_trend: Vec<Scalar> = trend.into();
 
         assert_eq!(high.len(), low.len());
         assert_eq!(high.len(), close.len());

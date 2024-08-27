@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn smma(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn smma(source: &Price, period: Period) -> Price {
     source.smooth(Smooth::SMMA, period)
 }
 
@@ -20,7 +20,7 @@ mod tests {
             6.835905,
         ];
 
-        let result: Vec<f32> = smma(&source, 3).into();
+        let result: Vec<Scalar> = smma(&source, 3).into();
 
         assert_eq!(result, expected)
     }

@@ -1,10 +1,6 @@
 use core::prelude::*;
 
-pub fn pp(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> (Series<f32>, Series<f32>) {
+pub fn pp(high: &Price, low: &Price, close: &Price) -> (Price, Price) {
     let pp = (high + low + close) / 3.;
 
     let support = 2. * &pp - high;
@@ -13,11 +9,7 @@ pub fn pp(
     (support, resistance)
 }
 
-pub fn fpp(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> (Series<f32>, Series<f32>) {
+pub fn fpp(high: &Price, low: &Price, close: &Price) -> (Price, Price) {
     let pp = (high + low + close) / 3.;
 
     let hl = 0.382 * (high - low);
@@ -28,11 +20,7 @@ pub fn fpp(
     (support, resistance)
 }
 
-pub fn wpp(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-) -> (Series<f32>, Series<f32>) {
+pub fn wpp(open: &Price, high: &Price, low: &Price) -> (Price, Price) {
     let pp = (high + low + 2. * open) / 4.;
 
     let support = 2. * &pp - high;
@@ -41,11 +29,7 @@ pub fn wpp(
     (support, resistance)
 }
 
-pub fn cpp(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> (Series<f32>, Series<f32>) {
+pub fn cpp(high: &Price, low: &Price, close: &Price) -> (Price, Price) {
     let hl = 1.1 * (high - low) / 12.;
 
     let support = close - &hl;
@@ -54,12 +38,7 @@ pub fn cpp(
     (support, resistance)
 }
 
-pub fn dpp(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> (Series<f32>, Series<f32>) {
+pub fn dpp(open: &Price, high: &Price, low: &Price, close: &Price) -> (Price, Price) {
     let mut pp = iff!(
         close.sgt(open),
         2. * high + low + close,
@@ -74,15 +53,15 @@ pub fn dpp(
 }
 
 pub fn spp(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-    smooth_type: Smooth,
-    period: usize,
-) -> (Series<f32>, Series<f32>) {
+    high: &Price,
+    low: &Price,
+    close: &Price,
+    smooth: Smooth,
+    period: Period,
+) -> (Price, Price) {
     let hh = high.highest(period);
     let ll = low.lowest(period);
-    let close = close.smooth(smooth_type, period);
+    let close = close.smooth(smooth, period);
 
     let pp = (&hh + &ll + close) / 3.;
 
@@ -120,8 +99,8 @@ mod tests {
         ];
 
         let (support, resistance) = pp(&high, &low, &close);
-        let result_support: Vec<f32> = support.into();
-        let result_resistance: Vec<f32> = resistance.into();
+        let result_support: Vec<Scalar> = support.into();
+        let result_resistance: Vec<Scalar> = resistance.into();
 
         assert_eq!(result_support, expected_support);
         assert_eq!(result_resistance, expected_resistance);
@@ -151,8 +130,8 @@ mod tests {
         ];
 
         let (support, resistance) = fpp(&high, &low, &close);
-        let result_support: Vec<f32> = support.into();
-        let result_resistance: Vec<f32> = resistance.into();
+        let result_support: Vec<Scalar> = support.into();
+        let result_resistance: Vec<Scalar> = resistance.into();
 
         assert_eq!(result_support, expected_support);
         assert_eq!(result_resistance, expected_resistance);
@@ -182,8 +161,8 @@ mod tests {
         ];
 
         let (support, resistance) = wpp(&open, &high, &low);
-        let result_support: Vec<f32> = support.into();
-        let result_resistance: Vec<f32> = resistance.into();
+        let result_support: Vec<Scalar> = support.into();
+        let result_resistance: Vec<Scalar> = resistance.into();
 
         assert_eq!(result_support, expected_support);
         assert_eq!(result_resistance, expected_resistance);
@@ -213,8 +192,8 @@ mod tests {
         ];
 
         let (support, resistance) = cpp(&high, &low, &close);
-        let result_support: Vec<f32> = support.into();
-        let result_resistance: Vec<f32> = resistance.into();
+        let result_support: Vec<Scalar> = support.into();
+        let result_resistance: Vec<Scalar> = resistance.into();
 
         assert_eq!(result_support, expected_support);
         assert_eq!(result_resistance, expected_resistance);
@@ -248,8 +227,8 @@ mod tests {
         ];
 
         let (support, resistance) = dpp(&open, &high, &low, &close);
-        let result_support: Vec<f32> = support.into();
-        let result_resistance: Vec<f32> = resistance.into();
+        let result_support: Vec<Scalar> = support.into();
+        let result_resistance: Vec<Scalar> = resistance.into();
 
         assert_eq!(result_support, expected_support);
         assert_eq!(result_resistance, expected_resistance);
@@ -282,8 +261,8 @@ mod tests {
         ];
 
         let (support, resistance) = spp(&high, &low, &close, Smooth::SMA, period);
-        let result_support: Vec<f32> = support.into();
-        let result_resistance: Vec<f32> = resistance.into();
+        let result_support: Vec<Scalar> = support.into();
+        let result_resistance: Vec<Scalar> = resistance.into();
 
         assert_eq!(result_support, expected_support);
         assert_eq!(result_resistance, expected_resistance);

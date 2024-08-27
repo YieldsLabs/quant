@@ -1,8 +1,8 @@
 use core::prelude::*;
 
-pub fn vidya(source: &Series<f32>, fast_period: usize, slow_period: usize) -> Series<f32> {
-    let k = source.std(fast_period) / source.std(slow_period);
-    let alpha = 2. / (fast_period as f32 + 1.) * k.nz(Some(ZERO));
+pub fn vidya(source: &Price, period_fast: Period, period_slow: Period) -> Price {
+    let k = source.std(period_fast) / source.std(period_slow);
+    let alpha = 2. / ((period_fast + 1) as Scalar) * k.nz(Some(ZERO));
 
     source.ew(&alpha, source)
 }
@@ -18,7 +18,7 @@ mod tests {
         let slow_period = 3;
         let expected = vec![100.0, 103.33333, 110.46114, 114.34566, 119.90917];
 
-        let result: Vec<f32> = vidya(&source, fast_period, slow_period).into();
+        let result: Vec<Scalar> = vidya(&source, fast_period, slow_period).into();
 
         assert_eq!(result, expected);
     }

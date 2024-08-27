@@ -3,7 +3,7 @@ use core::prelude::*;
 pub fn pk(high: &Price, low: &Price, period: Period) -> Price {
     let hll = (high / low).log();
 
-    let factor = 1. / (4.0 * period as f32 * 2.0_f32.ln());
+    let factor = 1. / (4.0 * period as Scalar * 2.0_f32.ln());
 
     let hls = factor * hll.pow(2).sum(period);
 

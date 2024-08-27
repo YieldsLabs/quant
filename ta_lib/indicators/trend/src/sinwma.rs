@@ -1,9 +1,9 @@
 use core::prelude::*;
 
-pub fn sinwma(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn sinwma(source: &Price, period: Period) -> Price {
     let weights = (0..period)
         .rev()
-        .map(|i| ((i as f32 + 1.) * std::f32::consts::PI / (period as f32 + 1.)).sin())
+        .map(|i| ((i as Scalar + 1.) * PI / (period + 1) as Scalar).sin())
         .collect::<Vec<_>>();
 
     source.wg(&weights)
@@ -29,7 +29,7 @@ mod tests {
             0.017057573,
         ];
 
-        let result: Vec<f32> = sinwma(&source, 3).into();
+        let result: Vec<Scalar> = sinwma(&source, 3).into();
 
         assert_eq!(result, expected);
     }

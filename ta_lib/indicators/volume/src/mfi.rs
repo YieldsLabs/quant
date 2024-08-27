@@ -13,7 +13,7 @@ pub fn mfi(hlc3: &Price, volume: &Price, period: Period) -> Price {
 
     let money_ratio = upper / lower;
 
-    SCALE - SCALE / (1. + money_ratio)
+    SCALE - SCALE / (ONE + money_ratio)
 }
 
 #[cfg(test)]

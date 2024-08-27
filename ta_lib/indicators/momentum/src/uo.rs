@@ -8,7 +8,7 @@ pub fn uo(
     period_medium: Period,
     period_slow: Period,
 ) -> Price {
-    let prev_source = source.shift(1).nz(Some(0.0));
+    let prev_source = source.shift(1).nz(Some(ZERO));
 
     let high = prev_source.max(high);
     let low = prev_source.min(low);

@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn ults(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn ults(source: &Price, period: Period) -> Price {
     source.smooth(Smooth::ULTS, period)
 }
 
@@ -14,7 +14,7 @@ mod tests {
         let period = 3;
         let expected = vec![18.898, 18.85439, 18.853537, 18.922752, 18.880928];
 
-        let result: Vec<f32> = ults(&source, period).into();
+        let result: Vec<Scalar> = ults(&source, period).into();
 
         assert_eq!(result, expected);
     }

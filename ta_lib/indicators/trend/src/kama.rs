@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn kama(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn kama(source: &Price, period: Period) -> Price {
     source.smooth(Smooth::KAMA, period)
 }
 
@@ -19,7 +19,7 @@ mod tests {
             5.110461, 5.1269784, 5.144952, 5.1693687, 5.190451,
         ];
 
-        let result: Vec<f32> = kama(&source, 3).into();
+        let result: Vec<Scalar> = kama(&source, 3).into();
 
         assert_eq!(result, expected);
     }

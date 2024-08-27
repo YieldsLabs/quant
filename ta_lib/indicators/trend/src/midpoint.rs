@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn midpoint(high: &Series<f32>, low: &Series<f32>, period: usize) -> Series<f32> {
+pub fn midpoint(high: &Price, low: &Price, period: Period) -> Price {
     0.5 * (high.highest(period) + low.lowest(period))
 }
 
@@ -14,7 +14,7 @@ mod tests {
         let low = Series::from([2.0846, 2.0846, 2.0881, 2.0886, 2.0865, 2.0875]);
         let expected = vec![2.08525, 2.08635, 2.08675, 2.0871, 2.08805, 2.0886];
 
-        let result: Vec<f32> = midpoint(&high, &low, 3).into();
+        let result: Vec<Scalar> = midpoint(&high, &low, 3).into();
 
         assert_eq!(result, expected);
     }

@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn wma(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn wma(source: &Price, period: Period) -> Price {
     source.smooth(Smooth::WMA, period)
 }
 
@@ -21,7 +21,7 @@ mod tests {
             6.5022836, 6.516834, 6.5373, 6.5378666,
         ];
 
-        let result: Vec<f32> = wma(&source, period).into();
+        let result: Vec<Scalar> = wma(&source, period).into();
 
         assert_eq!(result, expected);
     }

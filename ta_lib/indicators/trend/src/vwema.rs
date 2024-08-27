@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn vwema(source: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f32> {
+pub fn vwema(source: &Price, volume: &Price, period: Period) -> Price {
     (source * volume).smooth(Smooth::EMA, period) / volume.smooth(Smooth::EMA, period)
 }
 
@@ -15,7 +15,7 @@ mod tests {
         let period = 3;
         let expected = vec![100.0, 102.77778, 112.34501, 118.14274, 124.07811];
 
-        let result: Vec<f32> = vwema(&source, &volume, period).into();
+        let result: Vec<Scalar> = vwema(&source, &volume, period).into();
 
         assert_eq!(result, expected);
     }

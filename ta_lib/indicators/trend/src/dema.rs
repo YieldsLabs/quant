@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn dema(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn dema(source: &Price, period: Period) -> Price {
     source.smooth(Smooth::DEMA, period)
 }
 

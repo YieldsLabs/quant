@@ -1,12 +1,6 @@
 use core::prelude::*;
 
-pub fn cama(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    tr: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn cama(source: &Price, high: &Price, low: &Price, tr: &Price, period: Period) -> Price {
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
@@ -54,7 +48,7 @@ mod tests {
         let period = 2;
         let tr = wtr(&high, &low, &close);
 
-        let result: Vec<f32> = cama(&close, &high, &low, &tr, period).into();
+        let result: Vec<Scalar> = cama(&close, &high, &low, &tr, period).into();
 
         assert_eq!(result, expected);
     }

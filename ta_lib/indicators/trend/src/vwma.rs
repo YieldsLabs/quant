@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn vwma(source: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f32> {
+pub fn vwma(source: &Price, volume: &Price, period: Period) -> Price {
     (source * volume).smooth(Smooth::SMA, period) / volume.smooth(Smooth::SMA, period)
 }
 

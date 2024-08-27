@@ -1,18 +1,13 @@
 use core::prelude::*;
 
-pub fn frama(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
-    let len = (0.5 * period as f32).floor() as usize;
+pub fn frama(source: &Price, high: &Price, low: &Price, period: Period) -> Price {
+    let len = (0.5 * period as Scalar).floor() as Period;
     let hh = high.highest(len);
     let ll = low.lowest(len);
 
-    let n1 = (&hh - &ll) / len as f32;
-    let n2 = (hh.shift(len) - ll.shift(len)) / len as f32;
-    let n3 = (high.highest(period) - low.lowest(period)) / period as f32;
+    let n1 = (&hh - &ll) / len as Scalar;
+    let n2 = (hh.shift(len) - ll.shift(len)) / len as Scalar;
+    let n3 = (high.highest(period) - low.lowest(period)) / period as Scalar;
 
     let d = ((n1 + n2) / n3).log() / 2.0_f32.ln();
 
@@ -44,7 +39,7 @@ mod tests {
             5.105295, 5.122919, 5.1347446, 5.152087,
         ];
 
-        let result: Vec<f32> = frama(&source, &high, &low, 3).into();
+        let result: Vec<Scalar> = frama(&source, &high, &low, 3).into();
 
         assert_eq!(result, expected);
     }

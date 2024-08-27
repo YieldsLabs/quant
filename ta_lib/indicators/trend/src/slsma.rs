@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn slsma(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn slsma(source: &Price, period: Period) -> Price {
     let lsma = source.smooth(Smooth::LSMA, period);
 
     &lsma - (&lsma - lsma.smooth(Smooth::LSMA, period))
@@ -20,7 +20,7 @@ mod tests {
             12.522075, 12.472454,
         ];
 
-        let result: Vec<f32> = slsma(&source, 3).into();
+        let result: Vec<Scalar> = slsma(&source, 3).into();
 
         assert_eq!(result, expected);
     }

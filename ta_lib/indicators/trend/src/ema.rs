@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn ema(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn ema(source: &Price, period: Period) -> Price {
     source.smooth(Smooth::EMA, period)
 }
 
@@ -19,7 +19,7 @@ mod tests {
             6.5332203, 6.5316105, 6.5384054, 6.531903, 6.5178514, 6.489626, 6.487513, 6.492057,
         ];
 
-        let result: Vec<f32> = ema(&source, 3).into();
+        let result: Vec<Scalar> = ema(&source, 3).into();
 
         assert_eq!(result, expected);
     }

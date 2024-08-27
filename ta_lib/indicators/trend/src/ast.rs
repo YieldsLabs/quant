@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn ast(close: &Series<f32>, atr: &Series<f32>, factor: f32) -> (Series<f32>, Series<f32>) {
+pub fn ast(close: &Price, atr: &Price, factor: Scalar) -> (Price, Price) {
     let atr_multi = atr * factor;
 
     let len = close.len();
@@ -82,8 +82,8 @@ mod tests {
         ];
 
         let (direction, trend) = ast(&close, &atr, factor);
-        let result_direction: Vec<f32> = direction.into();
-        let result_trend: Vec<f32> = trend.into();
+        let result_direction: Vec<Scalar> = direction.into();
+        let result_trend: Vec<Scalar> = trend.into();
 
         assert_eq!(high.len(), low.len());
         assert_eq!(high.len(), close.len());

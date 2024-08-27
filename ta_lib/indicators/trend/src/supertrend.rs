@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn supertrend(
-    source: &Series<f32>,
-    close: &Series<f32>,
-    atr: &Series<f32>,
-    factor: f32,
-) -> (Series<f32>, Series<f32>) {
+pub fn supertrend(source: &Price, close: &Price, atr: &Price, factor: Scalar) -> (Price, Price) {
     let len = source.len();
 
     let atr_mul = atr * factor;
@@ -80,8 +75,8 @@ mod tests {
         ];
 
         let (direction, supertrend) = supertrend(&hl2, &close, &atr, factor);
-        let result_direction: Vec<f32> = direction.into();
-        let result_supertrend: Vec<f32> = supertrend.into();
+        let result_direction: Vec<Scalar> = direction.into();
+        let result_supertrend: Vec<Scalar> = supertrend.into();
 
         assert_eq!(high.len(), low.len());
         assert_eq!(high.len(), close.len());

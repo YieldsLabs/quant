@@ -3,7 +3,7 @@ use core::prelude::*;
 pub fn rs(open: &Price, high: &Price, low: &Price, close: &Price, period: Period) -> Price {
     let hl = (high / close).log() * (high / open).log();
     let ll = (low / close).log() * (low / open).log();
-    let factor = 1.0 / period as f32;
+    let factor = 1.0 / period as Scalar;
 
     let hs = factor * hl.sum(period);
     let ls = factor * ll.sum(period);

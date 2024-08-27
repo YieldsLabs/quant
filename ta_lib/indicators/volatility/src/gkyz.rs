@@ -6,9 +6,9 @@ pub fn gkyz(open: &Price, high: &Price, low: &Price, close: &Price, period: Peri
     let gkl = (close / open).log();
     let gm = 2.0 * 2.0_f32.ln() - 1.0;
 
-    let gkyzs = (1.0 / period as f32) * gkyzl.pow(2).sum(period);
-    let pks = (1.0 / (2.0 * period as f32)) * pkl.pow(2).sum(period);
-    let gs = (gm / period as f32) * gkl.pow(2).sum(period);
+    let gkyzs = (1.0 / period as Scalar) * gkyzl.pow(2).sum(period);
+    let pks = (1.0 / (2.0 * period as Scalar)) * pkl.pow(2).sum(period);
+    let gs = (gm / period as Scalar) * gkl.pow(2).sum(period);
 
     (gkyzs + pks - gs).sqrt()
 }

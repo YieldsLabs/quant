@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn gma(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn gma(source: &Price, period: Period) -> Price {
     source.log().smooth(Smooth::SMA, period).exp()
 }
 

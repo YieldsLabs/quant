@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn zlhma(source: &Series<f32>, period: usize, period_smooth: usize) -> Series<f32> {
+pub fn zlhma(source: &Price, period: Period, period_smooth: Period) -> Price {
     source
         .smooth(Smooth::HMA, period)
         .smooth(Smooth::HMA, period_smooth)
@@ -30,7 +30,7 @@ mod tests {
             7.099668, 7.1302214, 7.2068057, 7.1503606, 7.1527786,
         ];
 
-        let result: Vec<f32> = zlhma(&source, period, period_smooth).into();
+        let result: Vec<Scalar> = zlhma(&source, period, period_smooth).into();
 
         assert_eq!(result, expected);
     }

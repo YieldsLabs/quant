@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn zlsma(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn zlsma(source: &Price, period: Period) -> Price {
     let lsma = source.smooth(Smooth::LSMA, period);
 
     2. * &lsma - lsma.smooth(Smooth::LSMA, period)
@@ -20,7 +20,7 @@ mod tests {
             12.499587, 12.478523,
         ];
 
-        let result: Vec<f32> = zlsma(&source, 3).into();
+        let result: Vec<Scalar> = zlsma(&source, 3).into();
 
         assert_eq!(result, expected);
     }
