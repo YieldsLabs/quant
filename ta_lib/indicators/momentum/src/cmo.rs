@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn cmo(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn cmo(source: &Price, period: Period) -> Price {
     let mom = source.change(1);
     let zero = Series::zero(source.len());
 

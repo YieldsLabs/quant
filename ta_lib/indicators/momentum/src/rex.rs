@@ -1,13 +1,13 @@
 use core::prelude::*;
 
 pub fn rex(
-    source: &Series<f32>,
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
+    source: &Price,
+    open: &Price,
+    high: &Price,
+    low: &Price,
     smooth: Smooth,
-    period: usize,
-) -> Series<f32> {
+    period: Period,
+) -> Price {
     (3. * source - (open + high + low)).smooth(smooth, period)
 }
 

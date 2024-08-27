@@ -1,20 +1,20 @@
 use core::prelude::*;
 
 pub fn stc(
-    source: &Series<f32>,
-    smooth_type: Smooth,
-    fast_period: usize,
-    slow_period: usize,
-    cycle: usize,
-    d_first: usize,
-    d_second: usize,
-) -> Series<f32> {
+    source: &Price,
+    smooth: Smooth,
+    period_fast: Period,
+    period_slow: Period,
+    cycle: Period,
+    d_first: Period,
+    d_second: Period,
+) -> Price {
     source
-        .spread(smooth_type, fast_period, slow_period)
+        .spread(smooth, period_fast, period_slow)
         .normalize(cycle, SCALE)
-        .smooth(smooth_type, d_first)
+        .smooth(smooth, d_first)
         .normalize(cycle, SCALE)
-        .smooth(smooth_type, d_second)
+        .smooth(smooth, d_second)
         .clip(&ZERO, &SCALE)
 }
 
@@ -38,7 +38,7 @@ mod tests {
             67.08984, 83.54492,
         ];
 
-        let result: Vec<f32> = stc(
+        let result: Vec<Scalar> = stc(
             &source,
             Smooth::EMA,
             fast_period,

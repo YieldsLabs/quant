@@ -1,20 +1,13 @@
 use core::prelude::*;
 
-pub fn tsi(
-    source: &Series<f32>,
-    smooth_type: Smooth,
-    slow_period: usize,
-    fast_period: usize,
-) -> Series<f32> {
+pub fn tsi(source: &Price, smooth: Smooth, period_slow: Period, period_fast: Period) -> Price {
     let pc = source.change(1);
 
-    let pcds = pc
-        .smooth(smooth_type, slow_period)
-        .smooth(smooth_type, fast_period);
+    let pcds = pc.smooth(smooth, period_slow).smooth(smooth, period_fast);
     let apcds = pc
         .abs()
-        .smooth(smooth_type, slow_period)
-        .smooth(smooth_type, fast_period);
+        .smooth(smooth, period_slow)
+        .smooth(smooth, period_fast);
 
     SCALE * pcds / apcds
 }

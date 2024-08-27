@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn cci(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
+pub fn cci(source: &Price, period: Period, factor: Scalar) -> Price {
     source.ad(period) / (factor * source.mad(period))
 }
 
@@ -17,7 +17,7 @@ mod tests {
         let hlc3 = typical_price(&high, &low, &close);
         let expected = vec![0.0, 66.66667, 100.0, 100.0, 100.0];
 
-        let result: Vec<f32> = cci(&hlc3, 3, 0.015).into();
+        let result: Vec<Scalar> = cci(&hlc3, 3, 0.015).into();
 
         assert_eq!(result, expected);
     }

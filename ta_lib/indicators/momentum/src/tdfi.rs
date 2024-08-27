@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn tdfi(source: &Series<f32>, smooth: Smooth, period: usize, n: usize) -> Series<f32> {
+pub fn tdfi(source: &Price, smooth: Smooth, period: Period, n: usize) -> Price {
     let ma = (SCALE * 10. * source).smooth(smooth, period);
     let sma = ma.smooth(smooth, period);
 

@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn cfo(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn cfo(source: &Price, period: Period) -> Price {
     SCALE * (source - source.smooth(Smooth::LSMA, period)) / source
 }
 
@@ -24,7 +24,7 @@ mod tests {
             0.017605804,
         ];
 
-        let result: Vec<f32> = cfo(&source, 3).into();
+        let result: Vec<Scalar> = cfo(&source, 3).into();
 
         assert_eq!(result, expected);
     }

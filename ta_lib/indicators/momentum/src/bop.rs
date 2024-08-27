@@ -1,14 +1,14 @@
 use core::prelude::*;
 
 pub fn bop(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-    smooth_type: Smooth,
-    smoothing_period: usize,
-) -> Series<f32> {
-    ((close - open) / (high - low)).smooth(smooth_type, smoothing_period)
+    open: &Price,
+    high: &Price,
+    low: &Price,
+    close: &Price,
+    smooth: Smooth,
+    period_smooth: Period,
+) -> Price {
+    ((close - open) / (high - low)).smooth(smooth, period_smooth)
 }
 
 #[cfg(test)]
@@ -23,7 +23,7 @@ mod tests {
         let close = Series::from([2.0310, 2.0282, 1.9937, 1.9795, 1.9632]);
         let expected = vec![-0.58558744, -0.4300509, -0.6022142, -0.8487407, -0.77561265];
 
-        let result: Vec<f32> = bop(&open, &high, &low, &close, Smooth::SMA, 2).into();
+        let result: Vec<Scalar> = bop(&open, &high, &low, &close, Smooth::SMA, 2).into();
 
         assert_eq!(result, expected);
     }

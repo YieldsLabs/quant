@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn di(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
+pub fn di(source: &Price, smooth_type: Smooth, period: Period) -> Price {
     let ma = source.smooth(smooth_type, period);
 
     SCALE * (source - &ma) / ma
@@ -34,7 +34,7 @@ mod tests {
             0.0658433,
         ];
 
-        let result: Vec<f32> = di(&source, Smooth::WMA, 3).into();
+        let result: Vec<Scalar> = di(&source, Smooth::WMA, 3).into();
 
         assert_eq!(result, expected);
     }

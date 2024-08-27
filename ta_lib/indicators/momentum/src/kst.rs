@@ -2,21 +2,21 @@ use crate::roc;
 use core::prelude::*;
 
 pub fn kst(
-    source: &Series<f32>,
-    smooth_type: Smooth,
-    roc_period_first: usize,
-    roc_period_second: usize,
-    roc_period_third: usize,
-    roc_period_fouth: usize,
-    period_first: usize,
-    period_second: usize,
-    period_third: usize,
-    period_fouth: usize,
-) -> Series<f32> {
-    roc(source, roc_period_first).smooth(smooth_type, period_first)
-        + (2. * roc(source, roc_period_second).smooth(smooth_type, period_second))
-        + (3. * roc(source, roc_period_third).smooth(smooth_type, period_third))
-        + (4. * roc(source, roc_period_fouth).smooth(smooth_type, period_fouth))
+    source: &Price,
+    smooth: Smooth,
+    period_roc_first: Period,
+    period_roc_second: Period,
+    period_roc_third: Period,
+    period_roc_fouth: Period,
+    period_first: Period,
+    period_second: Period,
+    period_third: Period,
+    period_fouth: Period,
+) -> Price {
+    roc(source, period_roc_first).smooth(smooth, period_first)
+        + (2. * roc(source, period_roc_second).smooth(smooth, period_second))
+        + (3. * roc(source, period_roc_third).smooth(smooth, period_third))
+        + (4. * roc(source, period_roc_fouth).smooth(smooth, period_fouth))
 }
 
 #[cfg(test)]
@@ -43,7 +43,7 @@ mod tests {
             8.414183,
         ];
 
-        let result: Vec<f32> = kst(
+        let result: Vec<Scalar> = kst(
             &source,
             Smooth::SMA,
             roc_period_one,

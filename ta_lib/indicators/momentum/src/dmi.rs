@@ -1,13 +1,13 @@
 use core::prelude::*;
 
 pub fn dmi(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    atr: &Series<f32>,
+    high: &Price,
+    low: &Price,
+    atr: &Price,
     smooth: Smooth,
-    period_adx: usize,
-    period_di: usize,
-) -> (Series<f32>, Series<f32>, Series<f32>) {
+    period_adx: Period,
+    period_di: Period,
+) -> (Price, Price, Price) {
     let len = high.len();
     let up = high.change(1);
     let down = low.change(1).negate();
@@ -77,9 +77,9 @@ mod tests {
         let (result_di_plus, result_di_minus, result_adx) =
             dmi(&high, &low, &atr, Smooth::SMMA, adx_period, di_period);
 
-        let adx: Vec<f32> = result_adx.into();
-        let di_plus: Vec<f32> = result_di_plus.into();
-        let di_minus: Vec<f32> = result_di_minus.into();
+        let adx: Vec<Scalar> = result_adx.into();
+        let di_plus: Vec<Scalar> = result_di_plus.into();
+        let di_minus: Vec<Scalar> = result_di_minus.into();
 
         assert_eq!(adx, expected_adx);
         assert_eq!(di_plus, expected_di_plus);

@@ -1,11 +1,11 @@
 use crate::roc;
 use core::prelude::*;
 
-pub fn trix(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
+pub fn trix(source: &Price, smooth: Smooth, period: Period) -> Price {
     let ema3 = source
-        .smooth(smooth_type, period)
-        .smooth(smooth_type, period)
-        .smooth(smooth_type, period);
+        .smooth(smooth, period)
+        .smooth(smooth, period)
+        .smooth(smooth, period);
 
     SCALE * roc(&ema3, 1)
 }

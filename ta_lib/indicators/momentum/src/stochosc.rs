@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn stoch(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn stoch(source: &Price, high: &Price, low: &Price, period: Period) -> Price {
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
@@ -13,51 +8,49 @@ pub fn stoch(
 }
 
 pub fn stochosc(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
+    source: &Price,
+    high: &Price,
+    low: &Price,
     smooth: Smooth,
-    period: usize,
-    k_period: usize,
-    d_period: usize,
-) -> (Series<f32>, Series<f32>) {
-    let k = stoch(source, high, low, period).smooth(smooth, k_period);
-    let d = k.smooth(smooth, d_period);
+    period: Period,
+    period_k: Period,
+    period_d: Period,
+) -> (Price, Price) {
+    let k = stoch(source, high, low, period).smooth(smooth, period_k);
+    let d = k.smooth(smooth, period_d);
 
     (k, d)
 }
 
 pub fn sso(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    smooth_type: Smooth,
-    k_period: usize,
-    d_period: usize,
-) -> (Series<f32>, Series<f32>) {
-    let high_smooth = high.smooth(smooth_type, k_period);
-    let low_smooth = low.smooth(smooth_type, k_period);
-    let source = source.smooth(smooth_type, k_period);
+    source: &Price,
+    high: &Price,
+    low: &Price,
+    smooth: Smooth,
+    period_k: Period,
+    period_d: Period,
+) -> (Price, Price) {
+    let high_smooth = high.smooth(smooth, period_k);
+    let low_smooth = low.smooth(smooth, period_k);
+    let source = source.smooth(smooth, period_k);
 
-    let k = stoch(&source, &high_smooth, &low_smooth, k_period);
-    let d = k.smooth(smooth_type, d_period);
+    let k = stoch(&source, &high_smooth, &low_smooth, period_k);
+    let d = k.smooth(smooth, period_d);
 
     (k, d)
 }
 
 pub fn dso(
-    source: &Series<f32>,
-    smooth_type: Smooth,
-    period: usize,
-    k_period: usize,
-    d_period: usize,
-) -> (Series<f32>, Series<f32>) {
-    let source = source.smooth(smooth_type, k_period);
+    source: &Price,
+    smooth: Smooth,
+    period: Period,
+    period_k: Period,
+    period_d: Period,
+) -> (Price, Price) {
+    let source = source.smooth(smooth, period_k);
 
-    let k = source
-        .normalize(period, SCALE)
-        .smooth(smooth_type, k_period);
-    let d = k.smooth(smooth_type, d_period);
+    let k = source.normalize(period, SCALE).smooth(smooth, period_k);
+    let d = k.smooth(smooth, period_d);
 
     (k, d)
 }

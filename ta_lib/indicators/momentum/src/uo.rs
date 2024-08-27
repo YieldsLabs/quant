@@ -1,13 +1,13 @@
 use core::prelude::*;
 
 pub fn uo(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    period_fast: usize,
-    period_medium: usize,
-    period_slow: usize,
-) -> Series<f32> {
+    source: &Price,
+    high: &Price,
+    low: &Price,
+    period_fast: Period,
+    period_medium: Period,
+    period_slow: Period,
+) -> Price {
     let prev_source = source.shift(1).nz(Some(0.0));
 
     let high = prev_source.max(high);

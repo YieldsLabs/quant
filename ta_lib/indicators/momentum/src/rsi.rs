@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn rsi(source: &Series<f32>, smooth: Smooth, period: usize) -> Series<f32> {
+pub fn rsi(source: &Price, smooth: Smooth, period: Period) -> Price {
     let mom = source.change(1);
     let up = mom.max(&ZERO).smooth(smooth, period);
     let down = mom.min(&ZERO).negate().smooth(smooth, period);
@@ -33,7 +33,7 @@ mod test {
             33.926575, 36.707954, 30.863396, 15.785042, 64.06485,
         ];
 
-        let result: Vec<f32> = rsi(&source, Smooth::SMMA, period).into();
+        let result: Vec<Scalar> = rsi(&source, Smooth::SMMA, period).into();
 
         assert_eq!(result, expected);
     }

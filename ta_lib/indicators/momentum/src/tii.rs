@@ -1,18 +1,10 @@
 use core::prelude::*;
 
-pub fn tii(
-    source: &Series<f32>,
-    smooth_type: Smooth,
-    major_period: usize,
-    minor_period: usize,
-) -> Series<f32> {
-    let price_diff = source - source.smooth(smooth_type, major_period);
+pub fn tii(source: &Price, smooth: Smooth, period_major: Period, period_minor: Period) -> Price {
+    let price_diff = source - source.smooth(smooth, period_major);
 
-    let positive_sum = price_diff.max(&ZERO).smooth(smooth_type, minor_period);
-    let negative_sum = price_diff
-        .min(&ZERO)
-        .abs()
-        .smooth(smooth_type, minor_period);
+    let positive_sum = price_diff.max(&ZERO).smooth(smooth, period_minor);
+    let negative_sum = price_diff.min(&ZERO).abs().smooth(smooth, period_minor);
 
     SCALE * &positive_sum / (positive_sum + negative_sum)
 }

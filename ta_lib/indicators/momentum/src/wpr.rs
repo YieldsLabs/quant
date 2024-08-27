@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn wpr(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn wpr(source: &Price, high: &Price, low: &Price, period: Period) -> Price {
     let hh = high.highest(period);
     let ll = low.lowest(period);
 

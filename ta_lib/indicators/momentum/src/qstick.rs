@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn qstick(
-    open: &Series<f32>,
-    close: &Series<f32>,
-    smooth_type: Smooth,
-    period: usize,
-) -> Series<f32> {
+pub fn qstick(open: &Price, close: &Price, smooth_type: Smooth, period: Period) -> Price {
     (close - open).smooth(smooth_type, period)
 }
 
