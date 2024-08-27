@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-pub fn nvol(volume: &Price, smooth_type: Smooth, period: Period) -> Price {
-    SCALE * volume / volume.smooth(smooth_type, period)
+pub fn nvol(volume: &Price, smooth: Smooth, period: Period) -> Price {
+    SCALE * volume / volume.smooth(smooth, period)
 }
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-pub fn qstick(open: &Price, close: &Price, smooth_type: Smooth, period: Period) -> Price {
-    (close - open).smooth(smooth_type, period)
+pub fn qstick(open: &Price, close: &Price, smooth: Smooth, period: Period) -> Price {
+    (close - open).smooth(smooth, period)
 }
 
 #[cfg(test)]
