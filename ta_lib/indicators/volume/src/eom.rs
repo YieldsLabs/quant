@@ -5,10 +5,10 @@ pub fn eom(
     high: &Price,
     low: &Price,
     volume: &Price,
-    smooth_type: Smooth,
+    smooth: Smooth,
     period: Period,
 ) -> Price {
-    (SCALE * SCALE * hl2.change(1) * (high - low) / volume).smooth(smooth_type, period)
+    (SCALE * SCALE * hl2.change(1) * (high - low) / volume).smooth(smooth, period)
 }
 
 #[cfg(test)]

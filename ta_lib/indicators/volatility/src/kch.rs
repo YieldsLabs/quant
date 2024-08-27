@@ -5,7 +5,7 @@ pub fn kch(
     smooth: Smooth,
     atr: &Price,
     period: Period,
-    factor: f32,
+    factor: Scalar,
 ) -> (Price, Price, Price) {
     let middle = source.smooth(smooth, period);
     let volatility = factor * atr;
@@ -16,13 +16,13 @@ pub fn kch(
     (upper, middle, lower)
 }
 
-pub fn kchp(source: &Price, smooth: Smooth, atr: &Price, period: Period, factor: f32) -> Price {
+pub fn kchp(source: &Price, smooth: Smooth, atr: &Price, period: Period, factor: Scalar) -> Price {
     let (upc, _, lc) = kch(source, smooth, atr, period, factor);
 
     (source - &lc) / (upc - lc)
 }
 
-pub fn kchw(source: &Price, smooth: Smooth, atr: &Price, period: Period, factor: f32) -> Price {
+pub fn kchw(source: &Price, smooth: Smooth, atr: &Price, period: Period, factor: Scalar) -> Price {
     let (upc, mc, lc) = kch(source, smooth, atr, period, factor);
 
     SCALE * (upc - lc) / mc
