@@ -1,10 +1,6 @@
 use core::prelude::*;
 
-pub fn kb(
-    source: &Series<f32>,
-    period: usize,
-    factor: f32,
-) -> (Series<f32>, Series<f32>, Series<f32>) {
+pub fn kb(source: &Price, period: usize, factor: Scalar) -> (Price, Price, Price) {
     let middle = 0.5 * (source.highest(period) + source.lowest(period));
     let volatility = factor * source.std(period).highest(period);
 
@@ -14,13 +10,13 @@ pub fn kb(
     (upper, middle, lower)
 }
 
-pub fn kbp(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
+pub fn kbp(source: &Price, period: usize, factor: Scalar) -> Price {
     let (upb, _, lb) = kb(source, period, factor);
 
     (source - &lb) / (upb - lb)
 }
 
-pub fn kbw(source: &Series<f32>, period: usize, factor: f32) -> Series<f32> {
+pub fn kbw(source: &Price, period: usize, factor: Scalar) -> Price {
     let (upb, mb, lb) = kb(source, period, factor);
 
     SCALE * (upb - lb) / mb
@@ -48,9 +44,9 @@ mod tests {
 
         let (upper_band, middle_band, lower_band) = kb(&source, period, factor);
 
-        let result_upper_band: Vec<f32> = upper_band.into();
-        let result_middle_band: Vec<f32> = middle_band.into();
-        let result_lower_band: Vec<f32> = lower_band.into();
+        let result_upper_band: Vec<Scalar> = upper_band.into();
+        let result_middle_band: Vec<Scalar> = middle_band.into();
+        let result_lower_band: Vec<Scalar> = lower_band.into();
 
         for i in 0..source.len() {
             let a = result_upper_band[i];
@@ -77,7 +73,7 @@ mod tests {
             0.19381405,
         ];
 
-        let result: Vec<f32> = kbp(&source, period, factor).into();
+        let result: Vec<Scalar> = kbp(&source, period, factor).into();
 
         assert_eq!(result, expected);
     }
@@ -92,7 +88,7 @@ mod tests {
             54.433155,
         ];
 
-        let result: Vec<f32> = kbw(&source, period, factor).into();
+        let result: Vec<Scalar> = kbw(&source, period, factor).into();
 
         assert_eq!(result, expected);
     }

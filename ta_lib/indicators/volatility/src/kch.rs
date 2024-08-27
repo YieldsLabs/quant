@@ -1,12 +1,12 @@
 use core::prelude::*;
 
 pub fn kch(
-    source: &Series<f32>,
+    source: &Price,
     smooth: Smooth,
-    atr: &Series<f32>,
-    period: usize,
+    atr: &Price,
+    period: Period,
     factor: f32,
-) -> (Series<f32>, Series<f32>, Series<f32>) {
+) -> (Price, Price, Price) {
     let middle = source.smooth(smooth, period);
     let volatility = factor * atr;
 
@@ -16,25 +16,13 @@ pub fn kch(
     (upper, middle, lower)
 }
 
-pub fn kchp(
-    source: &Series<f32>,
-    smooth: Smooth,
-    atr: &Series<f32>,
-    period: usize,
-    factor: f32,
-) -> Series<f32> {
+pub fn kchp(source: &Price, smooth: Smooth, atr: &Price, period: Period, factor: f32) -> Price {
     let (upc, _, lc) = kch(source, smooth, atr, period, factor);
 
     (source - &lc) / (upc - lc)
 }
 
-pub fn kchw(
-    source: &Series<f32>,
-    smooth: Smooth,
-    atr: &Series<f32>,
-    period: usize,
-    factor: f32,
-) -> Series<f32> {
+pub fn kchw(source: &Price, smooth: Smooth, atr: &Price, period: Period, factor: f32) -> Price {
     let (upc, mc, lc) = kch(source, smooth, atr, period, factor);
 
     SCALE * (upc - lc) / mc
@@ -78,9 +66,9 @@ mod tests {
 
         let (upper_band, middle_band, lower_band) = kch(&hlc3, Smooth::EMA, &atr, period, factor);
 
-        let result_upper_band: Vec<f32> = upper_band.into();
-        let result_middle_band: Vec<f32> = middle_band.into();
-        let result_lower_band: Vec<f32> = lower_band.into();
+        let result_upper_band: Vec<Scalar> = upper_band.into();
+        let result_middle_band: Vec<Scalar> = middle_band.into();
+        let result_lower_band: Vec<Scalar> = lower_band.into();
 
         for i in 0..high.len() {
             let a = result_upper_band[i];
@@ -118,7 +106,7 @@ mod tests {
             0.6573705,
         ];
 
-        let result: Vec<f32> = kchp(&hlc3, Smooth::EMA, &atr, period, factor).into();
+        let result: Vec<Scalar> = kchp(&hlc3, Smooth::EMA, &atr, period, factor).into();
 
         assert_eq!(result, expected);
     }
@@ -144,7 +132,7 @@ mod tests {
             1.9380906,
         ];
 
-        let result: Vec<f32> = kchw(&hlc3, Smooth::EMA, &atr, period, factor).into();
+        let result: Vec<Scalar> = kchw(&hlc3, Smooth::EMA, &atr, period, factor).into();
 
         assert_eq!(result, expected);
     }

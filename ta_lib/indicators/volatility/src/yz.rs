@@ -1,25 +1,19 @@
 use crate::rs;
 use core::prelude::*;
 
-pub fn yz(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn yz(open: &Price, high: &Price, low: &Price, close: &Price, period: Period) -> Price {
     let oc = (open / close.shift(1).nz(Some(ZERO))).log();
     let ochat = oc.ma(period);
 
     let co = (close / open).log();
     let cohat = co.ma(period);
 
-    let factor = 1. / (period as f32 - 1.);
+    let factor = 1. / (period - 1) as f32;
 
     let ov = factor * (oc - ochat).pow(2).sum(period);
     let oc = factor * (co - cohat).pow(2).sum(period);
 
-    let k = 0.34 / (1.34 + (period as f32 + 1.) / (period as f32 - 1.));
+    let k = 0.34 / (1.34 + (period + 1) as f32 / (period - 1) as f32);
     let rs = rs(open, high, low, close, period).pow(2);
 
     (ov + k * oc + (1. - k) * rs).sqrt()
@@ -39,7 +33,7 @@ mod tests {
 
         let expected = vec![0.0, 0.64916766, 0.649761, 0.27574953, 0.13916442];
 
-        let result: Vec<f32> = yz(&open, &high, &low, &close, period).into();
+        let result: Vec<Scalar> = yz(&open, &high, &low, &close, period).into();
 
         assert_eq!(result, expected);
     }

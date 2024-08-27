@@ -1,12 +1,6 @@
 use core::prelude::*;
 
-pub fn rs(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn rs(open: &Price, high: &Price, low: &Price, close: &Price, period: Period) -> Price {
     let hl = (high / close).log() * (high / open).log();
     let ll = (low / close).log() * (low / open).log();
     let factor = 1.0 / period as f32;
@@ -31,7 +25,7 @@ mod tests {
 
         let expected = vec![0.63428414, 0.63428414, 0.63428414, 0.0, 0.0];
 
-        let result: Vec<f32> = rs(&open, &high, &low, &close, period).into();
+        let result: Vec<Scalar> = rs(&open, &high, &low, &close, period).into();
 
         assert_eq!(result, expected);
     }

@@ -1,12 +1,6 @@
 use core::prelude::*;
 
-pub fn gkyz(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn gkyz(open: &Price, high: &Price, low: &Price, close: &Price, period: Period) -> Price {
     let gkyzl = (open / close.shift(1).nz(Some(ZERO))).log();
     let pkl = (high / low).log();
     let gkl = (close / open).log();
@@ -33,7 +27,7 @@ mod tests {
 
         let expected = vec![0.0, 0.60109, 0.6450658, 0.49248216, 0.31461933];
 
-        let result: Vec<f32> = gkyz(&open, &high, &low, &close, period).into();
+        let result: Vec<Scalar> = gkyz(&open, &high, &low, &close, period).into();
 
         assert_eq!(result, expected);
     }

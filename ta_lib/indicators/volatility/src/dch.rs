@@ -1,10 +1,6 @@
 use core::prelude::*;
 
-pub fn dch(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    period: usize,
-) -> (Series<f32>, Series<f32>, Series<f32>) {
+pub fn dch(high: &Price, low: &Price, period: Period) -> (Price, Price, Price) {
     let upper = high.highest(period);
     let lower = low.lowest(period);
 
@@ -13,7 +9,7 @@ pub fn dch(
     (upper, middle, lower)
 }
 
-pub fn dchw(high: &Series<f32>, low: &Series<f32>, period: usize) -> Series<f32> {
+pub fn dchw(high: &Price, low: &Price, period: Period) -> Price {
     let (upb, _, lb) = dch(high, low, period);
 
     upb - lb
@@ -35,9 +31,9 @@ mod tests {
 
         let (upper, middle, lower) = dch(&high, &low, period);
 
-        let result_upper: Vec<f32> = upper.into();
-        let result_lower: Vec<f32> = lower.into();
-        let result_middle: Vec<f32> = middle.into();
+        let result_upper: Vec<Scalar> = upper.into();
+        let result_lower: Vec<Scalar> = lower.into();
+        let result_middle: Vec<Scalar> = middle.into();
 
         assert_eq!(result_upper, expected_upper);
         assert_eq!(result_lower, expected_lower);
@@ -52,7 +48,7 @@ mod tests {
 
         let expected = vec![0.0, 1.0, 2.0, 2.0, 2.0];
 
-        let result: Vec<f32> = dchw(&high, &low, period).into();
+        let result: Vec<Scalar> = dchw(&high, &low, period).into();
 
         assert_eq!(result, expected);
     }

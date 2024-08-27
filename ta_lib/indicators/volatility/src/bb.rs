@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn bb(
-    source: &Series<f32>,
-    smooth: Smooth,
-    period: usize,
-    factor: f32,
-) -> (Series<f32>, Series<f32>, Series<f32>) {
+pub fn bb(source: &Price, smooth: Smooth, period: Period, factor: Scalar) -> (Price, Price, Price) {
     let middle = source.smooth(smooth, period);
     let volatility = factor * source.std(period);
 
@@ -15,13 +10,13 @@ pub fn bb(
     (upper, middle, lower)
 }
 
-pub fn bbp(source: &Series<f32>, smooth: Smooth, period: usize, factor: f32) -> Series<f32> {
+pub fn bbp(source: &Price, smooth: Smooth, period: Period, factor: Scalar) -> Price {
     let (upb, _, lb) = bb(source, smooth, period, factor);
 
     (source - &lb) / (upb - lb)
 }
 
-pub fn bbw(source: &Series<f32>, smooth: Smooth, period: usize, factor: f32) -> Series<f32> {
+pub fn bbw(source: &Price, smooth: Smooth, period: Period, factor: Scalar) -> Price {
     let (upb, mb, lb) = bb(source, smooth, period, factor);
 
     SCALE * (upb - lb) / mb
@@ -49,9 +44,9 @@ mod tests {
 
         let (upper_band, middle_band, lower_band) = bb(&source, Smooth::SMA, period, factor);
 
-        let result_upper_band: Vec<f32> = upper_band.into();
-        let result_middle_band: Vec<f32> = middle_band.into();
-        let result_lower_band: Vec<f32> = lower_band.into();
+        let result_upper_band: Vec<Scalar> = upper_band.into();
+        let result_middle_band: Vec<Scalar> = middle_band.into();
+        let result_lower_band: Vec<Scalar> = lower_band.into();
 
         for i in 0..source.len() {
             let a = result_upper_band[i];

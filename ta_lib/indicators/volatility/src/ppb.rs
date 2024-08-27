@@ -1,13 +1,13 @@
 use core::prelude::*;
 
 pub fn ppb(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
+    source: &Price,
+    high: &Price,
+    low: &Price,
     smooth: Smooth,
-    period: usize,
-    factor: f32,
-) -> (Series<f32>, Series<f32>, Series<f32>) {
+    period: Period,
+    factor: Scalar,
+) -> (Price, Price, Price) {
     let ppvih = factor * high.std(period).highest(period);
     let ppvil = factor * low.std(period).lowest(period);
 
@@ -20,26 +20,26 @@ pub fn ppb(
 }
 
 pub fn ppbp(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
+    source: &Price,
+    high: &Price,
+    low: &Price,
     smooth: Smooth,
-    period: usize,
-    factor: f32,
-) -> Series<f32> {
+    period: Period,
+    factor: Scalar,
+) -> Price {
     let (upb, _, lb) = ppb(source, high, low, smooth, period, factor);
 
     (source - &lb) / (upb - lb)
 }
 
 pub fn ppbw(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
+    source: &Price,
+    high: &Price,
+    low: &Price,
     smooth: Smooth,
-    period: usize,
-    factor: f32,
-) -> Series<f32> {
+    period: Period,
+    factor: Scalar,
+) -> Price {
     let (upb, mb, lb) = ppb(source, high, low, smooth, period, factor);
 
     SCALE * (upb - lb) / mb
@@ -77,9 +77,9 @@ mod tests {
         let (upper_band, middle_band, lower_band) =
             ppb(&source, &high, &low, Smooth::SMA, period, factor);
 
-        let result_upper_band: Vec<f32> = upper_band.into();
-        let result_middle_band: Vec<f32> = middle_band.into();
-        let result_lower_band: Vec<f32> = lower_band.into();
+        let result_upper_band: Vec<Scalar> = upper_band.into();
+        let result_middle_band: Vec<Scalar> = middle_band.into();
+        let result_lower_band: Vec<Scalar> = lower_band.into();
 
         for i in 0..high.len() {
             let a = result_upper_band[i];
@@ -121,7 +121,7 @@ mod tests {
             0.8232956,
         ];
 
-        let result: Vec<f32> = ppbp(&source, &high, &low, Smooth::SMA, period, factor).into();
+        let result: Vec<Scalar> = ppbp(&source, &high, &low, Smooth::SMA, period, factor).into();
 
         assert_eq!(result, expected);
     }
@@ -144,7 +144,7 @@ mod tests {
             0.8744923,
         ];
 
-        let result: Vec<f32> = ppbw(&source, &high, &low, Smooth::SMA, period, factor).into();
+        let result: Vec<Scalar> = ppbw(&source, &high, &low, Smooth::SMA, period, factor).into();
 
         assert_eq!(result, expected);
     }

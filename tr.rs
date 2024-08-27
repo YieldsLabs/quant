@@ -24,11 +24,22 @@ pub fn wtr(high: &Price, low: &Price, close: &Price) -> Price {
     )
 }
 
-pub fn atr(high: &Price, low: &Price, close: &Price, smooth: Smooth, period: Period) -> Price {
+pub fn atr(
+    high: &Price,
+    low: &Price,
+    close: &Price,
+    smooth: Smooth,
+    period: Period,
+) -> Price {
     tr(high, low, close).smooth(smooth, period)
 }
 
-pub fn snatr(atr: &Price, period: Period, smooth: Smooth, period_smooth: Period) -> Series<f32> {
+pub fn snatr(
+    atr: &Price,
+    period: Period,
+    smooth: Smooth,
+    period_smooth: Period,
+) -> Price {
     atr.normalize(period, SCALE).smooth(smooth, period_smooth)
 }
 
