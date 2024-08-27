@@ -1,35 +1,35 @@
-use crate::series::Series;
 use crate::traits::Extremum;
+use crate::types::{Price, Scalar};
 
-impl Extremum<f32> for Series<f32> {
-    type Output = Series<f32>;
+impl Extremum<Scalar> for Price {
+    type Output = Price;
 
-    fn extremum<F>(&self, scalar: &f32, f: F) -> Self::Output
+    fn extremum<F>(&self, scalar: &Scalar, f: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> f32,
+        F: Fn(Scalar, Scalar) -> Scalar,
     {
         self.fmap(|val| val.map(|v| f(*v, *scalar)).or(Some(*scalar)))
     }
 
-    fn max(&self, scalar: &f32) -> Self::Output {
-        self.extremum(scalar, f32::max)
+    fn max(&self, scalar: &Scalar) -> Self::Output {
+        self.extremum(scalar, Scalar::max)
     }
 
-    fn min(&self, scalar: &f32) -> Self::Output {
-        self.extremum(scalar, f32::min)
+    fn min(&self, scalar: &Scalar) -> Self::Output {
+        self.extremum(scalar, Scalar::min)
     }
 
-    fn clip(&self, lhs: &f32, rhs: &f32) -> Self::Output {
+    fn clip(&self, lhs: &Scalar, rhs: &Scalar) -> Self::Output {
         self.min(rhs).max(lhs)
     }
 }
 
-impl Extremum<Series<f32>> for Series<f32> {
-    type Output = Series<f32>;
+impl Extremum<Price> for Price {
+    type Output = Price;
 
-    fn extremum<F>(&self, rhs: &Series<f32>, f: F) -> Self::Output
+    fn extremum<F>(&self, rhs: &Price, f: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> f32,
+        F: Fn(Scalar, Scalar) -> Scalar,
     {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(f(*a_val, *b_val)),
@@ -38,15 +38,15 @@ impl Extremum<Series<f32>> for Series<f32> {
         })
     }
 
-    fn max(&self, rhs: &Series<f32>) -> Self::Output {
-        self.extremum(rhs, f32::max)
+    fn max(&self, rhs: &Price) -> Self::Output {
+        self.extremum(rhs, Scalar::max)
     }
 
-    fn min(&self, rhs: &Series<f32>) -> Self::Output {
-        self.extremum(rhs, f32::min)
+    fn min(&self, rhs: &Price) -> Self::Output {
+        self.extremum(rhs, Scalar::min)
     }
 
-    fn clip(&self, lhs: &Series<f32>, rhs: &Series<f32>) -> Self::Output {
+    fn clip(&self, lhs: &Price, rhs: &Price) -> Self::Output {
         self.min(rhs).max(lhs)
     }
 }
@@ -54,6 +54,7 @@ impl Extremum<Series<f32>> for Series<f32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::series::Series;
 
     #[test]
     fn test_smax() {

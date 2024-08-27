@@ -1,5 +1,8 @@
-pub const SCALE: f32 = 100.;
-pub const NEUTRALITY: f32 = 50.;
-pub const ZERO: f32 = 0.;
-pub const ONE: f32 = 1.;
-pub const MINUS_ONE: f32 = -1.;
+use crate::types::Scalar;
+
+pub const SCALE: Scalar = 100.;
+pub const NEUTRALITY: Scalar = 50.;
+pub const ZERO: Scalar = 0.;
+pub const ONE: Scalar = 1.;
+pub const MINUS_ONE: Scalar = -1.;
+pub const NAN: Scalar = Scalar::NAN;

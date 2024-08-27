@@ -1,3 +1,4 @@
+use crate::types::{Period, Price, Rule, Scalar};
 use crate::{ONE, ZERO};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -27,7 +28,7 @@ impl<T> Series<T> {
         self.data.iter()
     }
 
-    pub fn window(&self, period: usize) -> impl Iterator<Item = &[Option<T>]> + '_ {
+    pub fn window(&self, period: Period) -> impl Iterator<Item = &[Option<T>]> + '_ {
         (0..self.len()).map(move |i| &self.data[i.saturating_sub(period - 1)..=i])
     }
 
@@ -56,11 +57,11 @@ impl<T> Series<T> {
 }
 
 impl<T: Clone> Series<T> {
-    pub fn shift(&self, n: usize) -> Self {
-        let shifted_len = self.len().saturating_sub(n);
+    pub fn shift(&self, period: Period) -> Self {
+        let shifted_len = self.len().saturating_sub(period);
 
         core::iter::repeat(None)
-            .take(n)
+            .take(period)
             .chain(self.iter().take(shifted_len).cloned())
             .collect()
     }
@@ -82,34 +83,34 @@ impl<T: Clone> Series<T> {
     }
 }
 
-impl Series<f32> {
-    pub fn nz(&self, replacement: Option<f32>) -> Self {
+impl Price {
+    pub fn nz(&self, replacement: Option<Scalar>) -> Self {
         self.fmap(|opt| match opt {
             Some(v) => Some(*v),
             None => Some(replacement.unwrap_or(0.0)),
         })
     }
 
-    pub fn na(&self) -> Series<bool> {
+    pub fn na(&self) -> Rule {
         self.fmap(|val| Some(val.is_none()))
     }
 
-    pub fn fill(scalar: f32, len: usize) -> Series<f32> {
+    pub fn fill(scalar: Scalar, len: usize) -> Price {
         core::iter::repeat(scalar).take(len).collect()
     }
 
-    pub fn zero(len: usize) -> Series<f32> {
+    pub fn zero(len: usize) -> Price {
         Series::fill(ZERO, len)
     }
 
-    pub fn one(len: usize) -> Series<f32> {
+    pub fn one(len: usize) -> Price {
         Series::fill(ONE, len)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::series::Series;
 
     #[test]
     fn test_len() {

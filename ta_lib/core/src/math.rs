@@ -1,7 +1,7 @@
-use crate::series::Series;
+use crate::types::{Period, Price, Scalar};
 use crate::{NEUTRALITY, SCALE, ZERO};
 
-impl Series<f32> {
+impl Price {
     pub fn abs(&self) -> Self {
         self.fmap(|val| val.map(|v| v.abs()))
     }
@@ -18,7 +18,7 @@ impl Series<f32> {
         self.fmap(|val| val.map(|v| v.exp()))
     }
 
-    pub fn pow(&self, period: usize) -> Self {
+    pub fn pow(&self, period: Period) -> Self {
         self.fmap(|val| val.map(|v| v.powi(period as i32)))
     }
 
@@ -51,12 +51,12 @@ impl Series<f32> {
     }
 }
 
-impl Series<f32> {
-    fn all_none(window: &[Option<f32>]) -> bool {
+impl Price {
+    fn all_none(window: &[Option<Scalar>]) -> bool {
         window.iter().all(|&x| x.is_none())
     }
 
-    fn wsum(&self, window: &[Option<f32>]) -> Option<f32> {
+    fn wsum(&self, window: &[Option<Scalar>]) -> Option<Scalar> {
         if Self::all_none(window) {
             return None;
         }
@@ -64,20 +64,20 @@ impl Series<f32> {
         Some(window.iter().flatten().sum())
     }
 
-    fn wmean(&self, window: &[Option<f32>]) -> Option<f32> {
-        self.wsum(window).map(|sum| sum / window.len() as f32)
+    fn wmean(&self, window: &[Option<Scalar>]) -> Option<Scalar> {
+        self.wsum(window).map(|sum| sum / window.len() as Scalar)
     }
 
-    fn wpercentile(&self, window: &[Option<f32>], percentile: f32) -> Option<f32> {
+    fn wpercentile(&self, window: &[Option<Scalar>], percentile: Scalar) -> Option<Scalar> {
         if Self::all_none(window) {
             return None;
         }
 
-        let mut values: Vec<f32> = window.iter().flatten().copied().collect();
+        let mut values: Vec<Scalar> = window.iter().flatten().copied().collect();
         values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         let len = values.len();
-        let idx = (percentile / SCALE) * (len as f32 - 1.0);
+        let idx = (percentile / SCALE) * (len as Scalar - 1.0);
         let idx_lower = idx.floor() as usize;
         let idx_upper = idx.ceil() as usize;
 
@@ -97,59 +97,59 @@ impl Series<f32> {
         Some(value_lower + fraction * (value_upper - value_lower))
     }
 
-    pub fn sum(&self, period: usize) -> Self {
+    pub fn sum(&self, period: Period) -> Self {
         self.window(period).map(|w| self.wsum(w)).collect()
     }
 
-    pub fn ma(&self, period: usize) -> Self {
+    pub fn ma(&self, period: Period) -> Self {
         self.window(period).map(|w| self.wmean(w)).collect()
     }
 
-    pub fn percentile(&self, period: usize, percentage: f32) -> Self {
+    pub fn percentile(&self, period: Period, percentage: Scalar) -> Self {
         self.window(period)
             .map(|w| self.wpercentile(w, percentage))
             .collect()
     }
 
-    pub fn median(&self, period: usize) -> Self {
+    pub fn median(&self, period: Period) -> Self {
         self.percentile(period, NEUTRALITY)
     }
 
-    pub fn mad(&self, period: usize) -> Self {
+    pub fn mad(&self, period: Period) -> Self {
         self.window(period)
             .map(|w| {
                 self.wmean(w).map(|mean| {
                     w.iter()
                         .flatten()
                         .map(|value| (value - mean).abs())
-                        .sum::<f32>()
-                        / w.len() as f32
+                        .sum::<Scalar>()
+                        / w.len() as Scalar
                 })
             })
             .collect()
     }
 
-    pub fn var(&self, period: usize) -> Self {
+    pub fn var(&self, period: Period) -> Self {
         self.pow(2).ma(period) - self.ma(period).pow(2)
     }
 
-    pub fn std(&self, period: usize) -> Self {
+    pub fn std(&self, period: Period) -> Self {
         self.var(period).sqrt()
     }
 
-    pub fn zscore(&self, period: usize) -> Self {
+    pub fn zscore(&self, period: Period) -> Self {
         (self - self.ma(period)) / self.std(period)
     }
 
-    pub fn slope(&self, period: usize) -> Self {
-        self.change(period) / period as f32
+    pub fn slope(&self, period: Period) -> Self {
+        self.change(period) / period as Scalar
     }
 
-    pub fn change(&self, period: usize) -> Self {
+    pub fn change(&self, period: Period) -> Self {
         self - self.shift(period)
     }
 
-    pub fn highest(&self, period: usize) -> Self {
+    pub fn highest(&self, period: Period) -> Self {
         self.window(period)
             .map(|w| {
                 w.iter()
@@ -159,7 +159,7 @@ impl Series<f32> {
             .collect()
     }
 
-    pub fn lowest(&self, period: usize) -> Self {
+    pub fn lowest(&self, period: Period) -> Self {
         self.window(period)
             .map(|w| {
                 w.iter()
@@ -169,11 +169,11 @@ impl Series<f32> {
             .collect()
     }
 
-    pub fn range(&self, period: usize) -> Self {
+    pub fn range(&self, period: Period) -> Self {
         self.highest(period) - self.lowest(period)
     }
 
-    pub fn normalize(&self, period: usize, scale: f32) -> Self {
+    pub fn normalize(&self, period: Period, scale: Scalar) -> Self {
         let l = self.lowest(period);
         let h = self.highest(period);
 
@@ -183,7 +183,7 @@ impl Series<f32> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::series::Series;
 
     #[test]
     fn test_abs() {

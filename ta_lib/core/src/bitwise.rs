@@ -1,11 +1,11 @@
-use crate::series::Series;
 use crate::traits::Bitwise;
+use crate::types::Rule;
 use std::ops::{BitAnd, BitOr};
 
-impl Bitwise<Series<bool>> for Series<bool> {
-    type Output = Series<bool>;
+impl Bitwise<Rule> for Rule {
+    type Output = Rule;
 
-    fn op<F>(&self, rhs: &Series<bool>, operation: F) -> Self::Output
+    fn op<F>(&self, rhs: &Rule, operation: F) -> Self::Output
     where
         F: Fn(bool, bool) -> bool,
     {
@@ -15,16 +15,16 @@ impl Bitwise<Series<bool>> for Series<bool> {
         })
     }
 
-    fn sand(&self, rhs: &Series<bool>) -> Self::Output {
+    fn sand(&self, rhs: &Rule) -> Self::Output {
         self.op(rhs, |a, b| a & b)
     }
 
-    fn sor(&self, rhs: &Series<bool>) -> Self::Output {
+    fn sor(&self, rhs: &Rule) -> Self::Output {
         self.op(rhs, |a, b| a | b)
     }
 }
 
-impl BitAnd for Series<bool> {
+impl BitAnd for Rule {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
@@ -32,7 +32,7 @@ impl BitAnd for Series<bool> {
     }
 }
 
-impl BitOr for Series<bool> {
+impl BitOr for Rule {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
@@ -43,13 +43,14 @@ impl BitOr for Series<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::series::Series;
     use crate::traits::Comparator;
 
     #[test]
     fn test_bitand() {
         let a = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let b = Series::from([1.0, 1.0, 6.0, 1.0, 1.0]);
-        let expected: Series<bool> = Series::from([0.0, 0.0, 0.0, 0.0, 0.0]).into();
+        let expected: Rule = Series::from([0.0, 0.0, 0.0, 0.0, 0.0]).into();
 
         let result = a.sgt(&b) & a.slt(&b);
 
@@ -60,7 +61,7 @@ mod tests {
     fn test_bitor() {
         let a = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let b = Series::from([1.0, 1.0, 1.0, 1.0, 1.0]);
-        let expected: Series<bool> = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
+        let expected: Rule = Series::from([0.0, 1.0, 1.0, 1.0, 1.0]).into();
 
         let result = a.sgt(&b) | a.slt(&b);
 

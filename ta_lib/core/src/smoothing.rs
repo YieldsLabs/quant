@@ -1,5 +1,6 @@
 use crate::series::Series;
 use crate::traits::Comparator;
+use crate::types::{Period, Price, Scalar};
 use crate::{iff, nz};
 use crate::{SCALE, ZERO};
 
@@ -18,8 +19,8 @@ pub enum Smooth {
     ULTS,
 }
 
-impl Series<f32> {
-    pub fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
+impl Price {
+    pub fn ew(&self, alpha: &Price, seed: &Price) -> Self {
         let len = self.len();
         let mut sum = Series::zero(len);
         let a = alpha * self;
@@ -32,9 +33,9 @@ impl Series<f32> {
         sum
     }
 
-    pub fn wg(&self, weights: &[f32]) -> Self {
+    pub fn wg(&self, weights: &[Scalar]) -> Self {
         let mut sum = Series::zero(self.len());
-        let norm = weights.iter().sum::<f32>();
+        let norm = weights.iter().sum::<Scalar>();
 
         for (i, &weight) in weights.iter().enumerate() {
             sum = sum + nz!(self.shift(i), self) * weight;
@@ -43,26 +44,26 @@ impl Series<f32> {
         sum / norm
     }
 
-    fn ema(&self, period: usize) -> Self {
-        let alpha = Series::fill(2. / (period as f32 + 1.), self.len());
+    fn ema(&self, period: Period) -> Self {
+        let alpha = Series::fill(2. / (period as Scalar + 1.), self.len());
 
         self.ew(&alpha, self)
     }
 
-    fn smma(&self, period: usize) -> Self {
-        let alpha = Series::fill(1. / (period as f32), self.len());
+    fn smma(&self, period: Period) -> Self {
+        let alpha = Series::fill(1. / (period as Scalar), self.len());
         let seed = self.ma(period);
 
         self.ew(&alpha, &seed)
     }
 
-    fn dema(&self, period: usize) -> Self {
+    fn dema(&self, period: Period) -> Self {
         let ema = self.ema(period);
 
         2. * &ema - ema.ema(period)
     }
 
-    fn tema(&self, period: usize) -> Self {
+    fn tema(&self, period: Period) -> Self {
         let ema1 = self.ema(period);
         let ema2 = ema1.ema(period);
         let ema3 = ema2.ema(period);
@@ -70,8 +71,10 @@ impl Series<f32> {
         3. * (ema1 - ema2) + ema3
     }
 
-    fn wma(&self, period: usize) -> Self {
-        let weights = (0..period).map(|i| (period - i) as f32).collect::<Vec<_>>();
+    fn wma(&self, period: Period) -> Self {
+        let weights = (0..period)
+            .map(|i| (period - i) as Scalar)
+            .collect::<Vec<_>>();
 
         self.wg(&weights)
     }
@@ -84,15 +87,15 @@ impl Series<f32> {
         x3 * 1. / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * 1. / 6.
     }
 
-    fn hma(&self, period: usize) -> Self {
-        let lag = (0.5 * period as f32) as usize;
-        let sqrt_period = (period as f32).sqrt().floor() as usize;
+    fn hma(&self, period: Period) -> Self {
+        let lag = (0.5 * period as Scalar) as Period;
+        let sqrt_period = (period as Scalar).sqrt().floor() as Period;
 
         (2. * self.wma(lag) - self.wma(period)).wma(sqrt_period)
     }
 
-    fn linreg(&self, period: usize) -> Self {
-        let x = (0..self.len()).map(|i| i as f32).collect::<Series<_>>();
+    fn linreg(&self, period: Period) -> Self {
+        let x = (0..self.len()).map(|i| i as Scalar).collect::<Series<_>>();
 
         let x_mean = x.ma(period);
         let y_mean = self.ma(period);
@@ -110,7 +113,7 @@ impl Series<f32> {
         &intercept + &slope * &x
     }
 
-    fn kama(&self, period: usize) -> Series<f32> {
+    fn kama(&self, period: Period) -> Self {
         let len = self.len();
         let mom = self.change(period).abs();
         let volatility = self.change(1).abs().sum(period);
@@ -121,15 +124,15 @@ impl Series<f32> {
         self.ew(&alpha, self)
     }
 
-    fn zlema(&self, period: usize) -> Series<f32> {
-        let lag = (0.5 * (period as f32 - 1.)).floor() as usize;
+    fn zlema(&self, period: Period) -> Self {
+        let lag = (0.5 * (period as Scalar - 1.)).floor() as Period;
 
         (self + (self - nz!(self.shift(lag), self))).ema(period)
     }
 
-    fn ults(&self, period: usize) -> Series<f32> {
-        let a1 = (-1.414 * std::f32::consts::PI / period as f32).exp();
-        let c2 = 2. * a1 * (1.414 * std::f32::consts::PI / period as f32).cos();
+    fn ults(&self, period: Period) -> Self {
+        let a1 = (-1.414 * std::f32::consts::PI / period as Scalar).exp();
+        let c2 = 2. * a1 * (1.414 * std::f32::consts::PI / period as Scalar).cos();
         let c3 = -a1 * a1;
         let c1 = 0.25 * (1. + c2 - c3);
 
@@ -156,7 +159,7 @@ impl Series<f32> {
         us
     }
 
-    pub fn smooth(&self, smooth: Smooth, period: usize) -> Self {
+    pub fn smooth(&self, smooth: Smooth, period: Period) -> Self {
         match smooth {
             Smooth::EMA => self.ema(period),
             Smooth::SMA => self.ma(period),
@@ -172,11 +175,11 @@ impl Series<f32> {
         }
     }
 
-    pub fn spread(&self, smooth: Smooth, period_fast: usize, period_slow: usize) -> Self {
+    pub fn spread(&self, smooth: Smooth, period_fast: Period, period_slow: Period) -> Self {
         self.smooth(smooth, period_fast) - self.smooth(smooth, period_slow)
     }
 
-    pub fn spread_pct(&self, smooth: Smooth, period_fast: usize, period_slow: usize) -> Self {
+    pub fn spread_pct(&self, smooth: Smooth, period_fast: Period, period_slow: Period) -> Self {
         let fsm = self.smooth(smooth, period_fast);
         let ssm = self.smooth(smooth, period_slow);
 
@@ -186,8 +189,8 @@ impl Series<f32> {
     pub fn spread_diff(
         &self,
         smooth: Smooth,
-        period_fast: usize,
-        period_slow: usize,
+        period_fast: Period,
+        period_slow: Period,
         n: usize,
     ) -> Self {
         self.spread(smooth, period_fast, period_slow)

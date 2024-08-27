@@ -1,6 +1,6 @@
-use crate::series::Series;
+use crate::types::Price;
 
-impl Series<f32> {
+impl Price {
     pub fn ad(&self, period: usize) -> Self {
         self - self.ma(period)
     }
@@ -8,7 +8,7 @@ impl Series<f32> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::series::Series;
 
     #[test]
     fn test_average_distance() {

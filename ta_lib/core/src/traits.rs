@@ -1,3 +1,5 @@
+use crate::types::Scalar;
+
 pub trait Cross<T> {
     type Output;
 
@@ -11,7 +13,7 @@ pub trait Extremum<T> {
 
     fn extremum<F>(&self, rhs: &T, f: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> f32;
+        F: Fn(Scalar, Scalar) -> Scalar;
 
     fn max(&self, rhs: &T) -> Self::Output;
     fn min(&self, rhs: &T) -> Self::Output;
@@ -23,7 +25,7 @@ pub trait Comparator<T> {
 
     fn compare<F>(&self, rhs: &T, comparator: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> bool;
+        F: Fn(Scalar, Scalar) -> bool;
 
     fn seq(&self, rhs: &T) -> Self::Output;
     fn sne(&self, rhs: &T) -> Self::Output;
@@ -38,7 +40,7 @@ pub trait Operation<T, U, V> {
 
     fn ops<F>(&self, rhs: &T, op: F) -> Self::Output
     where
-        F: Fn(U, V) -> f32;
+        F: Fn(U, V) -> Scalar;
 
     fn sadd(&self, rhs: &T) -> Self::Output;
     fn ssub(&self, rhs: &T) -> Self::Output;
