@@ -1,5 +1,3 @@
-use core::prelude::*;
-
 #[macro_export]
 macro_rules! f {
     ($direction:expr) => {{
