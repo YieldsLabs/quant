@@ -1,11 +1,6 @@
 use core::prelude::*;
 
-pub fn average_price(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> Series<f32> {
+pub fn average_price(open: &Price, high: &Price, low: &Price, close: &Price) -> Price {
     (open + high + low + close) / 4.
 }
 
@@ -22,7 +17,7 @@ mod tests {
 
         let expected = vec![1.5625, 3.125, 4.6875];
 
-        let result: Vec<f32> = average_price(&open, &high, &low, &close).into();
+        let result: Vec<Scalar> = average_price(&open, &high, &low, &close).into();
 
         assert_eq!(result, expected);
     }

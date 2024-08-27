@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn typical_price(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
+pub fn typical_price(high: &Price, low: &Price, close: &Price) -> Price {
     (high + low + close) / 3.
 }
 
@@ -16,7 +16,7 @@ mod tests {
 
         let expected = vec![0.75, 1.5, 2.25];
 
-        let result: Vec<f32> = typical_price(&high, &low, &close).into();
+        let result: Vec<Scalar> = typical_price(&high, &low, &close).into();
 
         assert_eq!(result, expected);
     }
