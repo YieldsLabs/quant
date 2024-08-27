@@ -19,7 +19,7 @@ fn generate_timeseries_id() -> i32 {
 const ERROR: Result = (-1, 0);
 const NOT_FOUND: Result = (0, 0);
 
-fn serialize<T: Serialize>(data: &T) -> (i32, i32) {
+fn serialize<T: Serialize>(data: &T) -> Result {
     match to_string(data) {
         Ok(json) => {
             let bytes = json.as_bytes();
