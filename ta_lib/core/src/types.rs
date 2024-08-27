@@ -1,6 +1,6 @@
 use crate::series::Series;
 
-pub type Price = Series<f32>;
+pub type Scalar = f32;
+pub type Price = Series<Scalar>;
 pub type Rule = Series<bool>;
 pub type Period = usize;
-pub type Scalar = f32;
