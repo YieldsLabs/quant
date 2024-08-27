@@ -42,7 +42,7 @@ mod tests {
             27.16367,
         ];
 
-        let result: Vec<f32> = tsi(&source, Smooth::EMA, slow_period, fast_period).into();
+        let result: Vec<Scalar> = tsi(&source, Smooth::EMA, slow_period, fast_period).into();
 
         assert_eq!(result, expected);
     }

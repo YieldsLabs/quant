@@ -68,7 +68,7 @@ mod tests {
 
         let expected = vec![50.0, 75.0, 50.0, 25.0, 50.0];
 
-        let result: Vec<f32> = stoch(&source, &high, &low, period).into();
+        let result: Vec<Scalar> = stoch(&source, &high, &low, period).into();
 
         assert_eq!(result, expected);
     }
@@ -88,8 +88,8 @@ mod tests {
 
         let (k, d) = stochosc(&close, &high, &low, Smooth::SMA, period, k_period, d_period);
 
-        let result_k: Vec<f32> = k.into();
-        let result_d: Vec<f32> = d.into();
+        let result_k: Vec<Scalar> = k.into();
+        let result_d: Vec<Scalar> = d.into();
 
         for i in 0..result_k.len() {
             assert!(
@@ -122,8 +122,8 @@ mod tests {
 
         let (k, d) = sso(&close, &high, &low, Smooth::WMA, k_period, d_period);
 
-        let result_k: Vec<f32> = k.into();
-        let result_d: Vec<f32> = d.into();
+        let result_k: Vec<Scalar> = k.into();
+        let result_d: Vec<Scalar> = d.into();
 
         assert_eq!(result_k, expected_k);
         assert_eq!(result_d, expected_d);
@@ -145,8 +145,8 @@ mod tests {
 
         let (k, d) = dso(&close, Smooth::EMA, period, k_period, d_period);
 
-        let result_k: Vec<f32> = k.into();
-        let result_d: Vec<f32> = d.into();
+        let result_k: Vec<Scalar> = k.into();
+        let result_d: Vec<Scalar> = d.into();
 
         assert_eq!(result_k, expected_k);
         assert_eq!(result_d, expected_d);

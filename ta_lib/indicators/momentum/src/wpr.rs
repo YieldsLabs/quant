@@ -20,7 +20,7 @@ mod tests {
 
         let expected = vec![-10.752942, -31.693844, -47.541027, -60.00008, -80.23232];
 
-        let result: Vec<f32> = wpr(&source, &high, &low, period).into();
+        let result: Vec<Scalar> = wpr(&source, &high, &low, period).into();
 
         assert_eq!(result, expected);
     }

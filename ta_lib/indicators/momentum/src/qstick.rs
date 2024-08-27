@@ -15,7 +15,7 @@ mod tests {
         let period = 3;
         let expected = vec![-12.4655, -12.4627495, -12.4766245, -12.486312, -12.509655];
 
-        let result: Vec<f32> = qstick(&open, &close, Smooth::EMA, period).into();
+        let result: Vec<Scalar> = qstick(&open, &close, Smooth::EMA, period).into();
 
         assert_eq!(result, expected);
     }

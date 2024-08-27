@@ -53,7 +53,7 @@ mod tests {
         let period_medium = 3;
         let period_slow = 4;
 
-        let result: Vec<f32> = uo(
+        let result: Vec<Scalar> = uo(
             &source,
             &high,
             &low,

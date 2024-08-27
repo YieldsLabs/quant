@@ -41,7 +41,7 @@ mod tests {
             0.0041924296,
         ];
 
-        let result: Vec<f32> = tdfi(&source, smooth_type, period, n).into();
+        let result: Vec<Scalar> = tdfi(&source, smooth_type, period, n).into();
 
         assert_eq!(result, expected);
     }

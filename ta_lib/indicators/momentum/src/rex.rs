@@ -32,7 +32,7 @@ mod tests {
 
         let period = 3;
 
-        let result: Vec<f32> = rex(&source, &open, &high, &low, Smooth::EMA, period).into();
+        let result: Vec<Scalar> = rex(&source, &open, &high, &low, Smooth::EMA, period).into();
 
         assert_eq!(result, expected);
     }

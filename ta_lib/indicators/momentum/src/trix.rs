@@ -26,7 +26,7 @@ mod tests {
             -5.0126247, -6.273622, -5.246739, -3.7003598, -2.672774, -2.9872787, -0.9277002,
         ];
 
-        let result: Vec<f32> = trix(&source, Smooth::EMA, period).into();
+        let result: Vec<Scalar> = trix(&source, Smooth::EMA, period).into();
 
         assert_eq!(result, expected);
     }

@@ -26,7 +26,7 @@ mod tests {
             100.0, 4.648687, 48.748272,
         ];
 
-        let result: Vec<f32> = tii(&source, Smooth::SMA, major_period, minor_period).into();
+        let result: Vec<Scalar> = tii(&source, Smooth::SMA, major_period, minor_period).into();
 
         assert_eq!(result, expected);
     }
