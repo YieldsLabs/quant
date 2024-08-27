@@ -1,13 +1,13 @@
 use core::prelude::*;
 
 pub fn eom(
-    hl2: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    volume: &Series<f32>,
+    hl2: &Price,
+    high: &Price,
+    low: &Price,
+    volume: &Price,
     smooth_type: Smooth,
-    period: usize,
-) -> Series<f32> {
+    period: Period,
+) -> Price {
     (SCALE * SCALE * hl2.change(1) * (high - low) / volume).smooth(smooth_type, period)
 }
 
@@ -35,7 +35,7 @@ mod tests {
         let hlc = median_price(&high, &low);
         let period = 2;
 
-        let result: Vec<f32> = eom(&hlc, &high, &low, &volume, Smooth::SMA, period).into();
+        let result: Vec<Scalar> = eom(&hlc, &high, &low, &volume, Smooth::SMA, period).into();
 
         assert_eq!(result, expected);
     }

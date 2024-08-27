@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn vwap(source: &Series<f32>, volume: &Series<f32>) -> Series<f32> {
+pub fn vwap(source: &Price, volume: &Price) -> Price {
     (source * volume).cumsum() / volume.cumsum()
 }
 
@@ -19,7 +19,7 @@ mod tests {
         let expected = [1.5, 2.5, 3.5];
         let epsilon = 0.001;
 
-        let result: Vec<f32> = vwap(&hlc3, &volume).into();
+        let result: Vec<Scalar> = vwap(&hlc3, &volume).into();
 
         for i in 0..high.len() {
             assert!(

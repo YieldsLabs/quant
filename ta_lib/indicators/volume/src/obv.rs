@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn obv(source: &Series<f32>, volume: &Series<f32>) -> Series<f32> {
+pub fn obv(source: &Price, volume: &Price) -> Price {
     (source.change(1).nz(Some(ZERO)).sign() * volume).cumsum()
 }
 
@@ -22,7 +22,7 @@ mod tests {
             3798.0, 9213.0, 16323.0, 18495.0, 11113.0, 13868.0, 15998.0, 37986.0, 47427.0,
         ];
 
-        let result: Vec<f32> = obv(&close, &volume).into();
+        let result: Vec<Scalar> = obv(&close, &volume).into();
 
         assert_eq!(result, expected);
     }

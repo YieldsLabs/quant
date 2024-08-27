@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn mfi(hlc3: &Series<f32>, volume: &Series<f32>, period: usize) -> Series<f32> {
+pub fn mfi(hlc3: &Price, volume: &Price, period: Period) -> Price {
     let changes = hlc3.change(1);
 
     let volume_hlc3 = volume * hlc3;
@@ -29,7 +29,7 @@ mod tests {
 
         let expected = [0.0, 0.0, 51.9992, 36.1106, 34.2859];
 
-        let result: Vec<f32> = mfi(&hlc3, &volume, period).into();
+        let result: Vec<Scalar> = mfi(&hlc3, &volume, period).into();
 
         for i in 0..hlc3.len() {
             assert!(

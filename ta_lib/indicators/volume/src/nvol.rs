@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn nvol(volume: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
+pub fn nvol(volume: &Price, smooth_type: Smooth, period: Period) -> Price {
     SCALE * volume / volume.smooth(smooth_type, period)
 }
 
@@ -15,7 +15,7 @@ mod tests {
 
         let expected = [100.0, 23.115578, 132.68292, 72.897194, 163.8051, 28.640778];
 
-        let result: Vec<f32> = nvol(&volume, Smooth::SMA, period).into();
+        let result: Vec<Scalar> = nvol(&volume, Smooth::SMA, period).into();
 
         assert_eq!(result, expected);
     }

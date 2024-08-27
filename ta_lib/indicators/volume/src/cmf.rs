@@ -1,12 +1,6 @@
 use core::prelude::*;
 
-pub fn cmf(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-    volume: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn cmf(high: &Price, low: &Price, close: &Price, volume: &Price, period: Period) -> Price {
     let mfv = iff!(
         (close.seq(high) & close.seq(low)) | high.seq(low),
         Series::zero(close.len()),
@@ -47,7 +41,7 @@ mod tests {
             0.32079986,
         ];
 
-        let result: Vec<f32> = cmf(&high, &low, &close, &volume, period).into();
+        let result: Vec<Scalar> = cmf(&high, &low, &close, &volume, period).into();
 
         assert_eq!(result, expected);
     }
