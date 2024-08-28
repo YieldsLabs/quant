@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-pub fn di(source: &Price, smooth_type: Smooth, period: Period) -> Price {
-    let ma = source.smooth(smooth_type, period);
+pub fn di(source: &Price, smooth: Smooth, period: Period) -> Price {
+    let ma = source.smooth(smooth, period);
 
     SCALE * (source - &ma) / ma
 }

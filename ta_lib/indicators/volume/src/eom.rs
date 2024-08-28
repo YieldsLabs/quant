@@ -32,10 +32,10 @@ mod tests {
             0.00023862119,
         ];
 
-        let hlc = median_price(&high, &low);
+        let hl2 = median_price(&high, &low);
         let period = 2;
 
-        let result: Vec<Scalar> = eom(&hlc, &high, &low, &volume, Smooth::SMA, period).into();
+        let result: Vec<Scalar> = eom(&hl2, &high, &low, &volume, Smooth::SMA, period).into();
 
         assert_eq!(result, expected);
     }
