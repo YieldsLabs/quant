@@ -28,6 +28,6 @@ impl Pulse for VoPulse {
             .volume()
             .spread_pct(self.smooth, self.period_fast, self.period_slow);
 
-        (vo.sgt(&ZERO_LINE), vo.sgt(&ZERO_LINE))
+        (vo.sgt(&ZERO), vo.sgt(&ZERO))
     }
 }

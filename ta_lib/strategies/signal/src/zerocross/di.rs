@@ -31,6 +31,6 @@ impl Signal for DiZeroCrossSignal {
             self.period,
         );
 
-        (di.cross_over(&ZERO_LINE), di.cross_under(&ZERO_LINE))
+        (di.cross_over(&ZERO), di.cross_under(&ZERO))
     }
 }

@@ -171,6 +171,13 @@ pub enum SignalConfig {
         period_atr: f32,
         factor: f32,
     },
+    // Pullback
+    SupPullback {
+        source: f32,
+        smooth_atr: f32,
+        period_atr: f32,
+        factor: f32,
+    },
     // Ma
     MaCross {
         source_type: f32,

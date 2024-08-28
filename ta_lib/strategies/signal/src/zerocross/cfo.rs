@@ -25,6 +25,6 @@ impl Signal for CfoZeroCrossSignal {
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let cfo = cfo(&data.source(self.source_type), self.period);
 
-        (cfo.cross_over(&ZERO_LINE), cfo.cross_under(&ZERO_LINE))
+        (cfo.cross_over(&ZERO), cfo.cross_under(&ZERO))
     }
 }

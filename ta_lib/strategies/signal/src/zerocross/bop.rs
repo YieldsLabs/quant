@@ -32,6 +32,6 @@ impl Signal for BopZeroCrossSignal {
             self.smooth_period,
         );
 
-        (bop.cross_over(&ZERO_LINE), bop.cross_under(&ZERO_LINE))
+        (bop.cross_over(&ZERO), bop.cross_under(&ZERO))
     }
 }

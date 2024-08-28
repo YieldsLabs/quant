@@ -22,4 +22,5 @@ candlestick = { path = "../../patterns/candlestick" }
 osc = { path = "../../patterns/osc" }
 channel = { path = "../../patterns/channel" }
 bands = { path = "../../patterns/bands" }
+trail = { path = "../../patterns/trail" }
 timeseries = { path = "../../timeseries" }

@@ -49,11 +49,11 @@ impl Signal for MacdColorSwitchSignal {
         let back_3_histogram = histogram.shift(3);
 
         (
-            histogram.slt(&ZERO_LINE)
+            histogram.slt(&ZERO)
                 & histogram.sgt(&prev_histogram)
                 & prev_histogram.slt(&back_2_histogram)
                 & back_2_histogram.slt(&back_3_histogram),
-            histogram.sgt(&ZERO_LINE)
+            histogram.sgt(&ZERO)
                 & histogram.slt(&prev_histogram)
                 & prev_histogram.sgt(&back_2_histogram)
                 & back_2_histogram.sgt(&back_3_histogram),

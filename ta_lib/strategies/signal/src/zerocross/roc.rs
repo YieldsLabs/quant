@@ -25,6 +25,6 @@ impl Signal for RocZeroCrossSignal {
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let roc = roc(&data.source(self.source), self.period);
 
-        (roc.cross_over(&ZERO_LINE), roc.cross_under(&ZERO_LINE))
+        (roc.cross_over(&ZERO), roc.cross_under(&ZERO))
     }
 }

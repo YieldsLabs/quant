@@ -36,11 +36,11 @@ impl Signal for RsiUSignal {
             rsi.sgt(&prev_rsi)
                 & prev_rsi.seq(&back_2_rsi)
                 & back_2_rsi.slt(&back_3_rsi)
-                & rsi.slt(&NEUTRALITY_LINE),
+                & rsi.slt(&NEUTRALITY),
             rsi.slt(&prev_rsi)
                 & prev_rsi.seq(&back_2_rsi)
                 & back_2_rsi.sgt(&back_3_rsi)
-                & rsi.sgt(&NEUTRALITY_LINE),
+                & rsi.sgt(&NEUTRALITY),
         )
     }
 }

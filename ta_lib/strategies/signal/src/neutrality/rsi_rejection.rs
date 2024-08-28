@@ -37,8 +37,8 @@ impl Signal for RsiNeutralityRejectionSignal {
             self.smooth_type,
             self.rsi_period,
         );
-        let upper_neutrality = NEUTRALITY_LINE + self.threshold;
-        let lower_neutrality = NEUTRALITY_LINE - self.threshold;
+        let upper_neutrality = NEUTRALITY + self.threshold;
+        let lower_neutrality = NEUTRALITY - self.threshold;
 
         let prev_rsi = rsi.shift(1);
         let back_2_rsi = rsi.shift(2);
@@ -46,13 +46,13 @@ impl Signal for RsiNeutralityRejectionSignal {
 
         (
             rsi.sgt(&upper_neutrality)
-                & prev_rsi.slt(&NEUTRALITY_LINE)
-                & back_2_rsi.sgt(&NEUTRALITY_LINE)
-                & back_3_rsi.sgt(&NEUTRALITY_LINE),
+                & prev_rsi.slt(&NEUTRALITY)
+                & back_2_rsi.sgt(&NEUTRALITY)
+                & back_3_rsi.sgt(&NEUTRALITY),
             rsi.slt(&lower_neutrality)
-                & prev_rsi.sgt(&NEUTRALITY_LINE)
-                & back_2_rsi.slt(&NEUTRALITY_LINE)
-                & back_3_rsi.slt(&NEUTRALITY_LINE),
+                & prev_rsi.sgt(&NEUTRALITY)
+                & back_2_rsi.slt(&NEUTRALITY)
+                & back_3_rsi.slt(&NEUTRALITY),
         )
     }
 }

@@ -4,33 +4,33 @@ use timeseries::prelude::*;
 
 pub trait Signal: Send + Sync {
     fn lookback(&self) -> usize;
-    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn trigger(&self, data: &OHLCVSeries) -> (Rule, Rule);
 }
 
 pub trait Confirm: Send + Sync {
     fn lookback(&self) -> usize;
-    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn filter(&self, data: &OHLCVSeries) -> (Rule, Rule);
 }
 
 pub trait Pulse: Send + Sync {
     fn lookback(&self) -> usize;
-    fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn assess(&self, data: &OHLCVSeries) -> (Rule, Rule);
 }
 
 pub trait BaseLine: Send + Sync {
     fn lookback(&self) -> usize;
-    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
-    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn filter(&self, data: &OHLCVSeries) -> (Rule, Rule);
+    fn close(&self, data: &OHLCVSeries) -> (Rule, Rule);
 }
 
 pub trait Exit: Send + Sync {
     fn lookback(&self) -> usize;
-    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>);
+    fn close(&self, data: &OHLCVSeries) -> (Rule, Rule);
 }
 
 pub trait StopLoss: Send + Sync {
     fn lookback(&self) -> usize;
-    fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>);
+    fn find(&self, data: &OHLCVSeries) -> (Price, Price);
 }
 
 pub trait Strategy {

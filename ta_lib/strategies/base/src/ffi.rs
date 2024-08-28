@@ -41,6 +41,7 @@ pub fn register_strategy(
 #[no_mangle]
 pub fn strategy_unregister(strategy_id: i32) -> i32 {
     let mut strategies = STRATEGIES.write().unwrap();
+
     strategies.remove(&strategy_id).is_some() as i32
 }
 
@@ -121,12 +122,12 @@ mod tests {
     use super::*;
     use core::prelude::*;
 
-    const period: usize = 7;
+    const PERIOD: usize = 7;
 
     struct MockSignal;
     impl Signal for MockSignal {
         fn lookback(&self) -> usize {
-            period
+            PERIOD
         }
 
         fn trigger(&self, bar: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -138,7 +139,7 @@ mod tests {
     struct MockConfirm;
     impl Confirm for MockConfirm {
         fn lookback(&self) -> usize {
-            period
+            PERIOD
         }
 
         fn filter(&self, bar: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -150,7 +151,7 @@ mod tests {
     struct MockPulse;
     impl Pulse for MockPulse {
         fn lookback(&self) -> usize {
-            period
+            PERIOD
         }
 
         fn assess(&self, bar: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -162,7 +163,7 @@ mod tests {
     struct MockBaseLine;
     impl BaseLine for MockBaseLine {
         fn lookback(&self) -> usize {
-            period
+            PERIOD
         }
 
         fn filter(&self, bar: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
@@ -179,7 +180,7 @@ mod tests {
     struct MockStopLoss;
     impl StopLoss for MockStopLoss {
         fn lookback(&self) -> usize {
-            period
+            PERIOD
         }
 
         fn find(&self, bar: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
@@ -191,7 +192,7 @@ mod tests {
     struct MockExit;
     impl Exit for MockExit {
         fn lookback(&self) -> usize {
-            period
+            PERIOD
         }
 
         fn close(&self, bar: &OHLCVSeries) -> (Series<bool>, Series<bool>) {

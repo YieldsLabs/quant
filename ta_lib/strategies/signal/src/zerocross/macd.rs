@@ -44,9 +44,6 @@ impl Signal for MacdZeroCrossSignal {
             self.signal_period,
         );
 
-        (
-            macd_line.cross_over(&ZERO_LINE),
-            macd_line.cross_under(&ZERO_LINE),
-        )
+        (macd_line.cross_over(&ZERO), macd_line.cross_under(&ZERO))
     }
 }

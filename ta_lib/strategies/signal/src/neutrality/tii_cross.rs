@@ -39,9 +39,6 @@ impl Signal for TiiNeutralityCrossSignal {
             self.minor_period,
         );
 
-        (
-            tii.cross_over(&NEUTRALITY_LINE),
-            tii.cross_under(&NEUTRALITY_LINE),
-        )
+        (tii.cross_over(&NEUTRALITY), tii.cross_under(&NEUTRALITY))
     }
 }

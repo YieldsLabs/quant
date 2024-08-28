@@ -35,17 +35,17 @@ impl Signal for AoSaucerSignal {
         let back_2_diff = diff.shift(2);
 
         (
-            ao.sgt(&ZERO_LINE)
-                & diff.sgt(&ZERO_LINE)
+            ao.sgt(&ZERO)
+                & diff.sgt(&ZERO)
                 & diff.sgt(&prev_diff)
-                & prev_diff.slt(&ZERO_LINE)
-                & back_2_diff.slt(&ZERO_LINE)
+                & prev_diff.slt(&ZERO)
+                & back_2_diff.slt(&ZERO)
                 & prev_diff.slt(&back_2_diff),
-            ao.slt(&ZERO_LINE)
-                & diff.slt(&ZERO_LINE)
+            ao.slt(&ZERO)
+                & diff.slt(&ZERO)
                 & diff.slt(&prev_diff)
-                & prev_diff.sgt(&ZERO_LINE)
-                & back_2_diff.sgt(&ZERO_LINE)
+                & prev_diff.sgt(&ZERO)
+                & back_2_diff.sgt(&ZERO)
                 & prev_diff.slt(&back_2_diff),
         )
     }

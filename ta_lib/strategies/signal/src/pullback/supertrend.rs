@@ -1,17 +1,17 @@
 use base::prelude::*;
 use core::prelude::*;
 use timeseries::prelude::*;
-use trail::f;
+use trail::p;
 use trend::supertrend;
 
-pub struct SupertrendFlipSignal {
+pub struct SupertrendPullbackSignal {
     source: SourceType,
     smooth_atr: Smooth,
     period_atr: usize,
     factor: f32,
 }
 
-impl SupertrendFlipSignal {
+impl SupertrendPullbackSignal {
     pub fn new(source: SourceType, smooth_atr: Smooth, period_atr: f32, factor: f32) -> Self {
         Self {
             source,
@@ -22,19 +22,18 @@ impl SupertrendFlipSignal {
     }
 }
 
-impl Signal for SupertrendFlipSignal {
+impl Signal for SupertrendPullbackSignal {
     fn lookback(&self) -> usize {
         self.period_atr
     }
 
     fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (direction, _) = supertrend(
-            &data.source(self.source),
-            data.close(),
-            &data.atr(self.smooth_atr, self.period_atr),
-            self.factor,
-        );
+        let source = data.source(self.source);
+        let atr = data.atr(self.smooth_atr, self.period_atr);
+        let close = data.close();
 
-        f!(direction)
+        let (_, trend) = supertrend(&source, close, &atr, self.factor);
+
+        p!(trend, data.high(), data.low(), close)
     }
 }

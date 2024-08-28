@@ -39,6 +39,6 @@ impl Signal for TsiZeroCrossSignal {
             self.fast_period,
         );
 
-        (tsi.cross_over(&ZERO_LINE), tsi.cross_under(&ZERO_LINE))
+        (tsi.cross_over(&ZERO), tsi.cross_under(&ZERO))
     }
 }

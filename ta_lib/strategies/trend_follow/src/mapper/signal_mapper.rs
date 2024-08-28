@@ -262,6 +262,18 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             period_atr,
             factor,
         )),
+        // Pullback
+        SignalConfig::SupPullback {
+            source,
+            smooth_atr,
+            period_atr,
+            factor,
+        } => Box::new(SupertrendPullbackSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor,
+        )),
         // Pattern
         SignalConfig::AoSaucer {
             source_type,

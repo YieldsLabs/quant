@@ -44,6 +44,6 @@ impl Signal for CcZeroCrossSignal {
             self.smooth_period,
         );
 
-        (cc.cross_over(&ZERO_LINE), cc.cross_under(&ZERO_LINE))
+        (cc.cross_over(&ZERO), cc.cross_under(&ZERO))
     }
 }

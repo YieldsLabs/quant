@@ -34,6 +34,6 @@ impl Confirm for EomConfirm {
             self.period,
         );
 
-        (eom.sgt(&ZERO_LINE), eom.slt(&ZERO_LINE))
+        (eom.sgt(&ZERO), eom.slt(&ZERO))
     }
 }

@@ -30,6 +30,6 @@ impl Signal for AoZeroCrossSignal {
             .source(self.source)
             .spread(self.smooth, self.period_fast, self.period_slow);
 
-        (ao.cross_over(&ZERO_LINE), ao.cross_under(&ZERO_LINE))
+        (ao.cross_over(&ZERO), ao.cross_under(&ZERO))
     }
 }

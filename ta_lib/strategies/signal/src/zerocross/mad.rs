@@ -30,6 +30,6 @@ impl Signal for MadZeroCrossSignal {
             data.source(self.source)
                 .spread_pct(self.smooth, self.period_fast, self.period_slow);
 
-        (mad.cross_over(&ZERO_LINE), mad.cross_under(&ZERO_LINE))
+        (mad.cross_over(&ZERO), mad.cross_under(&ZERO))
     }
 }

@@ -1,23 +1,24 @@
 use crate::source::{Source, SourceType};
 use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
+use core::prelude::*;
 use timeseries::prelude::*;
 
-const DEFAULT_LOOKBACK: usize = 16;
-const DEFAULT_STOP_LEVEL: f32 = -1.0;
+const DEFAULT_LOOKBACK: Period = 16;
+const DEFAULT_STOP_LEVEL: Scalar = -1.0;
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {
-    GoLong(f32),
-    GoShort(f32),
-    ExitLong(f32),
-    ExitShort(f32),
+    GoLong(Scalar),
+    GoShort(Scalar),
+    ExitLong(Scalar),
+    ExitShort(Scalar),
     DoNothing,
 }
 
 #[derive(Debug)]
 pub struct StopLossLevels {
-    pub long: f32,
-    pub short: f32,
+    pub long: Scalar,
+    pub short: Scalar,
 }
 
 pub struct BaseStrategy {
@@ -88,12 +89,7 @@ impl Strategy for BaseStrategy {
 
         let ohlcv = self.ohlcv();
 
-        println!("{}", ohlcv);
-
         let bar_index = ohlcv.bar_index(bar);
-
-        println!("Bar: {}, Index: {}", bar, bar_index);
-
         let theo_price = self.suggested_entry(&ohlcv, bar_index);
 
         match self.trade_signals(&ohlcv, bar_index) {
@@ -154,18 +150,18 @@ impl BaseStrategy {
         (go_long, go_short, exit_long, exit_short)
     }
 
-    fn suggested_entry(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> f32 {
+    fn suggested_entry(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> Scalar {
         ohlcv
             .source(SourceType::CLOSE)
             .get(bar_index)
-            .unwrap_or(f32::NAN)
+            .unwrap_or(NAN)
     }
 
-    fn stop_loss_levels(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (f32, f32) {
+    fn stop_loss_levels(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (Scalar, Scalar) {
         let (sl_long_find, sl_short_find) = self.stop_loss.find(ohlcv);
 
-        let stop_loss_long = sl_long_find.get(bar_index).unwrap_or(f32::NAN);
-        let stop_loss_short = sl_short_find.get(bar_index).unwrap_or(f32::NAN);
+        let stop_loss_long = sl_long_find.get(bar_index).unwrap_or(NAN);
+        let stop_loss_short = sl_short_find.get(bar_index).unwrap_or(NAN);
 
         (stop_loss_long, stop_loss_short)
     }

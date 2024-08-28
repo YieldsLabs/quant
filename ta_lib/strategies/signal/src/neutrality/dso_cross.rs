@@ -44,9 +44,6 @@ impl Signal for DsoNeutralityCrossSignal {
             self.d_period,
         );
 
-        (
-            k.cross_over(&NEUTRALITY_LINE),
-            k.cross_under(&NEUTRALITY_LINE),
-        )
+        (k.cross_over(&NEUTRALITY), k.cross_under(&NEUTRALITY))
     }
 }

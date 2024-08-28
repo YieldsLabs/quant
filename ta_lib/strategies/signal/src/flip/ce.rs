@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use timeseries::prelude::*;
+use trail::f;
 use trend::ce;
 
 pub struct CeFlipSignal {
@@ -42,6 +43,6 @@ impl Signal for CeFlipSignal {
             self.factor,
         );
 
-        (direction.cross_under(&ZERO), direction.cross_over(&ZERO))
+        f!(direction)
     }
 }
