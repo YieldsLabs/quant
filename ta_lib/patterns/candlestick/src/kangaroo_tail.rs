@@ -1,13 +1,8 @@
 use core::prelude::*;
 
-const RANGE_RATIO: f32 = 0.66;
+const RANGE_RATIO: Scalar = 0.66;
 
-pub fn bullish(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> Series<bool> {
+pub fn bullish(open: &Price, high: &Price, low: &Price, close: &Price) -> Rule {
     let range = high - low;
     let two_third_low_range = low + &range * RANGE_RATIO;
     let prev_low = low.shift(1);
@@ -27,12 +22,7 @@ pub fn bullish(
         & low.slte(&low.lowest(13))
 }
 
-pub fn bearish(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> Series<bool> {
+pub fn bearish(open: &Price, high: &Price, low: &Price, close: &Price) -> Rule {
     let range = high - low;
     let two_third_high_range = high - &range * RANGE_RATIO;
     let prev_low = low.shift(1);

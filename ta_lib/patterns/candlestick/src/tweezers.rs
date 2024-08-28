@@ -1,31 +1,31 @@
 use core::prelude::*;
 
-pub fn bullish(open: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<bool> {
+const RANGE: Scalar = 0.0005;
+
+pub fn bullish(open: &Price, low: &Price, close: &Price) -> Rule {
     let prev_close = close.shift(1);
     let prev_open = open.shift(1);
     let body = (close - open).abs();
     let prev_body = body.shift(1);
-    let range = 0.0005;
 
     close.sgt(open)
         & low.seq(&low.shift(1))
-        & body.slt(&range)
-        & prev_body.slt(&range)
+        & body.slt(&RANGE)
+        & prev_body.slt(&RANGE)
         & prev_close.slt(&prev_open)
         & close.shift(2).slt(&open.shift(1))
 }
 
-pub fn bearish(open: &Series<f32>, high: &Series<f32>, close: &Series<f32>) -> Series<bool> {
+pub fn bearish(open: &Price, high: &Price, close: &Price) -> Rule {
     let prev_close = close.shift(1);
     let prev_open = open.shift(1);
     let body = (close - open).abs();
     let prev_body = body.shift(1);
-    let range = 0.0005;
 
     close.slt(open)
         & high.seq(&high.shift(1))
-        & body.slt(&range)
-        & prev_body.slt(&range)
+        & body.slt(&RANGE)
+        & prev_body.slt(&RANGE)
         & prev_close.sgt(&prev_open)
         & close.shift(2).sgt(&open.shift(1))
 }
