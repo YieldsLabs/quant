@@ -26,7 +26,7 @@ impl FromIterator<Scalar> for Price {
 
 impl From<Price> for Vec<Scalar> {
     fn from(val: Price) -> Self {
-        val.into_iter().map(|x| x.unwrap_or(0.0)).collect()
+        val.into_iter().map(|x| x.unwrap_or(ZERO)).collect()
     }
 }
 
