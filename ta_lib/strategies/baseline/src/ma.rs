@@ -3,8 +3,8 @@ use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
 use timeseries::prelude::*;
 
-const DEFAULT_ATR_LOOKBACK: usize = 14;
-const DEFAULT_ATR_FACTOR: f32 = 1.2;
+const DEFAULT_ATR_LOOKBACK: Period = 14;
+const DEFAULT_ATR_FACTOR: Scalar = 1.2;
 const DEFAULT_ATR_SMOOTH: Smooth = Smooth::EMA;
 
 pub struct MaBaseLine {

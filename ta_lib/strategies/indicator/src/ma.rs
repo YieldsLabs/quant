@@ -45,7 +45,7 @@ pub fn ma_indicator(
     data: &OHLCVSeries,
     source: SourceType,
     period: usize,
-) -> Series<f32> {
+) -> Price {
     let source = data.source(source);
 
     match ma {

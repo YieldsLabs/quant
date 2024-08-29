@@ -23,7 +23,7 @@ pub enum CandleTrendType {
 pub fn candlestick_trend_indicator(
     candle: &CandleTrendType,
     data: &OHLCVSeries,
-) -> (Series<bool>, Series<bool>) {
+) -> (Rule, Rule) {
     match candle {
         CandleTrendType::BOTTLE => (
             bottle::bullish(data.open(), data.low(), data.close()),
@@ -101,7 +101,7 @@ pub enum CandleReversalType {
 pub fn candlestick_reversal_indicator(
     candle: &CandleReversalType,
     data: &OHLCVSeries,
-) -> (Series<bool>, Series<bool>) {
+) -> (Rule, Rule) {
     match candle {
         CandleReversalType::DOJI => (
             doji::bullish(data.open(), data.close()),
