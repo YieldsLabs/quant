@@ -209,19 +209,19 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             tp, sl = float(f"{_tp[0]}.{_tp[1]}"), float(f"{_sl[0]}.{_sl[1]}")
 
             risk_type = (
-                SignalRiskType.VERY_HIGH
+                SignalRiskType.UNKNOWN
                 if tp < curr_bar.close and side == PositionSide.LONG
                 else risk_type
             )
             risk_type = (
-                SignalRiskType.VERY_HIGH
+                SignalRiskType.UNKNOWN
                 if tp > curr_bar.close and side == PositionSide.SHORT
                 else risk_type
             )
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
-        logger.info(f"Signal Risk: {risk}")
+        logger.info(f"Entry: {curr_bar.close}, Signal Risk: {risk}")
 
         return risk
 

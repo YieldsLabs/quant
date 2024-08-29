@@ -149,7 +149,7 @@ class SmartRouter(AbstractEventManager):
                 f"Trying to open order -> algo price: {price}, theo price: {entry_price}, spread: {spread_percentage}%"
             )
 
-            if spread_percentage > 1.5:
+            if spread_percentage > 0.35:
                 break
 
             curr_time = time.time()

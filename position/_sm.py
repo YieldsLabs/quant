@@ -131,7 +131,7 @@ class PositionStateMachine:
     async def process_event(self, symbol: Symbol, event: PositionEvent):
         current_state = await self._get_state(symbol)
 
-        if not self._is_valid_state(current_state, event):
+        if not self._is_valid_state(self._transitions, current_state, event):
             return
 
         next_state, handler_name = self._transitions[(current_state, type(event))]
@@ -147,5 +147,8 @@ class PositionStateMachine:
             f"SM: symbol={symbol}, event={event}, curr_state={current_state}, next_state={next_state}"
         )
 
-    def _is_valid_state(self, state: PositionState, event: PositionEvent) -> bool:
-        return (state, type(event)) in self._transitions
+    @staticmethod
+    def _is_valid_state(
+        transitions: Transitions, state: PositionState, event: PositionEvent
+    ) -> bool:
+        return (state, type(event)) in transitions

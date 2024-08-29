@@ -103,7 +103,7 @@ class PositionActor(StrategyActor):
                 EvaluateSignal(event.signal, back_bars, ta)
             )
 
-            if signal_risk_level.type == SignalRiskType.VERY_HIGH:
+            if signal_risk_level.type == SignalRiskType.UNKNOWN:
                 return False
 
             position = await self.position_factory.create(

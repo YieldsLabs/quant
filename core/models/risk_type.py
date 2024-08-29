@@ -20,6 +20,7 @@ class SignalRiskType(Enum):
     MODERATE = auto()
     HIGH = auto()
     VERY_HIGH = auto()
+    UNKNOWN = auto()
 
     @classmethod
     def from_string(cls, risk_string):

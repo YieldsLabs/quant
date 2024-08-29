@@ -12,10 +12,11 @@ class StrategyActor(BaseActor):
         super().__init__()
         self._symbol = symbol
         self._timeframe = timeframe
+        self._id = f"{self.symbol}_{self.timeframe}"
 
     @property
     def id(self) -> str:
-        return f"{self.symbol}_{self.timeframe}"
+        return self._id
 
     @property
     def symbol(self) -> "Symbol":

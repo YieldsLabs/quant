@@ -122,7 +122,9 @@ async def main():
 
     try:
         logging.info("Started")
-        await asyncio.gather(*[backtest_system_task, trading_system_task, shutdown_task])
+        await asyncio.gather(
+            *[backtest_system_task, trading_system_task, shutdown_task]
+        )
     finally:
         logging.info("Closing...")
         shutdown_task.cancel()
@@ -130,6 +132,7 @@ async def main():
         trading_system_task.cancel()
 
         trading_system.stop()
+        backtest_system.stop()
 
         await event_bus.stop()
         await event_bus.wait()
