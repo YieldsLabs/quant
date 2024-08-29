@@ -20,10 +20,7 @@ pub enum CandleTrendType {
     THREE_ONE_TWO,
 }
 
-pub fn candlestick_trend_indicator(
-    candle: &CandleTrendType,
-    data: &OHLCVSeries,
-) -> (Rule, Rule) {
+pub fn candlestick_trend_indicator(candle: &CandleTrendType, data: &OHLCVSeries) -> (Rule, Rule) {
     match candle {
         CandleTrendType::BOTTLE => (
             bottle::bullish(data.open(), data.low(), data.close()),

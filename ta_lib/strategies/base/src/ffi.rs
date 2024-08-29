@@ -25,13 +25,13 @@ pub fn register_strategy(
     stop_loss: Box<dyn StopLoss>,
     exit: Box<dyn Exit>,
 ) -> i32 {
+    let mut strategies = STRATEGIES.write().unwrap();
+
     let strategy_id = generate_strategy_id();
 
     let strategy = Box::new(BaseStrategy::new(
         timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
     ));
-
-    let mut strategies = STRATEGIES.write().unwrap();
 
     strategies.insert(strategy_id, strategy);
 
