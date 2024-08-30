@@ -175,6 +175,10 @@ impl Price {
         }
     }
 
+    pub fn smooth_dst(&self, smooth: Smooth, period: Period) -> Self {
+        self - self.smooth(smooth, period)
+    }
+
     pub fn spread(&self, smooth: Smooth, period_fast: Period, period_slow: Period) -> Self {
         self.smooth(smooth, period_fast) - self.smooth(smooth, period_slow)
     }
@@ -288,6 +292,17 @@ mod tests {
         ]);
 
         let result = source.ults(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_average_distance() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 0.5, 1.0, 1.0, 1.0]);
+        let period = 3;
+
+        let result = source.smooth_dst(Smooth::SMA, period);
 
         assert_eq!(result, expected);
     }

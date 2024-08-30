@@ -2,7 +2,6 @@ mod bitwise;
 mod cmp;
 mod constants;
 mod cross;
-mod distance;
 mod extremum;
 mod fmt;
 mod from;

@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn cci(source: &Price, period: Period, factor: Scalar) -> Price {
-    source.ad(period) / (factor * source.mad(period))
+    source.smooth_dst(Smooth::SMA, period) / (factor * source.mad(period))
 }
 
 #[cfg(test)]
