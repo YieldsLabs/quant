@@ -4,7 +4,7 @@ pub fn tdfi(source: &Price, smooth: Smooth, period: Period, n: usize) -> Price {
     let ma = (SCALE * 10. * source).smooth(smooth, period);
     let sma = ma.smooth(smooth, period);
 
-    let tdf = ((&ma - &sma).abs().pow(1)) * ((0.5 * (ma.change(1) + sma.change(1))).pow(n));
+    let tdf = ((&ma - &sma).abs().pow(1)) * ((HALF * (ma.change(1) + sma.change(1))).pow(n));
 
     &tdf / tdf.abs().highest(period * n)
 }

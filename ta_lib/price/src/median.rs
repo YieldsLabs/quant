@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn median_price(high: &Price, low: &Price) -> Price {
-    0.5 * (high + low)
+    HALF * (high + low)
 }
 
 #[cfg(test)]

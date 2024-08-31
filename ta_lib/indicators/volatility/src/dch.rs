@@ -4,7 +4,7 @@ pub fn dch(high: &Price, low: &Price, period: Period) -> (Price, Price, Price) {
     let upper = high.highest(period);
     let lower = low.lowest(period);
 
-    let middle = 0.5 * (&upper + &lower);
+    let middle = HALF * (&upper + &lower);
 
     (upper, middle, lower)
 }

@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn trima(source: &Price, period: Period) -> Price {
-    let period_half = 0.5 * period as Scalar;
+    let period_half = HALF * period as Scalar;
 
     let n = period_half.ceil() as Period;
     let m = (period_half.floor() + 1.) as Period;

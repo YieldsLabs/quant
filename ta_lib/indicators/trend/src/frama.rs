@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn frama(source: &Price, high: &Price, low: &Price, period: Period) -> Price {
-    let len = (0.5 * period as Scalar).floor() as Period;
+    let len = (HALF * period as Scalar).floor() as Period;
     let hh = high.highest(len);
     let ll = low.lowest(len);
 

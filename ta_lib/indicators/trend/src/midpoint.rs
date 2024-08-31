@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn midpoint(high: &Price, low: &Price, period: Period) -> Price {
-    0.5 * (high.highest(period) + low.lowest(period))
+    HALF * (high.highest(period) + low.lowest(period))
 }
 
 #[cfg(test)]

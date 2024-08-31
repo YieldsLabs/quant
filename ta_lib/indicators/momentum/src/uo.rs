@@ -16,9 +16,10 @@ pub fn uo(
     let bp = source - &low;
     let tr = high - &low;
 
-    100. * (4. * bp.sum(period_fast) / tr.sum(period_fast)
-        + 2. * bp.sum(period_medium) / tr.sum(period_medium)
-        + bp.sum(period_slow) / tr.sum(period_slow))
+    SCALE
+        * (4. * bp.sum(period_fast) / tr.sum(period_fast)
+            + 2. * bp.sum(period_medium) / tr.sum(period_medium)
+            + bp.sum(period_slow) / tr.sum(period_slow))
         / 7.
 }
 

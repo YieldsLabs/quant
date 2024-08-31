@@ -1,7 +1,7 @@
 use core::prelude::*;
 
 pub fn kb(source: &Price, period: usize, factor: Scalar) -> (Price, Price, Price) {
-    let middle = 0.5 * (source.highest(period) + source.lowest(period));
+    let middle = HALF * (source.highest(period) + source.lowest(period));
     let volatility = factor * source.std(period).highest(period);
 
     let upper = &middle + &volatility;
