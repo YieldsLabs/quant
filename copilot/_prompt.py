@@ -2,7 +2,10 @@ system_prompt = """
 You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
 signal_trend_risk_prompt = """
-Evaluate the risk for an open {side} position within the {timeframe} timeframe over the next {horizon} candlesticks, considering the ENTRY PRICE at {entry} using the provided data:
+Evaluate the risk for an Open {side} Position:
+- Timeframe: {timeframe}
+- Horizon: Next {horizon} Candlesticks
+- Entry Price: {entry}
 
 [Input Data]
 - Candlestick Data: {bar}
@@ -13,8 +16,8 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - Normalized Volume: {nvol}
 - VWAP (Volume Weighted Average Price): {vwap}
 - Support/Resistance Levels: {support}/{resistance}
-- Bollinger Bands (UPPER BAND, LOWER BAND): {upper_bb}, {lower_bb}
-- Volatility (TRUE RANGE): {true_range}
+- Bollinger Bands: Upper {upper_bb}, Lower {lower_bb}
+- Volatility (True Range): {true_range}
 
 [Risk Evaluation Framework]
 
@@ -45,10 +48,11 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - RSI:
     - Above 70: Overbought, higher risk for LONG.
     - Below 30: Oversold, higher risk for SHORT.
+    - Between 30-70: Neutral, moderate risk for LONG and SHORT.
 - CCI:
     - Above 100: Overbought, higher risk for LONG.
     - Below -100: Oversold, higher risk for SHORT.
-    - Between -100 and 100: Neutral, moderate risk.
+    - Between -100 and 100: Neutral, moderate risk for LONG and SHORT.
 - Normalized Volume:
     - High: Strong market sentiment, higher risk if against the position.
     - Low: Weak market sentiment, lower risk.
@@ -58,12 +62,12 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - Support/Resistance Levels:
     - LONG: Higher risk near/below resistance, lower risk above support.
     - SHORT: Higher risk near/above support, lower risk below resistance.
-- Bollinger Bands (UPPER BAND, LOWER BAND):
-    - Price Above UPPER BAND: Indicates overbought conditions, higher risk for LONG, potential reversal or correction.
-    - Price Below LOWER BAND: Indicates oversold conditions, higher risk for SHORT, potential reversal or bounce.
-- Volatility (TRUE RANGE):
-    - High TRUE RANGE: Indicates high volatility, higher risk due to potential price swings, important for stop loss placement.
-    - Low TRUE RANGE: Indicates low volatility, lower risk but may suggest a potential breakout or reduced opportunity.
+- Bollinger Bands:
+    - Price Above Upper: Indicates overbought conditions, higher risk for LONG, potential reversal or correction.
+    - Price Below Lower: Indicates oversold conditions, higher risk for SHORT, potential reversal or bounce.
+- Volatility (True Range):
+    - High True Range: Indicates high volatility, higher risk due to potential price swings, important for stop loss placement.
+    - Low True Range: Indicates low volatility, lower risk but may suggest a potential breakout or reduced opportunity.
 
 [Risk Level Explanation]
 - NONE: No significant risk factors.
@@ -82,7 +86,10 @@ Return the result only as raw string:
 RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 """
 signal_contrarian_risk_prompt = """
-Evaluate the risk for an open {side} position within the {timeframe} timeframe over the next {horizon} candlesticks, considering the entry at {entry} using the provided data:
+Evaluate the risk for an Open {side} Position:
+- Timeframe: {timeframe}
+- Horizon: Next {horizon} Candlesticks
+- Entry Price: {entry}
 
 [Input Data]
 - Candlestick Data: {bar}
@@ -93,8 +100,8 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - Normalized Volume: {nvol}
 - VWAP (Volume Weighted Average Price): {vwap}
 - Support/Resistance Levels: {support}/{resistance}
-- Bollinger Bands (UPPER BAND, LOWER BAND): {upper_bb}, {lower_bb}
-- Volatility (TRUE RANGE): {true_range}
+- Bollinger Bands: Upper {upper_bb}, Lower {lower_bb}
+- Volatility (True Range): {true_range}
 
 [Risk Evaluation Framework]
 
@@ -137,13 +144,13 @@ Evaluate the risk for an open {side} position within the {timeframe} timeframe o
 - Support/Resistance Levels:
     - LONG: Higher risk near resistance.
     - SHORT: Higher risk near support.
-- Bollinger Bands (UPPER BAND, LOWER BAND):
-    - Above UPPER BAND: Overbought, reversal risk for LONG.
-    - Below LOWER BAND: Oversold, rebound risk for SHORT.
+- Bollinger Bands:
+    - Above Upper: Overbought, reversal risk for LONG.
+    - Below Lower: Oversold, rebound risk for SHORT.
     - Bollinger Bands Width:
-        - Wide (Significant gap between UPPER BAND and LOWER BAND): Indicates high volatility, potential breakout risk.
-        - Narrow (Small gap between UPPER BAND and LOWER BAND): Indicates low volatility, potential for explosive movement if bands expand.
-- Volatility (TRUE RANGE):
+        - Wide (Significant gap between Upper and Lower): Indicates high volatility, potential breakout risk.
+        - Narrow (Small gap between Upper and Lower): Indicates low volatility, potential for explosive movement if bands expand.
+- Volatility (True Range):
     - High: Higher reversal risk.
     - Low: Consolidation with lower risk.
 
