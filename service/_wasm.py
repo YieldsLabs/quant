@@ -28,9 +28,9 @@ class WasmManager(AbstractWasmManager):
 
         store.set_wasi(wasi)
 
+        module = self._get_module(wasm_type, store.engine)
         linker = self._configure_linker(store.engine)
 
-        module = self._get_module(wasm_type, store.engine)
         instance = linker.instantiate(store, module)
 
         return (instance, store)
