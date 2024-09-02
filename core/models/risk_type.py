@@ -29,10 +29,7 @@ class SignalRiskType(Enum):
             risk_string,
         )
 
-        if match:
-            return cls[match.group()]
-        else:
-            return cls.NONE
+        return cls[match.group()] if match else cls.NONE
 
     def __str__(self):
         return self.name.upper()
