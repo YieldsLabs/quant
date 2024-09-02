@@ -35,7 +35,7 @@ class WasmManager(AbstractWasmManager):
 
         return (instance, store)
 
-    def _configure_wasi(self):
+    def _configure_wasi(self) -> WasiConfig:
         wasi_config = WasiConfig()
         wasi_config.wasm_multi_value = True
         wasi_config.inherit_stdout()
