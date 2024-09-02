@@ -255,18 +255,18 @@ class PositionRisk(TaMixin):
 
         if side == PositionSide.LONG:
             print(
-                f"CHeCK => Side: {side},  H: {high}, SL: {sl}, L < SL {low < sl}, H > TP {high > tp}"
+                f"CHeCK => Side: {side}, H: {high}, L: {low}, SL: {sl}, L < SL {low < sl}, H > TP {high > tp}"
             )
-            if low <= sl:
+            if low < sl:
                 return replace(self, type=PositionRiskType.SL)
             if high > tp:
                 return replace(self, type=PositionRiskType.TP)
 
         if side == PositionSide.SHORT:
             print(
-                f"CHeCK => Side: {side},  H: {high}, SL: {sl}, H > SL {high > sl}, L < TP {low < tp}"
+                f"CHeCK => Side: {side}, H: {high}, L: {low}, SL: {sl}, H > SL {high > sl}, L < TP {low < tp}"
             )
-            if high >= sl:
+            if high > sl:
                 return replace(self, type=PositionRiskType.SL)
             if low < tp:
                 return replace(self, type=PositionRiskType.TP)
