@@ -145,7 +145,7 @@ class TradingSystem(AbstractSystem):
             await self.execute(
                 UpdateSettings(
                     symbol,
-                    self.config["leverage"],
+                    min(symbol.max_leverage, self.config["leverage"]),
                     PositionMode.HEDGED,
                     MarginMode.CROSS,
                 )

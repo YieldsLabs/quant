@@ -325,6 +325,7 @@ class Bybit(AbstractExchange):
             min_price_size,
             position_precision,
             price_precision,
+            max_leverage,
         ) = self._get_symbol_meta(market)
 
         return Symbol(
@@ -335,6 +336,7 @@ class Bybit(AbstractExchange):
             min_price_size,
             position_precision,
             price_precision,
+            max_leverage,
         )
 
     def _get_symbol_meta(self, market):
@@ -344,6 +346,7 @@ class Bybit(AbstractExchange):
         limits = market.get("limits", {})
         min_position_size = limits.get("amount", {}).get("min", 0)
         min_position_price = limits.get("price", {}).get("min", 0)
+        max_leverage = limits.get("leverage", {}).get("max", 1)
 
         precision = market.get("precision", {})
         position_precision = precision.get("amount", 0)
@@ -356,6 +359,7 @@ class Bybit(AbstractExchange):
             min_position_price,
             int(abs(math.log10(position_precision))),
             int(abs(math.log10(price_precision))),
+            max_leverage,
         )
 
     def _create_order(
