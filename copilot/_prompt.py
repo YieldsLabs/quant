@@ -17,8 +17,12 @@ risk_intro = """
 - ROC (Rate of Change): {roc}
 - Normalized Volume: {nvol}
 - VWAP (Volume Weighted Average Price): {vwap}
-- Support/Resistance Levels: {support}/{resistance}
-- Bollinger Bands: Upper {upper_bb}, Lower {lower_bb}
+- Support/Resistance Levels:
+    - Support: {support}
+    - Resistance: {resistance}
+- Bollinger Bands:
+    - Upper: {upper_bb}
+    - Lower: {lower_bb}
 - Volatility (True Range): {true_range}
 """
 risk_outro = """
