@@ -1,7 +1,7 @@
 system_prompt = """
 You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
-signal_trend_risk_prompt = """
+risk_intro = """
 Evaluate the risk for an Open {side} Position:
 - Timeframe: {timeframe}
 - Horizon: Next {horizon} Candlesticks
@@ -18,7 +18,25 @@ Evaluate the risk for an Open {side} Position:
 - Support/Resistance Levels: {support}/{resistance}
 - Bollinger Bands: Upper {upper_bb}, Lower {lower_bb}
 - Volatility (True Range): {true_range}
+"""
+risk_outro = """
+[Risk Level Explanation]
+- NONE: No significant risk factors.
+- VERY_LOW: Minor risk factors, generally favorable.
+- LOW: Some risk factors, not significant enough to deter.
+- MODERATE: Noticeable risk factors, caution advised.
+- HIGH: Significant risk factors, high caution or avoidance advised.
+- VERY_HIGH: Major risk factors, generally unfavorable.
 
+[Final Output]
+- **RISK_LEVEL**: [Risk Level Value]
+- **TP**: [Take Profit Value] (formatted to six decimal places)
+- **SL**: [Stop Loss Value] (formatted to six decimal places)
+
+Return the result only as raw string:
+RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
+"""
+trend_risk_framework = """
 [Risk Evaluation Framework]
 
 [Step 1: Candlestick Data Analysis]
@@ -68,41 +86,8 @@ Evaluate the risk for an Open {side} Position:
 - Volatility (True Range):
     - High True Range: Indicates high volatility, higher risk due to potential price swings, important for stop loss placement.
     - Low True Range: Indicates low volatility, lower risk but may suggest a potential breakout or reduced opportunity.
-
-[Risk Level Explanation]
-- NONE: No significant risk factors.
-- VERY_LOW: Minor risk factors, generally favorable.
-- LOW: Some risk factors, not significant enough to deter.
-- MODERATE: Noticeable risk factors, caution advised.
-- HIGH: Significant risk factors, high caution or avoidance advised.
-- VERY_HIGH: Major risk factors, generally unfavorable.
-
-[Final Output]
-- **RISK_LEVEL**: [Risk Level Value]
-- **TP**: [Take Profit Value] (formatted to six decimal places)
-- **SL**: [Stop Loss Value] (formatted to six decimal places)
-
-Return the result only as raw string:
-RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 """
-signal_contrarian_risk_prompt = """
-Evaluate the risk for an Open {side} Position:
-- Timeframe: {timeframe}
-- Horizon: Next {horizon} Candlesticks
-- Entry Price: {entry}
-
-[Input Data]
-- Candlestick Data: {bar}
-- Overall Trend (Exponential Moving Average): {trend}
-- MACD (Moving Average Convergence/Divergence) Histogram: {macd}
-- RSI (Relative Strength Index): {rsi}
-- CCI (Commodity Channel Index): {cci}
-- Normalized Volume: {nvol}
-- VWAP (Volume Weighted Average Price): {vwap}
-- Support/Resistance Levels: {support}/{resistance}
-- Bollinger Bands: Upper {upper_bb}, Lower {lower_bb}
-- Volatility (True Range): {true_range}
-
+contrarian_risk_framework = """
 [Risk Evaluation Framework]
 
 [Step 1: Candlestick Data Analysis]
@@ -153,21 +138,7 @@ Evaluate the risk for an Open {side} Position:
 - Volatility (True Range):
     - High: Higher reversal risk.
     - Low: Consolidation with lower risk.
-
-[Risk Level Explanation]
-- NONE: No significant risk factors.
-- VERY_LOW: Minor risk factors, generally favorable.
-- LOW: Some risk factors, not significant enough to deter.
-- MODERATE: Noticeable risk factors, caution advised.
-- HIGH: Significant risk factors, high caution or avoidance advised.
-- VERY_HIGH: Major risk factors, generally unfavorable.
-
-[Final Output]
-- **RISK_LEVEL**: [Risk Level Value]
-- **TP**: [Take Profit Value] (formatted to six decimal places)
-- **SL**: [Stop Loss Value] (formatted to six decimal places)
-
-Return the result only as raw string:
-RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 """
+signal_trend_risk_prompt = f"{risk_intro}{trend_risk_framework}{risk_outro}"
+signal_contrarian_risk_prompt = f"{risk_intro}{contrarian_risk_framework}{risk_outro}"
 signal_risk_pattern = r"RISK_LEVEL:\s*(NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP:\s*([\d.]+)\s*,\s*SL:\s*([\d.]+)\s*\.*"
