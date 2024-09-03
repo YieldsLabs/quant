@@ -184,8 +184,12 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             cci=momentum.cci[-self.bars_n :],
             roc=momentum.sroc[-self.bars_n :],
             nvol=volume.nvol[-self.bars_n :],
-            support=trend.support[-self.bars_n :],
-            resistance=trend.resistance[-self.bars_n :],
+            support=trend.support[-self.bars_n :]
+            if side == PositionSide.LONG
+            else trend.resistance[-self.bars_n :],
+            resistance=trend.resistance[-self.bars_n :]
+            if side == PositionSide.LONG
+            else trend.support[-self.bars_n :],
             vwap=volume.vwap[-self.bars_n :],
             upper_bb=volatility.upb[-self.bars_n :],
             lower_bb=volatility.lwb[-self.bars_n :],
