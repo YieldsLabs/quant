@@ -2,7 +2,8 @@ system_prompt = """
 You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
 risk_intro = """
-Evaluate the risk for an Open {side} Position:
+[Position Risk Evaluation]
+- Side: {side}
 - Timeframe: {timeframe}
 - Horizon: Next {horizon} Candlesticks
 - Entry Price: {entry}
