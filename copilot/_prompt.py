@@ -9,10 +9,11 @@ Evaluate the risk for an Open {side} Position:
 
 [Input Data]
 - Candlestick Data: {bar}
-- Overall Trend (Exponential Moving Average): {trend}
+- EMA (Exponential Moving Average): {trend}
 - MACD (Moving Average Convergence/Divergence) Histogram: {macd}
 - RSI (Relative Strength Index): {rsi}
 - CCI (Commodity Channel Index): {cci}
+- ROC (Rate of Change): {roc}
 - Normalized Volume: {nvol}
 - VWAP (Volume Weighted Average Price): {vwap}
 - Support/Resistance Levels: {support}/{resistance}
@@ -57,7 +58,7 @@ trend_risk_framework = """
     - Low ratio: Weak pressure, lower risk if against the position.
 
 [Step 2: Technical Analysis]
-- Overall Trend:
+- EMA:
     - Upward trend: Lower risk for LONG, higher risk for SHORT.
     - Downward trend: Higher risk for LONG, lower risk for SHORT.
 - MACD Histogram:
@@ -71,6 +72,9 @@ trend_risk_framework = """
     - Above 100: Overbought, higher risk for LONG.
     - Below -100: Oversold, higher risk for SHORT.
     - Between -100 and 100: Neutral, moderate risk for LONG and SHORT.
+- ROC:
+    - Positive ROC: Indicates upward momentum, lower risk for LONG, higher risk for SHORT.
+    - Negative ROC: Indicates downward momentum, higher risk for LONG, lower risk for SHORT.
 - Normalized Volume:
     - High: Strong market sentiment, higher risk if against the position.
     - Low: Weak market sentiment, lower risk.
@@ -108,7 +112,7 @@ contrarian_risk_framework = """
     - Low: Weak pressure, lower reversal risk.
 
 [Step 2: Technical Analysis]
-- Overall Trend:
+- EMA:
     - Upward: Higher reversal risk for LONG.
     - Downward: Higher rebound risk for SHORT.
 - MACD Histogram:
@@ -120,6 +124,9 @@ contrarian_risk_framework = """
 - CCI:
     - Above 100: Overbought, reversal likely.
     - Below -100: Oversold, rebound likely.
+- ROC:
+    - Positive ROC: Potential exhaustion if combined with overbought signals, higher reversal risk.
+    - Negative ROC: Potential rebound if combined with oversold signals, higher rebound risk.
 - Normalized Volume:
     - High: Strong sentiment, potential exhaustion.
     - Low: Weak sentiment, potential reversal.
