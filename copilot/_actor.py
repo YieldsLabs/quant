@@ -182,6 +182,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             macd=trend.macd[-self.bars_n :],
             rsi=osc.srsi[-self.bars_n :],
             cci=momentum.cci[-self.bars_n :],
+            roc=momentum.sroc[-self.bars_n :],
             nvol=volume.nvol[-self.bars_n :],
             support=trend.support[-self.bars_n :],
             resistance=trend.resistance[-self.bars_n :],
