@@ -2,7 +2,9 @@ system_prompt = """
 You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
 """
 risk_intro = """
-[Position Risk Evaluation]
+[Position Risk Evaluation Framework]
+
+[Position Details]
 - Side: {side}
 - Timeframe: {timeframe}
 - Horizon: Next {horizon} Candlesticks
@@ -34,7 +36,7 @@ risk_data = """
 - Volatility (True Range): {true_range}
 """
 trend_risk_framework = """
-[Risk Evaluation Framework]
+[Input Data Analysis]
 
 [Step 1: Candlestick Data Analysis]
 - Price Movement:
@@ -88,7 +90,7 @@ trend_risk_framework = """
     - Low True Range: Indicates low volatility, lower risk but may suggest a potential breakout or reduced opportunity.
 """
 contrarian_risk_framework = """
-[Risk Evaluation Framework]
+[Input Data Analysis]
 
 [Step 1: Candlestick Data Analysis]
 - Price Movement:
@@ -142,7 +144,7 @@ contrarian_risk_framework = """
     - Low: Suggests consolidation, with increased breakout potential, adjust risk management accordingly.
 """
 risk_eval = """
-[Step 3: Risk Level Evaluation]
+[Risk Level Management]
 - NONE: No significant risk factors.
 - VERY_LOW: Minor risk factors, generally favorable.
 - LOW: Some risk factors, not significant enough to deter.
