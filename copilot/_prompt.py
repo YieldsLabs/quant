@@ -7,7 +7,25 @@ risk_intro = """
 - Timeframe: {timeframe}
 - Horizon: Next {horizon} Candlesticks
 - Entry Price: {entry}
+"""
+risk_outro = """
+[Risk Level Explanation]
+- NONE: No significant risk factors.
+- VERY_LOW: Minor risk factors, generally favorable.
+- LOW: Some risk factors, not significant enough to deter.
+- MODERATE: Noticeable risk factors, caution advised.
+- HIGH: Significant risk factors, high caution or avoidance advised.
+- VERY_HIGH: Major risk factors, generally unfavorable.
 
+[Final Output]
+- **RL**: [Risk Level Value]
+- **TP**: [Take Profit Value] (formatted to six decimal places)
+- **SL**: [Stop Loss Value] (formatted to six decimal places)
+
+Return the result only as raw string:
+RL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
+"""
+risk_data = """
 [Input Data]
 - Candlestick Data: {bar}
 - EMA (Exponential Moving Average): {trend}
@@ -24,23 +42,6 @@ risk_intro = """
     - Upper: {upper_bb}
     - Lower: {lower_bb}
 - Volatility (True Range): {true_range}
-"""
-risk_outro = """
-[Risk Level Explanation]
-- NONE: No significant risk factors.
-- VERY_LOW: Minor risk factors, generally favorable.
-- LOW: Some risk factors, not significant enough to deter.
-- MODERATE: Noticeable risk factors, caution advised.
-- HIGH: Significant risk factors, high caution or avoidance advised.
-- VERY_HIGH: Major risk factors, generally unfavorable.
-
-[Final Output]
-- **RISK_LEVEL**: [Risk Level Value]
-- **TP**: [Take Profit Value] (formatted to six decimal places)
-- **SL**: [Stop Loss Value] (formatted to six decimal places)
-
-Return the result only as raw string:
-RISK_LEVEL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
 """
 trend_risk_framework = """
 [Risk Evaluation Framework]
@@ -151,6 +152,6 @@ contrarian_risk_framework = """
     - High: Higher reversal risk.
     - Low: Consolidation with lower risk.
 """
-signal_trend_risk_prompt = f"{risk_intro}{trend_risk_framework}{risk_outro}"
-signal_contrarian_risk_prompt = f"{risk_intro}{contrarian_risk_framework}{risk_outro}"
-signal_risk_pattern = r"RISK_LEVEL:\s*(NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP:\s*([\d.]+)\s*,\s*SL:\s*([\d.]+)\s*\.*"
+signal_trend_risk_prompt = f"{risk_intro}{risk_data}{trend_risk_framework}{risk_outro}"
+signal_contrarian_risk_prompt = f"{risk_intro}{risk_data}{contrarian_risk_framework}{risk_outro}"
+signal_risk_pattern = r"RL:\s*(NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP:\s*([\d.]+)\s*,\s*SL:\s*([\d.]+)\s*\.*"

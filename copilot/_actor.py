@@ -6,10 +6,11 @@ from typing import Union
 import numpy as np
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-from sklearn.manifold import Isomap
 from sklearn.metrics import calinski_harabasz_score
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
+from sklearn.decomposition import PCA
+from sklearn.ensemble import IsolationForest
 
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
@@ -239,16 +240,15 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             support = np.array(ta.trend.support[-LOOKBACK:])
             resistance = np.array(ta.trend.resistance[-LOOKBACK:])
             dmi = np.array(ta.trend.dmi[-LOOKBACK:])
-
             macd = np.array(ta.trend.macd[-LOOKBACK:])
-
             cci = np.array(ta.momentum.cci[-LOOKBACK:])
             ebb = np.array(ta.volatility.ebb[-LOOKBACK:])
             ekch = np.array(ta.volatility.ekch[-LOOKBACK:])
-            slow_rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
+            rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
             stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
             mfi = np.array(ta.volume.mfi[-LOOKBACK:])
-
+            roc = np.array(ta.momentum.sroc[-LOOKBACK:])
+            vwap = np.array(ta.volume.vwap[-LOOKBACK:])
             volatility = np.array(ta.volatility.yz[-LOOKBACK:])
 
             brr = np.array(
@@ -270,18 +270,20 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     macd,
                     brr,
                     cci,
-                    slow_rsi,
+                    rsi,
                     stoch_k,
                     mfi,
                     ebb,
                     ekch,
                     volatility,
+                    roc,
+                    vwap,
                 )
             )
 
-            features = MinMaxScaler(feature_range=(-1.0, 1.0)).fit_transform(features)
-            features = Isomap(
-                n_components=2, n_neighbors=len(features) - 1
+            features = StandardScaler().fit_transform(features)
+            features = PCA(
+                n_components=2
             ).fit_transform(features)
 
             max_clusters = min(len(features) - 1, 10)
@@ -304,12 +306,25 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             kmeans = CustomKMeans(n_clusters=optimal_clusters, random_state=1337).fit(
                 features
             )
+            
+            cluster_labels = kmeans.labels_.reshape(-1, 1)
+            features_with_clusters = np.hstack((features, cluster_labels))
+            iso_forest = IsolationForest(contamination=0.01, random_state=1337).fit(features_with_clusters)
+            anomaly_scores = iso_forest.decision_function(features_with_clusters)
+            iso_anomaly = iso_forest.predict(features_with_clusters) == -1
+            dynamic_threshold = np.percentile(anomaly_scores, 5)
 
             knn_transaction = "".join(map(str, kmeans.labels_))
 
             should_exit = False
 
-            if knn_transaction in self.anomaly:
+            confidence_scores = {
+                'knn_transaction': 0.4 if knn_transaction in self.anomaly else 0,
+                'iso_anomaly': 0.3 if iso_anomaly[-1] else 0,
+                'anomaly_score': 0.3 if anomaly_scores[-1] < dynamic_threshold else 0,
+            }
+
+            if sum(confidence_scores.values()) > 0.5:
                 should_exit = True
 
             logger.info(
@@ -322,7 +337,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 f"Body Range Ratio: {brr[-1]}, "
                 f"DMI: {dmi[-1]}, "
                 f"CCI: {cci[-1]}, "
-                f"RSI: {slow_rsi[-1]}, "
+                f"RSI: {rsi[-1]}, "
                 f"Stoch K: {stoch_k[-1]}, "
                 f"MFI: {mfi[-1]}, "
                 f"Volatility: {volatility[-1]}, "
