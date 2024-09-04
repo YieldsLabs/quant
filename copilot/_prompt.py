@@ -9,21 +9,11 @@ risk_intro = """
 - Entry Price: {entry}
 """
 risk_outro = """
-[Risk Level Explanation]
-- NONE: No significant risk factors.
-- VERY_LOW: Minor risk factors, generally favorable.
-- LOW: Some risk factors, not significant enough to deter.
-- MODERATE: Noticeable risk factors, caution advised.
-- HIGH: Significant risk factors, high caution or avoidance advised.
-- VERY_HIGH: Major risk factors, generally unfavorable.
-
 [Final Output]
-- **RL**: [Risk Level Value]
-- **TP**: [Take Profit Value] (formatted to six decimal places)
-- **SL**: [Stop Loss Value] (formatted to six decimal places)
+RL: [Risk Level Value:Enum], TP: [Take Profit Value:.6f], SL: [Stop Loss Value:.6f]
 
-Return the result only as raw string:
-RL: [Risk Level Value], TP: [Take Profit Value], SL: [Stop Loss Value]
+[Example]
+RL: MODERATE, TP: 7.702635, SL: 7.614073
 """
 risk_data = """
 [Input Data]
@@ -102,8 +92,8 @@ contrarian_risk_framework = """
 
 [Step 1: Candlestick Data Analysis]
 - Price Movement:
-    - Upward trend: Reversal risk higher for LONG, lower for SHORT.
-    - Downward trend: Rebound risk higher for SHORT, lower for LONG.
+    - Upward: Reversal risk higher for LONG, lower for SHORT.
+    - Downward: Rebound risk higher for SHORT, lower for LONG.
 - Price Range:
     - Wide: Higher reversal risk if aligned with the trend.
     - Narrow: Consolidation with potential reversal or breakout.
@@ -119,39 +109,47 @@ contrarian_risk_framework = """
 
 [Step 2: Technical Analysis]
 - EMA:
-    - Upward: Higher reversal risk for LONG.
-    - Downward: Higher rebound risk for SHORT.
+    - Upward: Indicates an overall upward trend, reducing risk for LONG and increasing risk for SHORT.
+    - Downward: Suggests trend reversal, favorable for SHORT and riskier for LONG.
 - MACD Histogram:
     - Positive: Potential exhaustion.
     - Negative: Potential rebound.
 - RSI:
-    - Above 70: Overbought, reversal likely.
-    - Below 30: Oversold, rebound likely.
+    - Above 70: Overbought, increased risk for LONG, favorable for SHORT.
+    - Below 30: Oversold, favorable for LONG, increased risk for SHORT.
 - CCI:
     - Above 100: Overbought, reversal likely.
     - Below -100: Oversold, rebound likely.
 - ROC:
-    - Positive ROC: Potential exhaustion if combined with overbought signals, higher reversal risk.
-    - Negative ROC: Potential rebound if combined with oversold signals, higher rebound risk.
+    - Positive: Potential exhaustion if combined with overbought signals, higher reversal risk.
+    - Negative: Potential rebound if combined with oversold signals, higher rebound risk.
 - Normalized Volume:
     - High: Strong sentiment, potential exhaustion.
     - Low: Weak sentiment, potential reversal.
 - VWAP:
-    - LONG: Higher risk above VWAP.
-    - SHORT: Higher risk below VWAP.
+    - Price Above: Favorable for LONG, increased risk for SHORT.
+    - Price Below: Favorable for SHORT, increased risk for LONG.
 - Support/Resistance Levels:
-    - LONG: Higher risk near resistance.
-    - SHORT: Higher risk near support.
+    - Near Resistance: Increased risk for LONG, favorable for SHORT.
+    - Near Support: Favorable for LONG, increased risk for SHORT.
 - Bollinger Bands:
     - Above Upper: Overbought, reversal risk for LONG.
     - Below Lower: Oversold, rebound risk for SHORT.
-    - Bollinger Bands Width:
-        - Wide (Significant gap between Upper and Lower): Indicates high volatility, potential breakout risk.
-        - Narrow (Small gap between Upper and Lower): Indicates low volatility, potential for explosive movement if bands expand.
+    - Wide (Significant gap between Upper and Lower): Indicates high volatility, potential breakout risk.
+    - Narrow (Small gap between Upper and Lower): Indicates low volatility, potential for explosive movement if bands expand.
 - Volatility (True Range):
-    - High: Higher reversal risk.
-    - Low: Consolidation with lower risk.
+    - High: Indicates increased risk of sharp movements; tighter stops recommended for both LONG and SHORT.
+    - Low: Suggests consolidation, with increased breakout potential, adjust risk management accordingly.
 """
-signal_trend_risk_prompt = f"{risk_intro}{risk_data}{trend_risk_framework}{risk_outro}"
-signal_contrarian_risk_prompt = f"{risk_intro}{risk_data}{contrarian_risk_framework}{risk_outro}"
+risk_eval = """
+[Step 3: Risk Level Evaluation]
+- NONE: No significant risk factors.
+- VERY_LOW: Minor risk factors, generally favorable.
+- LOW: Some risk factors, not significant enough to deter.
+- MODERATE: Noticeable risk factors, caution advised.
+- HIGH: Significant risk factors, high caution or avoidance advised.
+- VERY_HIGH: Major risk factors, generally unfavorable.
+"""
+signal_trend_risk_prompt = f"{risk_intro}{risk_data}{trend_risk_framework}{risk_eval}{risk_outro}"
+signal_contrarian_risk_prompt = f"{risk_intro}{risk_data}{contrarian_risk_framework}{risk_eval}{risk_outro}"
 signal_risk_pattern = r"RL:\s*(NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP:\s*([\d.]+)\s*,\s*SL:\s*([\d.]+)\s*\.*"
