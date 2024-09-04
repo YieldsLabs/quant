@@ -9,5 +9,5 @@ from .base import Pulse, PulseType
 @dataclass(frozen=True)
 class NvolPulse(Pulse):
     type: PulseType = PulseType.Nvol
-    smooth_type: Parameter = StaticParameter(Smooth.SMA)
+    smooth: Parameter = StaticParameter(Smooth.SMA)
     period: Parameter = StaticParameter(14.0)

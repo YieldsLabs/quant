@@ -9,6 +9,6 @@ from .base import Pulse, PulseType
 @dataclass(frozen=True)
 class VoPulse(Pulse):
     type: PulseType = PulseType.Vo
-    smooth_type: Parameter = CategoricalParameter(Smooth)
-    fast_period: Parameter = StaticParameter(7.0)
-    slow_period: Parameter = StaticParameter(13.0)
+    smooth: Parameter = CategoricalParameter(Smooth)
+    period_fast: Parameter = StaticParameter(7.0)
+    period_slow: Parameter = StaticParameter(13.0)

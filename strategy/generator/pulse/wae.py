@@ -11,10 +11,10 @@ from .base import Pulse, PulseType
 class WaePulse(Pulse):
     type: PulseType = PulseType.Wae
     source: Parameter = StaticParameter(SourceType.CLOSE)
-    smooth_type: Parameter = StaticParameter(Smooth.EMA)
-    fast_period: Parameter = StaticParameter(15.0)
-    slow_period: Parameter = StaticParameter(30.0)
+    smooth: Parameter = StaticParameter(Smooth.EMA)
+    period_fast: Parameter = StaticParameter(10.0)
+    period_slow: Parameter = StaticParameter(29.0)
     smooth_bb: Parameter = StaticParameter(Smooth.SMA)
-    bb_period: Parameter = StaticParameter(15.0)
-    factor: Parameter = StaticParameter(2.0)
-    strength: Parameter = StaticParameter(150.0)
+    period_bb: Parameter = StaticParameter(13.0)
+    factor: Parameter = StaticParameter(1.2)
+    strength: Parameter = StaticParameter(69.0)

@@ -7,14 +7,14 @@ use pulse::*;
 pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
     match config {
         PulseConfig::Adx {
-            smooth_type,
-            adx_period,
-            di_period,
+            smooth,
+            period,
+            period_di,
             threshold,
         } => Box::new(AdxPulse::new(
-            smooth_deserialize(smooth_type as usize),
-            adx_period,
-            di_period,
+            smooth_deserialize(smooth as usize),
+            period,
+            period_di,
             threshold,
         )),
         PulseConfig::Chop {
@@ -29,49 +29,45 @@ pub fn map_to_pulse(config: PulseConfig) -> Box<dyn Pulse> {
             threshold,
         )),
         PulseConfig::Dumb { period } => Box::new(DumbPulse::new(period)),
-        PulseConfig::Nvol {
-            smooth_type,
-            period,
-        } => Box::new(NvolPulse::new(
-            smooth_deserialize(smooth_type as usize),
-            period,
-        )),
+        PulseConfig::Nvol { smooth, period } => {
+            Box::new(NvolPulse::new(smooth_deserialize(smooth as usize), period))
+        }
         PulseConfig::Tdfi {
-            source_type,
-            smooth_type,
+            source,
+            smooth,
             period,
             n,
         } => Box::new(TdfiPulse::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
             period,
             n,
         )),
         PulseConfig::Vo {
-            smooth_type,
-            fast_period,
-            slow_period,
+            smooth,
+            period_fast,
+            period_slow,
         } => Box::new(VoPulse::new(
-            smooth_deserialize(smooth_type as usize),
-            fast_period,
-            slow_period,
+            smooth_deserialize(smooth as usize),
+            period_fast,
+            period_slow,
         )),
         PulseConfig::Wae {
             source,
-            smooth_type,
-            fast_period,
-            slow_period,
+            smooth,
+            period_fast,
+            period_slow,
             smooth_bb,
-            bb_period,
+            period_bb,
             factor,
             strength,
         } => Box::new(WaePulse::new(
             source_deserialize(source as usize),
-            smooth_deserialize(smooth_type as usize),
-            fast_period,
-            slow_period,
+            smooth_deserialize(smooth as usize),
+            period_fast,
+            period_slow,
             smooth_deserialize(smooth_bb as usize),
-            bb_period,
+            period_bb,
             factor,
             strength,
         )),

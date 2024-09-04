@@ -13,8 +13,8 @@ from .base import Exit, ExitType
 @dataclass(frozen=True)
 class RexExit(Exit):
     type: ExitType = ExitType.Rex
-    source: Parameter = StaticParameter(SourceType.CLOSE)
-    smooth: Parameter = StaticParameter(Smooth.EMA)
-    period: Parameter = StaticParameter(14.0)
-    smooth_signal: Parameter = StaticParameter(Smooth.EMA)
-    period_signal: Parameter = StaticParameter(7.0)
+    source: Parameter = StaticParameter(SourceType.HL2)
+    smooth: Parameter = StaticParameter(Smooth.LSMA)
+    period: Parameter = StaticParameter(10.0)
+    smooth_signal: Parameter = StaticParameter(Smooth.TEMA)
+    period_signal: Parameter = StaticParameter(5.0)
