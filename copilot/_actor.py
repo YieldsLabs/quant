@@ -4,13 +4,16 @@ import re
 from typing import Union
 
 import numpy as np
+from umap import UMAP
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-from sklearn.metrics import calinski_harabasz_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import calinski_harabasz_score, silhouette_score
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.utils import check_random_state
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, KernelPCA
 from sklearn.ensemble import IsolationForest
+from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import LocalOutlierFactor
 
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
@@ -166,15 +169,17 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         )
 
         bar = sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)
+        trade_type = "Contrarian" if "SUP" not in str(signal.strategy) else "Trend" 
 
         template = (
             signal_contrarian_risk_prompt
-            if "SUP" not in str(signal.strategy)
+            if trade_type == "Contrarian"
             else signal_trend_risk_prompt
         )
 
         prompt = template.format(
             side=side,
+            trade_type=trade_type,
             entry=curr_bar.close,
             horizon=self.horizon,
             timeframe=signal.timeframe,
@@ -217,7 +222,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             unknow_risk = tp > curr_bar.close and side == PositionSide.SHORT or tp < curr_bar.close and side == PositionSide.LONG
 
             if unknow_risk:
-                logger.warn(f"Risk is unknown")
+                logger.warn(f"Risk is unknown TP/SL")
+                # risk_type = SignalRiskType.UNKNOWN
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
@@ -276,14 +282,15 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             )
 
             features = StandardScaler().fit_transform(features)
-            features = PCA(
-                n_components=2
-            ).fit_transform(features)
+            n_neighbors = len(features) - 1
+            features = KernelPCA(n_components=2, kernel='rbf').fit_transform(features)
 
-            max_clusters = min(len(features) - 1, 10)
+            max_clusters = min(n_neighbors, 10)
             min_clusters = min(2, max_clusters)
-            best_score = float("-inf")
-            optimal_clusters = min_clusters
+            k_best_score = float("-inf")
+            g_best_score = float("-inf")
+            k_best_labels = None
+            g_best_labels = None
 
             for k in range(min_clusters, max_clusters + 1):
                 kmeans = CustomKMeans(n_clusters=k, random_state=None).fit(features)
@@ -292,22 +299,53 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     continue
 
                 score = calinski_harabasz_score(features, kmeans.labels_)
+                sil_score = silhouette_score(features, kmeans.labels_)
+    
+                combined_score = (score + sil_score) / 2
+    
+                if combined_score > k_best_score:
+                    k_best_score = combined_score
+                    k_best_labels = kmeans.labels_
 
-                if score > best_score:
-                    best_score = score
-                    optimal_clusters = k
+            # for k in range(min_clusters, max_clusters + 1):
+            #     gmm = GaussianMixture(n_components=k, random_state=None).fit(features)
+            #     labels = gmm.predict(features)
+                
+            #     if len(np.unique(labels)) < k:
+            #         continue
+                
+            #     score = calinski_harabasz_score(features, labels)
+            #     sil_score = silhouette_score(features, labels)
+                
+            #     combined_score = (score + sil_score) / 2
+                
+            #     if combined_score > g_best_score:
+            #         g_best_score = combined_score
+            #         g_best_labels = labels
+                        
+            k_cluster_labels = k_best_labels.reshape(-1, 1)
 
-            kmeans = CustomKMeans(n_clusters=optimal_clusters, random_state=1337).fit(
-                features
-            )
+            def create_interaction_terms(features, cluster_labels):
+                interaction_features = []
+                for feature_index in range(features.shape[1]):
+                    for cluster_index in range(cluster_labels.shape[1]):
+                        interaction_features.append(features[:, feature_index] * cluster_labels[:, cluster_index])
+                return np.column_stack(interaction_features)
+
+            interaction_features_k = create_interaction_terms(features, k_cluster_labels)
+
+            features_with_clusters = np.hstack((features, k_cluster_labels, interaction_features_k))
+
+            features_with_clusters = PCA(n_components=0.95).fit_transform(features_with_clusters)
             
-            cluster_labels = kmeans.labels_.reshape(-1, 1)
-            features_with_clusters = np.hstack((features, cluster_labels))
             iso_forest = IsolationForest(contamination=0.01, random_state=1337).fit(features_with_clusters)
             anomaly_scores = iso_forest.decision_function(features_with_clusters)
             iso_anomaly = iso_forest.predict(features_with_clusters) == -1
-            dynamic_threshold = np.percentile(anomaly_scores, 5)
 
+            lof = LocalOutlierFactor(n_neighbors=n_neighbors, contamination=0.01)
+            lof_anomaly = lof.fit_predict(features_with_clusters) == -1
+            
+            dynamic_threshold = np.percentile(anomaly_scores, 5)
             knn_transaction = "".join(map(str, kmeans.labels_))
 
             should_exit = False
@@ -315,7 +353,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             confidence_scores = {
                 'knn_transaction': 0.4 if knn_transaction in self.anomaly else 0,
                 'iso_anomaly': 0.3 if iso_anomaly[-1] else 0,
-                'anomaly_score': 0.3 if anomaly_scores[-1] < dynamic_threshold else 0,
+                'anomaly_score': 0.25 if anomaly_scores[-1] < dynamic_threshold else 0,
+                'lof_anomaly': 0.05 if lof_anomaly[-1] else 0,
             }
 
             if sum(confidence_scores.values()) > 0.5:

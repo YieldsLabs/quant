@@ -1,5 +1,5 @@
 system_prompt = """
-You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, and provide insights based on numerical information.
+You are act as an effective quantitative analysis assistant. Your job is to help interpret data, perform statistical analyses, technical analyses, forecast trend and provide insights based on numerical information.
 """
 risk_intro = """
 [Position Risk Evaluation Framework]
@@ -9,13 +9,18 @@ risk_intro = """
 - Timeframe: {timeframe}
 - Horizon: Next {horizon} Candlesticks
 - Entry Price: {entry}
+- Strategy Type: {trade_type}
 """
 risk_outro = """
 [Final Output]
-RL: [Risk Level Value:Enum], TP: [Take Profit Value:.6f], SL: [Stop Loss Value:.6f]
+- RL: [Risk Level Value]
+- TP: [Take Profit Value:.6f]
+- SL: [Stop Loss Value:.6f]
 
 [Example]
-RL: MODERATE, TP: 7.702635, SL: 7.614073
+RL: MODERATE, TP: 7.4499, SL: 8.444
+
+Return the result as raw string only.
 """
 risk_data = """
 [Input Data]
@@ -40,54 +45,54 @@ trend_risk_framework = """
 
 [Step 1: Candlestick Data Analysis]
 - Price Movement:
-    - Upward trend: Higher risk for SHORT, lower risk for LONG.
-    - Downward trend: Lower risk for SHORT, higher risk for LONG.
+    - Upward: Higher risk for SHORT, lower risk for LONG.
+    - Downward: Lower risk for SHORT, higher risk for LONG.
 - Price Range:
-    - Wide Range: Indicates high volatility, higher risk due to potential price swings.
-    - Narrow Range: Indicates low volatility, lower risk but may suggest a potential breakout.
+    - Wide: Higher risk due to potential price swings.
+    - Narrow: Lower risk but may suggest a potential breakout.
 - Real Body Normalization:
-    - High value: Strong movement, higher risk if against the position.
-    - Low value: Weak movement, lower risk if against the position.
+    - High: Strong movement, higher risk if against the position.
+    - Low: Weak movement, lower risk if against the position.
 - Body Range Ratio:
-    - High ratio: Significant body, higher risk if against the position.
-    - Low ratio: Insignificant body, lower risk if against the position.
+    - High: Higher risk if against the position.
+    - Low: Lower risk if against the position.
 - Body Shadow Ratio:
-    - High ratio: Strong pressure, higher risk if against the position.
-    - Low ratio: Weak pressure, lower risk if against the position.
+    - High: Higher risk if against the position.
+    - Low: Lower risk if against the position.
 
 [Step 2: Technical Analysis]
 - EMA:
-    - Upward trend: Lower risk for LONG, higher risk for SHORT.
-    - Downward trend: Higher risk for LONG, lower risk for SHORT.
+    - Upward: Lower risk for LONG, higher risk for SHORT.
+    - Downward: Higher risk for LONG, lower risk for SHORT.
 - MACD Histogram:
     - Positive: Bullish momentum, lower risk for LONG, higher risk for SHORT.
     - Negative: Bearish momentum, higher risk for LONG, lower risk for SHORT.
 - RSI:
     - Above 70: Overbought, higher risk for LONG.
     - Below 30: Oversold, higher risk for SHORT.
-    - Between 30-70: Neutral, moderate risk for LONG and SHORT.
+    - Between 30 and 70: Neutral, moderate risk for LONG and SHORT.
 - CCI:
     - Above 100: Overbought, higher risk for LONG.
     - Below -100: Oversold, higher risk for SHORT.
     - Between -100 and 100: Neutral, moderate risk for LONG and SHORT.
 - ROC:
-    - Positive ROC: Indicates upward momentum, lower risk for LONG, higher risk for SHORT.
-    - Negative ROC: Indicates downward momentum, higher risk for LONG, lower risk for SHORT.
+    - Positive: Lower risk for LONG, higher risk for SHORT.
+    - Negative: Higher risk for LONG, lower risk for SHORT.
 - Normalized Volume:
-    - High: Strong market sentiment, higher risk if against the position.
-    - Low: Weak market sentiment, lower risk.
+    - High: Higher risk if against the position.
+    - Low: Lower risk.
 - VWAP:
-    - LONG: Higher risk if price below VWAP, lower risk if above.
-    - SHORT: Higher risk if price above VWAP, lower risk if below.
+    - Above: Favorable for LONG, increased risk for SHORT.
+    - Below: Favorable for SHORT, increased risk for LONG.
 - Support/Resistance Levels:
-    - LONG: Higher risk near/below resistance, lower risk above support.
-    - SHORT: Higher risk near/above support, lower risk below resistance.
+    - Near Resistance: Increased risk for LONG, favorable for SHORT.
+    - Near Support: Favorable for LONG, increased risk for SHORT.
 - Bollinger Bands:
-    - Price Above Upper: Indicates overbought conditions, higher risk for LONG, potential reversal or correction.
-    - Price Below Lower: Indicates oversold conditions, higher risk for SHORT, potential reversal or bounce.
+    - Above Upper: Higher risk for LONG, potential reversal or correction.
+    - Below Lower: Higher risk for SHORT, potential reversal or bounce.
 - Volatility (True Range):
-    - High True Range: Indicates high volatility, higher risk due to potential price swings, important for stop loss placement.
-    - Low True Range: Indicates low volatility, lower risk but may suggest a potential breakout or reduced opportunity.
+    - High: Higher risk due to potential price swings, tighter stops recommended for both LONG and SHORT.
+    - Low: Suggests consolidation, with increased breakout potential, adjust risk management accordingly.
 """
 contrarian_risk_framework = """
 [Input Data Analysis]
@@ -120,8 +125,8 @@ contrarian_risk_framework = """
     - Above 70: Overbought, increased risk for LONG, favorable for SHORT.
     - Below 30: Oversold, favorable for LONG, increased risk for SHORT.
 - CCI:
-    - Above 100: Overbought, reversal likely.
-    - Below -100: Oversold, rebound likely.
+    - Above 100: Overbought, increased risk for LONG, favorable for SHORT.
+    - Below -100: Oversold, favorable for LONG, increased risk for SHORT.
 - ROC:
     - Positive: Potential exhaustion if combined with overbought signals, higher reversal risk.
     - Negative: Potential rebound if combined with oversold signals, higher rebound risk.
@@ -129,8 +134,8 @@ contrarian_risk_framework = """
     - High: Strong sentiment, potential exhaustion.
     - Low: Weak sentiment, potential reversal.
 - VWAP:
-    - Price Above: Favorable for LONG, increased risk for SHORT.
-    - Price Below: Favorable for SHORT, increased risk for LONG.
+    - Above: Favorable for LONG, increased risk for SHORT.
+    - Below: Favorable for SHORT, increased risk for LONG.
 - Support/Resistance Levels:
     - Near Resistance: Increased risk for LONG, favorable for SHORT.
     - Near Support: Favorable for LONG, increased risk for SHORT.
@@ -144,7 +149,7 @@ contrarian_risk_framework = """
     - Low: Suggests consolidation, with increased breakout potential, adjust risk management accordingly.
 """
 risk_eval = """
-[Risk Level Management]
+[Step 3: Risk Level Management]
 - NONE: No significant risk factors.
 - VERY_LOW: Minor risk factors, generally favorable.
 - LOW: Some risk factors, not significant enough to deter.
