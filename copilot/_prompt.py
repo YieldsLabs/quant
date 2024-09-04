@@ -13,7 +13,7 @@ risk_intro = """
 """
 risk_outro = """
 [Final Output]
-- RL: [Risk Level Value]
+- RL: [Risk Level Value:ENUM]
 - TP: [Take Profit Value:.6f]
 - SL: [Stop Loss Value:.6f]
 
