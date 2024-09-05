@@ -4,13 +4,13 @@ import re
 from typing import Union
 
 import numpy as np
-from umap import UMAP
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabasz_score, silhouette_score, davies_bouldin_score
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.utils import check_random_state
-from sklearn.decomposition import KernelPCA
+from sklearn.decomposition import KernelPCA, PCA
+from sklearn.svm import OneClassSVM
 from sklearn.ensemble import IsolationForest
 from sklearn.mixture import BayesianGaussianMixture
 from sklearn.neighbors import LocalOutlierFactor
@@ -250,6 +250,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             roc = np.array(ta.momentum.sroc[-LOOKBACK:])
             vwap = np.array(ta.volume.vwap[-LOOKBACK:])
             volatility = np.array(ta.volatility.yz[-LOOKBACK:])
+            tr = np.array(ta.volatility.tr[-LOOKBACK:])
 
             brr = np.array(
                 [
@@ -278,19 +279,21 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     volatility,
                     roc,
                     vwap,
+                    tr,
                 )
             )
 
             features = StandardScaler().fit_transform(features)
-            n_neighbors = len(features) - 1
+            features = MinMaxScaler(feature_range=(-1, 1)).fit_transform(features)
+
+            features = PCA(n_components=5).fit_transform(features)
             features = KernelPCA(n_components=2, kernel='rbf').fit_transform(features)
 
+            n_neighbors = len(features) - 1
             max_clusters = min(n_neighbors, 10)
             min_clusters = min(2, max_clusters)
             k_best_score = float("-inf")
-            g_best_score = float("-inf")
             k_best_labels = None
-            g_best_labels = None
 
             for k in range(min_clusters, max_clusters + 1):
                 kmeans = CustomKMeans(n_clusters=k, random_state=None).fit(features)
@@ -318,7 +321,15 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             lof = LocalOutlierFactor(n_neighbors=n_neighbors, contamination=0.01)
             lof_anomaly = lof.fit_predict(features_with_clusters) == -1
 
-            anomaly_scores = iso_forest.decision_function(features_with_clusters)
+            one_class_svm = OneClassSVM(kernel='rbf', gamma='scale', nu=0.01)
+            svm_anomaly = one_class_svm.fit_predict(features_with_clusters) == -1
+
+            iso_scores = iso_forest.decision_function(features_with_clusters)
+            lof_scores = -lof.negative_outlier_factor_
+            svm_score = one_class_svm.decision_function(features_with_clusters)
+            
+            anomaly_scores = 0.3 * iso_scores + 0.2 * lof_scores + 0.5 * svm_score
+
             bgmm = BayesianGaussianMixture(n_components=2, covariance_type='full', random_state=1337)
             bgmm.fit(anomaly_scores.reshape(-1, 1))
 
@@ -329,9 +340,10 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             confidence_scores = {
                 'knn_transaction': 0.4 if knn_transaction in self.anomaly else 0,
+                'anomaly_score': 0.2 if anomaly_scores[-1] < dynamic_threshold else 0,
                 'iso_anomaly': 0.3 if iso_anomaly[-1] else 0,
-                'anomaly_score': 0.25 if anomaly_scores[-1] < dynamic_threshold else 0,
                 'lof_anomaly': 0.05 if lof_anomaly[-1] else 0,
+                'svm_anomaly': 0.05 if svm_anomaly[-1] else 0,
             }
 
             if sum(confidence_scores.values()) > 0.5:
@@ -340,20 +352,6 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             logger.info(
                 f"SIDE: {msg.side}, "
                 f"Close: {close[-1]}, "
-                f"EMA: {ema[-1]}, "
-                f"Support: {support[-1]}, "
-                f"Resistance: {resistance[-1]}, "
-                f"MACD: {macd[-1]}, "
-                f"Body Range Ratio: {brr[-1]}, "
-                f"DMI: {dmi[-1]}, "
-                f"CCI: {cci[-1]}, "
-                f"RSI: {rsi[-1]}, "
-                f"Stoch K: {stoch_k[-1]}, "
-                f"MFI: {mfi[-1]}, "
-                f"Volatility: {volatility[-1]}, "
-                f"EBB: {ebb[-1]}, "
-                f"EKCH: {ekch[-1]}, "
-                f"KNN Transaction: {knn_transaction}, "
                 f"Exit: {should_exit}"
             )
 
