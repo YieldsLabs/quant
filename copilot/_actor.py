@@ -7,12 +7,12 @@ import numpy as np
 from umap import UMAP
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-from sklearn.metrics import calinski_harabasz_score, silhouette_score
+from sklearn.metrics import calinski_harabasz_score, silhouette_score, davies_bouldin_score
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.utils import check_random_state
-from sklearn.decomposition import PCA, KernelPCA
+from sklearn.decomposition import KernelPCA
 from sklearn.ensemble import IsolationForest
-from sklearn.mixture import GaussianMixture
+from sklearn.mixture import BayesianGaussianMixture
 from sklearn.neighbors import LocalOutlierFactor
 
 from core.actors import BaseActor
@@ -300,52 +300,29 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
                 score = calinski_harabasz_score(features, kmeans.labels_)
                 sil_score = silhouette_score(features, kmeans.labels_)
-    
-                combined_score = (score + sil_score) / 2
+                db_score = davies_bouldin_score(features, kmeans.labels_)
+
+                combined_score = (score + sil_score - db_score) / 3
     
                 if combined_score > k_best_score:
                     k_best_score = combined_score
                     k_best_labels = kmeans.labels_
-
-            # for k in range(min_clusters, max_clusters + 1):
-            #     gmm = GaussianMixture(n_components=k, random_state=None).fit(features)
-            #     labels = gmm.predict(features)
-                
-            #     if len(np.unique(labels)) < k:
-            #         continue
-                
-            #     score = calinski_harabasz_score(features, labels)
-            #     sil_score = silhouette_score(features, labels)
-                
-            #     combined_score = (score + sil_score) / 2
-                
-            #     if combined_score > g_best_score:
-            #         g_best_score = combined_score
-            #         g_best_labels = labels
-                        
+   
             k_cluster_labels = k_best_labels.reshape(-1, 1)
 
-            def create_interaction_terms(features, cluster_labels):
-                interaction_features = []
-                for feature_index in range(features.shape[1]):
-                    for cluster_index in range(cluster_labels.shape[1]):
-                        interaction_features.append(features[:, feature_index] * cluster_labels[:, cluster_index])
-                return np.column_stack(interaction_features)
+            features_with_clusters = np.hstack((features, k_cluster_labels))
 
-            interaction_features_k = create_interaction_terms(features, k_cluster_labels)
-
-            features_with_clusters = np.hstack((features, k_cluster_labels, interaction_features_k))
-
-            features_with_clusters = PCA(n_components=0.95).fit_transform(features_with_clusters)
-            
             iso_forest = IsolationForest(contamination=0.01, random_state=1337).fit(features_with_clusters)
-            anomaly_scores = iso_forest.decision_function(features_with_clusters)
             iso_anomaly = iso_forest.predict(features_with_clusters) == -1
 
             lof = LocalOutlierFactor(n_neighbors=n_neighbors, contamination=0.01)
             lof_anomaly = lof.fit_predict(features_with_clusters) == -1
-            
-            dynamic_threshold = np.percentile(anomaly_scores, 5)
+
+            anomaly_scores = iso_forest.decision_function(features_with_clusters)
+            bgmm = BayesianGaussianMixture(n_components=2, covariance_type='full', random_state=1337)
+            bgmm.fit(anomaly_scores.reshape(-1, 1))
+
+            dynamic_threshold = np.percentile(bgmm.means_, 5)
             knn_transaction = "".join(map(str, kmeans.labels_))
 
             should_exit = False
