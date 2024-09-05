@@ -30,14 +30,14 @@ impl BaseLine for MaBaseLine {
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.source, self.period);
-        let prev_ma = ma.shift(1);
+        let close = data.close();
 
-        let dist = (&ma - data.close()).abs();
+        let dist = (&ma - close).abs();
         let atr = data.atr(DEFAULT_ATR_SMOOTH, DEFAULT_ATR_LOOKBACK) * DEFAULT_ATR_FACTOR;
 
         (
-            ma.sgt(&prev_ma) & dist.slt(&atr),
-            ma.slt(&prev_ma) & dist.slt(&atr),
+            close.sgt(&ma) & dist.slt(&atr),
+            close.slt(&ma) & dist.slt(&atr),
         )
     }
 
