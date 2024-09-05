@@ -249,6 +249,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             mfi = np.array(ta.volume.mfi[-LOOKBACK:])
             roc = np.array(ta.momentum.sroc[-LOOKBACK:])
             vwap = np.array(ta.volume.vwap[-LOOKBACK:])
+            nvol = np.array(ta.volume.nvol[-LOOKBACK:])
             volatility = np.array(ta.volatility.yz[-LOOKBACK:])
             tr = np.array(ta.volatility.tr[-LOOKBACK:])
 
@@ -280,6 +281,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     roc,
                     vwap,
                     tr,
+                    nvol,
                 )
             )
 
