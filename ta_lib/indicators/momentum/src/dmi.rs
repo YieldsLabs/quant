@@ -1,13 +1,13 @@
 use core::prelude::*;
 
 pub fn dmi(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    atr: &Series<f32>,
-    smooth_type: Smooth,
-    adx_period: usize,
-    di_period: usize,
-) -> (Series<f32>, Series<f32>, Series<f32>) {
+    high: &Price,
+    low: &Price,
+    atr: &Price,
+    smooth: Smooth,
+    period_adx: Period,
+    period_di: Period,
+) -> (Price, Price, Price) {
     let len = high.len();
     let up = high.change(1);
     let down = low.change(1).negate();
@@ -18,16 +18,16 @@ pub fn dmi(
     let dm_plus = iff!(up.sgt(&down) & up.sgt(&ZERO), up, zero);
     let dm_minus = iff!(down.sgt(&up) & down.sgt(&ZERO), down, zero);
 
-    let di_plus = SCALE * dm_plus.smooth(smooth_type, di_period) / atr;
-    let di_minus = SCALE * dm_minus.smooth(smooth_type, di_period) / atr;
+    let di_plus = SCALE * dm_plus.smooth(smooth, period_di) / atr;
+    let di_minus = SCALE * dm_minus.smooth(smooth, period_di) / atr;
 
     let sum = &di_plus + &di_minus;
 
     let adx = SCALE
         * ((&di_plus - &di_minus).abs() / iff!(sum.seq(&ZERO), one, sum))
-            .smooth(smooth_type, adx_period);
+            .smooth(smooth, period_adx);
 
-    (adx, di_plus, di_minus)
+    (di_plus, di_minus, adx)
 }
 
 #[cfg(test)]
@@ -74,12 +74,12 @@ mod tests {
             38.785717, 57.523396, 68.031395, 42.329178, 33.812767, 37.56404, 50.37606, 26.629393,
         ];
 
-        let (result_adx, result_di_plus, result_di_minus) =
+        let (result_di_plus, result_di_minus, result_adx) =
             dmi(&high, &low, &atr, Smooth::SMMA, adx_period, di_period);
 
-        let adx: Vec<f32> = result_adx.into();
-        let di_plus: Vec<f32> = result_di_plus.into();
-        let di_minus: Vec<f32> = result_di_minus.into();
+        let adx: Vec<Scalar> = result_adx.into();
+        let di_plus: Vec<Scalar> = result_di_plus.into();
+        let di_minus: Vec<Scalar> = result_di_minus.into();
 
         assert_eq!(adx, expected_adx);
         assert_eq!(di_plus, expected_di_plus);

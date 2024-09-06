@@ -1,4 +1,4 @@
-use indicator::CandleTrendType;
+use indicator::{CandleReversalType, CandleTrendType};
 
 #[inline]
 pub fn candletrend_deserialize(candle: usize) -> CandleTrendType {
@@ -18,5 +18,22 @@ pub fn candletrend_deserialize(candle: usize) -> CandleTrendType {
         13 => CandleTrendType::TASUKI,
         14 => CandleTrendType::THREE_ONE_TWO,
         _ => CandleTrendType::THREE_CANDLES,
+    }
+}
+
+#[inline]
+pub fn candlereversal_deserialize(candle: usize) -> CandleReversalType {
+    match candle {
+        1 => CandleReversalType::DOJI,
+        2 => CandleReversalType::ENGULFING,
+        3 => CandleReversalType::EUPHORIA,
+        4 => CandleReversalType::HAMMER,
+        5 => CandleReversalType::HARAMIF,
+        6 => CandleReversalType::HARAMIS,
+        7 => CandleReversalType::KANGAROO,
+        8 => CandleReversalType::R,
+        9 => CandleReversalType::SPLIT,
+        10 => CandleReversalType::TWEEZERS,
+        _ => CandleReversalType::R,
     }
 }

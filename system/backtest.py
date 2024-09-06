@@ -116,28 +116,8 @@ class BacktestSystem(AbstractSystem):
 
         futures_symbols = await self.query(GetSymbols())
 
-        scalp = [
-            # "LUNA2USDT",
-            # "ALGOUSDT",
-            # "WAVESUSDT",
-            # "NEARUSDT",
-            "SOLUSDT",
-            # "FILUSDT"
-            # "TONUSDT"
-            # "ATOMUSDT",
-            # "SCUSDT"
-            # "FTMUSDT",
-            # "BOMEUSDT"
-            # "APEUSDT"
-            # "BTCUSDT"
-            # "ADAUSDT"
-        ]
+        generator = self.context.strategy_generator_factory.create(futures_symbols)
 
-        futures_symbols = [symbol for symbol in futures_symbols if symbol.name in scalp]
-
-        generator = self.context.strategy_generator_factory.create(
-            self.context.strategy_type, futures_symbols
-        )
         self.optimizer = self.context.strategy_optimizer_factory.create(
             Optimizer.GENETIC,
             generator,

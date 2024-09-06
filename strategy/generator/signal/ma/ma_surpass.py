@@ -12,4 +12,4 @@ class MaSurpassSignal(Signal):
     type: SignalType = SignalType.MaSurpass
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = RandomParameter(150.0, 200.0, 10.0)
+    period: Parameter = RandomParameter(10.0, 60.0, 5.0)

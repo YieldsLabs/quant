@@ -1,45 +1,38 @@
 use core::prelude::*;
 
-pub fn supertrend(
-    source: &Series<f32>,
-    close: &Series<f32>,
-    atr: &Series<f32>,
-    factor: f32,
-) -> (Series<f32>, Series<f32>) {
+pub fn supertrend(source: &Price, close: &Price, atr: &Price, factor: Scalar) -> (Price, Price) {
     let len = source.len();
 
     let atr_mul = atr * factor;
 
-    let basic_up = source - &atr_mul;
-    let mut up = Series::empty(len);
-
-    let basic_dn = source + &atr_mul;
-    let mut dn = Series::empty(len);
+    let mut up = source - &atr_mul;
+    let mut dn = source + &atr_mul;
 
     let prev_close = close.shift(1);
-    let mut direction = Series::empty(len);
+    let mut direction = Series::one(len);
 
     let trend_bull = Series::one(len);
     let trend_bear = trend_bull.negate();
 
     for _ in 0..len {
-        let prev_up = up.shift(1);
-        up = iff!(prev_close.sgt(&prev_up), basic_up.max(&prev_up), basic_up);
+        let prev_up = nz!(up.shift(1), up);
+        up = iff!(prev_close.sgt(&prev_up), up.max(&prev_up), up);
 
-        let prev_dn = dn.shift(1);
-        dn = iff!(prev_close.slt(&prev_dn), basic_dn.min(&prev_dn), basic_dn);
+        let prev_dn = nz!(dn.shift(1), dn);
+        dn = iff!(prev_close.slt(&prev_dn), dn.min(&prev_dn), dn);
 
         direction = nz!(direction.shift(1), direction);
-        direction = iff!(close.sgte(&prev_dn), trend_bull, direction);
-        direction = iff!(close.slt(&prev_up), trend_bear, direction);
+        direction = iff!(
+            direction.seq(&MINUS_ONE) & close.sgt(&prev_dn),
+            trend_bull,
+            direction
+        );
+        direction = iff!(
+            direction.seq(&ONE) & close.slt(&prev_up),
+            trend_bear,
+            direction
+        );
     }
-
-    let first_non_empty = direction
-        .iter()
-        .find(|&&el| el.is_some())
-        .map(|&el| -el.unwrap());
-
-    direction = direction.nz(first_non_empty);
 
     let trend = iff!(direction.seq(&ONE), up, dn);
 
@@ -82,8 +75,8 @@ mod tests {
         ];
 
         let (direction, supertrend) = supertrend(&hl2, &close, &atr, factor);
-        let result_direction: Vec<f32> = direction.into();
-        let result_supertrend: Vec<f32> = supertrend.into();
+        let result_direction: Vec<Scalar> = direction.into();
+        let result_supertrend: Vec<Scalar> = supertrend.into();
 
         assert_eq!(high.len(), low.len());
         assert_eq!(high.len(), close.len());
@@ -114,16 +107,16 @@ mod tests {
 
         let factor = 3.0;
         let expected_supertrend = vec![
-            6.223499, 6.207499, 6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326,
-            6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326,
-            6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.2073326, 6.1522994, 6.1522994,
+            6.073501, 6.077501, 6.0926676, 6.107279, 6.1168528, 6.122902, 6.122902, 6.1263456,
+            6.1263456, 6.1263456, 6.131306, 6.131306, 6.133747, 6.133747, 6.133747, 6.133747,
+            6.133747, 6.133747, 6.134674, 6.134674, 6.134674, 6.1417, 6.1522994, 6.1522994,
             6.1522994, 6.1522994, 6.1522994, 6.1522994, 6.1522994, 6.1522994, 6.1522994, 6.1522994,
             6.1522994, 6.1580467, 6.1580467, 6.1580467,
         ];
         let expected_direction = vec![
-            -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-            -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0,
         ];
 
         let (direction, supertrend) = supertrend(&hl2, &close, &atr, factor);

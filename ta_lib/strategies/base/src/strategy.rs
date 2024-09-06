@@ -1,28 +1,28 @@
 use crate::source::{Source, SourceType};
-use crate::{BaseLine, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy, OHLCV};
-use std::collections::VecDeque;
+use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
+use core::prelude::*;
+use timeseries::prelude::*;
 
-const DEFAULT_LOOKBACK: usize = 55;
-const DEFAULT_STOP_LEVEL: f32 = -1.0;
-const DEFAULT_BUFF_SIZE: f32 = 1.236;
+const DEFAULT_LOOKBACK: Period = 16;
+const DEFAULT_STOP_LEVEL: Scalar = -1.0;
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {
-    GoLong(f32),
-    GoShort(f32),
-    ExitLong(f32),
-    ExitShort(f32),
+    GoLong(Scalar),
+    GoShort(Scalar),
+    ExitLong(Scalar),
+    ExitShort(Scalar),
     DoNothing,
 }
 
 #[derive(Debug)]
 pub struct StopLossLevels {
-    pub long: f32,
-    pub short: f32,
+    pub long: Scalar,
+    pub short: Scalar,
 }
 
 pub struct BaseStrategy {
-    data: VecDeque<OHLCV>,
+    timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
     confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
@@ -34,6 +34,7 @@ pub struct BaseStrategy {
 
 impl BaseStrategy {
     pub fn new(
+        timeseries: Box<dyn TimeSeries>,
         signal: Box<dyn Signal>,
         confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
@@ -53,7 +54,7 @@ impl BaseStrategy {
         let lookback_period = lookbacks.into_iter().max().unwrap_or(DEFAULT_LOOKBACK);
 
         Self {
-            data: VecDeque::with_capacity(lookback_period),
+            timeseries,
             signal,
             confirm,
             pulse,
@@ -64,47 +65,43 @@ impl BaseStrategy {
         }
     }
 
-    fn store(&mut self, data: OHLCV) {
-        let buf_size = (self.lookback_period as f32 * DEFAULT_BUFF_SIZE) as usize;
-
-        if self.data.len() > buf_size {
-            self.data.pop_front();
-        }
-
-        self.data.push_back(data);
+    fn store(&mut self, bar: &OHLCV) {
+        self.timeseries.add(bar)
     }
 
     #[inline(always)]
     fn can_process(&self) -> bool {
-        self.data.len() >= self.lookback_period
+        self.timeseries.len() >= self.lookback_period
     }
 
-    #[inline(always)]
-    fn ohlcv_series(&self) -> OHLCVSeries {
-        OHLCVSeries::from_data(&self.data)
+    fn ohlcv(&self) -> OHLCVSeries {
+        self.timeseries.ohlcv(self.lookback_period)
     }
 }
 
 impl Strategy for BaseStrategy {
-    fn next(&mut self, data: OHLCV) -> TradeAction {
-        self.store(data);
+    fn next(&mut self, bar: &OHLCV) -> TradeAction {
+        self.store(bar);
 
         if !self.can_process() {
             return TradeAction::DoNothing;
         }
 
-        let theo_price = self.suggested_entry();
+        let ohlcv = self.ohlcv();
 
-        match self.trade_signals() {
-            (true, false, false, false) => TradeAction::GoLong(theo_price),
-            (false, true, false, false) => TradeAction::GoShort(theo_price),
-            (false, false, true, false) => TradeAction::ExitLong(theo_price),
-            (false, false, false, true) => TradeAction::ExitShort(theo_price),
+        let bar_index = ohlcv.bar_index(bar);
+        let theo_price = self.suggested_entry(&ohlcv, bar_index);
+
+        match self.trade_signals(&ohlcv, bar_index) {
+            (true, _, _, _) => TradeAction::GoLong(theo_price),
+            (_, true, _, _) => TradeAction::GoShort(theo_price),
+            (_, _, true, _) => TradeAction::ExitLong(theo_price),
+            (_, _, _, true) => TradeAction::ExitShort(theo_price),
             _ => TradeAction::DoNothing,
         }
     }
 
-    fn stop_loss(&self) -> StopLossLevels {
+    fn stop_loss(&self, bar: &OHLCV) -> StopLossLevels {
         if !self.can_process() {
             return StopLossLevels {
                 long: DEFAULT_STOP_LEVEL,
@@ -112,7 +109,9 @@ impl Strategy for BaseStrategy {
             };
         }
 
-        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels();
+        let ohlcv = self.ohlcv();
+        let bar_index = ohlcv.bar_index(bar);
+        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&ohlcv, bar_index);
 
         StopLossLevels {
             long: stop_loss_long,
@@ -122,47 +121,47 @@ impl Strategy for BaseStrategy {
 }
 
 impl BaseStrategy {
-    fn trade_signals(&self) -> (bool, bool, bool, bool) {
-        let series = self.ohlcv_series();
+    fn trade_signals(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (bool, bool, bool, bool) {
+        let (signal_go_long, signal_go_short) = self.signal.trigger(ohlcv);
 
-        let (go_long_trigger, go_short_trigger) = self.signal.generate(&series);
-        let (go_long_baseline, go_short_baseline) = self.base_line.generate(&series);
-        let (go_long_confirm, go_short_confirm) = self.confirm.validate(&series);
-        let (go_long_momentum, go_short_momentum) = self.pulse.assess(&series);
-        let (filter_long_baseline, filter_short_baseline) = self.base_line.filter(&series);
-        let (exit_long_eval, exit_short_eval) = self.exit.evaluate(&series);
+        let (baseline_confirm_long, baseline_confirm_short) = self.base_line.filter(ohlcv);
+        let (primary_confirm_long, primary_confirm_short) = self.confirm.filter(ohlcv);
+        let (pulse_confirm_long, pulse_confirm_short) = self.pulse.assess(ohlcv);
 
-        let go_long_signal = go_long_trigger | go_long_baseline;
-        let go_short_signal = go_short_trigger | go_short_baseline;
+        let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);
+        let (baseline_close_long, baseline_close_short) = self.base_line.close(ohlcv);
 
-        let go_long = (go_long_signal & filter_long_baseline & go_long_confirm & go_long_momentum)
-            .last()
+        let confirm_long = primary_confirm_long & pulse_confirm_long;
+        let confirm_short = primary_confirm_short & pulse_confirm_short;
+
+        let base_go_long = signal_go_long & baseline_confirm_long & confirm_long;
+        let base_go_short = signal_go_short & baseline_confirm_short & confirm_short;
+
+        let go_long = base_go_long.get(bar_index).unwrap_or(false);
+        let go_short = base_go_short.get(bar_index).unwrap_or(false);
+
+        let exit_long = (exit_close_long | baseline_close_long)
+            .get(bar_index)
             .unwrap_or(false);
-        let go_short =
-            (go_short_signal & filter_short_baseline & go_short_confirm & go_short_momentum)
-                .last()
-                .unwrap_or(false);
-
-        let exit_long = exit_long_eval.last().unwrap_or(false);
-        let exit_short = exit_short_eval.last().unwrap_or(false);
+        let exit_short = (exit_close_short | baseline_close_short)
+            .get(bar_index)
+            .unwrap_or(false);
 
         (go_long, go_short, exit_long, exit_short)
     }
 
-    fn suggested_entry(&self) -> f32 {
-        self.ohlcv_series()
-            .source(SourceType::OHLC4)
-            .last()
-            .unwrap_or(std::f32::NAN)
+    fn suggested_entry(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> Scalar {
+        ohlcv
+            .source(SourceType::CLOSE)
+            .get(bar_index)
+            .unwrap_or(NAN)
     }
 
-    fn stop_loss_levels(&self) -> (f32, f32) {
-        let series = self.ohlcv_series();
+    fn stop_loss_levels(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (Scalar, Scalar) {
+        let (sl_long_find, sl_short_find) = self.stop_loss.find(ohlcv);
 
-        let (sl_long_find, sl_short_find) = self.stop_loss.find(&series);
-
-        let stop_loss_long = sl_long_find.last().unwrap_or(std::f32::NAN);
-        let stop_loss_short = sl_short_find.last().unwrap_or(std::f32::NAN);
+        let stop_loss_long = sl_long_find.get(bar_index).unwrap_or(NAN);
+        let stop_loss_short = sl_short_find.get(bar_index).unwrap_or(NAN);
 
         (stop_loss_long, stop_loss_short)
     }
@@ -170,15 +169,9 @@ impl BaseStrategy {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::{Source, SourceType};
-    use crate::{
-        BaseLine, BaseStrategy, Confirm, Exit, OHLCVSeries, Pulse, Signal, StopLoss, Strategy,
-        TradeAction, OHLCV,
-    };
+    use crate::{BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss};
     use core::Series;
-
-    const DEFAULT_BUFF_SIZE: f32 = 1.3;
-    const DEFAULT_LOOKBACK: usize = 55;
+    use timeseries::{BaseTimeSeries, OHLCVSeries};
 
     struct MockSignal {
         fast_period: usize,
@@ -189,7 +182,7 @@ mod tests {
             self.fast_period
         }
 
-        fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
@@ -204,7 +197,7 @@ mod tests {
             self.period
         }
 
-        fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
@@ -234,14 +227,14 @@ mod tests {
             self.period
         }
 
-        fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
 
-        fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
-            (Series::one(len).into(), Series::zero(len).into())
+            (Series::zero(len).into(), Series::one(len).into())
         }
     }
 
@@ -271,7 +264,7 @@ mod tests {
             0
         }
 
-        fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
             let len = data.len();
             (Series::one(len).into(), Series::zero(len).into())
         }
@@ -280,6 +273,7 @@ mod tests {
     #[test]
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
+            Box::<BaseTimeSeries>::default(),
             Box::new(MockSignal { fast_period: 10 }),
             Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
@@ -290,50 +284,6 @@ mod tests {
             }),
             Box::new(MockExit {}),
         );
-        assert_eq!(strategy.lookback_period, 55);
-    }
-
-    #[test]
-    fn test_strategy_data() {
-        let mut strategy = BaseStrategy::new(
-            Box::new(MockSignal { fast_period: 10 }),
-            Box::new(MockConfirm { period: 1 }),
-            Box::new(MockPulse { period: 7 }),
-            Box::new(MockBaseLine { period: 15 }),
-            Box::new(MockStopLoss {
-                period: 2,
-                multi: 2.0,
-            }),
-            Box::new(MockExit {}),
-        );
-        let lookback = (DEFAULT_BUFF_SIZE * DEFAULT_LOOKBACK as f32) as usize;
-        let data = OHLCV {
-            ts: 1710297600000,
-            open: 1.0,
-            high: 2.0,
-            low: 0.5,
-            close: 1.5,
-            volume: 100.0,
-        };
-        let ohlcvs = vec![data; lookback];
-
-        let mut action = TradeAction::DoNothing;
-
-        for ohlcv in ohlcvs {
-            action = strategy.next(ohlcv);
-        }
-
-        let series = OHLCVSeries::from_data(&strategy.data);
-
-        let hl2: Vec<f32> = series.source(SourceType::HL2).into();
-        let hlc3: Vec<f32> = series.source(SourceType::HLC3).into();
-        let hlcc4: Vec<f32> = series.source(SourceType::HLCC4).into();
-        let ohlc4: Vec<f32> = series.source(SourceType::OHLC4).into();
-
-        assert_eq!(hl2, vec![1.25]);
-        assert_eq!(hlc3, vec![1.333_333_4]);
-        assert_eq!(hlcc4, vec![1.375]);
-        assert_eq!(ohlc4, vec![1.25]);
-        assert_eq!(action, TradeAction::DoNothing);
+        assert_eq!(strategy.lookback_period, 16);
     }
 }

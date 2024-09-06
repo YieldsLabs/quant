@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
+use timeseries::prelude::*;
 
 pub struct MaExit {
     source_type: SourceType,
@@ -23,7 +24,7 @@ impl Exit for MaExit {
         self.period
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
 
         (data.close().cross_under(&ma), data.close().cross_over(&ma))

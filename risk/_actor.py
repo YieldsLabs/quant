@@ -1,15 +1,19 @@
 import asyncio
-from collections import deque
-from typing import List, Optional, Union
+import logging
+import random
+from typing import Optional, Union
 
-from core.actors import Actor
+import numpy as np
+
+from core.actors import StrategyActor
+from core.events.base import EventMeta
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     PositionAdjusted,
     PositionClosed,
     PositionOpened,
 )
-from core.events.risk import RiskAdjustRequested, RiskThresholdBreached, RiskType
+from core.events.risk import RiskThresholdBreached
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -17,29 +21,51 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.interfaces.abstract_config import AbstractConfig
+from core.mixins import EventHandlerMixin
 from core.models.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.copilot import EvaluateSession
+from core.queries.ohlcv import TA, NextBar, PrevBar
+
+TrailEvent = Union[
+    GoLongSignalReceived,
+    GoShortSignalReceived,
+    ExitLongSignalReceived,
+    ExitShortSignalReceived,
+]
 
 RiskEvent = Union[
     NewMarketDataReceived,
     PositionOpened,
     PositionAdjusted,
     PositionClosed,
-    ExitLongSignalReceived,
-    ExitShortSignalReceived,
-    GoLongSignalReceived,
-    GoShortSignalReceived,
+    TrailEvent,
 ]
 
+MAX_ATTEMPTS = 16
+DEFAULT_MAX_BARS = 16
+MAX_CONSECUTIVE_ANOMALIES = 3
+DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
+DEFAULT_ANOMALY_THRESHOLD = 6.0
 
-class RiskActor(Actor):
+
+def _ema(values, alpha=0.1):
+    ema = [values[0]]
+    for value in values[1:]:
+        ema.append(ema[-1] * (1 - alpha) + value * alpha)
+    return np.array(ema)
+
+
+logger = logging.getLogger(__name__)
+
+
+class RiskActor(StrategyActor, EventHandlerMixin):
     _EVENTS = [
         NewMarketDataReceived,
         PositionOpened,
-        PositionAdjusted,
         PositionClosed,
         ExitLongSignalReceived,
         ExitShortSignalReceived,
@@ -48,350 +74,177 @@ class RiskActor(Actor):
     ]
 
     def __init__(
-        self,
-        symbol: Symbol,
-        timeframe: Timeframe,
-        config_service: AbstractConfig,
+        self, symbol: Symbol, timeframe: Timeframe, config_service: AbstractConfig
     ):
         super().__init__(symbol, timeframe)
-        self.lock = asyncio.Lock()
+        EventHandlerMixin.__init__(self)
+        self._register_event_handlers()
+        self._lock = asyncio.Lock()
         self._position = (None, None)
-        self._ohlcv = deque(maxlen=120)
         self.config = config_service.get("position")
-
-    def pre_receive(self, event: RiskEvent):
-        symbol, timeframe = self._get_event_key(event)
-        return self._symbol == symbol and self._timeframe == timeframe
+        self.max_bars = DEFAULT_MAX_BARS
+        self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
+        self.consc_anomaly_counter = 1
 
     async def on_receive(self, event: RiskEvent):
-        handlers = {
-            NewMarketDataReceived: self._handle_market_risk,
-            PositionOpened: self._open_position,
-            PositionClosed: self._close_position,
-            PositionAdjusted: self._adjust_position,
-            GoLongSignalReceived: [self._handle_reverse, self._handle_scale_in],
-            GoShortSignalReceived: [self._handle_reverse, self._handle_scale_in],
-            ExitLongSignalReceived: self._handle_signal_exit,
-            ExitShortSignalReceived: self._handle_signal_exit,
-        }
+        return await self.handle_event(event)
 
-        handler = handlers.get(type(event))
-
-        if handler:
-            if isinstance(handler, list):
-                for h in handler:
-                    await h(event)
-            else:
-                await handler(event)
+    def _register_event_handlers(self):
+        self.register_handler(NewMarketDataReceived, self._handle_position_risk)
+        self.register_handler(PositionOpened, self._open_position)
+        self.register_handler(PositionClosed, self._close_position)
+        self.register_handler(ExitLongSignalReceived, self._trail_position)
+        self.register_handler(ExitShortSignalReceived, self._trail_position)
+        self.register_handler(GoLongSignalReceived, self._trail_position)
+        self.register_handler(GoShortSignalReceived, self._trail_position)
 
     async def _open_position(self, event: PositionOpened):
-        async with self.lock:
-            long_position, short_position = self._position
-
-            self._position = (
-                event.position
-                if event.position.side == PositionSide.LONG
-                else long_position,
-                event.position
-                if event.position.side == PositionSide.SHORT
-                else short_position,
-            )
-
-    async def _adjust_position(self, event: PositionAdjusted):
-        async with self.lock:
-            long_position, short_position = self._position
-
-            self._position = (
-                event.position
-                if event.position.side == PositionSide.LONG
-                else long_position,
-                event.position
-                if event.position.side == PositionSide.SHORT
-                else short_position,
-            )
+        async with self._lock:
+            match event.position.side:
+                case PositionSide.LONG:
+                    self._position = (event.position, self._position[1])
+                case PositionSide.SHORT:
+                    self._position = (self._position[0], event.position)
 
     async def _close_position(self, event: PositionClosed):
-        async with self.lock:
-            long_position, short_position = self._position
+        async with self._lock:
+            match event.position.side:
+                case PositionSide.LONG:
+                    self._position = (None, self._position[1])
+                case PositionSide.SHORT:
+                    self._position = (self._position[0], None)
 
-            self._position = (
-                None if event.position.side == PositionSide.LONG else long_position,
-                None if event.position.side == PositionSide.SHORT else short_position,
-            )
+    async def _handle_position_risk(self, event: NewMarketDataReceived):
+        async with self._lock:
+            processed_positions = list(self._position)
+            num_positions = len(self._position)
 
-    async def _handle_market_risk(self, event: NewMarketDataReceived):
-        async with self.lock:
-            self._ohlcv.append(event.ohlcv)
-            visited = set()
-            ohlcvs = []
+            indexes = list(range(num_positions))
+            random.shuffle(indexes)
 
-            for i in range(len(self._ohlcv)):
-                if self._ohlcv[i].timestamp not in visited:
-                    ohlcvs.append(self._ohlcv[i])
-                    visited.add(self._ohlcv[i].timestamp)
+            current_index = 0
 
-            ohlcvs = sorted(ohlcvs, key=lambda x: x.timestamp)
-
-            long_position, short_position = self._position
-
-            if long_position or short_position:
-                long_position, short_position = await asyncio.gather(
-                    *[
-                        self._process_position(long_position, ohlcvs),
-                        self._process_position(short_position, ohlcvs),
-                    ]
+            for _ in range(num_positions):
+                shuffled_index = indexes[current_index]
+                processed_positions[shuffled_index] = await self._process_market(
+                    event, self._position[shuffled_index]
                 )
 
-                self._position = (long_position, short_position)
+                current_index = (current_index + 1) % num_positions
 
-    async def _handle_reverse(
-        self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
-    ):
-        async with self.lock:
+            self._position = tuple(processed_positions)
+
+    async def _trail_position(self, event: TrailEvent):
+        async with self._lock:
+
+            async def handle_trail(position: Position, risk_bar: OHLCV):
+                logger.info("Trail event")
+
+                ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
+                return position.trail(ta)
+
+            async def process_trail(position: Position, event_meta: EventMeta):
+                if (
+                    position
+                    and not position.has_risk
+                    and position.last_modified < event_meta.timestamp
+                ):
+                    return await handle_trail(position, position.risk_bar)
+                return position
+
             long_position, short_position = self._position
 
-            if (
-                isinstance(event, GoShortSignalReceived)
-                and long_position
-                and not short_position
-            ):
-                await self._process_reverse_exit(long_position, event.entry_price)
-            if (
-                isinstance(event, GoLongSignalReceived)
-                and short_position
-                and not long_position
-            ):
-                await self._process_reverse_exit(short_position, event.entry_price)
+            if isinstance(event, (ExitLongSignalReceived, GoShortSignalReceived)):
+                long_position = await process_trail(long_position, event.meta)
 
-    async def _handle_scale_in(
-        self, event: Union[GoLongSignalReceived, GoShortSignalReceived]
-    ):
-        async with self.lock:
-            long_position, short_position = self._position
+            elif isinstance(event, (ExitShortSignalReceived, GoLongSignalReceived)):
+                short_position = await process_trail(short_position, event.meta)
 
-            if (
-                isinstance(event, GoLongSignalReceived)
-                and long_position
-                and long_position.adj_count < self.config["max_scale_in"]
-                and long_position.entry_price < event.entry_price
-            ):
-                await self.tell(RiskAdjustRequested(long_position, event.entry_price))
-            if (
-                isinstance(event, GoShortSignalReceived)
-                and short_position
-                and short_position.adj_count < self.config["max_scale_in"]
-                and short_position.entry_price > event.entry_price
-            ):
-                await self.tell(RiskAdjustRequested(short_position, event.entry_price))
+            self._position = (long_position, short_position)
 
-    async def _handle_signal_exit(
-        self, event: Union[ExitLongSignalReceived, ExitShortSignalReceived]
-    ):
-        async with self.lock:
-            long_position, short_position = self._position
-
-            if isinstance(event, ExitLongSignalReceived) and long_position:
-                await self._process_signal_exit(
-                    long_position,
-                    event.exit_price,
-                )
-            if isinstance(event, ExitShortSignalReceived) and short_position:
-                await self._process_signal_exit(
-                    short_position,
-                    event.exit_price,
-                )
-
-    async def _process_position(
-        self, position: Optional[Position], ohlcvs: List[OHLCV]
+    async def _process_market(
+        self, event: NewMarketDataReceived, position: Optional[Position]
     ):
         next_position = position
 
-        if position and len(ohlcvs) > 1:
-            next_position = position.next(ohlcvs)
-            exit_event = self._create_exit_event(next_position, ohlcvs[-1])
+        if position and not position.has_risk:
+            prev_bar = next_position.risk_bar
+            next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
 
-            if exit_event:
-                await self.tell(exit_event)
+            if not next_bar:
+                next_bar = event.ohlcv
+
+            diff = event.ohlcv.timestamp - next_bar.timestamp
+            attempts = 0
+
+            while diff < 0 and attempts < MAX_ATTEMPTS:
+                new_prev_bar = await self.ask(
+                    PrevBar(self.symbol, self.timeframe, prev_bar)
+                )
+                attempts += 1
+
+                if new_prev_bar:
+                    diff = event.ohlcv.timestamp - new_prev_bar.timestamp
+                    prev_bar = new_prev_bar
+
+            bars = [next_bar]
+
+            if diff > 0:
+                for _ in range(int(self.max_bars)):
+                    next_bar = await self.ask(
+                        NextBar(self.symbol, self.timeframe, prev_bar)
+                    )
+
+                    if not next_bar:
+                        break
+
+                    bars.append(next_bar)
+                    prev_bar = next_bar
+
+            for bar in sorted(bars, key=lambda x: x.timestamp):
+                ohlcv = next_position.position_risk.ohlcv
+                ts = np.array([o.timestamp for o in ohlcv])
+
+                if len(ts) > 2:
+                    ts_diff = _ema(np.diff(ts))
+                    mean, std = np.mean(ts_diff), max(
+                        np.std(ts_diff), np.finfo(float).eps
+                    )
+
+                    current_diff = abs(bar.timestamp - ts[-1])
+                    anomaly = (current_diff - mean) / std
+                    anomaly = np.clip(
+                        anomaly,
+                        -9.0 * DEFAULT_ANOMALY_THRESHOLD,
+                        9.0 * DEFAULT_ANOMALY_THRESHOLD,
+                    )
+
+                    if abs(anomaly) > self.anomaly_threshold:
+                        self.consc_anomaly_counter += 1
+
+                        if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
+                            logger.warn(
+                                "Too many consecutive anomalies, increasing threshold temporarily"
+                            )
+                            self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
+                            self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
+                            self.consc_anomaly_counter = 1
+                        await asyncio.sleep(0.00001)
+                        continue
+                    else:
+                        self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
+                        self.max_bars = DEFAULT_MAX_BARS
+                        self.consc_anomaly_counter = 1
+
+                ta = await self.ask(TA(self.symbol, self.timeframe, bar))
+                session_risk = await self.ask(
+                    EvaluateSession(next_position.side, ohlcv, ta)
+                )
+
+                next_position = next_position.next(bar, ta, session_risk)
+
+                if next_position.has_risk:
+                    await self.tell(RiskThresholdBreached(next_position))
+                    break
 
         return next_position
-
-    def _create_exit_event(self, position: Position, ohlcv: OHLCV):
-        expiration = (
-            position.open_timestamp + self.config["trade_duration"] * 1000
-        ) - ohlcv.timestamp
-
-        risk_type = None
-
-        if position.side == PositionSide.LONG:
-            if self._is_long_expires(position, expiration, ohlcv):
-                risk_type = RiskType.TIME
-            elif self._is_long_meets_tp(position, ohlcv):
-                risk_type = RiskType.TP
-            elif self._is_long_meets_sl(position, ohlcv) and not self._position[1]:
-                risk_type = RiskType.SL
-        elif position.side == PositionSide.SHORT:
-            if self._is_short_expires(position, expiration, ohlcv):
-                risk_type = RiskType.TIME
-            elif self._is_short_meets_tp(position, ohlcv):
-                risk_type = RiskType.TP
-            elif self._is_short_meets_sl(position, ohlcv) and not self._position[0]:
-                risk_type = RiskType.SL
-
-        if risk_type:
-            exit_price = (
-                self._long_exit_price
-                if position.side == PositionSide.LONG
-                else self._short_exit_price
-            )(position, ohlcv)
-
-            return RiskThresholdBreached(position, exit_price, risk_type)
-
-        return None
-
-    async def _process_reverse_exit(
-        self,
-        position: Position,
-        price: float,
-    ):
-        take_profit_price = position.take_profit_price
-        stop_loss_price = position.stop_loss_price
-
-        distance_to_take_profit = abs(price - take_profit_price)
-        distance_to_stop_loss = abs(price - stop_loss_price)
-
-        if distance_to_take_profit < distance_to_stop_loss:
-            await self.tell(RiskThresholdBreached(position, price, RiskType.REVERSE))
-
-    async def _process_signal_exit(
-        self,
-        position: Position,
-        price: float,
-    ):
-        side = position.side
-        take_profit_price = position.take_profit_price
-        stop_loss_price = position.stop_loss_price
-        entry_price = position.entry_price
-
-        price_exceeds_take_profit = (
-            side == PositionSide.LONG and price > take_profit_price
-        ) or (side == PositionSide.SHORT and price < take_profit_price)
-
-        price_exceeds_stop_loss = (
-            side == PositionSide.LONG and price < stop_loss_price
-        ) or (side == PositionSide.SHORT and price > stop_loss_price)
-
-        if price_exceeds_take_profit or price_exceeds_stop_loss:
-            return
-
-        distance_to_take_profit = abs(price - take_profit_price)
-        distance_to_stop_loss = abs(price - stop_loss_price)
-        trailing_dist = abs(price - entry_price)
-
-        ttp = distance_to_take_profit * self.config["trl_factor"]
-
-        if distance_to_take_profit < distance_to_stop_loss and trailing_dist > ttp:
-            await self.tell(RiskThresholdBreached(position, price, RiskType.SIGNAL))
-            return position
-
-    @staticmethod
-    def _long_exit_price(position: Position, ohlcv: OHLCV):
-        if (
-            position.stop_loss_price is not None
-            and ohlcv.low <= position.stop_loss_price
-        ):
-            return ohlcv.low
-        if (
-            position.take_profit_price is not None
-            and ohlcv.high >= position.take_profit_price
-        ):
-            return ohlcv.high
-
-        return ohlcv.close
-
-    @staticmethod
-    def _is_long_expires(
-        position: Position,
-        expiration: int,
-        ohlcv: OHLCV,
-    ) -> bool:
-        return (
-            expiration <= 0
-            and position.entry_price > max(ohlcv.close, ohlcv.high) * 1.1
-        )
-
-    @staticmethod
-    def _is_long_meets_tp(
-        position: Position,
-        ohlcv: OHLCV,
-    ):
-        return (
-            position.take_profit_price is not None
-            and ohlcv.high > position.take_profit_price
-        )
-
-    @staticmethod
-    def _is_long_meets_sl(
-        position: Position,
-        ohlcv: OHLCV,
-    ):
-        return (
-            position.stop_loss_price is not None
-            and ohlcv.low < position.stop_loss_price
-        )
-
-    @staticmethod
-    def _short_exit_price(position: Position, ohlcv: OHLCV):
-        if (
-            position.stop_loss_price is not None
-            and ohlcv.high >= position.stop_loss_price
-        ):
-            return ohlcv.high
-        if (
-            position.take_profit_price is not None
-            and ohlcv.low <= position.take_profit_price
-        ):
-            return ohlcv.low
-
-        return ohlcv.close
-
-    @staticmethod
-    def _is_short_expires(
-        position: Position,
-        expiration: int,
-        ohlcv: OHLCV,
-    ) -> bool:
-        return expiration <= 0 and position.entry_price * 1.1 < min(
-            ohlcv.close, ohlcv.low
-        )
-
-    @staticmethod
-    def _is_short_meets_tp(
-        position: Position,
-        ohlcv: OHLCV,
-    ):
-        return (
-            position.take_profit_price is not None
-            and ohlcv.low < position.take_profit_price
-        )
-
-    @staticmethod
-    def _is_short_meets_sl(
-        position: Position,
-        ohlcv: OHLCV,
-    ):
-        return (
-            position.stop_loss_price is not None
-            and ohlcv.high > position.stop_loss_price
-        )
-
-    @staticmethod
-    def _get_event_key(event: RiskEvent):
-        signal = (
-            event.signal
-            if hasattr(event, "signal")
-            else event.position.signal
-            if hasattr(event, "position")
-            else event
-        )
-
-        return (signal.symbol, signal.timeframe)

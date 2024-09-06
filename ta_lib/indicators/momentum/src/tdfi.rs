@@ -1,10 +1,10 @@
 use core::prelude::*;
 
-pub fn tdfi(source: &Series<f32>, smooth_type: Smooth, period: usize, n: usize) -> Series<f32> {
-    let ma = (SCALE * 10. * source).smooth(smooth_type, period);
-    let sma = ma.smooth(smooth_type, period);
+pub fn tdfi(source: &Price, smooth: Smooth, period: Period, n: usize) -> Price {
+    let ma = (SCALE * 10. * source).smooth(smooth, period);
+    let sma = ma.smooth(smooth, period);
 
-    let tdf = (&ma - &sma).abs().pow(1) * (0.5 * (ma.change(1) + sma.change(1))).pow(n);
+    let tdf = ((&ma - &sma).abs().pow(1)) * ((HALF * (ma.change(1) + sma.change(1))).pow(n));
 
     &tdf / tdf.abs().highest(period * n)
 }
@@ -41,7 +41,7 @@ mod tests {
             0.0041924296,
         ];
 
-        let result: Vec<f32> = tdfi(&source, smooth_type, period, n).into();
+        let result: Vec<Scalar> = tdfi(&source, smooth_type, period, n).into();
 
         assert_eq!(result, expected);
     }

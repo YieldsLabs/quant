@@ -13,6 +13,7 @@ class SignalType(Enum):
     CfoZeroCross = "CfoZeroCross"
     DiZeroCross = "DiZeroCross"
     MacdZeroCross = "MacdZeroCross"
+    MadZeroCross = "MadZeroCross"
     QstickZeroCross = "QstickZeroCross"
     RocZeroCross = "RocZeroCross"
     TrixZeroCross = "TrixZeroCross"
@@ -32,18 +33,30 @@ class SignalType(Enum):
     VwapBb = "VwapBb"
     # Pattern
     AoSaucer = "AoSaucer"
+    Spread = "Spread"
     HighLow = "HighLow"
     MacdColorSwitch = "MacdColorSwitch"
-    RsiV = "RsiV"
-    TiiV = "TiiV"
     CandlestickTrend = "CandlestickTrend"
+    CandlestickReversal = "CandlestickReversal"
+    # Contrarian
+    Snatr = "Snatr"
+    RsiC = "RsiC"
+    RsiD = "RsiD"
+    RsiV = "RsiV"
+    RsiU = "RsiU"
+    RsiNt = "RsiNt"
+    TiiV = "TiiV"
+    StochE = "StochE"
+    KchA = "KchA"
+    KchC = "KchC"
     # Flip
     CeFlip = "CeFlip"
     SupFlip = "SupFlip"
-    # Reversal
-    DmiReversal = "DmiReversal"
-    SnatrReversal = "SnatrReversal"
-    ViReversal = "ViReversal"
+    # Pullback
+    SupPullback = "SupPullback"
+    # Two Lines Cross
+    Dmi2LinesCross = "Dmi2LinesCross"
+    Vi2LinesCross = "Vi2LinesCross"
     # Ma
     Ma3Cross = "Ma3Cross"
     MaTestingGround = "MaTestingGround"

@@ -1,69 +1,50 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
-use signal::{MaCrossSignal, MaQuadrupleSignal, MaSurpassSignal, MaTestingGroundSignal};
+use timeseries::prelude::*;
 
-const DEFAULT_ATR_LOOKBACK: usize = 14;
-const DEFAULT_ATR_FACTOR: f32 = 1.236;
+const DEFAULT_ATR_LOOKBACK: Period = 14;
+const DEFAULT_ATR_FACTOR: Scalar = 1.2;
+const DEFAULT_ATR_SMOOTH: Smooth = Smooth::EMA;
 
 pub struct MaBaseLine {
-    source_type: SourceType,
+    source: SourceType,
     ma: MovingAverageType,
     period: usize,
-    signal: Vec<Box<dyn Signal>>,
 }
 
 impl MaBaseLine {
-    pub fn new(source_type: SourceType, ma: MovingAverageType, period: f32) -> Self {
+    pub fn new(source: SourceType, ma: MovingAverageType, period: f32) -> Self {
         Self {
-            source_type,
+            source,
             ma,
             period: period as usize,
-            signal: vec![
-                Box::new(MaSurpassSignal::new(source_type, ma, period)),
-                Box::new(MaQuadrupleSignal::new(source_type, ma, period)),
-            ],
         }
     }
 }
 
 impl BaseLine for MaBaseLine {
     fn lookback(&self) -> usize {
-        let mut m = std::cmp::max(DEFAULT_ATR_LOOKBACK, self.period);
-
-        for signal in &self.signal {
-            m = std::cmp::max(m, signal.lookback());
-        }
-
-        m
+        std::cmp::max(DEFAULT_ATR_LOOKBACK, self.period)
     }
 
     fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let ma = ma_indicator(&self.ma, data, self.source_type, self.period);
-        let prev_ma = ma.shift(1);
+        let ma = ma_indicator(&self.ma, data, self.source, self.period);
+        let close = data.close();
 
-        let dist = (&ma - data.close()).abs();
-        let atr = data.atr(DEFAULT_ATR_LOOKBACK) * DEFAULT_ATR_FACTOR;
+        let dist = (&ma - close).abs();
+        let atr = data.atr(DEFAULT_ATR_SMOOTH, DEFAULT_ATR_LOOKBACK) * DEFAULT_ATR_FACTOR;
 
         (
-            ma.sgt(&prev_ma) & dist.slt(&atr),
-            ma.slt(&prev_ma) & dist.slt(&atr),
+            close.sgt(&ma) & dist.slt(&atr),
+            close.slt(&ma) & dist.slt(&atr),
         )
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let lookback = self.lookback();
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+        let ma = ma_indicator(&self.ma, data, self.source, self.period);
+        let close = data.close();
 
-        let mut go_long_signal: Series<bool> = Series::zero(lookback).into();
-        let mut go_short_signal: Series<bool> = Series::zero(lookback).into();
-
-        for signal in &self.signal {
-            let (go_long, go_short) = signal.generate(data);
-
-            go_long_signal = go_long_signal | go_long;
-            go_short_signal = go_short_signal | go_short;
-        }
-
-        (go_long_signal, go_short_signal)
+        (close.cross_under(&ma), close.cross_over(&ma))
     }
 }

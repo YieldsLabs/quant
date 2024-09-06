@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
-from core.models.parameter import Parameter, StaticParameter
+from core.models.parameter import CategoricalParameter, Parameter, StaticParameter
 from core.models.smooth import Smooth
+from core.models.source import SourceType
 
 from .base import Pulse, PulseType
 
@@ -9,12 +10,11 @@ from .base import Pulse, PulseType
 @dataclass(frozen=True)
 class WaePulse(Pulse):
     type: PulseType = PulseType.Wae
-    smooth_type: Parameter = StaticParameter(Smooth.EMA)
-    fast_period: Parameter = StaticParameter(15.0)
-    slow_period: Parameter = StaticParameter(30.0)
-    smooth_bb: Parameter = StaticParameter(Smooth.SMA)
-    bb_period: Parameter = StaticParameter(15.0)
-    factor: Parameter = StaticParameter(2.0)
-    strength: Parameter = StaticParameter(150.0)
-    atr_period: Parameter = StaticParameter(100.0)
-    dz_factor: Parameter = StaticParameter(3.7)
+    source: Parameter = StaticParameter(SourceType.CLOSE)
+    smooth: Parameter = CategoricalParameter(Smooth)
+    period_fast: Parameter = StaticParameter(10.0)
+    period_slow: Parameter = StaticParameter(29.0)
+    smooth_bb: Parameter = CategoricalParameter(Smooth)
+    period_bb: Parameter = StaticParameter(13.0)
+    factor: Parameter = StaticParameter(1.2)
+    strength: Parameter = StaticParameter(69.0)

@@ -4,11 +4,17 @@ resolver = "2"
 members = [
 "benches",
 "core",
+"timeseries",
+"ffi",
 "indicators/momentum",
 "indicators/trend",
 "indicators/volatility",
 "indicators/volume",
 "patterns/candlestick",
+"patterns/osc",
+"patterns/bands",
+"patterns/channel",
+"patterns/trail",
 "price",
 "strategies/base",
 "strategies/trend_follow",
@@ -17,7 +23,7 @@ members = [
 "strategies/confirm",
 "strategies/pulse",
 "strategies/baseline",
-"strategies/indicator",
+"strategies/indicator", "timeseries", "ffi", "patterns/osc",
 ]
 
 [workspace.package]
@@ -29,6 +35,6 @@ repository = "https://github.com/YieldLabs/quant"
 version = "0.1.0"
 
 [profile.release]
-opt-level = 'z'
+opt-level = 3
 lto = true
 panic = "abort"

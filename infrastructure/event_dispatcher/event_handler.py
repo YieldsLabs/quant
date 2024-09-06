@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 class EventHandler:
     def __init__(self):
         self._event_handlers: Dict[Type[Event], List[HandlerType]] = defaultdict(list)
-        self._dead_letter_queue: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
+        self._dlq: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
 
     @property
     def dlq(self):
-        return self._dead_letter_queue
+        return self._dlq
 
     def register(
         self,
@@ -39,22 +39,16 @@ class EventHandler:
         ]
 
     async def handle_event(self, event: Event, *args, **kwargs) -> None:
-        event_type = type(event)
-        handlers = self._event_handlers.get(event_type, [])
+        handlers = self._event_handlers.get(type(event), [])
 
         for handler, filter_fn in handlers:
             if not filter_fn or filter_fn(event):
-                await self._call_handler(handler, event, *args, **kwargs)
+                try:
+                    await self._call_handler(handler, event, *args, **kwargs)
+                except Exception as e:
+                    self._handle_exception(handler, event, e)
 
     async def _call_handler(
-        self, handler: HandlerType, event: Event, *args, **kwargs
-    ) -> None:
-        try:
-            await self._execute_handler(handler, event, *args, **kwargs)
-        except Exception as e:
-            self._handle_exception(handler, event, e)
-
-    async def _execute_handler(
         self, handler: HandlerType, event: Event, *args, **kwargs
     ) -> None:
         if asyncio.iscoroutinefunction(handler):
@@ -79,4 +73,4 @@ class EventHandler:
         elif isinstance(event, Query):
             event.set_response(None)
 
-        self._dead_letter_queue.append((event, exception))
+        self._dlq.append((event, exception))

@@ -1,6 +1,6 @@
-use crate::OHLCVSeries;
 use core::prelude::*;
 use price::prelude::*;
+use timeseries::prelude::*;
 
 #[derive(Copy, Clone)]
 pub enum SourceType {
@@ -12,12 +12,12 @@ pub enum SourceType {
 }
 
 pub trait Source {
-    fn source(&self, source_type: SourceType) -> Series<f32>;
+    fn source(&self, source_type: SourceType) -> Price;
 }
 
 impl Source for OHLCVSeries {
     #[inline]
-    fn source(&self, source_type: SourceType) -> Series<f32> {
+    fn source(&self, source_type: SourceType) -> Price {
         match source_type {
             SourceType::CLOSE => self.close().clone(),
             SourceType::HL2 => median_price(self.high(), self.low()),

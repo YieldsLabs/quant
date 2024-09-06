@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use volume::vwap;
 
 pub struct VwapCrossSignal {
@@ -21,7 +22,7 @@ impl Signal for VwapCrossSignal {
         self.period
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let vwap = vwap(&data.source(self.source_type), data.volume());
 
         (

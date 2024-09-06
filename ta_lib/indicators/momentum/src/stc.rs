@@ -1,24 +1,21 @@
-use crate::stoch;
 use core::prelude::*;
 
 pub fn stc(
-    source: &Series<f32>,
-    smooth_type: Smooth,
-    fast_period: usize,
-    slow_period: usize,
-    cycle: usize,
-    d_first: usize,
-    d_second: usize,
-) -> Series<f32> {
-    let macd_line =
-        source.smooth(smooth_type, fast_period) - source.smooth(smooth_type, slow_period);
-    let k = stoch(&macd_line, &macd_line, &macd_line, cycle);
-    let d = k.smooth(smooth_type, d_first);
-    let kd = stoch(&d, &d, &d, cycle);
-
-    let stc = kd.smooth(smooth_type, d_second);
-
-    stc.min(&SCALE).max(&ZERO)
+    source: &Price,
+    smooth: Smooth,
+    period_fast: Period,
+    period_slow: Period,
+    cycle: Period,
+    d_first: Period,
+    d_second: Period,
+) -> Price {
+    source
+        .spread(smooth, period_fast, period_slow)
+        .normalize(cycle, SCALE)
+        .smooth(smooth, d_first)
+        .normalize(cycle, SCALE)
+        .smooth(smooth, d_second)
+        .clip(&ZERO, &SCALE)
 }
 
 #[cfg(test)]
@@ -41,7 +38,7 @@ mod tests {
             67.08984, 83.54492,
         ];
 
-        let result: Vec<f32> = stc(
+        let result: Vec<Scalar> = stc(
             &source,
             Smooth::EMA,
             fast_period,

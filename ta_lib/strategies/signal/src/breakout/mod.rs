@@ -1,3 +1,3 @@
-mod dch_ma2_breakout;
+mod dch_ma2;
 
-pub use dch_ma2_breakout::DchMa2BreakoutSignal;
+pub use dch_ma2::DchMa2BreakoutSignal;

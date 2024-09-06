@@ -5,6 +5,7 @@ use crate::mapper::{
     map_to_baseline, map_to_confirm, map_to_exit, map_to_pulse, map_to_signal, map_to_stoploss,
 };
 use base::prelude::*;
+use timeseries::prelude::*;
 
 fn read_from_memory(ptr: *const u8, len: usize) -> &'static [u8] {
     unsafe { std::slice::from_raw_parts(ptr, len) }
@@ -40,6 +41,7 @@ pub fn register(
     let exit: ExitConfig = serde_json::from_slice(exit_buffer).unwrap();
 
     register_strategy(
+        Box::<BaseTimeSeries>::default(),
         map_to_signal(signal),
         map_to_confirm(confirm),
         map_to_pulse(pulse),

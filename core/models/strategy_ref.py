@@ -1,8 +1,11 @@
 import logging
+import typing
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Optional, Union
 
-from wasmtime import Instance, Store
+if typing.TYPE_CHECKING:
+    from wasmtime import Instance, Store
 
 from core.events.signal import (
     ExitLongSignalReceived,
@@ -12,7 +15,8 @@ from core.events.signal import (
 )
 from core.models.action import Action
 from core.models.ohlcv import OHLCV
-from core.models.signal import Signal, SignalSide
+from core.models.side import SignalSide
+from core.models.signal import Signal
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -30,20 +34,21 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class StrategyRef:
     id: int
-    instance_ref: Instance
-    store_ref: Store
+    instance_ref: "Instance"
+    store_ref: "Store"
+
+    @cached_property
+    def exports(self):
+        return self.instance_ref.exports(self.store_ref)
 
     def unregister(self):
-        exports = self.instance_ref.exports(self.store_ref)
-        exports["unregister_strategy"](self.store_ref, self.id)
+        self.exports["strategy_unregister"](self.store_ref, self.id)
         self.store_ref.gc()
 
     def next(
         self, symbol: Symbol, timeframe: Timeframe, strategy: Strategy, ohlcv: OHLCV
     ) -> Optional[SignalEvent]:
-        exports = self.instance_ref.exports(self.store_ref)
-
-        [raw_action, price] = exports["strategy_next"](
+        strategy_args = [
             self.store_ref,
             self.id,
             ohlcv.timestamp,
@@ -52,48 +57,67 @@ class StrategyRef:
             ohlcv.low,
             ohlcv.close,
             ohlcv.volume,
-        )
+        ]
+
+        raw_action, price = self.exports["strategy_next"](*strategy_args)
 
         action = Action.from_raw(raw_action)
 
         long_stop_loss, short_stop_loss = 0.0, 0.0
 
         if action in (Action.GO_LONG, Action.GO_SHORT):
-            [long_stop_loss, short_stop_loss] = exports["strategy_stop_loss"](
-                self.store_ref, self.id
+            long_stop_loss, short_stop_loss = self.exports["strategy_stop_loss"](
+                *strategy_args
             )
 
-        signal = Signal(
-            symbol,
-            timeframe,
-            strategy,
+        side = (
             SignalSide.BUY
             if action in (Action.GO_LONG, Action.EXIT_SHORT)
-            else SignalSide.SELL,
+            else SignalSide.SELL
         )
 
         action_event_map = {
             Action.GO_LONG: GoLongSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                entry_price=price,
-                stop_loss=long_stop_loss,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    entry=price,
+                    stop_loss=long_stop_loss,
+                ),
             ),
             Action.GO_SHORT: GoShortSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                entry_price=price,
-                stop_loss=short_stop_loss,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    entry=price,
+                    stop_loss=short_stop_loss,
+                ),
             ),
             Action.EXIT_LONG: ExitLongSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                exit_price=price,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    exit=price,
+                ),
             ),
             Action.EXIT_SHORT: ExitShortSignalReceived(
-                signal=signal,
-                ohlcv=ohlcv,
-                exit_price=price,
+                signal=Signal(
+                    symbol,
+                    timeframe,
+                    strategy,
+                    side,
+                    ohlcv,
+                    exit=price,
+                ),
             ),
         }
 

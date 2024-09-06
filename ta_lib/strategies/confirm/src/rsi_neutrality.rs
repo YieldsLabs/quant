@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
+use timeseries::prelude::*;
 
 const RSI_UPPER_BARRIER: f32 = 75.0;
 const RSI_LOWER_BARRIER: f32 = 25.0;
@@ -28,7 +29,7 @@ impl Confirm for RsiNeutralityConfirm {
         self.period
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(
             &data.source(self.source_type),
             self.smooth_type,
@@ -37,20 +38,20 @@ impl Confirm for RsiNeutralityConfirm {
 
         let lower_barrier = RSI_LOWER_BARRIER + self.threshold;
         let upper_barrier = RSI_UPPER_BARRIER - self.threshold;
-        let lower_neutrality = NEUTRALITY_LINE - self.threshold;
-        let upper_neutrality = NEUTRALITY_LINE + self.threshold;
+        let lower_neutrality = NEUTRALITY - self.threshold;
+        let upper_neutrality = NEUTRALITY + self.threshold;
 
         let prev_rsi = rsi.shift(1);
         let back_2_rsi = rsi.shift(2);
         let back_3_rsi = rsi.shift(3);
 
         (
-            rsi.sgt(&NEUTRALITY_LINE)
+            rsi.sgt(&NEUTRALITY)
                 & rsi.slt(&upper_barrier)
                 & prev_rsi.sgt(&lower_neutrality)
                 & back_2_rsi.sgt(&lower_neutrality)
                 & back_3_rsi.sgt(&lower_neutrality),
-            rsi.slt(&NEUTRALITY_LINE)
+            rsi.slt(&NEUTRALITY)
                 & rsi.sgt(&lower_barrier)
                 & prev_rsi.slt(&upper_neutrality)
                 & back_2_rsi.slt(&upper_neutrality)

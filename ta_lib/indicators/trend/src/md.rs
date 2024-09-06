@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn md(source: &Price, period: Period) -> Price {
     let len = source.len();
 
     let mut mg = Series::empty(len);
@@ -8,7 +8,7 @@ pub fn md(source: &Series<f32>, period: usize) -> Series<f32> {
 
     for _ in 0..len {
         let prev_mg = nz!(mg.shift(1), seed);
-        mg = &prev_mg + (source - &prev_mg) / ((source / &prev_mg).pow(4) * period as f32);
+        mg = &prev_mg + (source - &prev_mg) / ((source / &prev_mg).pow(4) * period as Scalar);
     }
 
     mg
@@ -28,7 +28,7 @@ mod tests {
             19.576805, 19.576_204,
         ];
 
-        let result: Vec<f32> = md(&source, 3).into();
+        let result: Vec<Scalar> = md(&source, 3).into();
 
         assert_eq!(result, expected);
     }

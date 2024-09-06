@@ -1,22 +1,23 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::tdfi;
+use timeseries::prelude::*;
 
 const TDFI_UPPER_LINE: f32 = 0.05;
 const TDFI_LOWER_LINE: f32 = -0.05;
 
 pub struct TdfiPulse {
-    source_type: SourceType,
-    smooth_type: Smooth,
+    source: SourceType,
+    smooth: Smooth,
     period: usize,
     n: usize,
 }
 
 impl TdfiPulse {
-    pub fn new(source_type: SourceType, smooth_type: Smooth, period: f32, n: f32) -> Self {
+    pub fn new(source: SourceType, smooth: Smooth, period: f32, n: f32) -> Self {
         Self {
-            source_type,
-            smooth_type,
+            source,
+            smooth,
             period: period as usize,
             n: n as usize,
         }
@@ -29,12 +30,7 @@ impl Pulse for TdfiPulse {
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let tdfi = tdfi(
-            &data.source(self.source_type),
-            self.smooth_type,
-            self.period,
-            self.n,
-        );
+        let tdfi = tdfi(&data.source(self.source), self.smooth, self.period, self.n);
 
         (tdfi.sgt(&TDFI_UPPER_LINE), tdfi.slt(&TDFI_LOWER_LINE))
     }
@@ -43,12 +39,11 @@ impl Pulse for TdfiPulse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::VecDeque;
 
     #[test]
     fn test_pulse_tdfi() {
         let pulse = TdfiPulse::new(SourceType::CLOSE, Smooth::TEMA, 6.0, 3.0);
-        let data = VecDeque::from([
+        let data = vec![
             OHLCV {
                 ts: 1679825700,
                 open: 5.993,
@@ -129,8 +124,8 @@ mod tests {
                 close: 5.943,
                 volume: 100.0,
             },
-        ]);
-        let series = OHLCVSeries::from_data(&data);
+        ];
+        let series = OHLCVSeries::from(data);
 
         let (long_signal, short_signal) = pulse.assess(&series);
 

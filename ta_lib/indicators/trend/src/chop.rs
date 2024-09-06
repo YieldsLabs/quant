@@ -1,13 +1,8 @@
 use core::prelude::*;
 
-pub fn chop(
-    high: &Series<f32>,
-    low: &Series<f32>,
-    atr: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn chop(high: &Price, low: &Price, atr: &Price, period: Period) -> Price {
     SCALE * (atr.sum(period) / (high.highest(period) - low.lowest(period))).log10()
-        / (period as f32).log10()
+        / (period as Scalar).log10()
 }
 
 #[cfg(test)]
@@ -26,7 +21,7 @@ mod tests {
         let expected = [0.0, 45.571022, 0.0, 26.31491, 40.33963, 58.496246];
         let epsilon = 0.0001;
 
-        let result: Vec<f32> = chop(&high, &low, &atr, period).into();
+        let result: Vec<Scalar> = chop(&high, &low, &atr, period).into();
 
         for i in 0..result.len() {
             assert!(

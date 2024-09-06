@@ -2,6 +2,7 @@ use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
 use momentum::rsi;
+use timeseries::prelude::*;
 
 const RSI_UPPER_BARRIER: f32 = 85.0;
 const RSI_LOWER_BARRIER: f32 = 15.0;
@@ -44,7 +45,7 @@ impl Signal for Ma2RsiSignal {
         std::cmp::max(adj_lookback, self.rsi_period)
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(
             &data.source(self.source_type),
             self.smooth_type,

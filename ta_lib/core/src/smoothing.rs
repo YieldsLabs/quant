@@ -1,6 +1,7 @@
+use crate::constants::{ONE, PI, SCALE, ZERO};
 use crate::series::Series;
 use crate::traits::Comparator;
-use crate::ZERO;
+use crate::types::{Period, Price, Scalar};
 use crate::{iff, nz};
 
 #[derive(Copy, Clone)]
@@ -14,57 +15,55 @@ pub enum Smooth {
     ZLEMA,
     LSMA,
     TEMA,
+    DEMA,
+    ULTS,
 }
 
-impl Series<f32> {
-    pub fn ew(&self, alpha: &Series<f32>, seed: &Series<f32>) -> Self {
+impl Price {
+    pub fn ew(&self, alpha: &Price, seed: &Price) -> Self {
         let len = self.len();
         let mut sum = Series::zero(len);
+        let a = alpha * self;
+        let b = ONE - alpha;
 
         for _ in 0..len {
-            sum = alpha * self + (1. - alpha) * nz!(sum.shift(1), seed)
+            sum = &a + &b * nz!(sum.shift(1), seed)
         }
 
         sum
     }
 
-    pub fn wg(&self, weights: &[f32]) -> Self {
+    pub fn wg(&self, weights: &[Scalar]) -> Self {
         let mut sum = Series::zero(self.len());
-        let norm = weights.iter().sum::<f32>();
+        let norm = weights.iter().sum::<Scalar>();
 
         for (i, &weight) in weights.iter().enumerate() {
-            sum = sum + self.shift(i) * weight;
+            sum = sum + nz!(self.shift(i), self) * weight;
         }
 
         sum / norm
     }
 
-    fn ma(&self, period: usize) -> Self {
-        self.window(period)
-            .map(|w| {
-                if w.iter().all(|&x| x.is_none()) {
-                    None
-                } else {
-                    Some(w.iter().flatten().sum::<f32>() / w.len() as f32)
-                }
-            })
-            .collect()
-    }
-
-    fn ema(&self, period: usize) -> Self {
-        let alpha = Series::fill(2. / (period as f32 + 1.), self.len());
+    fn ema(&self, period: Period) -> Self {
+        let alpha = Series::fill(2. / (period + 1) as Scalar, self.len());
 
         self.ew(&alpha, self)
     }
 
-    fn smma(&self, period: usize) -> Self {
-        let alpha = Series::fill(1. / (period as f32), self.len());
+    fn smma(&self, period: Period) -> Self {
+        let alpha = Series::fill(ONE / (period as Scalar), self.len());
         let seed = self.ma(period);
 
         self.ew(&alpha, &seed)
     }
 
-    fn tema(&self, period: usize) -> Self {
+    fn dema(&self, period: Period) -> Self {
+        let ema = self.ema(period);
+
+        2. * &ema - ema.ema(period)
+    }
+
+    fn tema(&self, period: Period) -> Self {
         let ema1 = self.ema(period);
         let ema2 = ema1.ema(period);
         let ema3 = ema2.ema(period);
@@ -72,29 +71,31 @@ impl Series<f32> {
         3. * (ema1 - ema2) + ema3
     }
 
-    fn wma(&self, period: usize) -> Self {
-        let weights = (0..period).map(|i| (period - i) as f32).collect::<Vec<_>>();
+    fn wma(&self, period: Period) -> Self {
+        let weights = (0..period)
+            .map(|i| (period - i) as Scalar)
+            .collect::<Vec<_>>();
 
         self.wg(&weights)
     }
 
     fn swma(&self) -> Self {
-        let x1 = self.shift(1);
-        let x2 = self.shift(2);
-        let x3 = self.shift(3);
+        let x1 = nz!(self.shift(1), self);
+        let x2 = nz!(self.shift(2), self);
+        let x3 = nz!(self.shift(3), self);
 
-        x3 * 1. / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * 1. / 6.
+        x3 * ONE / 6. + x2 * 2. / 6. + x1 * 2. / 6. + self * ONE / 6.
     }
 
-    fn hma(&self, period: usize) -> Self {
-        let lag = (0.5 * period as f32).round() as usize;
-        let sqrt_period = (period as f32).sqrt() as usize;
+    fn hma(&self, period: Period) -> Self {
+        let lag = (0.5 * period as Scalar) as Period;
+        let sqrt_period = (period as Scalar).sqrt().floor() as Period;
 
         (2. * self.wma(lag) - self.wma(period)).wma(sqrt_period)
     }
 
-    fn linreg(&self, period: usize) -> Self {
-        let x = (0..self.len()).map(|i| i as f32).collect::<Series<_>>();
+    fn linreg(&self, period: Period) -> Self {
+        let x = (0..self.len()).map(|i| i as Scalar).collect::<Series<_>>();
 
         let x_mean = x.ma(period);
         let y_mean = self.ma(period);
@@ -112,25 +113,54 @@ impl Series<f32> {
         &intercept + &slope * &x
     }
 
-    fn kama(&self, period: usize) -> Series<f32> {
+    fn kama(&self, period: Period) -> Self {
         let len = self.len();
         let mom = self.change(period).abs();
         let volatility = self.change(1).abs().sum(period);
         let er = iff!(volatility.seq(&ZERO), Series::zero(len), mom / volatility);
 
-        let alpha = (er * 0.666_666_7).pow(2);
+        let alpha = (er.nz(Some(ZERO)) * 0.6015 + 0.0645).pow(2);
 
         self.ew(&alpha, self)
     }
 
-    fn zlema(&self, period: usize) -> Series<f32> {
-        let lag = (0.5 * (period as f32 - 1.)) as usize;
+    fn zlema(&self, period: Period) -> Self {
+        let lag = (0.5 * (period - 1) as Scalar).floor() as Period;
 
-        (self + (self - self.shift(lag))).ema(period)
+        (self + (self - nz!(self.shift(lag), self))).ema(period)
     }
 
-    pub fn smooth(&self, smooth_type: Smooth, period: usize) -> Self {
-        match smooth_type {
+    fn ults(&self, period: Period) -> Self {
+        let a1 = (-1.414 * PI / period as Scalar).exp();
+        let c2 = 2. * a1 * (1.414 * PI / period as Scalar).cos();
+        let c3 = -a1 * a1;
+        let c1 = 0.25 * (ONE + c2 - c3);
+
+        let len = self.len();
+
+        let mut us = Series::zero(len);
+
+        let src1 = nz!(self.shift(1), self);
+        let src2 = nz!(self.shift(2), src1);
+
+        let a = (ONE - c1) * self;
+        let b = (2. * c1 - c2) * &src1;
+        let c = (c1 + c3) * &src2;
+
+        let abc = a + b - c;
+
+        for _ in 0..len {
+            let d = c2 * nz!(us.shift(1), src1);
+            let e = c3 * nz!(us.shift(2), src2);
+
+            us = &abc + d + e;
+        }
+
+        us
+    }
+
+    pub fn smooth(&self, smooth: Smooth, period: Period) -> Self {
+        match smooth {
             Smooth::EMA => self.ema(period),
             Smooth::SMA => self.ma(period),
             Smooth::SMMA => self.smma(period),
@@ -140,23 +170,41 @@ impl Series<f32> {
             Smooth::ZLEMA => self.zlema(period),
             Smooth::LSMA => self.linreg(period),
             Smooth::TEMA => self.tema(period),
+            Smooth::DEMA => self.dema(period),
+            Smooth::ULTS => self.ults(period),
         }
+    }
+
+    pub fn smooth_dst(&self, smooth: Smooth, period: Period) -> Self {
+        self - self.smooth(smooth, period)
+    }
+
+    pub fn spread(&self, smooth: Smooth, period_fast: Period, period_slow: Period) -> Self {
+        self.smooth(smooth, period_fast) - self.smooth(smooth, period_slow)
+    }
+
+    pub fn spread_pct(&self, smooth: Smooth, period_fast: Period, period_slow: Period) -> Self {
+        let fsm = self.smooth(smooth, period_fast);
+        let ssm = self.smooth(smooth, period_slow);
+
+        SCALE * (fsm - &ssm) / &ssm
+    }
+
+    pub fn spread_diff(
+        &self,
+        smooth: Smooth,
+        period_fast: Period,
+        period_slow: Period,
+        n: usize,
+    ) -> Self {
+        self.spread(smooth, period_fast, period_slow)
+            - self.shift(n).spread(smooth, period_fast, period_slow)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_ma() {
-        let source = Series::from([f32::NAN, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, 1.0, 1.6666666, 3.0, 4.0]);
-
-        let result = source.ma(3);
-
-        assert_eq!(result, expected);
-    }
 
     #[test]
     fn test_ema() {
@@ -181,7 +229,7 @@ mod tests {
     #[test]
     fn test_wma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, 2.3333333, 3.3333333, 4.3333335]);
+        let expected = Series::from([1.0, 1.6666666, 2.3333333, 3.3333333, 4.3333335]);
 
         let result = source.wma(3);
 
@@ -191,7 +239,7 @@ mod tests {
     #[test]
     fn test_swma() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 2.5, 3.5]);
+        let expected = Series::from([1.0, 1.6666667, 2.0, 2.5, 3.5]);
 
         let result = source.swma();
 
@@ -201,7 +249,7 @@ mod tests {
     #[test]
     fn test_kama() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 4.0, 4.4444447]);
+        let expected = Series::from([1.0, 1.0041603, 1.0124636, 2.337603, 3.5185251]);
 
         let result = source.kama(3);
 
@@ -230,6 +278,72 @@ mod tests {
         let result = source.linreg(3);
 
         assert_eq!(result.len(), expected.len());
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_ults() {
+        let source = Series::from([
+            0.3847, 0.3863, 0.3885, 0.3839, 0.3834, 0.3843, 0.3840, 0.3834, 0.3832,
+        ]);
+        let expected = Series::from([
+            0.38469997, 0.38586292, 0.3883182, 0.3857727, 0.38236603, 0.38377836, 0.38435996,
+            0.38352367, 0.38307717,
+        ]);
+
+        let result = source.ults(3);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_average_distance() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 0.5, 1.0, 1.0, 1.0]);
+        let period = 3;
+
+        let result = source.smooth_dst(Smooth::SMA, period);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_spread() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 0.16666675, 0.30555558, 0.39351845, 0.44367313]);
+        let period_fast = 2;
+        let period_slow = 3;
+        let smooth = Smooth::EMA;
+
+        let result = source.spread(smooth, period_fast, period_slow);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_percent_of_spread() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 11.111117, 13.580248, 12.59259, 10.921185]);
+        let period_fast = 2;
+        let period_slow = 3;
+        let smooth = Smooth::EMA;
+
+        let result = source.spread_pct(smooth, period_fast, period_slow);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_spread_diff() {
+        let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
+        let expected = Series::from([f32::NAN, 0.16666675, 0.13888884, 0.087962866, 0.050154686]);
+        let period_fast = 2;
+        let period_slow = 3;
+        let n = 1;
+        let smooth = Smooth::EMA;
+
+        let result = source.spread_diff(smooth, period_fast, period_slow, n);
+
         assert_eq!(result, expected);
     }
 }

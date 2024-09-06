@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 from typing import Generic, TypeVar
 
 from core.events.base import Event, EventMeta
@@ -9,13 +9,16 @@ T = TypeVar("T")
 
 
 class QueryGroup(Enum):
-    account = "account"
-    broker = "broker"
-    position = "position"
-    portfolio = "portfolio"
+    account = auto()
+    broker = auto()
+    position = auto()
+    portfolio = auto()
+    copilot = auto()
+    market = auto()
+    ta = auto()
 
     def __str__(self):
-        return self.value
+        return self.name
 
 
 @dataclass(frozen=True)

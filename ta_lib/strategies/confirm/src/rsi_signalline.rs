@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
+use timeseries::prelude::*;
 
 const RSI_UPPER_BARRIER: f32 = 75.;
 const RSI_LOWER_BARRIER: f32 = 35.;
@@ -39,7 +40,7 @@ impl Confirm for RsiSignalLineConfirm {
         std::cmp::max(self.rsi_period, self.smooth_period)
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(
             &data.source(self.source_type),
             self.smooth_type,
@@ -51,8 +52,8 @@ impl Confirm for RsiSignalLineConfirm {
         let lower_barrier = RSI_LOWER_BARRIER - self.threshold;
 
         (
-            rsi.slt(&upper_barrier) & rsi.sgt(&signal),
-            rsi.sgt(&lower_barrier) & rsi.slt(&signal),
+            rsi.sgt(&signal) & rsi.slt(&upper_barrier),
+            rsi.slt(&signal) & rsi.sgt(&lower_barrier),
         )
     }
 }

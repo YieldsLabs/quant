@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 
 pub struct DumbExit {}
 
@@ -8,7 +9,7 @@ impl Exit for DumbExit {
         0
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let len = data.len();
 
         (Series::zero(len).into(), Series::zero(len).into())

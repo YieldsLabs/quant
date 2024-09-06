@@ -37,6 +37,12 @@ pub enum SignalConfig {
         slow_period: f32,
         signal_period: f32,
     },
+    MadZeroCross {
+        source: f32,
+        smooth: f32,
+        period_fast: f32,
+        period_slow: f32,
+    },
     QstickZeroCross {
         smooth_type: f32,
         period: f32,
@@ -140,31 +146,36 @@ pub enum SignalConfig {
         bb_period: f32,
         factor: f32,
     },
-    // Reversal
-    DmiReversal {
+    // 2 lines cross
+    Dmi2LinesCross {
         smooth_type: f32,
         adx_period: f32,
         di_period: f32,
     },
-    SnatrReversal {
-        smooth_type: f32,
-        atr_period: f32,
-        atr_smooth_period: f32,
-        threshold: f32,
-    },
-    ViReversal {
-        atr_period: f32,
+    Vi2LinesCross {
         period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
     },
     // Flip
     CeFlip {
+        source_type: f32,
         period: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
         factor: f32,
     },
     SupFlip {
         source_type: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
+        factor: f32,
+    },
+    // Pullback
+    SupPullback {
+        source: f32,
+        smooth_atr: f32,
+        period_atr: f32,
         factor: f32,
     },
     // Ma
@@ -215,12 +226,22 @@ pub enum SignalConfig {
         fast_period: f32,
         slow_period: f32,
     },
+    Spread {
+        source: f32,
+        smooth: f32,
+        period_fast: f32,
+        period_slow: f32,
+    },
     CandlestickTrend {
+        candle: f32,
+    },
+    CandlestickReversal {
         candle: f32,
     },
     HighLow {
         period: f32,
     },
+    // Color Switch
     MacdColorSwitch {
         source_type: f32,
         smooth_type: f32,
@@ -228,17 +249,72 @@ pub enum SignalConfig {
         slow_period: f32,
         signal_period: f32,
     },
-    RsiV {
-        source_type: f32,
+    // Contrarian
+    KchA {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
+        factor: f32,
+    },
+    KchC {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
+        factor: f32,
+    },
+    Snatr {
         smooth_type: f32,
-        rsi_period: f32,
+        atr_period: f32,
+        atr_smooth_period: f32,
+        threshold: f32,
+    },
+    RsiC {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
+    RsiD {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
+    RsiNt {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
+    RsiV {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        threshold: f32,
+    },
+    RsiU {
+        source: f32,
+        smooth: f32,
+        period: f32,
         threshold: f32,
     },
     TiiV {
-        source_type: f32,
-        smooth_type: f32,
+        source: f32,
+        smooth: f32,
         major_period: f32,
         minor_period: f32,
+    },
+    StochE {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        period_k: f32,
+        period_d: f32,
+        threshold: f32,
     },
     // Neutrality
     DsoNeutralityCross {

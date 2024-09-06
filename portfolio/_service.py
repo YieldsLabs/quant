@@ -44,7 +44,7 @@ class Portfolio(AbstractEventManager):
         )
 
     @event_handler(TradeStarted)
-    async def trade_started(self, event: TradeStarted):
+    async def handle_trade_started(self, event: TradeStarted):
         await asyncio.gather(
             *[
                 self.state.reset(
@@ -61,6 +61,11 @@ class Portfolio(AbstractEventManager):
     @event_handler(PositionClosed)
     async def handle_close_positon(self, event: PositionClosed):
         position = event.position
+
+        if not position.is_valid:
+            logger.warn(f"Wrong position: {position}")
+            return
+
         signal = position.signal
         symbol = signal.symbol
         timeframe = signal.timeframe
@@ -75,11 +80,13 @@ class Portfolio(AbstractEventManager):
 
         logger.info(
             f"Performance: strategy={symbol}_{timeframe}{strategy}, side={position.side}, "
-            + f"trades={performance.total_trades}, hit_ratio={round(performance.hit_ratio * 100)}%, "
-            + f"cagr={round(performance.cagr * 100, 2)}%, return={round(performance.expected_return * 100, 2)}%, volatility={round(performance.ann_volatility * 100, 2)}%, "
-            + f"smart_sharpe={round(performance.smart_sharpe_ratio, 4)}, smart_sortino={round(performance.smart_sortino_ratio, 4)}, "
-            + f"skew={round(performance.skew, 2)}, kurtosis={round(performance.kurtosis, 2)}, omega={round(performance.omega_ratio, 2)}, upi={round(performance.upi, 2)}, "
-            + f"max_dd={round(performance.max_drawdown * 100, 2)}%, pnl={round(performance.total_pnl, 4)}, fee={round(performance.total_fee, 4)}"
+            f"trades={performance.total_trades}, hit_ratio={performance.hit_ratio * 100:.0f}%, "
+            f"cagr={performance.cagr * 100:.2f}%, return={performance.expected_return * 100:.2f}%, "
+            f"volatility={performance.ann_volatility * 100:.2f}%, smart_sharpe={performance.smart_sharpe_ratio:.4f}, "
+            f"smart_sortino={performance.smart_sortino_ratio:.4f}, skew={performance.skew:.2f}, "
+            f"kurtosis={performance.kurtosis:.2f}, omega={performance.omega_ratio:.2f}, "
+            f"upi={performance.upi:.2f}, mdd={performance.max_drawdown * 100:.4f}%, "
+            f"pnl={performance.total_pnl:.4f}, fee={performance.total_fee:.4f}"
         )
 
         await self.dispatch(
@@ -139,19 +146,16 @@ class Portfolio(AbstractEventManager):
         risk_per_trade = self.config["risk_per_trade"]
 
         equity = await self.state.get_equity(symbol, timeframe, strategy)
+        fixed_size = equity * risk_per_trade
 
-        if equity == 0:
+        if query.type == PositionSizeType.Fixed:
             return risk_per_trade
 
         if query.type == PositionSizeType.Kelly:
             kelly = await self.state.get_kelly(symbol, timeframe, strategy)
-            return equity * kelly if kelly > 0 else equity * risk_per_trade
+            return equity * kelly if kelly > 0 else fixed_size
 
-        if query.type == PositionSizeType.Optimalf:
-            optimalf = await self.state.get_optimalf(symbol, timeframe, strategy)
-            return optimalf * equity if optimalf > 0 else equity * risk_per_trade
-
-        return equity * risk_per_trade
+        return fixed_size
 
     @query_handler(GetFitness)
     async def fitness(self, query: GetFitness):

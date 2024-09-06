@@ -6,6 +6,17 @@ use confirm::*;
 #[inline]
 pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
     match config {
+        // contrarian
+        ConfirmConfig::BbC {
+            smooth,
+            period,
+            factor,
+        } => Box::new(BbConfirm::new(
+            smooth_deserialize(smooth as usize),
+            period,
+            factor,
+        )),
+        // trend
         ConfirmConfig::Dpo {
             source_type,
             smooth_type,
@@ -15,40 +26,55 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             smooth_deserialize(smooth_type as usize),
             period,
         )),
-        ConfirmConfig::Dso {
-            source_type,
-            smooth_type,
-            smooth_period,
-            k_period,
-            d_period,
-        } => Box::new(DsoConfirm::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
-            smooth_period,
-            k_period,
-            d_period,
+        ConfirmConfig::Cc {
+            source,
+            period_fast,
+            period_slow,
+            smooth,
+            period_smooth,
+            smooth_signal,
+            period_signal,
+        } => Box::new(CcConfirm::new(
+            source_deserialize(source as usize),
+            period_fast,
+            period_slow,
+            smooth_deserialize(smooth as usize),
+            period_smooth,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
         )),
         ConfirmConfig::Cci {
-            source_type,
-            smooth_type,
+            source,
             period,
             factor,
+            smooth,
+            period_smooth,
         } => Box::new(CciConfirm::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
+            source_deserialize(source as usize),
             period,
             factor,
+            smooth_deserialize(smooth as usize),
+            period_smooth,
+        )),
+        ConfirmConfig::Wpr {
+            source,
+            period,
+            smooth_signal,
+            period_signal,
+        } => Box::new(WprConfirm::new(
+            source_deserialize(source as usize),
+            period,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
         )),
         ConfirmConfig::Eom {
             source_type,
             smooth_type,
             period,
-            divisor,
         } => Box::new(EomConfirm::new(
             source_deserialize(source_type as usize),
             smooth_deserialize(smooth_type as usize),
             period,
-            divisor,
         )),
         ConfirmConfig::Dumb { period } => Box::new(DumbConfirm::new(period)),
         ConfirmConfig::RsiSignalLine {
@@ -77,14 +103,6 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             period,
             threshold,
         )),
-        ConfirmConfig::Roc {
-            source_type,
-            period,
-        } => Box::new(RocConfirm::new(
-            source_deserialize(source_type as usize),
-            period,
-        )),
-        ConfirmConfig::Vi { atr_period, period } => Box::new(ViConfirm::new(atr_period, period)),
         ConfirmConfig::Stc {
             source_type,
             smooth_type,
@@ -101,6 +119,38 @@ pub fn map_to_confirm(config: ConfirmConfig) -> Box<dyn Confirm> {
             cycle,
             d_first,
             d_second,
+        )),
+        ConfirmConfig::Braid {
+            smooth_type,
+            fast_period,
+            slow_period,
+            open_period,
+            strength,
+            smooth_atr,
+            period_atr,
+        } => Box::new(BraidConfirm::new(
+            smooth_deserialize(smooth_type as usize),
+            fast_period,
+            slow_period,
+            open_period,
+            strength,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+        )),
+        ConfirmConfig::Didi {
+            source,
+            smooth,
+            period_medium,
+            period_slow,
+            smooth_signal,
+            period_signal,
+        } => Box::new(DidiConfirm::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period_medium,
+            period_slow,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
         )),
     }
 }

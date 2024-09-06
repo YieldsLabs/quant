@@ -118,20 +118,20 @@ class PositionStateMachine:
         self._state: Dict[str, PositionState] = {}
         self._position_manager = position_manager
         self._transitions = transitions
-        self._state_lock = asyncio.Lock()
+        self._lock = asyncio.Lock()
 
     async def _get_state(self, symbol: Symbol) -> PositionState:
-        async with self._state_lock:
+        async with self._lock:
             return self._state.get(symbol, PositionState.IDLE)
 
     async def _set_state(self, symbol: Symbol, state: PositionState) -> None:
-        async with self._state_lock:
+        async with self._lock:
             self._state[symbol] = state
 
     async def process_event(self, symbol: Symbol, event: PositionEvent):
         current_state = await self._get_state(symbol)
 
-        if not self._is_valid_state(current_state, event):
+        if not self._is_valid_state(self._transitions, current_state, event):
             return
 
         next_state, handler_name = self._transitions[(current_state, type(event))]
@@ -147,5 +147,8 @@ class PositionStateMachine:
             f"SM: symbol={symbol}, event={event}, curr_state={current_state}, next_state={next_state}"
         )
 
-    def _is_valid_state(self, state: PositionState, event: PositionEvent) -> bool:
-        return (state, type(event)) in self._transitions
+    @staticmethod
+    def _is_valid_state(
+        transitions: Transitions, state: PositionState, event: PositionEvent
+    ) -> bool:
+        return (state, type(event)) in transitions

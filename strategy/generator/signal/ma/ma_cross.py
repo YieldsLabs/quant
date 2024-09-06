@@ -12,4 +12,4 @@ class MaCrossSignal(Signal):
     type: SignalType = SignalType.MaCross
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     ma: Parameter = CategoricalParameter(MovingAverageType)
-    period: Parameter = RandomParameter(100.0, 150.0, 10.0)
+    period: Parameter = RandomParameter(10.0, 20.0, 5.0)

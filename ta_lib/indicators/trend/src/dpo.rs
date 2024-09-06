@@ -1,9 +1,9 @@
 use core::prelude::*;
 
-pub fn dpo(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
+pub fn dpo(source: &Price, smooth: Smooth, period: Period) -> Price {
     let k = period / 2 + 1;
 
-    source - source.smooth(smooth_type, period).shift(k)
+    source - source.smooth(smooth, period).shift(k)
 }
 
 #[cfg(test)]
@@ -24,7 +24,7 @@ mod tests {
             0.0022332668,
         ];
 
-        let result: Vec<f32> = dpo(&source, Smooth::SMA, period).into();
+        let result: Vec<Scalar> = dpo(&source, Smooth::SMA, period).into();
 
         assert_eq!(result, expected);
     }

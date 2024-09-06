@@ -1,12 +1,6 @@
 use core::prelude::*;
 
-pub fn cama(
-    source: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    tr: &Series<f32>,
-    period: usize,
-) -> Series<f32> {
+pub fn cama(source: &Price, high: &Price, low: &Price, tr: &Price, period: Period) -> Price {
     let hh = high.highest(period);
     let ll = low.lowest(period);
 
@@ -18,7 +12,7 @@ pub fn cama(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use volatility::tr;
+    use volatility::wtr;
 
     #[test]
     fn test_cama() {
@@ -52,9 +46,9 @@ mod tests {
             7.1226425, 7.1630764, 7.157433, 7.156123,
         ];
         let period = 2;
-        let tr = tr(&high, &low, &close);
+        let tr = wtr(&high, &low, &close);
 
-        let result: Vec<f32> = cama(&close, &high, &low, &tr, period).into();
+        let result: Vec<Scalar> = cama(&close, &high, &low, &tr, period).into();
 
         assert_eq!(result, expected);
     }

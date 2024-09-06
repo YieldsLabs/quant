@@ -1,17 +1,17 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 class PositionSide(Enum):
-    LONG = "long"
-    SHORT = "short"
+    LONG = auto()
+    SHORT = auto()
 
     def __str__(self):
-        return self.value
+        return self.name.upper()
 
 
 class SignalSide(Enum):
-    BUY = "buy"
-    SELL = "sell"
+    BUY = auto()
+    SELL = auto()
 
     def __str__(self):
-        return self.value.upper()
+        return self.name.upper()

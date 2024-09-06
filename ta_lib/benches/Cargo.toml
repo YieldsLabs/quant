@@ -24,11 +24,6 @@ name = "patterns"
 harness = false
 path = "patterns.rs"
 
-[[bench]]
-name = "strategy"
-harness = false
-path = "strategy.rs"
-
 [dependencies]
 core = { path = "../core" }
 candlestick = { path = "../patterns/candlestick" }

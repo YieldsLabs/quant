@@ -1,6 +1,7 @@
 use crate::config::SignalConfig;
 use crate::deserialize::{
-    candletrend_deserialize, ma_deserialize, smooth_deserialize, source_deserialize,
+    candlereversal_deserialize, candletrend_deserialize, ma_deserialize, smooth_deserialize,
+    source_deserialize,
 };
 use base::prelude::*;
 use signal::*;
@@ -68,6 +69,17 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             fast_period,
             slow_period,
             signal_period,
+        )),
+        SignalConfig::MadZeroCross {
+            source,
+            smooth,
+            period_fast,
+            period_slow,
+        } => Box::new(MadZeroCrossSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period_fast,
+            period_slow,
         )),
         SignalConfig::RocZeroCross {
             source_type,
@@ -227,17 +239,39 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
         )),
         // Flip
         SignalConfig::CeFlip {
+            source_type,
             period,
-            atr_period,
+            smooth_atr,
+            period_atr,
             factor,
-        } => Box::new(CeFlipSignal::new(period, atr_period, factor)),
+        } => Box::new(CeFlipSignal::new(
+            source_deserialize(source_type as usize),
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor,
+        )),
         SignalConfig::SupFlip {
             source_type,
-            atr_period,
+            smooth_atr,
+            period_atr,
             factor,
         } => Box::new(SupertrendFlipSignal::new(
             source_deserialize(source_type as usize),
-            atr_period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor,
+        )),
+        // Pullback
+        SignalConfig::SupPullback {
+            source,
+            smooth_atr,
+            period_atr,
+            factor,
+        } => Box::new(SupertrendPullbackSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
             factor,
         )),
         // Pattern
@@ -252,6 +286,25 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             fast_period,
             slow_period,
         )),
+        SignalConfig::Spread {
+            source,
+            smooth,
+            period_fast,
+            period_slow,
+        } => Box::new(SpreadSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period_fast,
+            period_slow,
+        )),
+        SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
+        SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
+            candletrend_deserialize(candle as usize),
+        )),
+        SignalConfig::CandlestickReversal { candle } => Box::new(CandlestickReversalSignal::new(
+            candlereversal_deserialize(candle as usize),
+        )),
+        // Color Switch
         SignalConfig::MacdColorSwitch {
             source_type,
             smooth_type,
@@ -265,31 +318,128 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             slow_period,
             signal_period,
         )),
-        SignalConfig::TiiV {
-            source_type,
+        // Contrarian
+        SignalConfig::KchA {
+            source,
+            smooth,
+            period,
+            smooth_atr,
+            period_atr,
+            factor,
+        } => Box::new(KchASignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor,
+        )),
+        SignalConfig::KchC {
+            source,
+            smooth,
+            period,
+            smooth_atr,
+            period_atr,
+            factor,
+        } => Box::new(KchCSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+            factor,
+        )),
+        SignalConfig::Snatr {
             smooth_type,
+            atr_period,
+            atr_smooth_period,
+            threshold,
+        } => Box::new(SnatrSignal::new(
+            smooth_deserialize(smooth_type as usize),
+            atr_period,
+            atr_smooth_period,
+            threshold,
+        )),
+        SignalConfig::TiiV {
+            source,
+            smooth,
             major_period,
             minor_period,
         } => Box::new(TiiVSignal::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
             major_period,
             minor_period,
         )),
-        SignalConfig::RsiV {
-            source_type,
-            smooth_type,
-            rsi_period,
+        SignalConfig::StochE {
+            source,
+            smooth,
+            period,
+            period_k,
+            period_d,
             threshold,
-        } => Box::new(RsiVSignal::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
-            rsi_period,
+        } => Box::new(StochESignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            period_k,
+            period_d,
             threshold,
         )),
-        SignalConfig::HighLow { period } => Box::new(HighLowSignal::new(period)),
-        SignalConfig::CandlestickTrend { candle } => Box::new(CandlestickTrendSignal::new(
-            candletrend_deserialize(candle as usize),
+        SignalConfig::RsiC {
+            source,
+            smooth,
+            period,
+            threshold,
+        } => Box::new(RsiCSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            threshold,
+        )),
+        SignalConfig::RsiD {
+            source,
+            smooth,
+            period,
+            threshold,
+        } => Box::new(RsiDSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            threshold,
+        )),
+        SignalConfig::RsiNt {
+            source,
+            smooth,
+            period,
+            threshold,
+        } => Box::new(RsiNtSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            threshold,
+        )),
+        SignalConfig::RsiU {
+            source,
+            smooth,
+            period,
+            threshold,
+        } => Box::new(RsiUSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            threshold,
+        )),
+        SignalConfig::RsiV {
+            source,
+            smooth,
+            period,
+            threshold,
+        } => Box::new(RsiVSignal::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            threshold,
         )),
         // BB
         SignalConfig::MacdBb {
@@ -456,30 +606,25 @@ pub fn map_to_signal(config: SignalConfig) -> Box<dyn Signal> {
             source_deserialize(source_type as usize),
             period,
         )),
-        // Reversal
-        SignalConfig::SnatrReversal {
-            smooth_type,
-            atr_period,
-            atr_smooth_period,
-            threshold,
-        } => Box::new(SnatrReversalSignal::new(
-            smooth_deserialize(smooth_type as usize),
-            atr_period,
-            atr_smooth_period,
-            threshold,
-        )),
-        SignalConfig::DmiReversal {
+        // 2 lines cross
+        SignalConfig::Dmi2LinesCross {
             smooth_type,
             adx_period,
             di_period,
-        } => Box::new(DmiReversalSignal::new(
+        } => Box::new(Dmi2LinesCrossSignal::new(
             smooth_deserialize(smooth_type as usize),
             adx_period,
             di_period,
         )),
-        SignalConfig::ViReversal { period, atr_period } => {
-            Box::new(ViReversalSignal::new(period, atr_period))
-        }
+        SignalConfig::Vi2LinesCross {
+            period,
+            smooth_atr,
+            period_atr,
+        } => Box::new(Vi2LinesCrossSignal::new(
+            period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
+        )),
         // Breakout
         SignalConfig::DchMa2Breakout {
             source_type,

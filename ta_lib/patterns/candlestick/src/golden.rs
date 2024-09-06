@@ -1,25 +1,15 @@
 use core::prelude::*;
 
-const GOLDEN_RATIO: f32 = 2.618;
+const GOLDEN_RATIO: Scalar = 2.618;
 
-pub fn bullish(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> Series<bool> {
+pub fn bullish(open: &Price, high: &Price, low: &Price, close: &Price) -> Rule {
     let back_2_low = low.shift(2);
     let golden_low = &back_2_low + GOLDEN_RATIO * (high.shift(2) - &back_2_low);
 
     low.slte(&open.shift(1)) & close.shift(1).sgt(&golden_low) & close.shift(2).sgt(&open.shift(2))
 }
 
-pub fn bearish(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> Series<bool> {
+pub fn bearish(open: &Price, high: &Price, low: &Price, close: &Price) -> Rule {
     let back_2_high = high.shift(2);
     let golden_high = &back_2_high - GOLDEN_RATIO * (&back_2_high - low.shift(2));
 

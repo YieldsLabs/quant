@@ -1,6 +1,7 @@
-use crate::series::Series;
+use crate::constants::ZERO;
+use crate::types::{Price, Rule, Scalar};
 
-impl<T: AsRef<[f32]>> From<T> for Series<f32> {
+impl<T: AsRef<[Scalar]>> From<T> for Price {
     fn from(item: T) -> Self {
         item.as_ref()
             .iter()
@@ -9,34 +10,34 @@ impl<T: AsRef<[f32]>> From<T> for Series<f32> {
     }
 }
 
-impl<'a> FromIterator<Option<&'a f32>> for Series<f32> {
-    fn from_iter<I: IntoIterator<Item = Option<&'a f32>>>(iter: I) -> Self {
+impl<'a> FromIterator<Option<&'a Scalar>> for Price {
+    fn from_iter<I: IntoIterator<Item = Option<&'a Scalar>>>(iter: I) -> Self {
         iter.into_iter().map(|opt| opt.copied()).collect()
     }
 }
 
-impl FromIterator<f32> for Series<f32> {
-    fn from_iter<I: IntoIterator<Item = f32>>(iter: I) -> Self {
+impl FromIterator<Scalar> for Price {
+    fn from_iter<I: IntoIterator<Item = Scalar>>(iter: I) -> Self {
         iter.into_iter()
             .map(|x| if x.is_nan() { None } else { Some(x) })
             .collect()
     }
 }
 
-impl From<Series<f32>> for Vec<f32> {
-    fn from(val: Series<f32>) -> Self {
-        val.into_iter().map(|x| x.unwrap_or(0.0)).collect()
+impl From<Price> for Vec<Scalar> {
+    fn from(val: Price) -> Self {
+        val.into_iter().map(|x| x.unwrap_or(ZERO)).collect()
     }
 }
 
-impl From<Series<bool>> for Vec<bool> {
-    fn from(val: Series<bool>) -> Self {
+impl From<Rule> for Vec<bool> {
+    fn from(val: Rule) -> Self {
         val.into_iter().map(|x| x.unwrap_or(false)).collect()
     }
 }
 
-impl From<Series<f32>> for Series<bool> {
-    fn from(val: Series<f32>) -> Self {
-        val.fmap(|opt| opt.map(|f| f.is_finite() && *f != 0.))
+impl From<Price> for Rule {
+    fn from(val: Price) -> Self {
+        val.fmap(|opt| opt.map(|f| f.is_finite() && *f != ZERO))
     }
 }

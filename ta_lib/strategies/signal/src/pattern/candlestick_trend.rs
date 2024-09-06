@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{candlestick_trend_indicator, CandleTrendType};
+use timeseries::prelude::*;
 
 const DEFAULT_LOOKBACK: usize = 13;
 
@@ -19,7 +20,7 @@ impl Signal for CandlestickTrendSignal {
         DEFAULT_LOOKBACK
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         candlestick_trend_indicator(&self.candle, data)
     }
 }

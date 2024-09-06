@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-pub fn di(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
-    let ma = source.smooth(smooth_type, period);
+pub fn di(source: &Price, smooth: Smooth, period: Period) -> Price {
+    let ma = source.smooth(smooth, period);
 
     SCALE * (source - &ma) / ma
 }
@@ -17,8 +17,8 @@ mod tests {
             6.8360, 6.8345, 6.8285, 6.8395,
         ]);
         let expected = vec![
-            0.0,
-            0.0,
+            -0.0000069530056,
+            0.009725365,
             -0.08268177,
             0.040116996,
             0.07046368,
@@ -34,7 +34,7 @@ mod tests {
             0.0658433,
         ];
 
-        let result: Vec<f32> = di(&source, Smooth::WMA, 3).into();
+        let result: Vec<Scalar> = di(&source, Smooth::WMA, 3).into();
 
         assert_eq!(result, expected);
     }

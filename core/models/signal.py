@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from .ohlcv import OHLCV
 from .side import SignalSide
 from .strategy import Strategy
 from .symbol import Symbol
@@ -12,12 +13,10 @@ class Signal:
     timeframe: Timeframe
     strategy: Strategy
     side: SignalSide
-
-    def __str__(self) -> str:
-        return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
-
-    def __repr__(self) -> str:
-        return f"Signal(symbol={self.symbol}, timeframe={self.timeframe}, side={self.side}, strategy={self.strategy})"
+    ohlcv: OHLCV
+    entry: float = field(default_factory=lambda: 0.0)
+    exit: float = field(default_factory=lambda: 0.0)
+    stop_loss: float = field(default_factory=lambda: 0.0)
 
     def __hash__(self) -> int:
         return hash((self.symbol, self.timeframe, self.strategy, self.side))
@@ -39,4 +38,13 @@ class Signal:
             "timeframe": str(self.timeframe),
             "strategy": str(self.strategy),
             "side": str(self.side),
+            "ohlcv": self.ohlcv.to_dict(),
+            "entry": self.entry,
+            "stop_loss": self.stop_loss,
         }
+
+    def __str__(self) -> str:
+        return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
+
+    def __repr__(self) -> str:
+        return f"Signal({self})"

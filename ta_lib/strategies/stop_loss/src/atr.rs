@@ -1,14 +1,17 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 
 pub struct AtrStopLoss {
+    smooth: Smooth,
     period: usize,
     factor: f32,
 }
 
 impl AtrStopLoss {
-    pub fn new(period: f32, factor: f32) -> Self {
+    pub fn new(smooth: Smooth, period: f32, factor: f32) -> Self {
         Self {
+            smooth,
             period: period as usize,
             factor,
         }
@@ -20,8 +23,8 @@ impl StopLoss for AtrStopLoss {
         self.period
     }
 
-    fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-        let atr_multi = data.atr(self.period) * self.factor;
+    fn find(&self, data: &OHLCVSeries) -> (Price, Price) {
+        let atr_multi = data.atr(self.smooth, self.period) * self.factor;
 
         (data.low() - &atr_multi, data.high() + &atr_multi)
     }

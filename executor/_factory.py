@@ -4,8 +4,8 @@ from core.models.order import OrderType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
-from ._market_order_actor import MarketOrderActor
-from ._paper_order_actor import PaperOrderActor
+from ._market_actor import MarketOrderActor
+from ._paper_actor import PaperOrderActor
 
 
 class OrderExecutorActorFactory(AbstractExecutorActorFactory):

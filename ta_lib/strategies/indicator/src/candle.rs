@@ -1,9 +1,6 @@
-use base::prelude::*;
-use candlestick::{
-    bottle, double_trouble, golden, h, hexad, hikkake, marubozu, master_candle, quintuplets,
-    slingshot, tasuki, three_candles, three_methods, three_one_two,
-};
+use candlestick::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 
 #[derive(Copy, Clone)]
 pub enum CandleTrendType {
@@ -23,10 +20,7 @@ pub enum CandleTrendType {
     THREE_ONE_TWO,
 }
 
-pub fn candlestick_trend_indicator(
-    candle: &CandleTrendType,
-    data: &OHLCVSeries,
-) -> (Series<bool>, Series<bool>) {
+pub fn candlestick_trend_indicator(candle: &CandleTrendType, data: &OHLCVSeries) -> (Rule, Rule) {
     match candle {
         CandleTrendType::BOTTLE => (
             bottle::bullish(data.open(), data.low(), data.close()),
@@ -83,6 +77,68 @@ pub fn candlestick_trend_indicator(
         CandleTrendType::THREE_ONE_TWO => (
             three_one_two::bullish(data.open(), data.high(), data.low(), data.close()),
             three_one_two::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum CandleReversalType {
+    DOJI,
+    ENGULFING,
+    EUPHORIA,
+    KANGAROO,
+    R,
+    SPLIT,
+    TWEEZERS,
+    HARAMIS,
+    HARAMIF,
+    HAMMER,
+}
+
+pub fn candlestick_reversal_indicator(
+    candle: &CandleReversalType,
+    data: &OHLCVSeries,
+) -> (Rule, Rule) {
+    match candle {
+        CandleReversalType::DOJI => (
+            doji::bullish(data.open(), data.close()),
+            doji::bearish(data.open(), data.close()),
+        ),
+        CandleReversalType::ENGULFING => (
+            engulfing::bullish(data.open(), data.high(), data.low(), data.close()),
+            engulfing::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+        CandleReversalType::EUPHORIA => (
+            euphoria::bullish(data.open(), data.close()),
+            euphoria::bearish(data.open(), data.close()),
+        ),
+        CandleReversalType::HAMMER => (
+            hammer::bullish(data.open(), data.high(), data.close()),
+            hammer::bearish(data.open(), data.low(), data.close()),
+        ),
+        CandleReversalType::HARAMIS => (
+            harami_strict::bullish(data.open(), data.high(), data.low(), data.close()),
+            harami_strict::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+        CandleReversalType::HARAMIF => (
+            harami_flexible::bullish(data.open(), data.high(), data.low(), data.close()),
+            harami_flexible::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+        CandleReversalType::KANGAROO => (
+            kangaroo_tail::bullish(data.open(), data.high(), data.low(), data.close()),
+            kangaroo_tail::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+        CandleReversalType::R => (
+            r::bullish(data.low(), data.close()),
+            r::bearish(data.high(), data.close()),
+        ),
+        CandleReversalType::SPLIT => (
+            split::bullish(data.open(), data.high(), data.low(), data.close()),
+            split::bearish(data.open(), data.high(), data.low(), data.close()),
+        ),
+        CandleReversalType::TWEEZERS => (
+            tweezers::bullish(data.open(), data.low(), data.close()),
+            tweezers::bearish(data.open(), data.high(), data.close()),
         ),
     }
 }

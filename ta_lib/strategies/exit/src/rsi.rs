@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::rsi;
+use timeseries::prelude::*;
 
 const RSI_OVERBOUGHT: f32 = 70.0;
 const RSI_OVERSOLD: f32 = 30.0;
@@ -28,7 +29,7 @@ impl Exit for RsiExit {
         self.period
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let rsi = rsi(
             &data.source(self.source_type),
             self.smooth_type,

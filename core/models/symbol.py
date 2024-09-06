@@ -10,12 +10,13 @@ class Symbol:
     min_price_size: float
     position_precision: int
     price_precision: int
+    max_leverage: float
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     def __str__(self):
         return self.name
 
     def __repr__(self) -> str:
-        return f"Symbol({self.name})"
-
-    def __hash__(self) -> int:
-        return hash(self.name)
+        return f"Symbol({self})"

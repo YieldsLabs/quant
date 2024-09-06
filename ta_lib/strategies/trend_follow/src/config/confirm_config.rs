@@ -3,6 +3,13 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum ConfirmConfig {
+    // contrarian
+    BbC {
+        smooth: f32,
+        period: f32,
+        factor: f32,
+    },
+    // trend
     Dpo {
         source_type: f32,
         smooth_type: f32,
@@ -12,13 +19,13 @@ pub enum ConfirmConfig {
         source_type: f32,
         smooth_type: f32,
         period: f32,
-        divisor: f32,
     },
     Cci {
-        source_type: f32,
-        smooth_type: f32,
+        source: f32,
         period: f32,
         factor: f32,
+        smooth: f32,
+        period_smooth: f32,
     },
     Dumb {
         period: f32,
@@ -37,10 +44,6 @@ pub enum ConfirmConfig {
         smooth_period: f32,
         threshold: f32,
     },
-    Roc {
-        source_type: f32,
-        period: f32,
-    },
     Stc {
         source_type: f32,
         smooth_type: f32,
@@ -50,15 +53,36 @@ pub enum ConfirmConfig {
         d_first: f32,
         d_second: f32,
     },
-    Dso {
-        source_type: f32,
+    Braid {
         smooth_type: f32,
-        smooth_period: f32,
-        k_period: f32,
-        d_period: f32,
+        fast_period: f32,
+        slow_period: f32,
+        open_period: f32,
+        strength: f32,
+        smooth_atr: f32,
+        period_atr: f32,
     },
-    Vi {
-        atr_period: f32,
+    Wpr {
+        source: f32,
         period: f32,
+        smooth_signal: f32,
+        period_signal: f32,
+    },
+    Didi {
+        source: f32,
+        smooth: f32,
+        period_medium: f32,
+        period_slow: f32,
+        smooth_signal: f32,
+        period_signal: f32,
+    },
+    Cc {
+        source: f32,
+        period_fast: f32,
+        period_slow: f32,
+        smooth: f32,
+        period_smooth: f32,
+        smooth_signal: f32,
+        period_signal: f32,
     },
 }

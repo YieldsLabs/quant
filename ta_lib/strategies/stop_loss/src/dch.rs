@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use volatility::dch;
 
 pub struct DchStopLoss {
@@ -21,7 +22,7 @@ impl StopLoss for DchStopLoss {
         self.period
     }
 
-    fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
+    fn find(&self, data: &OHLCVSeries) -> (Price, Price) {
         let (upper, _, lower) = dch(data.high(), data.low(), self.period);
         let volatility = data.close().std(self.period).highest(self.period) * self.factor;
 

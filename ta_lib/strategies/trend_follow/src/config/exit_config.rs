@@ -5,15 +5,9 @@ use serde::Deserialize;
 pub enum ExitConfig {
     Ast {
         source_type: f32,
-        atr_period: f32,
+        smooth_atr: f32,
+        period_atr: f32,
         factor: f32,
-    },
-    Cci {
-        source_type: f32,
-        smooth_type: f32,
-        period: f32,
-        factor: f32,
-        threshold: f32,
     },
     Dumb {},
     HighLow {
@@ -40,5 +34,17 @@ pub enum ExitConfig {
         smooth_type: f32,
         period: f32,
         signal_period: f32,
+    },
+    Rex {
+        source: f32,
+        smooth: f32,
+        period: f32,
+        smooth_signal: f32,
+        period_signal: f32,
+    },
+    Mad {
+        source: f32,
+        period_fast: f32,
+        period_slow: f32,
     },
 }

@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 
 pub struct DumbConfirm {
     period: usize,
@@ -18,7 +19,7 @@ impl Confirm for DumbConfirm {
         self.period
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let len = data.len();
 
         (Series::one(len).into(), Series::one(len).into())

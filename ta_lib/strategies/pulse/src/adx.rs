@@ -1,22 +1,23 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::dmi;
+use timeseries::prelude::*;
 
-const ADX_LOWER_BARRIER: f32 = 25.;
+const ADX_THRESHOLD: f32 = 30.;
 
 pub struct AdxPulse {
-    smooth_type: Smooth,
-    adx_period: usize,
-    di_period: usize,
+    smooth: Smooth,
+    period_adx: usize,
+    period_di: usize,
     threshold: f32,
 }
 
 impl AdxPulse {
-    pub fn new(smooth_type: Smooth, adx_period: f32, di_period: f32, threshold: f32) -> Self {
+    pub fn new(smooth: Smooth, period_adx: f32, period_di: f32, threshold: f32) -> Self {
         Self {
-            smooth_type,
-            adx_period: adx_period as usize,
-            di_period: di_period as usize,
+            smooth,
+            period_adx: period_adx as usize,
+            period_di: period_di as usize,
             threshold,
         }
     }
@@ -24,20 +25,22 @@ impl AdxPulse {
 
 impl Pulse for AdxPulse {
     fn lookback(&self) -> usize {
-        std::cmp::max(self.adx_period, self.di_period)
+        std::cmp::max(self.period_adx, self.period_di)
     }
 
     fn assess(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-        let (adx, _, _) = dmi(
+        let atr = data.atr(self.smooth, self.period_di);
+        let (_, _, adx) = dmi(
             data.high(),
             data.low(),
-            &data.atr(self.di_period),
-            self.smooth_type,
-            self.adx_period,
-            self.di_period,
+            &atr,
+            self.smooth,
+            self.period_adx,
+            self.period_di,
         );
-        let adx_lower = ADX_LOWER_BARRIER + self.threshold;
 
-        (adx.sgt(&adx_lower), adx.sgt(&adx_lower))
+        let barrier = ADX_THRESHOLD - self.threshold;
+
+        (adx.sgt(&barrier), adx.sgt(&barrier))
     }
 }

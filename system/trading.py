@@ -137,13 +137,15 @@ class TradingSystem(AbstractSystem):
 
                 feed_actor.stop()
 
+                await asyncio.sleep(1.0)
+
                 signal_actors[(symbol, timeframe)].append(signal_actor)
 
         for (symbol, timeframe), _ in self.next_strategy.items():
             await self.execute(
                 UpdateSettings(
                     symbol,
-                    self.config["leverage"],
+                    min(symbol.max_leverage, self.config["leverage"]),
                     PositionMode.HEDGED,
                     MarginMode.CROSS,
                 )

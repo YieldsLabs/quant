@@ -3,13 +3,12 @@ import logging
 import time
 from typing import Union
 
-from core.actors import Actor
+from core.actors import StrategyActor
 from core.events.backtest import BacktestEnded
+from core.events.base import EventMeta
 from core.events.position import (
-    BrokerPositionAdjusted,
     BrokerPositionClosed,
     BrokerPositionOpened,
-    PositionAdjusted,
     PositionClosed,
     PositionCloseRequested,
     PositionInitialized,
@@ -22,17 +21,18 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
+from core.models.risk_type import SignalRiskType
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.copilot import EvaluateSignal
+from core.queries.ohlcv import TA, BackNBars
 
 from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
-BrokerPositionEvent = Union[
-    BrokerPositionOpened, BrokerPositionAdjusted, BrokerPositionClosed
-]
+BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
 ExitSignal = RiskThresholdBreached
 BacktestSignal = BacktestEnded
 
@@ -41,14 +41,14 @@ PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent, BacktestSign
 logger = logging.getLogger(__name__)
 
 TIME_BUFF = 3
+N_BACK_BARS = 4
 
 
-class PositionActor(Actor):
+class PositionActor(StrategyActor):
     _EVENTS = [
         GoLongSignalReceived,
         GoShortSignalReceived,
         BrokerPositionOpened,
-        BrokerPositionAdjusted,
         BrokerPositionClosed,
         RiskThresholdBreached,
         BacktestEnded,
@@ -69,10 +69,6 @@ class PositionActor(Actor):
         self.state = PositionStorage()
         self.config = config_service.get("position")
 
-    def pre_receive(self, event: PositionEvent) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-        return self._symbol == symbol and self._timeframe == timeframe
-
     async def on_receive(self, event):
         symbol, _ = self._get_event_key(event)
 
@@ -90,13 +86,28 @@ class PositionActor(Actor):
             )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
-        if int(event.meta.timestamp) < int(time.time()) - TIME_BUFF:
+        if self._is_stale_signal(event.meta):
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 
         async def create_and_store_position(event: SignalEvent):
-            position = await self.position_factory.create_position(
-                event.signal, event.ohlcv, event.entry_price, event.stop_loss
+            symbol, timeframe, ohlcv = (
+                event.signal.symbol,
+                event.signal.timeframe,
+                event.signal.ohlcv,
+            )
+
+            back_bars = await self.ask(BackNBars(symbol, timeframe, ohlcv, N_BACK_BARS))
+            ta = await self.ask(TA(symbol, timeframe, ohlcv))
+            signal_risk_level = await self.ask(
+                EvaluateSignal(event.signal, back_bars, ta)
+            )
+
+            if signal_risk_level.type in {SignalRiskType.VERY_HIGH}:
+                return False
+
+            position = await self.position_factory.create(
+                event.signal, signal_risk_level, ta
             )
 
             await self.state.store_position(position)
@@ -137,27 +148,6 @@ class PositionActor(Actor):
 
         return False
 
-    async def handle_position_adjusted(self, event: BrokerPositionAdjusted) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-        long_position, short_position = await self.state.retrieve_position(
-            symbol, timeframe
-        )
-
-        if (
-            event.position.side == PositionSide.LONG
-            and long_position
-            and long_position.last_modified < event.meta.timestamp
-        ) or (
-            event.position.side == PositionSide.SHORT
-            and short_position
-            and short_position.last_modified < event.meta.timestamp
-        ):
-            next_position = await self.state.update_stored_position(event.position)
-            await self.tell(PositionAdjusted(next_position))
-            return True
-
-        return False
-
     async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
@@ -174,6 +164,9 @@ class PositionActor(Actor):
         return False
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
+        if not event.position.has_risk:
+            logger.warn(f"Attempt to close not risky position: {event.position}")
+
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
             symbol, timeframe
@@ -189,7 +182,7 @@ class PositionActor(Actor):
             and short_position.last_modified < event.meta.timestamp
         ):
             next_position = await self.state.update_stored_position(event.position)
-            await self.tell(PositionCloseRequested(next_position, event.exit_price))
+            await self.tell(PositionCloseRequested(next_position))
             return True
 
         return False
@@ -201,16 +194,16 @@ class PositionActor(Actor):
         )
 
         if long_position:
-            await self.tell(
-                PositionCloseRequested(long_position, long_position.entry_price)
-            )
+            await self.tell(PositionCloseRequested(long_position))
 
         if short_position:
-            await self.tell(
-                PositionCloseRequested(short_position, short_position.entry_price)
-            )
+            await self.tell(PositionCloseRequested(short_position))
 
         return True
+
+    @staticmethod
+    def _is_stale_signal(meta: EventMeta) -> bool:
+        return int(meta.timestamp) < int(time.time()) - TIME_BUFF
 
     @staticmethod
     def _get_event_key(event: PositionEvent):

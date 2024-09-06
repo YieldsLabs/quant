@@ -12,6 +12,8 @@ repository.workspace = true
 [dependencies]
 base = { path = "../base" }
 core = { path = "../../core" }
+timeseries = { path = "../../timeseries" }
 momentum = { path = "../../indicators/momentum" }
 trend = { path = "../../indicators/trend" }
 volume = { path = "../../indicators/volume" }
+volatility = { path = "../../indicators/volatility" }

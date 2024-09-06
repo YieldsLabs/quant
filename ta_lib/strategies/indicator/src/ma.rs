@@ -1,8 +1,9 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use trend::{
-    alma, cama, dema, ema, frama, gma, hema, hma, kama, kjs, lsma, md, rmsma, sinwma, sma, smma,
-    t3, tema, tma, vidya, vwema, vwma, wma, zlema, zlhma, zlsma, zltema,
+    alma, cama, dema, ema, frama, gma, hema, hma, kama, lsma, md, midpoint, rmsma, sinwma, slsma,
+    sma, smma, t3, tema, trima, ults, vidya, vwema, vwma, wma, zlema, zlhma, zlsma, zltema,
 };
 
 #[derive(Copy, Clone)]
@@ -21,11 +22,14 @@ pub enum MovingAverageType {
     MD,
     RMSMA,
     SINWMA,
+    SLSMA,
     SMA,
     SMMA,
     TTHREE,
     TEMA,
-    TMA,
+    TL,
+    TRIMA,
+    ULTS,
     VIDYA,
     VWMA,
     VWEMA,
@@ -39,44 +43,41 @@ pub enum MovingAverageType {
 pub fn ma_indicator(
     ma: &MovingAverageType,
     data: &OHLCVSeries,
-    source_type: SourceType,
+    source: SourceType,
     period: usize,
-) -> Series<f32> {
+) -> Price {
+    let source = data.source(source);
+
     match ma {
-        MovingAverageType::ALMA => alma(&data.source(source_type), period, 0.85, 6.0),
-        MovingAverageType::CAMA => cama(
-            &data.source(source_type),
-            data.high(),
-            data.low(),
-            &data.tr(),
-            period,
-        ),
-        MovingAverageType::DEMA => dema(&data.source(source_type), period),
-        MovingAverageType::EMA => ema(&data.source(source_type), period),
-        MovingAverageType::FRAMA => {
-            frama(&data.source(source_type), data.high(), data.low(), period)
-        }
-        MovingAverageType::GMA => gma(&data.source(source_type), period),
-        MovingAverageType::HMA => hma(&data.source(source_type), period),
-        MovingAverageType::HEMA => hema(&data.source(source_type), period),
-        MovingAverageType::KAMA => kama(&data.source(source_type), period),
-        MovingAverageType::KJS => kjs(data.high(), data.low(), period),
-        MovingAverageType::LSMA => lsma(&data.source(source_type), period),
-        MovingAverageType::MD => md(&data.source(source_type), period),
-        MovingAverageType::RMSMA => rmsma(&data.source(source_type), period),
-        MovingAverageType::SINWMA => sinwma(&data.source(source_type), period),
-        MovingAverageType::SMA => sma(&data.source(source_type), period),
-        MovingAverageType::SMMA => smma(&data.source(source_type), period),
-        MovingAverageType::TTHREE => t3(&data.source(source_type), period),
-        MovingAverageType::TEMA => tema(&data.source(source_type), period),
-        MovingAverageType::TMA => tma(&data.source(source_type), period),
-        MovingAverageType::VIDYA => vidya(&data.source(source_type), period, 3 * period),
-        MovingAverageType::VWMA => vwma(&data.source(source_type), data.volume(), period),
-        MovingAverageType::VWEMA => vwema(&data.source(source_type), data.volume(), period),
-        MovingAverageType::WMA => wma(&data.source(source_type), period),
-        MovingAverageType::ZLEMA => zlema(&data.source(source_type), period),
-        MovingAverageType::ZLSMA => zlsma(&data.source(source_type), period),
-        MovingAverageType::ZLTEMA => zltema(&data.source(source_type), period),
-        MovingAverageType::ZLHMA => zlhma(&data.source(source_type), period, 3),
+        MovingAverageType::ALMA => alma(&source, period, 0.85, 6.0),
+        MovingAverageType::CAMA => cama(&source, data.high(), data.low(), &data.wtr(), period),
+        MovingAverageType::DEMA => dema(&source, period),
+        MovingAverageType::EMA => ema(&source, period),
+        MovingAverageType::FRAMA => frama(&source, data.high(), data.low(), period),
+        MovingAverageType::GMA => gma(&source, period),
+        MovingAverageType::HMA => hma(&source, period),
+        MovingAverageType::HEMA => hema(&source, period),
+        MovingAverageType::KAMA => kama(&source, period),
+        MovingAverageType::KJS => midpoint(data.high(), data.low(), 26),
+        MovingAverageType::LSMA => lsma(&source, period),
+        MovingAverageType::MD => md(&source, period),
+        MovingAverageType::RMSMA => rmsma(&source, period),
+        MovingAverageType::SINWMA => sinwma(&source, period),
+        MovingAverageType::SLSMA => slsma(&source, period),
+        MovingAverageType::SMA => sma(&source, period),
+        MovingAverageType::SMMA => smma(&source, period),
+        MovingAverageType::TTHREE => t3(&source, period),
+        MovingAverageType::TEMA => tema(&source, period),
+        MovingAverageType::TL => midpoint(data.high(), data.low(), 55),
+        MovingAverageType::TRIMA => trima(&source, period),
+        MovingAverageType::ULTS => ults(&source, period),
+        MovingAverageType::VIDYA => vidya(&source, period, 3 * period),
+        MovingAverageType::VWMA => vwma(&source, data.volume(), period),
+        MovingAverageType::VWEMA => vwema(&source, data.volume(), period),
+        MovingAverageType::WMA => wma(&source, period),
+        MovingAverageType::ZLEMA => zlema(&source, period),
+        MovingAverageType::ZLSMA => zlsma(&source, period),
+        MovingAverageType::ZLTEMA => zltema(&source, period),
+        MovingAverageType::ZLHMA => zlhma(&source, period, 3),
     }
 }

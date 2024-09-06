@@ -1,7 +1,8 @@
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from core.actors import Actor
+from core.actors import StrategyActor
+from core.actors.policy.signal import SignalPolicy
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class SignalActor(Actor):
+class SignalActor(StrategyActor):
     _EVENTS = [NewMarketDataReceived]
 
     def __init__(
@@ -25,29 +26,30 @@ class SignalActor(Actor):
         service: AbstractSignalService,
     ):
         super().__init__(symbol, timeframe)
-
-        self.strategy_ref: Optional[StrategyRef] = None
-        self.service = service
         self._strategy = strategy
+        self.service = service
+        self.strategy_ref: Optional[StrategyRef] = None
+
+    @property
+    def strategy(self):
+        return self._strategy
 
     def on_start(self):
-        self.strategy_ref = self.service.register(self._strategy)
+        self.strategy_ref = self.service.register(self.strategy)
 
     def on_stop(self):
         self.strategy_ref.unregister()
         self.strategy_ref = None
 
     def pre_receive(self, event: NewMarketDataReceived):
-        return (
-            event.symbol == self._symbol
-            and event.timeframe == self._timeframe
-            and event.closed
-        )
+        return SignalPolicy.should_process(self, event)
 
     async def on_receive(self, event: NewMarketDataReceived):
         signal_event = self.strategy_ref.next(
-            self._symbol, self._timeframe, self._strategy, event.ohlcv
+            self.symbol, self.timeframe, self.strategy, event.ohlcv
         )
 
         if signal_event:
+            logger.debug(signal_event)
+
             await self.tell(signal_event)

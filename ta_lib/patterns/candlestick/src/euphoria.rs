@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
+pub fn bullish(open: &Price, close: &Price) -> Rule {
     let body = (close - open).abs();
 
     let back_2_body = body.shift(2);
@@ -12,7 +12,7 @@ pub fn bullish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
         & back_2_body.sgt(&body.shift(3))
 }
 
-pub fn bearish(open: &Series<f32>, close: &Series<f32>) -> Series<bool> {
+pub fn bearish(open: &Price, close: &Price) -> Rule {
     let body = (close - open).abs();
 
     let back_2_body = body.shift(2);

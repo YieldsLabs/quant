@@ -1,15 +1,19 @@
 use core::prelude::*;
 
-pub fn rsi(source: &Series<f32>, smooth_type: Smooth, period: usize) -> Series<f32> {
+pub fn rsi(source: &Price, smooth: Smooth, period: Period) -> Price {
+    let mom = source.change(1);
+    let up = mom.max(&ZERO).smooth(smooth, period);
+    let down = mom.min(&ZERO).negate().smooth(smooth, period);
+
     let len = source.len();
 
-    let mom = source.change(1);
-    let up = mom.max(&ZERO).smooth(smooth_type, period);
-    let down = mom.min(&ZERO).negate().smooth(smooth_type, period);
+    let rsi = iff!(
+        down.seq(&ZERO),
+        Series::fill(SCALE, len),
+        SCALE - (SCALE / (1. + &up / down))
+    );
 
-    let oneh = Series::fill(SCALE, len);
-
-    iff!(down.seq(&ZERO), oneh, SCALE - (SCALE / (1. + up / down)))
+    iff!(up.seq(&ZERO), Series::fill(ZERO, len), rsi)
 }
 
 #[cfg(test)]
@@ -24,12 +28,12 @@ mod test {
         ]);
         let period = 3;
         let expected = [
-            100.0, 100.0, 100.0, 100.0, 46.885506, 66.75195, 50.889442, 65.60162, 73.53246,
+            0.0, 100.0, 100.0, 100.0, 46.885506, 66.75195, 50.889442, 65.60162, 73.53246,
             23.915344, 57.76078, 71.00006, 46.02974, 25.950226, 25.200401, 14.512299, 10.280083,
             33.926575, 36.707954, 30.863396, 15.785042, 64.06485,
         ];
 
-        let result: Vec<f32> = rsi(&source, Smooth::SMMA, period).into();
+        let result: Vec<Scalar> = rsi(&source, Smooth::SMMA, period).into();
 
         assert_eq!(result, expected);
     }

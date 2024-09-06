@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use momentum::trix;
+use timeseries::prelude::*;
 
 pub struct TrixExit {
     source_type: SourceType,
@@ -30,7 +31,7 @@ impl Exit for TrixExit {
         std::cmp::max(self.period, self.signal_period)
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let trix = trix(
             &data.source(self.source_type),
             self.smooth_type,

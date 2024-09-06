@@ -1,7 +1,7 @@
 use core::prelude::*;
 
-pub fn median_price(high: &Series<f32>, low: &Series<f32>) -> Series<f32> {
-    0.5 * (high + low)
+pub fn median_price(high: &Price, low: &Price) -> Price {
+    HALF * (high + low)
 }
 
 #[cfg(test)]
@@ -15,7 +15,7 @@ mod tests {
 
         let expected = vec![0.75, 1.5, 2.5];
 
-        let result: Vec<f32> = median_price(&high, &low).into();
+        let result: Vec<Scalar> = median_price(&high, &low).into();
 
         assert_eq!(result, expected);
     }

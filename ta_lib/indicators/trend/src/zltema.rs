@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn zltema(source: &Series<f32>, period: usize) -> Series<f32> {
+pub fn zltema(source: &Price, period: Period) -> Price {
     source
         .smooth(Smooth::TEMA, period)
         .smooth(Smooth::TEMA, period)
@@ -16,7 +16,7 @@ mod tests {
         let period = 3;
         let expected = vec![18.898, 18.852058, 18.865294, 18.910984, 18.869732];
 
-        let result: Vec<f32> = zltema(&source, period).into();
+        let result: Vec<Scalar> = zltema(&source, period).into();
 
         assert_eq!(result, expected);
     }

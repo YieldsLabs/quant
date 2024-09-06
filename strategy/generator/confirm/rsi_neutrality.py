@@ -12,5 +12,5 @@ class RsiNeutralityConfirm(Confirm):
     type: Confirm = ConfirmType.RsiNeutrality
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)
-    period: Parameter = StaticParameter(14.0)
+    period: Parameter = StaticParameter(28.0)
     threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)

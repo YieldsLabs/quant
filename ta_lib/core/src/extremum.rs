@@ -1,31 +1,35 @@
-use crate::series::Series;
 use crate::traits::Extremum;
+use crate::types::{Price, Scalar};
 
-impl Extremum<f32> for Series<f32> {
-    type Output = Series<f32>;
+impl Extremum<Scalar> for Price {
+    type Output = Price;
 
-    fn extremum<F>(&self, scalar: &f32, f: F) -> Self::Output
+    fn extremum<F>(&self, scalar: &Scalar, f: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> f32,
+        F: Fn(Scalar, Scalar) -> Scalar,
     {
         self.fmap(|val| val.map(|v| f(*v, *scalar)).or(Some(*scalar)))
     }
 
-    fn max(&self, scalar: &f32) -> Self::Output {
-        self.extremum(scalar, f32::max)
+    fn max(&self, scalar: &Scalar) -> Self::Output {
+        self.extremum(scalar, Scalar::max)
     }
 
-    fn min(&self, scalar: &f32) -> Self::Output {
-        self.extremum(scalar, f32::min)
+    fn min(&self, scalar: &Scalar) -> Self::Output {
+        self.extremum(scalar, Scalar::min)
+    }
+
+    fn clip(&self, lhs: &Scalar, rhs: &Scalar) -> Self::Output {
+        self.min(rhs).max(lhs)
     }
 }
 
-impl Extremum<Series<f32>> for Series<f32> {
-    type Output = Series<f32>;
+impl Extremum<Price> for Price {
+    type Output = Price;
 
-    fn extremum<F>(&self, rhs: &Series<f32>, f: F) -> Self::Output
+    fn extremum<F>(&self, rhs: &Price, f: F) -> Self::Output
     where
-        F: Fn(f32, f32) -> f32,
+        F: Fn(Scalar, Scalar) -> Scalar,
     {
         self.zip_with(rhs, |a, b| match (a, b) {
             (Some(a_val), Some(b_val)) => Some(f(*a_val, *b_val)),
@@ -34,50 +38,45 @@ impl Extremum<Series<f32>> for Series<f32> {
         })
     }
 
-    fn max(&self, rhs: &Series<f32>) -> Self::Output {
-        self.extremum(rhs, f32::max)
+    fn max(&self, rhs: &Price) -> Self::Output {
+        self.extremum(rhs, Scalar::max)
     }
 
-    fn min(&self, rhs: &Series<f32>) -> Self::Output {
-        self.extremum(rhs, f32::min)
+    fn min(&self, rhs: &Price) -> Self::Output {
+        self.extremum(rhs, Scalar::min)
+    }
+
+    fn clip(&self, lhs: &Price, rhs: &Price) -> Self::Output {
+        self.min(rhs).max(lhs)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::series::Series;
 
     #[test]
     fn test_smax() {
-        let source = vec![
+        let series = Series::from([
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
-        ];
+        ]);
         let length = 1;
-        let epsilon = 0.001;
-        let expected = [
-            Some(0.0),
-            Some(0.0),
-            Some(0.0599),
-            Some(0.0),
-            Some(0.7199),
-            Some(0.5),
-            Some(0.2700),
-            Some(0.3200),
-            Some(0.4200),
-        ];
-        let series = Series::from(&source);
+        let expected = Series::from([
+            0.,
+            0.,
+            0.060001373,
+            0.,
+            0.7200012,
+            0.5,
+            0.26999664,
+            0.3199997,
+            0.42000198,
+        ]);
 
         let result = series.change(length).max(&0.0);
 
-        for i in 0..result.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
-        }
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -120,35 +119,15 @@ mod tests {
 
     #[test]
     fn test_smin() {
-        let source = vec![
+        let series = Series::from([
             44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
-        ];
+        ]);
         let length = 1;
-        let epsilon = 0.001;
-        let expected = [
-            Some(0.0),
-            Some(-0.25),
-            Some(0.0),
-            Some(-0.5399),
-            Some(0.0),
-            Some(0.0),
-            Some(0.0),
-            Some(0.0),
-            Some(0.0),
-        ];
-        let series = Series::from(&source);
+        let expected = Series::from([0., -0.25, 0., -0.5400009, 0., 0., 0., 0., 0.]);
 
         let result = series.change(length).min(&0.0);
 
-        for i in 0..result.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
-        }
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -183,6 +162,18 @@ mod tests {
         let expected = Series::from([44.34, 44.0, 44.15, 43.60, 14.33, 44.83, 45.10, 45.42, 45.84]);
 
         let result = a.min(&b);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_clip() {
+        let source = Series::from([-1.0, 0.0, 1.0, 3.0, 5.0]);
+        let expected = Series::from([0.0, 0.0, 1.0, 3.0, 3.0]);
+        let min = 0.;
+        let max = 3.;
+
+        let result = source.clip(&min, &max);
 
         assert_eq!(result, expected);
     }

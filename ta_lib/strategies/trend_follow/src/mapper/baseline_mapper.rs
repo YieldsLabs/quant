@@ -6,12 +6,8 @@ use baseline::*;
 #[inline]
 pub fn map_to_baseline(config: BaseLineConfig) -> Box<dyn BaseLine> {
     match config {
-        BaseLineConfig::Ma {
-            source_type,
-            ma,
-            period,
-        } => Box::new(MaBaseLine::new(
-            source_deserialize(source_type as usize),
+        BaseLineConfig::Ma { source, ma, period } => Box::new(MaBaseLine::new(
+            source_deserialize(source as usize),
             ma_deserialize(ma as usize),
             period,
         )),

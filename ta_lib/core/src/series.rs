@@ -1,4 +1,5 @@
-use std::ops::{Index, IndexMut};
+use crate::types::{Period, Price, Rule, Scalar};
+use crate::{ONE, ZERO};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Series<T> {
@@ -22,26 +23,12 @@ impl<T> FromIterator<Option<T>> for Series<T> {
     }
 }
 
-impl<T> Index<usize> for Series<T> {
-    type Output = Option<T>;
-
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.data[idx]
-    }
-}
-
-impl<T> IndexMut<usize> for Series<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.data[index]
-    }
-}
-
-impl<T: Clone> Series<T> {
+impl<T> Series<T> {
     pub fn iter(&self) -> impl Iterator<Item = &Option<T>> {
         self.data.iter()
     }
 
-    pub fn window(&self, period: usize) -> impl Iterator<Item = &[Option<T>]> + '_ {
+    pub fn window(&self, period: Period) -> impl Iterator<Item = &[Option<T>]> + '_ {
         (0..self.len()).map(move |i| &self.data[i.saturating_sub(period - 1)..=i])
     }
 
@@ -63,81 +50,67 @@ impl<T: Clone> Series<T> {
             .collect()
     }
 
-    pub fn empty(length: usize) -> Self {
-        std::iter::repeat(None).take(length).collect()
-    }
-
-    #[inline]
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.data.len()
     }
+}
 
-    pub fn shift(&self, n: usize) -> Self {
-        let shifted_len = self.len() - n;
+impl<T: Clone> Series<T> {
+    pub fn shift(&self, period: Period) -> Self {
+        let shifted_len = self.len().saturating_sub(period);
 
-        std::iter::repeat(None)
-            .take(n)
+        core::iter::repeat(None)
+            .take(period)
             .chain(self.iter().take(shifted_len).cloned())
             .collect()
+    }
+
+    pub fn empty(length: usize) -> Self {
+        core::iter::repeat(None).take(length).collect()
     }
 
     pub fn last(&self) -> Option<T> {
         self.iter().last().cloned().flatten()
     }
+
+    pub fn get(&self, index: usize) -> Option<T> {
+        if index < self.len() {
+            self.data[index].clone()
+        } else {
+            None
+        }
+    }
 }
 
-impl Series<f32> {
-    pub fn nz(&self, replacement: Option<f32>) -> Self {
+impl Price {
+    pub fn nz(&self, replacement: Option<Scalar>) -> Self {
         self.fmap(|opt| match opt {
             Some(v) => Some(*v),
-            None => Some(replacement.unwrap_or(0.0)),
+            None => Some(replacement.unwrap_or(ZERO)),
         })
     }
 
-    pub fn na(&self) -> Series<bool> {
+    pub fn na(&self) -> Rule {
         self.fmap(|val| Some(val.is_none()))
     }
 
-    pub fn fill(scalar: f32, len: usize) -> Series<f32> {
-        Series::empty(len).nz(Some(scalar))
+    pub fn fill(scalar: Scalar, n: usize) -> Price {
+        core::iter::repeat(scalar).take(n).collect()
     }
 
-    pub fn zero(len: usize) -> Series<f32> {
-        Series::fill(0., len)
+    pub fn zero(n: usize) -> Price {
+        Series::fill(ZERO, n)
     }
 
-    pub fn one(len: usize) -> Series<f32> {
-        Series::fill(1., len)
-    }
-
-    pub fn change(&self, length: usize) -> Self {
-        self - self.shift(length)
-    }
-
-    pub fn highest(&self, period: usize) -> Self {
-        self.window(period)
-            .map(|w| {
-                w.iter()
-                    .flatten()
-                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-            })
-            .collect()
-    }
-
-    pub fn lowest(&self, period: usize) -> Self {
-        self.window(period)
-            .map(|w| {
-                w.iter()
-                    .flatten()
-                    .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-            })
-            .collect()
+    pub fn one(n: usize) -> Price {
+        Series::fill(ONE, n)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::series::Series;
 
     #[test]
     fn test_len() {
@@ -168,6 +141,16 @@ mod tests {
     }
 
     #[test]
+    fn test_nz() {
+        let source = Series::from([f32::NAN, f32::NAN, 3.0, 4.0, 5.0]);
+        let expected = Series::from([0.0, 0.0, 3.0, 4.0, 5.0]);
+
+        let result = source.nz(Some(0.0));
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn test_shift() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
         let expected = Series::from([f32::NAN, f32::NAN, 1.0, 2.0, 3.0]);
@@ -175,6 +158,7 @@ mod tests {
 
         let result = source.shift(n);
 
+        assert_eq!(source.len(), result.len());
         assert_eq!(result, expected);
     }
 
@@ -199,55 +183,11 @@ mod tests {
     }
 
     #[test]
-    fn test_change() {
-        let source = Series::from([
-            44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84,
-        ]);
-        let length = 1;
-        let epsilon = 0.001;
-        let expected = Series::from([
-            f32::NAN,
-            -0.25,
-            0.0599,
-            -0.540,
-            0.7199,
-            0.5,
-            0.2700,
-            0.3200,
-            0.4200,
-        ]);
-
-        let result = source.change(length);
-
-        for i in 0..result.len() {
-            match (result[i], expected[i]) {
-                (Some(a), Some(b)) => {
-                    assert!((a - b).abs() < epsilon, "at position {}: {} != {}", i, a, b)
-                }
-                (None, None) => {}
-                _ => panic!("at position {}: {:?} != {:?}", i, result[i], expected[i]),
-            }
-        }
-    }
-
-    #[test]
-    fn test_highest() {
+    fn test_get() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let period = 3;
+        let expected = Some(5.0);
 
-        let result = source.highest(period);
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_lowest() {
-        let source = Series::from([f32::NAN, 2.0, 3.0, 1.0, 5.0]);
-        let expected = Series::from([f32::NAN, 2.0, 2.0, 1.0, 1.0]);
-        let period = 3;
-
-        let result = source.lowest(period);
+        let result = source.get(4);
 
         assert_eq!(result, expected);
     }

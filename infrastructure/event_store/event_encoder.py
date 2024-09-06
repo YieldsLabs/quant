@@ -1,14 +1,12 @@
+import asyncio
 import json
+from abc import ABC
 from enum import Enum
 from typing import Any
 
 import numpy as np
 
 from core.events.base import Event
-from core.interfaces.abstract_position_risk_strategy import AbstractPositionRiskStrategy
-from core.interfaces.abstract_position_take_profit_strategy import (
-    AbstractPositionTakeProfitStrategy,
-)
 from core.models.indicator import Indicator
 
 
@@ -16,9 +14,7 @@ class Encoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Enum):
             return obj.value
-        if isinstance(obj, AbstractPositionRiskStrategy):
-            return obj.__class__.__name__
-        if isinstance(obj, AbstractPositionTakeProfitStrategy):
+        if isinstance(obj, ABC):
             return obj.__class__.__name__
         if isinstance(obj, np.ndarray):
             return obj.tolist()
@@ -28,5 +24,7 @@ class Encoder(json.JSONEncoder):
             return obj.to_dict()
         if isinstance(obj, type(Any)):
             return "Any"
+        if isinstance(obj, asyncio.Future):
+            return None
 
         return str(obj)

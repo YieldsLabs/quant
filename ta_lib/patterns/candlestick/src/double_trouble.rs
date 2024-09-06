@@ -1,12 +1,7 @@
 use core::prelude::*;
 use volatility::atr;
 
-pub fn bullish(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> Series<bool> {
+pub fn bullish(open: &Price, high: &Price, low: &Price, close: &Price) -> Rule {
     let atr = atr(high, low, close, Smooth::SMMA, 10);
     let prev_close = close.shift(1);
 
@@ -16,12 +11,7 @@ pub fn bullish(
         & (close - open).sgt(&(2.0 * atr.shift(1)))
 }
 
-pub fn bearish(
-    open: &Series<f32>,
-    high: &Series<f32>,
-    low: &Series<f32>,
-    close: &Series<f32>,
-) -> Series<bool> {
+pub fn bearish(open: &Price, high: &Price, low: &Price, close: &Price) -> Rule {
     let atr = atr(high, low, close, Smooth::SMMA, 10);
     let prev_close = close.shift(1);
 

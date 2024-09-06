@@ -17,3 +17,4 @@ volume = { path = "../../indicators/volume" }
 trend = { path = "../../indicators/trend" }
 momentum = { path = "../../indicators/momentum" }
 volatility = { path = "../../indicators/volatility" }
+timeseries = { path = "../../timeseries" }

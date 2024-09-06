@@ -1,5 +1,5 @@
-mod ce_flip;
-mod supertrend_flip;
+mod ce;
+mod supertrend;
 
-pub use ce_flip::CeFlipSignal;
-pub use supertrend_flip::SupertrendFlipSignal;
+pub use ce::CeFlipSignal;
+pub use supertrend::SupertrendFlipSignal;

@@ -52,7 +52,6 @@ class BybitWS(AbstractWS):
             cls._instance._channels = set()
             cls._instance._receive_semaphore = asyncio.Semaphore(1)
             cls._instance._lock = asyncio.Lock()
-            cls.ping_task = None
 
         return cls._instance
 
@@ -64,7 +63,6 @@ class BybitWS(AbstractWS):
             ping_timeout=15,
             close_timeout=None,
         )
-
         await self._resubscribe()
 
     @retry(
@@ -82,10 +80,8 @@ class BybitWS(AbstractWS):
         await self._connect_to_websocket()
 
     async def close(self):
-        if not self.ws or not self.ws.open:
-            return
-
-        await self.ws.close()
+        if self.ws and self.ws.open:
+            await self.ws.close()
 
     @retry(
         max_retries=13,
@@ -101,14 +97,17 @@ class BybitWS(AbstractWS):
                 data = json.loads(message)
 
                 if self.TOPIC_KEY not in data:
-                    return
+                    continue
 
-                topic = data["topic"].split(".")
+                topic = data[self.TOPIC_KEY].split(".")
 
-                if symbol.name == topic[2] and timeframe == self.TIMEFRAMES[topic[1]]:
-                    ohlcv = data[self.DATA_KEY][0]
-
-                    return Bar(OHLCV.from_dict(ohlcv), ohlcv[self.CONFIRM_KEY])
+                if symbol.name == topic[2] and timeframe == self.TIMEFRAMES.get(
+                    topic[1]
+                ):
+                    return [
+                        Bar(OHLCV.from_dict(ohlcv), ohlcv.get(self.CONFIRM_KEY))
+                        for ohlcv in data.get(self.DATA_KEY, {})
+                    ]
 
     async def subscribe(self, symbol, timeframe):
         async with self._lock:
@@ -133,7 +132,7 @@ class BybitWS(AbstractWS):
             logger.info(f"Subscribe to: {subscribe_message}")
             await self.ws.send(json.dumps(subscribe_message))
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Failed to send subscribe message: {e}")
 
     async def _unsubscribe(self, symbol, timeframe):
         if not self.ws or not self.ws.open:
@@ -146,7 +145,7 @@ class BybitWS(AbstractWS):
             logger.info(f"Unsubscribe from: {unsubscribe_message}")
             await self.ws.send(json.dumps(unsubscribe_message))
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Failed to send unsubscribe message: {e}")
 
     async def _resubscribe(self):
         async with self._lock:

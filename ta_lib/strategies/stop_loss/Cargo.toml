@@ -13,3 +13,4 @@ repository.workspace = true
 core = { path = "../../core" }
 base = { path = "../base" }
 volatility = { path = "../../indicators/volatility" }
+timeseries = { path = "../../timeseries" }

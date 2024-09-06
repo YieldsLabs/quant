@@ -8,25 +8,14 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
     match config {
         ExitConfig::Ast {
             source_type,
-            atr_period,
+            smooth_atr,
+            period_atr,
             factor,
         } => Box::new(AstExit::new(
             source_deserialize(source_type as usize),
-            atr_period,
+            smooth_deserialize(smooth_atr as usize),
+            period_atr,
             factor,
-        )),
-        ExitConfig::Cci {
-            source_type,
-            smooth_type,
-            period,
-            factor,
-            threshold,
-        } => Box::new(CciExit::new(
-            source_deserialize(source_type as usize),
-            smooth_deserialize(smooth_type as usize),
-            period,
-            factor,
-            threshold,
         )),
         ExitConfig::Dumb {} => Box::new(DumbExit {}),
         ExitConfig::HighLow { period } => Box::new(HighLowExit::new(period)),
@@ -69,6 +58,28 @@ pub fn map_to_exit(config: ExitConfig) -> Box<dyn Exit> {
             source_deserialize(source_type as usize),
             ma_deserialize(ma as usize),
             period,
+        )),
+        ExitConfig::Rex {
+            source,
+            smooth,
+            period,
+            smooth_signal,
+            period_signal,
+        } => Box::new(RexExit::new(
+            source_deserialize(source as usize),
+            smooth_deserialize(smooth as usize),
+            period,
+            smooth_deserialize(smooth_signal as usize),
+            period_signal,
+        )),
+        ExitConfig::Mad {
+            source,
+            period_fast,
+            period_slow,
+        } => Box::new(MadExit::new(
+            source_deserialize(source as usize),
+            period_fast,
+            period_slow,
         )),
     }
 }

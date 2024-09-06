@@ -1,6 +1,7 @@
 use base::prelude::*;
 use core::prelude::*;
 use indicator::{ma_indicator, MovingAverageType};
+use timeseries::prelude::*;
 
 pub struct Ma3CrossSignal {
     source_type: SourceType,
@@ -34,7 +35,7 @@ impl Signal for Ma3CrossSignal {
         std::cmp::max(adjusted_lookback, self.medium_period)
     }
 
-    fn generate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn trigger(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let short_ma = ma_indicator(&self.ma, data, self.source_type, self.fast_period);
         let medium_ma = ma_indicator(&self.ma, data, self.source_type, self.medium_period);
         let long_ma = ma_indicator(&self.ma, data, self.source_type, self.slow_period);

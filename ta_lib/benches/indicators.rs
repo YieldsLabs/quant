@@ -40,25 +40,6 @@ fn momentum(c: &mut Criterion) {
         7.1230, 7.1225, 7.1180, 7.1250,
     ];
 
-    group.bench_function("ao", |b| {
-        b.iter_batched_ref(
-            || {
-                let high = Series::from(&high);
-                let low = Series::from(&low);
-                let source = median_price(&high, &low);
-                let smooth_type = Smooth::SMA;
-                let fast_period = 5;
-                let slow_period = 34;
-
-                (source, smooth_type, fast_period, slow_period)
-            },
-            |(source, smooth_type, fast_period, slow_period)| {
-                ao(source, *smooth_type, *fast_period, *slow_period)
-            },
-            criterion::BatchSize::SmallInput,
-        )
-    });
-
     group.bench_function("bop", |b| {
         b.iter_batched_ref(
             || {
@@ -113,12 +94,11 @@ fn momentum(c: &mut Criterion) {
                 let low = Series::from(&low);
                 let close = Series::from(&close);
                 let hlc3 = typical_price(&high, &low, &close);
-                let smooth_type = Smooth::SMA;
                 let period = 14;
                 let factor = 0.015;
-                (hlc3, smooth_type, period, factor)
+                (hlc3, period, factor)
             },
-            |(hlc3, smooth_type, period, factor)| cci(hlc3, *smooth_type, *period, *factor),
+            |(hlc3, period, factor)| cci(hlc3, *period, *factor),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -591,7 +571,7 @@ fn trend(c: &mut Criterion) {
         )
     });
 
-    group.bench_function("kjs", |b| {
+    group.bench_function("midpoint", |b| {
         b.iter_batched_ref(
             || {
                 let high = Series::from(&high);
@@ -600,7 +580,7 @@ fn trend(c: &mut Criterion) {
 
                 (high, low, period)
             },
-            |(high, low, period)| kjs(high, low, *period),
+            |(high, low, period)| midpoint(high, low, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -742,7 +722,7 @@ fn trend(c: &mut Criterion) {
         )
     });
 
-    group.bench_function("tma", |b| {
+    group.bench_function("trima", |b| {
         b.iter_batched_ref(
             || {
                 let source = Series::from(&close);
@@ -750,7 +730,7 @@ fn trend(c: &mut Criterion) {
 
                 (source, period)
             },
-            |(source, period)| tma(source, *period),
+            |(source, period)| trima(source, *period),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -913,7 +893,7 @@ fn volatility(c: &mut Criterion) {
                 (hlc3, atr, smooth_type, period, factor)
             },
             |(hlc3, atr, smooth_type, period, factor)| {
-                kch(hlc3, atr, *smooth_type, *period, *factor)
+                kch(hlc3, *smooth_type, atr, *period, *factor)
             },
             criterion::BatchSize::SmallInput,
         )
@@ -1036,12 +1016,11 @@ fn volume(c: &mut Criterion) {
                 let hl2 = median_price(&high, &low);
                 let smooth_type = Smooth::SMA;
                 let period = 14;
-                let divisor = 10000.0;
 
-                (hl2, high, low, volume, smooth_type, period, divisor)
+                (hl2, high, low, volume, smooth_type, period)
             },
-            |(hl2, high, low, volume, smooth_type, period, divisor)| {
-                eom(hl2, high, low, volume, *smooth_type, *period, *divisor)
+            |(hl2, high, low, volume, smooth_type, period)| {
+                eom(hl2, high, low, volume, *smooth_type, *period)
             },
             criterion::BatchSize::SmallInput,
         )
@@ -1073,23 +1052,6 @@ fn volume(c: &mut Criterion) {
                 (close, volume)
             },
             |(close, volume)| obv(close, volume),
-            criterion::BatchSize::SmallInput,
-        )
-    });
-
-    group.bench_function("vo", |b| {
-        b.iter_batched_ref(
-            || {
-                let volume = Series::from(&volume);
-                let fast_period = 5;
-                let slow_period = 10;
-                let smooth_type = Smooth::EMA;
-
-                (volume, smooth_type, fast_period, slow_period)
-            },
-            |(volume, smooth_type, fast_period, slow_period)| {
-                vo(volume, *smooth_type, *fast_period, *slow_period)
-            },
             criterion::BatchSize::SmallInput,
         )
     });

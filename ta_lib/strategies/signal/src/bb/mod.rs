@@ -1,5 +1,5 @@
-mod macd_bb;
-mod vwap_bb;
+mod macd;
+mod vwap;
 
-pub use macd_bb::MacdBbSignal;
-pub use vwap_bb::VwapBbSignal;
+pub use macd::MacdBbSignal;
+pub use vwap::VwapBbSignal;

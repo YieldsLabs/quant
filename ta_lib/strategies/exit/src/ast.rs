@@ -1,18 +1,21 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use trend::ast;
 
 pub struct AstExit {
     source_type: SourceType,
-    atr_period: usize,
+    smooth_atr: Smooth,
+    period_atr: usize,
     factor: f32,
 }
 
 impl AstExit {
-    pub fn new(source_type: SourceType, atr_period: f32, factor: f32) -> Self {
+    pub fn new(source_type: SourceType, smooth_atr: Smooth, period_atr: f32, factor: f32) -> Self {
         Self {
             source_type,
-            atr_period: atr_period as usize,
+            smooth_atr,
+            period_atr: period_atr as usize,
             factor,
         }
     }
@@ -20,13 +23,13 @@ impl AstExit {
 
 impl Exit for AstExit {
     fn lookback(&self) -> usize {
-        self.atr_period
+        self.period_atr
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let (direction, _) = ast(
             &data.source(self.source_type),
-            &data.atr(self.atr_period),
+            &data.atr(self.smooth_atr, self.period_atr),
             self.factor,
         );
 

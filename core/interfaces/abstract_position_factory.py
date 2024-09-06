@@ -1,17 +1,14 @@
 from abc import ABC, abstractmethod
 
-from core.models.ohlcv import OHLCV
 from core.models.position import Position
+from core.models.risk_type import SignalRiskType
 from core.models.signal import Signal
+from core.models.ta import TechAnalysis
 
 
 class AbstractPositionFactory(ABC):
     @abstractmethod
-    def create_position(
-        self,
-        signal: Signal,
-        ohlcv: OHLCV,
-        entry_price: float,
-        stop_loss: float,
+    def create(
+        self, signal: Signal, signal_risk_type: SignalRiskType, ta: TechAnalysis
     ) -> Position:
         pass

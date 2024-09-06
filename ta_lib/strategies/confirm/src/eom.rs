@@ -1,21 +1,20 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use volume::eom;
 
 pub struct EomConfirm {
-    source_type: SourceType,
-    smooth_type: Smooth,
+    source: SourceType,
+    smooth: Smooth,
     period: usize,
-    divisor: f32,
 }
 
 impl EomConfirm {
-    pub fn new(source_type: SourceType, smooth_type: Smooth, period: f32, divisor: f32) -> Self {
+    pub fn new(source: SourceType, smooth: Smooth, period: f32) -> Self {
         Self {
-            source_type,
-            smooth_type,
+            source,
+            smooth,
             period: period as usize,
-            divisor,
         }
     }
 }
@@ -25,17 +24,16 @@ impl Confirm for EomConfirm {
         self.period
     }
 
-    fn validate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn filter(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let eom = eom(
-            &data.source(self.source_type),
+            &data.source(self.source),
             data.high(),
             data.low(),
             data.volume(),
-            self.smooth_type,
+            self.smooth,
             self.period,
-            self.divisor,
         );
 
-        (eom.sgt(&ZERO_LINE), eom.slt(&ZERO_LINE))
+        (eom.sgt(&ZERO), eom.slt(&ZERO))
     }
 }

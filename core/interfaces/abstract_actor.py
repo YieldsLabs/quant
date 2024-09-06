@@ -19,8 +19,6 @@ from core.events.signal import (
     GoLongSignalReceived,
     GoShortSignalReceived,
 )
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
 from core.queries.base import Query
 
 Message = Union[
@@ -46,16 +44,6 @@ class AbstractActor(ABC):
     @property
     @abstractmethod
     def id(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def symbol(self) -> Symbol:
-        pass
-
-    @property
-    @abstractmethod
-    def timeframe(self) -> Timeframe:
         pass
 
     @property

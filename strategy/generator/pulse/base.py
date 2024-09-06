@@ -6,13 +6,14 @@ from core.models.indicator import Indicator
 
 class PulseType(Enum):
     Adx = "Adx"
-    Braid = "Braid"
     Dumb = "Dumb"
     Chop = "Chop"
     Nvol = "Nvol"
     Vo = "Vo"
     Tdfi = "Tdfi"
     Wae = "Wae"
+    Yz = "Yz"
+    Sqz = "Sqz"
 
     def __str__(self):
         return self.value.upper()

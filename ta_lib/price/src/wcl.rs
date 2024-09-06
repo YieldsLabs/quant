@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn wcl(high: &Series<f32>, low: &Series<f32>, close: &Series<f32>) -> Series<f32> {
+pub fn wcl(high: &Price, low: &Price, close: &Price) -> Price {
     (high + low + (close * 2.)) / 4.
 }
 
@@ -16,7 +16,7 @@ mod tests {
 
         let expected = vec![0.75, 1.5, 2.25];
 
-        let result: Vec<f32> = wcl(&high, &low, &close).into();
+        let result: Vec<Scalar> = wcl(&high, &low, &close).into();
 
         assert_eq!(result, expected);
     }

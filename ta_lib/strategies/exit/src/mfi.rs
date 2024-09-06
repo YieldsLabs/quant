@@ -1,5 +1,6 @@
 use base::prelude::*;
 use core::prelude::*;
+use timeseries::prelude::*;
 use volume::mfi;
 
 const MFI_OVERBOUGHT: f32 = 80.0;
@@ -26,7 +27,7 @@ impl Exit for MfiExit {
         self.period
     }
 
-    fn evaluate(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
+    fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
         let mfi = mfi(&data.source(self.source_type), data.volume(), self.period);
         let upper_bound = MFI_OVERBOUGHT - self.threshold;
         let lower_bound = MFI_OVERSOLD + self.threshold;
