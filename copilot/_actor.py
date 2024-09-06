@@ -202,14 +202,14 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             true_range=volatility.tr[-self.bars_n :],
         )
 
-        logger.info(f"Signal Prompt: {prompt}")
+        # logger.info(f"Signal Prompt: {prompt}")
 
-        answer = await self.llm.call(system_prompt, prompt)
+        # answer = await self.llm.call(system_prompt, prompt)
 
-        logger.info(f"LLM Answer: {answer}")
+        # logger.info(f"LLM Answer: {answer}")
 
-        match = re.search(signal_risk_pattern, answer)
-        # match = None
+        # match = re.search(signal_risk_pattern, answer)
+        match = None
 
         if not match:
             risk = SignalRisk(type=risk_type)
@@ -219,11 +219,10 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             tp, sl = float(f"{_tp[0]}.{_tp[1]}"), float(f"{_sl[0]}.{_sl[1]}")
 
-            unknow_risk = tp > curr_bar.close and side == PositionSide.SHORT or tp < curr_bar.close and side == PositionSide.LONG
+            unknow_risk = (tp > curr_bar.close and side == PositionSide.SHORT) or (tp < curr_bar.close and side == PositionSide.LONG)
 
             if unknow_risk:
-                logger.warn(f"Risk is unknown TP/SL")
-                # risk_type = SignalRiskType.UNKNOWN
+                logger.warn(f"Risk with unknown position management")
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
@@ -234,34 +233,24 @@ class CopilotActor(BaseActor, EventHandlerMixin):
     async def _evaluate_session(self, msg: EvaluateSession) -> SessionRiskType:
         async with self._lock:
             ta = msg.ta
-            bars = pad_bars(msg.session, LOOKBACK)
 
             ema = np.array(ta.trend.sma[-LOOKBACK:])
             support = np.array(ta.trend.support[-LOOKBACK:])
             resistance = np.array(ta.trend.resistance[-LOOKBACK:])
             dmi = np.array(ta.trend.dmi[-LOOKBACK:])
             macd = np.array(ta.trend.macd[-LOOKBACK:])
+            hlcc4 = np.array(ta.trend.hlcc4[-LOOKBACK:])
             cci = np.array(ta.momentum.cci[-LOOKBACK:])
+            roc = np.array(ta.momentum.sroc[-LOOKBACK:])
             ebb = np.array(ta.volatility.ebb[-LOOKBACK:])
             ekch = np.array(ta.volatility.ekch[-LOOKBACK:])
             rsi = np.array(ta.oscillator.srsi[-LOOKBACK:])
             stoch_k = np.array(ta.oscillator.k[-LOOKBACK:])
             mfi = np.array(ta.volume.mfi[-LOOKBACK:])
-            roc = np.array(ta.momentum.sroc[-LOOKBACK:])
             vwap = np.array(ta.volume.vwap[-LOOKBACK:])
             nvol = np.array(ta.volume.nvol[-LOOKBACK:])
-            volatility = np.array(ta.volatility.yz[-LOOKBACK:])
+            yz = np.array(ta.volatility.yz[-LOOKBACK:])
             tr = np.array(ta.volatility.tr[-LOOKBACK:])
-
-            brr = np.array(
-                [
-                    bar.body_range_ratio if bar is not None else 0.0
-                    for bar in bars[-LOOKBACK:]
-                ]
-            )
-            close = np.array(
-                [bar.close if bar is not None else 0.0 for bar in bars[-LOOKBACK:]]
-            )
 
             features = np.column_stack(
                 (
@@ -270,18 +259,18 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     resistance,
                     dmi,
                     macd,
-                    brr,
                     cci,
                     rsi,
                     stoch_k,
                     mfi,
                     ebb,
                     ekch,
-                    volatility,
+                    yz,
                     roc,
                     vwap,
                     tr,
                     nvol,
+                    hlcc4,
                 )
             )
 
@@ -353,7 +342,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             logger.info(
                 f"SIDE: {msg.side}, "
-                f"Close: {close[-1]}, "
+                f"HLCC4: {hlcc4[-1]}, "
                 f"Exit: {should_exit}"
             )
 

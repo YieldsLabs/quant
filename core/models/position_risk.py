@@ -3,9 +3,10 @@ from typing import List, Tuple
 
 import numpy as np
 from scipy.signal import savgol_filter
+from scipy.interpolate import UnivariateSpline
 from sklearn.cluster import KMeans
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from .ohlcv import OHLCV
@@ -14,7 +15,7 @@ from .side import PositionSide
 from .ta import TechAnalysis
 
 TIME_THRESHOLD = 15000
-LOOKBACK = 8
+LOOKBACK = 6
 
 
 def optimize_params(
@@ -36,10 +37,14 @@ def optimize_params(
         if len(np.unique(kmeans.labels_)) < n_clusters:
             continue
 
-        silhouette_avg = silhouette_score(X, kmeans.labels_)
+        sscore = silhouette_score(X, kmeans.labels_)
+        cscore = calinski_harabasz_score(X, kmeans.labels_)
+        db_score = davies_bouldin_score(X, kmeans.labels_)
 
-        if silhouette_avg > best_score:
-            best_score = silhouette_avg
+        score = (sscore + cscore - db_score) / 3
+
+        if score > best_score:
+            best_score = score
             best_centroids = scaler.inverse_transform(kmeans.cluster_centers_).flatten()
 
     return int(round(np.mean(best_centroids))) if len(best_centroids) > 1 else 2
@@ -61,7 +66,7 @@ def optimize_window_polyorder(data: np.ndarray) -> Tuple[int, int]:
     return window_length, polyorder
 
 
-def smooth(*arrays: np.ndarray) -> List[np.ndarray]:
+def smooth_savgol(*arrays: np.ndarray) -> List[np.ndarray]:
     all_data = np.concatenate(arrays)
     window_length, polyorder = optimize_window_polyorder(all_data)
     return [
@@ -73,12 +78,22 @@ def smooth(*arrays: np.ndarray) -> List[np.ndarray]:
         for array in arrays
     ]
 
+def smooth_spline(*arrays: np.ndarray, s: float = 1.0, k: int = 3) -> List[np.ndarray]:
+    return [
+        UnivariateSpline(
+            np.arange(len(array)),
+            array,
+            s=s,
+            k=min(k, len(array) - 1)
+        )(np.arange(len(array))) if len(array) > k else array
+        for array in arrays
+    ]
 
 class TaMixin:
     @staticmethod
     def _ats(closes: List[float], atr: List[float]) -> List[float]:
-        stop_prices = np.zeros_like(closes)
         period = min(len(closes), len(atr))
+        stop_prices = np.zeros(period)
 
         stop_prices[0] = closes[0] - atr[0]
 
@@ -163,8 +178,6 @@ class PositionRisk(TaMixin):
 
         features_scaled = self.scaler.transform(features)
 
-        # print(f"Updated Features: ----->>>>>. {features_scaled}")
-
         self.model.partial_fit(features_scaled, target)
 
     def forecast(self, steps: int = 3):
@@ -246,26 +259,16 @@ class PositionRisk(TaMixin):
         high, low = self.curr_bar.high, self.curr_bar.low
         expiration = self.curr_bar.timestamp - open_timestamp - expiration
 
-        print(
-            f"ASSESS => Side: {side}, is long: {side == PositionSide.LONG} is short: {side == PositionSide.SHORT} TP: {tp}, SL: {sl}, H: {high}, L: {low}, E: {expiration}, TF: {self.trail_factor}"
-        )
-
         if expiration >= 0:
             return replace(self, type=PositionRiskType.TIME)
 
         if side == PositionSide.LONG:
-            print(
-                f"CHeCK => Side: {side}, H: {high}, L: {low}, SL: {sl}, L < SL {low < sl}, H > TP {high > tp}"
-            )
             if low < sl:
                 return replace(self, type=PositionRiskType.SL)
             if high > tp:
                 return replace(self, type=PositionRiskType.TP)
 
         if side == PositionSide.SHORT:
-            print(
-                f"CHeCK => Side: {side}, H: {high}, L: {low}, SL: {sl}, H > SL {high > sl}, L < TP {low < tp}"
-            )
             if high > sl:
                 return replace(self, type=PositionRiskType.SL)
             if low < tp:
@@ -310,7 +313,7 @@ class PositionRisk(TaMixin):
         if min_length < 1:
             return sl
 
-        ll_smooth, hh_smooth, volatility_smooth = smooth(ll, hh, volatility)
+        ll_smooth, hh_smooth, volatility_smooth = smooth_savgol(ll, hh, volatility)
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
@@ -349,7 +352,7 @@ class PositionRisk(TaMixin):
         if min_length < 1:
             return tp
 
-        ll_smooth, hh_smooth, volatility_smooth = smooth(ll, hh, volatility)
+        ll_smooth, hh_smooth, volatility_smooth = smooth_savgol(ll, hh, volatility)
 
         ll_smooth = ll_smooth[-min_length:]
         hh_smooth = hh_smooth[-min_length:]
@@ -377,14 +380,14 @@ class PositionRisk(TaMixin):
         close = np.array([candle.close for candle in self.ohlcv])
         low = np.array([candle.low for candle in self.ohlcv])
         high = np.array([candle.high for candle in self.ohlcv])
-        volatility = np.array(ta.volatility.yz)[-max_lookback:]
+        volatility = np.array(ta.volatility.gkyz)[-max_lookback:]
 
         min_length = min(len(close), len(volatility), len(high), len(low))
 
         if min_length < 3:
             return sl
 
-        close_smooth, volatility_smooth, high_smooth, low_smooth = smooth(
+        close_smooth, volatility_smooth, high_smooth, low_smooth = smooth_savgol(
             close, volatility, high, low
         )
 
@@ -404,18 +407,14 @@ class PositionRisk(TaMixin):
         )
 
         if side == PositionSide.LONG:
-            if bullish:
-                print("BULLLLLISHHHHHH-------------------------->")
-                return max(sl, min(low_smooth[-1], np.max(ats)))
-
-            return max(sl, min(low_smooth[-1], ats[-1]))
+            adjusted_sl = min(low_smooth[-1], np.max(ats)) if bullish else min(low_smooth[-1], ats[-1])
+    
+            return max(sl, adjusted_sl)
 
         if side == PositionSide.SHORT:
-            if bearish:
-                print("BEARISHHHHHHHHH-------------------------->")
-                return min(sl, max(high_smooth[-1], np.min(ats)))
+            adjusted_sl = max(high_smooth[-1], np.min(ats)) if bearish else max(high_smooth[-1], ats[-1])
 
-            return min(sl, max(high_smooth[-1], ats[-1]))
+            return min(sl, adjusted_sl)
 
         return sl
 

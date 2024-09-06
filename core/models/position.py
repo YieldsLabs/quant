@@ -173,8 +173,8 @@ class Position:
     @property
     def curr_price(self) -> float:
         last_bar = self.risk_bar
-
-        return (last_bar.close + last_bar.high + last_bar.low) / 3.0
+  
+        return (2 * last_bar.close + last_bar.high + last_bar.low) / 4.0
 
     @property
     def curr_target(self) -> float:
@@ -305,7 +305,7 @@ class Position:
                 else raw_forecast[0] > raw_forecast[-1]
             )
 
-        print(f"Forecast: {raw_forecast}, rising: {rising}")
+        # print(f"Forecast: {raw_forecast}, rising: {rising}")
 
         stp = (
             next_position.signal_risk.tp
@@ -368,6 +368,8 @@ class Position:
         trl_ratio = trl_dist / entry_price
         exit_ratio = exit_dist / entry_price
         dist_ratio = dist / entry_price
+        is_exit = session_risk == SessionRiskType.EXIT
+        has_risk = next_position.signal_risk.type in {SignalRiskType.MODERATE, SignalRiskType.HIGH}
 
         # print(f"Targets: {targets}")
         print(
@@ -385,11 +387,11 @@ class Position:
             print("Activating trailing stop mechanism")
             next_position = next_position.trail(ta)
 
-        if session_risk == SessionRiskType.EXIT:
+        if is_exit:
             exit_ratio = exit_dist / entry_price
             dist_ratio = dist / entry_price
 
-            if dist > exit_dist:
+            if exit_ratio > 0.005:
                 print(
                     f"TRAIL PREV SL: {next_position.stop_loss:.6f}, "
                     f"CURR PRICE: {next_position.risk_bar.close:.6f}, "
@@ -413,11 +415,12 @@ class Position:
         next_sl = next_position.stop_loss
         next_risk = next_position.position_risk
 
-        if dist_ratio > 0.009:
+        if dist_ratio > 0.007:
             half = 0.382 * dist
             sl = curr_price + half if long else curr_price - half
             next_sl = max(sl, next_sl) if long else min(sl, next_sl)
 
+        if next_sl != next_position.stop_loss:
             print(f"Change Dist SL: {next_sl}")
 
         next_risk = next_risk.assess(
@@ -444,7 +447,7 @@ class Position:
         print(f"Update TP: {next_tp}, SL: {next_sl}")
 
         next_position = replace(
-            next_position,
+            self,
             position_risk=next_risk,
             _tp=next_tp,
             _sl=next_sl,
