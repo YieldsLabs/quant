@@ -11,7 +11,7 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RsiNautralityRejectionSignal(Signal):
+class RsiNeutralityRejectionSignal(Signal):
     type: SignalType = SignalType.RsiNeutralityRejection
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)

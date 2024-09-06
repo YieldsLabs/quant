@@ -58,12 +58,12 @@ from strategy.generator.signal.ma.ma_surpass import MaSurpassSignal
 from strategy.generator.signal.ma.ma_testing_ground import MaTestingGroundSignal
 from strategy.generator.signal.ma.vwap_cross import VwapCrossSignal
 from strategy.generator.signal.neutrality.dso_cross import DsoNeutralityCrossSignal
-from strategy.generator.signal.neutrality.rsi_cross import RsiNautralityCrossSignal
+from strategy.generator.signal.neutrality.rsi_cross import RsiNeutralityCrossSignal
 from strategy.generator.signal.neutrality.rsi_pullback import (
     RsiNautralityPullbackSignal,
 )
 from strategy.generator.signal.neutrality.rsi_rejection import (
-    RsiNautralityRejectionSignal,
+    RsiNeutralityRejectionSignal,
 )
 from strategy.generator.signal.neutrality.tii_cross import TiiNeutralityCrossSignal
 from strategy.generator.signal.pattern.ao_saucer import AoSaucerSignal
@@ -472,14 +472,14 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
             return np.random.choice(
                 [
                     DsoNeutralityCrossSignal(),
-                    RsiNautralityCrossSignal(),
+                    RsiNeutralityCrossSignal(),
                     RsiNautralityPullbackSignal(),
-                    RsiNautralityRejectionSignal(),
+                    RsiNeutralityRejectionSignal(),
                     TiiNeutralityCrossSignal(),
                 ]
             )
         return np.random.choice(
             [
-                RsiNautralityRejectionSignal(),
+                RsiNeutralityRejectionSignal(),
             ]
         )

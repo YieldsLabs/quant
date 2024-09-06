@@ -11,7 +11,7 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class RsiNautralityCrossSignal(Signal):
+class RsiNeutralityCrossSignal(Signal):
     type: SignalType = SignalType.RsiNeutralityCross
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     smooth_type: Parameter = StaticParameter(Smooth.SMMA)
