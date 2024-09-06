@@ -173,7 +173,7 @@ class Position:
     @property
     def curr_price(self) -> float:
         last_bar = self.risk_bar
-  
+
         return (2 * last_bar.close + last_bar.high + last_bar.low) / 4.0
 
     @property
@@ -291,21 +291,11 @@ class Position:
         targets = next_position.profit_target.targets[1:]
         raw_forecast = next_position.position_risk.forecast(steps=3)
 
-        print(f"Targets: {targets[:8]}")
-
-        rising = False
         forecast = None
         long = next_position.side == PositionSide.LONG
 
         if raw_forecast:
             forecast = raw_forecast[-1]
-            rising = (
-                raw_forecast[0] <= raw_forecast[-1]
-                if long
-                else raw_forecast[0] > raw_forecast[-1]
-            )
-
-        # print(f"Forecast: {raw_forecast}, rising: {rising}")
 
         stp = (
             next_position.signal_risk.tp
@@ -321,8 +311,6 @@ class Position:
         w_stp, w_sstp, w_ftp = 0.6, 0.1, 0.3
 
         ttp = (w_stp * stp + w_ftp * ftp + w_sstp * sstp) / (w_stp + w_sstp + w_ftp)
-
-        print(f"Signal TP: {stp}, forecast TP: {ftp}, S/R TP: {sstp}, TTP: {ttp}")
 
         def target_filter(target, tp):
             sl = next_position.stop_loss
@@ -346,8 +334,6 @@ class Position:
                 idx_rr = i
                 break
 
-        print(f"RR Idx: {idx_rr}, RR: {rr}")
-
         idx_tg = 0
         for i, target in enumerate(targets):
             if target_filter(target, ttp):
@@ -369,22 +355,11 @@ class Position:
         exit_ratio = exit_dist / entry_price
         dist_ratio = dist / entry_price
         is_exit = session_risk == SessionRiskType.EXIT
-        has_risk = next_position.signal_risk.type in {SignalRiskType.MODERATE, SignalRiskType.HIGH}
-
-        # print(f"Targets: {targets}")
-        print(
-            f"Trail target: {trail_target}, PRED_TP: {next_tp}, "
-            f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
-            f"TR_DIST: {trl_dist:.6f} ({trl_ratio:.2%}), "
-            f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
-        )
 
         trail_threshold = 0.0008
 
-        print(f"____________RATIO: {trl_ratio}___________")
-
         if dist > trl_dist and trl_ratio > trail_threshold:
-            print("Activating trailing stop mechanism")
+            logger.info("Activating trailing stop mechanism")
             next_position = next_position.trail(ta)
 
         if is_exit:
@@ -392,21 +367,14 @@ class Position:
             dist_ratio = dist / entry_price
 
             if exit_ratio > 0.005:
-                print(
-                    f"TRAIL PREV SL: {next_position.stop_loss:.6f}, "
-                    f"CURR PRICE: {next_position.risk_bar.close:.6f}, "
-                    f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
-                    f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
-                )
-
                 next_position = next_position.trail(ta)
 
-                print(
+                logger.info(
                     f"TRAIL NEXT SL: {next_position.stop_loss:.6f}, "
                     f"CURR PRICE: {next_position.risk_bar.close:.6f}"
                 )
             else:
-                print(
+                logger.info(
                     f"Exit condition not met: "
                     f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
                     f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
@@ -420,9 +388,6 @@ class Position:
             sl = curr_price + half if long else curr_price - half
             next_sl = max(sl, next_sl) if long else min(sl, next_sl)
 
-        if next_sl != next_position.stop_loss:
-            print(f"Change Dist SL: {next_sl}")
-
         next_risk = next_risk.assess(
             next_position.side,
             next_tp,
@@ -432,7 +397,6 @@ class Position:
         )
 
         if next_risk.type == PositionRiskType.TP:
-            print("RESET RISK")
             next_risk = next_risk.reset()
             index = 0
 
@@ -443,8 +407,6 @@ class Position:
 
             idx = min(max(DEFAULT_TARGET_IDX, index + 1), len(targets) - 1)
             next_tp = targets[idx]
-
-        print(f"Update TP: {next_tp}, SL: {next_sl}")
 
         next_position = replace(
             self,
@@ -463,10 +425,6 @@ class Position:
     def trail(self, ta: TechAnalysis) -> "Position":
         prev_sl = self.stop_loss
         next_sl = self.position_risk.sl_ats(self.side, ta, prev_sl)
-
-        logger.info(
-            f"<---- &&&&&&TRAIL&&&&& -->>> prevSL: {prev_sl}, nextSL: {next_sl}"
-        )
 
         return replace(self, _sl=next_sl, last_modified=datetime.now().timestamp())
 

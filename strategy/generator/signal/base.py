@@ -52,6 +52,8 @@ class SignalType(Enum):
     # Flip
     CeFlip = "CeFlip"
     SupFlip = "SupFlip"
+    # Pullback
+    SupPullback = "SupPullback"
     # Two Lines Cross
     Dmi2LinesCross = "Dmi2LinesCross"
     Vi2LinesCross = "Vi2LinesCross"

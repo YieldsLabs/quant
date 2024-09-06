@@ -12,4 +12,4 @@ class EomConfirm(Confirm):
     type: ConfirmType = ConfirmType.Eom
     source_type: Parameter = StaticParameter(SourceType.HL2)
     smooth_type: Parameter = StaticParameter(Smooth.SMA)
-    period: Parameter = StaticParameter(14.0)
+    period: Parameter = StaticParameter(16.0)

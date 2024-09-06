@@ -12,4 +12,4 @@ class DpoConfirm(Confirm):
     type: Confirm = ConfirmType.Dpo
     source_type: Parameter = StaticParameter(SourceType.CLOSE)
     smooth_type: Parameter = StaticParameter(Smooth.SMA)
-    period: Parameter = StaticParameter(18.0)
+    period: Parameter = StaticParameter(27.0)

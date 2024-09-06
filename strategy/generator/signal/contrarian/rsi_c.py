@@ -15,5 +15,5 @@ class RsiCSignal(Signal):
     type: SignalType = SignalType.RsiC
     source: Parameter = StaticParameter(SourceType.CLOSE)
     smooth: Parameter = StaticParameter(Smooth.SMMA)
-    period: Parameter = StaticParameter(8.0)
+    period: Parameter = StaticParameter(14.0)
     threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)

@@ -138,6 +138,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         async with self._lock:
 
             async def handle_trail(position: Position, risk_bar: OHLCV):
+                logger.info("Trail event")
+
                 ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
                 return position.trail(ta)
 

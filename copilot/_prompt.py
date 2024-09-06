@@ -157,6 +157,10 @@ risk_eval = """
 - HIGH: Significant risk factors, high caution or avoidance advised.
 - VERY_HIGH: Major risk factors, generally unfavorable.
 """
-signal_trend_risk_prompt = f"{risk_intro}{risk_data}{trend_risk_framework}{risk_eval}{risk_outro}"
-signal_contrarian_risk_prompt = f"{risk_intro}{risk_data}{contrarian_risk_framework}{risk_eval}{risk_outro}"
+signal_trend_risk_prompt = (
+    f"{risk_intro}{risk_data}{trend_risk_framework}{risk_eval}{risk_outro}"
+)
+signal_contrarian_risk_prompt = (
+    f"{risk_intro}{risk_data}{contrarian_risk_framework}{risk_eval}{risk_outro}"
+)
 signal_risk_pattern = r"RL:\s*(NONE|VERY_LOW|LOW|MODERATE|HIGH|VERY_HIGH)\s*,\s*TP:\s*([\d.]+)\s*,\s*SL:\s*([\d.]+)\s*\.*"

@@ -106,7 +106,7 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         next_position = current_position.fill_order(order)
 
-        logger.info(f"Closed Position: {next_position}")
+        logger.debug(f"Closed Position: {next_position}")
 
         await self.tell(BrokerPositionClosed(next_position))
 

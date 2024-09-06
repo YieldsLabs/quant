@@ -18,4 +18,4 @@ class StochESignal(Signal):
     period: Parameter = StaticParameter(34.0)
     period_k: Parameter = StaticParameter(5.0)
     period_d: Parameter = StaticParameter(3.0)
-    threshold: Parameter = RandomParameter(0.0, 3.0, 1.0)
+    threshold: Parameter = RandomParameter(0.0, 1.0, 1.0)

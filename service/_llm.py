@@ -12,7 +12,7 @@ class LLMService(AbstractLLMService):
         super().__init__()
         self.config = config_service.get("copilot")
         self._llm = self._initialize_llm(self.config)
-        self._lock = asyncio.Semaphore(8)
+        self._lock = asyncio.Semaphore(3)
 
     async def call(
         self, system_prompt: str, user_prompt: str, stop_words: tuple[str] = ("<|end|>")

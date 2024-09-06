@@ -7,9 +7,9 @@ from strategy.generator.signal.base import Signal, SignalType
 
 
 @dataclass(frozen=True)
-class SupertrendFlipSignal(Signal):
-    type: SignalType = SignalType.SupFlip
-    source_type: Parameter = StaticParameter(SourceType.HL2)
+class SupertrendPullbackSignal(Signal):
+    type: SignalType = SignalType.SupPullback
+    source: Parameter = StaticParameter(SourceType.HL2)
     smooth_atr: Parameter = StaticParameter(SmoothATR.SMMA)
     period_atr: Parameter = StaticParameter(8.0)
     factor: Parameter = StaticParameter(0.86)

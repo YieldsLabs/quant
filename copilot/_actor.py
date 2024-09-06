@@ -1,19 +1,23 @@
 import asyncio
 import logging
-import re
 from typing import Union
 
 import numpy as np
+from core.models.strategy_type import StrategyType
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-from sklearn.metrics import calinski_harabasz_score, silhouette_score, davies_bouldin_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.utils import check_random_state
-from sklearn.decomposition import KernelPCA, PCA
-from sklearn.svm import OneClassSVM
+from sklearn.decomposition import PCA, KernelPCA
 from sklearn.ensemble import IsolationForest
+from sklearn.metrics import (
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    silhouette_score,
+)
 from sklearn.mixture import BayesianGaussianMixture
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.svm import OneClassSVM
+from sklearn.utils import check_random_state
 
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
@@ -25,9 +29,7 @@ from core.queries.copilot import EvaluateSession, EvaluateSignal
 
 from ._prompt import (
     signal_contrarian_risk_prompt,
-    signal_risk_pattern,
     signal_trend_risk_prompt,
-    system_prompt,
 )
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
@@ -169,11 +171,11 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         )
 
         bar = sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)
-        strategy_type = "Contrarian" if "SUP" not in str(signal.strategy) else "Trend" 
+        strategy_type = StrategyType.CONTRARIAN if "SUP" not in str(signal.strategy) else StrategyType.TREND_FOLLOW
 
         template = (
             signal_contrarian_risk_prompt
-            if strategy_type == "Contrarian"
+            if strategy_type == StrategyType.CONTRARIAN
             else signal_trend_risk_prompt
         )
 
@@ -219,10 +221,12 @@ class CopilotActor(BaseActor, EventHandlerMixin):
 
             tp, sl = float(f"{_tp[0]}.{_tp[1]}"), float(f"{_sl[0]}.{_sl[1]}")
 
-            unknow_risk = (tp > curr_bar.close and side == PositionSide.SHORT) or (tp < curr_bar.close and side == PositionSide.LONG)
+            unknow_risk = (tp > curr_bar.close and side == PositionSide.SHORT) or (
+                tp < curr_bar.close and side == PositionSide.LONG
+            )
 
             if unknow_risk:
-                logger.warn(f"Risk with unknown position management")
+                logger.warn("Risk with unknown position management")
 
             risk = SignalRisk(type=risk_type, tp=tp, sl=sl)
 
@@ -278,7 +282,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             features = MinMaxScaler(feature_range=(-1, 1)).fit_transform(features)
 
             features = PCA(n_components=5).fit_transform(features)
-            features = KernelPCA(n_components=2, kernel='rbf').fit_transform(features)
+            features = KernelPCA(n_components=2, kernel="rbf").fit_transform(features)
 
             n_neighbors = len(features) - 1
             max_clusters = min(n_neighbors, 10)
@@ -297,31 +301,35 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                 db_score = davies_bouldin_score(features, kmeans.labels_)
 
                 combined_score = (score + sil_score - db_score) / 3
-    
+
                 if combined_score > k_best_score:
                     k_best_score = combined_score
                     k_best_labels = kmeans.labels_
-   
+
             k_cluster_labels = k_best_labels.reshape(-1, 1)
 
             features_with_clusters = np.hstack((features, k_cluster_labels))
 
-            iso_forest = IsolationForest(contamination=0.01, random_state=1337).fit(features_with_clusters)
+            iso_forest = IsolationForest(contamination=0.01, random_state=1337).fit(
+                features_with_clusters
+            )
             iso_anomaly = iso_forest.predict(features_with_clusters) == -1
 
             lof = LocalOutlierFactor(n_neighbors=n_neighbors, contamination=0.01)
             lof_anomaly = lof.fit_predict(features_with_clusters) == -1
 
-            one_class_svm = OneClassSVM(kernel='rbf', gamma='scale', nu=0.01)
+            one_class_svm = OneClassSVM(kernel="rbf", gamma="scale", nu=0.01)
             svm_anomaly = one_class_svm.fit_predict(features_with_clusters) == -1
 
             iso_scores = iso_forest.decision_function(features_with_clusters)
             lof_scores = -lof.negative_outlier_factor_
             svm_score = one_class_svm.decision_function(features_with_clusters)
-            
+
             anomaly_scores = 0.3 * iso_scores + 0.2 * lof_scores + 0.5 * svm_score
 
-            bgmm = BayesianGaussianMixture(n_components=2, covariance_type='full', random_state=1337)
+            bgmm = BayesianGaussianMixture(
+                n_components=2, covariance_type="full", random_state=1337
+            )
             bgmm.fit(anomaly_scores.reshape(-1, 1))
 
             dynamic_threshold = np.percentile(bgmm.means_, 5)
@@ -330,20 +338,18 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             should_exit = False
 
             confidence_scores = {
-                'knn_transaction': 0.4 if knn_transaction in self.anomaly else 0,
-                'anomaly_score': 0.2 if anomaly_scores[-1] < dynamic_threshold else 0,
-                'iso_anomaly': 0.3 if iso_anomaly[-1] else 0,
-                'lof_anomaly': 0.05 if lof_anomaly[-1] else 0,
-                'svm_anomaly': 0.05 if svm_anomaly[-1] else 0,
+                "knn_transaction": 0.4 if knn_transaction in self.anomaly else 0,
+                "anomaly_score": 0.2 if anomaly_scores[-1] < dynamic_threshold else 0,
+                "iso_anomaly": 0.3 if iso_anomaly[-1] else 0,
+                "lof_anomaly": 0.05 if lof_anomaly[-1] else 0,
+                "svm_anomaly": 0.05 if svm_anomaly[-1] else 0,
             }
 
             if sum(confidence_scores.values()) > 0.5:
                 should_exit = True
 
             logger.info(
-                f"SIDE: {msg.side}, "
-                f"HLCC4: {hlcc4[-1]}, "
-                f"Exit: {should_exit}"
+                f"SIDE: {msg.side}, " f"HLCC4: {hlcc4[-1]}, " f"Exit: {should_exit}"
             )
 
             if should_exit:

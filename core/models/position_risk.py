@@ -2,11 +2,15 @@ from dataclasses import dataclass, field, replace
 from typing import List, Tuple
 
 import numpy as np
-from scipy.signal import savgol_filter
 from scipy.interpolate import UnivariateSpline
+from scipy.signal import savgol_filter
 from sklearn.cluster import KMeans
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+from sklearn.metrics import (
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    silhouette_score,
+)
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from .ohlcv import OHLCV
@@ -78,16 +82,17 @@ def smooth_savgol(*arrays: np.ndarray) -> List[np.ndarray]:
         for array in arrays
     ]
 
+
 def smooth_spline(*arrays: np.ndarray, s: float = 1.0, k: int = 3) -> List[np.ndarray]:
     return [
-        UnivariateSpline(
-            np.arange(len(array)),
-            array,
-            s=s,
-            k=min(k, len(array) - 1)
-        )(np.arange(len(array))) if len(array) > k else array
+        UnivariateSpline(np.arange(len(array)), array, s=s, k=min(k, len(array) - 1))(
+            np.arange(len(array))
+        )
+        if len(array) > k
+        else array
         for array in arrays
     ]
+
 
 class TaMixin:
     @staticmethod
@@ -407,12 +412,20 @@ class PositionRisk(TaMixin):
         )
 
         if side == PositionSide.LONG:
-            adjusted_sl = min(low_smooth[-1], np.max(ats)) if bullish else min(low_smooth[-1], ats[-1])
-    
+            adjusted_sl = (
+                min(low_smooth[-1], np.max(ats))
+                if bullish
+                else min(low_smooth[-1], ats[-1])
+            )
+
             return max(sl, adjusted_sl)
 
         if side == PositionSide.SHORT:
-            adjusted_sl = max(high_smooth[-1], np.min(ats)) if bearish else max(high_smooth[-1], ats[-1])
+            adjusted_sl = (
+                max(high_smooth[-1], np.min(ats))
+                if bearish
+                else max(high_smooth[-1], ats[-1])
+            )
 
             return min(sl, adjusted_sl)
 
