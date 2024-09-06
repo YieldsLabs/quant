@@ -9,7 +9,7 @@ risk_intro = """
 - Timeframe: {timeframe}
 - Horizon: Next {horizon} Candlesticks
 - Entry Price: {entry}
-- Strategy Type: {trade_type}
+- Strategy Type: {strategy_type}
 """
 risk_outro = """
 [Final Output]

@@ -169,17 +169,17 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         )
 
         bar = sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)
-        trade_type = "Contrarian" if "SUP" not in str(signal.strategy) else "Trend" 
+        strategy_type = "Contrarian" if "SUP" not in str(signal.strategy) else "Trend" 
 
         template = (
             signal_contrarian_risk_prompt
-            if trade_type == "Contrarian"
+            if strategy_type == "Contrarian"
             else signal_trend_risk_prompt
         )
 
         prompt = template.format(
             side=side,
-            trade_type=trade_type,
+            strategy_type=strategy_type,
             entry=curr_bar.close,
             horizon=self.horizon,
             timeframe=signal.timeframe,
