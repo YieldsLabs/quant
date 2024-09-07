@@ -60,7 +60,7 @@ from strategy.generator.signal.ma.vwap_cross import VwapCrossSignal
 from strategy.generator.signal.neutrality.dso_cross import DsoNeutralityCrossSignal
 from strategy.generator.signal.neutrality.rsi_cross import RsiNeutralityCrossSignal
 from strategy.generator.signal.neutrality.rsi_pullback import (
-    RsiNautralityPullbackSignal,
+    RsiNeutralityPullbackSignal,
 )
 from strategy.generator.signal.neutrality.rsi_rejection import (
     RsiNeutralityRejectionSignal,
