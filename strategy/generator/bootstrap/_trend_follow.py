@@ -473,7 +473,7 @@ class TrendFollowStrategyGenerator(AbstractStrategyGenerator):
                 [
                     DsoNeutralityCrossSignal(),
                     RsiNeutralityCrossSignal(),
-                    RsiNautralityPullbackSignal(),
+                    RsiNeutralityPullbackSignal(),
                     RsiNeutralityRejectionSignal(),
                     TiiNeutralityCrossSignal(),
                 ]
