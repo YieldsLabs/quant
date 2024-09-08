@@ -10,18 +10,18 @@ from core.models.symbol import Symbol
 class TWAP:
     def __init__(self, config_service: AbstractConfig):
         self.config = config_service.get("position")
+        self.duration = self.config["twap_duration"]
 
     async def next_value(self, symbol: Symbol, exchange: AbstractExchange):
         current_time = 0
         timepoints = []
-        twap_duration = self.config["twap_duration"]
 
-        while current_time < twap_duration:
+        while current_time < self.duration:
             bids, ask = self._fetch_book(symbol, exchange)
 
             timepoints.append((bids[:, 0], ask[:, 0], bids[:, 1], ask[:, 1]))
 
-            time_interval = self._volatility_time_interval(timepoints)
+            time_interval = TWAP._volatility_time_interval(timepoints)
             current_time += time_interval
 
             yield self._twap(timepoints)
@@ -44,10 +44,11 @@ class TWAP:
         bid_weighted_average = np.sum(bid_prices * bid_volume) / total_bid_volume
         ask_weighted_average = np.sum(ask_prices * ask_volume) / total_ask_volume
 
-        diff = ask_prices - bid_prices
-
         mid_price = (bid_weighted_average + ask_weighted_average) / 2.0
-        spread, volatility = np.mean(diff), np.std(diff)
+
+        spread, volatility = TWAP._calculate_volatility_spread(
+            bid_prices, ask_prices, bid_volume, ask_volume
+        )
 
         adj_spread = spread * volatility
 
@@ -55,6 +56,17 @@ class TWAP:
         ask_price = mid_price + adj_spread / 2.0
 
         return bid_price, ask_price
+
+    @staticmethod
+    def _calculate_volatility_spread(bid_prices, ask_prices, bid_volume, ask_volume):
+        diff = ask_prices - bid_prices
+        spread = np.mean(diff)
+
+        total_volume = bid_volume + ask_volume
+        vol_weighted = np.sum(diff**2 * total_volume) / np.sum(total_volume)
+        volatility = np.sqrt(vol_weighted)
+
+        return spread, volatility
 
     @staticmethod
     def _volatility_time_interval(timepoints):
