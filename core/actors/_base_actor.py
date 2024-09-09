@@ -9,8 +9,6 @@ from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
 
 class BaseActor(AbstractActor):
-    _EVENTS = []
-
     def __init__(self):
         super().__init__()
         self._running = False
