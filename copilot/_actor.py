@@ -1,9 +1,9 @@
 import asyncio
 import logging
+import re
 from typing import Union
 
 import numpy as np
-from core.models.strategy_type import StrategyType
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA, KernelPCA
@@ -25,11 +25,14 @@ from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
 from core.models.side import PositionSide, SignalSide
 from core.models.signal_risk import SignalRisk
+from core.models.strategy_type import StrategyType
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
 from ._prompt import (
     signal_contrarian_risk_prompt,
+    signal_risk_pattern,
     signal_trend_risk_prompt,
+    system_prompt,
 )
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
@@ -127,8 +130,6 @@ class CustomKMeans(KMeans):
 
 
 class CopilotActor(BaseActor, EventHandlerMixin):
-    _EVENTS = [EvaluateSignal, EvaluateSession]
-
     def __init__(self, llm: AbstractLLMService):
         super().__init__()
         EventHandlerMixin.__init__(self)
@@ -171,7 +172,11 @@ class CopilotActor(BaseActor, EventHandlerMixin):
         )
 
         bar = sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)
-        strategy_type = StrategyType.CONTRARIAN if "SUP" not in str(signal.strategy) else StrategyType.TREND_FOLLOW
+        strategy_type = (
+            StrategyType.CONTRARIAN
+            if "SUP" not in str(signal.strategy)
+            else StrategyType.TREND_FOLLOW
+        )
 
         template = (
             signal_contrarian_risk_prompt

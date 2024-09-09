@@ -14,7 +14,7 @@ from core.models.exchange import ExchangeType
 from core.models.order import Order, OrderStatus
 from core.models.side import PositionSide
 from core.queries.account import GetBalance
-from core.queries.broker import GetSymbol, GetSymbols
+from core.queries.broker import GetSymbol, GetSymbols, HasPosition
 from core.queries.position import GetClosePosition, GetOpenPosition
 
 from ._twap import TWAP
@@ -84,6 +84,19 @@ class SmartRouter(AbstractEventManager):
     def get_account_balance(self, query: GetBalance):
         return self.exchange.fetch_account_balance(query.currency)
 
+    @query_handler(HasPosition)
+    def has_position(self, query: HasPosition):
+        position = query.position
+        symbol = position.signal.symbol
+
+        existing_position = self.exchange.fetch_position(symbol, position.side)
+
+        if existing_position:
+            logging.info(f"Position for {symbol} on {position.side} already exists")
+            return True
+
+        return False
+
     @command_handler(UpdateSettings)
     def update_symbol_settings(self, command: UpdateSettings):
         self.exchange.update_symbol_settings(
@@ -93,21 +106,18 @@ class SmartRouter(AbstractEventManager):
     @command_handler(OpenPosition)
     async def open_position(self, command: OpenPosition):
         position = command.position
+        symbol = position.signal.symbol
 
         logger.info(f"Try to open position: {position}")
-
-        symbol = position.signal.symbol
-        stop_loss = position.stop_loss
-        pending_order = position.entry_order()
-
-        entry_price = pending_order.price
-        size = pending_order.size
 
         if self.exchange.fetch_position(symbol, position.side):
             logging.info("Position already exists")
             return
 
-        distance_to_stop_loss = abs(entry_price - stop_loss)
+        pending_order = position.entry_order()
+
+        entry_price = pending_order.price
+        size = 2 * pending_order.size
 
         num_orders = min(
             max(1, int(size / symbol.min_position_size)), self.config["max_order_slice"]
@@ -116,11 +126,14 @@ class SmartRouter(AbstractEventManager):
         order_counter = 0
         num_order_breach = 0
         order_timestamps = {}
+        exp_time = self.config["order_expiration_time"]
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = ask if position.side == PositionSide.LONG else bid
+            stop_loss = position.stop_loss
 
             current_distance_to_stop_loss = abs(stop_loss - price)
+            distance_to_stop_loss = abs(entry_price - stop_loss)
 
             threshold_breach = (
                 self.config["stop_loss_threshold"] * distance_to_stop_loss
@@ -156,7 +169,7 @@ class SmartRouter(AbstractEventManager):
             expired_orders = [
                 order_id
                 for order_id, timestamp in order_timestamps.items()
-                if curr_time - timestamp > self.config["order_expiration_time"]
+                if curr_time - timestamp > exp_time
             ]
 
             for order_id in expired_orders:
@@ -187,14 +200,15 @@ class SmartRouter(AbstractEventManager):
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
         position = command.position
-        symbol = position.signal.symbol
 
-        if not self.exchange.fetch_position(symbol, position.side):
+        symbol = position.signal.symbol
+        position_side = position.side
+
+        if not self.exchange.fetch_position(symbol, position_side):
             logging.info("Position is not existed")
             return
 
         exit_order = position.exit_order()
-        position_side = position.side
 
         num_orders = min(
             max(1, int(exit_order.size / symbol.min_position_size)),
@@ -204,6 +218,7 @@ class SmartRouter(AbstractEventManager):
         order_counter = 0
         order_timestamps = {}
         max_spread = float("-inf")
+        exp_time = self.config["order_expiration_time"]
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             if not self.exchange.fetch_position(symbol, position_side):
@@ -226,7 +241,7 @@ class SmartRouter(AbstractEventManager):
             expired_orders = [
                 order_id
                 for order_id, timestamp in order_timestamps.items()
-                if curr_time - timestamp > self.config["order_expiration_time"]
+                if curr_time - timestamp > exp_time
             ]
 
             for order_id in expired_orders:
@@ -252,14 +267,5 @@ class SmartRouter(AbstractEventManager):
                 if order_id:
                     order_timestamps[order_id] = time.time()
 
-            if spread < max_spread and not len(order_timestamps.keys()):
-                if num_orders > 2:
-                    self.exchange.close_half_position(symbol, position_side)
-                else:
-                    self.exchange.close_full_position(symbol, position_side)
-
         for order_id in list(order_timestamps.keys()):
             self.exchange.cancel_order(order_id, symbol)
-
-        if self.exchange.fetch_position(symbol, position_side):
-            self.exchange.close_full_position(symbol, position_side)

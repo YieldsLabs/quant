@@ -54,7 +54,7 @@ class BrokerPositionOpened(PositionEvent):
 
 
 @dataclass(frozen=True)
-class BrokerPositionAdjusted(PositionEvent):
+class BrokerPositionReduced(PositionEvent):
     pass
 
 

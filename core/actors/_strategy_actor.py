@@ -6,8 +6,6 @@ from .policy.strategy import StrategyPolicy
 
 
 class StrategyActor(BaseActor):
-    _EVENTS = []
-
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__()
         self._symbol = symbol

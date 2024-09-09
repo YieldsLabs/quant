@@ -63,16 +63,6 @@ logger = logging.getLogger(__name__)
 
 
 class RiskActor(StrategyActor, EventHandlerMixin):
-    _EVENTS = [
-        NewMarketDataReceived,
-        PositionOpened,
-        PositionClosed,
-        ExitLongSignalReceived,
-        ExitShortSignalReceived,
-        GoLongSignalReceived,
-        GoShortSignalReceived,
-    ]
-
     def __init__(
         self, symbol: Symbol, timeframe: Timeframe, config_service: AbstractConfig
     ):
