@@ -45,15 +45,6 @@ N_BACK_BARS = 4
 
 
 class PositionActor(StrategyActor):
-    _EVENTS = [
-        GoLongSignalReceived,
-        GoShortSignalReceived,
-        BrokerPositionOpened,
-        BrokerPositionClosed,
-        RiskThresholdBreached,
-        BacktestEnded,
-    ]
-
     def __init__(
         self,
         symbol: Symbol,
@@ -69,7 +60,7 @@ class PositionActor(StrategyActor):
         self.state = PositionStorage()
         self.config = config_service.get("position")
 
-    async def on_receive(self, event):
+    async def on_receive(self, event: PositionEvent):
         symbol, _ = self._get_event_key(event)
 
         if hasattr(event, "position"):
@@ -103,7 +94,10 @@ class PositionActor(StrategyActor):
                 EvaluateSignal(event.signal, back_bars, ta)
             )
 
-            if signal_risk_level.type in {SignalRiskType.VERY_HIGH}:
+            if signal_risk_level.type in {
+                SignalRiskType.UNKNOWN,
+                SignalRiskType.VERY_HIGH,
+            }:
                 return False
 
             position = await self.position_factory.create(

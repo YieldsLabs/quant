@@ -1,4 +1,6 @@
+import inspect
 import uuid
+from typing import Union, get_args, get_origin
 
 from core.commands.base import Command
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
@@ -7,13 +9,12 @@ from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
 
 class BaseActor(AbstractActor):
-    _EVENTS = []
-
     def __init__(self):
         super().__init__()
         self._running = False
         self._mailbox = EventDispatcher()
         self._id = str(uuid.uuid4())
+        self._EVENTS = self._discover_events()
 
     @property
     def id(self):
@@ -67,3 +68,21 @@ class BaseActor(AbstractActor):
     def _unregister_events(self):
         for event in self._EVENTS:
             self._mailbox.unregister(event, self.on_receive)
+
+    def _discover_events(self):
+        sig = inspect.signature(self.on_receive)
+        params = list(sig.parameters.values())
+
+        if len(params) < 1:
+            return []
+
+        event_type = params[0].annotation
+
+        events = []
+
+        if get_origin(event_type) is Union:
+            events = get_args(event_type)
+        else:
+            events = [event_type]
+
+        return list(set(events))

@@ -1,6 +1,4 @@
-
-
-from enum import Enum, auto
+from enum import Enum
 
 
 class StrategyType(Enum):

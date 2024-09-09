@@ -71,8 +71,6 @@ class AsyncHistoricalData:
 
 
 class HistoricalActor(StrategyActor):
-    _EVENTS = [StartHistoricalFeed]
-
     def __init__(
         self,
         symbol: Symbol,

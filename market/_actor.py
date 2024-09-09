@@ -11,8 +11,6 @@ MarketEvent = Union[NextBar, PrevBar, TA, BackNBars]
 
 
 class MarketActor(BaseActor, EventHandlerMixin):
-    _EVENTS = [NextBar, PrevBar, TA, BackNBars]
-
     def __init__(self, ts: AbstractTimeSeriesService):
         super().__init__()
         EventHandlerMixin.__init__(self)

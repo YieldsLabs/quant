@@ -46,8 +46,6 @@ class AsyncRealTimeData:
 
 
 class RealtimeActor(StrategyActor):
-    _EVENTS = [StartRealtimeFeed]
-
     def __init__(
         self,
         symbol: Symbol,

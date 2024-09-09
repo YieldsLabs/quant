@@ -5,7 +5,6 @@ from typing import Callable, Dict, Tuple, Type, Union
 
 from core.events.backtest import BacktestEnded
 from core.events.position import (
-    BrokerPositionAdjusted,
     BrokerPositionClosed,
     BrokerPositionOpened,
 )
@@ -29,7 +28,6 @@ class PositionState(Enum):
 
 PositionEvent = Union[
     BrokerPositionOpened,
-    BrokerPositionAdjusted,
     BrokerPositionClosed,
     GoLongSignalReceived,
     GoShortSignalReceived,
@@ -56,10 +54,6 @@ LONG_TRANSITIONS: Transitions = {
     (PositionState.WAITING_BROKER_CONFIRMATION, BacktestEnded): (
         PositionState.CLOSE,
         "handle_backtest",
-    ),
-    (PositionState.OPENED, BrokerPositionAdjusted): (
-        PositionState.OPENED,
-        "handle_position_adjusted",
     ),
     (PositionState.OPENED, RiskThresholdBreached): (
         PositionState.CLOSE,
@@ -91,10 +85,6 @@ SHORT_TRANSITIONS: Transitions = {
     (PositionState.WAITING_BROKER_CONFIRMATION, BacktestEnded): (
         PositionState.CLOSE,
         "handle_backtest",
-    ),
-    (PositionState.OPENED, BrokerPositionAdjusted): (
-        PositionState.OPENED,
-        "handle_position_adjusted",
     ),
     (PositionState.OPENED, RiskThresholdBreached): (
         PositionState.CLOSE,

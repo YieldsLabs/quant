@@ -12,6 +12,7 @@ from core.events.position import (
 from core.mixins import EventHandlerMixin
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.queries.broker import HasPosition
 from core.queries.position import GetClosePosition, GetOpenPosition
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,6 @@ PositionEventType = Union[PositionInitialized, PositionCloseRequested]
 
 
 class MarketOrderActor(StrategyActor, EventHandlerMixin):
-    _EVENTS = [PositionInitialized, PositionCloseRequested]
-
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
         EventHandlerMixin.__init__(self)
@@ -58,7 +57,8 @@ class MarketOrderActor(StrategyActor, EventHandlerMixin):
 
         logger.debug(f"To Close Position: {current_position}")
 
-        await self.ask(ClosePosition(current_position))
+        while await self.ask(HasPosition(current_position)):
+            await self.ask(ClosePosition(current_position))
 
         order = await self.ask(GetClosePosition(current_position))
 

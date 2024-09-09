@@ -16,8 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class SignalActor(StrategyActor):
-    _EVENTS = [NewMarketDataReceived]
-
     def __init__(
         self,
         symbol: Symbol,

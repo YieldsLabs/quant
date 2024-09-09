@@ -29,11 +29,6 @@ class PriceDirection(Enum):
 
 
 class PaperOrderActor(StrategyActor, EventHandlerMixin):
-    _EVENTS = [
-        PositionInitialized,
-        PositionCloseRequested,
-    ]
-
     def __init__(self, symbol: Symbol, timeframe: Timeframe):
         super().__init__(symbol, timeframe)
         EventHandlerMixin.__init__(self)
