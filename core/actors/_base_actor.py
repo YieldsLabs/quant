@@ -76,7 +76,9 @@ class BaseActor(AbstractActor):
         params = sig.parameters.values()
 
         if not params:
-            return []
+            raise RuntimeError(
+                f"{self.on_receive.__name__} method must accept at least one parameter for event handling."
+            )
 
         event_type = next(iter(params)).annotation
 
