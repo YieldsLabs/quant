@@ -117,7 +117,7 @@ class SmartRouter(AbstractEventManager):
         pending_order = position.entry_order()
 
         entry_price = pending_order.price
-        size = 2 * pending_order.size
+        size = pending_order.size
 
         num_orders = min(
             max(1, int(size / symbol.min_position_size)), self.config["max_order_slice"]
