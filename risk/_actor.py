@@ -112,15 +112,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             indexes = list(range(num_positions))
             random.shuffle(indexes)
 
-            current_index = 0
-
-            for _ in range(num_positions):
-                shuffled_index = indexes[current_index]
+            for shuffled_index in indexes:
                 processed_positions[shuffled_index] = await self._process_market(
                     event, self._position[shuffled_index]
                 )
-
-                current_index = (current_index + 1) % num_positions
 
             self._position = tuple(processed_positions)
 

@@ -52,8 +52,8 @@ class BybitWS(AbstractWS):
             self.ws = await websockets.connect(
                 self.wss,
                 open_timeout=None,
-                ping_interval=30,
-                ping_timeout=15,
+                ping_interval=18,
+                ping_timeout=10,
                 close_timeout=None,
             )
 
