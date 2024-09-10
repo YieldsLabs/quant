@@ -18,7 +18,7 @@ from .risk_type import PositionRiskType
 from .side import PositionSide
 from .ta import TechAnalysis
 
-TIME_THRESHOLD = 15000
+TIME_THRESHOLD = 10000
 LOOKBACK = 6
 
 
@@ -412,20 +412,14 @@ class PositionRisk(TaMixin):
         )
 
         if side == PositionSide.LONG:
-            adjusted_sl = (
-                min(low_smooth[-1], np.max(ats))
-                if bullish
-                else min(low_smooth[-1], ats[-1])
-            )
+            l_constr = low_smooth[-1] - volatility_smooth[-1]
+            adjusted_sl = min(l_constr, np.max(ats)) if bullish else min(l_constr, ats[-1])
 
             return max(sl, adjusted_sl)
 
         if side == PositionSide.SHORT:
-            adjusted_sl = (
-                max(high_smooth[-1], np.min(ats))
-                if bearish
-                else max(high_smooth[-1], ats[-1])
-            )
+            h_constr = high_smooth[-1] + volatility_smooth[-1]
+            adjusted_sl = max(h_constr, np.min(ats)) if bearish else max(h_constr, ats[-1])
 
             return min(sl, adjusted_sl)
 
