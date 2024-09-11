@@ -49,8 +49,8 @@ class TradingSystem(AbstractSystem):
         exchange_type: ExchangeType,
     ):
         super().__init__()
-        self.active_strategy = []
-        self.next_strategy = defaultdict(list)
+        self.active_strategy = set()
+        self.next_strategy = defaultdict(set)
         self.event_queue = asyncio.Queue()
         self.state = SystemState.IDLE
         self.config = config_service.get("system")
@@ -70,9 +70,7 @@ class TradingSystem(AbstractSystem):
         )
 
         for symbol, timeframe, strategy in event.strategy:
-            self.next_strategy[(symbol, timeframe)].append(
-                (symbol, timeframe, strategy)
-            )
+            self.next_strategy[(symbol, timeframe)].add((symbol, timeframe, strategy))
 
         await self.event_queue.put(Event.CHANGE)
 
@@ -113,7 +111,7 @@ class TradingSystem(AbstractSystem):
         await state_handlers[self.state]()
 
     async def _run_pretrading(self):
-        signal_actors = defaultdict(list)
+        signal_actors = defaultdict(set)
 
         for _, strategies in self.next_strategy.items():
             for symbol, timeframe, strategy in strategies:
@@ -139,7 +137,7 @@ class TradingSystem(AbstractSystem):
 
                 await asyncio.sleep(1.0)
 
-                signal_actors[(symbol, timeframe)].append(signal_actor)
+                signal_actors[(symbol, timeframe)].add(signal_actor)
 
         for (symbol, timeframe), _ in self.next_strategy.items():
             await self.execute(
@@ -168,14 +166,16 @@ class TradingSystem(AbstractSystem):
                 ),
             )
 
-            self.active_strategy.append(actors)
+            self.active_strategy.add(actors)
 
         await self.event_queue.put(Event.TRADING)
 
     async def _run_trading(self):
         logger.info("Start trading")
 
-        for actors in self.active_strategy:
-            await self.execute(StartRealtimeFeed(actors[0].symbol, actors[0].timeframe))
-
-            logger.info(f"Started feed: {actors[0].symbol}_{actors[0].timeframe}")
+        await asyncio.gather(
+            *[
+                self.execute(StartRealtimeFeed(actor[0].symbol, actor[0].timeframe))
+                for actor in self.active_strategy
+            ]
+        )

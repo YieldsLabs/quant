@@ -92,12 +92,10 @@ class HistoricalActor(StrategyActor):
         await asyncio.gather(producer, consumer)
 
     async def _producer(self, msg: StartHistoricalFeed):
-        symbol, timeframe = msg.symbol, msg.timeframe
-
         async with AsyncHistoricalData(
             self.exchange,
-            symbol,
-            timeframe,
+            self.symbol,
+            self.timeframe,
             msg.in_sample,
             msg.out_sample,
             self.batch_size,

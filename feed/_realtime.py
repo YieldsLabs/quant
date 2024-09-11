@@ -60,42 +60,47 @@ class RealtimeActor(StrategyActor):
         self.queue = asyncio.Queue()
         self.ws = ws
         self.ts = ts
+        self.producer = None
+        self.consumer = None
 
-    async def on_receive(self, msg: StartRealtimeFeed):
-        symbol, timeframe = msg.symbol, msg.timeframe
+    def on_stop(self):
+        if self.producer:
+            self.producer.cancel()
 
-        producer = asyncio.create_task(self._producer(symbol, timeframe))
-        consumer = asyncio.create_task(self._consumer(symbol, timeframe))
+        if self.consumer:
+            self.consumer.cancel()
 
-        await asyncio.gather(producer, consumer)
+    async def on_receive(self, _msg: StartRealtimeFeed):
+        self.producer = asyncio.create_task(self._producer())
+        self.consumer = asyncio.create_task(self._consumer())
 
-    async def _producer(self, symbol: Symbol, timeframe: Timeframe):
-        async with AsyncRealTimeData(self.ws, symbol, timeframe) as stream:
+    async def _producer(self):
+        async with AsyncRealTimeData(self.ws, self.symbol, self.timeframe) as stream:
             async for bars in stream:
                 await self.queue.put(bars)
 
             await self.queue.put(None)
 
-    async def _consumer(self, symbol: Symbol, timeframe: Timeframe):
+    async def _consumer(self):
         while True:
             bars = await self.queue.get()
 
             if bars is None:
                 break
 
-            await self._process_bars(symbol, timeframe, bars)
+            await self._process_bars(bars)
 
             self.queue.task_done()
 
-    async def _process_bars(
-        self, symbol: Symbol, timeframe: Timeframe, bars: List[Bar]
-    ):
+    async def _process_bars(self, bars: List[Bar]):
         for bar in bars:
             if bar.closed:
-                await self.ts.upsert(symbol, timeframe, bar.ohlcv)
+                await self.ts.upsert(self.symbol, self.timeframe, bar.ohlcv)
 
-                logger.info(f"{symbol}_{timeframe}:{bar}")
+                logger.info(f"{self.symbol}_{self.timeframe}:{bar}")
 
             await self.tell(
-                NewMarketDataReceived(symbol, timeframe, bar.ohlcv, bar.closed)
+                NewMarketDataReceived(
+                    self.symbol, self.timeframe, bar.ohlcv, bar.closed
+                )
             )
