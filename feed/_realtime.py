@@ -31,6 +31,7 @@ class AsyncRealTimeData:
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.ws.unsubscribe(self.symbol, self.timeframe)
+        await self.ws.close()
         return self
 
     def __aiter__(self):

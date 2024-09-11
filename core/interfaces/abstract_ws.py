@@ -10,6 +10,10 @@ class AbstractWS(ABC):
         pass
 
     @abstractmethod
+    def close(self):
+        pass
+
+    @abstractmethod
     def receive(self, symbol: Symbol, timeframe: Timeframe):
         pass
 
