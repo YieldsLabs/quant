@@ -413,13 +413,17 @@ class PositionRisk(TaMixin):
 
         if side == PositionSide.LONG:
             l_constr = low_smooth[-1] - volatility_smooth[-1]
-            adjusted_sl = min(l_constr, np.max(ats)) if bullish else min(l_constr, ats[-1])
+            adjusted_sl = (
+                min(l_constr, np.max(ats)) if bullish else min(l_constr, ats[-1])
+            )
 
             return max(sl, adjusted_sl)
 
         if side == PositionSide.SHORT:
             h_constr = high_smooth[-1] + volatility_smooth[-1]
-            adjusted_sl = max(h_constr, np.min(ats)) if bearish else max(h_constr, ats[-1])
+            adjusted_sl = (
+                max(h_constr, np.min(ats)) if bearish else max(h_constr, ats[-1])
+            )
 
             return min(sl, adjusted_sl)
 
