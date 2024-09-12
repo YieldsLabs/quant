@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-from asyncio.exceptions import CancelledError
 
 import websockets
 from websockets.exceptions import ConnectionClosedError
@@ -69,12 +68,7 @@ class BybitWS(AbstractWS):
     @retry(
         max_retries=13,
         initial_retry_delay=1,
-        handled_exceptions=(
-            ConnectionError,
-            RuntimeError,
-            ConnectionClosedError,
-            CancelledError,
-        ),
+        handled_exceptions=(ConnectionError, ConnectionClosedError),
     )
     async def run(self):
         await self.close()
@@ -91,9 +85,7 @@ class BybitWS(AbstractWS):
         initial_retry_delay=1,
         handled_exceptions=(
             ConnectionError,
-            RuntimeError,
             ConnectionClosedError,
-            CancelledError,
         ),
     )
     async def receive(self, symbol, timeframe):
