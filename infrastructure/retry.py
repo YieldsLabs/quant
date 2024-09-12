@@ -52,16 +52,12 @@ def retry(
         raise max_retries_exception
 
     def wrapper(func):
-        if asyncio.iscoroutinefunction(func):
+        async def wrapped_async(*args, **kwargs):
+            return await handle_retry_async(func, *args, **kwargs)
 
-            async def wrapped(*args, **kwargs):
-                return await handle_retry_async(func, *args, **kwargs)
+        def wrapped_sync(*args, **kwargs):
+            return handle_retry_sync(func, *args, **kwargs)
 
-        else:
-
-            def wrapped(*args, **kwargs):
-                return handle_retry_sync(func, *args, **kwargs)
-
-        return wrapped
+        return wrapped_async if asyncio.iscoroutinefunction(func) else wrapped_sync
 
     return wrapper
