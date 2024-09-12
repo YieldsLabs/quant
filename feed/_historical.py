@@ -113,6 +113,7 @@ class HistoricalActor(StrategyActor):
                 break
 
             await self._process_batch(batch)
+
             self.queue.task_done()
 
     async def _process_batch(self, batch: List[Bar]):
