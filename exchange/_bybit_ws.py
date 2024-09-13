@@ -59,7 +59,7 @@ class BybitWS(AbstractWS):
                     close_timeout=3,
                 )
 
-                await self._wait_for_ws()
+                await self._wait_for_ws(timeout=5)
                 await self._subscribe()
 
                 logger.info("WebSocket connection established.")
@@ -123,7 +123,7 @@ class BybitWS(AbstractWS):
     async def _unsubscribe(self):
         await self._send_message(self.UNSUBSCRIBE_OPERATION)
 
-    async def _send_message(self, operation):
+    async def _send_message(self, operation, timeout=5):
         if (
             not self.ws
             or not self.ws.open
@@ -137,7 +137,7 @@ class BybitWS(AbstractWS):
         }
 
         try:
-            await asyncio.wait_for(self.ws.send(json.dumps(message)), timeout=5)
+            await asyncio.wait_for(self.ws.send(json.dumps(message)), timeout=timeout)
 
             logger.info(f"{operation.capitalize()} to: {message}")
         except asyncio.TimeoutError:
@@ -145,9 +145,16 @@ class BybitWS(AbstractWS):
         except Exception as e:
             logger.error(f"Failed to send {operation} message: {e}")
 
-    async def _wait_for_ws(self):
+    async def _wait_for_ws(self, timeout=10):
+        try:
+            await asyncio.wait_for(self._check_ws_open(), timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.error("Timed out waiting for WebSocket to open.")
+            raise ConnectionError("WebSocket connection timeout.")
+
+    async def _check_ws_open(self):
         while not self.ws or not self.ws.open:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.1)
 
     def _is_valid_message(self, symbol, timeframe, data):
         if self.TOPIC_KEY not in data:
