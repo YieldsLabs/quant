@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 connect_exceptions = (ConnectionError, ConnectionClosedError, asyncio.TimeoutError)
 
+
 class BybitWS(AbstractWS):
     SUBSCRIBE_OPERATION = "subscribe"
     UNSUBSCRIBE_OPERATION = "unsubscribe"
@@ -137,6 +138,8 @@ class BybitWS(AbstractWS):
 
         try:
             await asyncio.wait_for(self.ws.send(json.dumps(message)), timeout=5)
+
+            logger.info(f"{operation.capitalize()} to: {message}")
         except asyncio.TimeoutError:
             logger.error("Subscription request timed out")
         except Exception as e:
