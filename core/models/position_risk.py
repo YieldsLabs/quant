@@ -123,13 +123,16 @@ class TaMixin:
         return stop_prices
 
 
+OHLCV_SIZE = 200
+
+
 @dataclass(frozen=True)
 class PositionRisk(TaMixin):
     model: SGDRegressor
     scaler: StandardScaler
     ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
-    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.8, 2.2))
+    trail_factor: float = field(default_factory=lambda: np.random.uniform(1.1, 1.8))
 
     @property
     def curr_bar(self):
@@ -246,7 +249,7 @@ class PositionRisk(TaMixin):
         return predictions
 
     def next(self, bar: OHLCV):
-        ohlcv = self.ohlcv + [bar]
+        ohlcv = (self.ohlcv + [bar])[-OHLCV_SIZE:]
         ohlcv.sort(key=lambda x: x.timestamp)
         return replace(self, ohlcv=ohlcv)
 
