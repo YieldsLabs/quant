@@ -95,12 +95,14 @@ class Bybit(AbstractExchange):
             logger.error(f"{symbol}: {e}")
             return
 
-    def fetch_trade(self, symbol: Symbol, side: PositionSide, limit: int):
-        trades = sorted(
-            self.connector.fetch_my_trades(symbol.name, limit=limit * 3),
-            key=lambda trade: trade["timestamp"],
-            reverse=True,
-        )
+    def fetch_trade(
+        self, symbol: Symbol, side: PositionSide, since: int, size: float, limit: int
+    ):
+        last_trades = [
+            trade
+            for trade in self.connector.fetch_my_trades(symbol.name, limit=limit * 2)
+            if trade["timestamp"] >= since
+        ]
 
         def round_down_to_minute(timestamp):
             return datetime.utcfromtimestamp(timestamp // 1000).replace(
@@ -109,21 +111,36 @@ class Bybit(AbstractExchange):
 
         aggregated_trades = defaultdict(lambda: {"amount": 0, "price": 0, "fee": 0})
 
-        for trade in trades:
-            if trade["side"] == "buy" if side == PositionSide.SHORT else "sell":
-                timestamp = round_down_to_minute(trade["timestamp"])
-                aggregated_trades[timestamp]["amount"] += trade["amount"]
-                aggregated_trades[timestamp]["price"] += trade["price"]
-                aggregated_trades[timestamp]["fee"] += trade["fee"]["cost"]
+        opposite_side = "buy" if side == PositionSide.SHORT else "sell"
 
-        for timestamp, trade_data in aggregated_trades.items():
-            count = sum(
-                1
-                for item in trades
-                if round_down_to_minute(item["timestamp"]) == timestamp
-            )
-            if count > 0:
-                trade_data["price"] /= count
+        trade_stack = sorted(
+            [trade for trade in last_trades if trade["side"] == opposite_side],
+            key=lambda trade: trade["timestamp"],
+            reverse=True,
+        )
+
+        acc_size = 0
+
+        for trade in trade_stack:
+            if acc_size >= size:
+                break
+
+            trade_amount = trade["amount"]
+            key = round_down_to_minute(trade["timestamp"])
+
+            trade_amount = min(trade["amount"], size - acc_size)
+
+            aggregated_trades[key]["amount"] += trade_amount
+            aggregated_trades[key]["price"] += trade["price"] * trade_amount
+            aggregated_trades[key]["fee"] += (
+                trade["fee"]["cost"] / trade["amount"]
+            ) * trade_amount
+
+            acc_size += trade_amount
+
+        for _, trade_data in aggregated_trades.items():
+            if trade_data["amount"] > 0:
+                trade_data["price"] /= trade_data["amount"]
 
         return next(iter(aggregated_trades.values()), None)
 
@@ -234,6 +251,7 @@ class Bybit(AbstractExchange):
                 else PositionSide.SHORT,
                 "entry_price": float(position.get("entryPrice", 0)),
                 "position_size": float(position.get("contracts", 0)),
+                "open_fee": -float(position.get("info", {}).get("curRealisedPnl", 0)),
             }
 
         return None

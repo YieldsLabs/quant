@@ -49,6 +49,7 @@ class SmartRouter(AbstractEventManager):
                 status=OrderStatus.EXECUTED,
                 size=broker_position["position_size"],
                 price=broker_position["entry_price"],
+                fee=broker_position["open_fee"],
             )
 
     @query_handler(GetClosePosition)
@@ -57,7 +58,11 @@ class SmartRouter(AbstractEventManager):
         symbol = position.signal.symbol
 
         trade = self.exchange.fetch_trade(
-            symbol, position.side, self.config["max_order_slice"]
+            symbol,
+            position.side,
+            position.last_modified,
+            position.size,
+            self.config["max_order_slice"],
         )
 
         if not trade:
@@ -88,13 +93,15 @@ class SmartRouter(AbstractEventManager):
     def has_position(self, query: HasPosition):
         position = query.position
         symbol = position.signal.symbol
+        side = position.side
 
-        existing_position = self.exchange.fetch_position(symbol, position.side)
+        existing_position = self.exchange.fetch_position(symbol, side)
 
         if existing_position:
-            logging.info(f"Position for {symbol} on {position.side} already exists")
+            logging.info(f"Position check: {side} position for {symbol} exists.")
             return True
 
+        logging.info(f"Position check: No existing {side} position found for {symbol}.")
         return False
 
     @command_handler(UpdateSettings)
