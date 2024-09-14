@@ -123,7 +123,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         async with self._lock:
 
             async def handle_trail(position: Position, risk_bar: OHLCV):
-                logger.info("Trail event")
+                logger.info(f"Trail event for side: {position.side}, bar: {risk_bar}")
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
                 return position.trail(ta)
@@ -214,7 +214,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                             self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
                             self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
                             self.consc_anomaly_counter = 1
-                        await asyncio.sleep(0.00001)
                         continue
                     else:
                         self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
