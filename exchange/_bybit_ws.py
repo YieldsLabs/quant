@@ -65,7 +65,7 @@ class BybitWS(AbstractWS):
                 logger.info("WebSocket connection established.")
             except Exception as e:
                 logger.error(f"Failed to connect to WebSocket: {e}")
-                raise ConnectionError(e)
+                raise ConnectionError("Failed to connect to WebSocket") from None
 
     @retry(
         max_retries=13,
@@ -150,7 +150,7 @@ class BybitWS(AbstractWS):
             await asyncio.wait_for(self._check_ws_open(), timeout=timeout)
         except asyncio.TimeoutError:
             logger.error("Timed out waiting for WebSocket to open.")
-            raise ConnectionError("WebSocket connection timeout.")
+            raise ConnectionError("WebSocket connection timeout.") from None
 
     async def _check_ws_open(self):
         while not self.ws or not self.ws.open:
