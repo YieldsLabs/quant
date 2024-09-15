@@ -98,11 +98,11 @@ class Bybit(AbstractExchange):
     def fetch_trade(
         self, symbol: Symbol, side: PositionSide, since: int, size: float, limit: int
     ):
-        last_trades = [
+        last_trades = (
             trade
             for trade in self.connector.fetch_my_trades(symbol.name, limit=limit * 2)
             if trade["timestamp"] >= since
-        ]
+        )
 
         def round_down_to_minute(timestamp):
             return datetime.utcfromtimestamp(timestamp // 1000).replace(
@@ -114,7 +114,7 @@ class Bybit(AbstractExchange):
         opposite_side = "buy" if side == PositionSide.SHORT else "sell"
 
         trade_stack = sorted(
-            [trade for trade in last_trades if trade["side"] == opposite_side],
+            (trade for trade in last_trades if trade["side"] == opposite_side),
             key=lambda trade: trade["timestamp"],
             reverse=True,
         )
