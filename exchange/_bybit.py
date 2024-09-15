@@ -238,9 +238,8 @@ class Bybit(AbstractExchange):
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def fetch_position(self, symbol: Symbol, side: PositionSide):
         positions = self.connector.fetch_positions([symbol.name])
-        side = str(side).lower()
         position = next(
-            iter([position for position in positions if position["side"] == side]),
+            (p for p in positions if p["side"] == str(side).lower()), 
             None,
         )
 
@@ -263,9 +262,7 @@ class Bybit(AbstractExchange):
 
     @cached(TTLCache(maxsize=300, ttl=120))
     def fetch_future_symbols(self):
-        markets = self._fetch_futures_market()
-        symbols = [self._create_symbol(market) for market in markets]
-        return symbols
+        return [self._create_symbol(market) for market in self._fetch_futures_market()]
 
     def fetch_ohlcv(
         self,
@@ -325,11 +322,9 @@ class Bybit(AbstractExchange):
 
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def _fetch_futures_market(self):
-        markets = self.connector.fetch_markets()
-
         return [
             market_info
-            for market_info in markets
+            for market_info in self.connector.fetch_markets()
             if market_info["linear"]
             and market_info["type"] != "future"
             and market_info["settle"] == "USDT"
