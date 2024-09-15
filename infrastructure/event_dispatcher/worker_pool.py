@@ -29,6 +29,9 @@ class WorkerPool:
             for _ in range(num_workers)
         ]
 
+        for worker in self.workers:
+            asyncio.create_task(worker.run())
+
     async def dispatch_to_worker(self, event: Event, *args, **kwargs) -> None:
         priority_group = self.load_balancer.determine_priority_group(
             event.meta.priority

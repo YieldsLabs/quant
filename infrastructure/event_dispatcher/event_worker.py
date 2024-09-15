@@ -17,11 +17,9 @@ class EventWorker:
         self.event_handler = event_handler
         self.cancel_event = cancel_event
         self.dedup = dedup
-
         self.queue = asyncio.Queue()
-        self.tasks = asyncio.create_task(self._process_events())
 
-    async def _process_events(self):
+    async def run(self):
         async for event, args, kwargs in self._get_event_stream():
             await self.event_handler.handle_event(event, *args, **kwargs)
 
