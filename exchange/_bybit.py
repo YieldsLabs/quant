@@ -239,7 +239,7 @@ class Bybit(AbstractExchange):
     def fetch_position(self, symbol: Symbol, side: PositionSide):
         positions = self.connector.fetch_positions([symbol.name])
         position = next(
-            (p for p in positions if p["side"] == str(side).lower()), 
+            (p for p in positions if p["side"] == str(side).lower()),
             None,
         )
 
