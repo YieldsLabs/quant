@@ -395,6 +395,12 @@ class PositionRisk(TaMixin):
         if min_length < 3:
             return sl
 
+        anomaly = lambda series: (series - np.mean(series)) / np.std(series)
+        close_anomaly = anomaly(close[-min_length:])
+
+        if abs(close_anomaly[-1]) > 2:
+            return sl
+
         close_smooth, volatility_smooth, high_smooth, low_smooth = smooth_savgol(
             close, volatility, high, low
         )
@@ -404,10 +410,8 @@ class PositionRisk(TaMixin):
 
         ats = self._ats(close_smooth, volatility_smooth)
 
-        rising_low = low_smooth[-1] > low_smooth[-2] and low_smooth[-2] > low_smooth[-3]
-        failing_high = (
-            high_smooth[-1] < high_smooth[-2] and high_smooth[-2] < high_smooth[-3]
-        )
+        rising_low = low[-1] > low[-2] and low[-2] > low[-3]
+        failing_high = high[-1] < high[-2] and high[-2] < high[-3]
 
         bullish = rising_low and (ta.trend.dmi[-1] > 0.0 or ta.momentum.cci[-1] > 100.0)
         bearish = failing_high and (
@@ -415,20 +419,22 @@ class PositionRisk(TaMixin):
         )
 
         if side == PositionSide.LONG:
-            l_constr = min(low_smooth[-1], low_smooth[-2])
+            l_constr = min(low[-1], low[-2])
             adjusted_sl = (
                 min(l_constr, np.max(ats)) if bullish else min(l_constr, ats[-1])
             )
+            atr_stop = l_constr - volatility_smooth[-1]
 
-            return max(sl, adjusted_sl)
+            return max(sl, max(atr_stop, adjusted_sl))
 
         if side == PositionSide.SHORT:
-            h_constr = max(high_smooth[-1], high_smooth[-2])
+            h_constr = max(high[-1], high[-2])
             adjusted_sl = (
                 max(h_constr, np.min(ats)) if bearish else max(h_constr, ats[-1])
             )
+            atr_stop = h_constr + volatility_smooth[-1]
 
-            return min(sl, adjusted_sl)
+            return min(sl, min(atr_stop, adjusted_sl))
 
         return sl
 
