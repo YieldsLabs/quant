@@ -1,5 +1,7 @@
 import numpy as np
 
+from .pid import PID
+
 
 def softmax(x):
     e_x = np.exp(x - np.max(x))
@@ -15,28 +17,20 @@ class LoadBalancer:
         initial_kd: float = 0.1,
         learning_rate: float = 0.001,
         decay_rate: float = 0.99,
+        event_threshold: float = 1e4,
+        threshold_growth_rate: float = 1.1,
     ):
         self._group_event_counts = np.zeros(priority_groups)
-        self._initialize_load_balancer(
-            priority_groups, initial_kp, initial_ki, initial_kd
+        self._pid = PID(
+            priority_groups,
+            initial_kp,
+            initial_ki,
+            initial_kd,
+            learning_rate,
+            decay_rate,
         )
-        self._group_event_counts_threshold = 1e4
-        self._learning_rate = learning_rate
-        self._decay_rate = decay_rate
-
-    def _initialize_load_balancer(
-        self,
-        priority_groups: int,
-        initial_kp: float,
-        initial_ki: float,
-        initial_kd: float,
-    ):
-        self._kp = np.ones(priority_groups) * initial_kp
-        self._ki = np.ones(priority_groups) * initial_ki
-        self._kd = np.ones(priority_groups) * initial_kd
-
-        self._integral_errors = np.zeros(priority_groups)
-        self._previous_errors = np.zeros(priority_groups)
+        self._group_event_counts_threshold = event_threshold
+        self._threshold_growth_rate = threshold_growth_rate
         self._target_ratios = 1 / (np.arange(priority_groups) + 1)
 
     def register_event(self, priority_group: int):
@@ -49,7 +43,7 @@ class LoadBalancer:
             self._group_event_counts *= 0.5
 
         self._group_event_counts_threshold = max(
-            self._group_event_counts_threshold * 1.1, 1e4
+            self._group_event_counts_threshold * self._threshold_growth_rate, 1e4
         )
 
     def determine_priority_group(self, priority: int) -> int:
@@ -60,30 +54,9 @@ class LoadBalancer:
 
         processed_ratios = self._group_event_counts / total_group
         errors = self._target_ratios - processed_ratios
-        self._update_pid(errors)
 
-        control_outputs = (
-            self._kp * errors
-            + self._ki * self._integral_errors
-            + self._kd * (errors - self._previous_errors)
-        )
-
-        self._previous_errors = errors.copy()
-        self._learning_rate *= self._decay_rate
+        control_outputs = self._pid.update(errors)
 
         return np.random.choice(
             np.arange(len(control_outputs)), p=softmax(control_outputs)
         )
-
-    def _update_pid(self, errors: np.ndarray):
-        for i, error in enumerate(errors):
-            self._integral_errors[i] += error
-            self._kp[i] = np.clip(self._kp[i] + self._learning_rate * error, 0, 1)
-            self._ki[i] = np.clip(
-                self._ki[i] + self._learning_rate * self._integral_errors[i], 0, 1
-            )
-            self._kd[i] = np.clip(
-                self._kd[i] + self._learning_rate * (error - self._previous_errors[i]),
-                0,
-                1,
-            )
