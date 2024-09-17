@@ -1,6 +1,6 @@
 import numpy as np
 
-from .pid import PID
+from .pid_controller import PID
 
 
 def softmax(x):
