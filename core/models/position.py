@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from .ohlcv import OHLCV
+from .entity.ohlcv import OHLCV
 from .order import Order, OrderStatus
 from .position_risk import PositionRisk
 from .profit_target import ProfitTarget
@@ -356,29 +356,21 @@ class Position:
         dist_ratio = dist / entry_price
         is_exit = session_risk == SessionRiskType.EXIT
 
-        trail_threshold = 0.0008
+        trail_threshold = 0.0011
 
         if dist > trl_dist and trl_ratio > trail_threshold:
             logger.info("Activating trailing stop mechanism")
             next_position = next_position.trail(ta)
 
         if is_exit:
-            exit_ratio = exit_dist / entry_price
             dist_ratio = dist / entry_price
 
-            if exit_ratio > 0.005:
-                next_position = next_position.trail(ta)
+            next_position = next_position.trail(ta)
 
-                logger.info(
-                    f"TRAIL NEXT SL: {next_position.stop_loss:.6f}, "
-                    f"CURR PRICE: {next_position.risk_bar.close:.6f}"
-                )
-            else:
-                logger.info(
-                    f"Exit condition not met: "
-                    f"CURR_DIST: {dist:.6f} ({dist_ratio:.2%}), "
-                    f"EXIT_DIST: {exit_dist:.6f} ({exit_ratio:.2%})"
-                )
+            logger.info(
+                f"TRAIL NEXT SL: {next_position.stop_loss:.6f}, "
+                f"CURR PRICE: {next_position.risk_bar.close:.6f}"
+            )
 
         next_sl = next_position.stop_loss
         next_risk = next_position.position_risk

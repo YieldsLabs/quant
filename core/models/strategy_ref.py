@@ -14,7 +14,7 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.models.action import Action
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.side import SignalSide
 from core.models.signal import Signal
 from core.models.strategy import Strategy

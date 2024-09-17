@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrategy
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.position_risk import PositionRisk
 from core.models.profit_target import ProfitTarget

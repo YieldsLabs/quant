@@ -22,7 +22,7 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
@@ -156,11 +156,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             prev_bar = next_position.risk_bar
             next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
 
-            if not next_bar:
-                next_bar = event.ohlcv
+            next_bar = next_bar or event.ohlcv
 
-            diff = event.ohlcv.timestamp - next_bar.timestamp
             attempts = 0
+            diff = event.ohlcv.timestamp - next_bar.timestamp
 
             while diff < 0 and attempts < MAX_ATTEMPTS:
                 new_prev_bar = await self.ask(

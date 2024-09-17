@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from .ohlcv import OHLCV
+from .entity.ohlcv import OHLCV
 from .side import SignalSide
 from .strategy import Strategy
 from .symbol import Symbol

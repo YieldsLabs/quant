@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 

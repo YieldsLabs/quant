@@ -4,7 +4,7 @@ from typing import Optional
 
 from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.interfaces.abstract_wasm_manager import AbstractWasmManager
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.models.timeseries_ref import TimeSeriesRef

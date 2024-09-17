@@ -3,7 +3,7 @@ from typing import Union
 from core.actors import BaseActor
 from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.mixins import EventHandlerMixin
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.ta import TechAnalysis
 from core.queries.ohlcv import TA, BackNBars, NextBar, PrevBar
 

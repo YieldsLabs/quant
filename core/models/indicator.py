@@ -1,11 +1,10 @@
-from abc import ABC
 from dataclasses import asdict, dataclass, fields
 from enum import Enum
 from typing import Any
 
 
 @dataclass(frozen=True)
-class Indicator(ABC):
+class Indicator:
     type: Any
 
     def to_dict(self) -> dict:

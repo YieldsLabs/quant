@@ -7,11 +7,12 @@ from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exchange import AbstractExchange
 from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
-from core.models.bar import Bar
+from core.models.entity.bar import Bar
+from core.models.entity.ohlcv import OHLCV
 from core.models.lookback import Lookback
-from core.models.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+
 
 
 class AsyncHistoricalData:

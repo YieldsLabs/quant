@@ -30,9 +30,9 @@ from core.queries.copilot import EvaluateSession, EvaluateSignal
 
 from ._prompt import (
     signal_contrarian_risk_prompt,
-    signal_risk_pattern,
     signal_trend_risk_prompt,
     system_prompt,
+    signal_risk_pattern,
 )
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]
@@ -171,7 +171,8 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             type=risk_type,
         )
 
-        bar = sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)
+        bar = [f"{b}" for b in sorted(prev_bar + [curr_bar], key=lambda x: x.timestamp)]
+
         strategy_type = (
             StrategyType.CONTRARIAN
             if "SUP" not in str(signal.strategy)
@@ -258,6 +259,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             mfi = np.array(ta.volume.mfi[-LOOKBACK:])
             vwap = np.array(ta.volume.vwap[-LOOKBACK:])
             nvol = np.array(ta.volume.nvol[-LOOKBACK:])
+            vo = np.array(ta.volume.vo[-LOOKBACK:])
             yz = np.array(ta.volatility.yz[-LOOKBACK:])
             tr = np.array(ta.volatility.tr[-LOOKBACK:])
 
@@ -279,7 +281,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
                     vwap,
                     tr,
                     nvol,
-                    hlcc4,
+                    vo,
                 )
             )
 

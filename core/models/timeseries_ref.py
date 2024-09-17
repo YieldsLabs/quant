@@ -8,7 +8,8 @@ import orjson as json
 if typing.TYPE_CHECKING:
     from wasmtime import Instance, Store
 
-from .ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
+
 from .ta import TechAnalysis
 
 

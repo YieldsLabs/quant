@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 from core.events.base import EventMeta
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.risk_type import SessionRiskType
 from core.models.side import PositionSide
 from core.models.signal import Signal

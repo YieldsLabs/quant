@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 from core.events.base import EventMeta
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.ta import TechAnalysis
 from core.models.timeframe import Timeframe

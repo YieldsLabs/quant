@@ -7,7 +7,7 @@ from core.commands.feed import StartRealtimeFeed
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.interfaces.abstract_ws import AbstractWS
-from core.models.bar import Bar
+from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 

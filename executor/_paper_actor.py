@@ -10,7 +10,7 @@ from core.events.position import (
     PositionInitialized,
 )
 from core.mixins import EventHandlerMixin
-from core.models.ohlcv import OHLCV
+from core.models.entity.ohlcv import OHLCV
 from core.models.order import Order, OrderStatus, OrderType
 from core.models.position import Position
 from core.models.side import PositionSide

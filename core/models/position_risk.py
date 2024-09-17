@@ -13,7 +13,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-from .ohlcv import OHLCV
+from .entity.ohlcv import OHLCV
 from .risk_type import PositionRiskType
 from .side import PositionSide
 from .ta import TechAnalysis

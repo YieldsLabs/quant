@@ -6,8 +6,8 @@ import websockets
 from websockets.exceptions import ConnectionClosedError
 
 from core.interfaces.abstract_ws import AbstractWS
-from core.models.bar import Bar
-from core.models.ohlcv import OHLCV
+from core.models.entity.bar import Bar
+from core.models.entity.ohlcv import OHLCV
 from core.models.timeframe import Timeframe
 from infrastructure.retry import retry
 
