@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .base import Entity
+from ._base import Entity
 from .ohlcv import OHLCV
 
 

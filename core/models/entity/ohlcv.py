@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from core.models.candle_type import CandleType
 
-from .base import Entity
+from ._base import Entity
 
 
 @dataclass(frozen=True)

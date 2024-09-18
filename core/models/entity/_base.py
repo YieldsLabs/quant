@@ -17,12 +17,10 @@ class Entity:
         result = {**field_dict, **property_dict}
 
         for key, value in result.items():
-            if isinstance(value, Enum):
-                result[key] = str(value)
-
-            elif hasattr(value, "to_dict") and callable(value.to_dict):
+            if hasattr(value, "to_dict") and callable(value.to_dict):
                 result[key] = value.to_dict()
-
+            elif isinstance(value, Enum):
+                result[key] = str(value)
             elif isinstance(value, list):
                 result[key] = [
                     v.to_dict() if hasattr(v, "to_dict") and callable(v.to_dict) else v
@@ -32,7 +30,7 @@ class Entity:
         return result
 
     def to_json(self) -> str:
-        return json.dumps(self.to_dict())
+        return json.dumps(self.to_dict(), default=str)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Entity":
@@ -40,8 +38,7 @@ class Entity:
 
     @classmethod
     def from_json(cls, json_str: str) -> "Entity":
-        data = json.loads(json_str)
-        return cls.from_dict(data)
+        return cls.from_dict(json.loads(json_str))
 
     @classmethod
     def from_list(cls, values: List[Any]) -> "Entity":
@@ -55,8 +52,11 @@ class Entity:
         return cls.from_dict(data)
 
     def __str__(self) -> str:
-        field_dict = self.to_dict()
-        field_strings = []
+        field_dict = {
+            key: value
+            for key, value in self.to_dict().items()
+            if not key.startswith("_")
+        }
 
         def format_value(value):
             if isinstance(value, dict):
@@ -69,23 +69,13 @@ class Entity:
                 return f"{value:.8f}"
             return str(value)
 
-        for key, value in field_dict.items():
-            if value is not None:
-                formatted_value = format_value(value)
-                field_strings.append(f"{key}={formatted_value}")
-            else:
-                field_strings.append(f"{key}=NA")
-
-        return ", ".join(field_strings)
+        return ", ".join(
+            f"{key}={format_value(value)}" if value is not None else f"{key}=NA"
+            for key, value in field_dict.items()
+        )
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.__str__()})"
 
     def __format__(self, format_spec: str) -> str:
-        if format_spec == "":
-            return self.__str__()
-
-        if format_spec == "json":
-            return self.to_json()
-
-        return self.__str__()
+        return self.to_json() if format_spec == "json" else self.__str__()

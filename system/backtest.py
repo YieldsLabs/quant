@@ -11,7 +11,7 @@ from core.interfaces.abstract_system import AbstractSystem
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
-from core.models.order import OrderType
+from core.models.order_type import OrderType
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe

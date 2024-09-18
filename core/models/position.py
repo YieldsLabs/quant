@@ -7,7 +7,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from .entity.ohlcv import OHLCV
-from .order import Order, OrderStatus
+from .entity.order import Order
+from .order_type import OrderStatus
 from .position_risk import PositionRisk
 from .profit_target import ProfitTarget
 from .risk_type import PositionRiskType, SessionRiskType, SignalRiskType

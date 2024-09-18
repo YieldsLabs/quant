@@ -14,7 +14,6 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
 
-
 class AsyncHistoricalData:
     def __init__(
         self,

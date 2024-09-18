@@ -11,7 +11,8 @@ from core.events.position import (
 )
 from core.mixins import EventHandlerMixin
 from core.models.entity.ohlcv import OHLCV
-from core.models.order import Order, OrderStatus, OrderType
+from core.models.entity.order import Order
+from core.models.order_type import OrderStatus, OrderType
 from core.models.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol

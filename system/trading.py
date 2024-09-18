@@ -19,7 +19,7 @@ from core.models.broker import MarginMode, PositionMode
 from core.models.exchange import ExchangeType
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
-from core.models.order import OrderType
+from core.models.order_type import OrderType
 
 logger = logging.getLogger(__name__)
 

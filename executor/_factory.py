@@ -1,6 +1,6 @@
 from core.interfaces.abstract_actor import AbstractActor
 from core.interfaces.abstract_executor_actor_factory import AbstractExecutorActorFactory
-from core.models.order import OrderType
+from core.models.order_type import OrderType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
