@@ -69,8 +69,6 @@ def Entity(cls):
                 return f"{value:.8f}"
             return str(value)
 
-        print(field_dict)
-
         return ", ".join(
             f"{key}={format_value(value)}" if value is not None else f"{key}=NA"
             for key, value in field_dict.items()
