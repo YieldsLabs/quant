@@ -9,5 +9,5 @@ class SignalPolicy(EventPolicy):
         return (
             event.symbol == actor.symbol
             and event.timeframe == actor.timeframe
-            and event.closed
+            and event.bar.closed
         )

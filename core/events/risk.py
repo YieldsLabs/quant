@@ -16,8 +16,3 @@ class RiskEvent(Event):
 @dataclass(frozen=True)
 class RiskThresholdBreached(RiskEvent):
     pass
-
-
-@dataclass(frozen=True)
-class RiskAdjustRequested(RiskEvent):
-    adjust_price: float

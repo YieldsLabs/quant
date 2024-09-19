@@ -101,6 +101,6 @@ class RealtimeActor(StrategyActor):
 
             await self.tell(
                 NewMarketDataReceived(
-                    self.symbol, self.timeframe, bar.ohlcv, bar.closed
+                    self.symbol, self.timeframe, bar
                 )
             )

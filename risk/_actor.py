@@ -151,15 +151,16 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         self, event: NewMarketDataReceived, position: Optional[Position]
     ):
         next_position = position
+        curr_bar = event.bar.ohlcv
 
         if position and not position.has_risk:
             prev_bar = next_position.risk_bar
             next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
 
-            next_bar = next_bar or event.ohlcv
+            next_bar = next_bar or curr_bar
 
             attempts = 0
-            diff = event.ohlcv.timestamp - next_bar.timestamp
+            diff = curr_bar.timestamp - next_bar.timestamp
 
             while diff < 0 and attempts < MAX_ATTEMPTS:
                 new_prev_bar = await self.ask(
@@ -168,7 +169,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 attempts += 1
 
                 if new_prev_bar:
-                    diff = event.ohlcv.timestamp - new_prev_bar.timestamp
+                    diff = curr_bar.timestamp - new_prev_bar.timestamp
                     prev_bar = new_prev_bar
 
             bars = [next_bar]

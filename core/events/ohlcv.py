@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-
-from core.models.entity.ohlcv import OHLCV
+from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
@@ -19,8 +18,7 @@ class MarketEvent(Event):
 class NewMarketDataReceived(MarketEvent):
     symbol: Symbol
     timeframe: Timeframe
-    ohlcv: OHLCV
-    closed: bool
+    bar: Bar
 
     def to_dict(self):
         parent_dict = super().to_dict()
@@ -28,8 +26,7 @@ class NewMarketDataReceived(MarketEvent):
         current_dict = {
             "symbol": str(self.symbol),
             "timeframe": str(self.timeframe),
-            "ohlcv": self.ohlcv.to_dict(),
-            "closed": self.closed,
+            "bar": self.bar.to_dict(),
         }
 
         return {**parent_dict, **current_dict}

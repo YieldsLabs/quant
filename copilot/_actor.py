@@ -24,7 +24,7 @@ from core.interfaces.abstract_llm_service import AbstractLLMService
 from core.mixins import EventHandlerMixin
 from core.models.risk_type import SessionRiskType, SignalRiskType
 from core.models.side import PositionSide, SignalSide
-from core.models.signal_risk import SignalRisk
+from core.models.entity.signal_risk import SignalRisk
 from core.models.strategy_type import StrategyType
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 

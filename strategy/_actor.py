@@ -44,7 +44,7 @@ class SignalActor(StrategyActor):
 
     async def on_receive(self, event: NewMarketDataReceived):
         signal_event = self.strategy_ref.next(
-            self.symbol, self.timeframe, self.strategy, event.ohlcv
+            self.symbol, self.timeframe, self.strategy, event.bar.ohlcv
         )
 
         if signal_event:

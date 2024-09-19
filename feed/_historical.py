@@ -124,7 +124,7 @@ class HistoricalActor(StrategyActor):
         for bar in batch:
             await self.tell(
                 NewMarketDataReceived(
-                    self.symbol, self.timeframe, bar.ohlcv, bar.closed
+                    self.symbol, self.timeframe, bar
                 )
             )
         await asyncio.sleep(0.0001)
