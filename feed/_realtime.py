@@ -99,8 +99,4 @@ class RealtimeActor(StrategyActor):
 
                 logger.info(f"{self.symbol}_{self.timeframe}:{bar}")
 
-            await self.tell(
-                NewMarketDataReceived(
-                    self.symbol, self.timeframe, bar
-                )
-            )
+            await self.tell(NewMarketDataReceived(self.symbol, self.timeframe, bar))

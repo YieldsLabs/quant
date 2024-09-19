@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+
 from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
