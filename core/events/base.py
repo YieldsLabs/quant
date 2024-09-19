@@ -30,6 +30,8 @@ class EventMeta:
 
 @dataclass(frozen=True)
 class Event:
+    meta: EventMeta
+
     def to_dict(self):
         res = asdict(self)
         res["meta"]["name"] = self.__class__.__name__
