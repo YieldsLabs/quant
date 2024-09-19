@@ -1,13 +1,14 @@
 import json
-from dataclasses import fields
+from dataclasses import dataclass, fields
 from enum import Enum
 from typing import Any, Dict, List
 
 
-class Entity:
+def Entity(cls):
+    cls = dataclass(frozen=True)(cls)
+
     def to_dict(self) -> Dict[str, Any]:
         field_dict = {f.name: getattr(self, f.name) for f in fields(self)}
-
         property_dict = {
             k: getattr(self, k)
             for k in dir(self)
@@ -26,7 +27,6 @@ class Entity:
                     v.to_dict() if hasattr(v, "to_dict") and callable(v.to_dict) else v
                     for v in value
                 ]
-
         return result
 
     def to_json(self) -> str:
@@ -69,6 +69,8 @@ class Entity:
                 return f"{value:.8f}"
             return str(value)
 
+        print(field_dict)
+
         return ", ".join(
             f"{key}={format_value(value)}" if value is not None else f"{key}=NA"
             for key, value in field_dict.items()
@@ -79,3 +81,21 @@ class Entity:
 
     def __format__(self, format_spec: str) -> str:
         return self.to_json() if format_spec == "json" else self.__str__()
+
+    cls_methods = {
+        "to_dict": to_dict,
+        "to_json": to_json,
+        "from_dict": from_dict,
+        "from_json": from_json,
+        "from_list": from_list,
+    }
+
+    for method_name, method in cls_methods.items():
+        if not hasattr(cls, method_name):
+            setattr(cls, method_name, method)
+
+    cls.__str__ = __str__
+    cls.__repr__ = __repr__
+    cls.__format__ = __format__
+
+    return cls

@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import datetime
 
 from core.models.order_type import OrderStatus, OrderType
@@ -7,8 +7,8 @@ from core.models.order_type import OrderStatus, OrderType
 from ._base import Entity
 
 
-@dataclass(frozen=True)
-class Order(Entity):
+@Entity
+class Order:
     status: OrderStatus
     price: float
     size: float

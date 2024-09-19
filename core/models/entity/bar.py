@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
 from ._base import Entity
 from .ohlcv import OHLCV
 
 
-@dataclass(frozen=True)
-class Bar(Entity):
+@Entity
+class Bar:
     ohlcv: OHLCV
     closed: bool

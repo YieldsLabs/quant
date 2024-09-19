@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from core.models.candle_type import CandleType
@@ -6,8 +5,8 @@ from core.models.candle_type import CandleType
 from ._base import Entity
 
 
-@dataclass(frozen=True)
-class OHLCV(Entity):
+@Entity
+class OHLCV:
     timestamp: int
     open: float
     high: float
