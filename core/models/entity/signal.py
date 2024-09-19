@@ -1,13 +1,15 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 
-from .entity.ohlcv import OHLCV
-from .side import SignalSide
-from .strategy import Strategy
-from .symbol import Symbol
-from .timeframe import Timeframe
+from core.models.side import SignalSide
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
+
+from ._base import Entity
+from .ohlcv import OHLCV
 
 
-@dataclass(frozen=True)
+@Entity
 class Signal:
     symbol: Symbol
     timeframe: Timeframe
@@ -32,19 +34,5 @@ class Signal:
             and self.strategy == other.strategy
         )
 
-    def to_dict(self):
-        return {
-            "symbol": str(self.symbol),
-            "timeframe": str(self.timeframe),
-            "strategy": str(self.strategy),
-            "side": str(self.side),
-            "ohlcv": self.ohlcv.to_dict(),
-            "entry": self.entry,
-            "stop_loss": self.stop_loss,
-        }
-
     def __str__(self) -> str:
         return f"{self.symbol.name}_{self.timeframe}_{self.side}{self.strategy}"
-
-    def __repr__(self) -> str:
-        return f"Signal({self})"

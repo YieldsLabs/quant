@@ -54,11 +54,18 @@ def Entity(cls):
         return cls.from_dict(data)
 
     def __str__(self) -> str:
-        field_dict = {
-            key: value
-            for key, value in self.to_dict().items()
-            if not key.startswith("_")
-        }
+        def filter_private_fields(data):
+            if isinstance(data, dict):
+                return {
+                    key: filter_private_fields(value)
+                    for key, value in data.items()
+                    if not key.startswith("_")
+                }
+            elif isinstance(data, list):
+                return [filter_private_fields(item) for item in data]
+            return data
+
+        field_dict = filter_private_fields(self.to_dict())
 
         def format_value(value):
             if isinstance(value, dict):

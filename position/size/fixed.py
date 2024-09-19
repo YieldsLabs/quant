@@ -1,5 +1,5 @@
 from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrategy
-from core.models.signal import Signal
+from core.models.entity.signal import Signal
 from core.models.size import PositionSizeType
 from core.queries.portfolio import GetPositionRisk
 

@@ -1,21 +1,18 @@
-from dataclasses import dataclass
 from functools import cached_property
 
 import numpy as np
 
 from core.models.side import SignalSide
 
+from ._base import Entity
 
-@dataclass(frozen=True)
+
+@Entity
 class ProfitTarget:
-    side: SignalSide
+    _side: SignalSide
     entry: float
-    volatility: float
-    noise_sigma: float = 0.001
-
-    @cached_property
-    def context_factor(self):
-        return 1.0 if self.side == SignalSide.BUY else -1.0
+    _volatility: float
+    _noise_sigma: float = 0.001
 
     @cached_property
     def targets(self):
@@ -110,27 +107,25 @@ class ProfitTarget:
             }
         )
 
-        reverse = self.context_factor == -1
+        reverse = self._context_factor() == -1
         return levels if not reverse else levels[::-1]
 
     @cached_property
     def last(self):
         return self.targets[-1]
 
+    def _context_factor(self):
+        return 1.0 if self._side == SignalSide.BUY else -1.0
+
     def _pt(self, min_scale: float, max_scale: float) -> float:
         scale = np.random.uniform(min_scale, max_scale)
-        noise = np.random.lognormal(mean=0, sigma=self.noise_sigma) - 1
+        noise = np.random.lognormal(mean=0, sigma=self._noise_sigma) - 1
         target_price = self.entry * (
-            1 + self.volatility * self.context_factor * scale + noise
+            1 + self._volatility * self._context_factor() * scale + noise
         )
 
         return (
             max(target_price, self.entry)
-            if self.context_factor == 1
+            if self._context_factor() == 1
             else min(target_price, self.entry)
         )
-
-    def to_dict(self):
-        return {
-            "targets": self.targets,
-        }

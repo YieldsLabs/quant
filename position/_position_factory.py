@@ -6,11 +6,11 @@ from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_order_size_strategy import AbstractOrderSizeStrategy
 from core.interfaces.abstract_position_factory import AbstractPositionFactory
 from core.models.entity.ohlcv import OHLCV
-from core.models.position import Position
-from core.models.position_risk import PositionRisk
-from core.models.profit_target import ProfitTarget
-from core.models.signal import Signal
-from core.models.signal_risk import SignalRisk
+from core.models.entity.position import Position
+from core.models.entity.position_risk import PositionRisk
+from core.models.entity.profit_target import ProfitTarget
+from core.models.entity.signal import Signal
+from core.models.entity.signal_risk import SignalRisk
 from core.models.ta import TechAnalysis
 
 
@@ -34,7 +34,7 @@ class PositionFactory(AbstractPositionFactory):
 
         model, scaler = self._create_model(ta, signal.ohlcv)
 
-        position_risk = PositionRisk(model=model, scaler=scaler).next(signal.ohlcv)
+        position_risk = PositionRisk(_model=model, _scaler=scaler).next(signal.ohlcv)
         profit_target = ProfitTarget(
             signal.side, signal.ohlcv.close, ta.volatility.yz[-1]
         )

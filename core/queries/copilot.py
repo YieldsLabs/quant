@@ -3,10 +3,10 @@ from typing import List
 
 from core.events.base import EventMeta
 from core.models.entity.ohlcv import OHLCV
+from core.models.entity.signal import Signal
+from core.models.entity.signal_risk import SignalRisk
 from core.models.risk_type import SessionRiskType
 from core.models.side import PositionSide
-from core.models.signal import Signal
-from core.models.signal_risk import SignalRisk
 from core.models.ta import TechAnalysis
 
 from .base import Query, QueryGroup

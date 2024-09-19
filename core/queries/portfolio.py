@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 from core.events.base import EventMeta
-from core.models.signal import Signal
+from core.models.entity.signal import Signal
 from core.models.size import PositionSizeType
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol

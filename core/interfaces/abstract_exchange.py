@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 from core.models.broker import MarginMode, PositionMode
+from core.models.entity.position import PositionSide
 from core.models.lookback import Lookback
-from core.models.position import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 

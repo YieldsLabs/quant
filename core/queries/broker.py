@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 from core.events.base import EventMeta
-from core.models.position import Position
+from core.models.entity.position import Position
 from core.models.symbol import Symbol
 
 from .base import Query, QueryGroup

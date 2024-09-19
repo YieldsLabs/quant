@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from core.events.base import EventMeta
 from core.models.entity.order import Order
-from core.models.position import Position
+from core.models.entity.position import Position
 from core.queries.base import Query, QueryGroup
 
 

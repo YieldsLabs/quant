@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from core.models.signal import Signal
+from core.models.entity.signal import Signal
 
 from .base import Event, EventGroup, EventMeta
 

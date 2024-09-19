@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple
 
 from core.models.entity.ohlcv import OHLCV
-from core.models.signal import SignalSide
+from core.models.entity.signal import SignalSide
 
 
 class AbstractPositionRiskStrategy(ABC):

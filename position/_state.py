@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import List, Optional, Tuple
 
-from core.models.position import Position
+from core.models.entity.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Dict, Tuple
 
 from core.models.entity.portfolio import Performance
-from core.models.position import Position
+from core.models.entity.position import Position
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe

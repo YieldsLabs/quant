@@ -23,7 +23,7 @@ from core.events.signal import (
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
 from core.models.entity.ohlcv import OHLCV
-from core.models.position import Position
+from core.models.entity.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -186,8 +186,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     prev_bar = next_bar
 
             for bar in sorted(bars, key=lambda x: x.timestamp):
-                ohlcv = next_position.position_risk.ohlcv
-                ts = np.array([o.timestamp for o in ohlcv])
+                risk = next_position.position_risk
+                ts = np.array(risk.time_points)
 
                 if len(ts) > 2:
                     ts_diff = _ema(np.diff(ts))
@@ -221,7 +221,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
                 ta = await self.ask(TA(self.symbol, self.timeframe, bar))
                 session_risk = await self.ask(
-                    EvaluateSession(next_position.side, ohlcv, ta)
+                    EvaluateSession(next_position.side, risk.session, ta)
                 )
 
                 next_position = next_position.next(bar, ta, session_risk)

@@ -1,21 +1,23 @@
 import logging
 import uuid
-from dataclasses import dataclass, field, replace
+from dataclasses import field, replace
 from datetime import datetime
 from typing import List, Optional, Tuple
 
 import numpy as np
 
-from .entity.ohlcv import OHLCV
-from .entity.order import Order
-from .order_type import OrderStatus
+from core.models.order_type import OrderStatus
+from core.models.risk_type import PositionRiskType, SessionRiskType, SignalRiskType
+from core.models.side import PositionSide, SignalSide
+from core.models.ta import TechAnalysis
+
+from ._base import Entity
+from .ohlcv import OHLCV
+from .order import Order
 from .position_risk import PositionRisk
 from .profit_target import ProfitTarget
-from .risk_type import PositionRiskType, SessionRiskType, SignalRiskType
-from .side import PositionSide, SignalSide
 from .signal import Signal
 from .signal_risk import SignalRisk
-from .ta import TechAnalysis
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ DEFAULT_TARGET_IDX = 2
 LATENCY_GAP_THRESHOLD = 1.8
 
 
-@dataclass(frozen=True)
+@Entity
 class Position:
     initial_size: float
     signal: Signal
@@ -436,29 +438,3 @@ class Position:
     def _average_price(orders: List[Order]) -> float:
         total_price = sum(order.price for order in orders)
         return total_price / len(orders) if orders else 0.0
-
-    def to_dict(self):
-        return {
-            "signal": self.signal.to_dict(),
-            "signal_risk": self.signal_risk.to_dict(),
-            "position_risk": self.position_risk.to_dict(),
-            "curr_target": self.curr_target,
-            "side": str(self.side),
-            "size": self.size,
-            "entry_price": self.entry_price,
-            "exit_price": self.exit_price,
-            "closed": self.closed,
-            "valid": self.is_valid,
-            "pnl": self.pnl,
-            "fee": self.fee,
-            "take_profit": self.take_profit,
-            "stop_loss": self.stop_loss,
-            "trade_time": self.trade_time,
-            "break_even": self.has_break_even,
-        }
-
-    def __str__(self):
-        return f"signal={self.signal}, signal_risk={self.signal_risk.type}, position_risk={self.position_risk.type}, open_ohlcv={self.signal_bar}, close_ohlcv={self.risk_bar}, side={self.side}, size={self.size}, entry_price={self.entry_price}, exit_price={self.exit_price}, tp={self.take_profit}, sl={self.stop_loss}, pnl={self.pnl}, trade_time={self.trade_time}, closed={self.closed}, valid={self.is_valid}, break_even={self.has_break_even}"
-
-    def __repr__(self):
-        return f"Position({self})"

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from core.models.position import Position
+from core.models.entity.position import Position
 
 from .base import Event, EventGroup, EventMeta
 

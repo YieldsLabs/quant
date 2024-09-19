@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, replace
+from dataclasses import field, replace
 from typing import List, Tuple
 
 import numpy as np
@@ -13,10 +13,12 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-from .entity.ohlcv import OHLCV
-from .risk_type import PositionRiskType
-from .side import PositionSide
-from .ta import TechAnalysis
+from core.models.risk_type import PositionRiskType
+from core.models.side import PositionSide
+from core.models.ta import TechAnalysis
+
+from ._base import Entity
+from .ohlcv import OHLCV
 
 TIME_THRESHOLD = 10000
 LOOKBACK = 6
@@ -126,23 +128,31 @@ class TaMixin:
 OHLCV_SIZE = 200
 
 
-@dataclass(frozen=True)
+@Entity
 class PositionRisk(TaMixin):
-    model: SGDRegressor
-    scaler: StandardScaler
-    ohlcv: List[OHLCV] = field(default_factory=list)
+    _model: SGDRegressor
+    _scaler: StandardScaler
+    _ohlcv: List[OHLCV] = field(default_factory=list)
     type: PositionRiskType = PositionRiskType.NONE
     trail_factor: float = field(default_factory=lambda: np.random.uniform(1.1, 1.8))
 
     @property
     def curr_bar(self):
-        return self.ohlcv[-1]
+        return self._ohlcv[-1]
+
+    @property
+    def time_points(self):
+        return [o.timestamp for o in self._ohlcv]
+
+    @property
+    def session(self):
+        return self._ohlcv
 
     def update_model(self):
-        if len(self.ohlcv) < 3:
+        if len(self._ohlcv) < 3:
             return
 
-        last_ohlcv = self.ohlcv[-3:]
+        last_ohlcv = self._ohlcv[-3:]
 
         close = [ohlcv.close for ohlcv in last_ohlcv]
         high = [ohlcv.high for ohlcv in last_ohlcv]
@@ -184,23 +194,23 @@ class PositionRisk(TaMixin):
         )
         target = np.array([close[-1]])
 
-        features_scaled = self.scaler.transform(features)
+        features_scaled = self._scaler.transform(features)
 
-        self.model.partial_fit(features_scaled, target)
+        self._model.partial_fit(features_scaled, target)
 
     def forecast(self, steps: int = 3):
-        if len(self.ohlcv) < 1:
+        if len(self._ohlcv) < 1:
             return []
 
         self.update_model()
 
-        last_ohlcv = self.ohlcv[-1]
+        last_ohlcv = self._ohlcv[-1]
 
         last_hlcc4 = (last_ohlcv.high + last_ohlcv.low + 2 * last_ohlcv.close) / 4.0
         last_true_range = max(
             last_ohlcv.high - last_ohlcv.low,
-            abs(last_ohlcv.high - self.ohlcv[-2].close),
-            abs(last_ohlcv.low - self.ohlcv[-2].close),
+            abs(last_ohlcv.high - self._ohlcv[-2].close),
+            abs(last_ohlcv.low - self._ohlcv[-2].close),
         )
 
         last_hlcc4_lagged_1 = last_hlcc4
@@ -229,9 +239,9 @@ class PositionRisk(TaMixin):
                 ]
             )
 
-            X_scaled = self.scaler.transform(X)
+            X_scaled = self._scaler.transform(X)
 
-            forecast = self.model.predict(X_scaled)[0]
+            forecast = self._model.predict(X_scaled)[0]
             predictions.append(forecast)
 
             last_hlcc4_lagged_2 = last_hlcc4_lagged_1
@@ -242,16 +252,16 @@ class PositionRisk(TaMixin):
             last_true_range_lagged_1 = last_true_range
             last_true_range = max(
                 forecast - last_ohlcv.close,
-                abs(forecast - self.ohlcv[-2].close),
-                abs(last_ohlcv.low - self.ohlcv[-2].close),
+                abs(forecast - self._ohlcv[-2].close),
+                abs(last_ohlcv.low - self._ohlcv[-2].close),
             )
 
         return predictions
 
     def next(self, bar: OHLCV):
-        ohlcv = (self.ohlcv + [bar])[-OHLCV_SIZE:]
+        ohlcv = (self._ohlcv + [bar])[-OHLCV_SIZE:]
         ohlcv.sort(key=lambda x: x.timestamp)
-        return replace(self, ohlcv=ohlcv)
+        return replace(self, _ohlcv=ohlcv)
 
     def reset(self):
         return replace(self, type=PositionRiskType.NONE)
@@ -300,7 +310,7 @@ class PositionRisk(TaMixin):
         return close
 
     def sl_low(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
-        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
+        timestamps = np.array(self.time_points)
         ts_diff = np.diff(timestamps)
 
         if ts_diff.sum() < TIME_THRESHOLD:
@@ -339,7 +349,7 @@ class PositionRisk(TaMixin):
         return sl
 
     def tp_low(self, side: PositionSide, ta: TechAnalysis, tp: float) -> "float":
-        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
+        timestamps = np.array(self.time_points)
         ts_diff = np.diff(timestamps)
 
         if ts_diff.sum() < TIME_THRESHOLD:
@@ -377,7 +387,7 @@ class PositionRisk(TaMixin):
         return tp
 
     def sl_ats(self, side: PositionSide, ta: TechAnalysis, sl: float) -> "float":
-        timestamps = np.array([candle.timestamp for candle in self.ohlcv])
+        timestamps = np.array(self.time_points)
         ts_diff = np.diff(timestamps)
 
         if ts_diff.sum() < TIME_THRESHOLD:
@@ -385,9 +395,9 @@ class PositionRisk(TaMixin):
 
         max_lookback = max(len(timestamps), LOOKBACK)
 
-        close = np.array([candle.close for candle in self.ohlcv])
-        low = np.array([candle.low for candle in self.ohlcv])
-        high = np.array([candle.high for candle in self.ohlcv])
+        close = np.array([candle.close for candle in self._ohlcv])
+        low = np.array([candle.low for candle in self._ohlcv])
+        high = np.array([candle.high for candle in self._ohlcv])
         volatility = np.array(ta.volatility.gkyz)[-max_lookback:]
 
         min_length = min(len(close), len(volatility), len(high), len(low))
@@ -395,7 +405,9 @@ class PositionRisk(TaMixin):
         if min_length < 3:
             return sl
 
-        anomaly = lambda series: (series - np.mean(series)) / np.std(series)
+        def anomaly(series):
+            return (series - np.mean(series)) / np.std(series)
+
         close_anomaly = anomaly(close[-min_length:])
 
         if abs(close_anomaly[-1]) > 2:
@@ -437,16 +449,3 @@ class PositionRisk(TaMixin):
             return min(sl, min(atr_stop, adjusted_sl))
 
         return sl
-
-    def to_dict(self):
-        return {
-            "type": self.type,
-            "trail_factor": self.trail_factor,
-            "ohlcv": self.curr_bar.to_dict(),
-        }
-
-    def __str__(self):
-        return f"type={self.type}, ohlcv={self.curr_bar}"
-
-    def __repr__(self):
-        return f"PositionRisk({self})"
