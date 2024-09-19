@@ -39,7 +39,7 @@ class OHLCV:
 
     @classmethod
     def from_dict(cls, data: Dict) -> "OHLCV":
-        keys = [
+        required_keys = {
             "start",
             "timestamp",
             "open",
@@ -48,15 +48,22 @@ class OHLCV:
             "close",
             "volume",
             "confirm",
-        ]
+        }
 
-        if any(key not in data for key in keys):
-            raise ValueError(f"Data dictionary must contain the keys: {keys}")
+        missing_keys = required_keys - data.keys()
+        
+        if missing_keys:
+            raise ValueError(f"Missing keys in data dictionary: {missing_keys}")
 
-        confirmed = ["start", "open", "high", "low", "close", "volume"]
-        not_confirmed = ["timestamp", "open", "high", "low", "close", "volume"]
+        if not isinstance(data.get("confirm"), bool):
+            raise ValueError("'confirm' key must be a boolean value.")
 
-        ohlcv_keys = not_confirmed if not data["confirm"] else confirmed
+        keys_to_use = {
+            True: ["start", "open", "high", "low", "close", "volume"],
+            False: ["timestamp", "open", "high", "low", "close", "volume"],
+        }
+
+        ohlcv_keys = keys_to_use[data["confirm"]]
 
         return cls.from_list([data[key] for key in ohlcv_keys])
 
