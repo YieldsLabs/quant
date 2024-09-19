@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass, fields
 from enum import Enum
+from functools import cached_property
 from typing import Any, Dict, List
 
 
@@ -12,7 +13,8 @@ def Entity(cls):
         property_dict = {
             k: getattr(self, k)
             for k in dir(self)
-            if isinstance(getattr(self.__class__, k, None), property)
+            if isinstance(getattr(self.__class__, k, None), (property, cached_property))
+            and hasattr(self, k)
         }
 
         result = {**field_dict, **property_dict}

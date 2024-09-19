@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Dict, Tuple
 
-from core.models.portfolio import Performance
+from core.models.entity.portfolio import Performance
 from core.models.position import Position
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol

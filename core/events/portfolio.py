@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from core.models.portfolio import Performance
+from core.models.entity.portfolio import Performance
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
