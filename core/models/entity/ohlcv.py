@@ -51,7 +51,7 @@ class OHLCV:
         }
 
         missing_keys = required_keys - data.keys()
-        
+
         if missing_keys:
             raise ValueError(f"Missing keys in data dictionary: {missing_keys}")
 
