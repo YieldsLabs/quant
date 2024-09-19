@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Optional, Type, Union
 
 from core.commands.base import Command
 from core.events.base import Event, EventEnded
@@ -87,12 +87,18 @@ class EventDispatcher(metaclass=SingletonMeta):
         self._store.close()
 
     async def _dispatch_to_poll(
-        self, event: Type[Event], worker_pool: WorkerPool, *args, **kwargs
+        self,
+        event: Union[Event, Command, Query],
+        worker_pool: WorkerPool,
+        *args,
+        **kwargs,
     ) -> None:
         if isinstance(event, EventEnded):
             self._cancel_event.set()
-        else:
+        elif isinstance(event, (Command, Query, Event)):
             await worker_pool.dispatch_to_worker(event, *args, **kwargs)
+        else:
+            raise ValueError(f"Invalid event type: {type(event)}")
 
     def _create_worker_pool(self) -> WorkerPool:
         return WorkerPool(
