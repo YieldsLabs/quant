@@ -86,7 +86,7 @@ class SmartRouter(AbstractEventManager):
     def get_symbol(self, query: GetSymbol):
         symbols = self.exchange.fetch_future_symbols()
 
-        return next((symbol for symbol in symbols if symbol.name == query.symbol), None)
+        return next((symbol for symbol in symbols if symbol == query.symbol), None)
 
     @query_handler(GetBalance)
     def get_account_balance(self, query: GetBalance):

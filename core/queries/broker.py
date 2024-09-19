@@ -18,7 +18,7 @@ class GetSymbols(Query[List[Symbol]]):
 
 @dataclass(frozen=True)
 class GetSymbol(Query[Symbol]):
-    symbol: str
+    symbol: Symbol
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=3, group=QueryGroup.broker),
         init=False,

@@ -12,6 +12,12 @@ class Symbol:
     price_precision: int
     max_leverage: float
 
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Symbol):
+            return self.name == other.name
+
+        return False
+
     def __hash__(self) -> int:
         return hash(self.name)
 
