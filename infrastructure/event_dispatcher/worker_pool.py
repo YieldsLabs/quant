@@ -32,11 +32,12 @@ class WorkerPool:
             event.meta.priority
         )
 
-        group_workers = self._distribute_workers(priority_group)
+        if await self.dedup.acquire(event):
+            group_workers = self._distribute_workers(priority_group)
 
-        worker = self._choose_worker(group_workers)
+            worker = self._choose_worker(group_workers)
 
-        await worker.dispatch(event, *args, **kwargs)
+            await worker.dispatch(event, *args, **kwargs)
 
         self.load_balancer.register_event(priority_group)
 
@@ -45,7 +46,7 @@ class WorkerPool:
 
     def _initialize_workers(self, num_workers):
         self.workers = [
-            EventWorker(self.event_handler, self.cancel_event, self.dedup)
+            EventWorker(self.event_handler, self.cancel_event)
             for _ in range(num_workers * self._num_priority_groups)
         ]
 
