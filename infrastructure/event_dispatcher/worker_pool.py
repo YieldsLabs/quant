@@ -1,4 +1,5 @@
 import asyncio
+from typing import List
 
 from core.events.base import Event
 
@@ -21,25 +22,38 @@ class WorkerPool:
         self.dedup = EventDedup()
         self.event_handler = event_handler
         self.cancel_event = cancel_event
+        self._num_priority_groups = num_piority_groups
         self._initialize_workers(num_workers)
-
-    def _initialize_workers(self, num_workers):
-        self.workers = [
-            EventWorker(self.event_handler, self.cancel_event, self.dedup)
-            for _ in range(num_workers)
-        ]
-
-        for worker in self.workers:
-            asyncio.create_task(worker.run())
 
     async def dispatch_to_worker(self, event: Event, *args, **kwargs) -> None:
         priority_group = self.load_balancer.determine_priority_group(
             event.meta.priority
         )
-        worker = self.workers[priority_group % len(self.workers)]
+        group_workers = self._distribute_workers(priority_group)
+
+        worker = min(group_workers, key=lambda worker: worker.queue_size)
 
         await worker.dispatch(event, *args, **kwargs)
+
         self.load_balancer.register_event(priority_group)
 
     async def wait(self) -> None:
         await asyncio.gather(*(worker.wait() for worker in self.workers))
+
+    def _initialize_workers(self, num_workers):
+        self.workers = [
+            EventWorker(self.event_handler, self.cancel_event, self.dedup)
+            for _ in range(num_workers * self._num_priority_groups)
+        ]
+
+        for worker in self.workers:
+            asyncio.create_task(worker.run())
+
+    def _distribute_workers(self, priority_group: int) -> List[EventWorker]:
+        workers_per_group = len(self.workers) // self._num_priority_groups
+        group_start = priority_group * workers_per_group
+        group_end = group_start + workers_per_group
+
+        return self.workers[group_start:group_end]
+
+

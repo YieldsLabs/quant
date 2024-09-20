@@ -14,30 +14,34 @@ class EventWorker:
         cancel_event: asyncio.Event,
         dedup: EventDedup,
     ):
-        self.event_handler = event_handler
-        self.cancel_event = cancel_event
-        self.dedup = dedup
-        self.queue = asyncio.Queue()
+        self._event_handler = event_handler
+        self._cancel_event = cancel_event
+        self._dedup = dedup
+        self._queue = asyncio.Queue()
+
+    @property
+    def queue_size(self):
+        return self._queue.qsize()
 
     async def run(self):
         async for event, args, kwargs in self._get_event_stream():
-            await self.event_handler.handle_event(event, *args, **kwargs)
+            await self._event_handler.handle_event(event, *args, **kwargs)
 
     async def _get_event_stream(
         self,
     ) -> AsyncIterable[Tuple[Event, Tuple[Any], Dict[str, Any]]]:
-        while not self.cancel_event.is_set():
-            event, args, kwargs = await self.queue.get()
+        while not self._cancel_event.is_set():
+            event, args, kwargs = await self._queue.get()
 
             yield event, args, kwargs
 
-            await self.dedup.remove_event(event)
+            await self._dedup.remove_event(event)
 
-            self.queue.task_done()
+            self._queue.task_done()
 
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
-        if await self.dedup.add_event(event):
-            await self.queue.put((event, args, kwargs))
+        if await self._dedup.add_event(event):
+            await self._queue.put((event, args, kwargs))
 
     async def wait(self) -> None:
-        await self.queue.join()
+        await self._queue.join()
