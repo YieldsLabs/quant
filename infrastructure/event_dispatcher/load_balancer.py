@@ -57,6 +57,9 @@ class LoadBalancer:
 
         control_outputs = self._pid.update(errors)
 
-        return np.random.choice(
-            np.arange(len(control_outputs)), p=softmax(control_outputs)
-        )
+        penalty_factor = np.exp(-processed_ratios)
+        weighted_outputs = control_outputs * penalty_factor
+
+        smooth_outputs = softmax(weighted_outputs)
+
+        return np.random.choice(np.arange(len(smooth_outputs)), p=smooth_outputs)
