@@ -9,6 +9,8 @@ from .base import Event, EventGroup, EventMeta
 
 @dataclass(frozen=True)
 class MarketEvent(Event):
+    symbol: Symbol
+    timeframe: Timeframe
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=4, group=EventGroup.market),
         init=False,
@@ -17,8 +19,6 @@ class MarketEvent(Event):
 
 @dataclass(frozen=True)
 class NewMarketDataReceived(MarketEvent):
-    symbol: Symbol
-    timeframe: Timeframe
     bar: Bar
 
     def to_dict(self):
