@@ -60,6 +60,10 @@ class WorkerPool:
 
     def _choose_worker(self, group_workers: List[EventWorker]) -> EventWorker:
         weights = np.array([1 / (worker.queue_size + 1) for worker in group_workers])
-        prob = weights / weights.sum()
+        total_weight = sum(weights)
 
-        return np.random.choice(group_workers, p=prob)
+        choice_point = np.random.uniform(0, total_weight)
+        cum_weights = np.cumsum(weights)
+        worker_index = np.searchsorted(cum_weights, choice_point)
+
+        return group_workers[worker_index]
