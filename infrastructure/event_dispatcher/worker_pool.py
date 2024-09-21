@@ -3,7 +3,7 @@ from typing import List
 
 import numpy as np
 
-from core.events.base import Event
+from core.events._base import Event
 
 from .event_dedup import EventDedup
 from .event_handler import EventHandler

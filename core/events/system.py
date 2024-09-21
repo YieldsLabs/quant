@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from core.events.base import Event, EventGroup, EventMeta
+from core.events.meta import EventMeta
+from core.groups.event import EventGroup
 from core.models.strategy import Strategy
+
+from ._base import Event
 
 
 @dataclass(frozen=True)

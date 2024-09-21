@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from core.events.base import Event
+from core.events._base import Event
 from core.models.indicator import Indicator
 
 

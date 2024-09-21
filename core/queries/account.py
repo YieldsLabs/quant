@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 
-from core.events.base import EventMeta
-from core.queries.base import Query, QueryGroup
+from core.events.meta import EventMeta
+from core.groups.query import QueryGroup
+
+from ._base import Query
 
 
 @dataclass(frozen=True)

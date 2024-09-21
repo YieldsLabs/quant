@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
 
-from core.events.base import EventMeta
+from core.events._base import EventMeta
+from core.groups.query import QueryGroup
 from core.models.entity.order import Order
 from core.models.entity.position import Position
-from core.queries.base import Query, QueryGroup
+
+from ._base import Query
 
 
 @dataclass(frozen=True)

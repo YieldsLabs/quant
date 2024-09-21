@@ -6,7 +6,7 @@ from typing import Optional, Union
 import numpy as np
 
 from core.actors import StrategyActor
-from core.events.base import EventMeta
+from core.events.meta import EventMeta
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     PositionAdjusted,
@@ -166,11 +166,12 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 new_prev_bar = await self.ask(
                     PrevBar(self.symbol, self.timeframe, prev_bar)
                 )
-                attempts += 1
 
                 if new_prev_bar:
                     diff = curr_bar.timestamp - new_prev_bar.timestamp
                     prev_bar = new_prev_bar
+
+                attempts += 1
 
             bars = [next_bar]
 
@@ -200,8 +201,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     anomaly = (current_diff - mean) / std
                     anomaly = np.clip(
                         anomaly,
-                        -9.0 * DEFAULT_ANOMALY_THRESHOLD,
-                        9.0 * DEFAULT_ANOMALY_THRESHOLD,
+                        -12.0 * DEFAULT_ANOMALY_THRESHOLD,
+                        12.0 * DEFAULT_ANOMALY_THRESHOLD,
                     )
 
                     if abs(anomaly) > self.anomaly_threshold:

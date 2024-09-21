@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 
-from core.events.base import EventMeta
+from core.events._base import EventMeta
+from core.groups.command import CommandGroup
 from core.models.broker import MarginMode, PositionMode
 from core.models.entity.position import Position
 from core.models.symbol import Symbol
 
-from .base import Command, CommandGroup
+from ._base import Command
 
 
 @dataclass(frozen=True)

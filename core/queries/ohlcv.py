@@ -1,13 +1,14 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from core.events.base import EventMeta
+from core.events._base import EventMeta
+from core.groups.query import QueryGroup
 from core.models.entity.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.ta import TechAnalysis
 from core.models.timeframe import Timeframe
 
-from .base import Query, QueryGroup
+from ._base import Query
 
 
 @dataclass(frozen=True)

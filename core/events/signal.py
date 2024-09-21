@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 
+from core.events.meta import EventMeta
+from core.groups.event import EventGroup
 from core.models.entity.signal import Signal
 
-from .base import Event, EventGroup, EventMeta
+from ._base import Event
 
 
 @dataclass(frozen=True)

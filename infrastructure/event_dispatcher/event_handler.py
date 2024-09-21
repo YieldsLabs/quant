@@ -4,9 +4,9 @@ from collections import defaultdict, deque
 from functools import partial
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple, Type, Union
 
-from core.commands.base import Command
-from core.events.base import Event
-from core.queries.base import Query
+from core.commands._base import Command
+from core.events._base import Event
+from core.queries._base import Query
 
 HandlerType = Union[partial, Callable[..., Any]]
 

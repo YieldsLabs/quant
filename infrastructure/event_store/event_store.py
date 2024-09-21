@@ -2,7 +2,7 @@ import json
 import os
 from typing import Optional
 
-from core.events.base import Event
+from core.events._base import Event
 from core.interfaces.abstract_config import AbstractConfig
 
 from .event_encoder import Encoder

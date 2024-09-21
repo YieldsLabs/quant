@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Union
 
-from core.commands.base import Command
+from core.commands._base import Command
 from core.events.backtest import BacktestEnded
 from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
@@ -19,7 +19,7 @@ from core.events.signal import (
     GoLongSignalReceived,
     GoShortSignalReceived,
 )
-from core.queries.base import Query
+from core.queries._base import Query
 
 Message = Union[
     NewMarketDataReceived,

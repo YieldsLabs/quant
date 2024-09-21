@@ -2,10 +2,10 @@ import inspect
 import uuid
 from typing import Union, get_args, get_origin
 
-from core.commands.base import Command
-from core.events.base import Event
+from core.commands._base import Command
+from core.events._base import Event
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
-from core.queries.base import Query
+from core.queries._base import Query
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
 

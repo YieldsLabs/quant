@@ -22,7 +22,7 @@ from .signal_risk import SignalRisk
 logger = logging.getLogger(__name__)
 
 DEFAULT_TARGET_IDX = 2
-LATENCY_GAP_THRESHOLD = 1.8
+LATENCY_GAP_THRESHOLD = 1.9
 
 
 @Entity
@@ -276,13 +276,17 @@ class Position:
         self, ohlcv: OHLCV, ta: TechAnalysis, session_risk: SessionRiskType
     ) -> "Position":
         if self.closed or ohlcv.timestamp <= self.risk_bar.timestamp:
-            logger.warning("Position update ignored due to stale data.")
+            logger.warning(
+                f"Position {self.signal.symbol}{self.side} update ignored due to stale data."
+            )
             return self
 
         gap = ohlcv.timestamp - self.risk_bar.timestamp
 
         if gap > LATENCY_GAP_THRESHOLD * self.signal.timeframe.to_milliseconds():
-            logger.warning(f"Position update ignored due to large latency gap: {gap}")
+            logger.warning(
+                f"Position {self.signal.symbol}{self.side} update ignored due to large latency gap: {gap}"
+            )
             return self
 
         next_risk = self.position_risk.next(ohlcv)

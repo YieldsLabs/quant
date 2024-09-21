@@ -4,8 +4,8 @@ import time
 from typing import Union
 
 from core.actors import StrategyActor
+from core.events.meta import EventMeta
 from core.events.backtest import BacktestEnded
-from core.events.base import EventMeta
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,

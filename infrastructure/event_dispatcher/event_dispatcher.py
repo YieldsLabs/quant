@@ -1,10 +1,10 @@
 import asyncio
 from typing import Any, Callable, Optional, Type, Union
 
-from core.commands.base import Command
-from core.events.base import Event, EventEnded
+from core.commands._base import Command
+from core.events._base import Event, EventEnded
 from core.interfaces.abstract_config import AbstractConfig
-from core.queries.base import Query
+from core.queries._base import Query
 from infrastructure.event_store.event_store import EventStore
 
 from .event_handler import EventHandler

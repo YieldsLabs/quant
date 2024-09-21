@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 from typing import Union
 
 import numpy as np
@@ -22,17 +21,15 @@ from sklearn.utils import check_random_state
 from core.actors import BaseActor
 from core.interfaces.abstract_llm_service import AbstractLLMService
 from core.mixins import EventHandlerMixin
+from core.models.entity.signal_risk import SignalRisk
 from core.models.risk_type import SessionRiskType, SignalRiskType
 from core.models.side import PositionSide, SignalSide
-from core.models.entity.signal_risk import SignalRisk
 from core.models.strategy_type import StrategyType
 from core.queries.copilot import EvaluateSession, EvaluateSignal
 
 from ._prompt import (
     signal_contrarian_risk_prompt,
     signal_trend_risk_prompt,
-    system_prompt,
-    signal_risk_pattern,
 )
 
 CopilotEvent = Union[EvaluateSignal, EvaluateSession]

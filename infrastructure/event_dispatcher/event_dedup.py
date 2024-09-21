@@ -2,7 +2,7 @@ import asyncio
 
 from cachetools import TTLCache
 
-from core.events.base import Event
+from core.events._base import Event
 
 
 class EventDedup:

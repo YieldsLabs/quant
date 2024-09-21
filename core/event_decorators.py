@@ -5,9 +5,9 @@ from typing import Callable, Type
 
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
-from .commands.base import Command
-from .events.base import Event
-from .queries.base import Query
+from .commands._base import Command
+from .events._base import Event
+from .queries._base import Query
 
 
 def eda(cls: Type):

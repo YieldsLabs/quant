@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.events.base import Event
+from core.events._base import Event
 from core.interfaces.abstract_actor import AbstractActor
 
 

@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
 
-from .base import Event, EventGroup, EventMeta
+from core.events.meta import EventMeta
+from core.groups.event import EventGroup
+
+from ._base import Event
 
 
 @dataclass(frozen=True)

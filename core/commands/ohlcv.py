@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 
-from core.events.base import EventMeta
+from core.events.meta import EventMeta
+from core.groups.command import CommandGroup
 from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
-from .base import Command, CommandGroup
+from ._base import Command
 
 
 @dataclass(frozen=True)

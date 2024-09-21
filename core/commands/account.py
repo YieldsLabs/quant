@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 
-from core.events.base import EventMeta
+from core.events._base import EventMeta
+from core.groups.command import CommandGroup
 
-from .base import Command, CommandGroup
+from ._base import Command
 
 
 @dataclass(frozen=True)
