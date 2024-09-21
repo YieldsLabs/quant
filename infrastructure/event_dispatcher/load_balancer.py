@@ -3,9 +3,10 @@ import numpy as np
 from .pid_controller import PID
 
 
-def softmax(x):
+def softmax(x, temperature=1.0):
+    x = x / temperature
     e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum(axis=0)
+    return e_x / np.sum(e_x)
 
 
 class LoadBalancer:
@@ -19,6 +20,8 @@ class LoadBalancer:
         decay_rate: float = 0.99,
         event_threshold: float = 1e4,
         threshold_growth_rate: float = 1.1,
+        smoothing_factor: float = 0.2,
+        temperature: float = 0.5,
     ):
         self._group_event_counts = np.zeros(priority_groups)
         self._pid = PID(
@@ -32,6 +35,8 @@ class LoadBalancer:
         self._group_event_counts_threshold = event_threshold
         self._threshold_growth_rate = threshold_growth_rate
         self._target_ratios = 1 / (np.arange(priority_groups) + 1)
+        self._smoothing_factor = smoothing_factor
+        self._temperature = temperature
 
     def register_event(self, priority_group: int):
         if not 0 <= priority_group < len(self._group_event_counts):
@@ -59,7 +64,11 @@ class LoadBalancer:
 
         penalty_factor = np.exp(-processed_ratios)
         weighted_outputs = control_outputs * penalty_factor
+        smoothed_outputs = (
+            self._smoothing_factor * weighted_outputs
+            + (1 - self._smoothing_factor) * control_outputs
+        )
 
-        smooth_outputs = softmax(weighted_outputs)
+        prob = softmax(smoothed_outputs, temperature=self._temperature)
 
-        return np.random.choice(np.arange(len(smooth_outputs)), p=smooth_outputs)
+        return np.random.choice(np.arange(len(prob)), p=prob)
