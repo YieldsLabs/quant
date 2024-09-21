@@ -38,6 +38,9 @@ def eda(cls: Type):
         async def execute(self, command, *args, **kwargs):
             return await self._dispatcher.execute(command, *args, **kwargs)
 
+        async def run(self, task, *args, **kwargs):
+            return await self._dispatcher.run(task, *args, **kwargs)
+
         async def wait(self):
             await asyncio.sleep(1)
             await self._dispatcher.wait()

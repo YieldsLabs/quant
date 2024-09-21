@@ -5,6 +5,7 @@ from core.commands._base import Command
 from core.events._base import Event, EventEnded
 from core.interfaces.abstract_config import AbstractConfig
 from core.queries._base import Query
+from core.tasks._base import Task
 from infrastructure.event_store.event_store import EventStore
 
 from .event_handler import EventHandler
@@ -31,6 +32,7 @@ class EventDispatcher(metaclass=SingletonMeta):
         self._command_worker_pool = None
         self._query_worker_pool = None
         self._event_worker_pool = None
+        self._task_worker_pool = None
 
     @property
     def command_worker_pool(self):
@@ -43,6 +45,10 @@ class EventDispatcher(metaclass=SingletonMeta):
     @property
     def event_worker_pool(self):
         return self._get_worker_pool("_event_worker_pool")
+
+    @property
+    def task_worker_pool(self):
+        return self._get_worker_pool("_task_worker_pool")
 
     def register(
         self,
@@ -63,6 +69,10 @@ class EventDispatcher(metaclass=SingletonMeta):
         await self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs)
         return await query.wait_for_response()
 
+    async def run(self, task: Task, *args, **kwargs) -> Any:
+        await self._dispatch_to_poll(task, self.task_worker_pool, *args, **kwargs)
+        await task.wait_for_finishing()
+
     async def dispatch(self, event: Event, *args, **kwargs) -> None:
         await self._dispatch_to_poll(event, self.event_worker_pool, *args, **kwargs)
         self._store.append(event)
@@ -73,6 +83,7 @@ class EventDispatcher(metaclass=SingletonMeta):
                 self.event_worker_pool.wait(),
                 self.query_worker_pool.wait(),
                 self.command_worker_pool.wait(),
+                self.task_worker_pool.wait(),
             ]
         )
 
@@ -82,6 +93,7 @@ class EventDispatcher(metaclass=SingletonMeta):
                 self._dispatch_to_poll(EventEnded(), self.event_worker_pool),
                 self._dispatch_to_poll(EventEnded(), self.query_worker_pool),
                 self._dispatch_to_poll(EventEnded(), self.command_worker_pool),
+                self._dispatch_to_poll(EventEnded(), self.task_worker_pool),
             ]
         )
         self._store.close()
@@ -95,7 +107,7 @@ class EventDispatcher(metaclass=SingletonMeta):
     ) -> None:
         if isinstance(event, EventEnded):
             self._cancel_event.set()
-        elif isinstance(event, (Command, Query, Event)):
+        elif isinstance(event, (Command, Query, Event, Task)):
             await worker_pool.dispatch_to_worker(event, *args, **kwargs)
         else:
             raise ValueError(f"Invalid event type: {type(event)}")

@@ -4,7 +4,6 @@ from collections import defaultdict
 from enum import Enum, auto
 
 from core.commands.broker import UpdateSettings
-from core.commands.feed import StartHistoricalFeed, StartRealtimeFeed
 from core.event_decorators import event_handler
 from core.events.system import DeployStrategy
 from core.events.trade import TradeStarted
@@ -20,6 +19,7 @@ from core.models.exchange import ExchangeType
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.order_type import OrderType
+from core.tasks.feed import StartHistoricalFeed, StartRealtimeFeed
 
 logger = logging.getLogger(__name__)
 
@@ -127,15 +127,13 @@ class TradingSystem(AbstractSystem):
                     FeedType.HISTORICAL, symbol, timeframe, self.exchange_type
                 )
 
-                await self.execute(
+                await self.run(
                     StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
                 )
 
-                await self.wait()
-
                 feed_actor.stop()
 
-                await asyncio.sleep(1.0)
+                await self.wait()
 
                 signal_actors[(symbol, timeframe)].add(signal_actor)
 
@@ -175,7 +173,7 @@ class TradingSystem(AbstractSystem):
 
         await asyncio.gather(
             *[
-                self.execute(StartRealtimeFeed(actor[0].symbol, actor[0].timeframe))
+                self.run(StartRealtimeFeed(actor[0].symbol, actor[0].timeframe))
                 for actor in self.active_strategy
             ]
         )

@@ -7,6 +7,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional, Tuple, Type, Unio
 from core.commands._base import Command
 from core.events._base import Event
 from core.queries._base import Query
+from core.tasks._base import Task
 
 HandlerType = Union[partial, Callable[..., Any]]
 
@@ -49,7 +50,12 @@ class EventHandler:
         self, handler: HandlerType, event: Event, *args, **kwargs
     ) -> None:
         try:
-            response = await self._execute_handler(handler, event, *args, **kwargs)
+            if isinstance(event, Task):
+                response = asyncio.create_task(
+                    self._execute_handler(handler, event, *args, **kwargs)
+                )
+            else:
+                response = await self._execute_handler(handler, event, *args, **kwargs)
 
             self._handle_event_response(event, response)
         except Exception as e:
@@ -60,22 +66,25 @@ class EventHandler:
     ) -> None:
         if asyncio.iscoroutinefunction(handler):
             return await handler(event, *args, **kwargs)
-        else:
-            return await asyncio.to_thread(handler, event, *args, **kwargs)
+        return await asyncio.to_thread(handler, event, *args, **kwargs)
 
     def _handle_event_response(self, event: Event, response: Any) -> None:
         if isinstance(event, Query):
             event.set_response(response)
         elif isinstance(event, Command):
             event.executed()
+        elif isinstance(event, Task):
+            event.set_task(response)
 
     def _handle_event_error(
         self, handler: HandlerType, event: Event, error: Exception
     ) -> None:
-        if isinstance(event, Command):
-            event.executed()
-        elif isinstance(event, Query):
+        if isinstance(event, Query):
             event.set_response(None)
+        elif isinstance(event, Command):
+            event.executed()
+        elif isinstance(event, Task):
+            event.set_task(asyncio.create_task(asyncio.sleep(0.00001)))
 
         self._dlq.append((event, error))
 

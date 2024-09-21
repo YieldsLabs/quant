@@ -3,7 +3,6 @@ import logging
 from enum import Enum, auto
 
 from core.commands.account import UpdateAccountSize
-from core.commands.feed import StartHistoricalFeed
 from core.commands.portfolio import StrategyReset
 from core.events.backtest import BacktestEnded, BacktestStarted
 from core.events.system import DeployStrategy
@@ -18,6 +17,7 @@ from core.models.timeframe import Timeframe
 from core.queries.account import GetBalance
 from core.queries.broker import GetSymbols
 from core.queries.portfolio import GetTopStrategy
+from core.tasks.feed import StartHistoricalFeed
 from infrastructure.estimator import Estimator
 
 from .context import SystemContext
@@ -227,7 +227,7 @@ class BacktestSystem(AbstractSystem):
             f"Backtest: strategy={symbol}_{timeframe}{strategy}, in_lookback={in_lookback}, out_lookback={out_lookback}"
         )
 
-        await self.execute(
+        await self.run(
             StartHistoricalFeed(symbol, timeframe, in_lookback, out_lookback)
         )
 

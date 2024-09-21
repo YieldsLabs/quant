@@ -6,6 +6,7 @@ from core.commands._base import Command
 from core.events._base import Event
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
 from core.queries._base import Query
+from core.tasks._base import Task
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
 
@@ -61,6 +62,8 @@ class BaseActor(AbstractActor):
             return await self._mailbox.query(msg, *args, **kwrgs)
         if isinstance(msg, Command):
             await self._mailbox.execute(msg, *args, **kwrgs)
+        if isinstance(msg, Task):
+            await self._mailbox.run(msg, *args, **kwrgs)
 
     def _register_events(self):
         for event in self._EVENTS:
@@ -71,7 +74,7 @@ class BaseActor(AbstractActor):
             self._mailbox.unregister(event, self.on_receive)
 
     def _discover_events(self):
-        allowed_types = (Event, Query, Command)
+        allowed_types = (Event, Query, Command, Task)
         sig = inspect.signature(self.on_receive)
         params = sig.parameters.values()
 
