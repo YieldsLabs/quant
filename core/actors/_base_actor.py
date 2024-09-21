@@ -61,9 +61,9 @@ class BaseActor(AbstractActor):
         if isinstance(msg, Query):
             return await self._mailbox.query(msg, *args, **kwrgs)
         if isinstance(msg, Command):
-            await self._mailbox.execute(msg, *args, **kwrgs)
+            return await self._mailbox.execute(msg, *args, **kwrgs)
         if isinstance(msg, Task):
-            await self._mailbox.run(msg, *args, **kwrgs)
+            return await self._mailbox.run(msg, *args, **kwrgs)
 
     def _register_events(self):
         for event in self._EVENTS:

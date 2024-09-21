@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from core.events._base import EventMeta
+from core.events.meta import EventMeta
 from core.groups.tasks import TasksGroup
 from core.models.lookback import Lookback
 from core.models.symbol import Symbol
