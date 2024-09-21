@@ -2,10 +2,10 @@ import asyncio
 from typing import AsyncIterator, List
 
 from core.actors import StrategyActor
+from core.commands.ohlcv import IngestMarketData
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exchange import AbstractExchange
-from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.models.entity.bar import Bar
 from core.models.entity.ohlcv import OHLCV
 from core.models.lookback import Lookback
@@ -75,12 +75,10 @@ class HistoricalActor(StrategyActor):
         symbol: Symbol,
         timeframe: Timeframe,
         exchange: AbstractExchange,
-        ts: AbstractTimeSeriesService,
         config_service: AbstractConfig,
     ):
         super().__init__(symbol, timeframe)
         self.exchange = exchange
-        self.ts = ts
         self.config_service = config_service.get("backtest")
         self.queue = asyncio.Queue()
         self.batch_size = self.config_service["batch_size"]
@@ -127,7 +125,7 @@ class HistoricalActor(StrategyActor):
 
     async def _outbox(self, batch: List[Bar]) -> None:
         tasks = [
-            self.ts.upsert(self.symbol, self.timeframe, bar.ohlcv)
+            self.ask(IngestMarketData(self.symbol, self.timeframe, bar))
             for bar in batch
             if bar.closed
         ]

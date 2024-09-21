@@ -3,8 +3,8 @@ import logging
 from typing import List
 
 from core.actors import StrategyActor
+from core.commands.ohlcv import IngestMarketData
 from core.events.ohlcv import NewMarketDataReceived
-from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.interfaces.abstract_ws import AbstractWS
 from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
@@ -54,12 +54,10 @@ class RealtimeActor(StrategyActor):
         symbol: Symbol,
         timeframe: Timeframe,
         ws: AbstractWS,
-        ts: AbstractTimeSeriesService,
     ):
         super().__init__(symbol, timeframe)
         self.queue = asyncio.Queue()
         self.ws = ws
-        self.ts = ts
         self.producer = None
         self.consumer = None
 
@@ -94,9 +92,8 @@ class RealtimeActor(StrategyActor):
 
     async def _process_bars(self, bars: List[Bar]):
         for bar in bars:
-            if bar.closed:
-                await self.ts.upsert(self.symbol, self.timeframe, bar.ohlcv)
-
-                logger.info(f"{self.symbol}_{self.timeframe}:{bar}")
-
+            await self.ask(IngestMarketData(self.symbol, self.timeframe, bar))
             await self.tell(NewMarketDataReceived(self.symbol, self.timeframe, bar))
+
+            if bar.closed:
+                logger.info(f"{self.symbol}_{self.timeframe}:{bar}")
