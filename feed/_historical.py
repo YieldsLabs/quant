@@ -86,10 +86,11 @@ class HistoricalActor(StrategyActor):
         self.batch_size = self.config_service["batch_size"]
 
     async def on_receive(self, msg: StartHistoricalFeed):
-        producer = asyncio.create_task(self._producer(msg))
-        consumer = asyncio.create_task(self._consumer())
+        async with asyncio.TaskGroup() as tg:
+            producer = tg.create_task(self._producer(msg))
+            consumer = tg.create_task(self._consumer())
 
-        await asyncio.gather(producer, consumer)
+            await asyncio.gather(producer, consumer)
 
     async def _producer(self, msg: StartHistoricalFeed):
         async with AsyncHistoricalData(

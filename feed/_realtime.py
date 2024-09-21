@@ -71,8 +71,9 @@ class RealtimeActor(StrategyActor):
             self.consumer.cancel()
 
     async def on_receive(self, _msg: StartRealtimeFeed):
-        self.producer = asyncio.create_task(self._producer())
-        self.consumer = asyncio.create_task(self._consumer())
+        async with asyncio.TaskGroup() as tg:
+            self.producer = tg.create_task(self._producer())
+            self.consumer = tg.create_task(self._consumer())
 
     async def _producer(self):
         async with AsyncRealTimeData(self.ws, self.symbol, self.timeframe) as stream:
