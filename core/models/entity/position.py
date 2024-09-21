@@ -277,7 +277,7 @@ class Position:
     ) -> "Position":
         if self.closed or ohlcv.timestamp <= self.risk_bar.timestamp:
             logger.warning(
-                f"Position {self.signal.symbol}{self.side} update ignored due to stale data."
+                f"Position {self.signal.symbol}_{self.side} update ignored due to stale data."
             )
             return self
 
@@ -285,7 +285,7 @@ class Position:
 
         if gap > LATENCY_GAP_THRESHOLD * self.signal.timeframe.to_milliseconds():
             logger.warning(
-                f"Position {self.signal.symbol}{self.side} update ignored due to large latency gap: {gap}"
+                f"Position {self.signal.symbol}_{self.side} update ignored due to large latency gap: {gap}"
             )
             return self
 
