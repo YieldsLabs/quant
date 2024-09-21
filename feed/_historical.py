@@ -2,7 +2,6 @@ import asyncio
 from typing import AsyncIterator, List
 
 from core.actors import StrategyActor
-from core.commands.feed import StartHistoricalFeed
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exchange import AbstractExchange
@@ -12,6 +11,7 @@ from core.models.entity.ohlcv import OHLCV
 from core.models.lookback import Lookback
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.tasks.feed import StartHistoricalFeed
 
 
 class AsyncHistoricalData:
@@ -86,11 +86,10 @@ class HistoricalActor(StrategyActor):
         self.batch_size = self.config_service["batch_size"]
 
     async def on_receive(self, msg: StartHistoricalFeed):
-        async with asyncio.TaskGroup() as tg:
-            producer = tg.create_task(self._producer(msg))
-            consumer = tg.create_task(self._consumer())
+        producer = asyncio.create_task(self._producer(msg))
+        consumer = asyncio.create_task(self._consumer())
 
-            await asyncio.gather(producer, consumer)
+        await asyncio.gather(producer, consumer)
 
     async def _producer(self, msg: StartHistoricalFeed):
         async with AsyncHistoricalData(

@@ -3,13 +3,13 @@ import logging
 from typing import List
 
 from core.actors import StrategyActor
-from core.commands.feed import StartRealtimeFeed
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.interfaces.abstract_ws import AbstractWS
 from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.tasks.feed import StartRealtimeFeed
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +71,8 @@ class RealtimeActor(StrategyActor):
             self.consumer.cancel()
 
     async def on_receive(self, _msg: StartRealtimeFeed):
-        async with asyncio.TaskGroup() as tg:
-            self.producer = tg.create_task(self._producer())
-            self.consumer = tg.create_task(self._consumer())
+        self.producer = asyncio.create_task(self._producer())
+        self.consumer = asyncio.create_task(self._consumer())
 
     async def _producer(self):
         async with AsyncRealTimeData(self.ws, self.symbol, self.timeframe) as stream:
