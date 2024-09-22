@@ -41,7 +41,7 @@ class SmartRouter(AbstractEventManager):
             position.signal.symbol, position.side
         )
 
-        logging.info(f"Broker position: {broker_position}")
+        logging.info(f"Broker open position: {broker_position}")
 
         if not broker_position:
             return Order(status=OrderStatus.FAILED, price=0, size=0)
@@ -66,7 +66,7 @@ class SmartRouter(AbstractEventManager):
             self.config["max_order_slice"],
         )
 
-        print(trade)
+        logging.info(f"Broker close position: {trade}")
 
         if not trade:
             return Order(status=OrderStatus.FAILED, price=0, size=0)
