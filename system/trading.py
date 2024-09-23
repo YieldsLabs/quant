@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from enum import Enum, auto
 
-from core.commands.broker import UpdateSettings
+from core.commands.broker import UpdateSymbolSettings
 from core.event_decorators import event_handler
 from core.events.system import DeployStrategy
 from core.events.trade import TradeStarted
@@ -139,7 +139,8 @@ class TradingSystem(AbstractSystem):
 
         for (symbol, timeframe), _ in self.next_strategy.items():
             await self.execute(
-                UpdateSettings(
+                UpdateSymbolSettings(
+                    self.exchange_type,
                     symbol,
                     min(symbol.max_leverage, self.config["leverage"]),
                     PositionMode.HEDGED,

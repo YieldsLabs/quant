@@ -24,3 +24,12 @@ class GetClosePosition(Query[Order]):
         default_factory=lambda: EventMeta(priority=1, group=QueryGroup.broker),
         init=False,
     )
+
+
+@dataclass(frozen=True)
+class HasPosition(Query[bool]):
+    position: Position
+    meta: EventMeta = field(
+        default_factory=lambda: EventMeta(priority=3, group=QueryGroup.broker),
+        init=False,
+    )

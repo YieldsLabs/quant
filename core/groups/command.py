@@ -6,6 +6,7 @@ class CommandGroup(Enum):
     broker = auto()
     portfolio = auto()
     market = auto()
+    position = auto()
 
     def __str__(self):
         return self.name

@@ -114,7 +114,7 @@ class BacktestSystem(AbstractSystem):
     async def _generate(self):
         logger.info("Generate a new population")
 
-        futures_symbols = await self.query(GetSymbols())
+        futures_symbols = await self.query(GetSymbols(self.context.exchange_type))
 
         generator = self.context.strategy_generator_factory.create(futures_symbols)
 

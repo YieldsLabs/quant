@@ -2,7 +2,7 @@ import logging
 from typing import Union
 
 from core.actors import StrategyActor
-from core.commands.broker import ClosePosition, OpenPosition
+from core.commands.position import ClosePosition, OpenPosition
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
@@ -12,8 +12,7 @@ from core.events.position import (
 from core.mixins import EventHandlerMixin
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.broker import HasPosition
-from core.queries.position import GetClosePosition, GetOpenPosition
+from core.queries.position import GetClosePosition, GetOpenPosition, HasPosition
 
 logger = logging.getLogger(__name__)
 
