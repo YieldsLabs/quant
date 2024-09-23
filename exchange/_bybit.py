@@ -270,7 +270,7 @@ class Bybit(AbstractExchange):
         timeframe: Timeframe,
         in_sample: Lookback,
         out_sample: Lookback | None,
-        batch_size: int,
+        batch_size: int = 512,
     ):
         in_sample = TIMEFRAMES_TO_LOOKBACK[(in_sample, timeframe)]
         out_sample = (
