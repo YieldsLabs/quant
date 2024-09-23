@@ -28,6 +28,7 @@ class HistoricalActor(StrategyActor):
         self.config_service = config_service.get("backtest")
         self.queue = asyncio.Queue()
         self.batch_size = self.config_service["batch_size"]
+        self.buff_size = self.config_service["buff_size"]
 
     async def on_receive(self, msg: StartHistoricalFeed):
         producer = asyncio.create_task(self._producer(msg))
@@ -45,7 +46,7 @@ class HistoricalActor(StrategyActor):
             self.batch_size,
             lambda data: Bar(OHLCV.from_list(data), True),
         ) as stream:
-            async for batch in self.batched(stream, self.batch_size):
+            async for batch in self.batched(stream, self.buff_size):
                 await self.queue.put(batch)
 
             await self.queue.put(None)
