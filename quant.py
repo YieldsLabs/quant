@@ -16,6 +16,7 @@ from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
 from market import MarketActor
+from ocean import OceanActor
 from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
@@ -78,6 +79,7 @@ async def main():
         config_service,
         PositionFixedSizeStrategy(),
     )
+    OceanActor().start()
     MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
