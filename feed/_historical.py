@@ -23,6 +23,7 @@ class AsyncHistoricalData:
         in_sample: Lookback,
         out_sample: Lookback,
         batch_size: int,
+        parse_fn=None,
     ):
         self.exchange = exchange
         self.symbol = symbol
@@ -33,6 +34,7 @@ class AsyncHistoricalData:
         self.iterator = None
         self.sentinel = object()
         self.last_row = None
+        self.parse_fn = parse_fn or self._default_parse
 
     async def __aenter__(self):
         self.iterator = self.exchange.fetch_ohlcv(
@@ -64,9 +66,13 @@ class AsyncHistoricalData:
 
     def _next_item_or_end(self):
         try:
-            return Bar(OHLCV.from_list(next(self.iterator)), True)
+            raw_data = next(self.iterator)
+            return self.parse_fn(raw_data)
         except StopIteration:
             return self.sentinel
+
+    def _default_parse(self, raw_data):
+        return raw_data
 
 
 class HistoricalActor(StrategyActor):
@@ -97,6 +103,7 @@ class HistoricalActor(StrategyActor):
             msg.in_sample,
             msg.out_sample,
             self.batch_size,
+            lambda data: Bar(OHLCV.from_list(data), True),
         ) as stream:
             async for batch in self.batched(stream, self.batch_size):
                 await self.queue.put(batch)
