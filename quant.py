@@ -79,7 +79,7 @@ async def main():
         config_service,
         PositionFixedSizeStrategy(),
     )
-    OceanActor().start()
+    OceanActor(exchange_factory).start()
     MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
