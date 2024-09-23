@@ -28,7 +28,7 @@ class MarketActor(BaseActor, EventHandlerMixin):
         self.register_handler(BackNBars, self._handle_back_n_bars)
         self.register_handler(TA, self._handle_ta)
 
-    async def _ingest_market_data(self, event: IngestMarketData) -> OHLCV:
+    async def _ingest_market_data(self, event: IngestMarketData) -> None:
         if event.bar.closed:
             await self.ts.upsert(event.symbol, event.timeframe, event.bar.ohlcv)
 
