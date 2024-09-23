@@ -1,4 +1,4 @@
-from .historical import AsyncHistoricalData
-from .realtime import AsyncRealTimeData
+from ._historical import AsyncHistoricalData
+from ._realtime import AsyncRealTimeData
 
 __all__ = [AsyncHistoricalData, AsyncRealTimeData]
