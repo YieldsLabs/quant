@@ -24,6 +24,8 @@ scipy = "*"
 cbor2 = "*"
 llama-cpp-python = "0.2.82"
 umap-learn = "*"
+faiss-cpu = "*"
+tensorflow = "*"
 
 [dev-packages]
 mypy = "*"
