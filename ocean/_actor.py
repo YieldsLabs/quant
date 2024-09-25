@@ -28,6 +28,9 @@ class OceanActor(BaseActor, EventHandlerMixin):
         exchange = self.exchange_factory.create(event.exchange)
         symbols = exchange.fetch_future_symbols()
 
+        if not event.cap:
+            return symbols
+        
         return symbols
 
     def _get_symbol(self, event: GetSymbol):

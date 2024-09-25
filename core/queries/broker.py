@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from core.events._base import EventMeta
 from core.groups.query import QueryGroup
@@ -13,7 +13,7 @@ from ._base import Query
 @dataclass(frozen=True)
 class GetSymbols(Query[List[Symbol]]):
     exchange: ExchangeType
-    cap: CapType = CapType.LARGE
+    cap: Optional[CapType] = None
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=3, group=QueryGroup.broker),
         init=False,
