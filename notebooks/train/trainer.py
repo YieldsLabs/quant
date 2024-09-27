@@ -39,6 +39,8 @@ class Trainer(ABC):
 
         self.checkpoint.load_latest()
 
+        self.model.to(self.device)
+
     @abstractmethod
     def train_epoch(self) -> float:
         pass
