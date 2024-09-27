@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class AutoEncoder(nn.Module):
     def __init__(self, feature_dim, latent_dim=32, dropout_prob=0.2):
         super(AutoEncoder, self).__init__()
@@ -13,7 +14,7 @@ class AutoEncoder(nn.Module):
             nn.Linear(128, 64),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(negative_slope=0.01),
-            nn.Linear(64, latent_dim)
+            nn.Linear(64, latent_dim),
         )
 
         self.decoder = nn.Sequential(
@@ -25,7 +26,7 @@ class AutoEncoder(nn.Module):
             nn.BatchNorm1d(128),
             nn.LeakyReLU(negative_slope=0.01),
             nn.Linear(128, feature_dim),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
         self.residual = nn.Linear(feature_dim, feature_dim)
