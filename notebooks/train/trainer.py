@@ -29,8 +29,9 @@ class Trainer(ABC):
 
         self.optimizer = optimizer
         self.criterion = criterion
+        self.rank = rank
 
-        if rank == 0:
+        if self.rank == 0:
             self.checkpoint.load_latest()
 
         self.model.to(self.device)
