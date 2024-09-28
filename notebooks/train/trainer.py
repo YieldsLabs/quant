@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 import torch
-import torch.nn as nn
 
 
 class Trainer(ABC):
@@ -9,21 +8,17 @@ class Trainer(ABC):
         self,
         model,
         dataloader,
+        optimizer,
+        criterion,
         early_stop,
         checkpoint,
-        epochs=50,
-        lr=1e-4,
         device=None,
-        optimizer_class=torch.optim.Adam,
-        criterion_class=nn.MSELoss,
-        **optimizer_kwargs,
+        rank=0,
     ):
 
         self.model = model
         self.model_name = model.__class__.__name__
         self.dataloader = dataloader
-        self.epochs = epochs
-        self.lr = lr
         self.device = (
             device
             if device
@@ -32,12 +27,11 @@ class Trainer(ABC):
         self.early_stop = early_stop
         self.checkpoint = checkpoint
 
-        self.optimizer = optimizer_class(
-            self.model.parameters(), lr=self.lr, **optimizer_kwargs
-        )
-        self.criterion = criterion_class()
+        self.optimizer = optimizer
+        self.criterion = criterion
 
-        self.checkpoint.load_latest()
+        if rank == 0:
+            self.checkpoint.load_latest()
 
         self.model.to(self.device)
 
@@ -45,24 +39,24 @@ class Trainer(ABC):
     def train_epoch(self) -> float:
         pass
 
-    def train(self):
+    def train(self, epochs=50):
         self.model.to(self.device)
         self.model.train()
 
-        for epoch in range(self.epochs):
+        for epoch in range(epochs):
             avg_train_loss = self.train_epoch()
 
-            print(
-                f"Epoch [{epoch + 1}/{self.epochs}], Train Loss: {avg_train_loss:.8f}"
-            )
+            if self.rank == 0:
+                print(f"Epoch [{epoch + 1}/{epochs}], Train Loss: {avg_train_loss:.8f}")
 
-            improved = avg_train_loss < self.early_stop.best_loss
+                improved = avg_train_loss < self.early_stop.best_loss
 
-            self.checkpoint.check_and_save(epoch, improved)
+                self.checkpoint.check_and_save(epoch, improved)
 
-            if self.early_stop.check(avg_train_loss):
-                break
+                if self.early_stop.check(avg_train_loss):
+                    break
 
-            self.checkpoint.periodic_save(epoch)
+                self.checkpoint.periodic_save(epoch)
 
-        print("Training Complete")
+        if self.rank == 0:
+            print("Training Complete")

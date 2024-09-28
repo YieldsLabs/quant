@@ -15,15 +15,16 @@ class CommonTrainer(Trainer):
         self.optimizer.zero_grad()
 
         for batch_idx, (data,) in enumerate(self.dataloader):
-            data = data.to(self.device)
+            data = data.to(self.device, non_blocking=True)
 
             outputs = self.model(data)
 
-            loss = self.criterion(outputs, data)
-            loss = loss / self.acc_steps
+            loss = self.criterion(outputs, data) / self.acc_steps
             loss.backward()
 
-            if (batch_idx + 1) % self.acc_steps == 0:
+            if (batch_idx + 1) % self.acc_steps == 0 or (batch_idx + 1) == len(
+                self.dataloader
+            ):
                 self.optimizer.step()
                 self.optimizer.zero_grad()
 
@@ -43,3 +44,22 @@ class CommonTrainer(Trainer):
         avg_train_loss = running_loss / len(self.dataloader)
 
         return avg_train_loss
+
+    def extract_embeddings(self):
+        self.model.to(self.device)
+
+        self.model.eval()
+
+        embeddings = []
+
+        with torch.no_grad():
+            for _batch_idx, (data,) in enumerate(self.dataloader):
+                data = data.to(self.device)
+
+                latent = self.model.get_latent(data)
+
+                embeddings.append(latent.cpu())
+
+        embeddings = torch.vstack(embeddings)
+
+        return embeddings.numpy()
