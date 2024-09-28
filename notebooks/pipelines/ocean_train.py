@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import torch
 import torch.distributed as dist
@@ -23,7 +25,9 @@ def to_train(
 
     dataset = TensorDataset(X)
     sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
-    dataloader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, sampler=sampler, num_workers=os.cpu_count()
+    )
 
     model = DDP(
         AutoEncoder(feature_dim=feature_dim, latent_dim=latent_dim), device_ids=None
