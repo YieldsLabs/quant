@@ -29,15 +29,16 @@ class CommonTrainer(Trainer):
 
             running_loss += loss.item()
 
-            del [data, outputs, loss]
+            del data, outputs, loss
 
-            if torch.backends.mps.is_available():
-                torch.mps.empty_cache()
+            if (batch_idx + 1) % (self.acc_steps * 5) == 0:
+                if torch.backends.mps.is_available():
+                    torch.mps.empty_cache()
 
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
-            gc.collect()
+                gc.collect()
 
         avg_train_loss = running_loss / len(self.dataloader)
 
