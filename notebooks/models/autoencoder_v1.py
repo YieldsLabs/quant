@@ -3,7 +3,15 @@ import torch.nn.functional as F
 
 
 class AutoEncoder(nn.Module):
-    def __init__(self, feature_dim, latent_dim=32, embed_dim=128, num_heads=4, dropout_prob=0.2, use_attention=True):
+    def __init__(
+        self,
+        feature_dim,
+        latent_dim=32,
+        embed_dim=128,
+        num_heads=4,
+        dropout_prob=0.2,
+        use_attention=True,
+    ):
         super(AutoEncoder, self).__init__()
         self.use_attention = use_attention
 
@@ -17,14 +25,18 @@ class AutoEncoder(nn.Module):
         )
 
         if use_attention:
-            self.attention_encoder = nn.MultiheadAttention(embed_dim=embed_dim, num_heads=num_heads, dropout=dropout_prob)
+            self.attention_encoder = nn.MultiheadAttention(
+                embed_dim=embed_dim, num_heads=num_heads, dropout=dropout_prob
+            )
 
         self.encoder_fc = nn.Linear(128, latent_dim)
 
         self.decoder_fc = nn.Linear(latent_dim, 128)
 
         if use_attention:
-            self.attention_decoder = nn.MultiheadAttention(embed_dim=embed_dim, num_heads=num_heads, dropout=dropout_prob)
+            self.attention_decoder = nn.MultiheadAttention(
+                embed_dim=embed_dim, num_heads=num_heads, dropout=dropout_prob
+            )
 
         self.decoder = nn.Sequential(
             nn.Linear(128, 256),
