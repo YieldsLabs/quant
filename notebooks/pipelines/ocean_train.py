@@ -13,24 +13,30 @@ from notebooks.train import CheckPoint, CommonTrainer, EarlyStop, SnapshotManage
 
 
 def to_train(
-    feature_path: str, latent_dim=16, lr=1e-6, rank=0, world_size=1, batch_size=2
+    feature_path: str,
+    latent_dim=16,
+    lr=1e-6,
+    rank=0,
+    world_size=1,
+    batch_size=2,
+    num_workers=os.cpu_count(),
 ):
     features = np.load(feature_path)
-    feature_dim = features.shape[1] * features.shape[2]
-
-    print("Feature dim: ", feature_dim)
+    _, segment_length, n_features = features.shape
 
     X = torch.tensor(features, dtype=torch.float32)
-    X = X.view(X.size(0), -1)
 
     dataset = TensorDataset(X)
     sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
     dataloader = DataLoader(
-        dataset, batch_size=batch_size, sampler=sampler, num_workers=os.cpu_count()
+        dataset, batch_size=batch_size, sampler=sampler, num_workers=num_workers
     )
 
     model = DDP(
-        AutoEncoder(feature_dim=feature_dim, latent_dim=latent_dim), device_ids=None
+        AutoEncoder(
+            segment_length=segment_length, n_features=n_features, latent_dim=latent_dim
+        ),
+        device_ids=None,
     )
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)

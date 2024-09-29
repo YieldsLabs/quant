@@ -5,81 +5,104 @@ import torch.nn.functional as F
 class AutoEncoder(nn.Module):
     def __init__(
         self,
-        feature_dim,
-        latent_dim=32,
-        embed_dim=128,
-        num_heads=4,
-        dropout_prob=0.2,
-        use_attention=True,
+        segment_length: int,
+        n_features: int,
+        latent_dim: int = 32,
+        num_heads: int = 4,
+        dropout_prob: float = 0.2,
+        use_attention: bool = True,
     ):
         super(AutoEncoder, self).__init__()
         self.use_attention = use_attention
+        self.segment_length = segment_length
+        self.n_features = n_features
 
         self.encoder = nn.Sequential(
-            nn.Linear(feature_dim, 256),
-            nn.LayerNorm(256),
-            nn.Tanh(),
-            nn.Dropout(dropout_prob),
-            nn.Linear(256, 128),
-            nn.LayerNorm(128),
+            nn.Conv1d(self.n_features, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+            nn.Conv1d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
         )
+
+        self.encoded_length = segment_length // 4
 
         if use_attention:
             self.attention_encoder = nn.MultiheadAttention(
-                embed_dim=embed_dim, num_heads=num_heads, dropout=dropout_prob
+                embed_dim=latent_dim, num_heads=num_heads, dropout=dropout_prob
             )
 
-        self.encoder_fc = nn.Linear(128, latent_dim)
+        self.fc_encoder = nn.Sequential(
+            nn.Linear(128 * self.encoded_length, 256),
+            nn.LayerNorm(256),
+            nn.Tanh(),
+            nn.Linear(256, latent_dim),
+            nn.Dropout(dropout_prob),
+        )
 
         self.decoder_fc = nn.Linear(latent_dim, 128)
 
         if use_attention:
             self.attention_decoder = nn.MultiheadAttention(
-                embed_dim=embed_dim, num_heads=num_heads, dropout=dropout_prob
+                embed_dim=latent_dim, num_heads=num_heads, dropout=dropout_prob
             )
 
-        self.decoder = nn.Sequential(
-            nn.Linear(128, 256),
+        self.fc_decoder = nn.Sequential(
+            nn.Linear(latent_dim, 256),
             nn.LayerNorm(256),
             nn.Tanh(),
+            nn.Linear(256, 128 * self.encoded_length),
             nn.Dropout(dropout_prob),
-            nn.Linear(256, feature_dim),
-            nn.Tanh(),
         )
 
-        self.residual = nn.Linear(feature_dim, feature_dim)
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose1d(128, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2),
+            nn.ConvTranspose1d(64, self.n_features, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2),
+        )
+
+        self.residual = nn.Linear(
+            self.segment_length * self.n_features, self.segment_length * self.n_features
+        )
 
     def forward(self, x):
+        x = x.permute(0, 2, 1)
+
         encoded = self.encoder(x)
+        encoded = encoded.view(encoded.size(0), -1)
+
+        latent = self.fc_encoder(encoded)
 
         if self.use_attention:
-            encoded = encoded.unsqueeze(1)
-            attn_encoded, _ = self.attention_encoder(encoded, encoded, encoded)
-            encoded = attn_encoded.squeeze(1)
+            latent = latent.unsqueeze(1)
+            attn_encoded, _ = self.attention_encoder(latent, latent, latent)
+            latent = attn_encoded.squeeze(1)
 
-        latent = self.encoder_fc(encoded)
+        decoded = self.fc_decoder(latent)
+        decoded = decoded.view(decoded.size(0), 128, self.encoded_length)
 
-        decoded = self.decoder_fc(latent)
+        decoded = self.decoder(decoded)
+        decoded = decoded.permute(0, 2, 1)
 
-        if self.use_attention:
-            decoded = decoded.unsqueeze(1)
-            attn_decoded, _ = self.attention_decoder(decoded, decoded, decoded)
-            decoded = attn_decoded.squeeze(1)
+        residual_out = self.residual(x.reshape(x.size(0), -1)).reshape(
+            x.size(0), self.segment_length, self.n_features
+        )
 
-        output = self.decoder(decoded)
-        residual_output = self.residual(x)
+        output = decoded + residual_out
 
-        return output + residual_output
+        return output
 
     def get_latent(self, x, normalize=True):
+        x = x.permute(0, 2, 1)
+
         encoded = self.encoder(x)
+        encoded = encoded.view(encoded.size(0), -1)
 
-        if self.use_attention:
-            encoded = encoded.unsqueeze(1)
-            attn_encoded, _ = self.attention_encoder(encoded, encoded, encoded)
-            encoded = attn_encoded.squeeze(1)
-
-        latent = self.encoder_fc(encoded)
+        latent = self.fc_encoder(encoded)
 
         if normalize:
             latent = F.normalize(latent, p=2, dim=1)
