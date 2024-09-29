@@ -19,9 +19,11 @@ class AutoEncoder(nn.Module):
 
         self.encoder = nn.Sequential(
             nn.Conv1d(self.n_features, 64, kernel_size=3, padding=1),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.MaxPool1d(2),
             nn.Conv1d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.MaxPool1d(2),
         )
@@ -58,9 +60,11 @@ class AutoEncoder(nn.Module):
 
         self.decoder = nn.Sequential(
             nn.ConvTranspose1d(128, 64, kernel_size=3, padding=1),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.Upsample(scale_factor=2),
             nn.ConvTranspose1d(64, self.n_features, kernel_size=3, padding=1),
+            nn.BatchNorm1d(self.n_features),
             nn.ReLU(),
             nn.Upsample(scale_factor=2),
         )
