@@ -1,6 +1,7 @@
 import gc
 
 import torch
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from .trainer import Trainer
 
@@ -56,7 +57,10 @@ class CommonTrainer(Trainer):
             for _batch_idx, (data,) in enumerate(self.dataloader):
                 data = data.to(self.device)
 
-                latent = self.model.get_latent(data)
+                if isinstance(self.model, DDP):
+                    latent = self.model.module.get_latent(data)
+                else:
+                    latent = self.model.get_latent(data)
 
                 embeddings.append(latent.cpu())
 
