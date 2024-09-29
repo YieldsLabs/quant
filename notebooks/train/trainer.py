@@ -20,10 +20,17 @@ class Trainer(ABC):
         self.model_name = model.__class__.__name__
         self.dataloader = dataloader
         self.device = (
-            device if device 
-            else (torch.device("cuda") if torch.cuda.is_available() 
-            else (torch.device("mps") if torch.backends.mps.is_available() 
-            else torch.device("cpu")))
+            device
+            if device
+            else (
+                torch.device("cuda")
+                if torch.cuda.is_available()
+                else (
+                    torch.device("mps")
+                    if torch.backends.mps.is_available()
+                    else torch.device("cpu")
+                )
+            )
         )
         self.early_stop = early_stop
         self.checkpoint = checkpoint
