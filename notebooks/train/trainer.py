@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import torch
+from torch.optim.lr_scheduler import StepLR
 
 
 class Trainer(ABC):
@@ -14,10 +15,11 @@ class Trainer(ABC):
         checkpoint,
         device=None,
         rank=0,
+        lr_scheduler_step=5,
+        lr_scheduler_gamma=0.1,
     ):
 
         self.model = model
-        self.model_name = model.__class__.__name__
         self.dataloader = dataloader
         self.device = (
             device
@@ -38,6 +40,9 @@ class Trainer(ABC):
         self.optimizer = optimizer
         self.criterion = criterion
         self.rank = rank
+        self.lr_scheduler = StepLR(
+            self.optimizer, step_size=lr_scheduler_step, gamma=lr_scheduler_gamma
+        )
 
         if self.rank == 0:
             self.checkpoint.load_latest()
@@ -54,6 +59,8 @@ class Trainer(ABC):
 
         for epoch in range(epochs):
             avg_train_loss = self.train_epoch()
+
+            self.lr_scheduler.step()
 
             if self.rank == 0:
                 print(f"Epoch [{epoch + 1}/{epochs}], Train Loss: {avg_train_loss:.8f}")
