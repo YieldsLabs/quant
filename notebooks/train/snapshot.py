@@ -1,6 +1,7 @@
 import os
 
 import torch
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 class SnapshotManager:
@@ -8,10 +9,14 @@ class SnapshotManager:
         self, model, snapshot_dir="snapshots", n_snapshots=5, remove_threshold=2
     ):
         self.model = model
-        self.model_name = model.__class__.__name__
         self.snapshot_dir = snapshot_dir
         self.n_snapshots = n_snapshots
         self.remove_threshold = remove_threshold
+
+        if isinstance(model, DDP):
+            self.model_name = model.module.__class__.__name__
+        else:
+            self.model_name = model.__class__.__name__
 
         os.makedirs(self.snapshot_dir, exist_ok=True)
 
