@@ -16,6 +16,7 @@ class AutoEncoder(nn.Module):
         self.use_attention = use_attention
         self.segment_length = segment_length
         self.n_features = n_features
+        self.encoded_length = segment_length // 4
 
         self.encoder = nn.Sequential(
             nn.Conv1d(self.n_features, 64, kernel_size=3, padding=1),
@@ -27,8 +28,6 @@ class AutoEncoder(nn.Module):
             nn.ReLU(),
             nn.MaxPool1d(2),
         )
-
-        self.encoded_length = segment_length // 4
 
         if use_attention:
             self.attention_encoder = nn.MultiheadAttention(
