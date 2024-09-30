@@ -5,6 +5,7 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 
@@ -20,6 +21,8 @@ def to_train(
     world_size=1,
     batch_size=2,
     num_workers=os.cpu_count(),
+    lr_scheduler_step=5,
+    lr_scheduler_gamma=0.1,
 ):
     features = np.load(feature_path)
     _, segment_length, n_features = features.shape
@@ -41,17 +44,22 @@ def to_train(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    return model, dataloader, optimizer
+    scheduler = StepLR(optimizer, step_size=lr_scheduler_step, gamma=lr_scheduler_gamma)
+
+    return model, dataloader, optimizer, scheduler
 
 
 def main(rank, features_filename, emb_filename, epochs, latent_dim, lr):
     dist.init_process_group(backend="gloo", init_method="env://")
 
     world_size = dist.get_world_size()
+    n_snapshots = 3
+    patience = 12
+    snapshot_interval = 5
 
     print(f"RANK: {rank}, WORLD_SIZE: {world_size}")
 
-    model, dataloader, optimizer = to_train(
+    model, dataloader, optimizer, scheduler = to_train(
         features_filename,
         latent_dim=latent_dim,
         lr=lr,
@@ -59,14 +67,22 @@ def main(rank, features_filename, emb_filename, epochs, latent_dim, lr):
         world_size=world_size,
     )
 
-    snapshot_manager = SnapshotManager(model, n_snapshots=3)
-    early_stop = EarlyStop(patience=12)
-    checkpoint = CheckPoint(snapshot_manager=snapshot_manager, snapshot_interval=5)
-
+    snapshot_manager = SnapshotManager(model, n_snapshots=n_snapshots)
+    early_stop = EarlyStop(patience=patience)
+    checkpoint = CheckPoint(
+        snapshot_manager=snapshot_manager, snapshot_interval=snapshot_interval
+    )
     criterion = torch.nn.MSELoss()
 
     trainer = CommonTrainer(
-        model, dataloader, optimizer, criterion, early_stop, checkpoint, rank=rank
+        model,
+        dataloader,
+        optimizer,
+        scheduler,
+        criterion,
+        early_stop,
+        checkpoint,
+        rank=rank,
     )
 
     trainer.train(epochs=epochs)

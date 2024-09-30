@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 import torch
-from torch.optim.lr_scheduler import StepLR
 
 
 class Trainer(ABC):
@@ -10,13 +9,12 @@ class Trainer(ABC):
         model,
         dataloader,
         optimizer,
+        lr_scheduler,
         criterion,
         early_stop,
         checkpoint,
         device=None,
         rank=0,
-        lr_scheduler_step=5,
-        lr_scheduler_gamma=0.1,
     ):
 
         self.model = model
@@ -38,11 +36,9 @@ class Trainer(ABC):
         self.checkpoint = checkpoint
 
         self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
         self.criterion = criterion
         self.rank = rank
-        self.lr_scheduler = StepLR(
-            self.optimizer, step_size=lr_scheduler_step, gamma=lr_scheduler_gamma
-        )
 
         if self.rank == 0:
             self.checkpoint.load_latest()

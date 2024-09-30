@@ -27,6 +27,7 @@ class AutoEncoder(nn.Module):
             nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.MaxPool1d(2),
+            nn.AdaptiveAvgPool1d(self.encoded_length),
         )
 
         if use_attention:
