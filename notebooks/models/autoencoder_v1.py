@@ -75,7 +75,7 @@ class AutoEncoder(nn.Module):
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
-        identity = x
+        identity = x.clone()
 
         encoded = self.encoder(x)
         encoded = encoded.view(encoded.size(0), -1)

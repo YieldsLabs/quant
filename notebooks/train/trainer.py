@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-import torch
-
 
 class Trainer(ABC):
     def __init__(
@@ -19,19 +17,7 @@ class Trainer(ABC):
 
         self.model = model
         self.dataloader = dataloader
-        self.device = (
-            device
-            if device
-            else (
-                torch.device("cuda")
-                if torch.cuda.is_available()
-                else (
-                    torch.device("mps")
-                    if torch.backends.mps.is_available()
-                    else torch.device("cpu")
-                )
-            )
-        )
+        self.device = device
         self.early_stop = early_stop
         self.checkpoint = checkpoint
 
@@ -52,6 +38,8 @@ class Trainer(ABC):
     def train(self, epochs=50):
         self.model.to(self.device)
         self.model.train()
+
+        print(f"Start training with epochs {epochs}")
 
         for epoch in range(epochs):
             avg_train_loss = self.train_epoch()
