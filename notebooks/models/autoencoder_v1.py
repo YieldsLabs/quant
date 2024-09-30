@@ -74,6 +74,7 @@ class AutoEncoder(nn.Module):
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
+        identity = x
 
         encoded = self.encoder(x)
         encoded = encoded.view(encoded.size(0), -1)
@@ -91,8 +92,8 @@ class AutoEncoder(nn.Module):
         decoded = self.decoder(decoded)
         decoded = decoded.permute(0, 2, 1)
 
-        residual_out = self.residual(x.reshape(x.size(0), -1)).reshape(
-            x.size(0), self.segment_length, self.n_features
+        residual_out = self.residual(identity.reshape(identity.size(0), -1)).reshape(
+            identity.size(0), self.segment_length, self.n_features
         )
 
         output = decoded + residual_out
