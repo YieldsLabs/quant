@@ -43,7 +43,7 @@ class CommonTrainer(Trainer):
                 gc.collect()
 
         num_batches = len(self.dataloader) // self.acc_steps
-        avg_train_loss = running_loss / num_batches if num_batches > 0 else float('inf')
+        avg_train_loss = running_loss / num_batches if num_batches > 0 else float("inf")
 
         return avg_train_loss
 

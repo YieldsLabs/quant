@@ -1,4 +1,5 @@
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,16 +11,19 @@ class PositionalEncoder(nn.Module):
 
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        div_term = torch.exp(
+            torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model)
+        )
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0).transpose(0, 1)
 
-        self.register_buffer('pe', pe)
+        self.register_buffer("pe", pe)
 
     def forward(self, x):
-        x = x + self.pe[:x.size(0), :]
+        x = x + self.pe[: x.size(0), :]
         return x
+
 
 class AutoEncoder(nn.Module):
     def __init__(
@@ -29,7 +33,7 @@ class AutoEncoder(nn.Module):
         latent_dim: int = 32,
         num_heads: int = 4,
         dropout_prob: float = 0.2,
-        activation_type: str = 'leaky_relu',
+        activation_type: str = "leaky_relu",
         use_attention: bool = True,
     ):
         super(AutoEncoder, self).__init__()
@@ -130,13 +134,13 @@ class AutoEncoder(nn.Module):
             latent = F.normalize(latent, p=2, dim=1)
 
         return latent
-    
+
     def _get_activation(self, activation: str):
-        if activation == 'relu':
+        if activation == "relu":
             return nn.ReLU()
-        elif activation == 'leaky_relu':
+        elif activation == "leaky_relu":
             return nn.LeakyReLU(negative_slope=0.01)
-        elif activation == 'gelu':
+        elif activation == "gelu":
             return nn.GELU()
         else:
             return nn.Tanh()
