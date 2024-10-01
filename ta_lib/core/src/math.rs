@@ -142,7 +142,7 @@ impl Price {
     }
 
     pub fn slope(&self, period: Period) -> Self {
-        self.change(period) / period as Scalar
+        self.change(period) / (period + 1) as Scalar
     }
 
     pub fn change(&self, period: Period) -> Self {
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn test_slope() {
         let source = Series::from([1.0, 2.0, 3.0, 4.0, 5.0]);
-        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 1.0, 1.0]);
+        let expected = Series::from([f32::NAN, f32::NAN, f32::NAN, 0.75, 0.75]);
         let n = 3;
 
         let result = source.slope(n);
