@@ -42,7 +42,7 @@ class CommonTrainer(Trainer):
 
                 gc.collect()
 
-        avg_train_loss = running_loss / len(self.dataloader)
+        avg_train_loss = running_loss / (len(self.dataloader) // self.acc_steps)
 
         return avg_train_loss
 
