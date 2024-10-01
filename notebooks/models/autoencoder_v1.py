@@ -21,9 +21,8 @@ class PositionalEncoder(nn.Module):
         self.register_buffer("pe", pe)
 
     def forward(self, x):
-        x = x + self.pe[: x.size(0), :]
-        return x
-
+        pe_slice = self.pe[:x.size(0), :]
+        return x + pe_slice
 
 class AutoEncoder(nn.Module):
     def __init__(
@@ -41,6 +40,7 @@ class AutoEncoder(nn.Module):
         self.segment_length = segment_length
         self.n_features = n_features
         self.encoded_length = segment_length // 4
+        self.activation_type = activation_type
 
         if self.use_attention:
             self.positional_encoder = PositionalEncoder(latent_dim)
@@ -48,11 +48,11 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Conv1d(self.n_features, 64, kernel_size=3, padding=1),
             nn.BatchNorm1d(64),
-            self._get_activation(activation_type),
+            self._get_activation(self.activation_type),
             nn.MaxPool1d(2),
             nn.Conv1d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm1d(128),
-            self._get_activation(activation_type),
+            self._get_activation(self.activation_type),
             nn.MaxPool1d(2),
             nn.AdaptiveAvgPool1d(self.encoded_length),
         )
@@ -65,7 +65,7 @@ class AutoEncoder(nn.Module):
         self.fc_encoder = nn.Sequential(
             nn.Linear(128 * self.encoded_length, 256),
             nn.LayerNorm(256),
-            nn.Tanh(),
+            self._get_activation("tanh"),
             nn.Linear(256, latent_dim),
             nn.Dropout(dropout_prob),
         )
@@ -73,7 +73,7 @@ class AutoEncoder(nn.Module):
         self.fc_decoder = nn.Sequential(
             nn.Linear(latent_dim, 256),
             nn.LayerNorm(256),
-            nn.Tanh(),
+            self._get_activation("tanh"),
             nn.Linear(256, 128 * self.encoded_length),
             nn.Dropout(dropout_prob),
         )
@@ -81,17 +81,21 @@ class AutoEncoder(nn.Module):
         self.decoder = nn.Sequential(
             nn.ConvTranspose1d(128, 64, kernel_size=3, padding=1),
             nn.BatchNorm1d(64),
-            self._get_activation(activation_type),
+            self._get_activation(self.activation_type),
             nn.Upsample(scale_factor=2),
             nn.ConvTranspose1d(64, self.n_features, kernel_size=3, padding=1),
             nn.BatchNorm1d(self.n_features),
-            self._get_activation(activation_type),
+            self._get_activation(self.activation_type),
             nn.Upsample(scale_factor=2),
         )
 
-        self.residual = nn.Linear(
-            self.segment_length * self.n_features, self.segment_length * self.n_features
+        self.residual = nn.Sequential(
+            nn.Conv1d(self.n_features, self.n_features, kernel_size=3, padding=1),
+            nn.BatchNorm1d(self.n_features),
+            self._get_activation('relu'),
         )
+
+        self.apply(self._init_weights)
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
@@ -107,6 +111,7 @@ class AutoEncoder(nn.Module):
             latent = self.positional_encoder(latent)
 
             attn_encoded, _ = self.attention_encoder(latent, latent, latent)
+            attn_encoded = self._get_activation(self.activation_type)(attn_encoded)
             latent = attn_encoded.squeeze(1)
 
         decoded = self.fc_decoder(latent)
@@ -114,9 +119,8 @@ class AutoEncoder(nn.Module):
         decoded = self.decoder(decoded)
         decoded = decoded.permute(0, 2, 1)
 
-        residual_out = self.residual(identity.reshape(identity.size(0), -1)).reshape(
-            identity.size(0), self.segment_length, self.n_features
-        )
+        residual_out = self.residual(identity)
+        residual_out = residual_out.permute(0, 2, 1)
 
         output = decoded + residual_out
 
@@ -135,12 +139,28 @@ class AutoEncoder(nn.Module):
 
         return latent
 
-    def _get_activation(self, activation: str):
-        if activation == "relu":
-            return nn.ReLU()
-        elif activation == "leaky_relu":
-            return nn.LeakyReLU(negative_slope=0.01)
-        elif activation == "gelu":
-            return nn.GELU()
-        else:
-            return nn.Tanh()
+    @staticmethod
+    def _get_activation(activation: str):
+        activations = {
+            "relu": nn.ReLU(),
+            "leaky_relu": nn.LeakyReLU(negative_slope=0.01),
+            "gelu": nn.GELU(),
+            "tanh": nn.Tanh(),
+            "swish": nn.SiLU(),
+            "mish": nn.Mish(),
+            "tanh": nn.Tanh(),
+        }
+
+        return activations.get(activation, nn.Tanh())
+    
+    def _init_weights(self, m):
+        if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d, nn.Linear)):
+            if self.activation_type in ["relu", "leaky_relu"]:
+                nn.init.kaiming_normal_(m.weight, nonlinearity=self.activation_type)
+            else:
+                nn.init.xavier_normal_(m.weight)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
