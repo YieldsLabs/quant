@@ -62,13 +62,11 @@ def to_train(
 
     model.to(device)
 
-    device_ids = [rank] if torch.cuda.is_available() else None
-
     if world_size > 1:
+        device_ids = [rank] if torch.cuda.is_available() else None
         model = DDP(model, device_ids=device_ids)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
     scheduler = StepLR(optimizer, step_size=lr_scheduler_step, gamma=lr_scheduler_gamma)
 
     return model, dataloader, optimizer, scheduler, device
