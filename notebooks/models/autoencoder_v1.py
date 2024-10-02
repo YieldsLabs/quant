@@ -51,10 +51,12 @@ class AutoEncoder(nn.Module):
             nn.BatchNorm1d(64),
             self._get_activation(self.activation_type),
             nn.MaxPool1d(2),
+            nn.Dropout(dropout_prob),
             nn.Conv1d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm1d(128),
             self._get_activation(self.activation_type),
             nn.MaxPool1d(2),
+            nn.Dropout(dropout_prob),
             nn.AdaptiveAvgPool1d(self.encoded_length),
         )
 
@@ -113,6 +115,7 @@ class AutoEncoder(nn.Module):
 
             attn_encoded, _ = self.attention_encoder(latent, latent, latent)
             attn_encoded = self._get_activation(self.activation_type)(attn_encoded)
+            attn_encoded = attn_encoded + latent
             latent = attn_encoded.squeeze(1)
 
         decoded = self.fc_decoder(latent)
