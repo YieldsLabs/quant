@@ -67,7 +67,7 @@ async def main():
         "bus": {"num_workers": os.cpu_count()},
         "store": {"base_dir": LOG_DIR},
         "copilot": {"model_path": COPILOT_MODEL_PATH},
-        "ocean": {"emb_file": OCEAN_EMB_PATH}
+        "ocean": {"emb_file": OCEAN_EMB_PATH},
     }
 
     config_service.update(config)
