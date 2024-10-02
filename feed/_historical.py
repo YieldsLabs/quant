@@ -12,7 +12,7 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.tasks.feed import StartHistoricalFeed
 
-from .streams.base.historical import AsyncHistoricalData
+from .streams.base import AsyncHistoricalData
 
 
 class HistoricalActor(StrategyActor):

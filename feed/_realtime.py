@@ -11,7 +11,7 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.tasks.feed import StartRealtimeFeed
 
-from .streams.base.realtime import AsyncRealTimeData
+from .streams.base import AsyncRealTimeData
 
 logger = logging.getLogger(__name__)
 
