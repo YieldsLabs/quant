@@ -245,9 +245,11 @@ class Bybit(AbstractExchange):
 
         if position and position["entryPrice"] is not None:
             return {
-                "position_side": PositionSide.LONG
-                if position["side"] == "long"
-                else PositionSide.SHORT,
+                "position_side": (
+                    PositionSide.LONG
+                    if position["side"] == "long"
+                    else PositionSide.SHORT
+                ),
                 "entry_price": float(position.get("entryPrice", 0)),
                 "position_size": float(position.get("contracts", 0)),
                 "open_fee": -float(position.get("info", {}).get("curRealisedPnl", 0)),
@@ -269,8 +271,8 @@ class Bybit(AbstractExchange):
         symbol: Symbol,
         timeframe: Timeframe,
         in_sample: Lookback,
-        out_sample: Lookback | None,
-        batch_size: int,
+        out_sample: Lookback | None = None,
+        batch_size: int = 512,
     ):
         in_sample = TIMEFRAMES_TO_LOOKBACK[(in_sample, timeframe)]
         out_sample = (

@@ -124,9 +124,9 @@ def create_candlestick(data: pd.DataFrame) -> go.Figure:
                     "x1": exit_timestamp,
                     "y0": row["position.entry_price"],
                     "y1": row["position.exit_price"],
-                    "fillcolor": "lightgreen"
-                    if row["position.side"] == "long"
-                    else "lightcoral",
+                    "fillcolor": (
+                        "lightgreen" if row["position.side"] == "long" else "lightcoral"
+                    ),
                     "opacity": 0.6,
                     "line_width": 1,
                     "line": {

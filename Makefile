@@ -25,13 +25,13 @@ build-timeseries:
 	cp $(TA_LIB_DIR)/target/wasm32-wasi/release/ffi.wasm $(WASM_DIR)/timeseries.wasm
 
 run:
-	pipenv run python3 quant.py
+	uv run python3 quant.py
 
 format:
 	cargo fmt --all --manifest-path=$(TA_LIB_PATH)
-	pipenv run black .
-	pipenv run ruff . --fix
+	uv run black .
+	uv run ruff check . --unsafe-fixes --fix
 
 update:
 	cargo update --manifest-path=$(TA_LIB_PATH)
-	pipenv update
+	uv sync

@@ -359,7 +359,7 @@ class Position:
         dist = abs(curr_price - entry_price)
 
         trl_ratio = trl_dist / entry_price
-        exit_ratio = exit_dist / entry_price
+        exit_dist / entry_price
         dist_ratio = dist / entry_price
         is_exit = session_risk == SessionRiskType.EXIT
 

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Callable, Dict, Type
 
 
@@ -10,6 +11,11 @@ class EventHandlerMixin:
 
     async def handle_event(self, event: Any) -> Any:
         handler = self._handlers.get(type(event))
+
         if handler:
-            return await handler(event)
+            if asyncio.iscoroutinefunction(handler):
+                return await handler(event)
+            else:
+                return await asyncio.to_thread(handler, event)
+
         return None

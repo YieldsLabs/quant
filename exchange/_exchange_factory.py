@@ -1,8 +1,11 @@
+from functools import lru_cache
+
 from core.interfaces.abstract_exchange import AbstractExchange
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.interfaces.abstract_secret_service import AbstractSecretService
 from core.models.exchange import ExchangeType
-from exchange._bybit import Bybit
+
+from ._bybit import Bybit
 
 
 class ExchangeFactory(AbstractExchangeFactory):
@@ -12,6 +15,7 @@ class ExchangeFactory(AbstractExchangeFactory):
         super().__init__()
         self.secret = secret
 
+    @lru_cache(maxsize=None)
     def create(self, type: ExchangeType) -> AbstractExchange:
         if type not in self._exchange_type:
             raise ValueError(f"Unknown Exchange: {type}")

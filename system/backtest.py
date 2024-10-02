@@ -7,6 +7,7 @@ from core.commands.portfolio import StrategyReset
 from core.events.backtest import BacktestEnded, BacktestStarted
 from core.events.system import DeployStrategy
 from core.interfaces.abstract_system import AbstractSystem
+from core.models.cap import CapType
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.optimizer import Optimizer
@@ -54,6 +55,7 @@ class BacktestSystem(AbstractSystem):
         self.optimizer = None
         self.config = self.context.config_service.get("system")
         self.active_strategy = set()
+        self.default_cap = CapType.A
 
     async def start(self):
         transitions = {
@@ -114,7 +116,9 @@ class BacktestSystem(AbstractSystem):
     async def _generate(self):
         logger.info("Generate a new population")
 
-        futures_symbols = await self.query(GetSymbols())
+        futures_symbols = await self.query(
+            GetSymbols(self.context.exchange_type, self.default_cap)
+        )
 
         generator = self.context.strategy_generator_factory.create(futures_symbols)
 
