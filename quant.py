@@ -46,6 +46,7 @@ LOG_DIR = os.getenv("LOG_DIR")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 WASM_FOLDER = os.getenv("WASM_FOLDER")
 COPILOT_MODEL_PATH = os.getenv("COPILOT_MODEL_PATH")
+OCEAN_EMB_PATH = os.getenv("OCEAN_EMB_PATH")
 
 configure_logging(LOG_LEVEL)
 
@@ -66,6 +67,7 @@ async def main():
         "bus": {"num_workers": os.cpu_count()},
         "store": {"base_dir": LOG_DIR},
         "copilot": {"model_path": COPILOT_MODEL_PATH},
+        "ocean": {"emb_file": OCEAN_EMB_PATH}
     }
 
     config_service.update(config)
@@ -79,7 +81,7 @@ async def main():
         config_service,
         PositionFixedSizeStrategy(),
     )
-    OceanActor(exchange_factory).start()
+    OceanActor(exchange_factory, config_service).start()
     MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)

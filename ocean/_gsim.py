@@ -13,12 +13,14 @@ class Node:
     data: np.ndarray
     level: int
     meta: Dict[str, str] = field(default_factory=dict)
-    neighbors: Dict[int, List[Tuple[float, 'Node']]] = field(default_factory=dict, compare=False)
+    neighbors: Dict[int, List[Tuple[float, "Node"]]] = field(
+        default_factory=dict, compare=False
+    )
 
     def __post_init__(self):
-        object.__setattr__(self, 'data', np.array(self.data))
+        object.__setattr__(self, "data", np.array(self.data))
 
-    def add_neighbor(self, neighbor: 'Node', level: int, max_neighbors: int = 300):
+    def add_neighbor(self, neighbor: "Node", level: int, max_neighbors: int = 300):
         if level not in self.neighbors:
             self.neighbors[level] = []
 
@@ -29,20 +31,27 @@ class Node:
         else:
             heappushpop(self.neighbors[level], (-dist, neighbor))
 
-    def get_neighbors(self, level: int) -> List[Tuple[float, 'Node']]:
+    def get_neighbors(self, level: int) -> List[Tuple[float, "Node"]]:
         return [(-d, n) for d, n in self.neighbors.get(level, [])]
 
     def __hash__(self):
         return hash((self.data.tobytes(), self.level))
 
-    def __eq__(self, other: 'Node'):
+    def __eq__(self, other: "Node"):
         return np.array_equal(self.data, other.data) and self.level == other.level
 
-    def __lt__(self, other: 'Node'):
+    def __lt__(self, other: "Node"):
         return np.linalg.norm(self.data) < np.linalg.norm(other.data)
 
+
 class SIM:
-    def __init__(self, max_level: int, max_neighbors: int = 16, ef_construction: int = 200, ef_search: int = 10):
+    def __init__(
+        self,
+        max_level: int,
+        max_neighbors: int = 16,
+        ef_construction: int = 200,
+        ef_search: int = 10,
+    ):
         self.max_level = max_level
         self.max_neighbors = max_neighbors
         self.ef_construction = ef_construction
@@ -94,7 +103,9 @@ class SIM:
 
         for l in range(self.max_level, -1, -1):
             if l <= level:
-                neighbors = self._beam_search(current_node, new_node.data, l, self.ef_construction)
+                neighbors = self._beam_search(
+                    current_node, new_node.data, l, self.ef_construction
+                )
                 new_node.neighbors[l] = self._select_best_neighbors(neighbors)
 
                 for _, neighbor in new_node.neighbors[l]:
@@ -102,7 +113,9 @@ class SIM:
 
             current_node = self._greedy_search(new_node.data, current_node, l)
 
-    def _beam_search(self, entry_node: Node, query: np.ndarray, level: int, ef: int) -> List[Tuple[float, Node]]:
+    def _beam_search(
+        self, entry_node: Node, query: np.ndarray, level: int, ef: int
+    ) -> List[Tuple[float, Node]]:
         candidates = [(self._distance(entry_node.data, query), entry_node)]
         visited = {entry_node}
         beam = []
@@ -120,7 +133,9 @@ class SIM:
                 if neighbor not in visited:
                     visited.add(neighbor)
 
-                    heappush(candidates, (self._distance(neighbor.data, query), neighbor))
+                    heappush(
+                        candidates, (self._distance(neighbor.data, query), neighbor)
+                    )
 
         return beam
 
@@ -142,7 +157,9 @@ class SIM:
 
         return current_node
 
-    def _select_best_neighbors(self, neighbors: List[Tuple[float, Node]]) -> List[Tuple[float, Node]]:
+    def _select_best_neighbors(
+        self, neighbors: List[Tuple[float, Node]]
+    ) -> List[Tuple[float, Node]]:
         return sorted(neighbors, key=lambda x: x[0])
 
     def _perform_clustering(self, n_clusters: int = 3) -> None:
@@ -169,10 +186,15 @@ class SIM:
         for i, cluster_id in enumerate(cluster_ids):
             centroid_sums[i] = embeddings[clusters == cluster_id].sum(axis=0)
 
-        centroids = {cluster: centroid_sums[i] / cluster_counts[i] for i, cluster in enumerate(cluster_ids)}
+        centroids = {
+            cluster: centroid_sums[i] / cluster_counts[i]
+            for i, cluster in enumerate(cluster_ids)
+        }
         return centroids
 
-    def search(self, query: np.ndarray, top_k: int = 10) -> Optional[List[Tuple[float, Node]]]:
+    def search(
+        self, query: np.ndarray, top_k: int = 10
+    ) -> Optional[List[Tuple[float, Node]]]:
         if self.entry_point is None:
             return None
 
@@ -199,7 +221,11 @@ class SIM:
 
         similar = self.search(emb, top_k + 1)
 
-        return [node.meta.get('symbol') for _, node in similar if node.meta.get('symbol') != symbol]
+        return [
+            node.meta.get("symbol")
+            for _, node in similar
+            if node.meta.get("symbol") != symbol
+        ]
 
     def find_similar_by_cap(self, cap: CapType, top_k: int = 10):
         if self.entry_point is None:
@@ -208,13 +234,27 @@ class SIM:
         if self.clusters is None:
             self._perform_clustering()
 
-        sorted_clusters_by_magnitude = sorted(self.centroids.items(), key=lambda x: np.linalg.norm(x[1]))
+        sorted_clusters_by_magnitude = sorted(
+            self.centroids.items(), key=lambda x: np.linalg.norm(x[1])
+        )
         n_sorted_clusters_by_magnitude = len(sorted_clusters_by_magnitude)
-        
+
         cap_to_cluster = {
-            CapType.A: sorted_clusters_by_magnitude[0][0] if n_sorted_clusters_by_magnitude > 0 else None,
-            CapType.B: sorted_clusters_by_magnitude[1][0] if n_sorted_clusters_by_magnitude > 1 else None,
-            CapType.C: sorted_clusters_by_magnitude[2][0] if n_sorted_clusters_by_magnitude > 2 else None
+            CapType.A: (
+                sorted_clusters_by_magnitude[0][0]
+                if n_sorted_clusters_by_magnitude > 0
+                else None
+            ),
+            CapType.B: (
+                sorted_clusters_by_magnitude[1][0]
+                if n_sorted_clusters_by_magnitude > 1
+                else None
+            ),
+            CapType.C: (
+                sorted_clusters_by_magnitude[2][0]
+                if n_sorted_clusters_by_magnitude > 2
+                else None
+            ),
         }
 
         cluster_index = cap_to_cluster.get(cap)
@@ -226,4 +266,4 @@ class SIM:
 
         similar = self.search(q, top_k=top_k)
 
-        return [node.meta.get('symbol') for _, node in similar]
+        return [node.meta.get("symbol") for _, node in similar]

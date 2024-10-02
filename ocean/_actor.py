@@ -1,4 +1,5 @@
 from typing import Union
+
 import numpy as np
 
 from core.actors import BaseActor
@@ -6,20 +7,25 @@ from core.commands.broker import UpdateSymbolSettings
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.mixins import EventHandlerMixin
-from core.queries.broker import GetSimularSymbols, GetSimularSymbols, GetSymbols
+from core.queries.broker import GetSimularSymbols, GetSymbols
+
 from ._gsim import SIM
 
 OceanEvent = Union[GetSymbols, GetSimularSymbols, UpdateSymbolSettings]
 
 
 class OceanActor(BaseActor, EventHandlerMixin):
-    def __init__(self, exchange_factory: AbstractExchangeFactory, config_service: AbstractConfig):
+    def __init__(
+        self, exchange_factory: AbstractExchangeFactory, config_service: AbstractConfig
+    ):
         super().__init__()
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
         self.exchange_factory = exchange_factory
         self.config = config_service.get("ocean")
-        self.gsim = SIM(max_level=8, max_neighbors=40, ef_construction=500, ef_search=50)
+        self.gsim = SIM(
+            max_level=8, max_neighbors=40, ef_construction=500, ef_search=50
+        )
         self._init_embeddings()
 
     async def on_receive(self, event: OceanEvent):
@@ -37,18 +43,22 @@ class OceanActor(BaseActor, EventHandlerMixin):
         if not event.cap:
             return symbols
 
-        simular_symbols = self.gsim.find_similar_by_cap(event.cap, top_k=self.config.get('top_k'))
-        
+        simular_symbols = self.gsim.find_similar_by_cap(
+            event.cap, top_k=self.config.get("top_k")
+        )
+
         if not simular_symbols:
             return symbols
-        
+
         return [symbol for symbol in symbols if symbol.name in simular_symbols]
 
     def _get_simular_symbols(self, event: GetSimularSymbols):
         exchange = self.exchange_factory.create(event.exchange)
         symbols = exchange.fetch_future_symbols()
 
-        simular_symbols = self.gsim.find_similar_symbols(event.symbol.name, top_k=self.config.get('top_k'))
+        simular_symbols = self.gsim.find_similar_symbols(
+            event.symbol.name, top_k=self.config.get("top_k")
+        )
 
         if not simular_symbols:
             return []
@@ -63,7 +73,7 @@ class OceanActor(BaseActor, EventHandlerMixin):
         )
 
     def _init_embeddings(self):
-        embs = np.load(self.config.get('emb_file'))
+        embs = np.load(self.config.get("emb_file"), allow_pickle=True)
 
         for symbol, emb in embs:
             self.gsim.insert(emb, symbol)
