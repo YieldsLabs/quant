@@ -21,8 +21,9 @@ class PositionalEncoder(nn.Module):
         self.register_buffer("pe", pe)
 
     def forward(self, x):
-        pe_slice = self.pe[:x.size(0), :]
+        pe_slice = self.pe[: x.size(0), :]
         return x + pe_slice
+
 
 class AutoEncoder(nn.Module):
     def __init__(
@@ -92,7 +93,7 @@ class AutoEncoder(nn.Module):
         self.residual = nn.Sequential(
             nn.Conv1d(self.n_features, self.n_features, kernel_size=3, padding=1),
             nn.BatchNorm1d(self.n_features),
-            self._get_activation('relu'),
+            self._get_activation("relu"),
         )
 
         self.apply(self._init_weights)
@@ -148,11 +149,10 @@ class AutoEncoder(nn.Module):
             "tanh": nn.Tanh(),
             "swish": nn.SiLU(),
             "mish": nn.Mish(),
-            "tanh": nn.Tanh(),
         }
 
         return activations.get(activation, nn.Tanh())
-    
+
     def _init_weights(self, m):
         if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d, nn.Linear)):
             if self.activation_type in ["relu", "leaky_relu"]:
