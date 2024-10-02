@@ -204,9 +204,7 @@ class PositionActor(StrategyActor):
         signal = (
             event.signal
             if hasattr(event, "signal")
-            else event.position.signal
-            if hasattr(event, "position")
-            else event
+            else event.position.signal if hasattr(event, "position") else event
         )
 
         return (signal.symbol, signal.timeframe)

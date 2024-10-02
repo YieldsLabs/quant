@@ -87,11 +87,13 @@ def smooth_savgol(*arrays: np.ndarray) -> List[np.ndarray]:
 
 def smooth_spline(*arrays: np.ndarray, s: float = 1.0, k: int = 3) -> List[np.ndarray]:
     return [
-        UnivariateSpline(np.arange(len(array)), array, s=s, k=min(k, len(array) - 1))(
-            np.arange(len(array))
+        (
+            UnivariateSpline(
+                np.arange(len(array)), array, s=s, k=min(k, len(array) - 1)
+            )(np.arange(len(array)))
+            if len(array) > k
+            else array
         )
-        if len(array) > k
-        else array
         for array in arrays
     ]
 

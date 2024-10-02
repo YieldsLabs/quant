@@ -87,9 +87,11 @@ class CustomKMeans(KMeans):
 
             new_centers = np.array(
                 [
-                    X[self.labels_ == j].mean(axis=0)
-                    if len(X[self.labels_ == j]) > 0
-                    else self.cluster_centers_[j]
+                    (
+                        X[self.labels_ == j].mean(axis=0)
+                        if len(X[self.labels_ == j]) > 0
+                        else self.cluster_centers_[j]
+                    )
                     for j in range(self.n_clusters)
                 ]
             )
@@ -182,7 +184,7 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             else signal_trend_risk_prompt
         )
 
-        prompt = template.format(
+        template.format(
             side=side,
             strategy_type=strategy_type,
             entry=curr_bar.close,
@@ -195,12 +197,16 @@ class CopilotActor(BaseActor, EventHandlerMixin):
             cci=momentum.cci[-self.bars_n :],
             roc=momentum.sroc[-self.bars_n :],
             nvol=volume.nvol[-self.bars_n :],
-            support=trend.support[-self.bars_n :]
-            if side == PositionSide.SHORT
-            else trend.resistance[-self.bars_n :],
-            resistance=trend.resistance[-self.bars_n :]
-            if side == PositionSide.SHORT
-            else trend.support[-self.bars_n :],
+            support=(
+                trend.support[-self.bars_n :]
+                if side == PositionSide.SHORT
+                else trend.resistance[-self.bars_n :]
+            ),
+            resistance=(
+                trend.resistance[-self.bars_n :]
+                if side == PositionSide.SHORT
+                else trend.support[-self.bars_n :]
+            ),
             vwap=volume.vwap[-self.bars_n :],
             upper_bb=volatility.upb[-self.bars_n :],
             lower_bb=volatility.lwb[-self.bars_n :],

@@ -34,9 +34,9 @@ class ConfigService(AbstractConfig):
                             self._config[current_section][key] = array_values
                         else:
                             try:
-                                self._config[current_section][
-                                    key
-                                ] = self._parse_single_value(value)
+                                self._config[current_section][key] = (
+                                    self._parse_single_value(value)
+                                )
                             except ValueError:
                                 array_values = value.split(",")
 

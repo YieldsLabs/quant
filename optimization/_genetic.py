@@ -153,44 +153,68 @@ class GeneticStrategyOptimization(AbstractStrategyOptimization):
             GeneticAttributes.EXIT,
         ]:
             child1_strategy = Strategy(
-                parent2.strategy.signal
-                if chosen_attr == GeneticAttributes.SIGNAL
-                else parent1.strategy.signal,
-                parent1.strategy.confirm
-                if chosen_attr == GeneticAttributes.CONFIRM
-                else parent2.strategy.confirm,
-                parent1.strategy.pulse
-                if chosen_attr == GeneticAttributes.PULSE
-                else parent2.strategy.pulse,
-                parent1.strategy.baseline
-                if chosen_attr == GeneticAttributes.BASELINE
-                else parent2.strategy.baseline,
-                parent1.strategy.stop_loss
-                if chosen_attr == GeneticAttributes.STOP_LOSS
-                else parent2.strategy.stop_loss,
-                parent1.strategy.exit
-                if chosen_attr == GeneticAttributes.EXIT
-                else parent2.strategy.exit,
+                (
+                    parent2.strategy.signal
+                    if chosen_attr == GeneticAttributes.SIGNAL
+                    else parent1.strategy.signal
+                ),
+                (
+                    parent1.strategy.confirm
+                    if chosen_attr == GeneticAttributes.CONFIRM
+                    else parent2.strategy.confirm
+                ),
+                (
+                    parent1.strategy.pulse
+                    if chosen_attr == GeneticAttributes.PULSE
+                    else parent2.strategy.pulse
+                ),
+                (
+                    parent1.strategy.baseline
+                    if chosen_attr == GeneticAttributes.BASELINE
+                    else parent2.strategy.baseline
+                ),
+                (
+                    parent1.strategy.stop_loss
+                    if chosen_attr == GeneticAttributes.STOP_LOSS
+                    else parent2.strategy.stop_loss
+                ),
+                (
+                    parent1.strategy.exit
+                    if chosen_attr == GeneticAttributes.EXIT
+                    else parent2.strategy.exit
+                ),
             )
             child2_strategy = Strategy(
-                parent1.strategy.signal
-                if chosen_attr == GeneticAttributes.SIGNAL
-                else parent2.strategy.signal,
-                parent2.strategy.confirm
-                if chosen_attr == GeneticAttributes.CONFIRM
-                else parent1.strategy.confirm,
-                parent2.strategy.pulse
-                if chosen_attr == GeneticAttributes.PULSE
-                else parent1.strategy.pulse,
-                parent2.strategy.baseline
-                if chosen_attr == GeneticAttributes.BASELINE
-                else parent1.strategy.baseline,
-                parent2.strategy.stop_loss
-                if chosen_attr == GeneticAttributes.STOP_LOSS
-                else parent1.strategy.stop_loss,
-                parent2.strategy.exit
-                if chosen_attr == GeneticAttributes.EXIT
-                else parent1.strategy.exit,
+                (
+                    parent1.strategy.signal
+                    if chosen_attr == GeneticAttributes.SIGNAL
+                    else parent2.strategy.signal
+                ),
+                (
+                    parent2.strategy.confirm
+                    if chosen_attr == GeneticAttributes.CONFIRM
+                    else parent1.strategy.confirm
+                ),
+                (
+                    parent2.strategy.pulse
+                    if chosen_attr == GeneticAttributes.PULSE
+                    else parent1.strategy.pulse
+                ),
+                (
+                    parent2.strategy.baseline
+                    if chosen_attr == GeneticAttributes.BASELINE
+                    else parent1.strategy.baseline
+                ),
+                (
+                    parent2.strategy.stop_loss
+                    if chosen_attr == GeneticAttributes.STOP_LOSS
+                    else parent1.strategy.stop_loss
+                ),
+                (
+                    parent2.strategy.exit
+                    if chosen_attr == GeneticAttributes.EXIT
+                    else parent1.strategy.exit
+                ),
             )
 
             return Individual(
