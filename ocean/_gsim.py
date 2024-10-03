@@ -18,30 +18,40 @@ class Node:
     )
 
     def __post_init__(self):
-        object.__setattr__(self, "data", np.array(self.data))
+        if not isinstance(self.data, np.ndarray):
+            object.__setattr__(self, "data", np.array(self.data))
 
     def add_neighbor(self, neighbor: "Node", level: int, max_neighbors: int = 300):
         if level not in self.neighbors:
             self.neighbors[level] = []
 
-        dist = np.linalg.norm(self.data - neighbor.data)
+        dist = self._distance(self.data, neighbor.data)
 
         if len(self.neighbors[level]) < max_neighbors:
             heappush(self.neighbors[level], (-dist, neighbor))
         else:
             heappushpop(self.neighbors[level], (-dist, neighbor))
 
-    def get_neighbors(self, level: int) -> List[Tuple[float, "Node"]]:
-        return [(-d, n) for d, n in self.neighbors.get(level, [])]
+    def get_neighbors(self, level: int) -> List["Node"]:
+        return [n for _, n in self.neighbors.get(level, [])]
 
-    def __hash__(self):
-        return hash((self.data.tobytes(), self.level))
+    @staticmethod
+    def _distance(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
+        return np.linalg.norm(vec_a - vec_b)
 
     def __eq__(self, other: "Node"):
-        return np.array_equal(self.data, other.data) and self.level == other.level
+        return (
+            np.allclose(self.data, other.data, rtol=1e-5, atol=1e-8)
+            and self.level == other.level
+        )
+
+    def __hash__(self):
+        return hash((self.data.round(decimals=5).tobytes(), self.level))
 
     def __lt__(self, other: "Node"):
-        return np.linalg.norm(self.data) < np.linalg.norm(other.data)
+        return np.isclose(
+            np.linalg.norm(self.data), np.linalg.norm(other.data), rtol=1e-5, atol=1e-8
+        ) or np.linalg.norm(self.data) < np.linalg.norm(other.data)
 
 
 class SIM:
@@ -57,37 +67,11 @@ class SIM:
         self.ef_construction = ef_construction
         self.ef_search = ef_search
         self.entry_point = None
-        self.assign_probas = self._set_probas(max_neighbors, 1 / np.log(max_neighbors))
+        self.probas = self._set_probas(1 / np.log(max_neighbors))
         self.emb = {}
         self.clusters = None
         self.centroids = None
         self.symbol_cluster_map = {}
-
-    def _set_probas(self, max_neighbors: int, m_l: float) -> List[float]:
-        nn = 0
-        level = 0
-        assign_probas = []
-
-        while True:
-            proba = np.exp(-level / m_l) * (1 - np.exp(-1 / m_l))
-            if proba < 1e-9:
-                break
-            assign_probas.append(proba)
-            nn += max_neighbors * 2 if level == 0 else max_neighbors
-            level += 1
-
-        return assign_probas
-
-    def _random_level(self) -> int:
-        level = 0
-
-        while level < self.max_level and np.random.rand() < self.assign_probas[level]:
-            level += 1
-
-        return level
-
-    def _distance(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
-        return np.linalg.norm(vec1 - vec2)
 
     def insert(self, data: np.ndarray, symbol: str) -> None:
         self.emb[symbol] = data
@@ -108,89 +92,10 @@ class SIM:
                 )
                 new_node.neighbors[l] = self._select_best_neighbors(neighbors)
 
-                for _, neighbor in new_node.neighbors[l]:
+                for neighbor in new_node.get_neighbors(l):
                     neighbor.add_neighbor(new_node, l, self.max_neighbors)
 
             current_node = self._greedy_search(new_node.data, current_node, l)
-
-    def _beam_search(
-        self, entry_node: Node, query: np.ndarray, level: int, ef: int
-    ) -> List[Tuple[float, Node]]:
-        candidates = [(self._distance(entry_node.data, query), entry_node)]
-        visited = {entry_node}
-        beam = []
-
-        while candidates:
-            dist, node = heappop(candidates)
-
-            if len(beam) < ef:
-                beam.append((dist, node))
-            else:
-                if dist < beam[-1][0]:
-                    beam[-1] = (dist, node)
-
-            for _, neighbor in node.get_neighbors(level):
-                if neighbor not in visited:
-                    visited.add(neighbor)
-
-                    heappush(
-                        candidates, (self._distance(neighbor.data, query), neighbor)
-                    )
-
-        return beam
-
-    def _greedy_search(self, query: np.ndarray, entry_node: Node, level: int) -> Node:
-        current_node = entry_node
-        current_dist = self._distance(query, current_node.data)
-
-        while True:
-            found_closer = False
-            for _, neighbor in current_node.get_neighbors(level):
-                dist = self._distance(query, neighbor.data)
-                if dist < current_dist:
-                    current_node = neighbor
-                    current_dist = dist
-                    found_closer = True
-
-            if not found_closer:
-                break
-
-        return current_node
-
-    def _select_best_neighbors(
-        self, neighbors: List[Tuple[float, Node]]
-    ) -> List[Tuple[float, Node]]:
-        return sorted(neighbors, key=lambda x: x[0])
-
-    def _perform_clustering(self, n_clusters: int = 3) -> None:
-        if not self.emb:
-            return
-
-        symbols = list(self.emb.keys())
-        embeddings = np.array(list(self.emb.values()))
-
-        gmm = GaussianMixture(n_components=n_clusters, random_state=1337)
-
-        self.clusters = gmm.fit_predict(embeddings)
-        self.symbol_cluster_map = dict(zip(symbols, self.clusters))
-        self.centroids = self._calculate_cluster_centroids()
-
-    def _calculate_cluster_centroids(self) -> Dict[int, np.ndarray]:
-        symbols = list(self.emb.keys())
-        embeddings = np.array(list(self.emb.values()))
-        clusters = np.array([self.symbol_cluster_map[symbol] for symbol in symbols])
-
-        cluster_ids, cluster_counts = np.unique(clusters, return_counts=True)
-        centroid_sums = np.zeros((len(cluster_ids), embeddings.shape[1]))
-
-        for i, cluster_id in enumerate(cluster_ids):
-            centroid_sums[i] = embeddings[clusters == cluster_id].sum(axis=0)
-
-        centroids = {
-            cluster: centroid_sums[i] / cluster_counts[i]
-            for i, cluster in enumerate(cluster_ids)
-        }
-        return centroids
 
     def search(
         self, query: np.ndarray, top_k: int = 10
@@ -231,12 +136,13 @@ class SIM:
         if self.entry_point is None:
             return []
 
-        if self.clusters is None:
+        if self.clusters is None or self.centroids is None:
             self._perform_clustering()
 
         sorted_clusters_by_magnitude = sorted(
             self.centroids.items(), key=lambda x: np.linalg.norm(x[1])
         )
+
         n_sorted_clusters_by_magnitude = len(sorted_clusters_by_magnitude)
 
         cap_to_cluster = {
@@ -267,3 +173,110 @@ class SIM:
         similar = self.search(q, top_k=top_k)
 
         return [node.meta.get("symbol") for _, node in similar]
+
+    def _random_level(self) -> int:
+        level = 0
+
+        while level < self.max_level and np.random.rand() < self.probas[level]:
+            level += 1
+
+        return level
+
+    def _beam_search(
+        self, entry_node: Node, query: np.ndarray, level: int, ef: int
+    ) -> List[Tuple[float, Node]]:
+        candidates = [(self._distance(entry_node.data, query), entry_node)]
+        visited = {entry_node}
+        beam = []
+
+        while candidates:
+            dist, node = heappop(candidates)
+
+            if len(beam) < ef:
+                heappush(beam, (dist, node))
+            else:
+                if dist < beam[0][0]:
+                    heappushpop(beam, (dist, node))
+
+            for neighbor in node.get_neighbors(level):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    neighbor_dist = self._distance(neighbor.data, query)
+
+                    if len(candidates) < ef or neighbor_dist < beam[0][0]:
+                        heappush(candidates, (neighbor_dist, neighbor))
+
+        return beam
+
+    def _greedy_search(self, query: np.ndarray, entry_node: Node, level: int) -> Node:
+        current_node = entry_node
+        current_dist = self._distance(query, current_node.data)
+
+        while True:
+            found_closer = False
+
+            for neighbor in current_node.get_neighbors(level):
+                dist = self._distance(query, neighbor.data)
+
+                if dist < current_dist:
+                    current_node = neighbor
+                    current_dist = dist
+                    found_closer = True
+
+            if not found_closer:
+                break
+
+        return current_node
+
+    def _select_best_neighbors(
+        self, neighbors: List[Tuple[float, Node]]
+    ) -> List[Tuple[float, Node]]:
+        return sorted(neighbors, key=lambda x: (x[0], id(x[1])))
+
+    def _perform_clustering(self, n_clusters: int = 3) -> None:
+        if not self.emb:
+            return
+
+        symbols = list(self.emb.keys())
+        embeddings = np.array(list(self.emb.values()))
+
+        gmm = GaussianMixture(
+            n_components=n_clusters, init_params="k-means++", random_state=1337
+        )
+
+        self.clusters = gmm.fit_predict(embeddings)
+        self.symbol_cluster_map = dict(zip(symbols, self.clusters))
+        self.centroids = self._calculate_cluster_centroids()
+
+    def _calculate_cluster_centroids(self) -> Dict[int, np.ndarray]:
+        clusters = np.array(
+            [self.symbol_cluster_map[symbol] for symbol in self.emb.keys()]
+        )
+        cluster_ids = np.unique(clusters)
+        centroid_sums = np.vstack(
+            [
+                np.mean(np.array(list(self.emb.values()))[clusters == cluster], axis=0)
+                for cluster in cluster_ids
+            ]
+        )
+
+        return dict(zip(cluster_ids, centroid_sums))
+
+    @staticmethod
+    def _set_probas(m_l: float) -> List[float]:
+        level = 0
+        probas = []
+
+        while True:
+            proba = np.exp(-level / m_l) * (1 - np.exp(-1 / m_l))
+            if proba < 1e-9:
+                break
+
+            probas.append(proba)
+            level += 1
+
+        return probas
+
+    @staticmethod
+    def _distance(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
+        return np.linalg.norm(vec_a - vec_b)
