@@ -119,7 +119,7 @@ class AutoEncoder(nn.Module):
             latent = attn_encoded.squeeze(1)
 
         decoded = self.fc_decoder(latent)
-        decoded = decoded.view(decoded.size(0), 128, self.encoded_length)
+        decoded = decoded.view(decoded.size(0), 128, int(decoded.size(1) // 128))
         decoded = self.decoder(decoded)
         decoded = decoded.permute(0, 2, 1)
 
