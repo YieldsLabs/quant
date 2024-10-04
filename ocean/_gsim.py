@@ -1,3 +1,4 @@
+import hashlib
 from dataclasses import dataclass, field
 from heapq import heappop, heappush, heappushpop
 from typing import Dict, List, Optional, Tuple
@@ -46,7 +47,12 @@ class Node:
         )
 
     def __hash__(self):
-        return hash((self.data.round(decimals=5).tobytes(), self.level))
+        hasher = hashlib.md5()
+
+        hasher.update(self.data.round(decimals=5).tobytes())
+        hasher.update(self.level.to_bytes(4, "little"))
+
+        return int(hasher.hexdigest(), 16)
 
     def __lt__(self, other: "Node"):
         return np.isclose(
@@ -67,7 +73,7 @@ class SIM:
         self.ef_construction = ef_construction
         self.ef_search = ef_search
         self.entry_point = None
-        self.probas = self._set_probas(1 / np.log(max_neighbors))
+        self.cum_probas = np.cumsum(self._set_probas(1 / np.log(max_neighbors)))
         self.emb = {}
         self.clusters = None
         self.centroids = None
@@ -137,7 +143,7 @@ class SIM:
             return []
 
         if self.clusters is None or self.centroids is None:
-            self._perform_clustering()
+            self.perform_clustering()
 
         sorted_clusters_by_magnitude = sorted(
             self.centroids.items(), key=lambda x: np.linalg.norm(x[1])
@@ -174,13 +180,24 @@ class SIM:
 
         return [node.meta.get("symbol") for _, node in similar]
 
+    def perform_clustering(self, n_clusters: int = 3) -> None:
+        if not self.emb:
+            return
+
+        symbols = list(self.emb.keys())
+        embeddings = np.array(list(self.emb.values()))
+
+        gmm = GaussianMixture(
+            n_components=n_clusters, init_params="k-means++", random_state=1337
+        )
+
+        self.clusters = gmm.fit_predict(embeddings)
+        self.symbol_cluster_map = dict(zip(symbols, self.clusters))
+        self.centroids = self._calculate_cluster_centroids()
+
     def _random_level(self) -> int:
-        level = 0
-
-        while level < self.max_level and np.random.rand() < self.probas[level]:
-            level += 1
-
-        return level
+        rand_val = np.random.rand()
+        return int(np.searchsorted(self.cum_probas, rand_val))
 
     def _beam_search(
         self, entry_node: Node, query: np.ndarray, level: int, ef: int
@@ -203,8 +220,7 @@ class SIM:
                     visited.add(neighbor)
                     neighbor_dist = self._distance(neighbor.data, query)
 
-                    if len(candidates) < ef or neighbor_dist < beam[0][0]:
-                        heappush(candidates, (neighbor_dist, neighbor))
+                    heappush(candidates, (neighbor_dist, neighbor))
 
         return beam
 
@@ -233,21 +249,6 @@ class SIM:
     ) -> List[Tuple[float, Node]]:
         return sorted(neighbors, key=lambda x: (x[0], id(x[1])))
 
-    def _perform_clustering(self, n_clusters: int = 3) -> None:
-        if not self.emb:
-            return
-
-        symbols = list(self.emb.keys())
-        embeddings = np.array(list(self.emb.values()))
-
-        gmm = GaussianMixture(
-            n_components=n_clusters, init_params="k-means++", random_state=1337
-        )
-
-        self.clusters = gmm.fit_predict(embeddings)
-        self.symbol_cluster_map = dict(zip(symbols, self.clusters))
-        self.centroids = self._calculate_cluster_centroids()
-
     def _calculate_cluster_centroids(self) -> Dict[int, np.ndarray]:
         clusters = np.array(
             [self.symbol_cluster_map[symbol] for symbol in self.emb.keys()]
@@ -264,16 +265,10 @@ class SIM:
 
     @staticmethod
     def _set_probas(m_l: float) -> List[float]:
-        level = 0
-        probas = []
+        levels = np.arange(0, 100)
 
-        while True:
-            proba = np.exp(-level / m_l) * (1 - np.exp(-1 / m_l))
-            if proba < 1e-9:
-                break
-
-            probas.append(proba)
-            level += 1
+        probas = np.exp(-levels / m_l) * (1 - np.exp(-1 / m_l))
+        probas = probas[probas >= 1e-9]
 
         return probas
 

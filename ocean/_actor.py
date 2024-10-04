@@ -33,7 +33,7 @@ class OceanActor(BaseActor, EventHandlerMixin):
 
     def _register_event_handlers(self):
         self.register_handler(GetSymbols, self._get_symbols)
-        self.register_handler(GetSimularSymbols, self._get_simular_symbols)
+        self.register_handler(GetSimularSymbols, self._get_similar_symbols)
         self.register_handler(UpdateSymbolSettings, self._update_symbol_settings)
 
     def _get_symbols(self, event: GetSymbols):
@@ -43,27 +43,27 @@ class OceanActor(BaseActor, EventHandlerMixin):
         if not event.cap:
             return symbols
 
-        simular_symbols = self.gsim.find_similar_by_cap(
+        similar_symbols = self.gsim.find_similar_by_cap(
             event.cap, top_k=self.config.get("top_k")
         )
 
-        if not simular_symbols:
+        if not similar_symbols:
             return symbols
 
-        return [symbol for symbol in symbols if symbol.name in simular_symbols]
+        return [symbol for symbol in symbols if symbol.name in similar_symbols]
 
-    def _get_simular_symbols(self, event: GetSimularSymbols):
+    def _get_similar_symbols(self, event: GetSimularSymbols):
         exchange = self.exchange_factory.create(event.exchange)
         symbols = exchange.fetch_future_symbols()
 
-        simular_symbols = self.gsim.find_similar_symbols(
+        similar_symbols = self.gsim.find_similar_symbols(
             event.symbol.name, top_k=self.config.get("top_k")
         )
 
-        if not simular_symbols:
+        if not similar_symbols:
             return []
 
-        return [symbol for symbol in symbols if symbol.name in simular_symbols]
+        return [symbol for symbol in symbols if symbol.name in similar_symbols]
 
     def _update_symbol_settings(self, event: UpdateSymbolSettings):
         exchange = self.exchange_factory.create(event.exchange)
@@ -77,3 +77,5 @@ class OceanActor(BaseActor, EventHandlerMixin):
 
         for symbol, emb in embs:
             self.gsim.insert(emb, symbol)
+
+        self.gsim.perform_clustering()

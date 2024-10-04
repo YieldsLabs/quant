@@ -5,7 +5,6 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 
@@ -17,12 +16,11 @@ def to_train(
     feature_path: str,
     latent_dim=16,
     lr=1e-6,
+    wd=1e-5,
     rank=0,
     world_size=1,
     batch_size=2,
     num_workers=os.cpu_count(),
-    lr_scheduler_step=5,
-    lr_scheduler_gamma=0.1,
 ):
     features = np.load(feature_path)
     _, segment_length, n_features = features.shape
@@ -66,8 +64,8 @@ def to_train(
         device_ids = [rank] if torch.cuda.is_available() else None
         model = DDP(model, device_ids=device_ids)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = StepLR(optimizer, step_size=lr_scheduler_step, gamma=lr_scheduler_gamma)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
 
     return model, dataloader, optimizer, scheduler, device
 
