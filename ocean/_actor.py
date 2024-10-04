@@ -7,11 +7,11 @@ from core.commands.broker import UpdateSymbolSettings
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.mixins import EventHandlerMixin
-from core.queries.broker import GetSimularSymbols, GetSymbols
+from core.queries.broker import GetSimilarSymbols, GetSymbols
 
 from ._gsim import SIM
 
-OceanEvent = Union[GetSymbols, GetSimularSymbols, UpdateSymbolSettings]
+OceanEvent = Union[GetSymbols, GetSimilarSymbols, UpdateSymbolSettings]
 
 
 class OceanActor(BaseActor, EventHandlerMixin):
@@ -33,7 +33,7 @@ class OceanActor(BaseActor, EventHandlerMixin):
 
     def _register_event_handlers(self):
         self.register_handler(GetSymbols, self._get_symbols)
-        self.register_handler(GetSimularSymbols, self._get_similar_symbols)
+        self.register_handler(GetSimilarSymbols, self._get_similar_symbols)
         self.register_handler(UpdateSymbolSettings, self._update_symbol_settings)
 
     def _get_symbols(self, event: GetSymbols):
@@ -52,7 +52,7 @@ class OceanActor(BaseActor, EventHandlerMixin):
 
         return [symbol for symbol in symbols if symbol.name in similar_symbols]
 
-    def _get_similar_symbols(self, event: GetSimularSymbols):
+    def _get_similar_symbols(self, event: GetSimilarSymbols):
         exchange = self.exchange_factory.create(event.exchange)
         symbols = exchange.fetch_future_symbols()
 

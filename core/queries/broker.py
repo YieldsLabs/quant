@@ -21,7 +21,7 @@ class GetSymbols(Query[List[Symbol]]):
 
 
 @dataclass(frozen=True)
-class GetSimularSymbols(Query[List[Symbol]]):
+class GetSimilarSymbols(Query[List[Symbol]]):
     symbol: Symbol
     exchange: ExchangeType
     meta: EventMeta = field(
