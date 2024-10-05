@@ -1,28 +1,19 @@
-from core.interfaces.abstract_ws import AbstractWS
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
+from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
 
 
 class AsyncRealTimeData:
     def __init__(
         self,
-        ws: AbstractWS,
-        symbol: Symbol,
-        timeframe: Timeframe,
+        strategy: AbstractStreamStrategy,
     ):
-        self.ws = ws
-        self.symbol = symbol
-        self.timeframe = timeframe
-        self.iterator = None
+        self.strategy = strategy
 
     async def __aenter__(self):
-        await self.ws.subscribe(self.symbol, self.timeframe)
-        await self.ws.run()
+        await self.strategy.subscribe()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.ws.unsubscribe(self.symbol, self.timeframe)
-        await self.ws.close()
+        await self.strategy.unsubscribe()
         return self
 
     def __aiter__(self):
@@ -30,8 +21,8 @@ class AsyncRealTimeData:
 
     async def __anext__(self):
         try:
-            data = await self.ws.receive(self.symbol, self.timeframe)
+            data = await self.strategy.receive()
             return data
         except StopAsyncIteration:
-            await self.ws.unsubscribe(self.symbol, self.timeframe)
+            await self.strategy.unsubscribe()
             raise

@@ -10,7 +10,7 @@ from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.tasks.feed import StartRealtimeFeed
-
+from .streams.strategy.kline import KlineStreamStrategy
 from .streams.base import AsyncRealTimeData
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,9 @@ class RealtimeActor(StrategyActor):
         self.consumer = asyncio.create_task(self._consumer())
 
     async def _producer(self):
-        async with AsyncRealTimeData(self.ws, self.symbol, self.timeframe) as stream:
+        async with AsyncRealTimeData(
+            KlineStreamStrategy(self.ws, self.timeframe, self.symbol)
+        ) as stream:
             async for bars in stream:
                 await self.queue.put(bars)
 

@@ -6,7 +6,7 @@ from core.models.timeframe import Timeframe
 
 class AbstractWS(ABC):
     @abstractmethod
-    def run(self):
+    def connect(self):
         pass
 
     @abstractmethod
@@ -14,13 +14,16 @@ class AbstractWS(ABC):
         pass
 
     @abstractmethod
-    def receive(self, symbol: Symbol, timeframe: Timeframe):
+    def receive(self):
         pass
 
     @abstractmethod
-    def subscribe(self, symbol: Symbol, timeframe: Timeframe):
+    def subscribe(self, topic: str):
         pass
 
     @abstractmethod
-    def unsubscribe(self, symbol: Symbol, timeframe: Timeframe):
+    def unsubscribe(self, topic: str):
+        pass
+
+    def kline_topic(self, timeframe: Timeframe, symbol: Symbol):
         pass

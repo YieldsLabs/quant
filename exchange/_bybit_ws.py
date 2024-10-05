@@ -8,6 +8,7 @@ from websockets.exceptions import ConnectionClosedError
 from core.interfaces.abstract_ws import AbstractWS
 from core.models.entity.bar import Bar
 from core.models.entity.ohlcv import OHLCV
+from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from infrastructure.retry import retry
 
@@ -37,7 +38,6 @@ class BybitWS(AbstractWS):
         "240": Timeframe.FOUR_HOURS,
     }
 
-    KLINE_CHANNEL = "kline"
     TOPIC_KEY = "topic"
     DATA_KEY = "data"
     CONFIRM_KEY = "confirm"
@@ -45,8 +45,8 @@ class BybitWS(AbstractWS):
     def __init__(self, wss: str):
         self.wss = wss
         self.ws = None
-        self._channels = set()
         self._lock = asyncio.Lock()
+        self.subscriptions = []
 
     async def _connect(self):
         if not self.ws or not self.ws.open:
@@ -60,9 +60,8 @@ class BybitWS(AbstractWS):
                 )
 
                 await self._wait_for_ws(timeout=5)
-                await self._subscribe()
-
                 logger.info("WebSocket connection established.")
+                await self._resubscribe_all()
             except Exception as e:
                 logger.error(f"Failed to connect to WebSocket: {e}")
                 raise ConnectionError("Failed to connect to WebSocket") from None
@@ -72,14 +71,11 @@ class BybitWS(AbstractWS):
         initial_retry_delay=1,
         handled_exceptions=connect_exceptions,
     )
-    async def run(self):
+    async def connect(self):
         await self.close()
         await self._connect()
 
     async def close(self):
-        if self.ws and self.ws.open:
-            await self._unsubscribe()
-
         if self.ws:
             await self.ws.close()
             await self.ws.wait_closed()
@@ -89,51 +85,55 @@ class BybitWS(AbstractWS):
         initial_retry_delay=1,
         handled_exceptions=connect_exceptions,
     )
-    async def receive(self, symbol, timeframe):
+    async def receive(self):
         await self._connect()
 
         async for message in self.ws:
             try:
                 data = json.loads(message)
 
-                if not self._is_valid_message(symbol, timeframe, data):
+                if not self._is_valid_message(data):
                     continue
 
-                return self._parse_ohlcv(data)
+                if self.DATA_KEY in data:
+                    ohlcv_data = [
+                        (ohlcv, ohlcv.get(self.CONFIRM_KEY, False))
+                        for ohlcv in data[self.DATA_KEY]
+                        if ohlcv
+                    ]
+
+                    if ohlcv_data:
+                        yield ohlcv_data
+
+                yield []
             except (json.JSONDecodeError, KeyError) as e:
                 logger.error(f"Malformed message received: {e}")
             except Exception as e:
                 logger.exception(f"Unexpected error while receiving message: {e}")
 
-    async def subscribe(self, symbol, timeframe):
-        async with self._lock:
-            if (symbol, timeframe) not in self._channels:
-                self._channels.add((symbol, timeframe))
-                await self._subscribe()
+    async def subscribe(self, topic: str):
+        await self._send(self.SUBSCRIBE_OPERATION, [topic])
+        self.subscriptions.append(topic)
 
-    async def unsubscribe(self, symbol, timeframe):
-        async with self._lock:
-            if (symbol, timeframe) in self._channels:
-                self._channels.remove((symbol, timeframe))
-                await self._subscribe()
+    async def unsubscribe(self, topic):
+        await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
+        
+        if topic in self.subscriptions:
+            self.subscriptions.remove(topic)
 
-    async def _subscribe(self):
-        await self._send_message(self.SUBSCRIBE_OPERATION)
+    def kline_topic(self, timeframe: Timeframe, symbol: Symbol) -> str:
+        return f"kline.{timeframe}.{symbol.name}"
 
-    async def _unsubscribe(self):
-        await self._send_message(self.UNSUBSCRIBE_OPERATION)
-
-    async def _send_message(self, operation, timeout=5):
+    async def _send(self, operation, args, timeout=5):
         if (
             not self.ws
             or not self.ws.open
-            or (operation == self.UNSUBSCRIBE_OPERATION and not self._channels)
         ):
             return
 
         message = {
             "op": operation,
-            "args": self._get_channels_args(),
+            "args": args,
         }
 
         try:
@@ -156,23 +156,16 @@ class BybitWS(AbstractWS):
         while not self.ws or not self.ws.open:
             await asyncio.sleep(0.1)
 
-    def _is_valid_message(self, symbol, timeframe, data):
+    def _is_valid_message(self, data):
         if self.TOPIC_KEY not in data:
             return False
 
-        topic = data[self.TOPIC_KEY].split(".")
+        return True
 
-        return symbol.name == topic[2] and timeframe == self.TIMEFRAMES.get(topic[1])
+    async def _resubscribe_all(self):
+        if not self.subscriptions:
+            return
 
-    def _parse_ohlcv(self, data):
-        return [
-            Bar(OHLCV.from_dict(ohlcv), ohlcv.get(self.CONFIRM_KEY))
-            for ohlcv in data.get(self.DATA_KEY, [])
-            if ohlcv
-        ]
-
-    def _get_channels_args(self):
-        return [
-            f"{self.KLINE_CHANNEL}.{self.INTERVALS[timeframe]}.{symbol.name}"
-            for symbol, timeframe in self._channels
-        ]
+        await self._send(self.SUBSCRIBE_OPERATION, self.subscriptions)
+        
+        logger.info(f"Resubscribed to all topics: {self.subscriptions}")
