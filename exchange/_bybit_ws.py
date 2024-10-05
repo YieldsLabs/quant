@@ -101,7 +101,7 @@ class BybitWS(AbstractWS):
 
                 if not ohlcv_data:
                     continue
-                
+
                 return ohlcv_data
         except (json.JSONDecodeError, KeyError) as e:
             logger.error(f"Malformed message received: {e}")
@@ -162,5 +162,5 @@ class BybitWS(AbstractWS):
             return
 
         await self._send(self.SUBSCRIBE_OPERATION, self.subscriptions)
-        
+
         logger.info(f"Resubscribed to all topics: {self.subscriptions}")
