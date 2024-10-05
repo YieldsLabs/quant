@@ -10,8 +10,9 @@ from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.tasks.feed import StartRealtimeFeed
-from .streams.strategy.kline import KlineStreamStrategy
+
 from .streams.base import AsyncRealTimeData
+from .streams.strategy.kline import KlineStreamStrategy
 
 logger = logging.getLogger(__name__)
 

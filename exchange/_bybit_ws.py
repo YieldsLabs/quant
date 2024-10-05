@@ -6,8 +6,6 @@ import websockets
 from websockets.exceptions import ConnectionClosedError
 
 from core.interfaces.abstract_ws import AbstractWS
-from core.models.entity.bar import Bar
-from core.models.entity.ohlcv import OHLCV
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from infrastructure.retry import retry
@@ -104,8 +102,8 @@ class BybitWS(AbstractWS):
 
                     if ohlcv_data:
                         yield ohlcv_data
-
-                yield []
+                else:
+                    yield []
             except (json.JSONDecodeError, KeyError) as e:
                 logger.error(f"Malformed message received: {e}")
             except Exception as e:
@@ -117,18 +115,15 @@ class BybitWS(AbstractWS):
 
     async def unsubscribe(self, topic):
         await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
-        
+
         if topic in self.subscriptions:
             self.subscriptions.remove(topic)
 
     def kline_topic(self, timeframe: Timeframe, symbol: Symbol) -> str:
-        return f"kline.{timeframe}.{symbol.name}"
+        return f"kline.{self.INTERVALS[timeframe]}.{symbol.name}"
 
     async def _send(self, operation, args, timeout=5):
-        if (
-            not self.ws
-            or not self.ws.open
-        ):
+        if not self.ws or not self.ws.open:
             return
 
         message = {
@@ -167,5 +162,5 @@ class BybitWS(AbstractWS):
             return
 
         await self._send(self.SUBSCRIBE_OPERATION, self.subscriptions)
-        
+
         logger.info(f"Resubscribed to all topics: {self.subscriptions}")

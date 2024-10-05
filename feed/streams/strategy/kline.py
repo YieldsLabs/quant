@@ -27,4 +27,3 @@ class KlineStreamStrategy(AbstractStreamStrategy):
                 continue
 
             return [Bar(OHLCV.from_dict(ohlcv), confirm) for ohlcv, confirm in message]
-        
