@@ -43,6 +43,7 @@ class RealtimeActor(StrategyActor):
 
     async def _producer(self):
         async with AsyncRealTimeData(
+            self.ws,
             KlineStreamStrategy(self.ws, self.timeframe, self.symbol)
         ) as stream:
             async for bars in stream:

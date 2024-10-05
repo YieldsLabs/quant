@@ -12,5 +12,5 @@ class AbstractStreamStrategy(ABC):
         pass
 
     @abstractmethod
-    def receive(self) -> Any:
+    def parse(self, message: Any) -> Any:
         pass
