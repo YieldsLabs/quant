@@ -92,18 +92,19 @@ class BybitWS(AbstractWS):
     async def receive(self, symbol, timeframe):
         await self._connect()
 
-        async for message in self.ws:
-            try:
+        try:
+            async for message in self.ws:
                 data = json.loads(message)
 
                 if not self._is_valid_message(symbol, timeframe, data):
                     continue
 
                 return self._parse_ohlcv(data)
-            except (json.JSONDecodeError, KeyError) as e:
-                logger.error(f"Malformed message received: {e}")
-            except Exception as e:
-                logger.exception(f"Unexpected error while receiving message: {e}")
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Malformed message received: {e}")
+        except Exception as e:
+            logger.exception(f"Unexpected error while receiving message: {e}")
+            raise ConnectionError("Failed to connect to WebSocket") from None
 
     async def subscribe(self, symbol, timeframe):
         async with self._lock:
