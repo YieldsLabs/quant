@@ -46,7 +46,9 @@ class RealtimeActor(StrategyActor):
                 yield bars
 
     async def _consumer(self, data: List[Bar]):
-        await self._process_bars(data)
+        match data:
+            case [Bar(), *_]:
+                await self._process_bars(data)
 
     async def _process_bars(self, bars: List[Bar]):
         for bar in bars:

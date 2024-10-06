@@ -52,8 +52,10 @@ class HistoricalActor(StrategyActor):
             async for batch in self.batched(stream, self.buff_size):
                 yield batch
 
-    async def _consumer(self, batch: List[Bar]):
-        await self._process_batch(batch)
+    async def _consumer(self, data: List[Bar]):
+        match data:
+            case [Bar(), *_]:
+                await self._process_batch(data)
 
     async def _process_batch(self, batch: List[Bar]):
         await self._outbox(batch)
