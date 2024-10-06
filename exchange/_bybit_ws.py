@@ -102,7 +102,7 @@ class BybitWS(AbstractWS):
             await self.ws.wait_closed()
 
     async def auth(self):
-        expires = int(time.time() * 10**3) + (1 * 1000)
+        expires = int(time.time() * 10**3) + 3 * 10**3
         param_str = f"GET/realtime{expires}"
         sign = hmac.new(
             bytes(self.api_secret, "utf-8"),

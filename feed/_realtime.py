@@ -19,6 +19,7 @@ from .streams.strategy import (
     LiquidationStreamStrategy,
     OrderBookStreamStrategy,
     OrderStreamStrategy,
+    PositionStreamStrategy,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ class RealtimeActor(StrategyActor):
         self.collector.add_producer(self._ob_producer)
         self.collector.add_producer(self._liquidation_producer)
         self.collector.add_producer(self._order_producer)
+        self.collector.add_producer(self._position_producer)
         self.collector.add_consumer(self._consumer)
 
         self.depth = 50
@@ -80,6 +82,14 @@ class RealtimeActor(StrategyActor):
         ) as stream:
             async for order in stream:
                 yield order
+
+    async def _position_producer(self, msg: StartRealtimeFeed):
+        ws = self.ws_factory.create(msg.exchange, WSType.PRIVATE)
+        async with AsyncRealTimeData(
+            ws, PositionStreamStrategy(ws, self.symbol)
+        ) as stream:
+            async for position in stream:
+                yield position
 
     async def _consumer(self, data: List[Bar]):
         match data:
