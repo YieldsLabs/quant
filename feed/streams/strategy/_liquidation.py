@@ -17,4 +17,4 @@ class LiquidationStreamStrategy(AbstractStreamStrategy):
         await self.ws.unsubscribe(self.topic)
 
     def parse(self, message):
-        return message
+        return [message]

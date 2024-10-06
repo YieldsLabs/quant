@@ -18,4 +18,4 @@ class OrderStreamStrategy(AbstractStreamStrategy):
         await self.ws.unsubscribe(self.topic)
 
     def parse(self, message):
-        return message
+        return [order for order in message if order.get("symbol") == self.symbol.name]

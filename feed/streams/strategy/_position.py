@@ -18,4 +18,8 @@ class PositionStreamStrategy(AbstractStreamStrategy):
         await self.ws.unsubscribe(self.topic)
 
     def parse(self, message):
-        return message
+        return [
+            position
+            for position in message
+            if position.get("symbol") == self.symbol.name
+        ]

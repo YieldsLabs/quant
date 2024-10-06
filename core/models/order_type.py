@@ -10,4 +10,5 @@ class OrderStatus(Enum):
 
 class OrderType(Enum):
     MARKET = auto()
+    LIMIT = auto()
     PAPER = auto()

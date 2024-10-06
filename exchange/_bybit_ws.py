@@ -92,14 +92,18 @@ class BybitWS(AbstractWS):
         await self._connect()
 
     async def close(self):
-        for task in self._tasks:
-            task.cancel()
+        if self._tasks:
+            for task in self._tasks:
+                task.cancel()
 
-        await asyncio.gather(*self._tasks, return_exceptions=True)
+            await asyncio.gather(*self._tasks, return_exceptions=True)
+
+            self._tasks.clear()
 
         if self.ws:
             await self.ws.close()
             await self.ws.wait_closed()
+            self.ws = None
 
     async def auth(self):
         expires = int(time.time() * 10**3) + 3 * 10**3
