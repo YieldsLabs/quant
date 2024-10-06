@@ -124,11 +124,13 @@ class TradingSystem(AbstractSystem):
                 logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
 
                 feed_actor = self.feed_factory.create_actor(
-                    FeedType.HISTORICAL, symbol, timeframe, self.exchange_type
+                    FeedType.HISTORICAL, symbol, timeframe
                 )
 
                 await self.run(
-                    StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
+                    StartHistoricalFeed(
+                        symbol, timeframe, self.exchange_type, Lookback.ONE_MONTH, None
+                    )
                 )
 
                 feed_actor.stop()
@@ -161,7 +163,6 @@ class TradingSystem(AbstractSystem):
                     FeedType.REALTIME,
                     symbol,
                     timeframe,
-                    self.exchange_type,
                 ),
             )
 
@@ -174,7 +175,11 @@ class TradingSystem(AbstractSystem):
 
         await asyncio.gather(
             *[
-                self.run(StartRealtimeFeed(actor[0].symbol, actor[0].timeframe))
+                self.run(
+                    StartRealtimeFeed(
+                        actor[0].symbol, actor[0].timeframe, self.exchange_type
+                    )
+                )
                 for actor in self.active_strategy
             ]
         )
