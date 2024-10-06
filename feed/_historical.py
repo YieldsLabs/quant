@@ -5,7 +5,7 @@ from core.actors import StrategyActor
 from core.commands.ohlcv import IngestMarketData
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
-from core.interfaces.abstract_exchange import AbstractExchange
+from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.entity.bar import Bar
 from core.models.entity.ohlcv import OHLCV
 from core.models.symbol import Symbol
@@ -21,11 +21,11 @@ class HistoricalActor(StrategyActor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        exchange: AbstractExchange,
+        exchange_factory: AbstractExchangeFactory,
         config_service: AbstractConfig,
     ):
         super().__init__(symbol, timeframe)
-        self.exchange = exchange
+        self.exchange_factory = exchange_factory
         self.collector = DataCollector()
 
         self.collector.add_producer(self._kline_producer)
@@ -41,7 +41,7 @@ class HistoricalActor(StrategyActor):
 
     async def _kline_producer(self, msg: StartHistoricalFeed):
         async with AsyncHistoricalData(
-            self.exchange,
+            self.exchange_factory.create(msg.exchange),
             self.symbol,
             self.timeframe,
             msg.in_sample,

@@ -21,4 +21,7 @@ class KlineStreamStrategy(AbstractStreamStrategy):
         await self.ws.unsubscribe(self.topic)
 
     def parse(self, message):
-        return [Bar(OHLCV.from_dict(ohlcv), confirm) for ohlcv, confirm in message]
+        return [
+            Bar(OHLCV.from_dict(ohlcv), ohlcv.get("confirm", False))
+            for ohlcv in message
+        ]

@@ -1,7 +1,6 @@
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.interfaces.abstract_feed_actor_factory import AbstractFeedActorFactory
-from core.models.exchange import ExchangeType
 from core.models.feed import FeedType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -26,20 +25,19 @@ class FeedActorFactory(AbstractFeedActorFactory):
         feed_type: FeedType,
         symbol: Symbol,
         timeframe: Timeframe,
-        exchange_type: ExchangeType,
     ):
         actor = (
             HistoricalActor(
                 symbol,
                 timeframe,
-                self.exchange_factory.create(exchange_type),
+                self.exchange_factory,
                 self.config_service,
             )
             if feed_type == FeedType.HISTORICAL
             else RealtimeActor(
                 symbol,
                 timeframe,
-                self.ws_factory.create(exchange_type),
+                self.ws_factory,
             )
         )
         actor.start()

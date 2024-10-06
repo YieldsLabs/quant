@@ -212,7 +212,6 @@ class BacktestSystem(AbstractSystem):
                 FeedType.HISTORICAL,
                 symbol,
                 timeframe,
-                self.context.exchange_type,
             ),
         ]
 
@@ -232,7 +231,9 @@ class BacktestSystem(AbstractSystem):
         )
 
         await self.run(
-            StartHistoricalFeed(symbol, timeframe, in_lookback, out_lookback)
+            StartHistoricalFeed(
+                symbol, timeframe, self.context.exchange_type, in_lookback, out_lookback
+            )
         )
 
         await self.dispatch(BacktestEnded(symbol, timeframe, strategy))

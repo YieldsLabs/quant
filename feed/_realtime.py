@@ -5,7 +5,7 @@ from typing import List
 from core.actors import StrategyActor
 from core.commands.ohlcv import IngestMarketData
 from core.events.ohlcv import NewMarketDataReceived
-from core.interfaces.abstract_ws import AbstractWS
+from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -15,6 +15,7 @@ from .streams.base import AsyncRealTimeData
 from .streams.collector import DataCollector
 from .streams.strategy import (
     KlineStreamStrategy,
+    OrderBookStreamStrategy,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,27 +26,40 @@ class RealtimeActor(StrategyActor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        ws: AbstractWS,
+        ws_factory: AbstractExchangeFactory,
     ):
         super().__init__(symbol, timeframe)
-        self.ws = ws
+        self.ws_factory = ws_factory
         self.collector = DataCollector()
 
         self.collector.add_producer(self._kline_producer)
+        self.collector.add_producer(self._ob_producer)
         self.collector.add_consumer(self._consumer)
 
+        self.depth = 50
+
     def on_stop(self):
-        asyncio.run(self.collector.stop())
+        asyncio.create_task(self.collector.stop())
 
     async def on_receive(self, msg: StartRealtimeFeed):
         await self.collector.start(msg)
 
-    async def _kline_producer(self, _msg: StartRealtimeFeed):
+    async def _kline_producer(self, msg: StartRealtimeFeed):
+        ws = self.ws_factory.create(msg.exchange)
+
         async with AsyncRealTimeData(
-            self.ws, KlineStreamStrategy(self.ws, self.timeframe, self.symbol)
+            ws, KlineStreamStrategy(ws, self.timeframe, self.symbol)
         ) as stream:
             async for bars in stream:
                 yield bars
+
+    async def _ob_producer(self, msg: StartRealtimeFeed):
+        ws = self.ws_factory.create(msg.exchange)
+        async with AsyncRealTimeData(
+            ws, OrderBookStreamStrategy(ws, self.symbol, self.depth)
+        ) as stream:
+            async for orders in stream:
+                yield orders
 
     async def _consumer(self, data: List[Bar]):
         match data:
@@ -54,6 +68,7 @@ class RealtimeActor(StrategyActor):
 
     async def _process_bars(self, bars: List[Bar]):
         for bar in bars:
+            print(bar)
             await self.ask(IngestMarketData(self.symbol, self.timeframe, bar))
             await self.tell(NewMarketDataReceived(self.symbol, self.timeframe, bar))
 
