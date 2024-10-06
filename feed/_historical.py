@@ -13,6 +13,7 @@ from core.models.timeframe import Timeframe
 from core.tasks.feed import StartHistoricalFeed
 
 from .streams.base import AsyncHistoricalData
+from .streams.collector import DataCollector
 
 
 class HistoricalActor(StrategyActor):
@@ -25,18 +26,20 @@ class HistoricalActor(StrategyActor):
     ):
         super().__init__(symbol, timeframe)
         self.exchange = exchange
+        self.collector = DataCollector()
+
+        self.collector.add_producer(self._kline_producer)
+        self.collector.add_consumer(self._consumer)
+
         self.config_service = config_service.get("backtest")
-        self.queue = asyncio.Queue()
         self.batch_size = self.config_service["batch_size"]
         self.buff_size = self.config_service["buff_size"]
 
     async def on_receive(self, msg: StartHistoricalFeed):
-        producer = asyncio.create_task(self._producer(msg))
-        consumer = asyncio.create_task(self._consumer())
+        await self.collector.start(msg)
+        await self.collector.wait_for_completion()
 
-        await asyncio.gather(producer, consumer)
-
-    async def _producer(self, msg: StartHistoricalFeed):
+    async def _kline_producer(self, queue: asyncio.Queue, msg: StartHistoricalFeed):
         async with AsyncHistoricalData(
             self.exchange,
             self.symbol,
@@ -47,20 +50,20 @@ class HistoricalActor(StrategyActor):
             lambda data: Bar(OHLCV.from_list(data), True),
         ) as stream:
             async for batch in self.batched(stream, self.buff_size):
-                await self.queue.put(batch)
+                await queue.put(batch)
 
-            await self.queue.put(None)
+            await queue.put(None)
 
-    async def _consumer(self):
+    async def _consumer(self, queue: asyncio.Queue):
         while True:
-            batch = await self.queue.get()
+            batch = await queue.get()
 
             if batch is None:
                 break
 
             await self._process_batch(batch)
 
-            self.queue.task_done()
+            queue.task_done()
 
     async def _process_batch(self, batch: List[Bar]):
         await self._outbox(batch)
