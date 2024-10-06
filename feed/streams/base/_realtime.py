@@ -26,7 +26,7 @@ class AsyncRealTimeData:
 
     async def __anext__(self):
         try:
-            data = await self.ws.receive()
+            data = await self.ws.get_message()
             return self.strategy.parse(data)
         except StopAsyncIteration:
             await self.strategy.unsubscribe()

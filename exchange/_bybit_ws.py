@@ -1,6 +1,9 @@
 import asyncio
+import hashlib
+import hmac
 import json
 import logging
+import time
 
 import websockets
 from websockets.exceptions import ConnectionClosedError
@@ -18,6 +21,8 @@ connect_exceptions = (ConnectionError, ConnectionClosedError, asyncio.TimeoutErr
 class BybitWS(AbstractWS):
     SUBSCRIBE_OPERATION = "subscribe"
     UNSUBSCRIBE_OPERATION = "unsubscribe"
+    AUTH_OPERATION = "auth"
+
     INTERVALS = {
         Timeframe.ONE_MINUTE: 1,
         Timeframe.THREE_MINUTES: 3,
@@ -38,14 +43,22 @@ class BybitWS(AbstractWS):
 
     TOPIC_KEY = "topic"
     DATA_KEY = "data"
-    CONFIRM_KEY = "confirm"
+    OP_KEY = "op"
+    SUCCESS_KEY = "success"
+    ARGS_KEY = "args"
 
-    def __init__(self, wss: str):
+    def __init__(self, wss: str, api_key: str, api_secret: str):
         super().__init__()
         self.wss = wss
         self.ws = None
+        self.api_key = api_key
+        self.api_secret = api_secret
         self._lock = asyncio.Lock()
-        self.subscriptions = []
+        self.subscriptions = set()
+        self._auth_event = asyncio.Event()
+        self._message_queue = asyncio.Queue()
+        self._tasks = set()
+        self._semaphore = asyncio.Semaphore(1)
 
     async def _connect(self):
         if not self.ws or not self.ws.open:
@@ -60,7 +73,11 @@ class BybitWS(AbstractWS):
 
                 await self._wait_for_ws(timeout=5)
                 logger.info("WebSocket connection established.")
-                await self._resubscribe_all()
+                await self._handle_reconnect()
+
+                receive_task = asyncio.create_task(self._receive())
+                self._tasks.add(receive_task)
+                receive_task.add_done_callback(self._tasks.discard)
             except Exception as e:
                 logger.error(f"Failed to connect to WebSocket: {e}")
                 raise ConnectionError("Failed to connect to WebSocket") from None
@@ -75,32 +92,45 @@ class BybitWS(AbstractWS):
         await self._connect()
 
     async def close(self):
+        for task in self._tasks:
+            task.cancel()
+
+        await asyncio.gather(*self._tasks, return_exceptions=True)
+
         if self.ws:
             await self.ws.close()
             await self.ws.wait_closed()
+
+    async def auth(self):
+        expires = int(time.time() * 10**3) + (1 * 1000)
+        param_str = f"GET/realtime{expires}"
+        sign = hmac.new(
+            bytes(self.api_secret, "utf-8"),
+            param_str.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        await self._send(self.AUTH_OPERATION, [self.api_key, expires, sign])
+        await self._auth_event.wait()
 
     @retry(
         max_retries=13,
         initial_retry_delay=1,
         handled_exceptions=connect_exceptions,
     )
-    async def receive(self):
+    async def _receive(self):
         await self._connect()
 
-        async with self._lock:
+        async with self._semaphore:
             try:
                 async for message in self.ws:
                     data = json.loads(message)
 
-                    if not self._is_valid_message(data):
-                        continue
+                    if self._is_auth_confirm_message(data):
+                        self._auth_event.set()
 
-                    data = data.get(self.DATA_KEY)
-
-                    if not data:
-                        continue
-
-                    return data
+                    if self._is_data_message(data):
+                        await self._message_queue.put(data.get(self.DATA_KEY))
             except (json.JSONDecodeError, KeyError) as e:
                 logger.error(f"Malformed message received: {e}")
             except Exception as e:
@@ -108,14 +138,22 @@ class BybitWS(AbstractWS):
                 raise ConnectionError("WebSocket connection error.") from None
 
     async def subscribe(self, topic: str):
-        await self._send(self.SUBSCRIBE_OPERATION, [topic])
-        self.subscriptions.append(topic)
+        async with self._lock:
+            await self._send(self.SUBSCRIBE_OPERATION, [topic])
+            self.subscriptions.add(topic)
 
     async def unsubscribe(self, topic):
-        await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
+        async with self._lock:
+            await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
 
-        if topic in self.subscriptions:
-            self.subscriptions.remove(topic)
+            if topic in self.subscriptions:
+                self.subscriptions.remove(topic)
+
+    async def get_message(self):
+        message = await self._message_queue.get()
+        self._message_queue.task_done()
+
+        return message
 
     def kline_topic(self, timeframe: Timeframe, symbol: Symbol) -> str:
         return f"kline.{self.INTERVALS[timeframe]}.{symbol.name}"
@@ -126,20 +164,27 @@ class BybitWS(AbstractWS):
     def liquidation_topic(self, symbol: Symbol):
         return f"liquidation.{symbol.name}"
 
+    def order_topic(self):
+        return "order.linear"
+
+    def position_topic(self):
+        return "position.linear"
+
     async def _send(self, operation, args, timeout=5):
         if not self.ws or not self.ws.open:
+            logger.error("WebSocket connection error.")
             return
 
         message = {
-            "op": operation,
-            "args": args,
+            self.OP_KEY: operation,
+            self.ARGS_KEY: args,
         }
 
         try:
             await asyncio.wait_for(self.ws.send(json.dumps(message)), timeout=timeout)
 
-            # if operation != self.AUTH_OPERATION:
-            logger.info(f"{operation.capitalize()} to: {message}")
+            if operation != self.AUTH_OPERATION:
+                logger.info(f"Subscribed {operation.capitalize()} to: {message}")
         except asyncio.TimeoutError:
             logger.error("Subscription request timed out")
         except Exception as e:
@@ -156,16 +201,26 @@ class BybitWS(AbstractWS):
         while not self.ws or not self.ws.open:
             await asyncio.sleep(0.1)
 
-    def _is_valid_message(self, data):
-        if self.TOPIC_KEY not in data:
-            return False
+    def _is_data_message(self, data):
+        return self.TOPIC_KEY in data
 
-        return True
+    def _is_auth_confirm_message(self, data):
+        return (
+            data.get(self.OP_KEY) == self.AUTH_OPERATION
+            and data.get(self.SUCCESS_KEY) is True
+        )
 
     async def _resubscribe_all(self):
-        if not self.subscriptions:
-            return
+        async with self._lock:
+            if not self.subscriptions:
+                return
 
-        await self._send(self.SUBSCRIBE_OPERATION, self.subscriptions)
+            await self._send(self.SUBSCRIBE_OPERATION, list(self.subscriptions))
 
-        logger.info(f"Resubscribed to all topics: {self.subscriptions}")
+            logger.info(f"Resubscribed to all topics: {list(self.subscriptions)}")
+
+    async def _handle_reconnect(self):
+        if self._auth_event.is_set():
+            await self.auth()
+
+        await self._resubscribe_all()

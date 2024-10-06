@@ -11,5 +11,13 @@ class AbstractSecretService(ABC):
         pass
 
     @abstractmethod
-    def get_wss(self, identifier: str) -> str:
+    def get_wss_public(self, identifier: str, type) -> str:
+        pass
+
+    @abstractmethod
+    def get_wss_private(self, identifier: str) -> str:
+        pass
+
+    @abstractmethod
+    def get_wss_order(self, identifier: str) -> str:
         pass

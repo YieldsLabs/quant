@@ -17,8 +17,14 @@ class EnvironmentSecretService(AbstractSecretService):
     def get_secret(self, identifier: str) -> Optional[str]:
         return self._get_env_variable(self._format_key(identifier, "API_SECRET"))
 
-    def get_wss(self, identifier: str) -> Optional[str]:
-        return self._get_env_variable(self._format_key(identifier, "WSS"))
+    def get_wss_public(self, identifier: str) -> Optional[str]:
+        return self._get_env_variable(self._format_key(identifier, "WSS_PUBLIC"))
+
+    def get_wss_private(self, identifier: str) -> Optional[str]:
+        return self._get_env_variable(self._format_key(identifier, "WSS_PRIVATE"))
+
+    def get_wss_order(self, identifier: str) -> Optional[str]:
+        return self._get_env_variable(self._format_key(identifier, "WSS_PRIVATE"))
 
     @staticmethod
     def _format_key(identifier: str, key_type: str) -> str:
