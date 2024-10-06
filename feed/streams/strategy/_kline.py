@@ -8,16 +8,17 @@ from core.models.timeframe import Timeframe
 
 class KlineStreamStrategy(AbstractStreamStrategy):
     def __init__(self, ws: AbstractWS, timeframe: Timeframe, symbol: Symbol):
+        super().__init__()
         self.ws = ws
         self.timeframe = timeframe
         self.symbol = symbol
-        self.kline_topic = ws.kline_topic(timeframe, symbol)
+        self.topic = ws.kline_topic(timeframe, symbol)
 
     async def subscribe(self):
-        await self.ws.subscribe(self.kline_topic)
+        await self.ws.subscribe(self.topic)
 
     async def unsubscribe(self):
-        await self.ws.unsubscribe(self.kline_topic)
+        await self.ws.unsubscribe(self.topic)
 
     def parse(self, message):
         return [Bar(OHLCV.from_dict(ohlcv), confirm) for ohlcv, confirm in message]

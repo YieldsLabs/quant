@@ -41,6 +41,7 @@ class BybitWS(AbstractWS):
     CONFIRM_KEY = "confirm"
 
     def __init__(self, wss: str):
+        super().__init__()
         self.wss = wss
         self.ws = None
         self._lock = asyncio.Lock()
@@ -90,6 +91,8 @@ class BybitWS(AbstractWS):
             async for message in self.ws:
                 data = json.loads(message)
 
+                print(data)
+
                 if not self._is_valid_message(data):
                     continue
 
@@ -122,6 +125,12 @@ class BybitWS(AbstractWS):
     def kline_topic(self, timeframe: Timeframe, symbol: Symbol) -> str:
         return f"kline.{self.INTERVALS[timeframe]}.{symbol.name}"
 
+    def order_book_topic(self, symbol: Symbol, depth: int):
+        return f"orderbook.{depth}.{symbol.name}"
+
+    def liquidation_topic(self, symbol: Symbol):
+        return f"liquidation.{symbol.name}"
+
     async def _send(self, operation, args, timeout=5):
         if not self.ws or not self.ws.open:
             return
@@ -134,6 +143,7 @@ class BybitWS(AbstractWS):
         try:
             await asyncio.wait_for(self.ws.send(json.dumps(message)), timeout=timeout)
 
+            # if operation != self.AUTH_OPERATION:
             logger.info(f"{operation.capitalize()} to: {message}")
         except asyncio.TimeoutError:
             logger.error("Subscription request timed out")

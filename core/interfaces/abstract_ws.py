@@ -27,3 +27,9 @@ class AbstractWS(ABC):
 
     def kline_topic(self, timeframe: Timeframe, symbol: Symbol):
         pass
+
+    def order_book_topic(self, symbol: Symbol, depth: int):
+        pass
+
+    def liquidation_topic(self, symbol: Symbol):
+        pass

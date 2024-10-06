@@ -3,53 +3,58 @@ from typing import Any, AsyncIterable, Awaitable, Callable, Optional
 
 from core.events._base import Event
 
+STOP = object()
+
 
 class DataCollector:
     def __init__(self):
-        self.queue = asyncio.Queue()
-        self.producers = []
-        self.consumers = []
-        self.tasks = set()
+        self._queue = asyncio.Queue()
+        self._producers = []
+        self._consumers = []
+        self._tasks = set()
 
     async def start(self, msg: Event):
-        for producer in self.producers:
+        for producer in self._producers:
             task = asyncio.create_task(self._run_producer(producer, msg))
-            self.tasks.add(task)
-            task.add_done_callback(self.tasks.discard)
+            self._tasks.add(task)
 
-        for consumer in self.consumers:
+            task.add_done_callback(self._tasks.discard)
+
+        for consumer in self._consumers:
             task = asyncio.create_task(self._run_consumer(consumer))
-            self.tasks.add(task)
+            self._tasks.add(task)
 
-            task.add_done_callback(self.tasks.discard)
+            task.add_done_callback(self._tasks.discard)
 
     async def stop(self):
-        await self.queue.put(None)
-        await self.queue.join()
+        await self._queue.put(STOP)
+        await self._queue.join()
         await self.wait_for_completion()
-        self.tasks.clear()
+        self._tasks.clear()
 
     async def wait_for_completion(self):
-        await asyncio.gather(*self.tasks, return_exceptions=True)
+        if self._tasks:
+            await asyncio.gather(*self._tasks, return_exceptions=True)
 
     def add_producer(self, producer: Callable[[Optional[Event]], AsyncIterable[Any]]):
-        self.producers.append(producer)
+        self._producers.append(producer)
 
     def add_consumer(self, consumer: Callable[[Any], Awaitable[None]]):
-        self.consumers.append(consumer)
+        self._consumers.append(consumer)
 
     async def _run_producer(self, producer, msg):
         async for data in producer(msg):
-            await self.queue.put(data)
+            await self._queue.put(data)
 
-        await self.queue.put(None)
+        await self._queue.put(STOP)
 
     async def _run_consumer(self, consumer):
         while True:
-            data = await self.queue.get()
-            if data is None:
+            data = await self._queue.get()
+
+            if data is STOP:
                 break
 
             await consumer(data)
 
-            self.queue.task_done()
+            self._queue.task_done()

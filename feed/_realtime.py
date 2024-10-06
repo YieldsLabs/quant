@@ -13,7 +13,9 @@ from core.tasks.feed import StartRealtimeFeed
 
 from .streams.base import AsyncRealTimeData
 from .streams.collector import DataCollector
-from .streams.strategy.kline import KlineStreamStrategy
+from .streams.strategy import (
+    KlineStreamStrategy,
+)
 
 logger = logging.getLogger(__name__)
 
