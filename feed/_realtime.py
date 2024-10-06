@@ -38,25 +38,15 @@ class RealtimeActor(StrategyActor):
     async def on_receive(self, msg: StartRealtimeFeed):
         await self.collector.start(msg)
 
-    async def _kline_producer(self, queue: asyncio.Queue, _msg):
+    async def _kline_producer(self, _msg: StartRealtimeFeed):
         async with AsyncRealTimeData(
             self.ws, KlineStreamStrategy(self.ws, self.timeframe, self.symbol)
         ) as stream:
             async for bars in stream:
-                await queue.put(bars)
+                yield bars
 
-            await queue.put(None)
-
-    async def _consumer(self, queue: asyncio.Queue):
-        while True:
-            data = await queue.get()
-
-            if data is None:
-                break
-
-            await self._process_bars(data)
-
-            queue.task_done()
+    async def _consumer(self, data: List[Bar]):
+        await self._process_bars(data)
 
     async def _process_bars(self, bars: List[Bar]):
         for bar in bars:

@@ -39,7 +39,7 @@ class HistoricalActor(StrategyActor):
         await self.collector.start(msg)
         await self.collector.wait_for_completion()
 
-    async def _kline_producer(self, queue: asyncio.Queue, msg: StartHistoricalFeed):
+    async def _kline_producer(self, msg: StartHistoricalFeed):
         async with AsyncHistoricalData(
             self.exchange,
             self.symbol,
@@ -50,20 +50,10 @@ class HistoricalActor(StrategyActor):
             lambda data: Bar(OHLCV.from_list(data), True),
         ) as stream:
             async for batch in self.batched(stream, self.buff_size):
-                await queue.put(batch)
+                yield batch
 
-            await queue.put(None)
-
-    async def _consumer(self, queue: asyncio.Queue):
-        while True:
-            batch = await queue.get()
-
-            if batch is None:
-                break
-
-            await self._process_batch(batch)
-
-            queue.task_done()
+    async def _consumer(self, batch: List[Bar]):
+        await self._process_batch(batch)
 
     async def _process_batch(self, batch: List[Bar]):
         await self._outbox(batch)
