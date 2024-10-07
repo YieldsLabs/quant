@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from copilot import CopilotActor
 from coral import DataSourceFactory
-from core.models.exchange import ExchangeType
+from core.models.datasource_type import DataSourceType
 from executor import OrderExecutorActorFactory
 from feed import FeedActorFactory
 from infrastructure.config import ConfigService
@@ -71,12 +71,13 @@ async def main():
     }
 
     config_service.update(config)
+    default_datasource = DataSourceType.BYBIT
 
     event_bus = EventDispatcher(config_service)
 
     datasource = DataSourceFactory(EnvironmentSecretService())
-    datasource.register_rest_exchange(ExchangeType.BYBIT)
-    datasource.register_ws_exchange(ExchangeType.BYBIT)
+    datasource.register_rest_exchange(default_datasource)
+    datasource.register_ws_exchange(default_datasource)
 
     wasm = WasmManager(WASM_FOLDER)
     position_factory = PositionFactory(
@@ -103,7 +104,7 @@ async def main():
         feed_actor_factory,
         StrategyGeneratorFactory(config_service),
         StrategyOptimizerFactory(config_service),
-        exchange_type=ExchangeType.BYBIT,
+        datasource=default_datasource,
         config_service=config_service,
     )
 
@@ -116,7 +117,7 @@ async def main():
         executor_actor_factory,
         feed_actor_factory,
         config_service,
-        exchange_type=ExchangeType.BYBIT,
+        datasource=default_datasource,
     )
 
     backtest_system_task = asyncio.create_task(backtest_system.start())
