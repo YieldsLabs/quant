@@ -8,6 +8,7 @@ from core.interfaces.abstract_datasource_factory import (
 )
 from core.interfaces.abstract_secret_service import AbstractSecretService
 from core.models.exchange import ExchangeType
+from core.models.wss_type import WSType
 
 from ._bybit import BybitWS
 
@@ -29,11 +30,21 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
 
         self._bucket[exchange_type] = ws_class
 
-    def create(self, exchange_type: ExchangeType, **kwargs) -> DataSource:
+    def create(
+        self, exchange_type: ExchangeType, ws_type: WSType, **kwargs
+    ) -> DataSource:
         if exchange_type not in self._bucket:
             raise ValueError(f"WebSocket class for {exchange_type} is not registered.")
 
-        wss_url = self.secret_service.get_wss_public(exchange_type.name)
+        wss = {
+            WSType.PUBLIC: self.secret_service.get_wss_public(exchange_type.name),
+            WSType.PRIVATE: self.secret_service.get_wss_private(exchange_type.name),
+            WSType.ORDER: self.secret_service.get_wss_order(exchange_type.name),
+        }
+
+        wss_url = wss.get(
+            ws_type, self.secret_service.get_wss_public(exchange_type.name)
+        )
         api_key = self.secret_service.get_api_key(exchange_type.name)
         api_secret = self.secret_service.get_secret(exchange_type.name)
 

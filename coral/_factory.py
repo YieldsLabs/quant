@@ -5,6 +5,7 @@ from core.interfaces.abstract_exchange import AbstractRestExchange, AbstractWSEx
 from core.interfaces.abstract_secret_service import AbstractSecretService
 from core.models.datasource_type import DataSourceType
 from core.models.exchange import ExchangeType
+from core.models.wss_type import WSType
 
 from .exchange import ExchangeRestDataSourceFactory, ExchangeWSDataSourceFactory
 
@@ -29,11 +30,15 @@ class DataSourceFactory:
         self._exws.register(exchange_type, ws_class)
 
     def create(
-        self, factory_type: DataSourceType, conn_type: Any, **kwargs
+        self,
+        factory_type: DataSourceType,
+        conn_type: Any,
+        ws_type: WSType = WSType.PUBLIC,
+        **kwargs,
     ) -> DataSource:
         if factory_type == DataSourceType.ExREST:
             return self._exrest.create(conn_type, **kwargs)
         elif factory_type == DataSourceType.ExWS:
-            return self._exws.create(conn_type, **kwargs)
+            return self._exws.create(conn_type, ws_type, **kwargs)
         else:
             raise ValueError(f"Unknown factory type: {factory_type}")
