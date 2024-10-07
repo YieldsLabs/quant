@@ -7,7 +7,7 @@ import ccxt
 from cachetools import TTLCache, cached
 from ccxt.base.errors import NetworkError, RequestTimeout
 
-from core.interfaces.abstract_exchange import AbstractExchange
+from core.interfaces.abstract_exchange import AbstractRestExchange
 from core.models.broker import MarginMode, PositionMode
 from core.models.lookback import TIMEFRAMES_TO_LOOKBACK, Lookback
 from core.models.side import PositionSide
@@ -22,7 +22,7 @@ EXCEPTIONS = (RequestTimeout, NetworkError)
 logger = logging.getLogger(__name__)
 
 
-class Bybit(AbstractExchange):
+class Bybit(AbstractRestExchange):
     _instance = None
 
     def __new__(cls, api_key: str, api_secret: str):

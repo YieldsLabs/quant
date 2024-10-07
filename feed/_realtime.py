@@ -2,10 +2,11 @@ import asyncio
 import logging
 from typing import List
 
+from coral import DataSourceFactory
 from core.actors import StrategyActor
 from core.commands.ohlcv import IngestMarketData
 from core.events.ohlcv import NewMarketDataReceived
-from core.interfaces.abstract_ws_factory import AbstractWSFactory
+from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -30,10 +31,10 @@ class RealtimeActor(StrategyActor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        ws_factory: AbstractWSFactory,
+        datasource: DataSourceFactory,
     ):
         super().__init__(symbol, timeframe)
-        self.ws_factory = ws_factory
+        self.datasource = datasource
         self.collector = DataCollector()
 
         self.collector.add_producer(self._kline_producer)
@@ -52,7 +53,7 @@ class RealtimeActor(StrategyActor):
         await self.collector.start(msg)
 
     async def _kline_producer(self, msg: StartRealtimeFeed):
-        ws = self.ws_factory.create(msg.exchange, WSType.PUBLIC)
+        ws = self.datasource.create(DataSourceType.ExWS, msg.exchange, WSType.PUBLIC)
         async with AsyncRealTimeData(
             ws, KlineStreamStrategy(self.timeframe, self.symbol)
         ) as stream:
@@ -60,7 +61,7 @@ class RealtimeActor(StrategyActor):
                 yield bars
 
     async def _ob_producer(self, msg: StartRealtimeFeed):
-        ws = self.ws_factory.create(msg.exchange, WSType.PUBLIC)
+        ws = self.datasource.create(DataSourceType.ExWS, msg.exchange, WSType.PUBLIC)
         async with AsyncRealTimeData(
             ws, OrderBookStreamStrategy(self.symbol, self.depth)
         ) as stream:
@@ -68,7 +69,7 @@ class RealtimeActor(StrategyActor):
                 yield orders
 
     async def _liquidation_producer(self, msg: StartRealtimeFeed):
-        ws = self.ws_factory.create(msg.exchange, WSType.PUBLIC)
+        ws = self.datasource.create(DataSourceType.ExWS, msg.exchange, WSType.PUBLIC)
         async with AsyncRealTimeData(
             ws, LiquidationStreamStrategy(self.symbol)
         ) as stream:
@@ -76,13 +77,13 @@ class RealtimeActor(StrategyActor):
                 yield liquidations
 
     async def _order_producer(self, msg: StartRealtimeFeed):
-        ws = self.ws_factory.create(msg.exchange, WSType.PRIVATE)
+        ws = self.datasource.create(DataSourceType.ExWS, msg.exchange, WSType.PRIVATE)
         async with AsyncRealTimeData(ws, OrderStreamStrategy(self.symbol)) as stream:
             async for order in stream:
                 yield order
 
     async def _position_producer(self, msg: StartRealtimeFeed):
-        ws = self.ws_factory.create(msg.exchange, WSType.PRIVATE)
+        ws = self.datasource.create(DataSourceType.ExWS, msg.exchange, WSType.PRIVATE)
         async with AsyncRealTimeData(ws, PositionStreamStrategy(self.symbol)) as stream:
             async for position in stream:
                 yield position

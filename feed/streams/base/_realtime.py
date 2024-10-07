@@ -1,17 +1,17 @@
+from core.interfaces.abstract_exchange import AbstractWSExchange
 from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
-from core.interfaces.abstract_ws import AbstractWS
 
 
 class AsyncRealTimeData:
     def __init__(
         self,
-        ws: AbstractWS,
+        ws: AbstractWSExchange,
         strategy: AbstractStreamStrategy,
     ):
         self.ws = ws
         self.strategy = strategy
 
-    async def __aenter__(self) -> 'AsyncRealTimeData':
+    async def __aenter__(self) -> "AsyncRealTimeData":
         await self.ws.connect()
         await self.strategy.subscribe(self.ws)
         return self
@@ -21,7 +21,7 @@ class AsyncRealTimeData:
         await self.ws.close()
         return self
 
-    def __aiter__(self) -> 'AsyncRealTimeData':
+    def __aiter__(self) -> "AsyncRealTimeData":
         return self
 
     async def __anext__(self):

@@ -1,11 +1,12 @@
 import logging
 import time
 
+from coral import DataSourceFactory
 from core.commands.position import ClosePosition, OpenPosition
 from core.event_decorators import command_handler, query_handler
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
+from core.models.datasource_type import DataSourceType
 from core.models.entity.order import Order
 from core.models.exchange import ExchangeType
 from core.models.order_type import OrderStatus
@@ -19,12 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class SmartRouter(AbstractEventManager):
-    def __init__(
-        self, exchange_factory: AbstractExchangeFactory, config_service: AbstractConfig
-    ):
+    def __init__(self, datasource: DataSourceFactory, config_service: AbstractConfig):
         super().__init__()
-        self.exchange_factory = exchange_factory
-        self.exchange = self.exchange_factory.create(ExchangeType.BYBIT)
+        self.exchange = datasource.create(DataSourceType.ExREST, ExchangeType.BYBIT)
         self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 

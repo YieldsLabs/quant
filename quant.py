@@ -7,8 +7,8 @@ import uvloop
 from dotenv import load_dotenv
 
 from copilot import CopilotActor
+from coral import DataSourceFactory
 from core.models.exchange import ExchangeType
-from exchange import ExchangeFactory, WSFactory
 from executor import OrderExecutorActorFactory
 from feed import FeedActorFactory
 from infrastructure.config import ConfigService
@@ -74,24 +74,26 @@ async def main():
 
     event_bus = EventDispatcher(config_service)
 
-    exchange_factory = ExchangeFactory(EnvironmentSecretService())
-    ws_factory = WSFactory(EnvironmentSecretService())
+    datasource = DataSourceFactory(EnvironmentSecretService())
+    datasource.register_rest_exchange(ExchangeType.BYBIT)
+    datasource.register_ws_exchange(ExchangeType.BYBIT)
+
     wasm = WasmManager(WASM_FOLDER)
     position_factory = PositionFactory(
         config_service,
         PositionFixedSizeStrategy(),
     )
-    OceanActor(exchange_factory, config_service).start()
+    OceanActor(datasource, config_service).start()
     MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
-    SmartRouter(exchange_factory, config_service)
+    SmartRouter(datasource, config_service)
 
     signal_actor_factory = SignalActorFactory(SignalService(wasm))
     position_actor_factory = PositionActorFactory(position_factory, config_service)
     risk_actor_factory = RiskActorFactory(config_service)
     executor_actor_factory = OrderExecutorActorFactory()
-    feed_actor_factory = FeedActorFactory(exchange_factory, ws_factory, config_service)
+    feed_actor_factory = FeedActorFactory(datasource, config_service)
 
     trend_context = SystemContext(
         signal_actor_factory,

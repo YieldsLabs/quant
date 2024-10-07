@@ -1,6 +1,6 @@
 import asyncio
 
-from core.interfaces.abstract_exchange import AbstractExchange
+from core.interfaces.abstract_exchange import AbstractRestExchange
 from core.models.lookback import Lookback
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -9,7 +9,7 @@ from core.models.timeframe import Timeframe
 class AsyncHistoricalData:
     def __init__(
         self,
-        exchange: AbstractExchange,
+        exchange: AbstractRestExchange,
         symbol: Symbol,
         timeframe: Timeframe,
         in_sample: Lookback,
@@ -27,7 +27,7 @@ class AsyncHistoricalData:
         self.sentinel = object()
         self.parse_fn = parse_fn or self._default_parse
 
-    async def __aenter__(self) -> 'AsyncHistoricalData':
+    async def __aenter__(self) -> "AsyncHistoricalData":
         self.iterator = self.exchange.fetch_ohlcv(
             self.symbol,
             self.timeframe,
@@ -40,7 +40,7 @@ class AsyncHistoricalData:
     async def __aexit__(self, exc_type, exc_value, traceback):
         self.iterator = None
 
-    def __aiter__(self) -> 'AsyncHistoricalData':
+    def __aiter__(self) -> "AsyncHistoricalData":
         return self
 
     async def __anext__(self):

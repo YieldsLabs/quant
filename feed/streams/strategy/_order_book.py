@@ -1,5 +1,5 @@
+from core.interfaces.abstract_exchange import AbstractWSExchange
 from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
-from core.interfaces.abstract_ws import AbstractWS
 from core.models.symbol import Symbol
 
 
@@ -11,13 +11,13 @@ class OrderBookStreamStrategy(AbstractStreamStrategy):
 
     async def subscribe(
         self,
-        ws: AbstractWS,
+        ws: AbstractWSExchange,
     ):
         await ws.subscribe(ws.order_book_topic(self.symbol, self.depth))
 
     async def unsubscribe(
         self,
-        ws: AbstractWS,
+        ws: AbstractWSExchange,
     ):
         await ws.unsubscribe(ws.order_book_topic(self.symbol, self.depth))
 

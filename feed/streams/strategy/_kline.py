@@ -1,5 +1,5 @@
+from core.interfaces.abstract_exchange import AbstractWSExchange
 from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
-from core.interfaces.abstract_ws import AbstractWS
 from core.models.entity.bar import Bar
 from core.models.entity.ohlcv import OHLCV
 from core.models.symbol import Symbol
@@ -12,10 +12,10 @@ class KlineStreamStrategy(AbstractStreamStrategy):
         self.timeframe = timeframe
         self.symbol = symbol
 
-    async def subscribe(self, ws: AbstractWS):
+    async def subscribe(self, ws: AbstractWSExchange):
         await ws.subscribe(ws.kline_topic(self.timeframe, self.symbol))
 
-    async def unsubscribe(self, ws: AbstractWS):
+    async def unsubscribe(self, ws: AbstractWSExchange):
         await ws.unsubscribe(ws.kline_topic(self.timeframe, self.symbol))
 
     def parse(self, message):

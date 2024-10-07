@@ -1,5 +1,5 @@
+from core.interfaces.abstract_exchange import AbstractWSExchange
 from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
-from core.interfaces.abstract_ws import AbstractWS
 from core.models.symbol import Symbol
 
 
@@ -8,11 +8,11 @@ class OrderStreamStrategy(AbstractStreamStrategy):
         super().__init__()
         self.symbol = symbol
 
-    async def subscribe(self, ws: AbstractWS):
+    async def subscribe(self, ws: AbstractWSExchange):
         await ws.auth()
         await ws.subscribe(ws.order_topic())
 
-    async def unsubscribe(self, ws: AbstractWS):
+    async def unsubscribe(self, ws: AbstractWSExchange):
         await ws.unsubscribe(ws.order_topic())
 
     def parse(self, message):

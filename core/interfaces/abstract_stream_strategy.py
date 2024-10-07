@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from core.interfaces.abstract_ws import AbstractWS
+from core.interfaces.abstract_exchange import AbstractWSExchange
 
 
 class AbstractStreamStrategy(ABC):
     @abstractmethod
-    async def subscribe(self, ws: AbstractWS):
+    async def subscribe(self, ws: AbstractWSExchange):
         pass
 
     @abstractmethod
-    async def unsubscribe(self, ws: AbstractWS):
+    async def unsubscribe(self, ws: AbstractWSExchange):
         pass
 
     @abstractmethod

@@ -3,7 +3,7 @@ from asyncio import sleep
 import numpy as np
 
 from core.interfaces.abstract_config import AbstractConfig
-from core.interfaces.abstract_exchange import AbstractExchange
+from core.interfaces.abstract_exchange import AbstractRestExchange
 from core.models.symbol import Symbol
 
 
@@ -12,7 +12,7 @@ class TWAP:
         self.config = config_service.get("position")
         self.duration = self.config["twap_duration"]
 
-    async def next_value(self, symbol: Symbol, exchange: AbstractExchange):
+    async def next_value(self, symbol: Symbol, exchange: AbstractRestExchange):
         current_time = 0
         timepoints = []
 
@@ -28,7 +28,7 @@ class TWAP:
 
             await sleep(time_interval)
 
-    def _fetch_book(self, symbol: Symbol, exchange: AbstractExchange):
+    def _fetch_book(self, symbol: Symbol, exchange: AbstractRestExchange):
         bids, asks = exchange.fetch_order_book(symbol, depth=self.config["dom"])
         return np.array(bids), np.array(asks)
 

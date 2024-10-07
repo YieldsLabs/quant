@@ -1,5 +1,5 @@
+from core.interfaces.abstract_exchange import AbstractWSExchange
 from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
-from core.interfaces.abstract_ws import AbstractWS
 from core.models.symbol import Symbol
 
 
@@ -8,10 +8,10 @@ class LiquidationStreamStrategy(AbstractStreamStrategy):
         super().__init__()
         self.symbol = symbol
 
-    async def subscribe(self, ws: AbstractWS):
+    async def subscribe(self, ws: AbstractWSExchange):
         await ws.subscribe(ws.liquidation_topic(self.symbol))
 
-    async def unsubscribe(self, ws: AbstractWS):
+    async def unsubscribe(self, ws: AbstractWSExchange):
         await ws.unsubscribe(ws.liquidation_topic(self.symbol))
 
     def parse(self, message):

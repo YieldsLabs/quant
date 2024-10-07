@@ -8,7 +8,7 @@ import time
 import websockets
 from websockets.exceptions import ConnectionClosedError
 
-from core.interfaces.abstract_ws import AbstractWS
+from core.interfaces.abstract_exchange import AbstractWSExchange
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from infrastructure.retry import retry
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 connect_exceptions = (ConnectionError, ConnectionClosedError, asyncio.TimeoutError)
 
 
-class BybitWS(AbstractWS):
+class BybitWS(AbstractWSExchange):
     SUBSCRIBE_OPERATION = "subscribe"
     UNSUBSCRIBE_OPERATION = "unsubscribe"
     AUTH_OPERATION = "auth"
