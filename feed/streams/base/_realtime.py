@@ -11,7 +11,7 @@ class AsyncRealTimeData:
         self.ws = ws
         self.strategy = strategy
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'AsyncRealTimeData':
         await self.ws.connect()
         await self.strategy.subscribe(self.ws)
         return self
@@ -21,7 +21,7 @@ class AsyncRealTimeData:
         await self.ws.close()
         return self
 
-    def __aiter__(self):
+    def __aiter__(self) -> 'AsyncRealTimeData':
         return self
 
     async def __anext__(self):

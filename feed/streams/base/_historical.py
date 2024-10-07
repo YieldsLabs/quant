@@ -25,10 +25,9 @@ class AsyncHistoricalData:
         self.batch_size = batch_size
         self.iterator = None
         self.sentinel = object()
-        self.last_row = None
         self.parse_fn = parse_fn or self._default_parse
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'AsyncHistoricalData':
         self.iterator = self.exchange.fetch_ohlcv(
             self.symbol,
             self.timeframe,
@@ -41,7 +40,7 @@ class AsyncHistoricalData:
     async def __aexit__(self, exc_type, exc_value, traceback):
         self.iterator = None
 
-    def __aiter__(self):
+    def __aiter__(self) -> 'AsyncHistoricalData':
         return self
 
     async def __anext__(self):
@@ -50,7 +49,6 @@ class AsyncHistoricalData:
         if next_item is self.sentinel:
             raise StopAsyncIteration
 
-        self.last_row = next_item
         return next_item
 
     async def _fetch_next_item(self):
