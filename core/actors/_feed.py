@@ -6,6 +6,7 @@ from core.models.timeframe import Timeframe
 
 from ._base import BaseActor
 from .collector import DataCollector
+from .policy.feed import FeedPolicy
 
 
 class FeedActor(BaseActor):
@@ -43,6 +44,9 @@ class FeedActor(BaseActor):
 
     def on_stop(self):
         asyncio.create_task(self.collector.stop())
+
+    def pre_receive(self, msg) -> bool:
+        return FeedPolicy.should_process(self, msg)
 
     def _register_producers_and_consumers(self):
         for method in [
