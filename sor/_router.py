@@ -8,8 +8,8 @@ from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_event_manager import AbstractEventManager
 from core.models.datasource_type import DataSourceType
 from core.models.entity.order import Order
-from core.models.exchange import ExchangeType
 from core.models.order_type import OrderStatus
+from core.models.protocol_type import ProtocolType
 from core.models.side import PositionSide
 from core.queries.account import GetBalance
 from core.queries.position import GetClosePosition, GetOpenPosition, HasPosition
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class SmartRouter(AbstractEventManager):
     def __init__(self, datasource: DataSourceFactory, config_service: AbstractConfig):
         super().__init__()
-        self.exchange = datasource.create(DataSourceType.ExREST, ExchangeType.BYBIT)
+        self.exchange = datasource.create(DataSourceType.BYBIT, ProtocolType.REST)
         self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 

@@ -20,6 +20,7 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.queries._base import Query
+from core.tasks.feed import StartHistoricalFeed, StartRealtimeFeed
 
 Message = Union[
     NewMarketDataReceived,
@@ -35,6 +36,8 @@ Message = Union[
     ExitLongSignalReceived,
     ExitShortSignalReceived,
     RiskThresholdBreached,
+    StartHistoricalFeed,
+    StartRealtimeFeed,
 ]
 
 Ask = Union[Command, Query]

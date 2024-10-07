@@ -7,7 +7,7 @@ from core.interfaces.abstract_datasource_factory import (
     DataSource,
 )
 from core.interfaces.abstract_secret_service import AbstractSecretService
-from core.models.exchange import ExchangeType
+from core.models.datasource_type import DataSourceType
 from core.models.wss_type import WSType
 
 from ._bybit import BybitWS
@@ -19,33 +19,29 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
         self.secret_service = secret_service
         self._bucket = LRUCache(maxsize=10)
         self._default_map = {
-            ExchangeType.BYBIT: BybitWS,
+            DataSourceType.BYBIT: BybitWS,
         }
 
     def register(
-        self, exchange_type: ExchangeType, ws_class: Optional[Type[DataSource]] = None
+        self, datasource: DataSourceType, ws_class: Optional[Type[DataSource]] = None
     ) -> None:
         if ws_class is None:
-            ws_class = self._default_map.get(exchange_type)
+            ws_class = self._default_map.get(datasource)
 
-        self._bucket[exchange_type] = ws_class
+        self._bucket[datasource] = ws_class
 
-    def create(
-        self, exchange_type: ExchangeType, ws_type: WSType, **kwargs
-    ) -> DataSource:
-        if exchange_type not in self._bucket:
-            raise ValueError(f"WebSocket class for {exchange_type} is not registered.")
+    def create(self, datasource: DataSourceType, ws: WSType, **kwargs) -> DataSource:
+        if datasource not in self._bucket:
+            raise ValueError(f"WebSocket class for {datasource} is not registered.")
 
         wss = {
-            WSType.PUBLIC: self.secret_service.get_wss_public(exchange_type.name),
-            WSType.PRIVATE: self.secret_service.get_wss_private(exchange_type.name),
-            WSType.ORDER: self.secret_service.get_wss_order(exchange_type.name),
+            WSType.PUBLIC: self.secret_service.get_wss_public(datasource.name),
+            WSType.PRIVATE: self.secret_service.get_wss_private(datasource.name),
+            WSType.ORDER: self.secret_service.get_wss_order(datasource.name),
         }
 
-        wss_url = wss.get(
-            ws_type, self.secret_service.get_wss_public(exchange_type.name)
-        )
-        api_key = self.secret_service.get_api_key(exchange_type.name)
-        api_secret = self.secret_service.get_secret(exchange_type.name)
+        wss_url = wss.get(ws, self.secret_service.get_wss_public(datasource.name))
+        api_key = self.secret_service.get_api_key(datasource.name)
+        api_secret = self.secret_service.get_secret(datasource.name)
 
-        return self._bucket[exchange_type](wss_url, api_key, api_secret)
+        return self._bucket[datasource](wss_url, api_key, api_secret)

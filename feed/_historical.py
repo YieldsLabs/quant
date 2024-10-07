@@ -2,36 +2,33 @@ import asyncio
 from typing import AsyncIterator, List
 
 from coral import DataSourceFactory
-from core.actors import StrategyActor
+from core.actors import FeedActor
+from core.actors.decorators import Consumer, Producer
 from core.commands.ohlcv import IngestMarketData
 from core.events.ohlcv import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
 from core.models.entity.ohlcv import OHLCV
+from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.tasks.feed import StartHistoricalFeed
 
 from .streams.base import AsyncHistoricalData
-from .streams.collector import DataCollector
 
 
-class HistoricalActor(StrategyActor):
+class HistoricalActor(FeedActor):
     def __init__(
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        datasource: DataSourceFactory,
+        datasource: DataSourceType,
+        datasource_factory: DataSourceFactory,
         config_service: AbstractConfig,
     ):
-        super().__init__(symbol, timeframe)
-        self.datasource = datasource
-        self.collector = DataCollector()
-
-        self.collector.add_producer(self._kline_producer)
-        self.collector.add_consumer(self._consumer)
-
+        super().__init__(symbol, timeframe, datasource)
+        self.datasource_factory = datasource_factory
         self.config_service = config_service.get("backtest")
         self.batch_size = self.config_service["batch_size"]
         self.buff_size = self.config_service["buff_size"]
@@ -40,11 +37,10 @@ class HistoricalActor(StrategyActor):
         await self.collector.start(msg)
         await self.collector.wait_for_completion()
 
+    @Producer
     async def _kline_producer(self, msg: StartHistoricalFeed):
-        exchange = self.datasource.create(DataSourceType.ExREST, msg.exchange)
-
         async with AsyncHistoricalData(
-            exchange,
+            self.datasource_factory.create(msg.datasource, ProtocolType.REST),
             self.symbol,
             self.timeframe,
             msg.in_sample,
@@ -55,6 +51,7 @@ class HistoricalActor(StrategyActor):
             async for batch in self.batched(stream, self.buff_size):
                 yield batch
 
+    @Consumer
     async def _consumer(self, data: List[Bar]):
         match data:
             case [Bar(), *_]:

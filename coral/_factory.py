@@ -1,10 +1,10 @@
-from typing import Any, Optional, Type
+from typing import Optional, Type
 
 from core.interfaces.abstract_datasource_factory import DataSource
 from core.interfaces.abstract_exchange import AbstractRestExchange, AbstractWSExchange
 from core.interfaces.abstract_secret_service import AbstractSecretService
 from core.models.datasource_type import DataSourceType
-from core.models.exchange import ExchangeType
+from core.models.protocol_type import ProtocolType
 from core.models.wss_type import WSType
 
 from .exchange import ExchangeRestDataSourceFactory, ExchangeWSDataSourceFactory
@@ -17,28 +17,28 @@ class DataSourceFactory:
 
     def register_rest_exchange(
         self,
-        exchange_type: ExchangeType,
+        datasource: DataSourceType,
         exchange_class: Optional[Type[AbstractRestExchange]] = None,
     ):
-        self._exrest.register(exchange_type, exchange_class)
+        self._exrest.register(datasource, exchange_class)
 
     def register_ws_exchange(
         self,
-        exchange_type: ExchangeType,
+        datasource: DataSourceType,
         ws_class: Optional[Type[AbstractWSExchange]] = None,
     ):
-        self._exws.register(exchange_type, ws_class)
+        self._exws.register(datasource, ws_class)
 
     def create(
         self,
-        factory_type: DataSourceType,
-        conn_type: Any,
-        ws_type: WSType = WSType.PUBLIC,
+        datasource: DataSourceType,
+        protocol: ProtocolType,
+        ws: WSType = WSType.PUBLIC,
         **kwargs,
     ) -> DataSource:
-        if factory_type == DataSourceType.ExREST:
-            return self._exrest.create(conn_type, **kwargs)
-        elif factory_type == DataSourceType.ExWS:
-            return self._exws.create(conn_type, ws_type, **kwargs)
+        if protocol == ProtocolType.REST:
+            return self._exrest.create(datasource, **kwargs)
+        elif protocol == ProtocolType.WS:
+            return self._exws.create(datasource, ws, **kwargs)
         else:
-            raise ValueError(f"Unknown factory type: {factory_type}")
+            raise ValueError(f"Unknown protocol type: {protocol}")

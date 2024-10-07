@@ -7,7 +7,7 @@ from core.actors import BaseActor
 from core.commands.broker import UpdateSymbolSettings
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
-from core.models.datasource_type import DataSourceType
+from core.models.protocol_type import ProtocolType
 from core.queries.broker import GetSimilarSymbols, GetSymbols
 
 from ._gsim import SIM
@@ -36,7 +36,7 @@ class OceanActor(BaseActor, EventHandlerMixin):
         self.register_handler(UpdateSymbolSettings, self._update_symbol_settings)
 
     def _get_symbols(self, event: GetSymbols):
-        exchange = self.datasource.create(DataSourceType.ExREST, event.exchange)
+        exchange = self.datasource.create(event.datasource, ProtocolType.REST)
         symbols = exchange.fetch_future_symbols()
 
         if not event.cap:
@@ -52,7 +52,7 @@ class OceanActor(BaseActor, EventHandlerMixin):
         return [symbol for symbol in symbols if symbol.name in similar_symbols]
 
     def _get_similar_symbols(self, event: GetSimilarSymbols):
-        exchange = self.datasource.create(DataSourceType.ExREST, event.exchange)
+        exchange = self.datasource.create(event.datasource, ProtocolType.REST)
         symbols = exchange.fetch_future_symbols()
 
         similar_symbols = self.gsim.find_similar_symbols(
@@ -65,7 +65,7 @@ class OceanActor(BaseActor, EventHandlerMixin):
         return [symbol for symbol in symbols if symbol.name in similar_symbols]
 
     def _update_symbol_settings(self, event: UpdateSymbolSettings):
-        exchange = self.datasource.create(DataSourceType.ExREST, event.exchange)
+        exchange = self.datasource.create(event.datasource, ProtocolType.REST)
         exchange.update_symbol_settings(
             event.symbol, event.position_mode, event.margin_mode, event.leverage
         )
