@@ -7,18 +7,16 @@ from core.models.timeframe import Timeframe
 
 
 class KlineStreamStrategy(AbstractStreamStrategy):
-    def __init__(self, ws: AbstractWS, timeframe: Timeframe, symbol: Symbol):
+    def __init__(self, timeframe: Timeframe, symbol: Symbol):
         super().__init__()
-        self.ws = ws
         self.timeframe = timeframe
         self.symbol = symbol
-        self.topic = ws.kline_topic(timeframe, symbol)
 
-    async def subscribe(self):
-        await self.ws.subscribe(self.topic)
+    async def subscribe(self, ws: AbstractWS):
+        await ws.subscribe(ws.kline_topic(self.timeframe, self.symbol))
 
-    async def unsubscribe(self):
-        await self.ws.unsubscribe(self.topic)
+    async def unsubscribe(self, ws: AbstractWS):
+        await ws.unsubscribe(ws.kline_topic(self.timeframe, self.symbol))
 
     def parse(self, message):
         return [

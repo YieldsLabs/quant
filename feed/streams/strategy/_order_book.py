@@ -4,17 +4,22 @@ from core.models.symbol import Symbol
 
 
 class OrderBookStreamStrategy(AbstractStreamStrategy):
-    def __init__(self, ws: AbstractWS, symbol: Symbol, depth: int):
+    def __init__(self, symbol: Symbol, depth: int):
         super().__init__()
-        self.ws = ws
         self.symbol = symbol
-        self.topic = ws.order_book_topic(symbol, depth)
+        self.depth = depth
 
-    async def subscribe(self):
-        await self.ws.subscribe(self.topic)
+    async def subscribe(
+        self,
+        ws: AbstractWS,
+    ):
+        await ws.subscribe(ws.order_book_topic(self.symbol, self.depth))
 
-    async def unsubscribe(self):
-        await self.ws.unsubscribe(self.topic)
+    async def unsubscribe(
+        self,
+        ws: AbstractWS,
+    ):
+        await ws.unsubscribe(ws.order_book_topic(self.symbol, self.depth))
 
     def parse(self, message):
         return message

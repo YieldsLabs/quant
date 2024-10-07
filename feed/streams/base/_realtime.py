@@ -13,11 +13,11 @@ class AsyncRealTimeData:
 
     async def __aenter__(self):
         await self.ws.connect()
-        await self.strategy.subscribe()
+        await self.strategy.subscribe(self.ws)
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.strategy.unsubscribe()
+        await self.strategy.unsubscribe(self.ws)
         await self.ws.close()
         return self
 

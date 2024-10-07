@@ -4,17 +4,15 @@ from core.models.symbol import Symbol
 
 
 class LiquidationStreamStrategy(AbstractStreamStrategy):
-    def __init__(self, ws: AbstractWS, symbol: Symbol):
+    def __init__(self, symbol: Symbol):
         super().__init__()
-        self.ws = ws
         self.symbol = symbol
-        self.topic = ws.liquidation_topic(symbol)
 
-    async def subscribe(self):
-        await self.ws.subscribe(self.topic)
+    async def subscribe(self, ws: AbstractWS):
+        await ws.subscribe(ws.liquidation_topic(self.symbol))
 
-    async def unsubscribe(self):
-        await self.ws.unsubscribe(self.topic)
+    async def unsubscribe(self, ws: AbstractWS):
+        await ws.unsubscribe(ws.liquidation_topic(self.symbol))
 
     def parse(self, message):
         return [message]

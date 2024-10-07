@@ -54,7 +54,7 @@ class RealtimeActor(StrategyActor):
     async def _kline_producer(self, msg: StartRealtimeFeed):
         ws = self.ws_factory.create(msg.exchange, WSType.PUBLIC)
         async with AsyncRealTimeData(
-            ws, KlineStreamStrategy(ws, self.timeframe, self.symbol)
+            ws, KlineStreamStrategy(self.timeframe, self.symbol)
         ) as stream:
             async for bars in stream:
                 yield bars
@@ -62,7 +62,7 @@ class RealtimeActor(StrategyActor):
     async def _ob_producer(self, msg: StartRealtimeFeed):
         ws = self.ws_factory.create(msg.exchange, WSType.PUBLIC)
         async with AsyncRealTimeData(
-            ws, OrderBookStreamStrategy(ws, self.symbol, self.depth)
+            ws, OrderBookStreamStrategy(self.symbol, self.depth)
         ) as stream:
             async for orders in stream:
                 yield orders
@@ -70,24 +70,20 @@ class RealtimeActor(StrategyActor):
     async def _liquidation_producer(self, msg: StartRealtimeFeed):
         ws = self.ws_factory.create(msg.exchange, WSType.PUBLIC)
         async with AsyncRealTimeData(
-            ws, LiquidationStreamStrategy(ws, self.symbol)
+            ws, LiquidationStreamStrategy(self.symbol)
         ) as stream:
             async for liquidations in stream:
                 yield liquidations
 
     async def _order_producer(self, msg: StartRealtimeFeed):
         ws = self.ws_factory.create(msg.exchange, WSType.PRIVATE)
-        async with AsyncRealTimeData(
-            ws, OrderStreamStrategy(ws, self.symbol)
-        ) as stream:
+        async with AsyncRealTimeData(ws, OrderStreamStrategy(self.symbol)) as stream:
             async for order in stream:
                 yield order
 
     async def _position_producer(self, msg: StartRealtimeFeed):
         ws = self.ws_factory.create(msg.exchange, WSType.PRIVATE)
-        async with AsyncRealTimeData(
-            ws, PositionStreamStrategy(ws, self.symbol)
-        ) as stream:
+        async with AsyncRealTimeData(ws, PositionStreamStrategy(self.symbol)) as stream:
             async for position in stream:
                 yield position
 

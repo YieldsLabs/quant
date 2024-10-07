@@ -1,4 +1,5 @@
 from cachetools import LRUCache
+
 from core.interfaces.abstract_exchange import AbstractExchange
 from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.interfaces.abstract_secret_service import AbstractSecretService

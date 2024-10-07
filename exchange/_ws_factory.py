@@ -1,4 +1,5 @@
 from cachetools import LRUCache
+
 from core.interfaces.abstract_exchange import AbstractExchange
 from core.interfaces.abstract_secret_service import AbstractSecretService
 from core.interfaces.abstract_ws_factory import AbstractWSFactory
@@ -40,7 +41,7 @@ class WSFactory(AbstractWSFactory):
                 return self._cache[cache_key]
 
             ws_instance = ws(wss_url, api_key, api_secret)
-            self._cache[cache_key] = ws_instance 
+            self._cache[cache_key] = ws_instance
             return ws_instance
         else:
-            return ws(wss_url, '', '')
+            return ws(wss_url, "", "")
