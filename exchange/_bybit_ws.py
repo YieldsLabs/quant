@@ -54,7 +54,7 @@ class BybitWS(AbstractWS):
         self.api_key = api_key
         self.api_secret = api_secret
         self._lock = asyncio.Lock()
-        self.subscriptions = set()
+        self._subscriptions = set()
         self._auth_event = asyncio.Event()
         self._message_queue = asyncio.Queue()
         self._tasks = set()
@@ -144,14 +144,14 @@ class BybitWS(AbstractWS):
     async def subscribe(self, topic: str):
         async with self._lock:
             await self._send(self.SUBSCRIBE_OPERATION, [topic])
-            self.subscriptions.add(topic)
+            self._subscriptions.add(topic)
 
     async def unsubscribe(self, topic):
         async with self._lock:
             await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
 
-            if topic in self.subscriptions:
-                self.subscriptions.remove(topic)
+            if topic in self._subscriptions:
+                self._subscriptions.remove(topic)
 
     async def get_message(self):
         message = await self._message_queue.get()
@@ -216,12 +216,12 @@ class BybitWS(AbstractWS):
 
     async def _resubscribe_all(self):
         async with self._lock:
-            if not self.subscriptions:
+            if not self._subscriptions:
                 return
 
-            await self._send(self.SUBSCRIBE_OPERATION, list(self.subscriptions))
+            await self._send(self.SUBSCRIBE_OPERATION, list(self._subscriptions))
 
-            logger.info(f"Resubscribed to all topics: {list(self.subscriptions)}")
+            logger.info(f"Resubscribed to all topics: {list(self._subscriptions)}")
 
     async def _handle_reconnect(self):
         if self._auth_event.is_set():
