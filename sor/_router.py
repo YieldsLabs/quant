@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class SmartRouter(AbstractEventManager):
-    def __init__(self, datasource: DataSourceFactory, config_service: AbstractConfig):
+    def __init__(self, datasource_factory: DataSourceFactory, config_service: AbstractConfig):
         super().__init__()
-        self.exchange = datasource.create(DataSourceType.BYBIT, ProtocolType.REST)
+        self.exchange = datasource_factory.create(DataSourceType.BYBIT, ProtocolType.REST)
         self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 
@@ -94,10 +94,11 @@ class SmartRouter(AbstractEventManager):
     async def open_position(self, command: OpenPosition):
         position = command.position
         symbol = position.signal.symbol
+        position_side = position.side
 
         logger.info(f"Try to open position: {position}")
 
-        if self.exchange.fetch_position(symbol, position.side):
+        if self.exchange.fetch_position(symbol, position_side):
             logging.info("Position already exists")
             return
 
@@ -109,11 +110,9 @@ class SmartRouter(AbstractEventManager):
         num_orders = min(
             max(1, int(size / symbol.min_position_size)), self.config["max_order_slice"]
         )
-        size = round(size / num_orders, symbol.position_precision)
-        order_counter = 0
+        orders_size = round(size / num_orders, symbol.position_precision)
+
         num_order_breach = 0
-        order_timestamps = {}
-        exp_time = self.config["order_expiration_time"]
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = ask if position.side == PositionSide.LONG else bid
@@ -137,52 +136,12 @@ class SmartRouter(AbstractEventManager):
                 if num_order_breach >= self.config["max_order_breach"]:
                     break
 
-            spread = (
-                price - entry_price
-                if position.side == PositionSide.LONG
-                else entry_price - price
-            )
+            existing_position = self.exchange.fetch_position(symbol, position_side)
 
-            spread_percentage = 100 * (spread / entry_price)
-
-            logging.info(
-                f"Trying to open order -> algo price: {price}, theo price: {entry_price}, spread: {spread_percentage}%"
-            )
-
-            if spread_percentage > 0.35:
+            if existing_position and existing_position.position_size >= size:
                 break
-
-            curr_time = time.time()
-            expired_orders = [
-                order_id
-                for order_id, timestamp in order_timestamps.items()
-                if curr_time - timestamp > exp_time
-            ]
-
-            for order_id in expired_orders:
-                self.exchange.cancel_order(order_id, symbol)
-                order_timestamps.pop(order_id)
-
-            for order_id in list(order_timestamps.keys()):
-                if self.exchange.has_filled_order(order_id, symbol):
-                    order_timestamps.pop(order_id)
-                    order_counter += 1
-
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
-                break
-
-            if not self.exchange.has_open_orders(symbol, position.side) and not len(
-                order_timestamps.keys()
-            ):
-                order_id = self.exchange.create_limit_order(
-                    symbol, position.side, size, price
-                )
-                if order_id:
-                    order_timestamps[order_id] = time.time()
-
-        for order_id in list(order_timestamps.keys()):
-            self.exchange.cancel_order(order_id, symbol)
+            else:
+                self.exchange.create_limit_order(symbol, position_side, orders_size, price)
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -201,58 +160,18 @@ class SmartRouter(AbstractEventManager):
             max(1, int(exit_order.size / symbol.min_position_size)),
             self.config["max_order_slice"],
         )
-        size = round(exit_order.size / num_orders, symbol.position_precision)
-        order_counter = 0
-        order_timestamps = {}
-        max_spread = float("-inf")
-        exp_time = self.config["order_expiration_time"]
+        orders_size = round(exit_order.size / num_orders, symbol.position_precision)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
-            if not self.exchange.fetch_position(symbol, position_side):
-                break
-
             price = bid if position.side == PositionSide.LONG else ask
-
-            spread = (
-                price - exit_order.price
-                if position_side == PositionSide.LONG
-                else exit_order.price - price
-            )
-            max_spread = max(max_spread, spread)
 
             logging.info(
                 f"Trying to reduce order -> algo price: {price}, theo price: {exit_order.price}, spread: {spread}, max spread: {max_spread}"
             )
 
-            curr_time = time.time()
-            expired_orders = [
-                order_id
-                for order_id, timestamp in order_timestamps.items()
-                if curr_time - timestamp > exp_time
-            ]
-
-            for order_id in expired_orders:
-                self.exchange.cancel_order(order_id, symbol)
-                order_timestamps.pop(order_id)
-
-            for order_id in list(order_timestamps.keys()):
-                if self.exchange.has_filled_order(order_id, symbol):
-                    order_timestamps.pop(order_id)
-                    order_counter += 1
-
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
+            if not self.exchange.fetch_position(symbol, position_side):
                 break
 
-            if not (
-                self.exchange.has_open_orders(symbol, position_side, True)
-                or len(order_timestamps.keys())
-            ):
-                order_id = self.exchange.create_reduce_order(
-                    symbol, position_side, size, price
-                )
-                if order_id:
-                    order_timestamps[order_id] = time.time()
-
-        for order_id in list(order_timestamps.keys()):
-            self.exchange.cancel_order(order_id, symbol)
+            self.exchange.create_reduce_order(
+                symbol, position_side, orders_size, price
+            )                
