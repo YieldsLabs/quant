@@ -14,6 +14,7 @@ from core.models.symbol import Symbol
 
 logger = logging.getLogger(__name__)
 
+
 class ReefActor(BaseActor):
     def __init__(
         self, datasource_factory: DataSourceFactory, config_service: AbstractConfig

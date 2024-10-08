@@ -4,8 +4,8 @@ from typing import List
 from coral import DataSourceFactory
 from core.actors import FeedActor
 from core.actors.decorators import Consumer, Producer
-from core.commands.ohlcv import IngestMarketData
-from core.events.ohlcv import NewMarketDataReceived
+from core.commands.market import IngestMarketData
+from core.events.market import NewMarketDataReceived
 from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
 from core.models.protocol_type import ProtocolType
@@ -104,8 +104,12 @@ class RealtimeActor(FeedActor):
 
     async def _process_bars(self, bars: List[Bar]):
         for bar in bars:
-            await self.ask(IngestMarketData(self.symbol, self.timeframe, bar))
-            await self.tell(NewMarketDataReceived(self.symbol, self.timeframe, bar))
+            await self.ask(
+                IngestMarketData(self.symbol, self.timeframe, self.datasource, bar)
+            )
+            await self.tell(
+                NewMarketDataReceived(self.symbol, self.timeframe, self.datasource, bar)
+            )
 
             if bar.closed:
                 logger.info(f"{self.symbol}_{self.timeframe}:{bar}")

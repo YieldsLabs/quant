@@ -6,8 +6,8 @@ from typing import Optional, Union
 import numpy as np
 
 from core.actors import StrategyActor
+from core.events.market import NewMarketDataReceived
 from core.events.meta import EventMeta
-from core.events.ohlcv import NewMarketDataReceived
 from core.events.position import (
     PositionAdjusted,
     PositionClosed,

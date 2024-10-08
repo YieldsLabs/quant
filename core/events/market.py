@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from core.events.meta import EventMeta
 from core.groups.event import EventGroup
+from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -13,6 +14,7 @@ from ._base import Event
 class MarketEvent(Event):
     symbol: Symbol
     timeframe: Timeframe
+    datasource: DataSourceType
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=4, group=EventGroup.market),
         init=False,

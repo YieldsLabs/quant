@@ -4,8 +4,8 @@ from typing import AsyncIterator, List
 from coral import DataSourceFactory
 from core.actors import FeedActor
 from core.actors.decorators import Consumer, Producer
-from core.commands.ohlcv import IngestMarketData
-from core.events.ohlcv import NewMarketDataReceived
+from core.commands.market import IngestMarketData
+from core.events.market import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
@@ -63,12 +63,16 @@ class HistoricalActor(FeedActor):
 
     async def _handle_market(self, batch: List[Bar]) -> None:
         for bar in batch:
-            await self.tell(NewMarketDataReceived(self.symbol, self.timeframe, bar))
+            await self.tell(
+                NewMarketDataReceived(self.symbol, self.timeframe, self.datasource, bar)
+            )
         await asyncio.sleep(0.0001)
 
     async def _outbox(self, batch: List[Bar]) -> None:
         tasks = [
-            self.ask(IngestMarketData(self.symbol, self.timeframe, bar))
+            self.ask(
+                IngestMarketData(self.symbol, self.timeframe, self.datasource, bar)
+            )
             for bar in batch
             if bar.closed
         ]

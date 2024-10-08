@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional
 
 from core.actors import StrategyActor
 from core.actors.policy.signal import SignalPolicy
-from core.events.ohlcv import NewMarketDataReceived
+from core.events.market import NewMarketDataReceived
 from core.interfaces.abstract_signal_service import AbstractSignalService
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
