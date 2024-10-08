@@ -23,6 +23,6 @@ class OrderBookStreamStrategy(AbstractStreamStrategy):
 
     def parse(self, ws: AbstractWSExchange, topic, message):
         if topic != ws.order_book_topic(self.symbol, self.depth):
-            return
+            return []
 
-        return message
+        return []
