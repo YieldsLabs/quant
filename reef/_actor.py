@@ -1,19 +1,17 @@
 import asyncio
 import logging
 import time
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import Dict, Tuple
 
 from coral import DataSourceFactory
 from core.actors import BaseActor
 from core.events.market import NewMarketOrderReceived
 from core.interfaces.abstract_config import AbstractConfig
+from core.models.datasource_type import DataSourceType
 from core.models.entity.order import Order
 from core.models.order_type import OrderStatus, OrderType
 from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
-
-if TYPE_CHECKING:
-    from core.models.datasource_type import DataSourceType
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +59,11 @@ class ReefActor(BaseActor):
 
                 logging.info(f"Order {order.id} cleared.")
 
-    async def _append_order(self, order: Order, symbol: Symbol):
+    async def _append_order(
+        self, order: Order, symbol: Symbol, datasource: DataSourceType
+    ):
         async with self._lock:
-            self._orders[order.id] = (time.time(), symbol)
+            self._orders[order.id] = (time.time(), symbol, datasource)
 
             logging.info(f"Order {order.id} appended for symbol {symbol.name}.")
 
