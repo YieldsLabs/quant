@@ -1,9 +1,11 @@
 from typing import Union
+
 from core.tasks.feed import StartHistoricalFeed, StartRealtimeFeed
 
 from .event import EventPolicy
 
 FeedEvent = Union[StartHistoricalFeed, StartRealtimeFeed]
+
 
 class FeedPolicy(EventPolicy):
     @classmethod

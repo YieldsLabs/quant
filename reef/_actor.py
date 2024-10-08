@@ -1,9 +1,9 @@
 import asyncio
 import time
-
 from typing import Any, Dict, Tuple
-from core.actors import BaseActor
+
 from coral import DataSourceFactory
+from core.actors import BaseActor
 from core.interfaces.abstract_config import AbstractConfig
 from core.models.datasource_type import DataSourceType
 from core.models.entity.order import Order
@@ -11,15 +11,20 @@ from core.models.order_type import OrderStatus
 from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 
+
 class ReefActor(BaseActor):
-    def __init__(self, datasource_factory: DataSourceFactory, config_service: AbstractConfig):
+    def __init__(
+        self, datasource_factory: DataSourceFactory, config_service: AbstractConfig
+    ):
         super().__init__()
         self._lock = asyncio.Lock()
         self._orders: Dict[str, Tuple[float, Symbol]] = {}
         self._datasource_factory = datasource_factory
         self._tasks = set()
-        self.order_service = datasource_factory.create(DataSourceType.BYBIT, ProtocolType.WS)
-        
+        self.order_service = datasource_factory.create(
+            DataSourceType.BYBIT, ProtocolType.WS
+        )
+
         order_config = config_service.get("order", {})
         self.expiration_time = order_config.get("expiration_time", 10)
         self.monitor_interval = order_config.get("monitor_interval", 10)
@@ -55,7 +60,7 @@ class ReefActor(BaseActor):
 
             async with self._lock:
                 curr_time = time.time()
-                
+
                 expired_orders = [
                     (order_id, symbol)
                     for order_id, (timestamp, symbol) in self._orders.items()

@@ -1,5 +1,4 @@
 import logging
-import time
 
 from coral import DataSourceFactory
 from core.commands.position import ClosePosition, OpenPosition
@@ -20,9 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class SmartRouter(AbstractEventManager):
-    def __init__(self, datasource_factory: DataSourceFactory, config_service: AbstractConfig):
+    def __init__(
+        self, datasource_factory: DataSourceFactory, config_service: AbstractConfig
+    ):
         super().__init__()
-        self.exchange = datasource_factory.create(DataSourceType.BYBIT, ProtocolType.REST)
+        self.exchange = datasource_factory.create(
+            DataSourceType.BYBIT, ProtocolType.REST
+        )
         self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 
@@ -96,21 +99,18 @@ class SmartRouter(AbstractEventManager):
         symbol = position.signal.symbol
         position_side = position.side
 
-        logger.info(f"Try to open position: {position}")
+        logger.info(f"Trying to open position: {position}")
 
         if self.exchange.fetch_position(symbol, position_side):
-            logging.info("Position already exists")
+            logger.info(f"Position for {symbol} already exists.")
             return
 
         pending_order = position.entry_order()
 
         entry_price = pending_order.price
-        size = pending_order.size
+        pending_order_size = pending_order.size
 
-        num_orders = min(
-            max(1, int(size / symbol.min_position_size)), self.config["max_order_slice"]
-        )
-        orders_size = round(size / num_orders, symbol.position_precision)
+        orders_size = self._calculate_order_slices(symbol, pending_order_size)
 
         num_order_breach = 0
 
@@ -121,27 +121,35 @@ class SmartRouter(AbstractEventManager):
             current_distance_to_stop_loss = abs(stop_loss - price)
             distance_to_stop_loss = abs(entry_price - stop_loss)
 
-            threshold_breach = (
+            if (
                 self.config["stop_loss_threshold"] * distance_to_stop_loss
                 > current_distance_to_stop_loss
-            )
-
-            if threshold_breach:
-                logging.info(
-                    f"Order risk breached: ENTR: {entry_price}, STPLS: {stop_loss}, THEO_DSTNC: {distance_to_stop_loss}, ALG_DSTNC: {current_distance_to_stop_loss}"
+            ):
+                logger.warn(
+                    f"Order risk breached for {symbol}: Entry Price={entry_price}, "
+                    f"Stop Loss={stop_loss}, Distance to Stop Loss={distance_to_stop_loss}, "
+                    f"Current Distance={current_distance_to_stop_loss}"
                 )
 
                 num_order_breach += 1
-
                 if num_order_breach >= self.config["max_order_breach"]:
+                    logger.warn(
+                        f"Max stop-loss breaches reached for {symbol}. Stopping order placement."
+                    )
                     break
 
             existing_position = self.exchange.fetch_position(symbol, position_side)
 
-            if existing_position and existing_position.position_size >= size:
+            if (
+                existing_position
+                and existing_position.position_size >= pending_order_size
+            ):
+                logger.info(
+                    f"Existing position for {symbol} has sufficient size. No more orders will be placed."
+                )
                 break
-            else:
-                self.exchange.create_limit_order(symbol, position_side, orders_size, price)
+
+            self.exchange.create_limit_order(symbol, position_side, orders_size, price)
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -150,28 +158,39 @@ class SmartRouter(AbstractEventManager):
         symbol = position.signal.symbol
         position_side = position.side
 
+        logger.info(f"Trying to close position for {symbol}")
+
         if not self.exchange.fetch_position(symbol, position_side):
-            logging.info("Position is not existed")
+            logger.warn(f"Position for {symbol} does not exist. No action taken.")
             return
 
         exit_order = position.exit_order()
 
-        num_orders = min(
-            max(1, int(exit_order.size / symbol.min_position_size)),
-            self.config["max_order_slice"],
-        )
-        orders_size = round(exit_order.size / num_orders, symbol.position_precision)
+        orders_size = self._calculate_order_slices(symbol, exit_order.size)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = bid if position.side == PositionSide.LONG else ask
 
-            logging.info(
-                f"Trying to reduce order -> algo price: {price}, theo price: {exit_order.price}, spread: {spread}, max spread: {max_spread}"
+            logger.info(
+                f"Reducing position for {symbol} -> Algo Price: {price}, "
+                f"Theoretical Exit Price: {exit_order.price}"
             )
 
             if not self.exchange.fetch_position(symbol, position_side):
+                logger.info(f"Position for {symbol} already closed.")
                 break
 
-            self.exchange.create_reduce_order(
-                symbol, position_side, orders_size, price
-            )                
+            self.exchange.create_reduce_order(symbol, position_side, orders_size, price)
+
+    def _calculate_order_slices(self, symbol, total_size):
+        num_orders = min(
+            max(1, int(total_size / symbol.min_position_size)),
+            self.config["max_order_slice"],
+        )
+        orders_size = round(total_size / num_orders, symbol.position_precision)
+
+        logger.info(
+            f"Calculated order slices for {symbol}: {num_orders} orders, {orders_size} size per order"
+        )
+
+        return orders_size
