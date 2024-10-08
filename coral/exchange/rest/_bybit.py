@@ -265,7 +265,9 @@ class Bybit(AbstractRestExchange):
                 ),
                 "entry_price": float(position.get("entryPrice", 0)),
                 "position_size": float(position.get("contracts", 0)),
-                "open_fee": -float(position.get("info", {}).get("curRealisedPnl", 0)),
+                "open_fee": abs(
+                    float(position.get("info", {}).get("curRealisedPnl", 0))
+                ),
             }
 
         return None

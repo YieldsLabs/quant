@@ -19,7 +19,7 @@ class OrderStatus(Enum):
         try:
             return _status_map[value]
         except KeyError:
-            raise ValueError(f"Unknown order status: '{value}'")
+            raise ValueError(f"Unknown order status: '{value}'") from None
 
 
 class OrderType(Enum):
@@ -37,4 +37,4 @@ class OrderType(Enum):
         try:
             return _status_map[value]
         except KeyError:
-            raise ValueError(f"Unknown order status: '{value}'")
+            raise ValueError(f"Unknown order status: '{value}'") from None

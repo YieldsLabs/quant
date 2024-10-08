@@ -25,7 +25,7 @@ class Order:
         size = float(data["qty"])
         order_type = OrderType.from_raw(data["orderType"])
         id = data["orderId"]
-        fee = data["closedPnl"]
+        fee = abs(float(data["closedPnl"]))
 
         return cls(
             status=order_status,
