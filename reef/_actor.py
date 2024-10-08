@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from typing import Any, Dict, Tuple
 
@@ -11,6 +12,7 @@ from core.models.order_type import OrderStatus
 from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 
+logger = logging.getLogger(__name__)
 
 class ReefActor(BaseActor):
     def __init__(
@@ -22,7 +24,7 @@ class ReefActor(BaseActor):
         self._datasource_factory = datasource_factory
         self._tasks = set()
         self.order_service = datasource_factory.create(
-            DataSourceType.BYBIT, ProtocolType.WS
+            DataSourceType.BYBIT, ProtocolType.REST
         )
 
         order_config = config_service.get("order", {})
@@ -55,18 +57,33 @@ class ReefActor(BaseActor):
             self._orders[order.id] = (time.time(), symbol)
 
     async def _monitor_orders(self):
-        while True:
-            await asyncio.sleep(self.monitor_interval)
+        try:
+            while True:
+                await asyncio.sleep(self.monitor_interval)
+                await self._cancel_expired_orders()
+        except asyncio.CancelledError:
+            logging.info("Monitoring task canceled.")
+        except Exception as e:
+            logging.error(f"Error in monitoring orders: {str(e)}")
 
-            async with self._lock:
-                curr_time = time.time()
+    async def _cancel_expired_orders(self):
+        curr_time = time.time()
 
-                expired_orders = [
-                    (order_id, symbol)
-                    for order_id, (timestamp, symbol) in self._orders.items()
-                    if curr_time - timestamp > self.expiration_time
-                ]
+        async with self._lock:
+            expired_orders = [
+                (order_id, symbol)
+                for order_id, (timestamp, symbol) in self._orders.items()
+                if curr_time - timestamp > self.expiration_time
+            ]
 
-                for order_id, symbol in expired_orders:
-                    self._orders.pop(order_id)
-                    await self.order_service.cancel_order(order_id, symbol)
+        if expired_orders:
+            logging.info(f"Found {len(expired_orders)} expired orders. Canceling...")
+
+        for order_id, symbol in expired_orders:
+            try:
+                await self.order_service.cancel_order(order_id, symbol)
+                async with self._lock:
+                    self._orders.pop(order_id, None)
+                logging.info(f"Order {order_id} for symbol {symbol.name} canceled.")
+            except Exception as e:
+                logging.error(f"Failed to cancel order {order_id}: {str(e)}")

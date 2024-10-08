@@ -10,6 +10,7 @@ from core.models.entity.order import Order
 from core.models.order_type import OrderStatus
 from core.models.protocol_type import ProtocolType
 from core.models.side import PositionSide
+from core.models.symbol import Symbol
 from core.queries.account import GetBalance
 from core.queries.position import GetClosePosition, GetOpenPosition, HasPosition
 
@@ -182,7 +183,7 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_reduce_order(symbol, position_side, orders_size, price)
 
-    def _calculate_order_slices(self, symbol, total_size):
+    def _calculate_order_slices(self, symbol: Symbol, total_size):
         num_orders = min(
             max(1, int(total_size / symbol.min_position_size)),
             self.config["max_order_slice"],
