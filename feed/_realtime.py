@@ -5,9 +5,10 @@ from coral import DataSourceFactory
 from core.actors import FeedActor
 from core.actors.decorators import Consumer, Producer
 from core.commands.market import IngestMarketData
-from core.events.market import NewMarketDataReceived
+from core.events.market import NewMarketDataReceived, NewMarketOrderReceived
 from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
+from core.models.entity.order import Order
 from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -102,6 +103,9 @@ class RealtimeActor(FeedActor):
             case [Bar(), *_]:
                 await self._process_bars(data)
 
+            case [Order(), *_]:
+                await self._process_orders(data)
+
     async def _process_bars(self, bars: List[Bar]):
         for bar in bars:
             await self.ask(
@@ -113,3 +117,11 @@ class RealtimeActor(FeedActor):
 
             if bar.closed:
                 logger.info(f"{self.symbol}_{self.timeframe}:{bar}")
+
+    async def _process_orders(self, orders: List[Order]):
+        for order in orders:
+            await self.tell(
+                NewMarketOrderReceived(
+                    self.symbol, self.timeframe, self.datasource, order
+                )
+            )
