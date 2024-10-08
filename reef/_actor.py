@@ -35,7 +35,7 @@ class ReefActor(BaseActor):
         self._tasks.add(task)
 
     def on_stop(self):
-        for task in self._tasks:
+        for task in list(self._tasks):
             task.cancel()
         self._tasks.clear()
 
@@ -102,21 +102,21 @@ class ReefActor(BaseActor):
 
     async def _fetch_open_orders(self):
         orders = []
-        bybit_service = self._datasource_factory.create(
-            DataSourceType.BYBIT, ProtocolType.REST
-        )
+        services = [
+            self._datasource_factory.create(DataSourceType.BYBIT, ProtocolType.REST),
+        ]
 
-        orders += bybit_service.fetch_all_open_orders()
+        for service in services:
+            orders += service.fetch_all_open_orders()
 
         curr_time = time.time()
 
         async with self._lock:
             for order_id, order_symbol in orders:
                 if order_id in self._orders:
-                    timestamp, _, _ = self._orders.get(order_id)
+                    timestamp, symbol, datasource = self._orders.get(order_id)
 
                     if curr_time - timestamp > self.expiration_time:
-                        _, symbol, datasource = self._orders.pop(order_id)
                         service = self._datasource_factory.create(
                             datasource, ProtocolType.REST
                         )
@@ -127,5 +127,8 @@ class ReefActor(BaseActor):
                             f"Order {order_id} for symbol {symbol.name} canceled."
                         )
                 else:
-                    logging.warning(f"Cancel this order: {order_id}")
-                    bybit_service.cancel_order(order_id, order_symbol)
+                    logging.warning(
+                        f"Untracked order {order_id} found, attempting cancellation."
+                    )
+                    for service in services:
+                        service.cancel_order(order_id, order_symbol)
