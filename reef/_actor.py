@@ -8,7 +8,7 @@ from core.actors import BaseActor
 from core.events.market import NewMarketOrderReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.models.entity.order import Order
-from core.models.order_type import OrderStatus
+from core.models.order_type import OrderStatus, OrderType
 from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 
@@ -27,12 +27,12 @@ class ReefActor(BaseActor):
         self._orders: Dict[str, Tuple[float, Symbol, DataSourceType]] = {}
         self._datasource_factory = datasource_factory
         self._tasks = set()
-        order_config = config_service.get("order", {})
+        order_config = config_service.get("order")
         self.expiration_time = order_config.get("expiration_time", 10)
         self.monitor_interval = order_config.get("monitor_interval", 10)
 
     def on_start(self):
-        task = asyncio.create_task(self._monitor_orders)
+        task = asyncio.create_task(self._monitor_orders())
         task.add_done_callback(self._tasks.discard)
         self._tasks.add(task)
 
@@ -40,6 +40,12 @@ class ReefActor(BaseActor):
         for task in self._tasks:
             task.cancel()
         self._tasks.clear()
+
+    def pre_receive(self, event: NewMarketOrderReceived):
+        return (
+            isinstance(event, NewMarketOrderReceived)
+            and event.order.type == OrderType.LIMIT
+        )
 
     async def on_receive(self, event: NewMarketOrderReceived):
         match event.order.status:
@@ -52,13 +58,13 @@ class ReefActor(BaseActor):
         async with self._lock:
             if order.id in self._orders:
                 self._orders.pop(order.id)
-                
+
                 logging.info(f"Order {order.id} cleared.")
 
     async def _append_order(self, order: Order, symbol: Symbol):
         async with self._lock:
             self._orders[order.id] = (time.time(), symbol)
-            
+
             logging.info(f"Order {order.id} appended for symbol {symbol.name}.")
 
     async def _monitor_orders(self):
