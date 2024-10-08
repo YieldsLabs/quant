@@ -21,6 +21,7 @@ from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
 from position.size.fixed import PositionFixedSizeStrategy
+from reef import ReefActor
 from risk import RiskActorFactory
 from service import (
     EnvironmentSecretService,
@@ -85,6 +86,7 @@ async def main():
         PositionFixedSizeStrategy(),
     )
     OceanActor(datasource, config_service).start()
+    ReefActor(datasource, config_service).start()
     MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
