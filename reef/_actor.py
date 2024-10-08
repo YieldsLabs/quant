@@ -37,6 +37,7 @@ class ReefActor(BaseActor):
     def on_stop(self):
         for task in list(self._tasks):
             task.cancel()
+
         self._tasks.clear()
 
     def pre_receive(self, event: NewMarketOrderReceived):
@@ -68,11 +69,19 @@ class ReefActor(BaseActor):
             logging.info(f"Order {order.id} appended for symbol {symbol.name}.")
 
     async def _monitor_orders(self):
+        fetch_interval = 5
+        counter = 0
+
         try:
             while True:
                 await asyncio.sleep(self.monitor_interval)
                 await self._cancel_expired_orders()
-                await self._fetch_open_orders()
+
+                if counter % fetch_interval == 0:
+                    await self._fetch_open_orders()
+                    counter = 0
+
+                counter += 1
         except asyncio.CancelledError:
             logging.info("Monitoring task canceled.")
         except Exception as e:

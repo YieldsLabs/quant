@@ -91,7 +91,10 @@ class Bybit(AbstractRestExchange):
     def fetch_all_open_orders(self):
         try:
             return [
-                (order["id"], Symbol(order.get("info", {}).get("symbol"), 0, 0, 0, 0, 0, 0, 0))
+                (
+                    order["id"],
+                    Symbol(order.get("info", {}).get("symbol"), 0, 0, 0, 0, 0, 0, 0),
+                )
                 for order in self.connector.fetch_open_orders()
             ]
         except Exception as e:

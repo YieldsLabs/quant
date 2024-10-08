@@ -102,7 +102,6 @@ class BybitWS(AbstractWSExchange):
 
         if self.ws:
             await self.ws.close()
-            await self.ws.wait_closed()
             self.ws = None
 
     async def auth(self):

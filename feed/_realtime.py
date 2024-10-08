@@ -125,3 +125,4 @@ class RealtimeActor(FeedActor):
                     self.symbol, self.timeframe, self.datasource, order
                 )
             )
+            logger.info(f"{self.symbol}_{self.timeframe}:{order}")
