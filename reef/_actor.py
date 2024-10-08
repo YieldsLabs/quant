@@ -42,7 +42,7 @@ class ReefActor(BaseActor):
     def pre_receive(self, event: NewMarketOrderReceived):
         return (
             isinstance(event, NewMarketOrderReceived)
-            and event.order.type == OrderType.LIMIT
+            and event.order.type != OrderType.PAPER
         )
 
     async def on_receive(self, event: NewMarketOrderReceived):
@@ -72,6 +72,7 @@ class ReefActor(BaseActor):
             while True:
                 await asyncio.sleep(self.monitor_interval)
                 await self._cancel_expired_orders()
+                await self._fetch_open_orders()
         except asyncio.CancelledError:
             logging.info("Monitoring task canceled.")
         except Exception as e:
@@ -92,12 +93,39 @@ class ReefActor(BaseActor):
             logging.info(f"Found {len(expired_orders)} expired orders. Canceling...")
 
         for order_id, symbol, datasource in expired_orders:
-            try:
-                service = self.datasource_factory.create(datasource, ProtocolType.REST)
-                service.cancel_order(order_id, symbol)
+            service = self._datasource_factory.create(datasource, ProtocolType.REST)
+            service.cancel_order(order_id, symbol)
 
-                async with self._lock:
-                    self._orders.pop(order_id, None)
-                logging.info(f"Order {order_id} for symbol {symbol.name} canceled.")
-            except Exception as e:
-                logging.error(f"Failed to cancel order {order_id}: {str(e)}")
+            async with self._lock:
+                self._orders.pop(order_id, None)
+            logging.info(f"Order {order_id} for symbol {symbol.name} canceled.")
+
+    async def _fetch_open_orders(self):
+        orders = []
+        bybit_service = self._datasource_factory.create(
+            DataSourceType.BYBIT, ProtocolType.REST
+        )
+
+        orders += bybit_service.fetch_all_open_orders()
+
+        curr_time = time.time()
+
+        async with self._lock:
+            for order_id, order_symbol in orders:
+                if order_id in self._orders:
+                    timestamp, _, _ = self._orders.get(order_id)
+
+                    if curr_time - timestamp > self.expiration_time:
+                        _, symbol, datasource = self._orders.pop(order_id)
+                        service = self._datasource_factory.create(
+                            datasource, ProtocolType.REST
+                        )
+                        service.cancel_order(order_id, symbol)
+                        self._orders.pop(order_id, None)
+
+                        logging.info(
+                            f"Order {order_id} for symbol {symbol.name} canceled."
+                        )
+                else:
+                    logging.warning(f"Cancel this order: {order_id}")
+                    bybit_service.cancel_order(order_id, order_symbol)

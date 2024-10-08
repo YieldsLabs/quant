@@ -1,5 +1,6 @@
 from core.interfaces.abstract_exchange import AbstractWSExchange
 from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
+from core.models.entity.order import Order
 from core.models.symbol import Symbol
 
 
@@ -16,4 +17,10 @@ class OrderStreamStrategy(AbstractStreamStrategy):
         await ws.unsubscribe(ws.order_topic())
 
     def parse(self, message):
-        return [order for order in message if order.get("symbol") == self.symbol.name]
+        print(message)
+
+        return [
+            Order.from_dict(order)
+            for order in message
+            if order.get("symbol") == self.symbol.name
+        ]

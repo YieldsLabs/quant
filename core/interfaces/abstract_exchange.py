@@ -72,6 +72,12 @@ class AbstractRestExchange(ABC):
         pass
 
     @abstractmethod
+    def fetch_all_open_orders(
+        self,
+    ):
+        pass
+
+    @abstractmethod
     def cancel_order(self, order_id: str, symbol: Symbol):
         pass
 

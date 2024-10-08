@@ -88,6 +88,16 @@ class Bybit(AbstractRestExchange):
             logger.error(f"{symbol}: {e}")
             return
 
+    def fetch_all_open_orders(self):
+        try:
+            return [
+                (order["orderId"], Symbol(order["symbol"], 0, 0, 0, 0, 0, 0, 0))
+                for order in self.connector.fetch_open_orders()
+            ]
+        except Exception as e:
+            logger.error(e)
+            return []
+
     def cancel_order(self, order_id: str, symbol: Symbol):
         try:
             self.connector.cancel_order(order_id, symbol.name)

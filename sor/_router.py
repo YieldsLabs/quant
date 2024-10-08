@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from coral import DataSourceFactory
@@ -152,6 +153,8 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_limit_order(symbol, position_side, orders_size, price)
 
+            await asyncio.sleep(1)
+
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
         position = command.position
@@ -182,6 +185,8 @@ class SmartRouter(AbstractEventManager):
                 break
 
             self.exchange.create_reduce_order(symbol, position_side, orders_size, price)
+
+            await asyncio.sleep(1)
 
     def _calculate_order_slices(self, symbol: Symbol, total_size):
         num_orders = min(
