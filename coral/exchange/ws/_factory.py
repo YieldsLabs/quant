@@ -32,9 +32,9 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
         self._bucket[datasource] = ws_class
 
     def create(self, datasource: DataSourceType, ws: WSType, **kwargs) -> DataSource:
-        if ws == WSType.PRIVATE:
-            cache_key = (datasource, ws)
+        cache_key = (datasource, ws)
 
+        if ws == WSType.PRIVATE:
             if cache_key in self._cache:
                 return self._cache[cache_key]
 
