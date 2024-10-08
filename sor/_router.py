@@ -144,7 +144,7 @@ class SmartRouter(AbstractEventManager):
 
             if (
                 existing_position
-                and existing_position.position_size >= pending_order_size
+                and existing_position.get("position_size", 0) >= pending_order_size
             ):
                 logger.info(
                     f"Existing position for {symbol} has sufficient size. No more orders will be placed."
@@ -153,7 +153,7 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_limit_order(symbol, position_side, orders_size, price)
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.0)
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -186,7 +186,7 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_reduce_order(symbol, position_side, orders_size, price)
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.0)
 
     def _calculate_order_slices(self, symbol: Symbol, total_size):
         num_orders = min(

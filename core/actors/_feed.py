@@ -21,6 +21,7 @@ class FeedActor(BaseActor):
         self._id = f"{self.symbol}_{self.timeframe}_{self.datasource.name}"
 
         self._register_producers_and_consumers()
+        self._tasks = set()
 
     @property
     def id(self) -> str:
@@ -43,7 +44,9 @@ class FeedActor(BaseActor):
         return self._collector
 
     def on_stop(self):
-        asyncio.create_task(self.collector.stop())
+        task = asyncio.create_task(self.collector.stop())
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
 
     def pre_receive(self, msg) -> bool:
         return FeedPolicy.should_process(self, msg)
