@@ -14,5 +14,8 @@ class LiquidationStreamStrategy(AbstractStreamStrategy):
     async def unsubscribe(self, ws: AbstractWSExchange):
         await ws.unsubscribe(ws.liquidation_topic(self.symbol))
 
-    def parse(self, message):
+    def parse(self, ws: AbstractWSExchange, topic: str, message):
+        if topic != ws.liquidation_topic(self.symbol):
+            return []
+
         return [message]

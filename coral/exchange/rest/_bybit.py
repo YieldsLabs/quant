@@ -90,9 +90,12 @@ class Bybit(AbstractRestExchange):
 
     def fetch_all_open_orders(self):
         try:
+            orders = self.connector.fetch_open_orders()
+            print(orders)
+
             return [
                 (order["orderId"], Symbol(order["symbol"], 0, 0, 0, 0, 0, 0, 0))
-                for order in self.connector.fetch_open_orders()
+                for order in orders
             ]
         except Exception as e:
             logger.error(e)

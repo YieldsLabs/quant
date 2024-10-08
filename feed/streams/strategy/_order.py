@@ -16,8 +16,9 @@ class OrderStreamStrategy(AbstractStreamStrategy):
     async def unsubscribe(self, ws: AbstractWSExchange):
         await ws.unsubscribe(ws.order_topic())
 
-    def parse(self, message):
-        print(message)
+    def parse(self, ws: AbstractWSExchange, topic, message):
+        if topic != ws.order_topic():
+            return []
 
         return [
             Order.from_dict(order)

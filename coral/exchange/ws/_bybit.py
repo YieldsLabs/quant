@@ -134,7 +134,9 @@ class BybitWS(AbstractWSExchange):
                         self._auth_event.set()
 
                     if self._is_data_message(data):
-                        await self._message_queue.put(data.get(self.DATA_KEY))
+                        await self._message_queue.put(
+                            (data.get(self.TOPIC_KEY), data.get(self.DATA_KEY))
+                        )
             except (json.JSONDecodeError, KeyError) as e:
                 logger.error(f"Malformed message received: {e}")
             except Exception as e:
@@ -146,7 +148,7 @@ class BybitWS(AbstractWSExchange):
             await self._send(self.SUBSCRIBE_OPERATION, [topic])
             self._subscriptions.add(topic)
 
-    async def unsubscribe(self, topic):
+    async def unsubscribe(self, topic: str):
         async with self._lock:
             await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
 

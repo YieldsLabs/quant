@@ -21,5 +21,8 @@ class OrderBookStreamStrategy(AbstractStreamStrategy):
     ):
         await ws.unsubscribe(ws.order_book_topic(self.symbol, self.depth))
 
-    def parse(self, message):
+    def parse(self, ws: AbstractWSExchange, topic, message):
+        if topic != ws.order_book_topic(self.symbol, self.depth):
+            return
+
         return message

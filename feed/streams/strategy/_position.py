@@ -15,7 +15,10 @@ class PositionStreamStrategy(AbstractStreamStrategy):
     async def unsubscribe(self, ws: AbstractWSExchange):
         await ws.unsubscribe(ws.position_topic())
 
-    def parse(self, message):
+    def parse(self, ws: AbstractWSExchange, topic, message):
+        if topic != ws.position_topic():
+            return []
+
         return [
             position
             for position in message
