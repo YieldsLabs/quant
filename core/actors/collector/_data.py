@@ -30,6 +30,10 @@ class DataCollector:
         await self._queue.put(STOP)
         await self._queue.join()
         await self.wait_for_completion()
+        
+        for task in list(self._tasks):
+            task.cancel()
+
         self._tasks.clear()
 
     async def wait_for_completion(self):
