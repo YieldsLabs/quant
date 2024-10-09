@@ -73,15 +73,15 @@ class ReefActor(BaseActor):
         counter = 0
 
         try:
-            while True:
-                await asyncio.sleep(self.monitor_interval)
-                await self._cancel_expired_orders()
+            async with asyncio.TaskGroup() as task_group:
+                while True:
+                    await asyncio.sleep(self.monitor_interval)
+                    await task_group.create_task(self._cancel_expired_orders())
 
-                if counter % fetch_interval == 0:
-                    await self._fetch_open_orders()
-                    counter = 0
-
-                counter += 1
+                    if counter % fetch_interval == 0:
+                        await task_group.create_task(self._fetch_open_orders())
+                        counter = 0
+                    counter += 1
         except asyncio.CancelledError:
             logging.info("Monitoring task canceled.")
         except Exception as e:
