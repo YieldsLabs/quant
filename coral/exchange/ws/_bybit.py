@@ -19,6 +19,7 @@ connect_exceptions = (ConnectionError, ConnectionClosedError, asyncio.TimeoutErr
 
 user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
 
+
 class BybitWS(AbstractWSExchange):
     SUBSCRIBE_OPERATION = "subscribe"
     UNSUBSCRIBE_OPERATION = "unsubscribe"
@@ -135,14 +136,16 @@ class BybitWS(AbstractWSExchange):
     async def _manage_ping_pong(self):
         while True:
             try:
-                await self.ws.send(json.dumps({self.OP_KEY: self.PING_OPERATION }))
-                await asyncio.wait_for(self._pong_received.wait(), timeout=self.PONG_TIMEOUT)
+                await self.ws.send(json.dumps({self.OP_KEY: self.PING_OPERATION}))
+                await asyncio.wait_for(
+                    self._pong_received.wait(), timeout=self.PONG_TIMEOUT
+                )
                 self._pong_received.clear()
 
             except asyncio.TimeoutError:
                 logger.warning("Pong response timed out. Reconnecting WebSocket.")
                 await self.connect()
-                return 
+                return
             except Exception as e:
                 logger.error(f"Ping/Pong management error: {e}")
                 await self.close()
@@ -161,7 +164,7 @@ class BybitWS(AbstractWSExchange):
             try:
                 async for message in self.ws:
                     data = json.loads(message)
-                    
+
                     if self._is_pong_message(data):
                         self._pong_received.set()
 
@@ -244,7 +247,7 @@ class BybitWS(AbstractWSExchange):
 
     def _is_data_message(self, data):
         return self.TOPIC_KEY in data
-    
+
     def _is_pong_message(self, data):
         return (
             data.get(self.OP_KEY) == self.PONG_OPERATION

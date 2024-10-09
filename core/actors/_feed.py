@@ -52,11 +52,21 @@ class FeedActor(BaseActor):
         return FeedPolicy.should_process(self, msg)
 
     def _register_producers_and_consumers(self):
-        for method in [
-            getattr(self, func) for func in dir(self) if callable(getattr(self, func))
-        ]:
-            if hasattr(method, "_is_producer_"):
-                self.collector.add_producer(method)
+        methods = [
+            getattr(self, method_name)
+            for method_name in dir(self)
+            if callable(getattr(self, method_name))
+        ]
 
-            if hasattr(method, "_is_consumer_"):
-                self.collector.add_consumer(method)
+        producers = [
+            method for method in methods if getattr(method, "_is_producer_", False)
+        ]
+        consumers = [
+            method for method in methods if getattr(method, "_is_consumer_", False)
+        ]
+
+        for producer in producers:
+            self.collector.add_producer(producer)
+
+        for consumer in consumers:
+            self.collector.add_consumer(consumer)
