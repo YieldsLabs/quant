@@ -117,7 +117,7 @@ class BacktestSystem(AbstractSystem):
         logger.info("Generate a new population")
 
         futures_symbols = await self.query(
-            GetSymbols(self.context.exchange_type, self.default_cap)
+            GetSymbols(self.context.datasource, self.default_cap)
         )
 
         generator = self.context.strategy_generator_factory.create(futures_symbols)
@@ -212,7 +212,7 @@ class BacktestSystem(AbstractSystem):
                 FeedType.HISTORICAL,
                 symbol,
                 timeframe,
-                self.context.exchange_type,
+                self.context.datasource,
             ),
         ]
 
@@ -232,7 +232,9 @@ class BacktestSystem(AbstractSystem):
         )
 
         await self.run(
-            StartHistoricalFeed(symbol, timeframe, in_lookback, out_lookback)
+            StartHistoricalFeed(
+                symbol, timeframe, self.context.datasource, in_lookback, out_lookback
+            )
         )
 
         await self.dispatch(BacktestEnded(symbol, timeframe, strategy))

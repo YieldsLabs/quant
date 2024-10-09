@@ -1,7 +1,7 @@
+from coral import DataSourceFactory
 from core.interfaces.abstract_config import AbstractConfig
-from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
 from core.interfaces.abstract_feed_actor_factory import AbstractFeedActorFactory
-from core.models.exchange import ExchangeType
+from core.models.datasource_type import DataSourceType
 from core.models.feed import FeedType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -13,33 +13,33 @@ from ._realtime import RealtimeActor
 class FeedActorFactory(AbstractFeedActorFactory):
     def __init__(
         self,
-        exchange_factory: AbstractExchangeFactory,
-        ws_factory: AbstractExchangeFactory,
+        datasource_factory: DataSourceFactory,
         config_service: AbstractConfig,
     ):
+        self.datasource_factory = datasource_factory
         self.config_service = config_service
-        self.exchange_factory = exchange_factory
-        self.ws_factory = ws_factory
 
     def create_actor(
         self,
-        feed_type: FeedType,
+        feed: FeedType,
         symbol: Symbol,
         timeframe: Timeframe,
-        exchange_type: ExchangeType,
+        datasource: DataSourceType,
     ):
         actor = (
             HistoricalActor(
                 symbol,
                 timeframe,
-                self.exchange_factory.create(exchange_type),
+                datasource,
+                self.datasource_factory,
                 self.config_service,
             )
-            if feed_type == FeedType.HISTORICAL
+            if feed == FeedType.HISTORICAL
             else RealtimeActor(
                 symbol,
                 timeframe,
-                self.ws_factory.create(exchange_type),
+                datasource,
+                self.datasource_factory,
             )
         )
         actor.start()

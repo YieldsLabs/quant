@@ -9,7 +9,7 @@ from core.interfaces.abstract_signal_actor_factory import AbstractSignalActorFac
 from core.interfaces.abstract_strategy_generator_factory import (
     AbstractStrategyGeneratorFactory,
 )
-from core.models.exchange import ExchangeType
+from core.models.datasource_type import DataSourceType
 from infrastructure.config import ConfigService
 
 
@@ -22,5 +22,5 @@ class SystemContext:
     feed_factory: AbstractFeedActorFactory
     strategy_generator_factory: AbstractStrategyGeneratorFactory
     strategy_optimizer_factory: AbstractStrategyOptimizerFactory
-    exchange_type: ExchangeType
+    datasource: DataSourceType
     config_service: ConfigService

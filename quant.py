@@ -7,8 +7,8 @@ import uvloop
 from dotenv import load_dotenv
 
 from copilot import CopilotActor
-from core.models.exchange import ExchangeType
-from exchange import ExchangeFactory, WSFactory
+from coral import DataSourceFactory
+from core.models.datasource_type import DataSourceType
 from executor import OrderExecutorActorFactory
 from feed import FeedActorFactory
 from infrastructure.config import ConfigService
@@ -21,6 +21,7 @@ from optimization import StrategyOptimizerFactory
 from portfolio import Portfolio
 from position import PositionActorFactory, PositionFactory
 from position.size.fixed import PositionFixedSizeStrategy
+from reef import ReefActor
 from risk import RiskActorFactory
 from service import (
     EnvironmentSecretService,
@@ -71,27 +72,31 @@ async def main():
     }
 
     config_service.update(config)
+    default_datasource = DataSourceType.BYBIT
 
     event_bus = EventDispatcher(config_service)
 
-    exchange_factory = ExchangeFactory(EnvironmentSecretService())
-    ws_factory = WSFactory(EnvironmentSecretService())
+    datasource = DataSourceFactory(EnvironmentSecretService())
+    datasource.register_rest_exchange(default_datasource)
+    datasource.register_ws_exchange(default_datasource)
+
     wasm = WasmManager(WASM_FOLDER)
     position_factory = PositionFactory(
         config_service,
         PositionFixedSizeStrategy(),
     )
-    OceanActor(exchange_factory, config_service).start()
+    OceanActor(datasource, config_service).start()
+    ReefActor(datasource, config_service).start()
     MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
     Portfolio(config_service)
-    SmartRouter(exchange_factory, config_service)
+    SmartRouter(datasource, config_service)
 
     signal_actor_factory = SignalActorFactory(SignalService(wasm))
     position_actor_factory = PositionActorFactory(position_factory, config_service)
     risk_actor_factory = RiskActorFactory(config_service)
     executor_actor_factory = OrderExecutorActorFactory()
-    feed_actor_factory = FeedActorFactory(exchange_factory, ws_factory, config_service)
+    feed_actor_factory = FeedActorFactory(datasource, config_service)
 
     trend_context = SystemContext(
         signal_actor_factory,
@@ -101,7 +106,7 @@ async def main():
         feed_actor_factory,
         StrategyGeneratorFactory(config_service),
         StrategyOptimizerFactory(config_service),
-        exchange_type=ExchangeType.BYBIT,
+        datasource=default_datasource,
         config_service=config_service,
     )
 
@@ -114,7 +119,7 @@ async def main():
         executor_actor_factory,
         feed_actor_factory,
         config_service,
-        exchange_type=ExchangeType.BYBIT,
+        datasource=default_datasource,
     )
 
     backtest_system_task = asyncio.create_task(backtest_system.start())

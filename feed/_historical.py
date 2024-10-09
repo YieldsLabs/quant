@@ -1,13 +1,16 @@
 import asyncio
 from typing import AsyncIterator, List
 
-from core.actors import StrategyActor
-from core.commands.ohlcv import IngestMarketData
-from core.events.ohlcv import NewMarketDataReceived
+from coral import DataSourceFactory
+from core.actors import FeedActor
+from core.actors.decorators import Consumer, Producer
+from core.commands.market import IngestMarketData
+from core.events.market import NewMarketDataReceived
 from core.interfaces.abstract_config import AbstractConfig
-from core.interfaces.abstract_exchange import AbstractExchange
+from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
 from core.models.entity.ohlcv import OHLCV
+from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.tasks.feed import StartHistoricalFeed
@@ -15,30 +18,29 @@ from core.tasks.feed import StartHistoricalFeed
 from .streams.base import AsyncHistoricalData
 
 
-class HistoricalActor(StrategyActor):
+class HistoricalActor(FeedActor):
     def __init__(
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        exchange: AbstractExchange,
+        datasource: DataSourceType,
+        datasource_factory: DataSourceFactory,
         config_service: AbstractConfig,
     ):
-        super().__init__(symbol, timeframe)
-        self.exchange = exchange
+        super().__init__(symbol, timeframe, datasource)
+        self.datasource_factory = datasource_factory
         self.config_service = config_service.get("backtest")
-        self.queue = asyncio.Queue()
         self.batch_size = self.config_service["batch_size"]
         self.buff_size = self.config_service["buff_size"]
 
     async def on_receive(self, msg: StartHistoricalFeed):
-        producer = asyncio.create_task(self._producer(msg))
-        consumer = asyncio.create_task(self._consumer())
+        await self.collector.start(msg)
+        await self.collector.wait_for_completion()
 
-        await asyncio.gather(producer, consumer)
-
-    async def _producer(self, msg: StartHistoricalFeed):
+    @Producer
+    async def _kline_producer(self, msg: StartHistoricalFeed):
         async with AsyncHistoricalData(
-            self.exchange,
+            self.datasource_factory.create(msg.datasource, ProtocolType.REST),
             self.symbol,
             self.timeframe,
             msg.in_sample,
@@ -47,20 +49,13 @@ class HistoricalActor(StrategyActor):
             lambda data: Bar(OHLCV.from_list(data), True),
         ) as stream:
             async for batch in self.batched(stream, self.buff_size):
-                await self.queue.put(batch)
+                yield batch
 
-            await self.queue.put(None)
-
-    async def _consumer(self):
-        while True:
-            batch = await self.queue.get()
-
-            if batch is None:
-                break
-
-            await self._process_batch(batch)
-
-            self.queue.task_done()
+    @Consumer
+    async def _consumer(self, data: List[Bar]):
+        match data:
+            case [Bar(), *_]:
+                await self._process_batch(data)
 
     async def _process_batch(self, batch: List[Bar]):
         await self._outbox(batch)
@@ -68,12 +63,16 @@ class HistoricalActor(StrategyActor):
 
     async def _handle_market(self, batch: List[Bar]) -> None:
         for bar in batch:
-            await self.tell(NewMarketDataReceived(self.symbol, self.timeframe, bar))
+            await self.tell(
+                NewMarketDataReceived(self.symbol, self.timeframe, self.datasource, bar)
+            )
         await asyncio.sleep(0.0001)
 
     async def _outbox(self, batch: List[Bar]) -> None:
         tasks = [
-            self.ask(IngestMarketData(self.symbol, self.timeframe, bar))
+            self.ask(
+                IngestMarketData(self.symbol, self.timeframe, self.datasource, bar)
+            )
             for bar in batch
             if bar.closed
         ]

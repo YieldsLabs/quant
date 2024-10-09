@@ -1,67 +1,128 @@
-import asyncio
 import logging
 from typing import List
 
-from core.actors import StrategyActor
-from core.commands.ohlcv import IngestMarketData
-from core.events.ohlcv import NewMarketDataReceived
-from core.interfaces.abstract_ws import AbstractWS
+from coral import DataSourceFactory
+from core.actors import FeedActor
+from core.actors.decorators import Consumer, Producer
+from core.commands.market import IngestMarketData
+from core.events.market import NewMarketDataReceived, NewMarketOrderReceived
+from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
+from core.models.entity.order import Order
+from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
+from core.models.wss_type import WSType
 from core.tasks.feed import StartRealtimeFeed
 
 from .streams.base import AsyncRealTimeData
+from .streams.strategy import (
+    KlineStreamStrategy,
+    LiquidationStreamStrategy,
+    OrderBookStreamStrategy,
+    OrderStreamStrategy,
+    PositionStreamStrategy,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class RealtimeActor(StrategyActor):
+class RealtimeActor(FeedActor):
     def __init__(
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        ws: AbstractWS,
+        datasource: DataSourceType,
+        datasource_factory: DataSourceFactory,
     ):
-        super().__init__(symbol, timeframe)
-        self.queue = asyncio.Queue()
-        self.ws = ws
-        self.producer = None
-        self.consumer = None
+        super().__init__(symbol, timeframe, datasource)
+        self.datasource_factory = datasource_factory
+        self.depth = 50
 
-    def on_stop(self):
-        if self.producer:
-            self.producer.cancel()
+    async def on_receive(self, msg: StartRealtimeFeed):
+        await self.collector.start(msg)
 
-        if self.consumer:
-            self.consumer.cancel()
-
-    async def on_receive(self, _msg: StartRealtimeFeed):
-        self.producer = asyncio.create_task(self._producer())
-        self.consumer = asyncio.create_task(self._consumer())
-
-    async def _producer(self):
-        async with AsyncRealTimeData(self.ws, self.symbol, self.timeframe) as stream:
+    @Producer
+    async def _kline_producer(self, msg: StartRealtimeFeed):
+        async with AsyncRealTimeData(
+            self.datasource_factory.create(
+                msg.datasource, ProtocolType.WS, WSType.PUBLIC
+            ),
+            KlineStreamStrategy(self.timeframe, self.symbol),
+        ) as stream:
             async for bars in stream:
-                await self.queue.put(bars)
+                yield bars
 
-            await self.queue.put(None)
+    @Producer
+    async def _ob_producer(self, msg: StartRealtimeFeed):
+        async with AsyncRealTimeData(
+            self.datasource_factory.create(
+                msg.datasource, ProtocolType.WS, WSType.PUBLIC
+            ),
+            OrderBookStreamStrategy(self.symbol, self.depth),
+        ) as stream:
+            async for orders in stream:
+                yield orders
 
-    async def _consumer(self):
-        while True:
-            bars = await self.queue.get()
+    @Producer
+    async def _liquidation_producer(self, msg: StartRealtimeFeed):
+        async with AsyncRealTimeData(
+            self.datasource_factory.create(
+                msg.datasource, ProtocolType.WS, WSType.PUBLIC
+            ),
+            LiquidationStreamStrategy(self.symbol),
+        ) as stream:
+            async for liquidations in stream:
+                yield liquidations
 
-            if bars is None:
-                break
+    @Producer
+    async def _order_producer(self, msg: StartRealtimeFeed):
+        async with AsyncRealTimeData(
+            self.datasource_factory.create(
+                msg.datasource, ProtocolType.WS, WSType.PRIVATE
+            ),
+            OrderStreamStrategy(self.symbol),
+        ) as stream:
+            async for order in stream:
+                yield order
 
-            await self._process_bars(bars)
+    @Producer
+    async def _position_producer(self, msg: StartRealtimeFeed):
+        async with AsyncRealTimeData(
+            self.datasource_factory.create(
+                msg.datasource, ProtocolType.WS, WSType.PRIVATE
+            ),
+            PositionStreamStrategy(self.symbol),
+        ) as stream:
+            async for position in stream:
+                yield position
 
-            self.queue.task_done()
+    @Consumer
+    async def _consumer(self, data: List[Bar]):
+        match data:
+            case [Bar(), *_]:
+                await self._process_bars(data)
+
+            case [Order(), *_]:
+                await self._process_orders(data)
 
     async def _process_bars(self, bars: List[Bar]):
         for bar in bars:
-            await self.ask(IngestMarketData(self.symbol, self.timeframe, bar))
-            await self.tell(NewMarketDataReceived(self.symbol, self.timeframe, bar))
+            await self.ask(
+                IngestMarketData(self.symbol, self.timeframe, self.datasource, bar)
+            )
+            await self.tell(
+                NewMarketDataReceived(self.symbol, self.timeframe, self.datasource, bar)
+            )
 
             if bar.closed:
                 logger.info(f"{self.symbol}_{self.timeframe}:{bar}")
+
+    async def _process_orders(self, orders: List[Order]):
+        for order in orders:
+            await self.tell(
+                NewMarketOrderReceived(
+                    self.symbol, self.timeframe, self.datasource, order
+                )
+            )
+            logger.info(f"{self.symbol}_{self.timeframe}:{order}")

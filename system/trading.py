@@ -15,7 +15,7 @@ from core.interfaces.abstract_risk_actor_factory import AbstractRiskActorFactory
 from core.interfaces.abstract_signal_actor_factory import AbstractSignalActorFactory
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.broker import MarginMode, PositionMode
-from core.models.exchange import ExchangeType
+from core.models.datasource_type import DataSourceType
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
 from core.models.order_type import OrderType
@@ -46,7 +46,7 @@ class TradingSystem(AbstractSystem):
         executor_factory: AbstractExecutorActorFactory,
         feed_factory: AbstractFeedActorFactory,
         config_service: AbstractConfig,
-        exchange_type: ExchangeType,
+        datasource: DataSourceType,
     ):
         super().__init__()
         self.active_strategy = set()
@@ -59,7 +59,7 @@ class TradingSystem(AbstractSystem):
         self.risk_factory = risk_factory
         self.executor_factory = executor_factory
         self.feed_factory = feed_factory
-        self.exchange_type = exchange_type
+        self.datasource = datasource
 
     @event_handler(DeployStrategy)
     async def _deploy_strategy(self, event: DeployStrategy):
@@ -124,11 +124,13 @@ class TradingSystem(AbstractSystem):
                 logger.info(f"Prefetch data: {symbol}_{timeframe}{strategy}")
 
                 feed_actor = self.feed_factory.create_actor(
-                    FeedType.HISTORICAL, symbol, timeframe, self.exchange_type
+                    FeedType.HISTORICAL, symbol, timeframe, self.datasource
                 )
 
                 await self.run(
-                    StartHistoricalFeed(symbol, timeframe, Lookback.ONE_MONTH, None)
+                    StartHistoricalFeed(
+                        symbol, timeframe, self.datasource, Lookback.ONE_MONTH, None
+                    )
                 )
 
                 feed_actor.stop()
@@ -140,7 +142,7 @@ class TradingSystem(AbstractSystem):
         for (symbol, timeframe), _ in self.next_strategy.items():
             await self.execute(
                 UpdateSymbolSettings(
-                    self.exchange_type,
+                    self.datasource,
                     symbol,
                     min(symbol.max_leverage, self.config["leverage"]),
                     PositionMode.HEDGED,
@@ -158,10 +160,7 @@ class TradingSystem(AbstractSystem):
                     timeframe,
                 ),
                 self.feed_factory.create_actor(
-                    FeedType.REALTIME,
-                    symbol,
-                    timeframe,
-                    self.exchange_type,
+                    FeedType.REALTIME, symbol, timeframe, self.datasource
                 ),
             )
 
@@ -174,7 +173,11 @@ class TradingSystem(AbstractSystem):
 
         await asyncio.gather(
             *[
-                self.run(StartRealtimeFeed(actor[0].symbol, actor[0].timeframe))
+                self.run(
+                    StartRealtimeFeed(
+                        actor[-1].symbol, actor[-1].timeframe, actor[-1].datasource
+                    )
+                )
                 for actor in self.active_strategy
             ]
         )

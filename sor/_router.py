@@ -1,15 +1,17 @@
+import asyncio
 import logging
-import time
 
+from coral import DataSourceFactory
 from core.commands.position import ClosePosition, OpenPosition
 from core.event_decorators import command_handler, query_handler
 from core.interfaces.abstract_config import AbstractConfig
 from core.interfaces.abstract_event_manager import AbstractEventManager
-from core.interfaces.abstract_exhange_factory import AbstractExchangeFactory
+from core.models.datasource_type import DataSourceType
 from core.models.entity.order import Order
-from core.models.exchange import ExchangeType
 from core.models.order_type import OrderStatus
+from core.models.protocol_type import ProtocolType
 from core.models.side import PositionSide
+from core.models.symbol import Symbol
 from core.queries.account import GetBalance
 from core.queries.position import GetClosePosition, GetOpenPosition, HasPosition
 
@@ -20,11 +22,12 @@ logger = logging.getLogger(__name__)
 
 class SmartRouter(AbstractEventManager):
     def __init__(
-        self, exchange_factory: AbstractExchangeFactory, config_service: AbstractConfig
+        self, datasource_factory: DataSourceFactory, config_service: AbstractConfig
     ):
         super().__init__()
-        self.exchange_factory = exchange_factory
-        self.exchange = self.exchange_factory.create(ExchangeType.BYBIT)
+        self.exchange = datasource_factory.create(
+            DataSourceType.BYBIT, ProtocolType.REST
+        )
         self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 
@@ -96,26 +99,22 @@ class SmartRouter(AbstractEventManager):
     async def open_position(self, command: OpenPosition):
         position = command.position
         symbol = position.signal.symbol
+        position_side = position.side
 
-        logger.info(f"Try to open position: {position}")
+        logger.info(f"Trying to open position: {symbol}_{position_side}")
 
-        if self.exchange.fetch_position(symbol, position.side):
-            logging.info("Position already exists")
+        if self.exchange.fetch_position(symbol, position_side):
+            logger.info(f"Position for {symbol} already exists.")
             return
 
         pending_order = position.entry_order()
 
         entry_price = pending_order.price
-        size = pending_order.size
+        pending_order_size = pending_order.size
 
-        num_orders = min(
-            max(1, int(size / symbol.min_position_size)), self.config["max_order_slice"]
-        )
-        size = round(size / num_orders, symbol.position_precision)
-        order_counter = 0
+        orders_size = self._calculate_order_slices(symbol, pending_order_size)
+
         num_order_breach = 0
-        order_timestamps = {}
-        exp_time = self.config["order_expiration_time"]
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = ask if position.side == PositionSide.LONG else bid
@@ -124,67 +123,37 @@ class SmartRouter(AbstractEventManager):
             current_distance_to_stop_loss = abs(stop_loss - price)
             distance_to_stop_loss = abs(entry_price - stop_loss)
 
-            threshold_breach = (
+            if (
                 self.config["stop_loss_threshold"] * distance_to_stop_loss
                 > current_distance_to_stop_loss
-            )
-
-            if threshold_breach:
-                logging.info(
-                    f"Order risk breached: ENTR: {entry_price}, STPLS: {stop_loss}, THEO_DSTNC: {distance_to_stop_loss}, ALG_DSTNC: {current_distance_to_stop_loss}"
+            ):
+                logger.warn(
+                    f"Order risk breached for {symbol}: Entry Price={entry_price}, "
+                    f"Stop Loss={stop_loss}, Distance to Stop Loss={distance_to_stop_loss}, "
+                    f"Current Distance={current_distance_to_stop_loss}"
                 )
 
                 num_order_breach += 1
-
                 if num_order_breach >= self.config["max_order_breach"]:
+                    logger.warn(
+                        f"Max stop-loss breaches reached for {symbol}. Stopping order placement."
+                    )
                     break
 
-            spread = (
-                price - entry_price
-                if position.side == PositionSide.LONG
-                else entry_price - price
-            )
+            existing_position = self.exchange.fetch_position(symbol, position_side)
 
-            spread_percentage = 100 * (spread / entry_price)
-
-            logging.info(
-                f"Trying to open order -> algo price: {price}, theo price: {entry_price}, spread: {spread_percentage}%"
-            )
-
-            if spread_percentage > 0.35:
-                break
-
-            curr_time = time.time()
-            expired_orders = [
-                order_id
-                for order_id, timestamp in order_timestamps.items()
-                if curr_time - timestamp > exp_time
-            ]
-
-            for order_id in expired_orders:
-                self.exchange.cancel_order(order_id, symbol)
-                order_timestamps.pop(order_id)
-
-            for order_id in list(order_timestamps.keys()):
-                if self.exchange.has_filled_order(order_id, symbol):
-                    order_timestamps.pop(order_id)
-                    order_counter += 1
-
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
-                break
-
-            if not self.exchange.has_open_orders(symbol, position.side) and not len(
-                order_timestamps.keys()
+            if (
+                existing_position
+                and existing_position.get("position_size", 0) >= pending_order_size
             ):
-                order_id = self.exchange.create_limit_order(
-                    symbol, position.side, size, price
+                logger.info(
+                    f"Existing position for {symbol} has sufficient size. No more orders will be placed."
                 )
-                if order_id:
-                    order_timestamps[order_id] = time.time()
+                break
 
-        for order_id in list(order_timestamps.keys()):
-            self.exchange.cancel_order(order_id, symbol)
+            self.exchange.create_limit_order(symbol, position_side, orders_size, price)
+
+            await asyncio.sleep(0.2)
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -193,68 +162,41 @@ class SmartRouter(AbstractEventManager):
         symbol = position.signal.symbol
         position_side = position.side
 
+        logger.info(f"Trying to close position for {symbol}_{position_side}")
+
         if not self.exchange.fetch_position(symbol, position_side):
-            logging.info("Position is not existed")
+            logger.warn(f"Position for {symbol} does not exist. No action taken.")
             return
 
         exit_order = position.exit_order()
 
-        num_orders = min(
-            max(1, int(exit_order.size / symbol.min_position_size)),
-            self.config["max_order_slice"],
-        )
-        size = round(exit_order.size / num_orders, symbol.position_precision)
-        order_counter = 0
-        order_timestamps = {}
-        max_spread = float("-inf")
-        exp_time = self.config["order_expiration_time"]
+        orders_size = self._calculate_order_slices(symbol, exit_order.size)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
-            if not self.exchange.fetch_position(symbol, position_side):
-                break
-
             price = bid if position.side == PositionSide.LONG else ask
 
-            spread = (
-                price - exit_order.price
-                if position_side == PositionSide.LONG
-                else exit_order.price - price
-            )
-            max_spread = max(max_spread, spread)
-
-            logging.info(
-                f"Trying to reduce order -> algo price: {price}, theo price: {exit_order.price}, spread: {spread}, max spread: {max_spread}"
+            logger.info(
+                f"Reducing position for {symbol} -> Algo Price: {price}, "
+                f"Theoretical Exit Price: {exit_order.price}"
             )
 
-            curr_time = time.time()
-            expired_orders = [
-                order_id
-                for order_id, timestamp in order_timestamps.items()
-                if curr_time - timestamp > exp_time
-            ]
-
-            for order_id in expired_orders:
-                self.exchange.cancel_order(order_id, symbol)
-                order_timestamps.pop(order_id)
-
-            for order_id in list(order_timestamps.keys()):
-                if self.exchange.has_filled_order(order_id, symbol):
-                    order_timestamps.pop(order_id)
-                    order_counter += 1
-
-            if order_counter >= num_orders:
-                logging.info(f"All orders are filled: {order_counter}")
+            if not self.exchange.fetch_position(symbol, position_side):
+                logger.info(f"Position for {symbol} already closed.")
                 break
 
-            if not (
-                self.exchange.has_open_orders(symbol, position_side, True)
-                or len(order_timestamps.keys())
-            ):
-                order_id = self.exchange.create_reduce_order(
-                    symbol, position_side, size, price
-                )
-                if order_id:
-                    order_timestamps[order_id] = time.time()
+            self.exchange.create_reduce_order(symbol, position_side, orders_size, price)
 
-        for order_id in list(order_timestamps.keys()):
-            self.exchange.cancel_order(order_id, symbol)
+            await asyncio.sleep(0.2)
+
+    def _calculate_order_slices(self, symbol: Symbol, total_size):
+        num_orders = min(
+            max(1, int(total_size / symbol.min_position_size)),
+            self.config["max_order_slice"],
+        )
+        orders_size = round(total_size / num_orders, symbol.position_precision)
+
+        logger.info(
+            f"Calculated order slices for {symbol}: {num_orders} orders, {orders_size} size per order"
+        )
+
+        return orders_size

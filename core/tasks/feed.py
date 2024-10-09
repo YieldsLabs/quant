@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from core.events.meta import EventMeta
 from core.groups.tasks import TasksGroup
+from core.models.datasource_type import DataSourceType
 from core.models.lookback import Lookback
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -13,6 +14,7 @@ from ._base import Task
 class FeedTask(Task):
     symbol: Symbol
     timeframe: Timeframe
+    datasource: DataSourceType
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=2, group=TasksGroup.feed),
         init=False,

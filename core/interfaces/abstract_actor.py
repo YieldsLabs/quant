@@ -3,7 +3,7 @@ from typing import Union
 
 from core.commands._base import Command
 from core.events.backtest import BacktestEnded
-from core.events.ohlcv import NewMarketDataReceived
+from core.events.market import NewMarketDataReceived, NewMarketOrderReceived
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
@@ -20,9 +20,11 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.queries._base import Query
+from core.tasks.feed import StartHistoricalFeed, StartRealtimeFeed
 
 Message = Union[
     NewMarketDataReceived,
+    NewMarketOrderReceived,
     PositionInitialized,
     PositionOpened,
     PositionClosed,
@@ -35,6 +37,8 @@ Message = Union[
     ExitLongSignalReceived,
     ExitShortSignalReceived,
     RiskThresholdBreached,
+    StartHistoricalFeed,
+    StartRealtimeFeed,
 ]
 
 Ask = Union[Command, Query]

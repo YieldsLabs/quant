@@ -1,7 +1,7 @@
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 
-from ._base_actor import BaseActor
+from ._base import BaseActor
 from .policy.strategy import StrategyPolicy
 
 

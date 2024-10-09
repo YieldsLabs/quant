@@ -1,7 +1,7 @@
 from typing import Union
 
 from core.actors import BaseActor
-from core.commands.ohlcv import IngestMarketData
+from core.commands.market import IngestMarketData
 from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.mixins import EventHandlerMixin
 from core.models.entity.ohlcv import OHLCV

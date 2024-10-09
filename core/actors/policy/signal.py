@@ -1,4 +1,4 @@
-from core.events.ohlcv import NewMarketDataReceived
+from core.events.market import NewMarketDataReceived
 
 from .event import EventPolicy
 

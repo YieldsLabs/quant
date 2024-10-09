@@ -7,7 +7,7 @@ import ccxt
 from cachetools import TTLCache, cached
 from ccxt.base.errors import NetworkError, RequestTimeout
 
-from core.interfaces.abstract_exchange import AbstractExchange
+from core.interfaces.abstract_exchange import AbstractRestExchange
 from core.models.broker import MarginMode, PositionMode
 from core.models.lookback import TIMEFRAMES_TO_LOOKBACK, Lookback
 from core.models.side import PositionSide
@@ -22,7 +22,7 @@ EXCEPTIONS = (RequestTimeout, NetworkError)
 logger = logging.getLogger(__name__)
 
 
-class Bybit(AbstractExchange):
+class Bybit(AbstractRestExchange):
     _instance = None
 
     def __new__(cls, api_key: str, api_secret: str):
@@ -87,6 +87,19 @@ class Bybit(AbstractExchange):
         except Exception as e:
             logger.error(f"{symbol}: {e}")
             return
+
+    def fetch_all_open_orders(self):
+        try:
+            return [
+                (
+                    order["id"],
+                    Symbol(order.get("info", {}).get("symbol"), 0, 0, 0, 0, 0, 0, 0),
+                )
+                for order in self.connector.fetch_open_orders()
+            ]
+        except Exception as e:
+            logger.error(e)
+            return []
 
     def cancel_order(self, order_id: str, symbol: Symbol):
         try:
@@ -252,7 +265,9 @@ class Bybit(AbstractExchange):
                 ),
                 "entry_price": float(position.get("entryPrice", 0)),
                 "position_size": float(position.get("contracts", 0)),
-                "open_fee": -float(position.get("info", {}).get("curRealisedPnl", 0)),
+                "open_fee": abs(
+                    float(position.get("info", {}).get("curRealisedPnl", 0))
+                ),
             }
 
         return None

@@ -1,37 +1,33 @@
-from core.interfaces.abstract_ws import AbstractWS
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
+from core.interfaces.abstract_exchange import AbstractWSExchange
+from core.interfaces.abstract_stream_strategy import AbstractStreamStrategy
 
 
 class AsyncRealTimeData:
     def __init__(
         self,
-        ws: AbstractWS,
-        symbol: Symbol,
-        timeframe: Timeframe,
+        ws: AbstractWSExchange,
+        strategy: AbstractStreamStrategy,
     ):
         self.ws = ws
-        self.symbol = symbol
-        self.timeframe = timeframe
-        self.iterator = None
+        self.strategy = strategy
 
-    async def __aenter__(self):
-        await self.ws.subscribe(self.symbol, self.timeframe)
-        await self.ws.run()
+    async def __aenter__(self) -> "AsyncRealTimeData":
+        await self.ws.connect()
+        await self.strategy.subscribe(self.ws)
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.ws.unsubscribe(self.symbol, self.timeframe)
+        await self.strategy.unsubscribe(self.ws)
         await self.ws.close()
         return self
 
-    def __aiter__(self):
+    def __aiter__(self) -> "AsyncRealTimeData":
         return self
 
     async def __anext__(self):
         try:
-            data = await self.ws.receive(self.symbol, self.timeframe)
-            return data
+            topic, data = await self.ws.get_message()
+            return self.strategy.parse(self.ws, topic, data)
         except StopAsyncIteration:
-            await self.ws.unsubscribe(self.symbol, self.timeframe)
+            await self.strategy.unsubscribe()
             raise

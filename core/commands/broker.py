@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from core.events._base import EventMeta
 from core.groups.command import CommandGroup
 from core.models.broker import MarginMode, PositionMode
-from core.models.exchange import ExchangeType
+from core.models.datasource_type import DataSourceType
 from core.models.symbol import Symbol
 
 from ._base import Command
@@ -19,7 +19,7 @@ class BrokerCommand(Command):
 
 @dataclass(frozen=True)
 class UpdateSymbolSettings(BrokerCommand):
-    exchange: ExchangeType
+    datasource: DataSourceType
     symbol: Symbol
     leverage: int
     position_mode: PositionMode
