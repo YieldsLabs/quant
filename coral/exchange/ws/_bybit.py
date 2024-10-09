@@ -5,7 +5,7 @@ import json
 import logging
 import time
 
-import websockets
+from websockets.asyncio.client import connect
 from websockets.exceptions import ConnectionClosedError
 
 from core.interfaces.abstract_exchange import AbstractWSExchange
@@ -17,11 +17,17 @@ logger = logging.getLogger(__name__)
 
 connect_exceptions = (ConnectionError, ConnectionClosedError, asyncio.TimeoutError)
 
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
 
 class BybitWS(AbstractWSExchange):
     SUBSCRIBE_OPERATION = "subscribe"
     UNSUBSCRIBE_OPERATION = "unsubscribe"
     AUTH_OPERATION = "auth"
+    PING_OPERATION = "ping"
+    PONG_OPERATION = "pong"
+
+    PING_INTERVAL = 20
+    PONG_TIMEOUT = 18
 
     INTERVALS = {
         Timeframe.ONE_MINUTE: 1,
@@ -59,25 +65,38 @@ class BybitWS(AbstractWSExchange):
         self._message_queue = asyncio.Queue()
         self._tasks = set()
         self._semaphore = asyncio.Semaphore(1)
+        self._last_pong_time = None
+        self._pong_received = asyncio.Event()
+        self._ping_task = None
+        self._receive_task = None
 
     async def _connect(self):
-        if not self.ws or not self.ws.open:
+        if not self.ws:
             try:
-                self.ws = await websockets.connect(
+                self.ws = await connect(
                     self.wss,
-                    open_timeout=2,
-                    ping_interval=20,
-                    ping_timeout=10,
-                    close_timeout=3,
+                    open_timeout=5,
+                    ping_interval=self.PING_INTERVAL,
+                    ping_timeout=self.PONG_TIMEOUT,
+                    close_timeout=10,
+                    user_agent_header=user_agent,
+                    max_queue=2,
                 )
 
                 await self._wait_for_ws(timeout=5)
                 logger.info("WebSocket connection established.")
                 await self._handle_reconnect()
 
-                receive_task = asyncio.create_task(self._receive())
-                self._tasks.add(receive_task)
-                receive_task.add_done_callback(self._tasks.discard)
+                if not self._receive_task or self._receive_task.done():
+                    self._receive_task = asyncio.create_task(self._receive())
+                    self._tasks.add(self._receive_task)
+                    self._receive_task.add_done_callback(self._tasks.discard)
+
+                if not self._ping_task or self._ping_task.done():
+                    self._ping_task = asyncio.create_task(self._manage_ping_pong())
+                    self._tasks.add(self._ping_task)
+                    self._ping_task.add_done_callback(self._tasks.discard)
+
             except Exception as e:
                 logger.error(f"Failed to connect to WebSocket: {e}")
                 raise ConnectionError("Failed to connect to WebSocket") from None
@@ -92,17 +111,14 @@ class BybitWS(AbstractWSExchange):
         await self._connect()
 
     async def close(self):
-        if self._tasks:
-            for task in self._tasks:
-                task.cancel()
-
-            await asyncio.gather(*self._tasks, return_exceptions=True)
-
-            self._tasks.clear()
-
         if self.ws:
-            await self.ws.close()
-            self.ws = None
+            try:
+                await self.ws.close()
+            except Exception as e:
+                logger.error(f"Failed to close WebSocket properly: {e}")
+            finally:
+                self.ws = None
+        self._tasks.clear()
 
     async def auth(self):
         expires = int(time.time() * 10**3) + 3 * 10**3
@@ -116,18 +132,38 @@ class BybitWS(AbstractWSExchange):
         await self._send(self.AUTH_OPERATION, [self.api_key, expires, sign])
         await self._auth_event.wait()
 
+    async def _manage_ping_pong(self):
+        while True:
+            try:
+                await self.ws.send(json.dumps({self.OP_KEY: self.PING_OPERATION }))
+                await asyncio.wait_for(self._pong_received.wait(), timeout=self.PONG_TIMEOUT)
+                self._pong_received.clear()
+
+            except asyncio.TimeoutError:
+                logger.warning("Pong response timed out. Reconnecting WebSocket.")
+                await self.connect()
+                return 
+            except Exception as e:
+                logger.error(f"Ping/Pong management error: {e}")
+                await self.close()
+                return
+            await asyncio.sleep(self.PING_INTERVAL)
+
     @retry(
         max_retries=13,
         initial_retry_delay=1,
         handled_exceptions=connect_exceptions,
     )
     async def _receive(self):
-        await self._connect()
+        await self._resubscribe_all()
 
         async with self._semaphore:
             try:
                 async for message in self.ws:
                     data = json.loads(message)
+                    
+                    if self._is_pong_message(data):
+                        self._pong_received.set()
 
                     if self._is_auth_confirm_message(data):
                         self._auth_event.set()
@@ -176,7 +212,7 @@ class BybitWS(AbstractWSExchange):
         return "position.linear"
 
     async def _send(self, operation, args, timeout=5):
-        if not self.ws or not self.ws.open:
+        if not self.ws:
             logger.error("WebSocket connection error.")
             return
 
@@ -203,11 +239,17 @@ class BybitWS(AbstractWSExchange):
             raise ConnectionError("WebSocket connection timeout.") from None
 
     async def _check_ws_open(self):
-        while not self.ws or not self.ws.open:
+        while not self.ws:
             await asyncio.sleep(0.1)
 
     def _is_data_message(self, data):
         return self.TOPIC_KEY in data
+    
+    def _is_pong_message(self, data):
+        return (
+            data.get(self.OP_KEY) == self.PONG_OPERATION
+            and data.get(self.SUCCESS_KEY) is True
+        )
 
     def _is_auth_confirm_message(self, data):
         return (

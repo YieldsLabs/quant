@@ -34,9 +34,8 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
     def create(self, datasource: DataSourceType, ws: WSType, **kwargs) -> DataSource:
         cache_key = (datasource, ws)
 
-        if ws == WSType.PRIVATE:
-            if cache_key in self._cache:
-                return self._cache[cache_key]
+        if cache_key in self._cache:
+            return self._cache[cache_key]
 
         if datasource not in self._bucket:
             raise ValueError(f"WebSocket class for {datasource} is not registered.")
@@ -53,7 +52,6 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
 
         instance = self._bucket[datasource](wss_url, api_key, api_secret)
 
-        if ws == WSType.PRIVATE:
-            self._cache[cache_key] = instance
+        self._cache[cache_key] = instance
 
         return instance

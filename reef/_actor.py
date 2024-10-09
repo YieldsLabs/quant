@@ -69,7 +69,7 @@ class ReefActor(BaseActor):
             logging.info(f"Order {order.id} appended for symbol {symbol.name}.")
 
     async def _monitor_orders(self):
-        fetch_interval = 5
+        fetch_interval = 8
         counter = 0
 
         try:

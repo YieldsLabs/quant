@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 def retry(
     max_retries=3,
     initial_retry_delay=1,
+    jitter_factor=(0.5, 1.5),
     handled_exceptions=(RequestException, ReadTimeout),
 ):
     max_retries_exception = Exception(
@@ -27,7 +28,7 @@ def retry(
                 logger.error(f"Error: {e}. Retrying...")
                 retries += 1
                 retry_delay = (
-                    initial_retry_delay * (2**retries) * random.uniform(0.5, 1.5)
+                    initial_retry_delay * (2**retries) * random.uniform(*jitter_factor)
                 )
                 logger.info(f"Waiting {retry_delay} seconds before retrying.")
                 await asyncio.sleep(retry_delay)
@@ -44,7 +45,7 @@ def retry(
                 logger.error(f"Error: {e}. Retrying...")
                 retries += 1
                 retry_delay = (
-                    initial_retry_delay * (2**retries) * random.uniform(0.5, 1.5)
+                    initial_retry_delay * (2**retries) * random.uniform(*jitter_factor)
                 )
                 logger.info(f"Waiting {retry_delay} seconds before retrying.")
                 time.sleep(retry_delay)

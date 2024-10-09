@@ -3,7 +3,7 @@ from typing import Union
 
 from core.commands._base import Command
 from core.events.backtest import BacktestEnded
-from core.events.market import NewMarketDataReceived
+from core.events.market import NewMarketDataReceived, NewMarketOrderReceived
 from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
@@ -24,6 +24,7 @@ from core.tasks.feed import StartHistoricalFeed, StartRealtimeFeed
 
 Message = Union[
     NewMarketDataReceived,
+    NewMarketOrderReceived,
     PositionInitialized,
     PositionOpened,
     PositionClosed,

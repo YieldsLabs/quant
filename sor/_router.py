@@ -101,7 +101,7 @@ class SmartRouter(AbstractEventManager):
         symbol = position.signal.symbol
         position_side = position.side
 
-        logger.info(f"Trying to open position: {position}")
+        logger.info(f"Trying to open position: {symbol}_{position_side}")
 
         if self.exchange.fetch_position(symbol, position_side):
             logger.info(f"Position for {symbol} already exists.")
@@ -162,7 +162,7 @@ class SmartRouter(AbstractEventManager):
         symbol = position.signal.symbol
         position_side = position.side
 
-        logger.info(f"Trying to close position for {symbol}")
+        logger.info(f"Trying to close position for {symbol}_{position_side}")
 
         if not self.exchange.fetch_position(symbol, position_side):
             logger.warn(f"Position for {symbol} does not exist. No action taken.")

@@ -35,11 +35,10 @@ class DataCollector:
 
         await self.wait_for_completion()
 
-        self._tasks.clear()
-
     async def wait_for_completion(self):
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
+        self._tasks.clear()
 
     def add_producer(self, producer: Callable[[Optional[Event]], AsyncIterable[Any]]):
         self._producers.append(producer)
