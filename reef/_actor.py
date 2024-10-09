@@ -71,10 +71,9 @@ class ReefActor(BaseActor):
     async def _monitor_orders(self):
         fetch_interval = 8
         counter = 0
-
         try:
-            async with asyncio.TaskGroup() as task_group:
-                while True:
+            while True:
+                async with asyncio.TaskGroup() as task_group:
                     await asyncio.sleep(self.monitor_interval)
                     await task_group.create_task(self._cancel_expired_orders())
 
