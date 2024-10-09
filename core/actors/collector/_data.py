@@ -58,7 +58,8 @@ class DataCollector:
 
             if data is STOP:
                 break
-
-            await consumer(data)
+            
+            if data:
+                await consumer(data)
 
             self._queue.task_done()
