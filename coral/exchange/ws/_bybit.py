@@ -28,7 +28,8 @@ class BybitWS(AbstractWSExchange):
     PONG_OPERATION = "pong"
 
     PING_INTERVAL = 20
-    PONG_TIMEOUT = 18
+    PONG_TIMEOUT = 8
+    AUTH_TIMEOUT = 10
 
     INTERVALS = {
         Timeframe.ONE_MINUTE: 1,
@@ -80,13 +81,13 @@ class BybitWS(AbstractWSExchange):
                     ping_timeout=self.PONG_TIMEOUT,
                     close_timeout=10,
                     user_agent_header=user_agent,
-                    max_queue=2,
+                    max_queue=4,
                 )
 
                 await self._wait_for_ws(timeout=5)
                 logger.info("WebSocket connection established.")
-                await self._handle_reconnect()
                 self._start_tasks()
+                await self._handle_reconnect()
             except Exception as e:
                 logger.error(f"Failed to connect to WebSocket: {e}")
                 raise ConnectionError("Failed to connect to WebSocket") from None
@@ -108,7 +109,6 @@ class BybitWS(AbstractWSExchange):
                 logger.error(f"Failed to close WebSocket properly: {e}")
             finally:
                 self.ws = None
-        self._tasks.clear()
 
     async def auth(self):
         expires = int(time.time() * 10**3) + 3 * 10**3
@@ -120,20 +120,32 @@ class BybitWS(AbstractWSExchange):
         ).hexdigest()
 
         await self._send(self.AUTH_OPERATION, [self.api_key, expires, sign])
-        await self._auth_event.wait()
+        await asyncio.wait_for(self._auth_event.wait(), timeout=self.AUTH_TIMEOUT)
 
     async def _manage_ping_pong(self):
+        max_ping_retries = 3
+        retries = 0
+
         while True:
             try:
                 await self.ws.send(json.dumps({self.OP_KEY: self.PING_OPERATION}))
                 await asyncio.wait_for(
                     self._pong_received.wait(), timeout=self.PONG_TIMEOUT
                 )
+                retries = 0
                 self._pong_received.clear()
             except asyncio.TimeoutError:
-                logger.warning("Pong response timed out. Reconnecting WebSocket.")
-                await self.connect()
-                return
+                retries += 1
+                logger.warning(
+                    f"Pong response timed out. Attempt {retries}/{max_ping_retries}."
+                )
+
+                if retries >= max_ping_retries:
+                    logger.error("Max retries exceeded. Reconnecting WebSocket.")
+                    await self.connect()
+                    return
+                else:
+                    await asyncio.sleep(self.PING_INTERVAL)
             except Exception as e:
                 logger.error(f"Ping/Pong management error: {e}")
                 await self.close()
@@ -150,6 +162,15 @@ class BybitWS(AbstractWSExchange):
             self._ping_task = asyncio.create_task(self._manage_ping_pong())
             self._tasks.add(self._ping_task)
             self._ping_task.add_done_callback(self._tasks.discard)
+
+    async def _cancel_tasks(self):
+        tasks = list(self._tasks)
+
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     @retry(
         max_retries=13,
@@ -176,7 +197,7 @@ class BybitWS(AbstractWSExchange):
                 logger.error(f"Malformed message received: {e}")
             except Exception as e:
                 logger.exception(f"Unexpected error while receiving message: {e}")
-                await self._handle_reconnect()
+                await self.connect()
                 raise ConnectionError("WebSocket connection error.") from None
 
     async def subscribe(self, topic: str):
@@ -225,7 +246,7 @@ class BybitWS(AbstractWSExchange):
             await asyncio.wait_for(self.ws.send(json.dumps(message)), timeout=timeout)
 
             if operation != self.AUTH_OPERATION:
-                logger.info(f"Subscribed {operation.capitalize()} to: {message}")
+                logger.info(f"{operation.capitalize()} to: {message}")
         except asyncio.TimeoutError:
             logger.error("Subscription request timed out")
         except Exception as e:
@@ -267,6 +288,9 @@ class BybitWS(AbstractWSExchange):
             logger.info(f"Resubscribed to all topics: {list(self._subscriptions)}")
 
     async def _handle_reconnect(self):
+        if not self.ws:
+            return
+
         if self._auth_event.is_set():
             await self.auth()
 
