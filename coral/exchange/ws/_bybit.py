@@ -66,7 +66,6 @@ class BybitWS(AbstractWSExchange):
         self._message_queue = asyncio.Queue()
         self._tasks = set()
         self._semaphore = asyncio.Semaphore(1)
-        self._last_pong_time = None
         self._pong_received = asyncio.Event()
         self._ping_task = None
         self._receive_task = None
@@ -87,17 +86,7 @@ class BybitWS(AbstractWSExchange):
                 await self._wait_for_ws(timeout=5)
                 logger.info("WebSocket connection established.")
                 await self._handle_reconnect()
-
-                if not self._receive_task or self._receive_task.done():
-                    self._receive_task = asyncio.create_task(self._receive())
-                    self._tasks.add(self._receive_task)
-                    self._receive_task.add_done_callback(self._tasks.discard)
-
-                if not self._ping_task or self._ping_task.done():
-                    self._ping_task = asyncio.create_task(self._manage_ping_pong())
-                    self._tasks.add(self._ping_task)
-                    self._ping_task.add_done_callback(self._tasks.discard)
-
+                self._start_tasks()
             except Exception as e:
                 logger.error(f"Failed to connect to WebSocket: {e}")
                 raise ConnectionError("Failed to connect to WebSocket") from None
@@ -141,7 +130,6 @@ class BybitWS(AbstractWSExchange):
                     self._pong_received.wait(), timeout=self.PONG_TIMEOUT
                 )
                 self._pong_received.clear()
-
             except asyncio.TimeoutError:
                 logger.warning("Pong response timed out. Reconnecting WebSocket.")
                 await self.connect()
@@ -152,14 +140,23 @@ class BybitWS(AbstractWSExchange):
                 return
             await asyncio.sleep(self.PING_INTERVAL)
 
+    def _start_tasks(self):
+        if not self._receive_task or self._receive_task.done():
+            self._receive_task = asyncio.create_task(self._receive())
+            self._tasks.add(self._receive_task)
+            self._receive_task.add_done_callback(self._tasks.discard)
+
+        if not self._ping_task or self._ping_task.done():
+            self._ping_task = asyncio.create_task(self._manage_ping_pong())
+            self._tasks.add(self._ping_task)
+            self._ping_task.add_done_callback(self._tasks.discard)
+
     @retry(
         max_retries=13,
         initial_retry_delay=1,
         handled_exceptions=connect_exceptions,
     )
     async def _receive(self):
-        await self._resubscribe_all()
-
         async with self._semaphore:
             try:
                 async for message in self.ws:
@@ -179,6 +176,7 @@ class BybitWS(AbstractWSExchange):
                 logger.error(f"Malformed message received: {e}")
             except Exception as e:
                 logger.exception(f"Unexpected error while receiving message: {e}")
+                await self._handle_reconnect()
                 raise ConnectionError("WebSocket connection error.") from None
 
     async def subscribe(self, topic: str):
@@ -196,7 +194,6 @@ class BybitWS(AbstractWSExchange):
     async def get_message(self):
         message = await self._message_queue.get()
         self._message_queue.task_done()
-
         return message
 
     def kline_topic(self, timeframe: Timeframe, symbol: Symbol) -> str:

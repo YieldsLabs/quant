@@ -58,7 +58,7 @@ class DataCollector:
 
             if data is STOP:
                 break
-            
+
             if data:
                 await consumer(data)
 
