@@ -208,8 +208,8 @@ class BybitWS(AbstractWSExchange):
 
             if topic in self._subscriptions:
                 self._subscriptions.remove(topic)
-                if topic in self._topic_queues:
-                    self._topic_queues.pop(topic)
+            if topic in self._topic_queues:
+                self._topic_queues.pop(topic)
 
     async def get_message(self, topic: str):
         if topic not in self._topic_queues:
@@ -292,6 +292,7 @@ class BybitWS(AbstractWSExchange):
 
     async def _handle_reconnect(self):
         if not self.ws:
+            logger.error("WebSocket connection error.")
             return
 
         if self._auth_event.is_set():
