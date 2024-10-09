@@ -27,7 +27,7 @@ class BybitWS(AbstractWSExchange):
     PING_OPERATION = "ping"
     PONG_OPERATION = "pong"
 
-    PING_INTERVAL = 20
+    PING_INTERVAL = 10
     PONG_TIMEOUT = 8
     AUTH_TIMEOUT = 10
 
@@ -64,7 +64,7 @@ class BybitWS(AbstractWSExchange):
         self._lock = asyncio.Lock()
         self._subscriptions = set()
         self._auth_event = asyncio.Event()
-        self._message_queue = asyncio.Queue()
+        self._topic_queues = {}
         self._tasks = set()
         self._semaphore = asyncio.Semaphore(1)
         self._pong_received = asyncio.Event()
@@ -163,15 +163,6 @@ class BybitWS(AbstractWSExchange):
             self._tasks.add(self._ping_task)
             self._ping_task.add_done_callback(self._tasks.discard)
 
-    async def _cancel_tasks(self):
-        tasks = list(self._tasks)
-
-        for task in tasks:
-            if not task.done():
-                task.cancel()
-
-        await asyncio.gather(*tasks, return_exceptions=True)
-
     @retry(
         max_retries=13,
         initial_retry_delay=1,
@@ -190,9 +181,14 @@ class BybitWS(AbstractWSExchange):
                         self._auth_event.set()
 
                     if self._is_data_message(data):
-                        await self._message_queue.put(
-                            (data.get(self.TOPIC_KEY), data.get(self.DATA_KEY))
-                        )
+                        topic = data.get(self.TOPIC_KEY)
+
+                        if topic and topic in self._topic_queues:
+                            await self._topic_queues[topic].put(data.get(self.DATA_KEY))
+                        else:
+                            logger.warning(
+                                f"Received data for unsubscribed topic: {topic}"
+                            )
             except (json.JSONDecodeError, KeyError) as e:
                 logger.error(f"Malformed message received: {e}")
             except Exception as e:
@@ -204,6 +200,7 @@ class BybitWS(AbstractWSExchange):
         async with self._lock:
             await self._send(self.SUBSCRIBE_OPERATION, [topic])
             self._subscriptions.add(topic)
+            self._topic_queues[topic] = asyncio.Queue()
 
     async def unsubscribe(self, topic: str):
         async with self._lock:
@@ -211,10 +208,16 @@ class BybitWS(AbstractWSExchange):
 
             if topic in self._subscriptions:
                 self._subscriptions.remove(topic)
+                if topic in self._topic_queues:
+                    self._topic_queues.pop(topic)
 
-    async def get_message(self):
-        message = await self._message_queue.get()
-        self._message_queue.task_done()
+    async def get_message(self, topic: str):
+        if topic not in self._topic_queues:
+            logger.error(f"No queue available for topic: {topic}")
+            return None
+
+        message = await self._topic_queues[topic].get()
+        self._topic_queues[topic].task_done()
         return message
 
     def kline_topic(self, timeframe: Timeframe, symbol: Symbol) -> str:

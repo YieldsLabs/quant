@@ -7,17 +7,23 @@ class PositionStreamStrategy(AbstractStreamStrategy):
     def __init__(self, symbol: Symbol):
         super().__init__()
         self.symbol = symbol
+        self.topic = None
 
     async def subscribe(self, ws: AbstractWSExchange):
         await ws.auth()
-        await ws.subscribe(ws.position_topic())
+        self.topic = ws.position_topic()
+        await ws.subscribe(self.topic)
 
     async def unsubscribe(self, ws: AbstractWSExchange):
-        await ws.unsubscribe(ws.position_topic())
+        if self.topic:
+            await ws.unsubscribe(self.topic)
+            self.topic = None
 
-    def parse(self, ws: AbstractWSExchange, topic, message):
-        if topic != ws.position_topic():
+    async def next(self, ws: AbstractWSExchange):
+        if not self.topic:
             return []
+
+        message = await ws.get_message(self.topic)
 
         return [
             position

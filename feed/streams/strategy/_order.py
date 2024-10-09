@@ -8,17 +8,23 @@ class OrderStreamStrategy(AbstractStreamStrategy):
     def __init__(self, symbol: Symbol):
         super().__init__()
         self.symbol = symbol
+        self.topic = None
 
     async def subscribe(self, ws: AbstractWSExchange):
         await ws.auth()
-        await ws.subscribe(ws.order_topic())
+        self.topic = ws.order_topic()
+        await ws.subscribe(self.topic)
 
     async def unsubscribe(self, ws: AbstractWSExchange):
-        await ws.unsubscribe(ws.order_topic())
+        if self.topic:
+            await ws.unsubscribe(self.topic)
+            self.topic = None
 
-    def parse(self, ws: AbstractWSExchange, topic, message):
-        if topic != ws.order_topic():
+    async def next(self, ws: AbstractWSExchange):
+        if not self.topic:
             return []
+
+        message = await ws.get_message(self.topic)
 
         return [
             Order.from_dict(order)

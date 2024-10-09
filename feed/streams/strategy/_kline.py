@@ -11,16 +11,22 @@ class KlineStreamStrategy(AbstractStreamStrategy):
         super().__init__()
         self.timeframe = timeframe
         self.symbol = symbol
+        self.topic = None
 
     async def subscribe(self, ws: AbstractWSExchange):
-        await ws.subscribe(ws.kline_topic(self.timeframe, self.symbol))
+        self.topic = ws.kline_topic(self.timeframe, self.symbol)
+        await ws.subscribe(self.topic)
 
     async def unsubscribe(self, ws: AbstractWSExchange):
-        await ws.unsubscribe(ws.kline_topic(self.timeframe, self.symbol))
+        if self.topic:
+            await ws.unsubscribe(self.topic)
+            self.topic = None
 
-    def parse(self, ws: AbstractWSExchange, topic: str, message):
-        if topic != ws.kline_topic(self.timeframe, self.symbol):
+    async def next(self, ws: AbstractWSExchange):
+        if not self.topic:
             return []
+
+        message = await ws.get_message(self.topic)
 
         return [
             Bar(OHLCV.from_dict(ohlcv), ohlcv.get("confirm", False))

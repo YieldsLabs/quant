@@ -8,21 +8,27 @@ class OrderBookStreamStrategy(AbstractStreamStrategy):
         super().__init__()
         self.symbol = symbol
         self.depth = depth
+        self.topic = None
 
     async def subscribe(
         self,
         ws: AbstractWSExchange,
     ):
-        await ws.subscribe(ws.order_book_topic(self.symbol, self.depth))
+        self.topic = ws.order_book_topic(self.symbol, self.depth)
+        await ws.subscribe(self.topic)
 
     async def unsubscribe(
         self,
         ws: AbstractWSExchange,
     ):
-        await ws.unsubscribe(ws.order_book_topic(self.symbol, self.depth))
+        if self.topic:
+            await ws.unsubscribe(self.topic)
+            self.topic = None
 
-    def parse(self, ws: AbstractWSExchange, topic, message):
-        if topic != ws.order_book_topic(self.symbol, self.depth):
+    async def next(self, ws: AbstractWSExchange):
+        if not self.topic:
             return []
 
-        return []
+        message = await ws.get_message(self.topic)
+
+        return [message]

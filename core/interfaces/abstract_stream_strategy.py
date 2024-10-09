@@ -14,5 +14,5 @@ class AbstractStreamStrategy(ABC):
         pass
 
     @abstractmethod
-    def parse(self, ws: AbstractWSExchange, topic: str, message: Any) -> Any:
+    def next(self, ws: AbstractWSExchange) -> Any:
         pass

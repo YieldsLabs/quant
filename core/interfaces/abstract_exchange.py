@@ -112,7 +112,7 @@ class AbstractWSExchange(ABC):
         pass
 
     @abstractmethod
-    def get_message(self):
+    def get_message(self, topic: str):
         pass
 
     @abstractmethod
