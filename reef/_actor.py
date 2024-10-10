@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from coral import DataSourceFactory
 from core.actors import BaseActor
@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 @dataclass(order=True)
 class PQOrder:
-    timestamp: float
-    order_id: str
-    symbol: Symbol
-    datasource: DataSourceType
+    order_id: str = field(compare=False)
+    symbol: Symbol = field(compare=False)
+    datasource: DataSourceType = field(compare=False)
+    timestamp: float = field(default_factory=lambda: time.time(), compare=True)
 
 
 class ReefActor(BaseActor):
@@ -57,9 +57,9 @@ class ReefActor(BaseActor):
 
     async def on_receive(self, event: NewMarketOrderReceived):
         order = event.order
-        pq_order = PQOrder(time.time(), order.id, event.symbol, event.datasource)
+        pq_order = PQOrder(order.id, event.symbol, event.datasource)
 
-        await self._order_queue.put((pq_order.timestamp, pq_order))
+        await self._order_queue.put(pq_order)
 
         logging.info(f"Order {order.id} {order.status} added to the queue.")
 
@@ -69,15 +69,15 @@ class ReefActor(BaseActor):
 
         try:
             while True:
-                timestamp, pq_order = await self._order_queue.get()
+                pq_order = await self._order_queue.get()
                 current_time = time.time()
 
-                if current_time - timestamp > expiration_time:
+                if current_time - pq_order.timestamp > expiration_time:
                     await self._cancel_order(
                         pq_order.order_id, pq_order.symbol, pq_order.datasource
                     )
                 else:
-                    sleep_time = expiration_time - (current_time - timestamp)
+                    sleep_time = expiration_time - (current_time - pq_order.timestamp)
 
                     if sleep_time > 0:
                         await asyncio.sleep(sleep_time)
@@ -114,7 +114,7 @@ class ReefActor(BaseActor):
             orders = await asyncio.to_thread(service.fetch_all_open_orders)
 
             for order_id, symbol in orders:
-                pq_order = PQOrder(time.time(), order_id, symbol, datasource)
-                await self._order_queue.put((pq_order.timestamp, pq_order))
+                pq_order = PQOrder(order_id, symbol, datasource)
+                await self._order_queue.put(pq_order)
 
             await asyncio.sleep(monitor_interval)
