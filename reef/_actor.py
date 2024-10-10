@@ -1,5 +1,4 @@
 import asyncio
-import heapq
 import logging
 import time
 from dataclasses import dataclass
@@ -9,7 +8,7 @@ from core.actors import BaseActor
 from core.events.market import NewMarketOrderReceived
 from core.interfaces.abstract_config import AbstractConfig
 from core.models.datasource_type import DataSourceType
-from core.models.order_type import OrderType
+from core.models.order_type import OrderStatus, OrderType
 from core.models.protocol_type import ProtocolType
 from core.models.symbol import Symbol
 
@@ -29,8 +28,7 @@ class ReefActor(BaseActor):
         self, datasource_factory: DataSourceFactory, config_service: AbstractConfig
     ):
         super().__init__()
-        self._lock = asyncio.Lock()
-        self._orders = []
+        self._order_queue = asyncio.PriorityQueue()
         self._datasource_factory = datasource_factory
         self._tasks = set()
         self.order_config = config_service.get("order")
@@ -54,58 +52,47 @@ class ReefActor(BaseActor):
         return (
             isinstance(event, NewMarketOrderReceived)
             and event.order.type != OrderType.PAPER
+            and event.order.status == OrderStatus.PENDING
         )
 
     async def on_receive(self, event: NewMarketOrderReceived):
         order = event.order
+        pq_order = PQOrder(time.time(), order.id, event.symbol, event.datasource)
 
-        async with self._lock:
-            heapq.heappush(
-                self._orders,
-                PQOrder(time.time(), order.id, event.symbol, event.datasource),
-            )
-            logging.info(f"Order {order.id} {order.status} added to the queue.")
+        await self._order_queue.put((pq_order.timestamp, pq_order))
+
+        logging.info(f"Order {order.id} {order.status} added to the queue.")
 
     async def _process_orders(self):
         expiration_time = self.order_config.get("expiration_time", 10)
         monitor_interval = self.order_config.get("monitor_interval", 10)
 
-        while True:
-            try:
-                async with self._lock:
-                    current_time = time.time()
+        try:
+            while True:
+                timestamp, pq_order = await self._order_queue.get()
+                current_time = time.time()
 
-                    if self._orders:
-                        next_order = self._orders[0]
+                if current_time - timestamp > expiration_time:
+                    await self._cancel_order(
+                        pq_order.order_id, pq_order.symbol, pq_order.datasource
+                    )
+                else:
+                    sleep_time = expiration_time - (current_time - timestamp)
 
-                        if next_order.timestamp <= current_time:
-                            pq_order = heapq.heappop(self._orders)
-                            await self._cancel_order(
-                                pq_order.order_id, pq_order.symbol, pq_order.datasource
-                            )
-                        else:
-                            await asyncio.sleep(next_order.timestamp - current_time)
+                    if sleep_time > 0:
+                        await asyncio.sleep(sleep_time)
 
-                    expired_orders = [
-                        order
-                        for order in self._orders
-                        if current_time - order.timestamp > expiration_time
-                    ]
-                    for expired_order in expired_orders:
-                        await self._cancel_order(
-                            expired_order.order_id,
-                            expired_order.symbol,
-                            expired_order.datasource,
-                        )
+                    await self._cancel_order(
+                        pq_order.order_id, pq_order.symbol, pq_order.datasource
+                    )
 
-                    self._orders = [
-                        order for order in self._orders if order not in expired_orders
-                    ]
+                self._order_queue.task_done()
 
                 await asyncio.sleep(monitor_interval)
-
-            except Exception as e:
-                logging.error(f"Error in processing or monitoring orders: {str(e)}")
+        except asyncio.CancelledError:
+            logging.info("Order processing task was cancelled.")
+        except Exception as e:
+            logging.error(f"Error in processing or monitoring orders: {str(e)}")
 
     async def _cancel_order(
         self, order_id: str, symbol: Symbol, datasource: DataSourceType
@@ -120,13 +107,14 @@ class ReefActor(BaseActor):
         services = [
             DataSourceType.BYBIT,
         ]
+        monitor_interval = self.order_config.get("monitor_interval", 10)
 
         for datasource in services:
             service = self._datasource_factory.create(datasource, ProtocolType.REST)
             orders = await asyncio.to_thread(service.fetch_all_open_orders)
 
-            async with self._lock:
-                for order_id, symbol in orders:
-                    heapq.heappush(
-                        self._orders, PQOrder(time.time(), order_id, symbol, datasource)
-                    )
+            for order_id, symbol in orders:
+                pq_order = PQOrder(time.time(), order_id, symbol, datasource)
+                await self._order_queue.put((pq_order.timestamp, pq_order))
+
+            await asyncio.sleep(monitor_interval)
