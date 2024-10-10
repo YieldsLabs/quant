@@ -159,7 +159,7 @@ class Bybit(AbstractRestExchange):
 
     def fetch_order_book(self, symbol: Symbol, depth: int = 30):
         book = self.connector.fetch_order_book(symbol.name, limit=depth)
-        return book["bids"], book["asks"]
+        return book["bids"], book["asks"], book["timestamp"]
 
     def create_market_order(self, symbol: Symbol, side: PositionSide, size: float):
         try:

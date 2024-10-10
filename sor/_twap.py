@@ -29,7 +29,7 @@ class TWAP:
             await sleep(time_interval)
 
     def _fetch_book(self, symbol: Symbol, exchange: AbstractRestExchange):
-        bids, asks = exchange.fetch_order_book(symbol, depth=self.config["dom"])
+        bids, asks, _ = exchange.fetch_order_book(symbol, depth=self.config["dom"])
         return np.array(bids), np.array(asks)
 
     @staticmethod
