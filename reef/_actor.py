@@ -25,9 +25,7 @@ class ReefActor(BaseActor):
         self._orders: Dict[str, Tuple[float, Symbol, DataSourceType]] = {}
         self._datasource_factory = datasource_factory
         self._tasks = set()
-        order_config = config_service.get("order")
-        self.expiration_time = order_config.get("expiration_time", 10)
-        self.monitor_interval = order_config.get("monitor_interval", 10)
+        self.order_config = config_service.get("order")
 
     def on_start(self):
         task = asyncio.create_task(self._monitor_orders())
@@ -69,15 +67,16 @@ class ReefActor(BaseActor):
             logging.info(f"Order {order.id} appended for symbol {symbol.name}.")
 
     async def _monitor_orders(self):
-        fetch_interval = 8
         counter = 0
+        monitor_interval = self.order_config.get("monitor_interval", 10)
+        untracked_interval = self.order_config.get("untracked_interval", 8)
         try:
             while True:
                 async with asyncio.TaskGroup() as task_group:
-                    await asyncio.sleep(self.monitor_interval)
+                    await asyncio.sleep(monitor_interval)
                     await task_group.create_task(self._cancel_expired_orders())
 
-                    if counter % fetch_interval == 0:
+                    if counter % untracked_interval == 0:
                         await task_group.create_task(self._fetch_open_orders())
                         counter = 0
                     counter += 1
@@ -88,13 +87,14 @@ class ReefActor(BaseActor):
 
     async def _cancel_expired_orders(self):
         curr_time = time.time()
+        expiration_time = self.order_config.get("expiration_time", 10)
         expired_orders = []
 
         async with self._lock:
             expired_orders = [
                 (order_id, symbol, datasource)
                 for order_id, (timestamp, symbol, datasource) in self._orders.items()
-                if curr_time - timestamp > self.expiration_time
+                if curr_time - timestamp > expiration_time
             ]
 
         if expired_orders:
@@ -118,13 +118,14 @@ class ReefActor(BaseActor):
             orders += service.fetch_all_open_orders()
 
         curr_time = time.time()
+        expiration_time = self.order_config.get("expiration_time", 10)
 
         async with self._lock:
             for order_id, order_symbol in orders:
                 if order_id in self._orders:
                     timestamp, symbol, datasource = self._orders.get(order_id)
 
-                    if curr_time - timestamp > self.expiration_time:
+                    if curr_time - timestamp > expiration_time:
                         service = self._datasource_factory.create(
                             datasource, ProtocolType.REST
                         )
