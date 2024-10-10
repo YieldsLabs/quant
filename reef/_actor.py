@@ -36,13 +36,13 @@ class ReefActor(BaseActor):
         self.order_config = config_service.get("order")
 
     def on_start(self):
-        monitor_task = asyncio.create_task(self._monitor_orders())
-        monitor_task.add_done_callback(self._tasks.discard)
-        self._tasks.add(monitor_task)
-
-        worker_task = asyncio.create_task(self._process_order_queue())
+        worker_task = asyncio.create_task(self._process_orders())
         worker_task.add_done_callback(self._tasks.discard)
         self._tasks.add(worker_task)
+
+        poll_task = asyncio.create_task(self._fetch_open_orders())
+        poll_task.add_done_callback(self._tasks.discard)
+        self._tasks.add(poll_task)
 
     def on_stop(self):
         for task in list(self._tasks):
@@ -66,57 +66,31 @@ class ReefActor(BaseActor):
             )
             logging.info(f"Order {order.id} {order.status} added to the queue.")
 
-    async def _process_order_queue(self):
-        while True:
-            try:
-                async with self._lock:
-                    if not self._orders:
-                        await asyncio.sleep(1)
-                        continue
-
-                    next_order = self._orders[0]
-                    current_time = time.time()
-
-                    if next_order.timestamp > current_time:
-                        await asyncio.sleep(next_order.timestamp - current_time)
-                        continue
-
-                    prioritized_order = heapq.heappop(self._orders)
-
-                await self._cancel_order(
-                    prioritized_order.order_id,
-                    prioritized_order.symbol,
-                    prioritized_order.datasource,
-                )
-
-            except Exception as e:
-                logging.error(f"Error processing order queue: {str(e)}")
-
-    async def _cancel_order(
-        self, order_id: str, symbol: Symbol, datasource: DataSourceType
-    ):
-        service = self._datasource_factory.create(datasource, ProtocolType.REST)
-
-        await asyncio.to_thread(service.cancel_order, order_id, symbol)
-
-        logging.info(f"Order {order_id} for symbol {symbol.name} canceled.")
-
-    async def _monitor_orders(self):
+    async def _process_orders(self):
         expiration_time = self.order_config.get("expiration_time", 10)
         monitor_interval = self.order_config.get("monitor_interval", 10)
 
-        try:
-            while True:
-                await asyncio.sleep(monitor_interval)
-
+        while True:
+            try:
                 async with self._lock:
                     current_time = time.time()
+
+                    if self._orders:
+                        next_order = self._orders[0]
+
+                        if next_order.timestamp <= current_time:
+                            pq_order = heapq.heappop(self._orders)
+                            await self._cancel_order(
+                                pq_order.order_id, pq_order.symbol, pq_order.datasource
+                            )
+                        else:
+                            await asyncio.sleep(next_order.timestamp - current_time)
+
                     expired_orders = [
                         order
                         for order in self._orders
                         if current_time - order.timestamp > expiration_time
                     ]
-
                     for expired_order in expired_orders:
                         await self._cancel_order(
                             expired_order.order_id,
@@ -128,10 +102,19 @@ class ReefActor(BaseActor):
                         order for order in self._orders if order not in expired_orders
                     ]
 
-        except asyncio.CancelledError:
-            logging.info("Monitoring task canceled.")
-        except Exception:
-            logging.e
+                await asyncio.sleep(monitor_interval)
+
+            except Exception as e:
+                logging.error(f"Error in processing or monitoring orders: {str(e)}")
+
+    async def _cancel_order(
+        self, order_id: str, symbol: Symbol, datasource: DataSourceType
+    ):
+        service = self._datasource_factory.create(datasource, ProtocolType.REST)
+
+        await asyncio.to_thread(service.cancel_order, order_id, symbol)
+
+        logging.info(f"Order {order_id} for symbol {symbol.name} canceled.")
 
     async def _fetch_open_orders(self):
         services = [
