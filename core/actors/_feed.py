@@ -44,7 +44,9 @@ class FeedActor(BaseActor):
         return self._collector
 
     def on_stop(self):
-        asyncio.create_task(self.collector.stop())
+        stop_task = asyncio.create_task(self.collector.stop())
+        self._tasks.add(stop_task)
+        stop_task.add_done_callback(self._tasks.discard)
 
     def pre_receive(self, msg) -> bool:
         return FeedPolicy.should_process(self, msg)
