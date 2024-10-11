@@ -15,7 +15,7 @@ from core.models.symbol import Symbol
 logger = logging.getLogger(__name__)
 
 
-@dataclass(order=True)
+@dataclass(order=True, frozen=True)
 class PQOrder:
     order_id: str = field(compare=False)
     symbol: Symbol = field(compare=False)
