@@ -47,7 +47,8 @@ class ReefActor(BaseActor):
         self._stop_event.set()
 
         for task in list(self._tasks):
-            task.cancel()
+            if not task.done():
+                task.cancel()
 
         self._tasks.clear()
 

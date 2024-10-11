@@ -34,7 +34,8 @@ class DataCollector:
         await self._queue.join()
 
         for task in list(self._tasks):
-            task.cancel()
+            if not task.done():
+                task.cancel()
 
         await self.wait_for_completion()
 
