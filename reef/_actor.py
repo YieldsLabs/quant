@@ -118,6 +118,11 @@ class ReefActor(BaseActor):
 
             for order_id, symbol in orders:
                 pq_order = PQOrder(order_id, symbol, datasource)
-                await self._order_queue.put(pq_order)
+
+                if not any(
+                    existing_order.order_id == pq_order.order_id
+                    for existing_order in self._order_queue._queue
+                ):
+                    await self._order_queue.put(pq_order)
 
             await asyncio.sleep(monitor_interval)
