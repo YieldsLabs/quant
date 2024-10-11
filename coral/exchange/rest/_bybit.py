@@ -289,30 +289,33 @@ class Bybit(AbstractRestExchange):
         out_sample: Lookback | None = None,
         batch_size: int = 512,
     ):
-        in_sample = TIMEFRAMES_TO_LOOKBACK[(in_sample, timeframe)]
-        out_sample = (
+
+        in_sample_lookback = TIMEFRAMES_TO_LOOKBACK[(in_sample, timeframe)]
+        out_sample_lookback = (
             TIMEFRAMES_TO_LOOKBACK[(out_sample, timeframe)] if out_sample else 0
         )
 
-        lookback = in_sample + out_sample
-
-        start_time = (
+        in_sample_start_time = (
             self.connector.milliseconds()
-            - lookback * self.connector.parse_timeframe(timeframe.value) * 1000
+            - in_sample_lookback
+            * self.connector.parse_timeframe(timeframe.value)
+            * 1000
         )
 
-        max_time = (
-            start_time
-            + in_sample * self.connector.parse_timeframe(timeframe.value) * 1000
+        max_in_sample_time = (
+            in_sample_start_time
+            + in_sample_lookback
+            * self.connector.parse_timeframe(timeframe.value)
+            * 1000
         )
 
         fetched_ohlcv = 0
 
-        while fetched_ohlcv < in_sample:
-            current_limit = min(in_sample - fetched_ohlcv, batch_size)
+        while fetched_ohlcv < in_sample_lookback:
+            current_limit = min(in_sample_lookback - fetched_ohlcv, batch_size)
 
             current_ohlcv = self._fetch_ohlcv(
-                symbol, timeframe, start_time, current_limit
+                symbol, timeframe, in_sample_start_time, current_limit
             )
 
             if not current_ohlcv:
@@ -320,16 +323,39 @@ class Bybit(AbstractRestExchange):
 
             for data in current_ohlcv:
                 yield data
-
                 fetched_ohlcv += 1
 
-            start_time = (
+            in_sample_start_time = (
                 current_ohlcv[-1][0]
                 + self.connector.parse_timeframe(timeframe.value) * 1000
             )
 
-            if start_time >= max_time:
+            if in_sample_start_time >= max_in_sample_time:
                 break
+
+        if out_sample_lookback > 0:
+            out_sample_start_time = in_sample_start_time + 1
+
+            fetched_ohlcv = 0
+
+            while fetched_ohlcv < out_sample_lookback:
+                current_limit = min(out_sample_lookback - fetched_ohlcv, batch_size)
+
+                current_ohlcv = self._fetch_ohlcv(
+                    symbol, timeframe, out_sample_start_time, current_limit
+                )
+
+                if not current_ohlcv:
+                    break
+
+                for data in current_ohlcv:
+                    yield data
+                    fetched_ohlcv += 1
+
+                out_sample_start_time = (
+                    current_ohlcv[-1][0]
+                    + self.connector.parse_timeframe(timeframe.value) * 1000
+                )
 
     @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def _fetch_ohlcv(self, symbol, timeframe, start_time, current_limit):
