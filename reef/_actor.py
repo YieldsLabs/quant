@@ -32,6 +32,7 @@ class ReefActor(BaseActor):
         self._datasource_factory = datasource_factory
         self._tasks = set()
         self.order_config = config_service.get("order")
+        self._stop_event = asyncio.Event()
 
     def on_start(self):
         worker_task = asyncio.create_task(self._process_orders())
@@ -43,6 +44,8 @@ class ReefActor(BaseActor):
         self._tasks.add(poll_task)
 
     def on_stop(self):
+        self._stop_event.set()
+
         for task in list(self._tasks):
             task.cancel()
 
@@ -68,7 +71,7 @@ class ReefActor(BaseActor):
         monitor_interval = self.order_config.get("monitor_interval", 10)
 
         try:
-            while True:
+            while not self._stop_event.is_set():
                 pq_order = await self._order_queue.get()
                 current_time = time.time()
 

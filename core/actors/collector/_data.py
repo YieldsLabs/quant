@@ -12,6 +12,7 @@ class DataCollector:
         self._producers = []
         self._consumers = []
         self._tasks = set()
+        self._stop_event = asyncio.Event()
 
     async def start(self, msg: Event):
         for producer in self._producers:
@@ -27,6 +28,8 @@ class DataCollector:
             task.add_done_callback(self._tasks.discard)
 
     async def stop(self):
+        self._stop_event.set()
+
         await self._queue.put(STOP)
         await self._queue.join()
 
@@ -53,7 +56,7 @@ class DataCollector:
         await self._queue.put(STOP)
 
     async def _run_consumer(self, consumer):
-        while True:
+        while not self._stop_event.is_set():
             data = await self._queue.get()
 
             if data is STOP:
