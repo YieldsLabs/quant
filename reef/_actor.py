@@ -76,13 +76,17 @@ class ReefActor(BaseActor):
             while not self._stop_event.is_set():
                 queue_size = self._order_queue.qsize()
                 batch_size = min(queue_size, batch_size)
-       
-                orders = [
-                    await asyncio.wait_for(
-                        self._order_queue.get(), timeout=monitor_interval
-                    )
-                    for _ in range(batch_size)
-                ]
+
+                orders = []
+
+                for _ in range(batch_size):
+                    try:
+                        order = await asyncio.wait_for(
+                            self._order_queue.get(), timeout=monitor_interval
+                        )
+                        orders.append(order)
+                    except asyncio.TimeoutError:
+                        break
 
                 if not orders:
                     continue
