@@ -70,47 +70,27 @@ class ReefActor(BaseActor):
     async def _process_orders(self):
         expiration_time = self.order_config.get("expiration_time", 10)
         monitor_interval = self.order_config.get("monitor_interval", 10)
-        batch_size = self.order_config.get("batch_size", 4)
 
         try:
             while not self._stop_event.is_set():
-                queue_size = self._order_queue.qsize()
-                batch_size = min(queue_size, batch_size)
-
-                orders = []
-
-                for _ in range(batch_size):
-                    try:
-                        order = await asyncio.wait_for(
-                            self._order_queue.get(), timeout=monitor_interval
-                        )
-                        orders.append(order)
-                    except asyncio.TimeoutError:
-                        break
-
-                if not orders:
-                    continue
-
+                pq_order = await self._order_queue.get()
                 current_time = time.time()
-                tasks = []
 
-                for pq_order in orders:
-                    time_elapsed = current_time - pq_order.timestamp
+                if current_time - pq_order.timestamp > expiration_time:
+                    await self._cancel_order(
+                        pq_order.order_id, pq_order.symbol, pq_order.datasource
+                    )
+                else:
+                    sleep_time = expiration_time - (current_time - pq_order.timestamp)
 
-                    if time_elapsed > expiration_time:
-                        tasks.append(
-                            self._cancel_order(
-                                pq_order.order_id, pq_order.symbol, pq_order.datasource
-                            )
-                        )
-                    else:
-                        sleep_time = expiration_time - time_elapsed
-                        tasks.append(self._delayed_cancel_order(pq_order, sleep_time))
+                    if sleep_time > 0:
+                        await asyncio.sleep(sleep_time)
 
-                await asyncio.gather(*tasks)
+                    await self._cancel_order(
+                        pq_order.order_id, pq_order.symbol, pq_order.datasource
+                    )
 
-                for _ in orders:
-                    self._order_queue.task_done()
+                self._order_queue.task_done()
 
                 await asyncio.sleep(monitor_interval)
         except asyncio.CancelledError:
