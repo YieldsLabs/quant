@@ -194,16 +194,20 @@ class SmartRouter(AbstractEventManager):
             await asyncio.sleep(0.2)
 
     def _calculate_order_slices(self, symbol: Symbol, total_size: int):
-        mu = np.log(total_size)
-        sigma = 0.75
+        x_min = symbol.min_position_size
+        alpha = np.random.uniform(1.3, 1.5)
+
+        logger.info(f"Using power-law exponent: {alpha:.2f}")
 
         while True:
-            raw_order_size = np.random.lognormal(mu, sigma)
+            u = np.random.rand()
 
-            raw_order_size = min(raw_order_size, total_size)
+            order_size = x_min * (1 - u) ** (-1 / (alpha - 1))
 
-            order_size = round(raw_order_size, symbol.position_precision)
+            raw_order_size = min(order_size, total_size)
 
-            logger.info(f"Next order size: {order_size}")
+            rounded_order_size = round(raw_order_size, symbol.position_precision)
 
-            yield order_size
+            logger.info(f"Next order size: {rounded_order_size} for symbol: {symbol}")
+
+            yield rounded_order_size
