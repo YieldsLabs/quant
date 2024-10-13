@@ -33,6 +33,10 @@ class SmartRouter(AbstractEventManager):
         self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 
+    @query_handler(GetBalance)
+    def get_account_balance(self, query: GetBalance):
+        return self.exchange.fetch_account_balance(query.currency)
+
     @query_handler(GetOpenPosition)
     def get_open_position(self, query: GetOpenPosition):
         position = query.position
@@ -77,10 +81,6 @@ class SmartRouter(AbstractEventManager):
             price=trade["price"],
             fee=trade["fee"],
         )
-
-    @query_handler(GetBalance)
-    def get_account_balance(self, query: GetBalance):
-        return self.exchange.fetch_account_balance(query.currency)
 
     @query_handler(HasPosition)
     def has_position(self, query: HasPosition):
@@ -142,17 +142,23 @@ class SmartRouter(AbstractEventManager):
                     break
 
             existing_position = self.exchange.fetch_position(symbol, position_side)
+            current_position_size = (
+                existing_position.get("position_size", 0) if existing_position else 0
+            )
 
-            if (
-                existing_position
-                and existing_position.get("position_size", 0) >= pending_order.size
-            ):
+            remaining_size = pending_order.size - current_position_size
+
+            if remaining_size <= 0:
                 logger.info(
-                    f"Existing position for {symbol} has sufficient size. No more orders will be placed."
+                    f"Position for {symbol} has reached or exceeded the target size. No more orders will be placed."
                 )
                 break
 
-            order_size = next(order_size_generator)
+            order_size = min(next(order_size_generator), remaining_size)
+
+            logger.info(
+                f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
+            )
 
             self.exchange.create_limit_order(symbol, position_side, order_size, price)
 
@@ -183,11 +189,19 @@ class SmartRouter(AbstractEventManager):
                 f"Theoretical Exit Price: {exit_order.price}"
             )
 
-            if not self.exchange.fetch_position(symbol, position_side):
+            existing_position = self.exchange.fetch_position(symbol, position_side)
+
+            if not existing_position:
                 logger.info(f"Position for {symbol} already closed.")
                 break
 
-            order_size = next(order_size_generator)
+            current_position_size = existing_position.get("position_size", 0)
+            order_size = min(next(order_size_generator), current_position_size)
+
+            logger.info(
+                f"Placing reduce order for {symbol}: size={order_size}, price={price}, "
+                f"Remaining Position Size={current_position_size}"
+            )
 
             self.exchange.create_reduce_order(symbol, position_side, order_size, price)
 
