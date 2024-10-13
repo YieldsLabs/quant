@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+import numpy as np
+
 from coral import DataSourceFactory
 from core.commands.position import ClosePosition, OpenPosition
 from core.event_decorators import command_handler, query_handler
@@ -110,11 +112,10 @@ class SmartRouter(AbstractEventManager):
         pending_order = position.entry_order()
 
         entry_price = pending_order.price
-        pending_order_size = pending_order.size
-
-        orders_size = self._calculate_order_slices(symbol, pending_order_size)
 
         num_order_breach = 0
+
+        order_size_generator = self._calculate_order_slices(symbol, pending_order.size)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = ask if position.side == PositionSide.LONG else bid
@@ -144,14 +145,16 @@ class SmartRouter(AbstractEventManager):
 
             if (
                 existing_position
-                and existing_position.get("position_size", 0) >= pending_order_size
+                and existing_position.get("position_size", 0) >= pending_order.size
             ):
                 logger.info(
                     f"Existing position for {symbol} has sufficient size. No more orders will be placed."
                 )
                 break
 
-            self.exchange.create_limit_order(symbol, position_side, orders_size, price)
+            order_size = next(order_size_generator)
+
+            self.exchange.create_limit_order(symbol, position_side, order_size, price)
 
             await asyncio.sleep(0.2)
 
@@ -170,7 +173,7 @@ class SmartRouter(AbstractEventManager):
 
         exit_order = position.exit_order()
 
-        orders_size = self._calculate_order_slices(symbol, exit_order.size)
+        order_size_generator = self._calculate_order_slices(symbol, exit_order.size)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = bid if position.side == PositionSide.LONG else ask
@@ -184,19 +187,23 @@ class SmartRouter(AbstractEventManager):
                 logger.info(f"Position for {symbol} already closed.")
                 break
 
-            self.exchange.create_reduce_order(symbol, position_side, orders_size, price)
+            order_size = next(order_size_generator)
+
+            self.exchange.create_reduce_order(symbol, position_side, order_size, price)
 
             await asyncio.sleep(0.2)
 
-    def _calculate_order_slices(self, symbol: Symbol, total_size):
-        num_orders = min(
-            max(1, int(total_size / symbol.min_position_size)),
-            self.config["max_order_slice"],
-        )
-        orders_size = round(total_size / num_orders, symbol.position_precision)
+    def _calculate_order_slices(self, symbol: Symbol, total_size: int):
+        mu = np.log(total_size)
+        sigma = 0.75
 
-        logger.info(
-            f"Calculated order slices for {symbol}: {num_orders} orders, {orders_size} size per order"
-        )
+        while True:
+            raw_order_size = np.random.lognormal(mu, sigma)
 
-        return orders_size
+            raw_order_size = min(raw_order_size, total_size)
+
+            order_size = round(raw_order_size, symbol.position_precision)
+
+            logger.info(f"Next order size: {order_size}")
+
+            yield order_size
