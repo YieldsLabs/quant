@@ -129,16 +129,14 @@ class ReefActor(BaseActor):
 
         for datasource, result in zip(services, results):
             open_orders.extend(
-                [(order_id, symbol, datasource) for order_id, symbol in result]
+                [PQOrder(order_id, symbol, datasource) for order_id, symbol in result]
             )
 
-        for order_id, symbol, datasource in open_orders:
-            pq_order = PQOrder(order_id, symbol, datasource)
-
+        for open_order in open_orders:
             if not any(
-                existing_order.order_id == pq_order.order_id
+                existing_order.order_id == open_order.order_id
                 for existing_order in self._order_queue._queue
             ):
-                await self._order_queue.put(pq_order)
+                await self._order_queue.put(open_order)
 
         await asyncio.sleep(monitor_interval)
