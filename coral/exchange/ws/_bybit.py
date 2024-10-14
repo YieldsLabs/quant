@@ -81,7 +81,7 @@ class BybitWS(AbstractWSExchange):
                     ping_timeout=self.PONG_TIMEOUT,
                     close_timeout=10,
                     user_agent_header=user_agent,
-                    max_queue=4,
+                    max_queue=8,
                 )
 
                 await self._wait_for_ws(timeout=5)
