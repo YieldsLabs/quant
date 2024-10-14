@@ -52,9 +52,9 @@ class SmartRouter(AbstractEventManager):
         else:
             return Order(
                 status=OrderStatus.EXECUTED,
-                size=broker_position["position_size"],
-                price=broker_position["entry_price"],
-                fee=broker_position["open_fee"],
+                size=broker_position.get("position_size", 0),
+                price=broker_position.get("entry_price", 0),
+                fee=broker_position.get("open_fee", 0),
             )
 
     @query_handler(GetClosePosition)
@@ -67,7 +67,6 @@ class SmartRouter(AbstractEventManager):
             position.side,
             position.last_modified,
             position.size,
-            self.config["max_order_slice"],
         )
 
         logging.info(f"Broker close position: {trade}")
@@ -77,9 +76,9 @@ class SmartRouter(AbstractEventManager):
 
         return Order(
             status=OrderStatus.CLOSED,
-            size=trade["amount"],
-            price=trade["price"],
-            fee=trade["fee"],
+            size=trade.get("amount", 0),
+            price=trade.get("price", 0),
+            fee=trade.get("fee", 0),
         )
 
     @query_handler(HasPosition)
@@ -162,7 +161,7 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_limit_order(symbol, position_side, order_size, price)
 
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.02)
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -205,7 +204,7 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_reduce_order(symbol, position_side, order_size, price)
 
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.02)
 
     def _calculate_order_slices(self, symbol: Symbol, total_size: int):
         x_min = symbol.min_position_size

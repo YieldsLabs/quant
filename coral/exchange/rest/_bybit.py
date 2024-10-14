@@ -108,12 +108,10 @@ class Bybit(AbstractRestExchange):
             logger.error(f"{symbol}: {e}")
             return
 
-    def fetch_trade(
-        self, symbol: Symbol, side: PositionSide, since: int, size: float, limit: int
-    ):
+    def fetch_trade(self, symbol: Symbol, side: PositionSide, since: int, size: float):
         last_trades = (
             trade
-            for trade in self.connector.fetch_my_trades(symbol.name, limit=limit * 2)
+            for trade in self.connector.fetch_my_trades(symbol.name)
             if trade["timestamp"] >= since
         )
 
