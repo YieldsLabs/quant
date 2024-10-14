@@ -23,7 +23,7 @@ class TWAP:
 
             intensities += self._calculate_intensity(timepoints)
 
-            time_interval = TWAP._volatility_time_interval(timepoints, intensities)
+            time_interval = self._volatility_time_interval(timepoints, intensities)
             current_time += time_interval
 
             yield self._twap(timepoints)

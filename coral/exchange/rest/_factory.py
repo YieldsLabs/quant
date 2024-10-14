@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-from cachetools import LRUCache
+from cachetools import LRUCache, TTLCache
 
 from core.interfaces.abstract_datasource_factory import (
     AbstractDataSourceFactory,
@@ -20,6 +20,7 @@ class RestDataSourceFactory(AbstractDataSourceFactory):
         self._default_map = {
             DataSourceType.BYBIT: Bybit,
         }
+        self._cache = TTLCache(maxsize=5, ttl=60)
 
     def register(
         self,
@@ -34,8 +35,17 @@ class RestDataSourceFactory(AbstractDataSourceFactory):
     def create(self, datasource: DataSourceType, **kwargs) -> DataSource:
         if datasource not in self._bucket:
             raise ValueError(f"Class for {datasource} is not registered.")
+        
+        cache_key = (datasource)
+
+        if cache_key in self._cache:
+            return self._cache[cache_key]
 
         api_key = self.secret_service.get_api_key(datasource.name)
         api_secret = self.secret_service.get_secret(datasource.name)
 
-        return self._bucket[datasource](api_key, api_secret)
+        instance = self._bucket[datasource](api_key, api_secret)
+
+        self._cache[cache_key] = instance
+
+        return instance

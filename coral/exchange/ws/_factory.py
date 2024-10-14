@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-from cachetools import LRUCache
+from cachetools import LRUCache, TTLCache
 
 from core.interfaces.abstract_datasource_factory import (
     AbstractDataSourceFactory,
@@ -21,7 +21,7 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
         self._default_map = {
             DataSourceType.BYBIT: BybitWS,
         }
-        self._cache = LRUCache(maxsize=10)
+        self._cache = TTLCache(maxsize=5, ttl=60)
 
     def register(
         self, datasource: DataSourceType, ws_class: Optional[Type[DataSource]] = None
