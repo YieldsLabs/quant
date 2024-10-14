@@ -1,4 +1,4 @@
-from asyncio import sleep
+import asyncio
 
 import numpy as np
 
@@ -9,28 +9,58 @@ from core.models.symbol import Symbol
 
 class TWAP:
     def __init__(self, config_service: AbstractConfig):
-        self.config = config_service.get("position")
-        self.duration = self.config["twap_duration"]
+        self.config = config_service.get("order")
 
     async def next_value(self, symbol: Symbol, exchange: AbstractRestExchange):
         current_time = 0
         timepoints = []
+        intensities = []
 
-        while current_time < self.duration:
-            bids, ask = self._fetch_book(symbol, exchange)
+        while current_time < self.config.get("twap_duration", 10):
+            bids, ask = await self._fetch_book(symbol, exchange)
 
             timepoints.append((bids[:, 0], ask[:, 0], bids[:, 1], ask[:, 1]))
 
-            time_interval = TWAP._volatility_time_interval(timepoints)
+            intensities += self._calculate_intensity(timepoints)
+
+            time_interval = TWAP._volatility_time_interval(timepoints, intensities)
             current_time += time_interval
 
             yield self._twap(timepoints)
 
-            await sleep(time_interval)
+            await asyncio.sleep(time_interval)
 
-    def _fetch_book(self, symbol: Symbol, exchange: AbstractRestExchange):
-        bids, asks, _ = exchange.fetch_order_book(symbol, depth=self.config["dom"])
+    async def _fetch_book(self, symbol: Symbol, exchange: AbstractRestExchange):
+        bids, asks, _ = await asyncio.to_thread(
+            exchange.fetch_order_book, symbol, self.config.get("dom", 10)
+        )
         return np.array(bids), np.array(asks)
+
+    def _volatility_time_interval(self, timepoints, intensities):
+        high_prices = np.concatenate([ask_prices for _, ask_prices, _, _ in timepoints])
+        low_prices = np.concatenate([bid_prices for bid_prices, _, _, _ in timepoints])
+
+        high_low = np.log(high_prices / low_prices)
+        volatility = np.sqrt((1 / (4 * np.log(2))) * np.mean(high_low**2))
+
+        avg_intensity = np.mean(intensities) if intensities else 1.0
+        dynamic_volatility_factor = (
+            self.config.get("volatility_factor", 10) * avg_intensity
+        )
+
+        return np.tanh(dynamic_volatility_factor * volatility)
+
+    def _calculate_intensity(self, timepoints):
+        if not timepoints:
+            return 1.0
+
+        last_event_time = len(timepoints) - 1
+
+        intensity = 1.0 + np.sum(
+            np.exp(-self.config.get("hawkes_decay", 0.1) * np.arange(last_event_time))
+        )
+
+        return intensity
 
     @staticmethod
     def _twap(order_book):
@@ -67,16 +97,3 @@ class TWAP:
         volatility = np.sqrt(vol_weighted)
 
         return spread, volatility
-
-    @staticmethod
-    def _volatility_time_interval(timepoints):
-        high_prices = np.concatenate([ask_prices for _, ask_prices, _, _ in timepoints])
-        low_prices = np.concatenate([bid_prices for bid_prices, _, _, _ in timepoints])
-
-        high_low = np.log(high_prices / low_prices)
-        volatility = np.sqrt((1 / (4 * np.log(2))) * np.mean(high_low**2))
-
-        base_interval = 1.236
-        volatility_factor = 30.0
-
-        return base_interval + np.tanh(volatility_factor * volatility)

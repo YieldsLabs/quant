@@ -204,16 +204,15 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_reduce_order(symbol, position_side, order_size, price)
 
-            await asyncio.sleep(0.02)
-
     def _calculate_order_slices(self, symbol: Symbol, total_size: int):
         x_min = symbol.min_position_size
         alpha = np.random.uniform(1.3, 1.5)
+        decay_factor = 0.88
 
         logger.info(f"Using power-law exponent: {alpha:.2f}")
 
         while True:
-            u = np.random.rand()
+            u = np.random.rand() ** decay_factor
 
             order_size = x_min * (1 - u) ** (-1 / (alpha - 1))
 
