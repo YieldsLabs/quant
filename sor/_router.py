@@ -161,7 +161,7 @@ class SmartRouter(AbstractEventManager):
 
             self.exchange.create_limit_order(symbol, position_side, order_size, price)
 
-            await asyncio.sleep(0.02)
+            await asyncio.sleep(0.5)
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -203,6 +203,8 @@ class SmartRouter(AbstractEventManager):
             )
 
             self.exchange.create_reduce_order(symbol, position_side, order_size, price)
+
+            await asyncio.sleep(0.5)
 
     def _calculate_order_slices(self, symbol: Symbol, total_size: int):
         x_min = symbol.min_position_size
