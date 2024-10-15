@@ -35,8 +35,8 @@ class RestDataSourceFactory(AbstractDataSourceFactory):
     def create(self, datasource: DataSourceType, **kwargs) -> DataSource:
         if datasource not in self._bucket:
             raise ValueError(f"Class for {datasource} is not registered.")
-        
-        cache_key = (datasource)
+
+        cache_key = datasource
 
         if cache_key in self._cache:
             return self._cache[cache_key]
