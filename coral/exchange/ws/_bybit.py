@@ -28,6 +28,7 @@ class BybitWS(AbstractWSExchange):
     PONG_OPERATION = "pong"
 
     PING_INTERVAL = 10
+    PING_TIMEOUT = 5
     PONG_TIMEOUT = 8
     AUTH_TIMEOUT = 10
 
@@ -128,7 +129,10 @@ class BybitWS(AbstractWSExchange):
 
         while True:
             try:
-                await self.ws.send(json.dumps({self.OP_KEY: self.PING_OPERATION}))
+                await asyncio.wait_for(
+                    self.ws.send(json.dumps({self.OP_KEY: self.PING_OPERATION})),
+                    timeout=self.PING_TIMEOUT,
+                )
                 await asyncio.wait_for(
                     self._pong_received.wait(), timeout=self.PONG_TIMEOUT
                 )
@@ -172,25 +176,25 @@ class BybitWS(AbstractWSExchange):
         async with self._semaphore:
             try:
                 async for message in self.ws:
-                    data = json.loads(message)
+                    try:
+                        data = json.loads(message)
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Failed to decode message: {message}. Error: {e}")
+                        continue
 
                     if self._is_pong_message(data):
                         self._pong_received.set()
-
-                    if self._is_auth_confirm_message(data):
+                    elif self._is_auth_confirm_message(data):
                         self._auth_event.set()
-
-                    if self._is_data_message(data):
+                    elif self._is_data_message(data):
                         topic = data.get(self.TOPIC_KEY)
 
-                        if topic and topic in self._topic_queues:
+                        if topic in self._topic_queues:
                             await self._topic_queues[topic].put(data.get(self.DATA_KEY))
                         else:
                             logger.warning(
                                 f"Received data for unsubscribed topic: {topic}"
                             )
-            except (json.JSONDecodeError, KeyError) as e:
-                logger.error(f"Malformed message received: {e}")
             except Exception as e:
                 logger.exception(f"Unexpected error while receiving message: {e}")
                 await self.connect()
@@ -208,8 +212,8 @@ class BybitWS(AbstractWSExchange):
 
             if topic in self._subscriptions:
                 self._subscriptions.remove(topic)
-            if topic in self._topic_queues:
-                self._topic_queues.pop(topic)
+
+            self._topic_queues.pop(topic, None)
 
     async def get_message(self, topic: str):
         if topic not in self._topic_queues:
