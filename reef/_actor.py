@@ -3,6 +3,8 @@ import logging
 import time
 from dataclasses import dataclass, field
 
+import numpy as np
+
 from coral import DataSourceFactory
 from core.actors import BaseActor
 from core.events.market import NewMarketOrderReceived
@@ -21,6 +23,10 @@ class PQOrder:
     symbol: Symbol = field(compare=False)
     datasource: DataSourceType = field(compare=False)
     timestamp: float = field(default_factory=lambda: time.time(), compare=True)
+    ttl: float = field(
+        default_factory=lambda: np.mean(np.random.exponential(3, size=1000)),
+        compare=False,
+    )
 
 
 class ReefActor(BaseActor):
@@ -68,7 +74,6 @@ class ReefActor(BaseActor):
         logging.info(f"Order {order.id} {order.status} added to the queue.")
 
     async def _process_orders(self):
-        expiration_time = self.order_config.get("expiration_time", 10)
         monitor_interval = self.order_config.get("monitor_interval", 10)
 
         try:
@@ -76,12 +81,12 @@ class ReefActor(BaseActor):
                 pq_order = await self._order_queue.get()
                 current_time = time.time()
 
-                if current_time - pq_order.timestamp > expiration_time:
+                if current_time - pq_order.timestamp > pq_order.ttl:
                     await self._cancel_order(
                         pq_order.order_id, pq_order.symbol, pq_order.datasource
                     )
                 else:
-                    sleep_time = expiration_time - (current_time - pq_order.timestamp)
+                    sleep_time = pq_order.ttl - (current_time - pq_order.timestamp)
 
                     if sleep_time > 0:
                         await asyncio.sleep(sleep_time)
