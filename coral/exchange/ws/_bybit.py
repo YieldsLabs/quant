@@ -169,6 +169,7 @@ class BybitWS(AbstractWSExchange):
 
             except Exception as e:
                 logger.error(f"Unexpected error while receiving message: {e}")
+                await self.close()
                 await self.connect()
                 raise ConnectionError("WebSocket connection error.") from None
 
@@ -302,11 +303,7 @@ class BybitWS(AbstractWSExchange):
         success = data.get(self.SUCCESS_KEY)
 
         if not success:
-            await asyncio.wait_for(
-                self.ws.send(json.dumps(message)), timeout=self.SEND_TIMEOUT
-            )
-
-            logger.info(f"Resubscribed to {message.get(self.ARGS_KEY)}")
+            raise ConnectionError(f"Subscription error: {message}") from None
 
     async def _resubscribe_all(self):
         if not self._subscriptions:
