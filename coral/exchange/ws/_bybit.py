@@ -6,6 +6,7 @@ import logging
 import time
 import uuid
 
+import numpy as np
 from websockets.asyncio.client import connect
 from websockets.exceptions import ConnectionClosedError
 
@@ -75,36 +76,34 @@ class BybitWS(AbstractWSExchange):
         self._receive_task = None
         self._ping_rid = str(uuid.uuid4())
 
-    async def _connect(self):
-        if not self.ws:
-            try:
-                self.ws = await connect(
-                    self.wss,
-                    open_timeout=5,
-                    ping_interval=self.PING_INTERVAL,
-                    ping_timeout=self.PONG_TIMEOUT,
-                    close_timeout=10,
-                    user_agent_header=user_agent,
-                    max_queue=8,
-                )
-
-                await self._wait_for_ws(timeout=5)
-                await self.ping()
-                logger.info("WebSocket connection established.")
-                self._start_tasks()
-                await self._handle_reconnect()
-            except Exception as e:
-                logger.error(f"Failed to connect to WebSocket: {e}")
-                raise ConnectionError("Failed to connect to WebSocket") from None
-
     @retry(
         max_retries=13,
         initial_retry_delay=1,
         handled_exceptions=connect_exceptions,
     )
     async def connect(self):
-        await self.close()
-        await self._connect()
+        if self.ws:
+            return
+
+        try:
+            self.ws = await connect(
+                self.wss,
+                open_timeout=5,
+                ping_interval=self.PING_INTERVAL,
+                ping_timeout=self.PONG_TIMEOUT,
+                close_timeout=10,
+                user_agent_header=user_agent,
+                max_queue=8,
+            )
+
+            await self._wait_for_ws(timeout=5)
+            await self.ping()
+            logger.info("WebSocket connection established.")
+            self._start_tasks()
+            await self._handle_reconnect()
+        except Exception as e:
+            logger.error(f"Failed to connect to WebSocket: {e}")
+            raise ConnectionError("Failed to connect to WebSocket") from None
 
     async def close(self):
         if self.ws:
@@ -116,29 +115,35 @@ class BybitWS(AbstractWSExchange):
                 self.ws = None
 
     async def auth(self):
-        expires = int(time.time() * 10**3) + 3 * 10**3
-        param_str = f"GET/realtime{expires}"
-        sign = hmac.new(
-            bytes(self.api_secret, "utf-8"),
-            param_str.encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
+        try:
+            expires = int(time.time() * 10**3) + 3 * 10**3
+            param_str = f"GET/realtime{expires}"
+            sign = hmac.new(
+                bytes(self.api_secret, "utf-8"),
+                param_str.encode("utf-8"),
+                hashlib.sha256,
+            ).hexdigest()
 
-        await self._send(self.AUTH_OPERATION, [self.api_key, expires, sign])
-        await asyncio.wait_for(self._auth_event.wait(), timeout=self.AUTH_TIMEOUT)
+            await self._send(self.AUTH_OPERATION, [self.api_key, expires, sign])
+            await asyncio.wait_for(self._auth_event.wait(), timeout=self.AUTH_TIMEOUT)
+        except asyncio.TimeoutError:
+            logger.error("Auth request timed out")
 
     async def ping(self):
-        await asyncio.wait_for(
-            self.ws.send(
-                json.dumps(
-                    {
-                        self.OP_KEY: self.PING_OPERATION,
-                        self.REQ_KEY: self._ping_rid,
-                    }
-                )
-            ),
-            timeout=self.PING_TIMEOUT,
-        )
+        try:
+            await asyncio.wait_for(
+                self.ws.send(
+                    json.dumps(
+                        {
+                            self.OP_KEY: self.PING_OPERATION,
+                            self.REQ_KEY: self._ping_rid,
+                        }
+                    )
+                ),
+                timeout=self.PING_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            logger.error("Ping request timed out")
 
     def _start_tasks(self):
         if not self._receive_task or self._receive_task.done():
@@ -254,15 +259,7 @@ class BybitWS(AbstractWSExchange):
             logger.warning(f"Received data with missing topic or data: {data}")
             return
 
-        queue = self._topic_queues.get(topic)
-
-        if queue:
-            await queue.put(message)
-        else:
-            queue = asyncio.Queue()
-            await queue.put(message)
-            
-        self._topic_queues[topic] = queue
+        await self._topic_queues[topic].put(message)
 
     async def _check_ws_open(self):
         while not self.ws:
@@ -315,14 +312,11 @@ class BybitWS(AbstractWSExchange):
         if not self._subscriptions:
             return
 
-        tasks = [
-            asyncio.wait_for(
+        for message in list(self._subscriptions.values()):
+            await asyncio.wait_for(
                 self.ws.send(json.dumps(message)), timeout=self.SEND_TIMEOUT
             )
-            for message in self._subscriptions.values()
-        ]
-
-        await asyncio.gather(*tasks)
+            await asyncio.sleep(np.random.exponential(2.0, 100))
 
         logger.info("Resubscribed to all topics")
 
@@ -349,7 +343,6 @@ class BybitWS(AbstractWSExchange):
         elif self._is_auth_confirm_message(data):
             self._auth_event.set()
         elif self._is_subs_confirm_message(data):
-            print(data)
             await self._resubscribe(data)
         elif self._is_data_message(data):
             await self._add_data(data)

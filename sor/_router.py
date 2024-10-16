@@ -194,7 +194,9 @@ class SmartRouter(AbstractEventManager):
 
             current_position_size = existing_position.get("position_size", 0)
 
-            order_size = next(self._calculate_order_slices(symbol, current_position_size))
+            order_size = next(
+                self._calculate_order_slices(symbol, current_position_size)
+            )
 
             logger.info(
                 f"Placing reduce order for {symbol}: size={order_size}, price={price}, "
