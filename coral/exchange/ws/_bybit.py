@@ -28,10 +28,11 @@ class BybitWS(AbstractWSExchange):
     PING_OPERATION = "ping"
     PONG_OPERATION = "pong"
 
-    PING_INTERVAL = 10
+    PING_INTERVAL = 20
     PING_TIMEOUT = 5
-    PONG_TIMEOUT = 8
+    PONG_TIMEOUT = 18
     AUTH_TIMEOUT = 10
+    SEND_TIMEOUT = 5
 
     INTERVALS = {
         Timeframe.ONE_MINUTE: 1,
@@ -57,6 +58,7 @@ class BybitWS(AbstractWSExchange):
     SUCCESS_KEY = "success"
     ARGS_KEY = "args"
     REQ_KEY = "req_id"
+    RETR_MSG = "ret_msg"
 
     def __init__(self, wss: str, api_key: str, api_secret: str):
         super().__init__()
@@ -65,14 +67,13 @@ class BybitWS(AbstractWSExchange):
         self.api_key = api_key
         self.api_secret = api_secret
         self._lock = asyncio.Lock()
-        self._subscriptions = set()
+        self._subscriptions = {}
         self._auth_event = asyncio.Event()
         self._topic_queues = {}
         self._tasks = set()
         self._semaphore = asyncio.Semaphore(1)
-        self._pong_received = asyncio.Event()
-        self._ping_task = None
         self._receive_task = None
+        self._ping_rid = str(uuid.uuid4())
 
     async def _connect(self):
         if not self.ws:
@@ -88,6 +89,7 @@ class BybitWS(AbstractWSExchange):
                 )
 
                 await self._wait_for_ws(timeout=5)
+                await self.ping()
                 logger.info("WebSocket connection established.")
                 self._start_tasks()
                 await self._handle_reconnect()
@@ -125,52 +127,24 @@ class BybitWS(AbstractWSExchange):
         await self._send(self.AUTH_OPERATION, [self.api_key, expires, sign])
         await asyncio.wait_for(self._auth_event.wait(), timeout=self.AUTH_TIMEOUT)
 
-    async def _manage_ping_pong(self):
-        max_ping_retries = 3
-        retries = 0
-
-        while True:
-            try:
-                await asyncio.wait_for(
-                    self.ws.send(json.dumps({
+    async def ping(self):
+        await asyncio.wait_for(
+            self.ws.send(
+                json.dumps(
+                    {
                         self.OP_KEY: self.PING_OPERATION,
-                        self.REQ_KEY: str(uuid.uuid4())
-                    })),
-                    timeout=self.PING_TIMEOUT,
+                        self.REQ_KEY: self._ping_rid,
+                    }
                 )
-                await asyncio.wait_for(
-                    self._pong_received.wait(), timeout=self.PONG_TIMEOUT
-                )
-                retries = 0
-                self._pong_received.clear()
-            except asyncio.TimeoutError:
-                retries += 1
-                logger.warning(
-                    f"Pong response timed out. Attempt {retries}/{max_ping_retries}."
-                )
-
-                if retries >= max_ping_retries:
-                    logger.error("Max retries exceeded. Reconnecting WebSocket.")
-                    await self.connect()
-                    return
-                else:
-                    await asyncio.sleep(self.PING_INTERVAL)
-            except Exception as e:
-                logger.error(f"Ping/Pong management error: {e}")
-                await self.close()
-                return
-            await asyncio.sleep(self.PING_INTERVAL)
+            ),
+            timeout=self.PING_TIMEOUT,
+        )
 
     def _start_tasks(self):
         if not self._receive_task or self._receive_task.done():
             self._receive_task = asyncio.create_task(self._receive())
             self._tasks.add(self._receive_task)
             self._receive_task.add_done_callback(self._tasks.discard)
-
-        if not self._ping_task or self._ping_task.done():
-            self._ping_task = asyncio.create_task(self._manage_ping_pong())
-            self._tasks.add(self._ping_task)
-            self._ping_task.add_done_callback(self._tasks.discard)
 
     @retry(
         max_retries=13,
@@ -181,46 +155,27 @@ class BybitWS(AbstractWSExchange):
         async with self._semaphore:
             try:
                 async for message in self.ws:
-                    try:
-                        data = json.loads(message)
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Failed to decode message: {message}. Error: {e}")
+                    data = await self._parse_message(message)
+
+                    if not data:
                         continue
 
-                    if self._is_pong_message(data):
-                        self._pong_received.set()
-                    elif self._is_auth_confirm_message(data):
-                        self._auth_event.set()
-                    elif self._is_data_message(data):
-                        topic = data.get(self.TOPIC_KEY)
+                    await self._route_message(data)
 
-                        if topic in self._topic_queues:
-                            await self._topic_queues[topic].put(data.get(self.DATA_KEY))
-                        else:
-                            logger.warning(
-                                f"Received data for unsubscribed topic: {topic}"
-                            )
             except Exception as e:
                 logger.error(f"Unexpected error while receiving message: {e}")
                 await self.connect()
                 raise ConnectionError("WebSocket connection error.") from None
 
     async def subscribe(self, topic: str):
-        async with self._lock:
-            await self._send(self.SUBSCRIBE_OPERATION, [topic])
-            self._subscriptions.add(topic)
+        await self._send(self.SUBSCRIBE_OPERATION, [topic])
 
-            if topic not in self._topic_queues:
-                self._topic_queues[topic] = asyncio.Queue()
+        if topic not in self._topic_queues:
+            self._topic_queues[topic] = asyncio.Queue()
 
     async def unsubscribe(self, topic: str):
-        async with self._lock:
-            await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
-
-            if topic in self._subscriptions:
-                self._subscriptions.remove(topic)
-
-            self._topic_queues.pop(topic, None)
+        await self._send(self.UNSUBSCRIBE_OPERATION, [topic])
+        self._topic_queues.pop(topic, None)
 
     async def get_message(self, topic: str):
         if topic not in self._topic_queues:
@@ -246,19 +201,36 @@ class BybitWS(AbstractWSExchange):
     def position_topic(self):
         return "position.linear"
 
-    async def _send(self, operation, args, timeout=5):
+    async def _send(self, operation, topics):
         if not self.ws:
             logger.error("WebSocket connection error.")
             return
 
+        req_id = str(uuid.uuid4())
+
         message = {
             self.OP_KEY: operation,
-            self.ARGS_KEY: args,
-            self.REQ_KEY: str(uuid.uuid4()),
+            self.ARGS_KEY: topics,
+            self.REQ_KEY: req_id,
         }
 
         try:
-            await asyncio.wait_for(self.ws.send(json.dumps(message)), timeout=timeout)
+            await asyncio.wait_for(
+                self.ws.send(json.dumps(message)), timeout=self.SEND_TIMEOUT
+            )
+
+            if operation == self.SUBSCRIBE_OPERATION:
+                self._subscriptions[req_id] = message
+
+            if operation == self.UNSUBSCRIBE_OPERATION:
+                unsub_ids = {
+                    req_id
+                    for req_id, message in self._subscriptions.items()
+                    if any(topic in message.get(self.ARGS_KEY, []) for topic in topics)
+                }
+
+                for rid in unsub_ids:
+                    self._subscriptions.pop(rid, None)
 
             if operation != self.AUTH_OPERATION:
                 logger.info(f"{operation.capitalize()} to: {message}")
@@ -274,6 +246,24 @@ class BybitWS(AbstractWSExchange):
             logger.error("Timed out waiting for WebSocket to open.")
             raise ConnectionError("WebSocket connection timeout.") from None
 
+    async def _add_data(self, data):
+        topic = data.get(self.TOPIC_KEY)
+        message = data.get(self.DATA_KEY)
+
+        if topic is None or message is None:
+            logger.warning(f"Received data with missing topic or data: {data}")
+            return
+
+        queue = self._topic_queues.get(topic)
+
+        if queue:
+            await queue.put(message)
+        else:
+            queue = asyncio.Queue()
+            await queue.put(message)
+            
+        self._topic_queues[topic] = queue
+
     async def _check_ws_open(self):
         while not self.ws:
             await asyncio.sleep(0.1)
@@ -281,10 +271,13 @@ class BybitWS(AbstractWSExchange):
     def _is_data_message(self, data):
         return self.TOPIC_KEY in data
 
+    def _is_subs_confirm_message(self, data):
+        return data.get(self.OP_KEY) == self.SUBSCRIBE_OPERATION
+
     def _is_pong_message(self, data):
         return (
-            data.get(self.OP_KEY) == self.PONG_OPERATION
-            and data.get(self.SUCCESS_KEY) is True
+            data.get(self.RETR_MSG) == self.PONG_OPERATION
+            or data.get(self.OP_KEY) == self.PONG_OPERATION
         )
 
     def _is_auth_confirm_message(self, data):
@@ -293,16 +286,45 @@ class BybitWS(AbstractWSExchange):
             and data.get(self.SUCCESS_KEY) is True
         )
 
+    async def _resubscribe(self, data):
+        if not self._subscriptions:
+            return
+
+        req_id = data.get(self.REQ_KEY)
+
+        if req_id is None:
+            logger.error("Missing request ID in the response during resubscription.")
+            return
+
+        message = self._subscriptions.get(req_id)
+
+        if not message:
+            logger.error(f"Subscription message for req_id {req_id} not found.")
+            return
+
+        success = data.get(self.SUCCESS_KEY)
+
+        if not success:
+            await asyncio.wait_for(
+                self.ws.send(json.dumps(message)), timeout=self.SEND_TIMEOUT
+            )
+
+            logger.info(f"Resubscribed to {message.get(self.ARGS_KEY)}")
+
     async def _resubscribe_all(self):
-        async with self._lock:
-            if not self._subscriptions:
-                return
+        if not self._subscriptions:
+            return
 
-        for topic in list(self._subscriptions):
-            await self.subscribe(topic)
-            await asyncio.sleep(0.05)
+        tasks = [
+            asyncio.wait_for(
+                self.ws.send(json.dumps(message)), timeout=self.SEND_TIMEOUT
+            )
+            for message in self._subscriptions.values()
+        ]
 
-        logger.info(f"Resubscribed to all topics: {list(self._subscriptions)}")
+        await asyncio.gather(*tasks)
+
+        logger.info("Resubscribed to all topics")
 
     async def _handle_reconnect(self):
         if not self.ws:
@@ -313,3 +335,21 @@ class BybitWS(AbstractWSExchange):
             await self.auth()
 
         await self._resubscribe_all()
+
+    async def _parse_message(self, message):
+        try:
+            return json.loads(message)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to decode message: {message}. Error: {e}")
+            return None
+
+    async def _route_message(self, data):
+        if self._is_pong_message(data):
+            await self.ping()
+        elif self._is_auth_confirm_message(data):
+            self._auth_event.set()
+        elif self._is_subs_confirm_message(data):
+            print(data)
+            await self._resubscribe(data)
+        elif self._is_data_message(data):
+            await self._add_data(data)
