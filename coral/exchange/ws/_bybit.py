@@ -132,7 +132,10 @@ class BybitWS(AbstractWSExchange):
         while True:
             try:
                 await asyncio.wait_for(
-                    self.ws.send(json.dumps({self.OP_KEY: self.PING_OPERATION})),
+                    self.ws.send(json.dumps({
+                        self.OP_KEY: self.PING_OPERATION,
+                        self.REQ_KEY: str(uuid.uuid4())
+                    })),
                     timeout=self.PING_TIMEOUT,
                 )
                 await asyncio.wait_for(
@@ -198,7 +201,7 @@ class BybitWS(AbstractWSExchange):
                                 f"Received data for unsubscribed topic: {topic}"
                             )
             except Exception as e:
-                logger.exception(f"Unexpected error while receiving message: {e}")
+                logger.error(f"Unexpected error while receiving message: {e}")
                 await self.connect()
                 raise ConnectionError("WebSocket connection error.") from None
 
