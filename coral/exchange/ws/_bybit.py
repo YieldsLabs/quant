@@ -4,6 +4,7 @@ import hmac
 import json
 import logging
 import time
+import uuid
 
 from websockets.asyncio.client import connect
 from websockets.exceptions import ConnectionClosedError
@@ -55,6 +56,7 @@ class BybitWS(AbstractWSExchange):
     OP_KEY = "op"
     SUCCESS_KEY = "success"
     ARGS_KEY = "args"
+    REQ_KEY = "req_id"
 
     def __init__(self, wss: str, api_key: str, api_secret: str):
         super().__init__()
@@ -204,7 +206,9 @@ class BybitWS(AbstractWSExchange):
         async with self._lock:
             await self._send(self.SUBSCRIBE_OPERATION, [topic])
             self._subscriptions.add(topic)
-            self._topic_queues[topic] = asyncio.Queue()
+
+            if topic not in self._topic_queues:
+                self._topic_queues[topic] = asyncio.Queue()
 
     async def unsubscribe(self, topic: str):
         async with self._lock:
@@ -247,6 +251,7 @@ class BybitWS(AbstractWSExchange):
         message = {
             self.OP_KEY: operation,
             self.ARGS_KEY: args,
+            self.REQ_KEY: str(uuid.uuid4()),
         }
 
         try:
@@ -290,9 +295,11 @@ class BybitWS(AbstractWSExchange):
             if not self._subscriptions:
                 return
 
-            await self._send(self.SUBSCRIBE_OPERATION, list(self._subscriptions))
+        for topic in list(self._subscriptions):
+            await self.subscribe(topic)
+            await asyncio.sleep(0.05)
 
-            logger.info(f"Resubscribed to all topics: {list(self._subscriptions)}")
+        logger.info(f"Resubscribed to all topics: {list(self._subscriptions)}")
 
     async def _handle_reconnect(self):
         if not self.ws:
