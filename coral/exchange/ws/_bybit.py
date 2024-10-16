@@ -232,7 +232,7 @@ class BybitWS(AbstractWSExchange):
                 unsub_ids = {
                     req_id
                     for req_id, message in self._subscriptions.items()
-                    if any(topic in message.get(self.ARGS_KEY, []) for topic in topics)
+                    if np.any(np.isin(topics, message.get(self.ARGS_KEY, [])))
                 }
 
                 for rid in unsub_ids:
