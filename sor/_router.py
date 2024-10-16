@@ -178,8 +178,6 @@ class SmartRouter(AbstractEventManager):
 
         exit_order = position.exit_order()
 
-        order_size_generator = self._calculate_order_slices(symbol, exit_order.size)
-
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = bid if position.side == PositionSide.LONG else ask
 
@@ -195,7 +193,8 @@ class SmartRouter(AbstractEventManager):
                 break
 
             current_position_size = existing_position.get("position_size", 0)
-            order_size = min(next(order_size_generator), current_position_size)
+
+            order_size = next(self._calculate_order_slices(symbol, current_position_size))
 
             logger.info(
                 f"Placing reduce order for {symbol}: size={order_size}, price={price}, "
