@@ -17,7 +17,7 @@ from core.models.symbol import Symbol
 logger = logging.getLogger(__name__)
 
 
-@dataclass(order=True, frozen=True)
+@dataclass(order=True, frozen=True, slots=True)
 class PQOrder:
     order_id: str = field(compare=False)
     symbol: Symbol = field(compare=False)
@@ -97,7 +97,9 @@ class ReefActor(BaseActor):
 
                 self._order_queue.task_done()
 
-                await asyncio.sleep(monitor_interval)
+                await asyncio.sleep(
+                    np.mean(np.random.exponential(monitor_interval, size=100))
+                )
         except asyncio.CancelledError:
             logging.info("Order processing task was cancelled.")
         except Exception as e:
@@ -144,4 +146,4 @@ class ReefActor(BaseActor):
             ):
                 await self._order_queue.put(open_order)
 
-        await asyncio.sleep(monitor_interval)
+        await asyncio.sleep(np.random.exponential(monitor_interval))
