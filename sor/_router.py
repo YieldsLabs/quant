@@ -121,12 +121,11 @@ class SmartRouter(AbstractEventManager):
             stop_loss = position.stop_loss
 
             current_distance_to_stop_loss = abs(stop_loss - price)
-            distance_to_stop_loss = abs(entry_price - stop_loss)
+            distance_to_stop_loss = self.config.get("stop_loss_threshold") * abs(
+                entry_price - stop_loss
+            )
 
-            if (
-                self.config["stop_loss_threshold"] * distance_to_stop_loss
-                > current_distance_to_stop_loss
-            ):
+            if distance_to_stop_loss > current_distance_to_stop_loss:
                 logger.warn(
                     f"Order risk breached for {symbol}: Entry Price={entry_price}, "
                     f"Stop Loss={stop_loss}, Distance to Stop Loss={distance_to_stop_loss}, "
@@ -134,7 +133,8 @@ class SmartRouter(AbstractEventManager):
                 )
 
                 num_order_breach += 1
-                if num_order_breach >= self.config["max_order_breach"]:
+
+                if num_order_breach >= self.config.get("max_order_breach"):
                     logger.warn(
                         f"Max stop-loss breaches reached for {symbol}. Stopping order placement."
                     )
@@ -212,8 +212,6 @@ class SmartRouter(AbstractEventManager):
         alpha = np.random.uniform(1.3, 1.5)
         decay_factor = 0.88
 
-        logger.info(f"Using power-law exponent: {alpha:.2f}")
-
         while True:
             u = np.random.rand() ** decay_factor
 
@@ -222,7 +220,5 @@ class SmartRouter(AbstractEventManager):
             raw_order_size = min(order_size, total_size)
 
             rounded_order_size = round(raw_order_size, symbol.position_precision)
-
-            logger.info(f"Next order size: {rounded_order_size} for symbol: {symbol}")
 
             yield rounded_order_size
