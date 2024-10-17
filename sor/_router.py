@@ -217,8 +217,6 @@ class SmartRouter(AbstractEventManager):
 
             order_size = x_min * (1 - u) ** (-1 / (alpha - 1))
 
-            raw_order_size = min(order_size, total_size)
+            order_size = min(order_size, total_size)
 
-            rounded_order_size = round(raw_order_size, symbol.position_precision)
-
-            yield rounded_order_size
+            yield order_size

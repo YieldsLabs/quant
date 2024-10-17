@@ -213,11 +213,8 @@ class Position:
         return False
 
     def entry_order(self) -> Order:
-        price = round(self.signal.entry, self.signal.symbol.price_precision)
-        size = round(
-            max(self.initial_size, self.signal.symbol.min_position_size),
-            self.signal.symbol.position_precision,
-        )
+        price = self.signal.entry
+        size = max(self.initial_size, self.signal.symbol.min_position_size)
 
         return Order(
             status=OrderStatus.PENDING,

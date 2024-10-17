@@ -69,9 +69,7 @@ class ReefActor(BaseActor):
         order = event.order
         pq_order = PQOrder(order.id, event.symbol, event.datasource)
 
-        await self._order_queue.put(pq_order)
-
-        logging.info(f"Order {order.id} {order.status} added to the queue.")
+        await self._put_order(pq_order)
 
     async def _process_orders(self):
         monitor_interval = self.order_config.get("monitor_interval", 10)
@@ -125,25 +123,37 @@ class ReefActor(BaseActor):
         ]
         monitor_interval = self.order_config.get("monitor_interval", 10)
 
-        open_orders = []
-
-        tasks = [
+        datasource_tasks = [
             asyncio.create_task(self._fetch_orders(datasource))
             for datasource in services
         ]
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*datasource_tasks, return_exceptions=True)
+
+        open_orders = []
 
         for datasource, result in zip(services, results):
+            if isinstance(result, Exception):
+                logging.error(f"Error fetching orders for {datasource}: {str(result)}")
+                continue
+
             open_orders.extend(
                 [PQOrder(order_id, symbol, datasource) for order_id, symbol in result]
             )
 
         for open_order in open_orders:
-            if not any(
-                existing_order.order_id == open_order.order_id
-                for existing_order in self._order_queue._queue
-            ):
-                await self._order_queue.put(open_order)
+            await self._put_order(open_order)
 
         await asyncio.sleep(np.random.exponential(monitor_interval))
+
+    async def _put_order(self, pq_order: PQOrder):
+        if not any(
+            existing_order.order_id == pq_order.order_id
+            for existing_order in self._order_queue._queue
+        ):
+            await self._order_queue.put(pq_order)
+            logging.info(f"Order {pq_order.order_id} added to the queue.")
+        else:
+            logging.info(
+                f"Order {pq_order.order_id} already exists in the queue, skipping."
+            )
