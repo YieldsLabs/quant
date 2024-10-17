@@ -5,6 +5,7 @@ import json
 import logging
 import time
 import uuid
+from typing import List
 
 import numpy as np
 from websockets.asyncio.client import connect
@@ -67,14 +68,12 @@ class BybitWS(AbstractWSExchange):
         self.ws = None
         self.api_key = api_key
         self.api_secret = api_secret
-        self._lock = asyncio.Lock()
         self._subscriptions = {}
         self._auth_event = asyncio.Event()
         self._topic_queues = {}
         self._tasks = set()
         self._semaphore = asyncio.Semaphore(1)
         self._receive_task = None
-        self._ping_rid = str(uuid.uuid4())
 
     @retry(
         max_retries=13,
@@ -136,7 +135,7 @@ class BybitWS(AbstractWSExchange):
                     json.dumps(
                         {
                             self.OP_KEY: self.PING_OPERATION,
-                            self.REQ_KEY: self._ping_rid,
+                            self.REQ_KEY: str(uuid.uuid4()),
                         }
                     )
                 ),
@@ -207,36 +206,19 @@ class BybitWS(AbstractWSExchange):
     def position_topic(self):
         return "position.linear"
 
-    async def _send(self, operation, topics):
+    async def _send(self, operation: str, topics: List[str]):
         if not self.ws:
             logger.error("WebSocket connection error.")
             return
 
-        req_id = str(uuid.uuid4())
-
-        message = {
-            self.OP_KEY: operation,
-            self.ARGS_KEY: topics,
-            self.REQ_KEY: req_id,
-        }
+        message = self._build_message(operation, topics)
 
         try:
             await asyncio.wait_for(
                 self.ws.send(json.dumps(message)), timeout=self.SEND_TIMEOUT
             )
 
-            if operation == self.SUBSCRIBE_OPERATION:
-                self._subscriptions[req_id] = message
-
-            if operation == self.UNSUBSCRIBE_OPERATION:
-                unsub_ids = {
-                    req_id
-                    for req_id, message in self._subscriptions.items()
-                    if np.any(np.isin(topics, message.get(self.ARGS_KEY, [])))
-                }
-
-                for rid in unsub_ids:
-                    self._subscriptions.pop(rid, None)
+            self._handle_subscription(operation, topics, message)
 
             if operation != self.AUTH_OPERATION:
                 logger.info(f"{operation.capitalize()} to: {message}")
@@ -333,6 +315,28 @@ class BybitWS(AbstractWSExchange):
         except json.JSONDecodeError as e:
             logger.error(f"Failed to decode message: {message}. Error: {e}")
             return None
+
+    def _build_message(self, operation, topics):
+        return {
+            self.REQ_KEY: str(uuid.uuid4()),
+            self.OP_KEY: operation,
+            self.ARGS_KEY: topics,
+        }
+
+    def _handle_subscription(self, operation: str, topics: List[str], message):
+        req_id = message.get(self.REQ_KEY)
+
+        if operation == self.SUBSCRIBE_OPERATION:
+            self._subscriptions[req_id] = message
+
+        elif operation == self.UNSUBSCRIBE_OPERATION:
+            unsub_ids = {
+                rid
+                for rid, msg in self._subscriptions.items()
+                if any(topic in msg.get(self.ARGS_KEY, []) for topic in topics)
+            }
+            for rid in unsub_ids:
+                self._subscriptions.pop(rid, None)
 
     async def _route_message(self, data):
         if self._is_pong_message(data):
