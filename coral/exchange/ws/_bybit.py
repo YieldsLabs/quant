@@ -255,10 +255,15 @@ class BybitWS(AbstractWSExchange):
         return data.get(self.OP_KEY) == self.SUBSCRIBE_OPERATION
 
     def _is_pong_message(self, data):
-        return (
-            data.get(self.RETR_MSG) == self.PONG_OPERATION
-            or data.get(self.OP_KEY) == self.PONG_OPERATION
-        )
+        retr_msg = data.get(self.RETR_MSG, [])
+        op_key = data.get(self.OP_KEY, [])
+
+        if not isinstance(retr_msg, list):
+            retr_msg = [retr_msg]
+        if not isinstance(op_key, list):
+            op_key = [op_key]
+
+        return self.PONG_OPERATION in retr_msg or self.PONG_OPERATION in op_key
 
     def _is_auth_confirm_message(self, data):
         return (
@@ -295,7 +300,7 @@ class BybitWS(AbstractWSExchange):
             await asyncio.wait_for(
                 self.ws.send(json.dumps(message)), timeout=self.SEND_TIMEOUT
             )
-            await asyncio.sleep(np.random.exponential(2.0, 100))
+            await asyncio.sleep(np.random.exponential(2.0))
 
         logger.info("Resubscribed to all topics")
 
@@ -332,7 +337,7 @@ class BybitWS(AbstractWSExchange):
         elif operation == self.UNSUBSCRIBE_OPERATION:
             unsub_ids = {
                 rid
-                for rid, msg in self._subscriptions.items()
+                for rid, msg in list(self._subscriptions.items())
                 if any(topic in msg.get(self.ARGS_KEY, []) for topic in topics)
             }
             for rid in unsub_ids:
