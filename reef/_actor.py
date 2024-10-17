@@ -66,10 +66,7 @@ class ReefActor(BaseActor):
         )
 
     async def on_receive(self, event: NewMarketOrderReceived):
-        order = event.order
-        pq_order = PQOrder(order.id, event.symbol, event.datasource)
-
-        await self._put_order(pq_order)
+        await self._put_order(PQOrder(event.order.id, event.symbol, event.datasource))
 
     async def _process_orders(self):
         monitor_interval = self.order_config.get("monitor_interval", 10)
