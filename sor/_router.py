@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+import numpy as np
+
 from coral import DataSourceFactory
 from core.commands.position import ClosePosition, OpenPosition
 from core.event_decorators import command_handler, query_handler
@@ -31,6 +33,10 @@ class SmartRouter(AbstractEventManager):
         self.algo_price = TWAP(config_service)
         self.config = config_service.get("position")
 
+    @query_handler(GetBalance)
+    def get_account_balance(self, query: GetBalance):
+        return self.exchange.fetch_account_balance(query.currency)
+
     @query_handler(GetOpenPosition)
     def get_open_position(self, query: GetOpenPosition):
         position = query.position
@@ -46,9 +52,9 @@ class SmartRouter(AbstractEventManager):
         else:
             return Order(
                 status=OrderStatus.EXECUTED,
-                size=broker_position["position_size"],
-                price=broker_position["entry_price"],
-                fee=broker_position["open_fee"],
+                size=broker_position.get("position_size", 0),
+                price=broker_position.get("entry_price", 0),
+                fee=broker_position.get("open_fee", 0),
             )
 
     @query_handler(GetClosePosition)
@@ -61,7 +67,6 @@ class SmartRouter(AbstractEventManager):
             position.side,
             position.last_modified,
             position.size,
-            self.config["max_order_slice"],
         )
 
         logging.info(f"Broker close position: {trade}")
@@ -71,14 +76,10 @@ class SmartRouter(AbstractEventManager):
 
         return Order(
             status=OrderStatus.CLOSED,
-            size=trade["amount"],
-            price=trade["price"],
-            fee=trade["fee"],
+            size=trade.get("amount", 0),
+            price=trade.get("price", 0),
+            fee=trade.get("fee", 0),
         )
-
-    @query_handler(GetBalance)
-    def get_account_balance(self, query: GetBalance):
-        return self.exchange.fetch_account_balance(query.currency)
 
     @query_handler(HasPosition)
     def has_position(self, query: HasPosition):
@@ -110,23 +111,21 @@ class SmartRouter(AbstractEventManager):
         pending_order = position.entry_order()
 
         entry_price = pending_order.price
-        pending_order_size = pending_order.size
-
-        orders_size = self._calculate_order_slices(symbol, pending_order_size)
 
         num_order_breach = 0
+
+        order_size_generator = self._calculate_order_slices(symbol, pending_order.size)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = ask if position.side == PositionSide.LONG else bid
             stop_loss = position.stop_loss
 
             current_distance_to_stop_loss = abs(stop_loss - price)
-            distance_to_stop_loss = abs(entry_price - stop_loss)
+            distance_to_stop_loss = self.config.get("stop_loss_threshold") * abs(
+                entry_price - stop_loss
+            )
 
-            if (
-                self.config["stop_loss_threshold"] * distance_to_stop_loss
-                > current_distance_to_stop_loss
-            ):
+            if distance_to_stop_loss > current_distance_to_stop_loss:
                 logger.warn(
                     f"Order risk breached for {symbol}: Entry Price={entry_price}, "
                     f"Stop Loss={stop_loss}, Distance to Stop Loss={distance_to_stop_loss}, "
@@ -134,26 +133,35 @@ class SmartRouter(AbstractEventManager):
                 )
 
                 num_order_breach += 1
-                if num_order_breach >= self.config["max_order_breach"]:
+
+                if num_order_breach >= self.config.get("max_order_breach"):
                     logger.warn(
                         f"Max stop-loss breaches reached for {symbol}. Stopping order placement."
                     )
                     break
 
             existing_position = self.exchange.fetch_position(symbol, position_side)
+            current_position_size = (
+                existing_position.get("position_size", 0) if existing_position else 0
+            )
 
-            if (
-                existing_position
-                and existing_position.get("position_size", 0) >= pending_order_size
-            ):
+            remaining_size = pending_order.size - current_position_size
+
+            if remaining_size <= 0:
                 logger.info(
-                    f"Existing position for {symbol} has sufficient size. No more orders will be placed."
+                    f"Position for {symbol} has reached or exceeded the target size. No more orders will be placed."
                 )
                 break
 
-            self.exchange.create_limit_order(symbol, position_side, orders_size, price)
+            order_size = min(next(order_size_generator), remaining_size)
 
-            await asyncio.sleep(0.2)
+            logger.info(
+                f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
+            )
+
+            self.exchange.create_limit_order(symbol, position_side, order_size, price)
+
+            await asyncio.sleep(np.random.exponential(0.5))
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -170,8 +178,6 @@ class SmartRouter(AbstractEventManager):
 
         exit_order = position.exit_order()
 
-        orders_size = self._calculate_order_slices(symbol, exit_order.size)
-
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = bid if position.side == PositionSide.LONG else ask
 
@@ -180,23 +186,37 @@ class SmartRouter(AbstractEventManager):
                 f"Theoretical Exit Price: {exit_order.price}"
             )
 
-            if not self.exchange.fetch_position(symbol, position_side):
+            existing_position = self.exchange.fetch_position(symbol, position_side)
+
+            if not existing_position:
                 logger.info(f"Position for {symbol} already closed.")
                 break
 
-            self.exchange.create_reduce_order(symbol, position_side, orders_size, price)
+            current_position_size = existing_position.get("position_size", 0)
 
-            await asyncio.sleep(0.2)
+            order_size = next(
+                self._calculate_order_slices(symbol, current_position_size)
+            )
 
-    def _calculate_order_slices(self, symbol: Symbol, total_size):
-        num_orders = min(
-            max(1, int(total_size / symbol.min_position_size)),
-            self.config["max_order_slice"],
-        )
-        orders_size = round(total_size / num_orders, symbol.position_precision)
+            logger.info(
+                f"Placing reduce order for {symbol}: size={order_size}, price={price}, "
+                f"Remaining Position Size={current_position_size}"
+            )
 
-        logger.info(
-            f"Calculated order slices for {symbol}: {num_orders} orders, {orders_size} size per order"
-        )
+            self.exchange.create_reduce_order(symbol, position_side, order_size, price)
 
-        return orders_size
+            await asyncio.sleep(np.random.exponential(0.5))
+
+    def _calculate_order_slices(self, symbol: Symbol, total_size: int):
+        x_min = symbol.min_position_size
+        alpha = np.random.uniform(1.3, 1.5)
+        decay_factor = 0.88
+
+        while True:
+            u = np.random.rand() ** decay_factor
+
+            order_size = x_min * (1 - u) ** (-1 / (alpha - 1))
+
+            order_size = min(order_size, total_size)
+
+            yield order_size

@@ -41,6 +41,7 @@ class RealtimeActor(FeedActor):
 
     async def on_receive(self, msg: StartRealtimeFeed):
         await self.collector.start(msg)
+        await self.collector.wait_for_completion()
 
     @Producer
     async def _kline_producer(self, msg: StartRealtimeFeed):

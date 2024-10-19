@@ -3,6 +3,8 @@ import logging
 import time
 from dataclasses import dataclass, field
 
+import numpy as np
+
 from coral import DataSourceFactory
 from core.actors import BaseActor
 from core.events.market import NewMarketOrderReceived
@@ -15,12 +17,16 @@ from core.models.symbol import Symbol
 logger = logging.getLogger(__name__)
 
 
-@dataclass(order=True, frozen=True)
+@dataclass(order=True, frozen=True, slots=True)
 class PQOrder:
     order_id: str = field(compare=False)
     symbol: Symbol = field(compare=False)
     datasource: DataSourceType = field(compare=False)
     timestamp: float = field(default_factory=lambda: time.time(), compare=True)
+    ttl: float = field(
+        default_factory=lambda: np.mean(np.random.exponential(3, size=1000)),
+        compare=False,
+    )
 
 
 class ReefActor(BaseActor):
@@ -60,15 +66,9 @@ class ReefActor(BaseActor):
         )
 
     async def on_receive(self, event: NewMarketOrderReceived):
-        order = event.order
-        pq_order = PQOrder(order.id, event.symbol, event.datasource)
-
-        await self._order_queue.put(pq_order)
-
-        logging.info(f"Order {order.id} {order.status} added to the queue.")
+        await self._put_order(PQOrder(event.order.id, event.symbol, event.datasource))
 
     async def _process_orders(self):
-        expiration_time = self.order_config.get("expiration_time", 10)
         monitor_interval = self.order_config.get("monitor_interval", 10)
 
         try:
@@ -76,12 +76,12 @@ class ReefActor(BaseActor):
                 pq_order = await self._order_queue.get()
                 current_time = time.time()
 
-                if current_time - pq_order.timestamp > expiration_time:
+                if current_time - pq_order.timestamp > pq_order.ttl:
                     await self._cancel_order(
                         pq_order.order_id, pq_order.symbol, pq_order.datasource
                     )
                 else:
-                    sleep_time = expiration_time - (current_time - pq_order.timestamp)
+                    sleep_time = pq_order.ttl - (current_time - pq_order.timestamp)
 
                     if sleep_time > 0:
                         await asyncio.sleep(sleep_time)
@@ -92,7 +92,9 @@ class ReefActor(BaseActor):
 
                 self._order_queue.task_done()
 
-                await asyncio.sleep(monitor_interval)
+                await asyncio.sleep(
+                    np.mean(np.random.exponential(monitor_interval, size=100))
+                )
         except asyncio.CancelledError:
             logging.info("Order processing task was cancelled.")
         except Exception as e:
@@ -118,25 +120,37 @@ class ReefActor(BaseActor):
         ]
         monitor_interval = self.order_config.get("monitor_interval", 10)
 
-        open_orders = []
-
-        tasks = [
+        datasource_tasks = [
             asyncio.create_task(self._fetch_orders(datasource))
             for datasource in services
         ]
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*datasource_tasks, return_exceptions=True)
+
+        open_orders = []
 
         for datasource, result in zip(services, results):
+            if isinstance(result, Exception):
+                logging.error(f"Error fetching orders for {datasource}: {str(result)}")
+                continue
+
             open_orders.extend(
                 [PQOrder(order_id, symbol, datasource) for order_id, symbol in result]
             )
 
         for open_order in open_orders:
-            if not any(
-                existing_order.order_id == open_order.order_id
-                for existing_order in self._order_queue._queue
-            ):
-                await self._order_queue.put(open_order)
+            await self._put_order(open_order)
 
-        await asyncio.sleep(monitor_interval)
+        await asyncio.sleep(np.random.exponential(monitor_interval))
+
+    async def _put_order(self, pq_order: PQOrder):
+        if not any(
+            existing_order.order_id == pq_order.order_id
+            for existing_order in self._order_queue._queue
+        ):
+            await self._order_queue.put(pq_order)
+            logging.info(f"Order {pq_order.order_id} added to the queue.")
+        else:
+            logging.info(
+                f"Order {pq_order.order_id} already exists in the queue, skipping."
+            )

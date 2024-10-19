@@ -21,7 +21,6 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
         self._default_map = {
             DataSourceType.BYBIT: BybitWS,
         }
-        self._cache = LRUCache(maxsize=10)
 
     def register(
         self, datasource: DataSourceType, ws_class: Optional[Type[DataSource]] = None
@@ -32,11 +31,6 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
         self._bucket[datasource] = ws_class
 
     def create(self, datasource: DataSourceType, ws: WSType, **kwargs) -> DataSource:
-        cache_key = (datasource, ws)
-
-        if cache_key in self._cache:
-            return self._cache[cache_key]
-
         if datasource not in self._bucket:
             raise ValueError(f"WebSocket class for {datasource} is not registered.")
 
@@ -51,7 +45,5 @@ class WSDataSourceFactory(AbstractDataSourceFactory):
         api_secret = self.secret_service.get_secret(datasource.name)
 
         instance = self._bucket[datasource](wss_url, api_key, api_secret)
-
-        self._cache[cache_key] = instance
 
         return instance
