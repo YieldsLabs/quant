@@ -140,7 +140,10 @@ class SmartRouter(AbstractEventManager):
                     )
                     break
 
-            existing_position = self.exchange.fetch_position(symbol, position_side)
+            existing_position = await asyncio.to_thread(
+                self.exchange.fetch_position, symbol, position_side
+            )
+
             current_position_size = (
                 existing_position.get("position_size", 0) if existing_position else 0
             )
@@ -159,7 +162,13 @@ class SmartRouter(AbstractEventManager):
                 f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
             )
 
-            self.exchange.create_limit_order(symbol, position_side, order_size, price)
+            await asyncio.to_thread(
+                self.exchange.create_limit_order,
+                symbol,
+                position_side,
+                order_size,
+                price,
+            )
 
             await asyncio.sleep(np.random.exponential(0.5))
 
@@ -186,7 +195,9 @@ class SmartRouter(AbstractEventManager):
                 f"Theoretical Exit Price: {exit_order.price}"
             )
 
-            existing_position = self.exchange.fetch_position(symbol, position_side)
+            existing_position = await asyncio.to_thread(
+                self.exchange.fetch_position, symbol, position_side
+            )
 
             if not existing_position:
                 logger.info(f"Position for {symbol} already closed.")
@@ -203,7 +214,13 @@ class SmartRouter(AbstractEventManager):
                 f"Remaining Position Size={current_position_size}"
             )
 
-            self.exchange.create_reduce_order(symbol, position_side, order_size, price)
+            await asyncio.to_thread(
+                self.exchange.create_reduce_order,
+                symbol,
+                position_side,
+                order_size,
+                price,
+            )
 
             await asyncio.sleep(np.random.exponential(0.5))
 
