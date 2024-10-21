@@ -45,14 +45,14 @@ class Performance:
     @property
     def profit(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return np.array([0.0])
+            return np.zeros_like(self.equity)
 
         return self._pnl[self._pnl > 0]
 
     @property
     def loss(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return np.array([0.0])
+            return np.zeros_like(self.equity)
 
         return self._pnl[self._pnl < 0]
 
@@ -100,18 +100,22 @@ class Performance:
     @property
     def drawdown(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return np.array([0.0])
+            return np.zeros_like(self.equity)
 
         peak = np.maximum.accumulate(self.equity)
-        return (peak - self.equity) / peak
+        drawdown = np.where(peak > 0, (peak - self.equity) / peak, 0.0)
+
+        return drawdown
 
     @property
     def runup(self):
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return np.array([0.0])
+            return np.zeros_like(self.equity)
 
         trough = np.minimum.accumulate(self.equity)
-        return (self.equity - trough) / trough
+        runup = np.where(trough > 0, (self.equity - trough) / trough, 0.0)
+
+        return runup
 
     @cached_property
     def max_runup(self) -> float:
@@ -238,11 +242,12 @@ class Performance:
 
         if initial_value == 0:
             return 0.0
-        if final_value < initial_value:
+
+        if final_value == 0:
             return -1.0
 
         compound_factor = final_value / initial_value
-        time_factor = 1 / (self.total_trades / self._periods_per_year)
+        time_factor = 1 / max(self.total_trades / self._periods_per_year, 1)
 
         return np.power(compound_factor, time_factor) - 1
 
@@ -268,11 +273,19 @@ class Performance:
         if len(self.equity) < 2:
             return 0.0
 
-        return (self.equity[-1] / self.equity[0]) - 1
+        initial_equity = self.equity[0]
+
+        if initial_equity == 0:
+            return 0.0
+
+        return (self.equity[-1] / initial_equity) - 1
 
     @cached_property
     def geometric_holding_period_return(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        if self.time_weighted_return <= -1.0:
             return 0.0
 
         return (1 + self.time_weighted_return) ** (1 / self.total_trades) - 1
@@ -280,6 +293,9 @@ class Performance:
     @cached_property
     def expected_return(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        if np.any(self.profit < -1.0):
             return 0.0
 
         log_prod = np.sum(np.log(1.0 + self.profit))
@@ -292,6 +308,9 @@ class Performance:
     @cached_property
     def ann_volatility(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        if self._account_size <= 0:
             return 0.0
 
         daily_returns = self._pnl / self._account_size
@@ -324,6 +343,12 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
+        if self.hit_ratio == 0:
+            return 1.0
+
+        if self.hit_ratio == 1:
+            return 0.0
+
         return ((1 - self.hit_ratio) / (1 + self.hit_ratio)) ** self.total_trades
 
     @cached_property
@@ -345,21 +370,22 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        mu = self.average_pnl
-        sigma = np.std(self._pnl, ddof=1)
+        pnl_sorted = np.sort(self._pnl)
 
-        return norm.ppf(1.0 - confidence_level, mu, sigma)
+        var_index = int((1.0 - confidence_level) * self.total_trades)
+        var = pnl_sorted[var_index]
+
+        return var
 
     @cached_property
     def cvar(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        var = self.var
-        pnl = self._pnl[self._pnl < var]
+        pnl = self._pnl[self._pnl < self.var]
 
         if len(pnl) < 2:
-            return var
+            return self.var
 
         return np.mean(pnl)
 
@@ -375,7 +401,7 @@ class Performance:
 
     @cached_property
     def upi(self) -> float:
-        if self.ulcer_index == 0:
+        if self.ulcer_index < 1e-6:
             return 0.0
 
         return self.expected_return / self.ulcer_index
@@ -383,6 +409,9 @@ class Performance:
     @cached_property
     def common_sense_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        if self.profit_factor < 1e-6 or self.tail_ratio < 1e-6:
             return 0.0
 
         return self.profit_factor * self.tail_ratio
@@ -408,10 +437,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        downside_deviation = np.std(np.minimum(self._pnl, 0), ddof=1)
-
-        if downside_deviation == 0:
-            return 0.0
+        downside_deviation = np.maximum(np.std(np.minimum(self._pnl, 0), ddof=1), 1e-6)
 
         return self.cagr / downside_deviation
 
@@ -424,14 +450,27 @@ class Performance:
         var_95 = np.percentile(pnl_sorted, 5)
 
         shortfall = pnl_sorted[pnl_sorted <= var_95]
+
         if len(shortfall) < 2:
             return 0.0
 
         expected_shortfall = np.abs(np.mean(shortfall))
+
         if expected_shortfall == 0:
             return 0.0
 
-        return abs(self.average_pnl) / expected_shortfall
+        var_5 = np.percentile(pnl_sorted, 95)
+        upside = pnl_sorted[pnl_sorted >= var_5]
+
+        if len(upside) < 2:
+            return 0.0
+
+        expected_upside = np.mean(upside)
+
+        if expected_upside <= 0:
+            return 0.0
+
+        return expected_upside / abs(expected_shortfall)
 
     @cached_property
     def sterling_ratio(self) -> float:
@@ -441,10 +480,7 @@ class Performance:
         if len(self.loss) < 2:
             return 0.0
 
-        downside_risk = np.sqrt(np.mean(self.loss**2))
-
-        if downside_risk == 0:
-            return 0.0
+        downside_risk = np.maximum(np.sqrt(np.mean(self.loss**2)), 1e-6)
 
         return self.average_profit / downside_risk
 
@@ -454,7 +490,8 @@ class Performance:
             return 0.0
 
         denom = np.percentile(self._pnl, 100 - cutoff)
-        if denom == 0:
+
+        if abs(denom) < 1e-6:
             return 0.0
 
         return abs(np.percentile(self._pnl, cutoff) / denom)
@@ -464,16 +501,22 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        gross_loss = abs(self.total_loss)
+        threshold = self.average_profit - self.average_loss
 
-        if gross_loss == 0:
-            return 0.0
+        up = np.maximum(self._pnl - threshold, 0)
+        down = np.maximum(threshold - self._pnl, 0)
 
-        return self.total_profit / gross_loss
+        cum_gains = np.sum(up)
+        cum_losses = np.sum(down)
+
+        if cum_losses == 0:
+            return 0
+
+        return cum_gains / cum_losses
 
     @cached_property
     def martin_ratio(self) -> float:
-        if self.ulcer_index == 0:
+        if self.ulcer_index < 1e-6:
             return 0.0
 
         return self.average_pnl / self.ulcer_index
@@ -485,21 +528,15 @@ class Performance:
 
         threshold = self.average_profit - self.average_loss
 
-        if threshold == 0:
-            return 0.0
-
         up_proportion = np.sum(self.profit > threshold) / self.total_trades
         down_proportion = np.sum(self.loss < threshold) / self.total_trades
 
-        if len(self._pnl) < 2:
+        downside_deviation_cubed = np.mean(np.minimum(self._pnl - threshold, 0) ** 3)
+
+        if downside_deviation_cubed < 1e-6:
             return 0.0
 
-        denom = np.sqrt(np.mean(self._pnl**2))
-
-        if denom == 0:
-            return 0.0
-
-        return (up_proportion**3 - down_proportion) / denom
+        return (up_proportion - down_proportion) / (downside_deviation_cubed ** (1 / 3))
 
     def next(self, pnl: float, fee: float) -> "Performance":
         _pnl, _fee = np.append(self._pnl, pnl), np.append(self._fee, fee)
