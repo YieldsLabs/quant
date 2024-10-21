@@ -135,7 +135,7 @@ class Performance:
     def calmar_ratio(self) -> float:
         denom = abs(self.max_drawdown)
 
-        if denom == 0:
+        if denom < 1e-6:
             return 0.0
 
         return self.cagr / denom
@@ -146,7 +146,8 @@ class Performance:
             return 0.0
 
         std_return = np.std(self._pnl, ddof=1)
-        if std_return == 0:
+
+        if std_return < 1e-6:
             return 0.0
 
         return self.average_pnl / std_return
@@ -154,14 +155,14 @@ class Performance:
     @cached_property
     def smart_sharpe_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return 0
+            return 0.0
 
         std_return = np.std(self._pnl, ddof=1)
         penalty = self._penalty(self._pnl)
 
         denom = std_return * penalty
 
-        if denom == 0:
+        if denom < 1e-6:
             return 0.0
 
         return self.average_pnl / denom
@@ -169,7 +170,7 @@ class Performance:
     @cached_property
     def deflated_sharpe_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return 0
+            return 0.0
 
         e = np.exp(1)
 
@@ -184,8 +185,8 @@ class Performance:
             + ((self.kurtosis - 1) / 4) * self.sharpe_ratio**2
         )
 
-        if denom <= 0:
-            return 0
+        if denom < 1e-6:
+            return 0.0
 
         return norm.cdf(
             (self.sharpe_ratio - sharpe_ratio_star)
@@ -200,7 +201,7 @@ class Performance:
 
         downside = np.sqrt(np.sum(self.loss**2) / self.total_trades)
 
-        if downside == 0:
+        if downside < 1e-6:
             return 0.0
 
         return self.average_pnl / downside
@@ -215,7 +216,7 @@ class Performance:
 
         denom = downside * penalty
 
-        if denom == 0:
+        if denom < 1e-6:
             return 0.0
 
         return self.average_pnl / denom
@@ -227,7 +228,7 @@ class Performance:
 
         denom = abs(self.average_loss)
 
-        if denom == 0:
+        if denom < 1e-6:
             return 0.0
 
         return self.average_profit / denom
@@ -300,7 +301,7 @@ class Performance:
 
         log_prod = np.sum(np.log(1.0 + self.profit))
 
-        if log_prod <= 0:
+        if log_prod < 1e-6:
             return 0.0
 
         return np.exp(log_prod / self.total_trades) - 1.0
@@ -321,7 +322,7 @@ class Performance:
 
     @cached_property
     def recovery_factor(self) -> float:
-        if self.max_drawdown == 0:
+        if self.max_drawdown < 1e-6:
             return 0.0
 
         return self.total_profit / self.max_drawdown
@@ -333,7 +334,7 @@ class Performance:
 
         gross_loss = abs(self.total_loss)
 
-        if gross_loss == 0:
+        if gross_loss < 1e-6:
             return 0.0
 
         return self.total_profit / gross_loss
@@ -456,7 +457,7 @@ class Performance:
 
         expected_shortfall = np.abs(np.mean(shortfall))
 
-        if expected_shortfall == 0:
+        if expected_shortfall < 1e-6:
             return 0.0
 
         var_5 = np.percentile(pnl_sorted, 95)
@@ -467,7 +468,7 @@ class Performance:
 
         expected_upside = np.mean(upside)
 
-        if expected_upside <= 0:
+        if expected_upside < 1e-6:
             return 0.0
 
         return expected_upside / abs(expected_shortfall)
@@ -509,7 +510,7 @@ class Performance:
         cum_gains = np.sum(up)
         cum_losses = np.sum(down)
 
-        if cum_losses == 0:
+        if cum_losses < 1e-6:
             return 0
 
         return cum_gains / cum_losses
