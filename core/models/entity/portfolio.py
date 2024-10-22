@@ -37,7 +37,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        return np.mean(self._pnl) if len(self._pnl) > 2 else 0.0
+        return np.mean(self._pnl) if len(self._pnl) >= 2 else 0.0
 
     @property
     def profit(self):
@@ -74,11 +74,11 @@ class Performance:
 
     @cached_property
     def average_profit(self) -> float:
-        return np.mean(self.profit) if len(self.profit) > 2 else 0.0
+        return np.mean(self.profit) if len(self.profit) >= 2 else 0.0
 
     @cached_property
     def average_loss(self) -> float:
-        return np.mean(self.loss) if len(self.loss) > 2 else 0.0
+        return np.mean(self.loss) if len(self.loss) >= 2 else 0.0
 
     @cached_property
     def max_consecutive_wins(self) -> int:
@@ -110,11 +110,11 @@ class Performance:
 
     @cached_property
     def max_runup(self) -> float:
-        return np.max(self.runup) if len(self.runup) > 0 else 0.0
+        return np.max(self.runup) if len(self.runup) >= 2 else 0.0
 
     @cached_property
     def max_drawdown(self) -> float:
-        return np.max(self.drawdown) if len(self.drawdown) > 0 else 0.0
+        return np.max(self.drawdown) if len(self.drawdown) >= 2 else 0.0
 
     @cached_property
     def calmar_ratio(self) -> float:
@@ -287,10 +287,9 @@ class Performance:
 
     @cached_property
     def recovery_factor(self) -> float:
-        if self.max_drawdown < 1e-6:
-            return 0.0
-
-        return self.total_profit / self.max_drawdown
+        return (
+            self.total_profit / self.max_drawdown if self.max_drawdown > 1e-6 else 0.0
+        )
 
     @cached_property
     def profit_factor(self) -> float:
@@ -345,7 +344,7 @@ class Performance:
 
         pnl = self._pnl[self._pnl < self.var]
 
-        return np.mean(pnl) if len(pnl) > 2 else self.var
+        return np.mean(pnl) if len(pnl) >= 2 else self.var
 
     @cached_property
     def ulcer_index(self) -> float:
