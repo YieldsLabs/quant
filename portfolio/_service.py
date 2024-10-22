@@ -80,7 +80,7 @@ class Portfolio(AbstractEventManager):
 
         logger.info(
             f"Performance: strategy={symbol}_{timeframe}{strategy}, side={position.side}, "
-            f"trades={performance.total_trades}, hit_ratio={performance.hit_ratio:.0%}, "
+            f"trades={performance.total_trades}, hit_ratio={performance.hit_ratio:.0%}, inf_ratio={performance.information_ratio:.4f}, "
             f"cagr={performance.cagr:.2%}, return={performance.expected_return:.2%}, "
             f"volatility={performance.ann_volatility:.2%}, smart_sharpe={performance.smart_sharpe_ratio:.4f}, "
             f"smart_sortino={performance.smart_sortino_ratio:.4f}, skew={performance.skew:.2f}, "
