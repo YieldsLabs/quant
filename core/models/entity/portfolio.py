@@ -366,7 +366,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        return np.sqrt(np.mean(self.drawdown**2)) if len(self.drawdown) > 2 else 0.0
+        return np.sqrt(np.mean(self.drawdown**2)) if len(self.drawdown) >= 2 else 0.0
 
     @cached_property
     def upi(self) -> float:
@@ -401,7 +401,11 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        return 1 - np.sum(self.drawdown < 0) / self._periods_per_year
+        return (
+            1 - np.sum(self.drawdown < 0) / self._periods_per_year
+            if len(self.drawdown) >= 2
+            else 0.0
+        )
 
     @cached_property
     def burke_ratio(self) -> float:
