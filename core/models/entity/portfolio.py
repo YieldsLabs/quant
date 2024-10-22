@@ -529,17 +529,17 @@ class Performance:
 
     @staticmethod
     def _max_streak(pnl, winning: bool) -> int:
-        streak = max_streak = 0
         pnl_positive = pnl > 0
 
-        for pnl_value in pnl_positive:
-            if pnl_value == winning:
-                streak += 1
-                max_streak = max(max_streak, streak)
-            else:
-                streak = 0
+        mask = pnl_positive == winning
 
-        return max_streak
+        diff = np.diff(np.concatenate(([0], mask.astype(int), [0])))
+        streak_starts = np.where(diff == 1)[0]
+        streak_ends = np.where(diff == -1)[0]
+
+        streak_lengths = streak_ends - streak_starts
+
+        return streak_lengths.max() if streak_lengths.size > 0 else 0
 
     @staticmethod
     def _penalty(pnl) -> float:
