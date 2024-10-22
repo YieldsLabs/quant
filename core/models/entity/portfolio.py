@@ -37,10 +37,7 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        if len(self._pnl) < 2:
-            return 0.0
-
-        return np.mean(self._pnl)
+        return np.mean(self._pnl) if len(self._pnl) > 2 else 0.0
 
     @property
     def profit(self):
@@ -77,17 +74,11 @@ class Performance:
 
     @cached_property
     def average_profit(self) -> float:
-        if len(self.profit) < 2:
-            return 0.0
-
-        return np.mean(self.profit)
+        return np.mean(self.profit) if len(self.profit) > 2 else 0.0
 
     @cached_property
     def average_loss(self) -> float:
-        if len(self.loss) < 2:
-            return 0.0
-
-        return np.mean(self.loss)
+        return np.mean(self.loss) if len(self.loss) > 2 else 0.0
 
     @cached_property
     def max_consecutive_wins(self) -> int:
@@ -119,26 +110,17 @@ class Performance:
 
     @cached_property
     def max_runup(self) -> float:
-        if len(self.runup) == 0:
-            return 0.0
-
-        return np.max(self.runup)
+        return np.max(self.runup) if len(self.runup) > 0 else 0.0
 
     @cached_property
     def max_drawdown(self) -> float:
-        if len(self.drawdown) == 0:
-            return 0.0
-
-        return np.max(self.drawdown)
+        return np.max(self.drawdown) if len(self.drawdown) > 0 else 0.0
 
     @cached_property
     def calmar_ratio(self) -> float:
         denom = abs(self.max_drawdown)
 
-        if denom < 1e-6:
-            return 0.0
-
-        return self.cagr / denom
+        return self.cagr / denom if denom > 1e-6 else 0.0
 
     @cached_property
     def sharpe_ratio(self) -> float:
@@ -147,10 +129,7 @@ class Performance:
 
         std_return = np.std(self._pnl, ddof=1)
 
-        if std_return < 1e-6:
-            return 0.0
-
-        return self.average_pnl / std_return
+        return self.average_pnl / std_return if std_return > 1e-6 else 0.0
 
     @cached_property
     def smart_sharpe_ratio(self) -> float:
@@ -162,10 +141,7 @@ class Performance:
 
         denom = std_return * penalty
 
-        if denom < 1e-6:
-            return 0.0
-
-        return self.average_pnl / denom
+        return self.average_pnl / denom if denom > 1e-6 else 0.0
 
     @cached_property
     def deflated_sharpe_ratio(self) -> float:
@@ -185,13 +161,14 @@ class Performance:
             + ((self.kurtosis - 1) / 4) * self.sharpe_ratio**2
         )
 
-        if denom < 1e-6:
-            return 0.0
-
-        return norm.cdf(
-            (self.sharpe_ratio - sharpe_ratio_star)
-            * np.sqrt(self.total_trades - 1)
-            / np.sqrt(denom)
+        return (
+            norm.cdf(
+                (self.sharpe_ratio - sharpe_ratio_star)
+                * np.sqrt(self.total_trades - 1)
+                / np.sqrt(denom)
+            )
+            if denom > 1e-6
+            else 0.0
         )
 
     @cached_property
@@ -201,10 +178,7 @@ class Performance:
 
         downside = np.sqrt(np.sum(self.loss**2) / self.total_trades)
 
-        if downside < 1e-6:
-            return 0.0
-
-        return self.average_pnl / downside
+        return self.average_pnl / downside if downside > 1e-6 else 0.0
 
     @cached_property
     def smart_sortino_ratio(self) -> float:
@@ -216,10 +190,7 @@ class Performance:
 
         denom = downside * penalty
 
-        if denom < 1e-6:
-            return 0.0
-
-        return self.average_pnl / denom
+        return self.average_pnl / denom if denom > 1e-6 else 0.0
 
     @cached_property
     def payoff_ratio(self) -> float:
@@ -228,10 +199,7 @@ class Performance:
 
         denom = abs(self.average_loss)
 
-        if denom < 1e-6:
-            return 0.0
-
-        return self.average_profit / denom
+        return self.average_profit / denom if denom > 1e-6 else 0.0
 
     @cached_property
     def cagr(self) -> float:
@@ -301,10 +269,7 @@ class Performance:
 
         log_prod = np.sum(np.log(1.0 + self.profit))
 
-        if log_prod < 1e-6:
-            return 0.0
-
-        return np.exp(log_prod / self.total_trades) - 1.0
+        return np.exp(log_prod / self.total_trades) - 1.0 if log_prod > 1e-6 else 0.0
 
     @cached_property
     def ann_volatility(self) -> float:
@@ -334,10 +299,7 @@ class Performance:
 
         gross_loss = abs(self.total_loss)
 
-        if gross_loss < 1e-6:
-            return 0.0
-
-        return self.total_profit / gross_loss
+        return self.total_profit / gross_loss if gross_loss > 1e-6 else 0.0
 
     @cached_property
     def risk_of_ruin(self) -> float:
@@ -372,11 +334,9 @@ class Performance:
             return 0.0
 
         pnl_sorted = np.sort(self._pnl)
-
         var_index = int((1.0 - confidence_level) * self.total_trades)
-        var = pnl_sorted[var_index]
 
-        return var
+        return pnl_sorted[var_index]
 
     @cached_property
     def cvar(self) -> float:
@@ -385,27 +345,20 @@ class Performance:
 
         pnl = self._pnl[self._pnl < self.var]
 
-        if len(pnl) < 2:
-            return self.var
-
-        return np.mean(pnl)
+        return np.mean(pnl) if len(pnl) > 2 else self.var
 
     @cached_property
     def ulcer_index(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        if len(self.drawdown) < 2:
-            return 0.0
-
-        return np.sqrt(np.mean(self.drawdown**2))
+        return np.sqrt(np.mean(self.drawdown**2)) if len(self.drawdown) > 2 else 0.0
 
     @cached_property
     def upi(self) -> float:
-        if self.ulcer_index < 1e-6:
-            return 0.0
-
-        return self.expected_return / self.ulcer_index
+        return (
+            self.expected_return / self.ulcer_index if self.ulcer_index > 1e-6 else 0.0
+        )
 
     @cached_property
     def common_sense_ratio(self) -> float:
@@ -429,18 +382,16 @@ class Performance:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        underwater_time = np.sum(self.drawdown < 0) / self._periods_per_year
-
-        return 1 - underwater_time
+        return 1 - np.sum(self.drawdown < 0) / self._periods_per_year
 
     @cached_property
     def burke_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        downside_deviation = np.maximum(np.std(np.minimum(self._pnl, 0), ddof=1), 1e-6)
+        downside_deviation = np.std(np.minimum(self._pnl, 0), ddof=1)
 
-        return self.cagr / downside_deviation
+        return self.cagr / downside_deviation if downside_deviation > 1e-6 else 0.0
 
     @cached_property
     def rachev_ratio(self) -> float:
@@ -481,9 +432,9 @@ class Performance:
         if len(self.loss) < 2:
             return 0.0
 
-        downside_risk = np.maximum(np.sqrt(np.mean(self.loss**2)), 1e-6)
+        downside_risk = np.sqrt(np.mean(self.loss**2))
 
-        return self.average_profit / downside_risk
+        return self.average_profit / downside_risk if downside_risk > 1e-6 else 0.0
 
     @cached_property
     def tail_ratio(self, cutoff=95) -> float:
@@ -492,10 +443,9 @@ class Performance:
 
         denom = np.percentile(self._pnl, 100 - cutoff)
 
-        if abs(denom) < 1e-6:
-            return 0.0
-
-        return abs(np.percentile(self._pnl, cutoff) / denom)
+        return (
+            abs(np.percentile(self._pnl, cutoff) / denom) if abs(denom) > 1e-6 else 0.0
+        )
 
     @cached_property
     def omega_ratio(self) -> float:
@@ -510,17 +460,11 @@ class Performance:
         cum_gains = np.sum(up)
         cum_losses = np.sum(down)
 
-        if cum_losses < 1e-6:
-            return 0
-
-        return cum_gains / cum_losses
+        return cum_gains / cum_losses if cum_losses > 1e-6 else 0.0
 
     @cached_property
     def martin_ratio(self) -> float:
-        if self.ulcer_index < 1e-6:
-            return 0.0
-
-        return self.average_pnl / self.ulcer_index
+        return self.average_pnl / self.ulcer_index if self.ulcer_index > 1e-6 else 0.0
 
     @cached_property
     def kappa_three_ratio(self) -> float:
