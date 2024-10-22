@@ -240,6 +240,17 @@ class Performance:
         return self.sharpe_ratio * np.sqrt(self._periods_per_year)
 
     @cached_property
+    def daily_returns(self) -> np.array:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return np.zeros_like(self._pnl)
+
+        return self._pnl / self._account_size
+
+    @cached_property
+    def average_daily_return(self) -> float:
+        return np.mean(self.daily_returns) if len(self.daily_returns) >= 2 else 0.0
+
+    @cached_property
     def time_weighted_return(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
@@ -281,18 +292,17 @@ class Performance:
         )
 
     @cached_property
+    def daily_volatility(self) -> float:
+        return (
+            np.std(self.daily_returns, ddof=1) if len(self.daily_returns) >= 2 else 0.0
+        )
+
+    @cached_property
     def ann_volatility(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
 
-        if self._account_size <= 0:
-            return 0.0
-
-        daily_returns = self._pnl / self._account_size
-
-        volatility = np.std(daily_returns, ddof=1)
-
-        return volatility * np.sqrt(self._periods_per_year)
+        return self.daily_volatility * np.sqrt(self._periods_per_year)
 
     @cached_property
     def recovery_factor(self) -> float:
@@ -373,6 +383,17 @@ class Performance:
         return (
             self.expected_return / self.ulcer_index
             if self.ulcer_index > SMALL_NUMBER_THRESHOLD
+            else 0.0
+        )
+
+    @cached_property
+    def information_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        return (
+            self.average_daily_return / self.ann_volatility
+            if self.ann_volatility > SMALL_NUMBER_THRESHOLD
             else 0.0
         )
 
