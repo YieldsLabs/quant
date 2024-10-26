@@ -153,6 +153,22 @@ class Performance:
         return np.mean(pnl) if len(pnl) >= 2 else self.var
 
     @cached_property
+    def mvar(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        z = norm.ppf(1 - self._confidence_level)
+
+        z_cf = (
+            z
+            + (1.0 / 6) * (z**2 - 1.0) * self.skew
+            + (1.0 / 24) * (z**3 - 3.0 * z) * self.kurtosis
+            - (1.0 / 36) * (2.0 * z**3 - 5.0 * z) * (self.skew**2)
+        )
+
+        return -z_cf * np.std(self._pnl, ddof=1)
+
+    @cached_property
     def cagr(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
@@ -301,6 +317,17 @@ class Performance:
                 / np.sqrt(denom)
             )
             if denom > SMALL_NUMBER_THRESHOLD
+            else 0.0
+        )
+
+    @cached_property
+    def modified_sharpe_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        return (
+            self.excess_return / self.mvar
+            if self.mvar > SMALL_NUMBER_THRESHOLD
             else 0.0
         )
 
