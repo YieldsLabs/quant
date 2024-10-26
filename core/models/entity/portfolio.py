@@ -562,10 +562,7 @@ class Performance:
         mask = pnl_positive == winning
 
         diff = np.diff(np.concatenate(([0], mask.astype(int), [0])))
-        streak_starts = np.where(diff == 1)[0]
-        streak_ends = np.where(diff == -1)[0]
-
-        streak_lengths = streak_ends - streak_starts
+        streak_lengths = np.where(diff == -1)[0] - np.where(diff == 1)[0]
 
         return streak_lengths.max() if streak_lengths.size > 0 else 0
 
