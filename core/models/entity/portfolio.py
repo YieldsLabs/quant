@@ -349,6 +349,9 @@ class Performance:
 
     @cached_property
     def calmar_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
         denom = abs(self.max_drawdown)
 
         return self.excess_return / denom if denom > SMALL_NUMBER_THRESHOLD else 0.0
