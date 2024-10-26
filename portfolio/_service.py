@@ -83,7 +83,7 @@ class Portfolio(AbstractEventManager):
             f"trades={performance.total_trades}, hit_ratio={performance.hit_ratio:.0%}, inf_ratio={performance.information_ratio:.4f}, "
             f"cagr={performance.cagr:.2%}, return={performance.expected_return:.2%}, "
             f"volatility={performance.ann_volatility:.2%}, smart_sharpe={performance.smart_sharpe_ratio:.4f}, "
-            f"smart_sortino={performance.smart_sortino_ratio:.4f}, skew={performance.skew:.2f}, "
+            f"sortino={performance.sortino_ratio:.4f}, skew={performance.skew:.2f}, "
             f"kurtosis={performance.kurtosis:.2f}, omega={performance.omega_ratio:.2f}, "
             f"upi={performance.upi:.2f}, mdd={performance.max_drawdown:.4%}, "
             f"pnl={performance.total_pnl:.4f}, fee={performance.total_fee:.4f}"
@@ -95,7 +95,7 @@ class Portfolio(AbstractEventManager):
 
         performance_metrics = [
             performance.smart_sharpe_ratio,
-            performance.smart_sortino_ratio,
+            performance.sortino_ratio,
             performance.calmar_ratio,
             performance.cvar,
             performance.ulcer_index,
