@@ -351,7 +351,7 @@ class Performance:
     def calmar_ratio(self) -> float:
         denom = abs(self.max_drawdown)
 
-        return self.cagr / denom if denom > SMALL_NUMBER_THRESHOLD else 0.0
+        return self.excess_return / denom if denom > SMALL_NUMBER_THRESHOLD else 0.0
 
     @cached_property
     def sterling_ratio(self) -> float:
@@ -360,7 +360,7 @@ class Performance:
 
         denom = -np.sum(self.drawdown) / len(self.drawdown)
 
-        return self.cagr / denom if denom > SMALL_NUMBER_THRESHOLD else 0.0
+        return self.excess_return / denom if denom > SMALL_NUMBER_THRESHOLD else 0.0
 
     @cached_property
     def burke_ratio(self) -> float:
@@ -369,7 +369,7 @@ class Performance:
 
         denom = np.sqrt(np.sum(np.square(self.drawdown)))
 
-        return self.cagr / denom if denom > SMALL_NUMBER_THRESHOLD else 0.0
+        return self.excess_return / denom if denom > SMALL_NUMBER_THRESHOLD else 0.0
 
     @cached_property
     def recovery_factor(self) -> float:

@@ -85,7 +85,7 @@ class Portfolio(AbstractEventManager):
             f"volatility={performance.ann_volatility:.2%}, smart_sharpe={performance.smart_sharpe_ratio:.4f}, "
             f"sortino={performance.sortino_ratio:.4f}, skew={performance.skew:.2f}, "
             f"kurtosis={performance.kurtosis:.2f}, omega={performance.omega_ratio:.2f}, "
-            f"upi={performance.upi:.2f}, mdd={performance.max_drawdown:.4%}, "
+            f"upi={performance.upi:.2f}, cvar={performance.cvar:.2f}, "
             f"pnl={performance.total_pnl:.4f}, fee={performance.total_fee:.4f}"
         )
 
