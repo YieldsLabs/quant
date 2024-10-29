@@ -8,6 +8,7 @@ dependencies = [
     "black>=24.8.0",
     "cachetools>=5.5.0",
     "ccxt>=4.4.7",
+    "imbalanced-learn>=0.12.4",
     "ipykernel>=6.29.5",
     "lime>=0.2.0.1",
     "llama-cpp-python>=0.2.90",
