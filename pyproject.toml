@@ -25,6 +25,7 @@ dependencies = [
     "scipy>=1.14.1",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.4",
+    "torch-geometric>=2.6.1",
     "torch>=2.4.1",
     "uuid>=1.30",
     "uvloop>=0.20.0",
