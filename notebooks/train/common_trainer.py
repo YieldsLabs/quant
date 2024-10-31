@@ -15,7 +15,7 @@ class CommonTrainer(Trainer):
         running_loss = 0.0
         self.optimizer.zero_grad()
 
-        for batch_idx, (data,) in enumerate(self.dataloader):
+        for batch_idx, (data,) in enumerate(self.train_dataloader):
             data = data.to(self.device, non_blocking=True)
 
             outputs = self.model(data)
@@ -24,7 +24,7 @@ class CommonTrainer(Trainer):
             loss.backward()
 
             if (batch_idx + 1) % self.acc_steps == 0 or (batch_idx + 1) == len(
-                self.dataloader
+                self.train_dataloader
             ):
                 self.optimizer.step()
                 self.optimizer.zero_grad()
@@ -42,10 +42,13 @@ class CommonTrainer(Trainer):
 
                 gc.collect()
 
-        num_batches = len(self.dataloader) // self.acc_steps
+        num_batches = len(self.train_dataloader) // self.acc_steps
         avg_train_loss = running_loss / num_batches if num_batches > 0 else float("inf")
 
         return avg_train_loss
+    
+    def valid_epoch(self) -> float:
+        return 0.0
 
     def extract_embeddings(self):
         self.model.to(self.device)
@@ -55,7 +58,7 @@ class CommonTrainer(Trainer):
         embeddings = []
 
         with torch.no_grad():
-            for _batch_idx, (data,) in enumerate(self.dataloader):
+            for _batch_idx, (data,) in enumerate(self.train_dataloader):
                 data = data.to(self.device)
 
                 if isinstance(self.model, DDP):

@@ -82,13 +82,15 @@ def main(_, features_filename, emb_filename, epochs, latent_dim, lr):
 
     print(f"RANK: {rank}, WORLD_SIZE: {world_size}")
 
-    model, dataloader, optimizer, scheduler, device = to_train(
+    model, train_dataloader, optimizer, scheduler, device = to_train(
         features_filename,
         latent_dim=latent_dim,
         lr=lr,
         rank=rank,
         world_size=world_size,
     )
+
+    test_dataloader = None
 
     snapshot_manager = SnapshotManager(model, n_snapshots=n_snapshots)
     early_stop = EarlyStop(patience=patience)
@@ -99,7 +101,8 @@ def main(_, features_filename, emb_filename, epochs, latent_dim, lr):
 
     trainer = CommonTrainer(
         model,
-        dataloader,
+        train_dataloader,
+        test_dataloader,
         optimizer,
         scheduler,
         criterion,
