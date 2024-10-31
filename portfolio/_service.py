@@ -94,15 +94,16 @@ class Portfolio(AbstractEventManager):
 
         performance_metrics = [
             performance.smart_sharpe_ratio,
+            performance.modified_sharpe_ratio,
             performance.sortino_ratio,
             performance.calmar_ratio,
-            performance.cvar,
-            performance.ulcer_index,
             performance.sterling_ratio,
             performance.burke_ratio,
-            performance.ann_volatility,
-            performance.cpc_ratio,
+            performance.omega_ratio,
+            performance.kappa_three_ratio,
             performance.rachev_ratio,
+            performance.upi,
+            performance.information_ratio,
         ]
 
         await self.strategy.next(
