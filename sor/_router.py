@@ -162,15 +162,20 @@ class SmartRouter(AbstractEventManager):
                 f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
             )
 
-            await asyncio.to_thread(
-                self.exchange.create_limit_order,
+            if not await asyncio.to_thread(
+                self.exchange.has_open_orders,
                 symbol,
                 position_side,
-                order_size,
-                price,
-            )
+            ):
+                await asyncio.to_thread(
+                    self.exchange.create_limit_order,
+                    symbol,
+                    position_side,
+                    order_size,
+                    price,
+                )
 
-            await asyncio.sleep(np.random.exponential(0.5))
+            await asyncio.sleep(np.random.exponential(0.1))
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
