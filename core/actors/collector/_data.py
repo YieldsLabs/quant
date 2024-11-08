@@ -52,19 +52,27 @@ class DataCollector:
         self._consumers.append(consumer)
 
     async def _run_producer(self, producer, msg):
-        async for data in producer(msg):
-            await self._queue.put(data)
+        try:
+            async for data in producer(msg):
+                await self._queue.put(data)
 
-        await self._queue.put(STOP)
+            await self._queue.put(STOP)
+        except asyncio.CancelledError:
+            pass
+        finally:
+            await self._queue.put(STOP)
 
     async def _run_consumer(self, consumer):
-        while not self._stop_event.is_set():
-            data = await self._queue.get()
+        try:
+            while not self._stop_event.is_set():
+                data = await self._queue.get()
 
-            if data is STOP:
-                break
+                if data is STOP:
+                    break
 
-            if data:
-                await consumer(data)
+                if data:
+                    await consumer(data)
 
-            self._queue.task_done()
+                self._queue.task_done()
+        except asyncio.CancelledError:
+            pass
