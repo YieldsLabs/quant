@@ -158,15 +158,15 @@ class SmartRouter(AbstractEventManager):
 
             order_size = min(next(order_size_generator), remaining_size)
 
-            logger.info(
-                f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
-            )
-
             if not await asyncio.to_thread(
                 self.exchange.has_open_orders,
                 symbol,
                 position_side,
             ):
+                logger.info(
+                    f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
+                )
+
                 await asyncio.to_thread(
                     self.exchange.create_limit_order,
                     symbol,
