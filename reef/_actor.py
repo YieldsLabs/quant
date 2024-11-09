@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
@@ -27,6 +27,9 @@ class PQOrder:
         default_factory=lambda: np.mean(np.random.exponential(3, size=1000)),
         compare=False,
     )
+
+    def copy(self) -> "PQOrder":
+        return replace(self, ttl=np.mean(np.random.exponential(3, size=1000)))
 
 
 class ReefActor(BaseActor):
