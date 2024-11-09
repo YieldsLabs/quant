@@ -170,7 +170,7 @@ class Bybit(AbstractRestExchange):
                 "market",
                 "buy" if side == PositionSide.LONG else "sell",
                 symbol.name,
-                round(size, symbol.position_precision),
+                max(round(size, symbol.position_precision), symbol.min_position_size),
                 extra_params=self._create_order_extra_params(side),
             )
 
@@ -188,7 +188,7 @@ class Bybit(AbstractRestExchange):
                 "buy" if side == PositionSide.LONG else "sell",
                 symbol.name,
                 max(round(size, symbol.position_precision), symbol.min_position_size),
-                round(price, symbol.price_precision),
+                max(round(price, symbol.price_precision), symbol.min_price_size),
                 extra_params=self._create_order_extra_params(side),
             )
 
@@ -206,7 +206,7 @@ class Bybit(AbstractRestExchange):
                 "sell" if side == PositionSide.LONG else "buy",
                 symbol.name,
                 max(round(size, symbol.position_precision), symbol.min_position_size),
-                round(price, symbol.price_precision),
+                max(round(price, symbol.price_precision), symbol.min_price_size),
                 extra_params=self._create_order_extra_params(side, reduce=True),
             )
 
