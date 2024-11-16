@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import random
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -25,6 +25,7 @@ from core.events.signal import (
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
 from core.models.entity.ohlcv import OHLCV
+from core.models.entity.portfolio import Performance
 from core.models.entity.position import Position
 from core.models.entity.profit_target import ProfitTarget
 from core.models.entity.risk import Risk
@@ -34,9 +35,6 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.ohlcv import TA, NextBar, PrevBar
 from core.queries.portfolio import GetPortfolioPerformance
-
-if TYPE_CHECKING:
-    from core.models.entity.portfolio import Performance
 
 TrailEvent = Union[
     GoLongSignalReceived,
@@ -58,7 +56,7 @@ DEFAULT_MAX_BARS = 16
 MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
-
+LATENCY_GAP_THRESHOLD = 2.2
 SL_MULTI = 1.8
 
 
@@ -71,6 +69,8 @@ def _ema(values, alpha=0.1):
 
 logger = logging.getLogger(__name__)
 
+RiskState = Tuple[Risk, Position, ProfitTarget, Performance]
+
 
 class RiskActor(StrategyActor, EventHandlerMixin):
     def __init__(
@@ -80,7 +80,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
         self._lock = asyncio.Lock()
-        self._state: Tuple[Tuple[Risk, Position, ProfitTarget, Performance]] = (
+        self._state: Tuple[RiskState] = (
             None,
             None,
         )
@@ -110,10 +110,14 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 side=side, entry=position.entry_price, volatility=volatility
             )
 
-            tp = pt.targets[3]
+            tp = pt.targets[-1]
             sl = bar.close - SL_MULTI * pt.context_factor * volatility
 
-            risk = Risk(ohlcv=[bar], side=side, tp=tp, sl=sl)
+            print(f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}")
+
+            risk = Risk(side=side, tp=tp, sl=sl)
+            risk = risk.next(bar)
+
             performance = await self.ask(
                 GetPortfolioPerformance(
                     self.symbol, self.timeframe, position.signal.strategy
@@ -138,95 +142,135 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     async def _handle_risk(self, event: NewMarketDataReceived):
         async with self._lock:
-            states = list(self._state)
-            num_states = len(self._state)
+            current_states = list(self._state)
+            num_states = len(current_states)
+
+            updated_states = current_states[:]
 
             indexes = list(range(num_states))
             random.shuffle(indexes)
 
             for shuffled_index in indexes:
-                curr_state = self._state[shuffled_index]
+                curr_state = current_states[shuffled_index]
 
-                states[shuffled_index] = await self._process_market(event, curr_state)
+                updated_states[shuffled_index] = await self._process_market(
+                    event, curr_state
+                )
 
-            self._risk = tuple(states)
+            self._state = tuple(updated_states)
 
     async def _process_market(
         self,
         event: NewMarketDataReceived,
-        state: Optional[Tuple[Risk, Position, ProfitTarget]],
+        state: Optional[RiskState],
     ):
-        next_state = state
+        if not state:
+            return state
 
-        if state:
-            risk, position, pt, performance = state
+        risk, position, pt, performance = state
 
-            bars = await self._fetch_bars(event.bar.ohlcv, risk.curr_bar)
+        if risk.has_risk:
+            return state
 
-            for bar in sorted(bars, key=lambda x: x.timestamp):
-                ts = np.array(risk.time_points)
+        next_risk = risk
+        open_signal = position.signal
 
-                if len(ts) > 2:
-                    ts_diff = _ema(np.diff(ts))
-                    mean, std = np.mean(ts_diff), max(
-                        np.std(ts_diff), np.finfo(float).eps
-                    )
+        bars = await self._fetch_bars(event.bar.ohlcv, next_risk.curr_bar)
 
-                    current_diff = abs(bar.timestamp - ts[-1])
-                    anomaly = (current_diff - mean) / std
-                    anomaly = np.clip(
-                        anomaly,
-                        -12.0 * DEFAULT_ANOMALY_THRESHOLD,
-                        12.0 * DEFAULT_ANOMALY_THRESHOLD,
-                    )
+        if not bars:
+            logger.warning("No bars fetched, skipping market processing.")
+            return state
 
-                    if abs(anomaly) > self.anomaly_threshold:
-                        self.consc_anomaly_counter += 1
+        for bar in bars:
+            if self._has_anomaly(bar.timestamp, next_risk.time_points):
+                logger.debug(f"Anomalous bar skipped: {bar.timestamp}")
+                continue
 
-                        if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
-                            logger.warn(
-                                "Too many consecutive anomalies, increasing threshold temporarily"
-                            )
-                            self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
-                            self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
-                            self.consc_anomaly_counter = 1
-                        continue
-                    else:
-                        self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
-                        self.max_bars = DEFAULT_MAX_BARS
-                        self.consc_anomaly_counter = 1
+            gap = bar.timestamp - next_risk.curr_bar.timestamp
 
-                risk = risk.next(bar, position.signal)
+            if gap <= 0:
+                logger.debug(f"Stale bar skipped: {bar.timestamp}")
+                continue
 
-                next_state = (risk, position, pt, performance)
+            if gap > LATENCY_GAP_THRESHOLD * open_signal.timeframe.to_milliseconds():
+                logger.info(f"Latency Gap: {gap} exceeds threshold.")
+                continue
 
-                if risk.has_risk:
-                    open_signal = position.signal
-                    exit_price = (
-                        risk.curr_bar.high + risk.curr_bar.low + risk.curr_bar.close
-                    ) / 3.0
+            next_risk = next_risk.next(bar)
 
-                    signal = Signal(
-                        symbol=open_signal.symbol,
-                        timeframe=open_signal.timeframe,
-                        strategy=open_signal.strategy,
-                        side=open_signal.side,
-                        ohlcv=risk.curr_bar,
-                        exit=exit_price,
-                    )
+            if next_risk.has_risk:
+                logger.info("Risk threshold breached, triggering position close.")
+                break
 
-                    risk_cls = (
-                        RiskLongThresholdBreached
-                        if risk.side == PositionSide.LONG
-                        else RiskShortThresholdBreached
-                    )
+        curr_bar = next_risk.curr_bar
+        next_price = (curr_bar.high + curr_bar.low + curr_bar.close) / 3.0
 
-                    await self.tell(risk_cls(signal))
-                    break
+        logger.info(
+            f"{open_signal.symbol}:{position.side} -> "
+            f"Bar: {curr_bar}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
+        )
 
-        return next_state
+        if next_risk.has_risk:
+            close_signal = Signal(
+                symbol=open_signal.symbol,
+                timeframe=open_signal.timeframe,
+                strategy=open_signal.strategy,
+                side=open_signal.side,
+                ohlcv=curr_bar,
+                exit=next_price,
+            )
 
-    async def _fetch_bars(self, curr_bar: OHLCV, prev_bar: OHLCV) -> List[OHLCV]:
+            risk_cls = (
+                RiskLongThresholdBreached
+                if risk.side == PositionSide.LONG
+                else RiskShortThresholdBreached
+            )
+
+            await self.tell(risk_cls(close_signal))
+
+        return (next_risk, position, pt, performance)
+
+    def _has_anomaly(self, bar_timestamp: float, time_points: list[float]) -> bool:
+        if len(time_points) <= 2:
+            return False
+
+        time_points = np.array(time_points)
+
+        ts_diff = _ema(np.diff(time_points))
+        mean, std = np.mean(ts_diff), max(np.std(ts_diff), np.finfo(float).eps)
+
+        current_diff = abs(bar_timestamp - time_points[-1])
+        anomaly = (current_diff - mean) / std
+        anomaly = np.clip(
+            anomaly,
+            -12.0 * DEFAULT_ANOMALY_THRESHOLD,
+            12.0 * DEFAULT_ANOMALY_THRESHOLD,
+        )
+
+        if abs(anomaly) > self.anomaly_threshold:
+            self.consc_anomaly_counter += 1
+
+            if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
+                logger.warn(
+                    "Too many consecutive anomalies, increasing threshold temporarily"
+                )
+                self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
+                self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
+                self.consc_anomaly_counter = 1
+
+            return True
+
+        self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
+        self.max_bars = DEFAULT_MAX_BARS
+        self.consc_anomaly_counter = 1
+
+        return False
+
+    async def _fetch_bars(self, event_bar: OHLCV, risk_bar: OHLCV) -> List[OHLCV]:
+        bars = []
+        prev_bar = min(event_bar, risk_bar)
+        curr_bar = max(event_bar, risk_bar)
+
         next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
 
         next_bar = next_bar or curr_bar
@@ -253,10 +297,12 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     NextBar(self.symbol, self.timeframe, prev_bar)
                 )
 
-                if not next_bar:
-                    break
+                if not next_bar or next_bar.timestamp <= bars[-1].timestamp:
+                    continue
 
                 bars.append(next_bar)
+                bars = sorted(bars, key=lambda x: x.timestamp)
+
                 prev_bar = next_bar
 
-        return list(set(bars))
+        return bars
