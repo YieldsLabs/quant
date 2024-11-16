@@ -202,12 +202,14 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 logger.info("Risk threshold breached, triggering position close.")
                 break
 
-        curr_bar = next_risk.curr_bar
-        next_price = (curr_bar.high + curr_bar.low + curr_bar.close) / 3.0
+        cbar = next_risk.curr_bar
+        next_price = (cbar.high + cbar.low + cbar.close) / 3.0
+        pnl = pt.context_factor * (next_price - position.entry_price) * position.size
+        ap = performance.next(pnl, position.fee)
 
         logger.info(
-            f"{open_signal.symbol}:{position.side} -> "
-            f"Bar: {curr_bar}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
+            f"{cbar.timestamp}:{open_signal.symbol}:{position.side} -> "
+            f"PnL: {pnl:.4f}, VAR: {ap.mvar:.4f}, MDD: {ap.max_drawdown * 100:.4f}, H: {cbar.high}, L: {cbar.low}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
         )
 
         if next_risk.has_risk:
@@ -216,8 +218,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 timeframe=open_signal.timeframe,
                 strategy=open_signal.strategy,
                 side=open_signal.side,
-                ohlcv=curr_bar,
-                exit=next_price,
+                ohlcv=cbar,
+                entry=open_signal.entry,
+                exit=next_risk.curr_bar.close,
             )
 
             risk_cls = (

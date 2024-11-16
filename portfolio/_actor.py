@@ -33,10 +33,10 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
         self.config = config_service.get("portfolio")
-        self.account_size = self.config.get("account_size", 1000)
-        self.risk_per_trade = self.config.get("risk_per_trade", 0.0001)
-
-        self.state = PortfolioState()
+        self.state = PortfolioState(
+            self.config.get("account_size", 1000),
+            self.config.get("risk_per_trade", 0.0001),
+        )
 
     async def on_receive(self, event: PortfolioEvent):
         return await self.handle_event(event)
@@ -49,24 +49,25 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         self.register_handler(GetPortfolioPerformance, self._get_state)
 
     async def _init_state(self, event: Union[BacktestStarted, TradeStarted]):
-        self.account_size = await self.ask(GetBalance())
+        account_size = await self.ask(GetBalance())
 
-        await self.state.init(
-            event.symbol,
-            event.timeframe,
-            event.strategy,
-            self.account_size,
-            self.risk_per_trade,
-        )
+        self.state.set_account(account_size)
+
+        await self.state.init(event.symbol, event.timeframe, event.strategy)
 
     async def _get_state(self, event: GetPortfolioPerformance):
-        return await self.state.get(event.symbol, event.timeframe, event.strategy)
+        performance = await self.state.get(
+            event.symbol, event.timeframe, event.strategy
+        )
+        return performance
 
     async def _reset_state(self, _event: PortfolioReset):
         await self.state.reset_all()
 
     async def _update_state(self, event: PositionClosed):
-        self.account_size = await self.ask(GetBalance())
+        account_size = await self.ask(GetBalance())
+
+        self.state.set_account(account_size)
 
         position = event.position
 
@@ -81,10 +82,8 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
 
         performance = await self.state.get(symbol, timeframe, strategy)
 
-        if not performance or performance.updated_at < event.meta.timestamp:
-            performance = await self.state.next(
-                event.position, self.account_size, self.risk_per_trade
-            )
+        if performance.updated_at < event.meta.timestamp:
+            performance = await self.state.next(event.position)
 
         logger.info(
             f"Performance: strategy={symbol}_{timeframe}{strategy}, side={position.side}, "

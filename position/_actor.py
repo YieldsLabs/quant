@@ -148,8 +148,8 @@ class PositionActor(StrategyActor):
             event: ExitSignal, position: Optional[Position]
         ) -> bool:
             if position and position.last_modified < event.meta.timestamp:
-                closed_position = position.close_position(event.signal)
-                position = await self.state.update_stored_position(closed_position)
+                position = position.close_position(event.signal)
+                position = await self.state.update_stored_position(position)
 
                 await self.tell(PositionCloseRequested(position))
                 return True
