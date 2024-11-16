@@ -167,8 +167,6 @@ class Position:
         )
 
     def close_position(self, signal: Signal):
-        print(signal)
-
         return replace(
             self,
             close_signal=signal,
