@@ -12,7 +12,6 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import MinMaxScaler
 
-from core.models.entity.signal import Signal
 from core.models.risk_type import PositionRiskType
 from core.models.side import PositionSide
 from core.models.ta import TechAnalysis
@@ -127,13 +126,9 @@ class TaMixin:
         return stop_prices
 
 
-OHLCV_SIZE = 200
-LATENCY_GAP_THRESHOLD = 1.9
-
-
 @Entity
 class Risk(TaMixin):
-    ohlcv: List[OHLCV] = field(default_factory=list)
+    ohlcv: List = field(default_factory=lambda: [])
     side: PositionSide = None
     tp: float = field(default_factory=lambda: 0.0)
     sl: float = field(default_factory=lambda: 0.0)
@@ -170,16 +165,10 @@ class Risk(TaMixin):
 
         return risk_type != PositionRiskType.NONE
 
-    def next(self, bar: OHLCV, signal: Signal) -> "Risk":
-        gap = bar.timestamp - self.curr_bar.timestamp
-        threshold = LATENCY_GAP_THRESHOLD * signal.timeframe.to_milliseconds()
+    def next(self, bar: OHLCV) -> "Risk":
+        ohlcv = self.ohlcv.copy()
+        ohlcv.append(bar)
 
-        if gap > threshold:
-            print(f"Latency GAP: {gap}, TRESHOLD: {threshold}")
-            return self
-
-        ohlcv = (self.ohlcv + [bar])[-OHLCV_SIZE:]
-        ohlcv.sort(key=lambda x: x.timestamp)
         return replace(self, ohlcv=ohlcv)
 
     def sl_low(self, ta: TechAnalysis) -> "float":
