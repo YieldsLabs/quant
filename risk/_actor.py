@@ -197,7 +197,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                         self.consc_anomaly_counter = 1
 
                 risk = risk.next(bar, position.signal)
-                
+
                 next_state = (risk, position, pt, performance)
 
                 if risk.has_risk:
@@ -244,7 +244,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 prev_bar = new_prev_bar
 
             attempts += 1
-        
+
         bars = [next_bar]
 
         if diff > 0:

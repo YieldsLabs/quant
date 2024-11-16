@@ -76,11 +76,15 @@ class PositionActor(StrategyActor):
             return False
 
         async def create_and_store_position(event: SignalEvent):
-            performance = await self.ask(GetPortfolioPerformance(self.symbol, self.timeframe, event.signal.strategy))
-            
+            performance = await self.ask(
+                GetPortfolioPerformance(
+                    self.symbol, self.timeframe, event.signal.strategy
+                )
+            )
+
             initial_size = performance.equity[-1] * performance.risk_per_trade
             initial_size = max(initial_size, self.symbol.min_position_size)
-            
+
             logger.info(f"Initial Size: {initial_size}")
 
             position = Position(initial_size=initial_size)

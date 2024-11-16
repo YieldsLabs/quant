@@ -130,7 +130,7 @@ class Position:
     def is_valid(self) -> bool:
         if self.closed and self.size == 0:
             return False
-    
+
         if self.closed and self.open_timestamp > self.close_timestamp:
             return False
 

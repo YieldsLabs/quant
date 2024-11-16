@@ -34,6 +34,8 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         self._register_event_handlers()
         self.config = config_service.get("portfolio")
         self.account_size = self.config.get("account_size", 1000)
+        self.risk_per_trade = self.config.get("risk_per_trade", 0.0001)
+
         self.state = PortfolioState()
 
     async def on_receive(self, event: PortfolioEvent):
@@ -54,12 +56,11 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
             event.timeframe,
             event.strategy,
             self.account_size,
-            self.config.get("risk_per_trade", 0.0001),
+            self.risk_per_trade,
         )
 
     async def _get_state(self, event: GetPortfolioPerformance):
-        performance = await self.state.get(event.symbol, event.timeframe, event.strategy)
-        return performance
+        return await self.state.get(event.symbol, event.timeframe, event.strategy)
 
     async def _reset_state(self, _event: PortfolioReset):
         await self.state.reset_all()
@@ -82,7 +83,7 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
 
         if not performance or performance.updated_at < event.meta.timestamp:
             performance = await self.state.next(
-                event.position, self.account_size, self.config.get("risk_per_trade")
+                event.position, self.account_size, self.risk_per_trade
             )
 
         logger.info(
