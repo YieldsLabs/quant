@@ -10,6 +10,7 @@ from copilot import CopilotActor
 from coral import DataSourceFactory
 from core.models.datasource_type import DataSourceType
 from executor import OrderExecutorActorFactory
+from factor import FactorActor
 from feed import FeedActorFactory
 from infrastructure.config import ConfigService
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
@@ -17,10 +18,8 @@ from infrastructure.logger import configure_logging
 from infrastructure.shutdown import GracefulShutdown
 from market import MarketActor
 from ocean import OceanActor
-from optimization import StrategyOptimizerFactory
-from portfolio import Portfolio
-from position import PositionActorFactory, PositionFactory
-from position.size.fixed import PositionFixedSizeStrategy
+from portfolio import PortfolioActor
+from position import PositionActorFactory
 from reef import ReefActor
 from risk import RiskActorFactory
 from service import (
@@ -32,7 +31,6 @@ from service import (
 )
 from sor import SmartRouter
 from strategy import SignalActorFactory
-from strategy.generator import StrategyGeneratorFactory
 from system.backtest import BacktestSystem
 from system.context import SystemContext
 from system.trading import TradingSystem
@@ -81,19 +79,17 @@ async def main():
     datasource.register_ws_exchange(default_datasource)
 
     wasm = WasmManager(WASM_FOLDER)
-    position_factory = PositionFactory(
-        config_service,
-        PositionFixedSizeStrategy(),
-    )
+
     OceanActor(datasource, config_service).start()
     ReefActor(datasource, config_service).start()
     MarketActor(TimeSeriesService(wasm)).start()
     CopilotActor(LLMService(config_service)).start()
-    Portfolio(config_service)
+    FactorActor(datasource, config_service).start()
+    PortfolioActor(config_service).start()
     SmartRouter(datasource, config_service)
 
     signal_actor_factory = SignalActorFactory(SignalService(wasm))
-    position_actor_factory = PositionActorFactory(position_factory, config_service)
+    position_actor_factory = PositionActorFactory()
     risk_actor_factory = RiskActorFactory(config_service)
     executor_actor_factory = OrderExecutorActorFactory()
     feed_actor_factory = FeedActorFactory(datasource, config_service)
@@ -104,8 +100,6 @@ async def main():
         risk_actor_factory,
         executor_actor_factory,
         feed_actor_factory,
-        StrategyGeneratorFactory(config_service),
-        StrategyOptimizerFactory(config_service),
         datasource=default_datasource,
         config_service=config_service,
     )
@@ -118,8 +112,8 @@ async def main():
         risk_actor_factory,
         executor_actor_factory,
         feed_actor_factory,
-        config_service,
         datasource=default_datasource,
+        config_service=config_service,
     )
 
     backtest_system_task = asyncio.create_task(backtest_system.start())

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from typing import Union
+from typing import Optional, Union
 
 from core.actors import StrategyActor
 from core.events.backtest import BacktestEnded
@@ -14,26 +14,26 @@ from core.events.position import (
     PositionInitialized,
     PositionOpened,
 )
-from core.events.risk import RiskThresholdBreached
+from core.events.risk import (
+    RiskLongThresholdBreached,
+    RiskShortThresholdBreached,
+)
 from core.events.signal import (
     GoLongSignalReceived,
     GoShortSignalReceived,
 )
-from core.interfaces.abstract_config import AbstractConfig
-from core.interfaces.abstract_position_factory import AbstractPositionFactory
-from core.models.risk_type import SignalRiskType
+from core.models.entity.position import Position
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.copilot import EvaluateSignal
-from core.queries.ohlcv import TA, BackNBars
+from core.queries.portfolio import GetPortfolioPerformance
 
 from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
 from ._state import PositionStorage
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
 BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
-ExitSignal = RiskThresholdBreached
+ExitSignal = Union[RiskLongThresholdBreached, RiskShortThresholdBreached]
 BacktestSignal = BacktestEnded
 
 PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent, BacktestSignal]
@@ -41,7 +41,6 @@ PositionEvent = Union[SignalEvent, ExitSignal, BrokerPositionEvent, BacktestSign
 logger = logging.getLogger(__name__)
 
 TIME_BUFF = 3
-N_BACK_BARS = 4
 
 
 class PositionActor(StrategyActor):
@@ -49,16 +48,11 @@ class PositionActor(StrategyActor):
         self,
         symbol: Symbol,
         timeframe: Timeframe,
-        position_factory: AbstractPositionFactory,
-        config_service: AbstractConfig,
     ):
         super().__init__(symbol, timeframe)
-        self.position_factory = position_factory
-
         self.long_sm = PositionStateMachine(self, LONG_TRANSITIONS)
         self.short_sm = PositionStateMachine(self, SHORT_TRANSITIONS)
         self.state = PositionStorage()
-        self.config = config_service.get("position")
 
     async def on_receive(self, event: PositionEvent):
         symbol, _ = self._get_event_key(event)
@@ -82,27 +76,15 @@ class PositionActor(StrategyActor):
             return False
 
         async def create_and_store_position(event: SignalEvent):
-            symbol, timeframe, ohlcv = (
-                event.signal.symbol,
-                event.signal.timeframe,
-                event.signal.ohlcv,
-            )
+            performance = await self.ask(GetPortfolioPerformance(self.symbol, self.timeframe, event.signal.strategy))
+            
+            initial_size = performance.equity[-1] * performance.risk_per_trade
+            initial_size = max(initial_size, self.symbol.min_position_size)
+            
+            logger.info(f"Initial Size: {initial_size}")
 
-            back_bars = await self.ask(BackNBars(symbol, timeframe, ohlcv, N_BACK_BARS))
-            ta = await self.ask(TA(symbol, timeframe, ohlcv))
-            signal_risk_level = await self.ask(
-                EvaluateSignal(event.signal, back_bars, ta)
-            )
-
-            if signal_risk_level.type in {
-                SignalRiskType.UNKNOWN,
-                SignalRiskType.VERY_HIGH,
-            }:
-                return False
-
-            position = await self.position_factory.create(
-                event.signal, signal_risk_level, ta
-            )
+            position = Position(initial_size=initial_size)
+            position = position.open_position(event.signal)
 
             await self.state.store_position(position)
             await self.tell(PositionInitialized(position))
@@ -158,26 +140,28 @@ class PositionActor(StrategyActor):
         return False
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
-        if not event.position.has_risk:
-            logger.warn(f"Attempt to close not risky position: {event.position}")
+        async def close_position(
+            event: ExitSignal, position: Optional[Position]
+        ) -> bool:
+            if position and position.last_modified < event.meta.timestamp:
+                closed_position = position.close_position(event.signal)
+                position = await self.state.update_stored_position(closed_position)
+
+                await self.tell(PositionCloseRequested(position))
+                return True
+
+            return False
 
         symbol, timeframe = self._get_event_key(event)
         long_position, short_position = await self.state.retrieve_position(
             symbol, timeframe
         )
 
-        if (
-            event.position.side == PositionSide.LONG
-            and long_position
-            and long_position.last_modified < event.meta.timestamp
-        ) or (
-            event.position.side == PositionSide.SHORT
-            and short_position
-            and short_position.last_modified < event.meta.timestamp
-        ):
-            next_position = await self.state.update_stored_position(event.position)
-            await self.tell(PositionCloseRequested(next_position))
-            return True
+        if isinstance(event, RiskLongThresholdBreached):
+            return await close_position(event, long_position)
+
+        if isinstance(event, RiskShortThresholdBreached):
+            return await close_position(event, short_position)
 
         return False
 

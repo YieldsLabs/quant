@@ -110,35 +110,10 @@ class SmartRouter(AbstractEventManager):
 
         pending_order = position.entry_order()
 
-        entry_price = pending_order.price
-
-        num_order_breach = 0
-
         order_size_generator = self._calculate_order_slices(symbol, pending_order.size)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = ask if position.side == PositionSide.LONG else bid
-            stop_loss = position.stop_loss
-
-            current_distance_to_stop_loss = abs(stop_loss - price)
-            distance_to_stop_loss = self.config.get("stop_loss_threshold") * abs(
-                entry_price - stop_loss
-            )
-
-            if distance_to_stop_loss > current_distance_to_stop_loss:
-                logger.warn(
-                    f"Order risk breached for {symbol}: Entry Price={entry_price}, "
-                    f"Stop Loss={stop_loss}, Distance to Stop Loss={distance_to_stop_loss}, "
-                    f"Current Distance={current_distance_to_stop_loss}"
-                )
-
-                num_order_breach += 1
-
-                if num_order_breach >= self.config.get("max_order_breach"):
-                    logger.warn(
-                        f"Max stop-loss breaches reached for {symbol}. Stopping order placement."
-                    )
-                    break
 
             existing_position = await asyncio.to_thread(
                 self.exchange.fetch_position, symbol, position_side

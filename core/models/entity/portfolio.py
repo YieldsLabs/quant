@@ -15,7 +15,7 @@ GAMMA = 0.57721566
 @Entity
 class Performance:
     _account_size: float
-    _risk_per_trade: float
+    risk_per_trade: float
     _periods_per_year: float = 252
     _mar: float = 0.0
     _confidence_level: float = 0.95
@@ -25,6 +25,9 @@ class Performance:
 
     @property
     def equity(self):
+        if not self.total_trades:
+            return np.array([self._account_size])
+
         return np.array([self._account_size]) + np.cumsum(self._pnl)
 
     @cached_property
@@ -336,19 +339,6 @@ class Performance:
         return self.sharpe_ratio * np.sqrt(self._periods_per_year)
 
     @cached_property
-    def sortino_ratio(self) -> float:
-        if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return 0.0
-
-        downside_risk = np.sqrt(self._lpm(order=2))
-
-        return (
-            self.excess_return / downside_risk
-            if downside_risk > SMALL_NUMBER_THRESHOLD
-            else 0.0
-        )
-
-    @cached_property
     def omega_ratio(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
             return 0.0
@@ -357,6 +347,19 @@ class Performance:
 
         return (
             (self.excess_return / downside_risk) + 1.0
+            if downside_risk > SMALL_NUMBER_THRESHOLD
+            else 0.0
+        )
+
+    @cached_property
+    def sortino_ratio(self) -> float:
+        if self.total_trades < TOTAL_TRADES_THRESHOLD:
+            return 0.0
+
+        downside_risk = np.sqrt(self._lpm(order=2))
+
+        return (
+            self.excess_return / downside_risk
             if downside_risk > SMALL_NUMBER_THRESHOLD
             else 0.0
         )
@@ -449,10 +452,10 @@ class Performance:
     @cached_property
     def kelly(self) -> float:
         if self.total_trades < TOTAL_TRADES_THRESHOLD:
-            return self._risk_per_trade
+            return self.risk_per_trade
 
         if self.payoff_ratio < SMALL_NUMBER_THRESHOLD:
-            return self._risk_per_trade
+            return self.risk_per_trade
 
         return self.hit_ratio - (1.0 - self.hit_ratio) / self.payoff_ratio
 

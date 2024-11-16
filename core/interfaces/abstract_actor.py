@@ -12,7 +12,7 @@ from core.events.position import (
     PositionInitialized,
     PositionOpened,
 )
-from core.events.risk import RiskThresholdBreached
+from core.events.risk import RiskLongThresholdBreached, RiskShortThresholdBreached
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -36,7 +36,8 @@ Message = Union[
     GoShortSignalReceived,
     ExitLongSignalReceived,
     ExitShortSignalReceived,
-    RiskThresholdBreached,
+    RiskLongThresholdBreached,
+    RiskShortThresholdBreached,
     StartHistoricalFeed,
     StartRealtimeFeed,
 ]

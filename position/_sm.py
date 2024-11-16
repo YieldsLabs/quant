@@ -8,7 +8,7 @@ from core.events.position import (
     BrokerPositionClosed,
     BrokerPositionOpened,
 )
-from core.events.risk import RiskThresholdBreached
+from core.events.risk import RiskLongThresholdBreached, RiskShortThresholdBreached
 from core.events.signal import (
     GoLongSignalReceived,
     GoShortSignalReceived,
@@ -31,7 +31,8 @@ PositionEvent = Union[
     BrokerPositionClosed,
     GoLongSignalReceived,
     GoShortSignalReceived,
-    RiskThresholdBreached,
+    RiskLongThresholdBreached,
+    RiskShortThresholdBreached,
     BacktestEnded,
 ]
 
@@ -55,7 +56,7 @@ LONG_TRANSITIONS: Transitions = {
         PositionState.CLOSE,
         "handle_backtest",
     ),
-    (PositionState.OPENED, RiskThresholdBreached): (
+    (PositionState.OPENED, RiskLongThresholdBreached): (
         PositionState.CLOSE,
         "handle_exit_received",
     ),
@@ -86,7 +87,7 @@ SHORT_TRANSITIONS: Transitions = {
         PositionState.CLOSE,
         "handle_backtest",
     ),
-    (PositionState.OPENED, RiskThresholdBreached): (
+    (PositionState.OPENED, RiskShortThresholdBreached): (
         PositionState.CLOSE,
         "handle_exit_received",
     ),

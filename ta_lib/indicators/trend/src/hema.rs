@@ -1,6 +1,6 @@
 use core::prelude::*;
 
-pub fn hema(source: &Price, period: usize) -> Price {
+pub fn hema(source: &Price, period: Period) -> Price {
     let period = (period as Scalar / 2.) as Period;
 
     3. * source.smooth(Smooth::WMA, period) - 2. * source.smooth(Smooth::EMA, period)

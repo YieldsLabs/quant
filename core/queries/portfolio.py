@@ -3,8 +3,7 @@ from typing import List
 
 from core.events._base import EventMeta
 from core.groups.query import QueryGroup
-from core.models.entity.signal import Signal
-from core.models.size import PositionSizeType
+from core.models.entity.portfolio import Performance
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -13,19 +12,7 @@ from ._base import Query
 
 
 @dataclass(frozen=True)
-class GetTopStrategy(Query[List[Strategy]]):
-    num: int = 5
-    positive_pnl: bool = False
-    meta: EventMeta = field(
-        default_factory=lambda: EventMeta(priority=2, group=QueryGroup.broker),
-        init=False,
-    )
-
-
-@dataclass(frozen=True)
-class GetPositionRisk(Query[float]):
-    signal: Signal
-    type: PositionSizeType
+class GetPortfolioRank(Query[List[Strategy]]):
     meta: EventMeta = field(
         default_factory=lambda: EventMeta(priority=2, group=QueryGroup.portfolio),
         init=False,
@@ -33,11 +20,11 @@ class GetPositionRisk(Query[float]):
 
 
 @dataclass(frozen=True)
-class GetFitness(Query[float]):
+class GetPortfolioPerformance(Query[Performance]):
     symbol: Symbol
     timeframe: Timeframe
     strategy: Strategy
     meta: EventMeta = field(
-        default_factory=lambda: EventMeta(priority=2, group=QueryGroup.broker),
+        default_factory=lambda: EventMeta(priority=2, group=QueryGroup.portfolio),
         init=False,
     )

@@ -54,7 +54,9 @@ class Trainer(ABC):
             self.lr_scheduler.step()
 
             if self.rank == 0:
-                print(f"Epoch {epoch + 1}/{epochs}, Train_Loss: {avg_train_loss:.4f}, Val_Loss: {avg_val_loss:.4f}")
+                print(
+                    f"Epoch {epoch + 1}/{epochs}, Train_Loss: {avg_train_loss:.4f}, Val_Loss: {avg_val_loss:.4f}"
+                )
 
                 improved = avg_train_loss < self.early_stop.best_loss
 

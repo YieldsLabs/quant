@@ -1,3 +1,3 @@
-from ._service import Portfolio
+from ._actor import PortfolioActor
 
-__all__ = [Portfolio]
+__all__ = [PortfolioActor]

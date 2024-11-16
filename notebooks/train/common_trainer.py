@@ -46,7 +46,7 @@ class CommonTrainer(Trainer):
         avg_train_loss = running_loss / num_batches if num_batches > 0 else float("inf")
 
         return avg_train_loss
-    
+
     def valid_epoch(self) -> float:
         return 0.0
 

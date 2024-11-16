@@ -1,19 +1,21 @@
 import asyncio
 import logging
 import random
-from typing import Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import numpy as np
 
 from core.actors import StrategyActor
 from core.events.market import NewMarketDataReceived
-from core.events.meta import EventMeta
 from core.events.position import (
     PositionAdjusted,
     PositionClosed,
     PositionOpened,
 )
-from core.events.risk import RiskThresholdBreached
+from core.events.risk import (
+    RiskLongThresholdBreached,
+    RiskShortThresholdBreached,
+)
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -24,11 +26,17 @@ from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
 from core.models.entity.ohlcv import OHLCV
 from core.models.entity.position import Position
+from core.models.entity.profit_target import ProfitTarget
+from core.models.entity.risk import Risk
+from core.models.entity.signal import Signal
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.copilot import EvaluateSession
 from core.queries.ohlcv import TA, NextBar, PrevBar
+from core.queries.portfolio import GetPortfolioPerformance
+
+if TYPE_CHECKING:
+    from core.models.entity.portfolio import Performance
 
 TrailEvent = Union[
     GoLongSignalReceived,
@@ -51,6 +59,8 @@ MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
 
+SL_MULTI = 1.8
+
 
 def _ema(values, alpha=0.1):
     ema = [values[0]]
@@ -70,7 +80,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
         self._lock = asyncio.Lock()
-        self._position = (None, None)
+        self._state: Tuple[Tuple[Risk, Position, ProfitTarget, Performance]] = (
+            None,
+            None,
+        )
         self.config = config_service.get("position")
         self.max_bars = DEFAULT_MAX_BARS
         self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
@@ -80,115 +93,77 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         return await self.handle_event(event)
 
     def _register_event_handlers(self):
-        self.register_handler(NewMarketDataReceived, self._handle_position_risk)
+        self.register_handler(NewMarketDataReceived, self._handle_risk)
         self.register_handler(PositionOpened, self._open_position)
         self.register_handler(PositionClosed, self._close_position)
-        self.register_handler(ExitLongSignalReceived, self._trail_position)
-        self.register_handler(ExitShortSignalReceived, self._trail_position)
-        self.register_handler(GoLongSignalReceived, self._trail_position)
-        self.register_handler(GoShortSignalReceived, self._trail_position)
 
     async def _open_position(self, event: PositionOpened):
         async with self._lock:
-            match event.position.side:
+            position = event.position
+            side = position.side
+            bar = position.open_bar
+
+            ta = await self.ask(TA(self.symbol, self.timeframe, bar))
+            volatility = ta.volatility.yz[-1]
+
+            pt = ProfitTarget(
+                side=side, entry=position.entry_price, volatility=volatility
+            )
+
+            tp = pt.targets[3]
+            sl = bar.close - SL_MULTI * pt.context_factor * volatility
+
+            risk = Risk(ohlcv=[bar], side=side, tp=tp, sl=sl)
+            performance = await self.ask(
+                GetPortfolioPerformance(
+                    self.symbol, self.timeframe, position.signal.strategy
+                )
+            )
+
+            state = (risk, position, pt, performance)
+
+            match side:
                 case PositionSide.LONG:
-                    self._position = (event.position, self._position[1])
+                    self._state = (state, self._state[1])
                 case PositionSide.SHORT:
-                    self._position = (self._position[0], event.position)
+                    self._state = (self._state[0], state)
 
     async def _close_position(self, event: PositionClosed):
         async with self._lock:
             match event.position.side:
                 case PositionSide.LONG:
-                    self._position = (None, self._position[1])
+                    self._state = (None, self._state[1])
                 case PositionSide.SHORT:
-                    self._position = (self._position[0], None)
+                    self._state = (self._state[0], None)
 
-    async def _handle_position_risk(self, event: NewMarketDataReceived):
+    async def _handle_risk(self, event: NewMarketDataReceived):
         async with self._lock:
-            processed_positions = list(self._position)
-            num_positions = len(self._position)
+            states = list(self._state)
+            num_states = len(self._state)
 
-            indexes = list(range(num_positions))
+            indexes = list(range(num_states))
             random.shuffle(indexes)
 
             for shuffled_index in indexes:
-                processed_positions[shuffled_index] = await self._process_market(
-                    event, self._position[shuffled_index]
-                )
+                curr_state = self._state[shuffled_index]
 
-            self._position = tuple(processed_positions)
+                states[shuffled_index] = await self._process_market(event, curr_state)
 
-    async def _trail_position(self, event: TrailEvent):
-        async with self._lock:
-
-            async def handle_trail(position: Position, risk_bar: OHLCV):
-                logger.info(f"Trail event for side: {position.side}, bar: {risk_bar}")
-
-                ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
-                return position.trail(ta)
-
-            async def process_trail(position: Position, event_meta: EventMeta):
-                if (
-                    position
-                    and not position.has_risk
-                    and position.last_modified < event_meta.timestamp
-                ):
-                    return await handle_trail(position, position.risk_bar)
-                return position
-
-            long_position, short_position = self._position
-
-            if isinstance(event, (ExitLongSignalReceived, GoShortSignalReceived)):
-                long_position = await process_trail(long_position, event.meta)
-
-            elif isinstance(event, (ExitShortSignalReceived, GoLongSignalReceived)):
-                short_position = await process_trail(short_position, event.meta)
-
-            self._position = (long_position, short_position)
+            self._risk = tuple(states)
 
     async def _process_market(
-        self, event: NewMarketDataReceived, position: Optional[Position]
+        self,
+        event: NewMarketDataReceived,
+        state: Optional[Tuple[Risk, Position, ProfitTarget]],
     ):
-        next_position = position
-        curr_bar = event.bar.ohlcv
+        next_state = state
 
-        if position and not position.has_risk:
-            prev_bar = next_position.risk_bar
-            next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
+        if state:
+            risk, position, pt, performance = state
 
-            next_bar = next_bar or curr_bar
-
-            attempts = 0
-            diff = curr_bar.timestamp - next_bar.timestamp
-
-            while diff < 0 and attempts < MAX_ATTEMPTS:
-                new_prev_bar = await self.ask(
-                    PrevBar(self.symbol, self.timeframe, prev_bar)
-                )
-
-                if new_prev_bar:
-                    diff = curr_bar.timestamp - new_prev_bar.timestamp
-                    prev_bar = new_prev_bar
-
-                attempts += 1
-
-            bars = [next_bar]
-
-            if diff > 0:
-                for _ in range(int(self.max_bars)):
-                    next_bar = await self.ask(
-                        NextBar(self.symbol, self.timeframe, prev_bar)
-                    )
-
-                    if not next_bar:
-                        break
-
-                    bars.append(next_bar)
-                    prev_bar = next_bar
+            bars = await self._fetch_bars(event.bar.ohlcv, risk.curr_bar)
 
             for bar in sorted(bars, key=lambda x: x.timestamp):
-                risk = next_position.position_risk
                 ts = np.array(risk.time_points)
 
                 if len(ts) > 2:
@@ -221,15 +196,67 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                         self.max_bars = DEFAULT_MAX_BARS
                         self.consc_anomaly_counter = 1
 
-                ta = await self.ask(TA(self.symbol, self.timeframe, bar))
-                session_risk = await self.ask(
-                    EvaluateSession(next_position.side, risk.session, ta)
-                )
+                risk = risk.next(bar, position.signal)
+                
+                next_state = (risk, position, pt, performance)
 
-                next_position = next_position.next(bar, ta, session_risk)
+                if risk.has_risk:
+                    open_signal = position.signal
+                    exit_price = (
+                        risk.curr_bar.high + risk.curr_bar.low + risk.curr_bar.close
+                    ) / 3.0
 
-                if next_position.has_risk:
-                    await self.tell(RiskThresholdBreached(next_position))
+                    signal = Signal(
+                        symbol=open_signal.symbol,
+                        timeframe=open_signal.timeframe,
+                        strategy=open_signal.strategy,
+                        side=open_signal.side,
+                        ohlcv=risk.curr_bar,
+                        exit=exit_price,
+                    )
+
+                    risk_cls = (
+                        RiskLongThresholdBreached
+                        if risk.side == PositionSide.LONG
+                        else RiskShortThresholdBreached
+                    )
+
+                    await self.tell(risk_cls(signal))
                     break
 
-        return next_position
+        return next_state
+
+    async def _fetch_bars(self, curr_bar: OHLCV, prev_bar: OHLCV) -> List[OHLCV]:
+        next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
+
+        next_bar = next_bar or curr_bar
+
+        attempts = 0
+        diff = curr_bar.timestamp - next_bar.timestamp
+
+        while diff < 0 and attempts < MAX_ATTEMPTS:
+            new_prev_bar = await self.ask(
+                PrevBar(self.symbol, self.timeframe, prev_bar)
+            )
+
+            if new_prev_bar:
+                diff = curr_bar.timestamp - new_prev_bar.timestamp
+                prev_bar = new_prev_bar
+
+            attempts += 1
+        
+        bars = [next_bar]
+
+        if diff > 0:
+            for _ in range(int(self.max_bars)):
+                next_bar = await self.ask(
+                    NextBar(self.symbol, self.timeframe, prev_bar)
+                )
+
+                if not next_bar:
+                    break
+
+                bars.append(next_bar)
+                prev_bar = next_bar
+
+        return list(set(bars))
