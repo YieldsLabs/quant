@@ -18,15 +18,17 @@ class DataCollector:
         self._stop_event = asyncio.Event()
 
     async def start(self, msg: Event):
+        self._stop_event.clear()
+
         for producer in self._producers:
             task = asyncio.create_task(self._run_producer(producer, msg))
             self._tasks.add(task)
-            task.add_done_callback(self._tasks.discard)
+            task.add_done_callback(lambda t: self._tasks.discard(t))
 
         for consumer in self._consumers:
             task = asyncio.create_task(self._run_consumer(consumer))
             self._tasks.add(task)
-            task.add_done_callback(self._tasks.discard)
+            task.add_done_callback(lambda t: self._tasks.discard(t))
 
     async def stop(self):
         self._stop_event.set()
@@ -64,7 +66,9 @@ class DataCollector:
             async for data in producer(msg):
                 await self._queue.put(data)
         except asyncio.CancelledError:
-            pass
+            logger.info("Producer canceled")
+        except Exception as e:
+            logger.error(f"Error in producer: {e}")
         finally:
             await self._queue.put(STOP)
 
@@ -72,16 +76,13 @@ class DataCollector:
         try:
             while not self._stop_event.is_set():
                 data = await self._queue.get()
-
+                if data is STOP:
+                    break
                 try:
-                    if data is STOP:
-                        break
-
-                    if data:
-                        await consumer(data)
+                    await consumer(data)
                 except Exception as e:
-                    logger.error(e)
+                    logger.error(f"Error in consumer: {e}")
                 finally:
                     self._queue.task_done()
         except asyncio.CancelledError:
-            pass
+            logger.info("Consumer canceled")
