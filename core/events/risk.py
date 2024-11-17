@@ -24,7 +24,6 @@ class RiskEvent(Event):
         return {**parent_dict, **current_dict}
 
 
-
 @dataclass(frozen=True)
 class RiskLongThresholdBreached(RiskEvent):
     pass

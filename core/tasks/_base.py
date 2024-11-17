@@ -17,4 +17,11 @@ class Task(Event):
 
     async def wait_for_finishing(self) -> asyncio.Task:
         await self._task_event.wait()
-        return await self._task
+        result = await self._task
+
+        if not self._task.done():
+            self._task.cancel()
+
+        object.__setattr__(self, "_task", None)
+
+        return result

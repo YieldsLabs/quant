@@ -8,7 +8,6 @@ import numpy as np
 from core.actors import StrategyActor
 from core.events.market import NewMarketDataReceived
 from core.events.position import (
-    PositionAdjusted,
     PositionClosed,
     PositionOpened,
 )
@@ -103,9 +102,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             bar = position.open_bar
 
             ta = await self.ask(TA(self.symbol, self.timeframe, bar))
-        
+
             volatility = ta.volatility.yz[-1]
-       
+
             pt = ProfitTarget(
                 side=side, entry=position.entry_price, volatility=volatility
             )
@@ -118,17 +117,27 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
             price = bar.low if position.side == PositionSide.LONG else bar.high
             volatility_factor = volatility * SL_MULTI
-            sl = price - volatility_factor if position.side == PositionSide.LONG else price + volatility_factor
+            sl = (
+                price - volatility_factor
+                if position.side == PositionSide.LONG
+                else price + volatility_factor
+            )
 
             risk_factor = RRR_MULTI * abs(position.entry_price - sl)
-            tp = bar.high + risk_factor if position.side == PositionSide.LONG else bar.low - risk_factor
-    
+            tp = (
+                bar.high + risk_factor
+                if position.side == PositionSide.LONG
+                else bar.low - risk_factor
+            )
+
             risk = Risk(
                 side=side, tp=tp, sl=sl, duration=self.config.get("trade_duration", 20)
             )
             risk = risk.next(bar)
-            
-            print(f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}")
+
+            print(
+                f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}"
+            )
 
             state = (risk, position, pt, performance)
 

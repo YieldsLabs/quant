@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import uuid
 from typing import Union, get_args, get_origin
@@ -43,7 +44,7 @@ class BaseActor(AbstractActor):
             raise RuntimeError(f"Start: {self.__class__.__name__} is already running")
 
         self._register_events()
-        self.on_start()
+        self._run_hook(self.on_start)
         self._running = True
 
     def stop(self):
@@ -51,7 +52,7 @@ class BaseActor(AbstractActor):
             raise RuntimeError(f"Stop: {self.__class__.__name__} is not started")
 
         self._unregister_events()
-        self.on_stop()
+        self._run_hook(self.on_stop)
         self._running = False
 
     async def tell(self, msg: Message, *args, **kwrgs):
@@ -64,6 +65,13 @@ class BaseActor(AbstractActor):
             return await self._mailbox.execute(msg, *args, **kwrgs)
         if isinstance(msg, Task):
             return await self._mailbox.run(msg, *args, **kwrgs)
+
+    def _run_hook(self, hook):
+        if asyncio.iscoroutinefunction(hook):
+            loop = asyncio.get_running_loop()
+            asyncio.run_coroutine_threadsafe(hook(), loop)
+        else:
+            hook()
 
     def _register_events(self):
         for event in self._EVENTS:
