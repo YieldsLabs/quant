@@ -46,9 +46,7 @@ TrailEvent = Union[
 RiskEvent = Union[
     NewMarketDataReceived,
     PositionOpened,
-    PositionAdjusted,
     PositionClosed,
-    TrailEvent,
 ]
 
 MAX_ATTEMPTS = 16
@@ -57,7 +55,8 @@ MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
 LATENCY_GAP_THRESHOLD = 2.2
-SL_MULTI = 1.8
+SL_MULTI = 1.5
+RRR_MULTI = 2.0
 
 
 def _ema(values, alpha=0.1):
@@ -104,25 +103,32 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             bar = position.open_bar
 
             ta = await self.ask(TA(self.symbol, self.timeframe, bar))
+        
             volatility = ta.volatility.yz[-1]
-
+       
             pt = ProfitTarget(
                 side=side, entry=position.entry_price, volatility=volatility
             )
-
-            tp = pt.targets[-1]
-            sl = bar.close - SL_MULTI * pt.context_factor * volatility
-
-            print(f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}")
-
-            risk = Risk(side=side, tp=tp, sl=sl)
-            risk = risk.next(bar)
 
             performance = await self.ask(
                 GetPortfolioPerformance(
                     self.symbol, self.timeframe, position.signal.strategy
                 )
             )
+
+            price = bar.low if position.side == PositionSide.LONG else bar.high
+            volatility_factor = volatility * SL_MULTI
+            sl = price - volatility_factor if position.side == PositionSide.LONG else price + volatility_factor
+
+            risk_factor = RRR_MULTI * abs(position.entry_price - sl)
+            tp = bar.high + risk_factor if position.side == PositionSide.LONG else bar.low - risk_factor
+    
+            risk = Risk(
+                side=side, tp=tp, sl=sl, duration=self.config.get("trade_duration", 20)
+            )
+            risk = risk.next(bar)
+            
+            print(f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}")
 
             state = (risk, position, pt, performance)
 
@@ -175,7 +181,14 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         next_risk = risk
         open_signal = position.signal
 
-        bars = await self._fetch_bars(event.bar.ohlcv, next_risk.curr_bar)
+        bars = []
+
+        try:
+            bars = await asyncio.wait_for(
+                self._fetch_bars(event.bar.ohlcv, next_risk.curr_bar), timeout=10
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Timeout occurred while fetching bars...")
 
         if not bars:
             logger.warning("No bars fetched, skipping market processing.")
@@ -183,13 +196,13 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
         for bar in bars:
             if self._has_anomaly(bar.timestamp, next_risk.time_points):
-                logger.debug(f"Anomalous bar skipped: {bar.timestamp}")
+                logger.info(f"Anomalous bar skipped: {bar.timestamp}")
                 continue
 
             gap = bar.timestamp - next_risk.curr_bar.timestamp
 
             if gap <= 0:
-                logger.debug(f"Stale bar skipped: {bar.timestamp}")
+                logger.info(f"Stale bar skipped: {bar.timestamp}")
                 continue
 
             if gap > LATENCY_GAP_THRESHOLD * open_signal.timeframe.to_milliseconds():
@@ -220,7 +233,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 side=open_signal.side,
                 ohlcv=cbar,
                 entry=open_signal.entry,
-                exit=next_risk.curr_bar.close,
+                exit=next_price,
             )
 
             risk_cls = (
@@ -229,7 +242,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 else RiskShortThresholdBreached
             )
 
-            await self.tell(risk_cls(close_signal))
+            event = risk_cls(close_signal)
+            await self.tell(event)
 
         return (next_risk, position, pt, performance)
 

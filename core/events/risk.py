@@ -14,6 +14,16 @@ class RiskEvent(Event):
         default_factory=lambda: EventMeta(priority=1, group=EventGroup.risk), init=False
     )
 
+    def to_dict(self):
+        parent_dict = super().to_dict()
+
+        current_dict = {
+            "signal": self.signal.to_dict(),
+        }
+
+        return {**parent_dict, **current_dict}
+
+
 
 @dataclass(frozen=True)
 class RiskLongThresholdBreached(RiskEvent):

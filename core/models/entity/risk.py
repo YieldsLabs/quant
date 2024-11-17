@@ -132,6 +132,7 @@ class Risk(TaMixin):
     side: PositionSide = None
     tp: float = field(default_factory=lambda: 0.0)
     sl: float = field(default_factory=lambda: 0.0)
+    duration: int = field(default_factory=lambda: 900)
     trail_factor: float = field(default_factory=lambda: np.random.uniform(1.1, 1.8))
 
     @property
@@ -143,13 +144,15 @@ class Risk(TaMixin):
         return [o.timestamp for o in self.ohlcv]
 
     @property
-    def session(self):
-        return self.ohlcv
-
-    @property
     def has_risk(self) -> bool:
         high, low = self.curr_bar.high, self.curr_bar.low
         risk_type = PositionRiskType.NONE
+        expired = (
+            self.curr_bar.timestamp - self.ohlcv[0].timestamp
+        ) // 1e3 - self.duration
+
+        if expired >= 0:
+            risk_type = PositionRiskType.TIME
 
         if self.side == PositionSide.LONG:
             if low < self.sl:

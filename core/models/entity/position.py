@@ -51,11 +51,15 @@ class Position:
 
     @property
     def open_bar(self) -> Optional[OHLCV]:
-        return self.signal.ohlcv if self.signal else None
+        open_signal = self.signal
+
+        return open_signal.ohlcv if open_signal else None
 
     @property
     def close_bar(self) -> Optional[OHLCV]:
-        return self.close_signal.ohlcv if self.close_signal else None
+        close_signal = self.close_signal
+
+        return close_signal.ohlcv if close_signal else None
 
     @property
     def trade_time(self) -> int:
@@ -152,7 +156,7 @@ class Position:
         size = self._average_size(self.open_orders) - self._average_size(
             self.closed_orders
         )
-        price = self.close_signal.exit
+        price = self.close_signal.exit if self.close_signal else 0.0
 
         return Order(
             status=OrderStatus.PENDING,

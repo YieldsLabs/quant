@@ -2,13 +2,6 @@ use core::prelude::*;
 use timeseries::prelude::*;
 use volatility::{tr, wtr};
 
-
-enum Volatility {
-    ATR,
-    TR,
-    WTR,
-}
-
 pub trait Volatility {
     fn atr(&self, smooth: Smooth, period: usize) -> Price;
     fn tr(&self) -> Price;

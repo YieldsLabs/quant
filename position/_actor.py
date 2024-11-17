@@ -23,6 +23,7 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.models.entity.position import Position
+from core.models.entity.signal import Signal
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
@@ -148,10 +149,11 @@ class PositionActor(StrategyActor):
             event: ExitSignal, position: Optional[Position]
         ) -> bool:
             if position and position.last_modified < event.meta.timestamp:
-                position = position.close_position(event.signal)
-                position = await self.state.update_stored_position(position)
-
-                await self.tell(PositionCloseRequested(position))
+                closed_position = position.close_position(event.signal)
+                closed_position = await self.state.update_stored_position(
+                    closed_position
+                )
+                await self.tell(PositionCloseRequested(closed_position))
                 return True
 
             return False
@@ -176,10 +178,32 @@ class PositionActor(StrategyActor):
         )
 
         if long_position:
-            await self.tell(PositionCloseRequested(long_position))
+            open_signal = long_position.signal
+            close_signal = Signal(
+                symbol=open_signal.symbol,
+                timeframe=open_signal.timeframe,
+                strategy=open_signal.strategy,
+                side=open_signal.side,
+                ohlcv=open_signal.ohlcv,
+                entry=open_signal.entry,
+                exit=open_signal.entry,
+            )
+            position = long_position.close_position(close_signal)
+            await self.tell(PositionCloseRequested(position))
 
         if short_position:
-            await self.tell(PositionCloseRequested(short_position))
+            open_signal = short_position.signal
+            close_signal = Signal(
+                symbol=open_signal.symbol,
+                timeframe=open_signal.timeframe,
+                strategy=open_signal.strategy,
+                side=open_signal.side,
+                ohlcv=open_signal.ohlcv,
+                entry=open_signal.entry,
+                exit=open_signal.entry,
+            )
+            position = short_position.close_position(close_signal)
+            await self.tell(PositionCloseRequested(position))
 
         return True
 
