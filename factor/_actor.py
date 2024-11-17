@@ -5,6 +5,8 @@ from core.actors import BaseActor
 from core.commands.factor import EnvolveGeneration, InitGeneration
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
+from core.models.strategy import Strategy
+from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.broker import GetSymbols
 from core.queries.factor import GetGeneration
@@ -46,11 +48,13 @@ class FactorActor(BaseActor, EventHandlerMixin):
         generator = PopulationGenerator(
             symbols, timeframes, self.config.get("n_samples", 2)
         )
-        
+
         for individual in generator:
             self.population.append(individual)
 
-    async def _get_generation(self, _msg: GetGeneration) -> Tuple[list, float]:
+    async def _get_generation(
+        self, _msg: GetGeneration
+    ) -> Tuple[list[Tuple[Symbol, Timeframe, Strategy]], float]:
         population = [(i.symbol, i.timeframe, i.strategy) for i in self.population]
 
         return (population, self.generation)
