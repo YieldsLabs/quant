@@ -1,3 +1,3 @@
-from ._strategy import StrategyGenerator
+from ._population import PopulationGenerator
 
-__all__ = [StrategyGenerator]
+__all__ = [PopulationGenerator]

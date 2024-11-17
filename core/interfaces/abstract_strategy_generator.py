@@ -1,13 +1,5 @@
-from abc import ABC, abstractmethod
-
-from core.models.strategy import Strategy
-from core.models.symbol import Symbol
-from core.models.timeframe import Timeframe
+from abc import ABC
 
 
 class AbstractStrategyGenerator(ABC):
-    @abstractmethod
-    def generate(
-        self, symbols: list[Symbol], timeframes: list[Timeframe]
-    ) -> list[tuple[Symbol, Timeframe, Strategy]]:
-        pass
+    pass

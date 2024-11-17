@@ -56,6 +56,7 @@ DEFAULT_ANOMALY_THRESHOLD = 6.0
 LATENCY_GAP_THRESHOLD = 2.2
 SL_MULTI = 1.5
 RRR_MULTI = 2.0
+BAR_TIMEOUT = 15
 
 
 def _ema(values, alpha=0.1):
@@ -78,10 +79,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
         self._lock = asyncio.Lock()
-        self._state: Tuple[RiskState] = (
-            None,
-            None,
-        )
+        self._state: Tuple[Optional[RiskState], Optional[RiskState]] = (None, None)
         self.config = config_service.get("position")
         self.max_bars = DEFAULT_MAX_BARS
         self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
@@ -130,10 +128,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 else bar.low - risk_factor
             )
 
-            risk = Risk(
-                side=side, tp=tp, sl=sl, duration=self.config.get("trade_duration", 20)
-            )
-            risk = risk.next(bar)
+            trade_duration = self.config.get("trade_duration", 20)
+
+            risk = Risk(side=side, tp=tp, sl=sl, duration=trade_duration).next(bar)
 
             print(
                 f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}"
@@ -194,7 +191,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
         try:
             bars = await asyncio.wait_for(
-                self._fetch_bars(event.bar.ohlcv, next_risk.curr_bar), timeout=10
+                self._fetch_bars(event.bar.ohlcv, next_risk.curr_bar),
+                timeout=BAR_TIMEOUT,
             )
         except asyncio.TimeoutError:
             logger.warning("Timeout occurred while fetching bars...")
