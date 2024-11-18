@@ -148,11 +148,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     async def _handle_risk(self, event: NewMarketDataReceived):
         sides = list(PositionSide)
-        tasks = []
-
-        for side in sides:
-            tasks.append(self._process_side(side, event))
-
+        tasks = [self._process_side(side, event) for side in sides]
         await asyncio.gather(*tasks)
 
     async def _process_side(self, side, event):
