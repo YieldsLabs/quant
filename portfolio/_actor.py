@@ -28,6 +28,7 @@ PortfolioEvent = Union[
 ]
 
 logger = logging.getLogger(__name__)
+PerfKey = Tuple[Symbol, Timeframe, Strategy]
 
 
 class PortfolioActor(BaseActor, EventHandlerMixin):
@@ -37,7 +38,7 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         self._register_event_handlers()
 
         self.config = config_service.get("portfolio")
-        self.state = InMemory[str, Performance]()
+        self.state = InMemory[PerfKey, Performance]()
 
     async def on_receive(self, event: PortfolioEvent):
         return await self.handle_event(event)
@@ -114,5 +115,5 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
     @staticmethod
     def _performance_key(
         symbol: Symbol, timeframe: Timeframe, strategy: Strategy
-    ) -> Tuple[Symbol, Timeframe, Strategy]:
+    ) -> PerfKey:
         return symbol, timeframe, strategy
