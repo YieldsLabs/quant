@@ -296,6 +296,7 @@ class PopulationGenerator(AbstractStrategyGenerator):
                 )
             if len(strategies) >= self.n_samples:
                 return strategies
+
         return strategies
 
     def _random_strategies(self, count):
@@ -314,4 +315,5 @@ class PopulationGenerator(AbstractStrategyGenerator):
                     exit=np.random.choice(self.exit()),
                 )
             )
+
         return strategies

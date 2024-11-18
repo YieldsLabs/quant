@@ -24,4 +24,5 @@ class InitGeneration(FactorCommand):
 
 @dataclass(frozen=True)
 class EnvolveGeneration(FactorCommand):
-    pass
+    datasource: DataSourceType
+    cap: CapType

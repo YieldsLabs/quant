@@ -134,7 +134,7 @@ class BacktestSystem(AbstractSystem):
     async def _run_optimization(self):
         logger.info("Run optimization")
 
-        await self.execute(EnvolveGeneration())
+        await self.execute(EnvolveGeneration(self.context.datasource, self.default_cap))
 
         await self.event_queue.put(Event.RUN_BACKTEST)
 
