@@ -49,10 +49,11 @@ RiskEvent = Union[
 ]
 
 MAX_ATTEMPTS = 16
-DEFAULT_MAX_BARS = 16
+DEFAULT_MAX_BARS = 60
 MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
+ANOMALY_CLIP_MULTIPLIER = 12.0
 LATENCY_GAP_THRESHOLD = 2.2
 SL_MULTI = 1.5
 RRR_MULTI = 2.0
@@ -264,23 +265,26 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         mean, std = np.mean(ts_diff), max(np.std(ts_diff), np.finfo(float).eps)
 
         current_diff = abs(bar_timestamp - time_points[-1])
-        anomaly = (current_diff - mean) / std
-        anomaly = np.clip(
-            anomaly,
-            -12.0 * DEFAULT_ANOMALY_THRESHOLD,
-            12.0 * DEFAULT_ANOMALY_THRESHOLD,
+        anomaly_score = (current_diff - mean) / std
+
+        anomaly_score = np.clip(
+            anomaly_score,
+            -ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD,
+            ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD,
         )
 
-        if abs(anomaly) > self.anomaly_threshold:
+        if abs(anomaly_score) > self.anomaly_threshold:
             self.consc_anomaly_counter += 1
 
             if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
-                logger.warn(
-                    "Too many consecutive anomalies, increasing threshold temporarily"
+                logger.warning(
+                    "Too many consecutive anomalies detected. "
+                    f"Increasing thresholds: anomaly_threshold={self.anomaly_threshold}, "
+                    f"max_bars={self.max_bars}"
                 )
                 self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
                 self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
-                self.consc_anomaly_counter = 1
+                self.consc_anomaly_counter = 0
 
             return True
 
