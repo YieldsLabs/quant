@@ -29,7 +29,7 @@ class HistoricalActor(FeedActor):
     ):
         super().__init__(symbol, timeframe, datasource)
         self.datasource_factory = datasource_factory
-        self.config = config_service.get("backtest")
+        self.config = config_service.get("feed")
 
     async def on_receive(self, msg: StartHistoricalFeed):
         await self.collector.start(msg)

@@ -23,7 +23,6 @@ from reef import ReefActor
 from risk import RiskActorFactory
 from service import (
     EnvironmentSecretService,
-    LLMService,
     SignalService,
     TimeSeriesService,
     WasmManager,
