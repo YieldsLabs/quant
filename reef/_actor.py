@@ -47,12 +47,12 @@ class ReefActor(BaseActor):
         self._stop_event.clear()
 
         worker_task = asyncio.create_task(self._process_orders())
-        worker_task.add_done_callback(self._tasks.discard)
         self._tasks.add(worker_task)
+        worker_task.add_done_callback(lambda t: self._tasks.discard(t))
 
         poll_task = asyncio.create_task(self._fetch_open_orders())
-        poll_task.add_done_callback(self._tasks.discard)
         self._tasks.add(poll_task)
+        poll_task.add_done_callback(lambda t: self._tasks.discard(t))
 
     def on_stop(self):
         self._stop_event.set()
