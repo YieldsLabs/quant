@@ -6,7 +6,6 @@ import signal
 import uvloop
 from dotenv import load_dotenv
 
-from copilot import CopilotActor
 from coral import DataSourceFactory
 from core.models.datasource_type import DataSourceType
 from executor import OrderExecutorActorFactory
@@ -83,7 +82,6 @@ async def main():
     OceanActor(datasource, config_service).start()
     ReefActor(datasource, config_service).start()
     MarketActor(TimeSeriesService(wasm)).start()
-    CopilotActor(LLMService(config_service)).start()
     FactorActor(datasource, config_service).start()
     PortfolioActor(config_service).start()
     SmartRouter(datasource, config_service)
