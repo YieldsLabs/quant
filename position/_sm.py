@@ -87,8 +87,8 @@ class PositionStateMachine:
         self._transitions = transitions
         self._state = InMemory[Symbol, PositionState]()
         self._locks = {
-            PositionSide.LONG: asyncio.Semaphore(1),
-            PositionSide.SHORT: asyncio.Semaphore(1),
+            PositionSide.LONG: asyncio.Semaphore(3),
+            PositionSide.SHORT: asyncio.Semaphore(3),
         }
 
     async def process_event(self, event: PositionEvent, side: PositionSide):
