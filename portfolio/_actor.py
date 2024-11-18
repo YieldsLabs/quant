@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 from core.actors import BaseActor
 from core.actors.state import InMemory
@@ -31,15 +31,13 @@ logger = logging.getLogger(__name__)
 
 
 class PortfolioActor(BaseActor, EventHandlerMixin):
-    ACCOUNT_SIZE_KEY = "__account_size__"
-
     def __init__(self, config_service: AbstractConfig):
         super().__init__()
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
 
         self.config = config_service.get("portfolio")
-        self.state = InMemory[str, Union[Performance, float]]()
+        self.state = InMemory[str, Performance]()
 
     async def on_receive(self, event: PortfolioEvent):
         return await self.handle_event(event)
@@ -52,11 +50,10 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         self.register_handler(GetPortfolioPerformance, self._get_performance)
 
     async def _init_state(self, event: Union[BacktestStarted, TradeStarted]):
-        account_size = await self._update_account_size()
-        risk_per_trade = self.config.get("risk_per_trade", 0.0001)
         key = self._performance_key(event.symbol, event.timeframe, event.strategy)
+        performance = await self._init_performance()
 
-        await self.state.set(key, Performance(account_size, risk_per_trade))
+        await self.state.set(key, performance)
 
     async def _get_performance(
         self, event: GetPortfolioPerformance
@@ -65,17 +62,13 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         performance = await self.state.get(key)
 
         if not performance:
-            account_size = await self.state.get(self.ACCOUNT_SIZE_KEY)
-            risk_per_trade = self.config.get("risk_per_trade", 0.0001)
-            performance = Performance(account_size, risk_per_trade)
-
+            performance = await self._init_performance()
             await self.state.set(key, performance)
 
         return performance
 
     async def _reset_state(self, _event: PortfolioReset):
         await self.state.reset()
-        await self._update_account_size()
 
     async def _update_state(self, event: PositionClosed):
         position = event.position
@@ -112,15 +105,14 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         else:
             logger.warning(f"Invalid position: {position}")
 
-    async def _update_account_size(self) -> float:
+    async def _init_performance(self):
         account_size = await self.ask(GetBalance())
-
-        await self.state.set(self.ACCOUNT_SIZE_KEY, account_size)
-
-        return account_size
+        risk_per_trade = self.config.get("risk_per_trade", 0.0001)
+        performance = Performance(account_size, risk_per_trade)
+        return performance
 
     @staticmethod
     def _performance_key(
         symbol: Symbol, timeframe: Timeframe, strategy: Strategy
-    ) -> str:
-        return f"{symbol}_{timeframe}_{strategy}"
+    ) -> Tuple[Symbol, Timeframe, Strategy]:
+        return symbol, timeframe, strategy
