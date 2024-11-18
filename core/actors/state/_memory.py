@@ -11,11 +11,11 @@ class InMemory(Generic[K, V]):
         self._data: Dict[K, V] = {}
         self._lock = RWLock()
 
-    async def get(self, key: K) -> Optional[V]:
+    async def get(self, key: K, fallback: Optional[V] = None) -> Optional[V]:
         await self._lock.acquire_reader()
 
         try:
-            return self._data.get(key)
+            return self._data.get(key, fallback)
         finally:
             await self._lock.release_reader()
 

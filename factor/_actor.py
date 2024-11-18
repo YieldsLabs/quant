@@ -5,6 +5,7 @@ import numpy as np
 
 from coral import DataSourceFactory
 from core.actors import BaseActor
+from core.actors.state import InMemory
 from core.commands.factor import EnvolveGeneration, InitGeneration
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
@@ -44,8 +45,7 @@ class FactorActor(BaseActor, EventHandlerMixin):
         self._register_event_handlers()
         self.datasource = datasource
         self.config = config_service.get("factor")
-        self.population: List[Individual] = []
-        self.generation = 0
+        self.state = InMemory[str, Union[List[Individual], int]]()
 
     async def on_receive(self, event: FactorEvent):
         return await self.handle_event(event)
@@ -56,13 +56,11 @@ class FactorActor(BaseActor, EventHandlerMixin):
         self.register_handler(EnvolveGeneration, self._envolve_generation)
 
     async def _init_generation(self, msg: InitGeneration):
-        self.population = []
-        self.generation = 0
-
         generator = await self._get_generator(msg.datasource, msg.cap)
+        population = list(generator)
 
-        for individual in generator:
-            self.population.append(individual)
+        await self.state.set("population", population)
+        await self.state.set("generation", 0)
 
     async def _get_generator(self, datasource, cap):
         symbols = await self.ask(GetSymbols(datasource, cap))
@@ -77,28 +75,34 @@ class FactorActor(BaseActor, EventHandlerMixin):
     async def _get_generation(
         self, _msg: GetGeneration
     ) -> Tuple[list[Tuple[Symbol, Timeframe, Strategy]], float]:
-        population = [(i.symbol, i.timeframe, i.strategy) for i in self.population]
+        population = [
+            (i.symbol, i.timeframe, i.strategy)
+            for i in await self.state.get("population", [])
+        ]
+        generation = await self.state.get("generation", 0)
 
-        return population, self.generation
+        return population, generation
 
     async def _envolve_generation(self, msg: EnvolveGeneration):
-        await self._evaluate_fitness()
-
-        elite, parents = self._select_elite_and_parents()
-
+        population = await self.state.get("population", [])
         generator = await self._get_generator(msg.datasource, msg.cap)
+
+        await self._evaluate_fitness(population)
+
+        elite, parents = self._select_elite_and_parents(population)
 
         await self._mutate_parents(parents, generator)
 
         children = self._crossover_parents(parents)
-        self._update_population(elite, children)
 
-        self.population = list(set(self.population))
+        next_population = list(set(elite + children))
+        next_generation = (await self.state.get("generation", 0)) + 1
 
-        self.generation += 1
+        await self.state.set("population", next_population)
+        await self.state.set("generation", next_generation)
 
-    async def _evaluate_fitness(self) -> None:
-        for individual in self.population:
+    async def _evaluate_fitness(self, population: List[Individual]) -> None:
+        for individual in population:
             performance = await self.ask(
                 GetPortfolioPerformance(
                     individual.symbol, individual.timeframe, individual.strategy
@@ -106,14 +110,11 @@ class FactorActor(BaseActor, EventHandlerMixin):
             )
             individual.update_fitness(performance.deflated_sharpe_ratio)
 
-    def _update_population(
-        self, elite: list[Individual], children: list[Individual]
-    ) -> None:
-        self.population = elite + children
-
-    def _select_elite_and_parents(self) -> tuple[list[Individual], list[Individual]]:
+    def _select_elite_and_parents(
+        self, population: List[Individual]
+    ) -> tuple[list[Individual], list[Individual]]:
         sorted_population = sorted(
-            self.population, key=lambda ind: ind.fitness, reverse=True
+            population, key=lambda ind: ind.fitness, reverse=True
         )
         elite = sorted_population[: self.config.get("elite_count", 5)]
 
@@ -140,7 +141,7 @@ class FactorActor(BaseActor, EventHandlerMixin):
         return parents
 
     async def _mutate_parents(self, parents: list[Individual], generator) -> None:
-        for idx, _parent in enumerate(parents):
+        for idx, _ in enumerate(parents):
             if np.random.rand() < self.config.get("mutation_rate", 0.1):
                 parents[idx] = next(generator)
 
