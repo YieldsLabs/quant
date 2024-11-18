@@ -1,11 +1,11 @@
 import asyncio
 import logging
-import random
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 
 from core.actors import StrategyActor
+from core.actors.state import InMemory
 from core.events.market import NewMarketDataReceived
 from core.events.position import (
     PositionClosed,
@@ -79,8 +79,13 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         super().__init__(symbol, timeframe)
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
-        self._lock = asyncio.Lock()
-        self._state: Tuple[Optional[RiskState], Optional[RiskState]] = (None, None)
+
+        self._state = InMemory[PositionSide, RiskState]()
+        self._locks = {
+            PositionSide.LONG: asyncio.Semaphore(1),
+            PositionSide.SHORT: asyncio.Semaphore(1),
+        }
+
         self.config = config_service.get("position")
         self.max_bars = DEFAULT_MAX_BARS
         self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
@@ -95,108 +100,85 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         self.register_handler(PositionClosed, self._close_position)
 
     async def _open_position(self, event: PositionOpened):
-        async with self._lock:
-            position = event.position
-            side = position.side
-            bar = position.open_bar
+        position = event.position
+        side = position.side
+        bar = position.open_bar
 
-            ta = await self.ask(TA(self.symbol, self.timeframe, bar))
+        ta = await self.ask(TA(self.symbol, self.timeframe, bar))
 
-            volatility = ta.volatility.yz[-1]
+        volatility = ta.volatility.yz[-1]
 
-            pt = ProfitTarget(
-                side=side, entry=position.entry_price, volatility=volatility
+        pt = ProfitTarget(side=side, entry=position.entry_price, volatility=volatility)
+
+        performance = await self.ask(
+            GetPortfolioPerformance(
+                self.symbol, self.timeframe, position.signal.strategy
             )
+        )
 
-            performance = await self.ask(
-                GetPortfolioPerformance(
-                    self.symbol, self.timeframe, position.signal.strategy
-                )
-            )
+        price = bar.low if position.side == PositionSide.LONG else bar.high
+        volatility_factor = volatility * SL_MULTI
+        sl = (
+            price - volatility_factor
+            if position.side == PositionSide.LONG
+            else price + volatility_factor
+        )
 
-            price = bar.low if position.side == PositionSide.LONG else bar.high
-            volatility_factor = volatility * SL_MULTI
-            sl = (
-                price - volatility_factor
-                if position.side == PositionSide.LONG
-                else price + volatility_factor
-            )
+        risk_factor = RRR_MULTI * abs(position.entry_price - sl)
+        tp = (
+            bar.high + risk_factor
+            if position.side == PositionSide.LONG
+            else bar.low - risk_factor
+        )
 
-            risk_factor = RRR_MULTI * abs(position.entry_price - sl)
-            tp = (
-                bar.high + risk_factor
-                if position.side == PositionSide.LONG
-                else bar.low - risk_factor
-            )
+        trade_duration = self.config.get("trade_duration", 20)
 
-            trade_duration = self.config.get("trade_duration", 20)
+        risk = Risk(side=side, tp=tp, sl=sl, duration=trade_duration).next(bar)
 
-            risk = Risk(side=side, tp=tp, sl=sl, duration=trade_duration).next(bar)
+        logger.info(
+            f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}"
+        )
 
-            print(
-                f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}"
-            )
+        state = (risk, position, pt, performance)
 
-            state = (risk, position, pt, performance)
-
-            match side:
-                case PositionSide.LONG:
-                    self._state = (state, self._state[1])
-                case PositionSide.SHORT:
-                    self._state = (self._state[0], state)
+        await self._state.set(side, state)
 
     async def _close_position(self, event: PositionClosed):
-        async with self._lock:
-            match event.position.side:
-                case PositionSide.LONG:
-                    self._state = (None, self._state[1])
-                case PositionSide.SHORT:
-                    self._state = (self._state[0], None)
+        await self._state.delete(event.position.side)
 
     async def _handle_risk(self, event: NewMarketDataReceived):
-        async with self._lock:
-            current_states = list(self._state)
-            num_states = len(current_states)
+        sides = list(PositionSide)
+        tasks = []
 
-            updated_states = current_states[:]
+        for side in sides:
+            tasks.append(self._process_side(side, event))
 
-            indexes = list(range(num_states))
-            random.shuffle(indexes)
+        await asyncio.gather(*tasks)
 
-            for shuffled_index in indexes:
-                curr_state = current_states[shuffled_index]
-
-                updated_states[shuffled_index] = await self._process_market(
-                    event, curr_state
-                )
-
-            self._state = tuple(updated_states)
+    async def _process_side(self, side, event):
+        async with self._locks.get(side):
+            await self._process_market(event, side)
 
     async def _process_market(
         self,
         event: NewMarketDataReceived,
-        state: Optional[RiskState],
+        side: PositionSide,
     ):
+        state = await self._state.get(side)
+
         if not state:
-            return state
+            return
 
         risk, position, pt, performance = state
 
         if risk.has_risk:
-            return state
+            return
 
         next_risk = risk
         open_signal = position.signal
+        cbar = next_risk.curr_bar
 
-        bars = []
-
-        try:
-            bars = await asyncio.wait_for(
-                self._fetch_bars(event.bar.ohlcv, next_risk.curr_bar),
-                timeout=BAR_TIMEOUT,
-            )
-        except asyncio.TimeoutError:
-            logger.warning("Timeout occurred while fetching bars...")
+        bars = await self._fetch_bars(event.bar.ohlcv, cbar)
 
         if not bars:
             logger.warning("No bars fetched, skipping market processing.")
@@ -207,7 +189,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 logger.info(f"Anomalous bar skipped: {bar.timestamp}")
                 continue
 
-            gap = bar.timestamp - next_risk.curr_bar.timestamp
+            gap = bar.timestamp - cbar.timestamp
 
             if gap <= 0:
                 logger.info(f"Stale bar skipped: {bar.timestamp}")
@@ -219,19 +201,13 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
             next_risk = next_risk.next(bar)
 
+            cbar = next_risk.curr_bar
+
             if next_risk.has_risk:
                 logger.info("Risk threshold breached, triggering position close.")
                 break
 
-        cbar = next_risk.curr_bar
         next_price = (cbar.high + cbar.low + cbar.close) / 3.0
-        pnl = pt.context_factor * (next_price - position.entry_price) * position.size
-        ap = performance.next(pnl, position.fee)
-
-        logger.info(
-            f"{cbar.timestamp}:{open_signal.symbol}:{position.side} -> "
-            f"PnL: {pnl:.4f}, VAR: {ap.mvar:.4f}, MDD: {ap.max_drawdown * 100:.4f}, H: {cbar.high}, L: {cbar.low}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
-        )
 
         if next_risk.has_risk:
             close_signal = Signal(
@@ -244,16 +220,25 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 exit=next_price,
             )
 
-            risk_cls = (
-                RiskLongThresholdBreached
-                if risk.side == PositionSide.LONG
-                else RiskShortThresholdBreached
+            event = (
+                RiskLongThresholdBreached(signal=close_signal)
+                if side == PositionSide.LONG
+                else RiskShortThresholdBreached(signal=close_signal)
             )
 
-            event = risk_cls(close_signal)
             await self.tell(event)
 
-        return (next_risk, position, pt, performance)
+        pnl = pt.context_factor * (next_price - position.entry_price) * position.size
+        ap = performance.next(pnl, position.fee)
+
+        logger.info(
+            f"{cbar.timestamp}:{open_signal.symbol}:{side} -> "
+            f"PnL: {pnl:.4f}, VAR: {ap.mvar:.4f}, MDD: {ap.max_drawdown * 100:.4f}, H: {cbar.high}, L: {cbar.low}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
+        )
+
+        next_state = (next_risk, position, pt, performance)
+
+        await self._state.set(side, next_state)
 
     def _has_anomaly(self, bar_timestamp: float, time_points: list[float]) -> bool:
         if len(time_points) <= 2:
@@ -301,6 +286,16 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
         next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
 
+        attempts = 0
+
+        while (
+            next_bar
+            and next_bar.timestamp == curr_bar.timestamp
+            and attempts < MAX_ATTEMPTS
+        ):
+            next_bar = await self.ask(NextBar(self.symbol, self.timeframe, curr_bar))
+            attempts += 1
+
         next_bar = next_bar or curr_bar
 
         attempts = 0
@@ -325,12 +320,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                     NextBar(self.symbol, self.timeframe, prev_bar)
                 )
 
-                if not next_bar or next_bar.timestamp <= bars[-1].timestamp:
-                    continue
+                if next_bar and next_bar.timestamp > bars[-1].timestamp:
+                    if next_bar.timestamp not in [bar.timestamp for bar in bars]:
+                        bars.append(next_bar)
 
-                bars.append(next_bar)
-                bars = sorted(bars, key=lambda x: x.timestamp)
-
-                prev_bar = next_bar
+                    prev_bar = next_bar
 
         return bars
