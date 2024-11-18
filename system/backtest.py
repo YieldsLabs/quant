@@ -141,14 +141,14 @@ class BacktestSystem(AbstractSystem):
     async def _run_verification(self):
         logger.info("Run verification")
 
-        strategies = await self.query(GetPortfolioRank())
+        population, _ = await self.query(GetGeneration())
 
-        if not len(strategies):
+        if not len(population):
             return await self.event_queue.put(Event.REGENERATE)
 
         await self.execute(PortfolioReset())
 
-        all_strategy = set(strategies)
+        all_strategy = set(population)
 
         for data in all_strategy:
             await self._process_backtest(data, True)
@@ -158,12 +158,12 @@ class BacktestSystem(AbstractSystem):
     async def _update_trading(self):
         logger.info("Deploy strategy for trading")
 
-        strategies = await self.query(GetPortfolioRank())
+        population, _ = await self.query(GetGeneration())
 
-        if not len(strategies):
+        if not len(population):
             return await self.event_queue.put(Event.REGENERATE)
 
-        await self.dispatch(DeployStrategy(strategy=strategies))
+        await self.dispatch(DeployStrategy(strategy=population))
 
     async def _process_backtest(
         self, data: tuple[Symbol, Timeframe, Strategy], verify=False
