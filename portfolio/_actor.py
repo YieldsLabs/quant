@@ -80,16 +80,13 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         timeframe = signal.timeframe
         strategy = signal.strategy
 
-        performance = await self.state.get(symbol, timeframe, strategy)
-
-        if performance.updated_at < event.meta.timestamp:
-            performance = await self.state.next(event.position)
+        performance = await self.state.next(event.position)
 
         logger.info(
-            f"Performance: strategy={symbol}_{timeframe}{strategy}, side={position.side}, "
-            f"trades={performance.total_trades}, hit_ratio={performance.hit_ratio:.0%}, inf_ratio={performance.information_ratio:.4f}, "
-            f"cagr={performance.cagr:.2%}, return={performance.expected_return:.2%}, ann_volatility={performance.ann_volatility:.2%}, "
-            f"smart_sharpe={performance.smart_sharpe_ratio:.4f}, modified_sharpe={performance.modified_sharpe_ratio:.4f}, "
+            f"Performance: strategy={symbol}_{timeframe}:{position.side}{strategy}, "
+            f"trades={performance.total_trades}, hit={performance.hit_ratio:.0%}, ir={performance.information_ratio:.4f}, "
+            f"cagr={performance.cagr:.2%}, return={performance.expected_return:.2%}, ann_vol={performance.ann_volatility:.2%}, "
+            f"sharpe={performance.smart_sharpe_ratio:.4f}, msharpe={performance.modified_sharpe_ratio:.4f}, "
             f"sortino={performance.sortino_ratio:.4f}, omega={performance.omega_ratio:.2f}, upi={performance.upi:.2f}, "
             f"skew={performance.skew:.2f}, kurtosis={performance.kurtosis:.2f}, "
             f"pnl={performance.total_pnl:.4f}, fee={performance.total_fee:.4f}"
