@@ -15,7 +15,6 @@ from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.factor import GetGeneration
-from core.queries.portfolio import GetPortfolioRank
 from core.tasks.feed import StartHistoricalFeed
 from infrastructure.estimator import Estimator
 

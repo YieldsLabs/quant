@@ -20,6 +20,7 @@ from .generator import PopulationGenerator
 
 FactorEvent = Union[InitGeneration, GetGeneration, EnvolveGeneration]
 
+
 class GeneticAttributes(Enum):
     SIGNAL = auto()
     CONFIRM = auto()
@@ -71,9 +72,7 @@ class FactorActor(BaseActor, EventHandlerMixin):
             for timeframe in self.config.get("timeframes", ["15m"])
         ]
 
-        return PopulationGenerator(
-            symbols, timeframes, self.config.get("n_samples", 2)
-        )
+        return PopulationGenerator(symbols, timeframes, self.config.get("n_samples", 2))
 
     async def _get_generation(
         self, _msg: GetGeneration
@@ -101,7 +100,9 @@ class FactorActor(BaseActor, EventHandlerMixin):
     async def _evaluate_fitness(self) -> None:
         for individual in self.population:
             performance = await self.ask(
-                GetPortfolioPerformance(individual.symbol, individual.timeframe, individual.strategy)
+                GetPortfolioPerformance(
+                    individual.symbol, individual.timeframe, individual.strategy
+                )
             )
             individual.update_fitness(performance.deflated_sharpe_ratio)
 
@@ -120,34 +121,32 @@ class FactorActor(BaseActor, EventHandlerMixin):
         reset_size = int(self.config.get("reset_percentage", 0.2) * total_size)
         stability_size = int(self.config.get("stability_percentage", 0.3) * total_size)
 
-        reset_parents = self._tournament_selection(
-            sorted_population[: reset_size]
-        )
+        reset_parents = self._tournament_selection(sorted_population[:reset_size])
         stability_parents = self._tournament_selection(
             sorted_population[reset_size : reset_size + stability_size]
         )
 
         return elite, reset_parents + stability_parents
-    
+
     def _tournament_selection(self, candidates: list[Individual]) -> list[Individual]:
         parents = []
-        
+
         for _ in range(len(candidates)):
             contenders = np.random.choice(
                 candidates, size=self.config.get("tournament_size", 3), replace=False
             )
             parents.append(max(contenders, key=lambda ind: ind.fitness))
-        
+
         return parents
-    
+
     async def _mutate_parents(self, parents: list[Individual], generator) -> None:
-        for idx, parent in enumerate(parents):
+        for idx, _parent in enumerate(parents):
             if np.random.rand() < self.config.get("mutation_rate", 0.1):
                 parents[idx] = next(generator)
 
     def _crossover_parents(self, parents: list[Individual]) -> list[Individual]:
         children = []
-        
+
         for parent1, parent2 in zip(parents[::2], parents[1::2]):
             if np.random.rand() < self.config.get("crossover_rate", 0.7):
                 child1, child2 = self._crossover(parent1, parent2)
@@ -156,23 +155,27 @@ class FactorActor(BaseActor, EventHandlerMixin):
                 children.extend([parent1, parent2])
 
         return children
-    
+
     def _crossover(self, parent1, parent2):
         chosen_attrs = np.random.choice(GeneticAttributes.all(), size=2, replace=False)
 
         child1_strategy = Strategy(
             **{
-                attr.name.lower(): getattr(parent2.strategy, attr.name.lower())
-                if attr in chosen_attrs
-                else getattr(parent1.strategy, attr.name.lower())
+                attr.name.lower(): (
+                    getattr(parent2.strategy, attr.name.lower())
+                    if attr in chosen_attrs
+                    else getattr(parent1.strategy, attr.name.lower())
+                )
                 for attr in GeneticAttributes
             }
         )
         child2_strategy = Strategy(
             **{
-                attr.name.lower(): getattr(parent1.strategy, attr.name.lower())
-                if attr in chosen_attrs
-                else getattr(parent2.strategy, attr.name.lower())
+                attr.name.lower(): (
+                    getattr(parent1.strategy, attr.name.lower())
+                    if attr in chosen_attrs
+                    else getattr(parent2.strategy, attr.name.lower())
+                )
                 for attr in GeneticAttributes
             }
         )
