@@ -142,7 +142,7 @@ class FactorActor(BaseActor, EventHandlerMixin):
     
     async def _mutate_parents(self, parents: list[Individual], generator) -> None:
         for idx, parent in enumerate(parents):
-            if np.random.rand() < self.config["mutation_rate"]:
+            if np.random.rand() < self.config.get("mutation_rate", 0.1):
                 parents[idx] = next(generator)
 
     def _crossover_parents(self, parents: list[Individual]) -> list[Individual]:
