@@ -1,9 +1,10 @@
 import asyncio
 import logging
 import time
-from typing import Optional, Union
+from typing import Tuple, Union
 
 from core.actors import StrategyActor
+from core.actors.state import InMemory
 from core.events.backtest import BacktestEnded
 from core.events.meta import EventMeta
 from core.events.position import (
@@ -29,8 +30,7 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.portfolio import GetPortfolioPerformance
 
-from ._sm import LONG_TRANSITIONS, SHORT_TRANSITIONS, PositionStateMachine
-from ._state import PositionStorage
+from ._sm import TRANSITIONS, PositionStateMachine
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
 BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
@@ -51,32 +51,29 @@ class PositionActor(StrategyActor):
         timeframe: Timeframe,
     ):
         super().__init__(symbol, timeframe)
-        self.long_sm = PositionStateMachine(self, LONG_TRANSITIONS)
-        self.short_sm = PositionStateMachine(self, SHORT_TRANSITIONS)
-        self.state = PositionStorage()
+        self.long_sm = PositionStateMachine(self, TRANSITIONS)
+        self.short_sm = PositionStateMachine(self, TRANSITIONS)
+        self._state = InMemory[PositionSide, Position]()
 
     async def on_receive(self, event: PositionEvent):
-        symbol, _ = self._get_event_key(event)
-
-        if hasattr(event, "position"):
-            if event.position.side == PositionSide.LONG:
-                await self.long_sm.process_event(symbol, event)
-            if event.position.side == PositionSide.SHORT:
-                await self.short_sm.process_event(symbol, event)
-        else:
-            await asyncio.gather(
-                *[
-                    self.long_sm.process_event(symbol, event),
-                    self.short_sm.process_event(symbol, event),
-                ]
-            )
+        await asyncio.gather(
+            *[
+                self.long_sm.process_event(event, PositionSide.LONG),
+                self.short_sm.process_event(event, PositionSide.SHORT),
+            ]
+        )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         if self._is_stale_signal(event.meta):
             logger.warn(f"Stale Signal: {event}, {time.time()}")
             return False
 
-        async def create_and_store_position(event: SignalEvent):
+        async def create_and_store_position(event: SignalEvent, side: PositionSide):
+            key = self._get_key(side)
+
+            if await self._state.exists(key):
+                return False
+
             performance = await self.ask(
                 GetPortfolioPerformance(
                     self.symbol, self.timeframe, event.signal.strategy
@@ -91,54 +88,35 @@ class PositionActor(StrategyActor):
             position = Position(initial_size=initial_size)
             position = position.open_position(event.signal)
 
-            await self.state.store_position(position)
+            await self._state.set(key, position)
             await self.tell(PositionInitialized(position))
             return True
 
-        symbol, timeframe = self._get_event_key(event)
-        long_position, short_position = await self.state.retrieve_position(
-            symbol, timeframe
-        )
+        if isinstance(event, GoLongSignalReceived):
+            return await create_and_store_position(event, PositionSide.LONG)
 
-        if not long_position and isinstance(event, GoLongSignalReceived):
-            return await create_and_store_position(event)
-
-        if not short_position and isinstance(event, GoShortSignalReceived):
-            return await create_and_store_position(event)
+        if isinstance(event, GoShortSignalReceived):
+            return await create_and_store_position(event, PositionSide.SHORT)
 
         return False
 
     async def handle_position_opened(self, event: BrokerPositionOpened) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-        long_position, short_position = await self.state.retrieve_position(
-            symbol, timeframe
-        )
+        key = self._get_key(event.position.side)
 
-        if (
-            event.position.side == PositionSide.LONG
-            and long_position
-            and long_position.last_modified < event.meta.timestamp
-        ) or (
-            event.position.side == PositionSide.SHORT
-            and short_position
-            and short_position.last_modified < event.meta.timestamp
-        ):
-            next_position = await self.state.update_stored_position(event.position)
-            await self.tell(PositionOpened(next_position))
+        position = await self._state.get(key)
+
+        if position and position.last_modified < event.meta.timestamp:
+            await self._state.set(key, event.position)
+            await self.tell(PositionOpened(event.position))
             return True
 
         return False
 
     async def handle_position_closed(self, event: BrokerPositionClosed) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-        long_position, short_position = await self.state.retrieve_position(
-            symbol, timeframe
-        )
+        key = self._get_key(event.position.side)
 
-        if (event.position.side == PositionSide.LONG and long_position) or (
-            event.position.side == PositionSide.SHORT and short_position
-        ):
-            await self.state.close_stored_position(event.position)
+        if await self._state.exists(key):
+            await self._state.delete(key)
             await self.tell(PositionClosed(event.position))
             return True
 
@@ -146,77 +124,58 @@ class PositionActor(StrategyActor):
 
     async def handle_exit_received(self, event: ExitSignal) -> bool:
         async def close_position(
-            event: ExitSignal, position: Optional[Position]
+            event: ExitSignal,
+            side: PositionSide,
         ) -> bool:
+            key = self._get_key(side)
+            position = await self._state.get(key)
+
             if position and position.last_modified < event.meta.timestamp:
                 closed_position = position.close_position(event.signal)
-                closed_position = await self.state.update_stored_position(
-                    closed_position
-                )
+
+                await self._state.set(key, closed_position)
                 await self.tell(PositionCloseRequested(closed_position))
                 return True
 
             return False
 
-        symbol, timeframe = self._get_event_key(event)
-        long_position, short_position = await self.state.retrieve_position(
-            symbol, timeframe
-        )
-
         if isinstance(event, RiskLongThresholdBreached):
-            return await close_position(event, long_position)
+            return await close_position(event, PositionSide.LONG)
 
         if isinstance(event, RiskShortThresholdBreached):
-            return await close_position(event, short_position)
+            return await close_position(event, PositionSide.SHORT)
 
         return False
 
-    async def handle_backtest(self, event: BacktestSignal) -> bool:
-        symbol, timeframe = self._get_event_key(event)
-        long_position, short_position = await self.state.retrieve_position(
-            symbol, timeframe
+    async def handle_backtest(self, _event: BacktestSignal) -> bool:
+        await asyncio.gather(
+            self._process_backtest_close(PositionSide.LONG),
+            self._process_backtest_close(PositionSide.SHORT),
         )
-
-        if long_position:
-            open_signal = long_position.signal
-            close_signal = Signal(
-                symbol=open_signal.symbol,
-                timeframe=open_signal.timeframe,
-                strategy=open_signal.strategy,
-                side=open_signal.side,
-                ohlcv=open_signal.ohlcv,
-                entry=open_signal.entry,
-                exit=open_signal.entry,
-            )
-            position = long_position.close_position(close_signal)
-            await self.tell(PositionCloseRequested(position))
-
-        if short_position:
-            open_signal = short_position.signal
-            close_signal = Signal(
-                symbol=open_signal.symbol,
-                timeframe=open_signal.timeframe,
-                strategy=open_signal.strategy,
-                side=open_signal.side,
-                ohlcv=open_signal.ohlcv,
-                entry=open_signal.entry,
-                exit=open_signal.entry,
-            )
-            position = short_position.close_position(close_signal)
-            await self.tell(PositionCloseRequested(position))
-
         return True
+
+    async def _process_backtest_close(self, side: PositionSide):
+        position = await self._state.get(self._get_key(side))
+
+        if position:
+            open_signal = position.signal
+            close_signal = Signal(
+                symbol=open_signal.symbol,
+                timeframe=open_signal.timeframe,
+                strategy=open_signal.strategy,
+                side=open_signal.side,
+                ohlcv=open_signal.ohlcv,
+                entry=open_signal.entry,
+                exit=open_signal.entry,
+            )
+
+            closed_position = position.close_position(close_signal)
+
+            await self.tell(PositionCloseRequested(closed_position))
 
     @staticmethod
     def _is_stale_signal(meta: EventMeta) -> bool:
         return int(meta.timestamp) < int(time.time()) - TIME_BUFF
 
-    @staticmethod
-    def _get_event_key(event: PositionEvent):
-        signal = (
-            event.signal
-            if hasattr(event, "signal")
-            else event.position.signal if hasattr(event, "position") else event
-        )
-
-        return (signal.symbol, signal.timeframe)
+    def _get_key(self, side: PositionSide) -> Tuple[Symbol, Timeframe, PositionSide]:
+        return self.symbol, self.timeframe, side

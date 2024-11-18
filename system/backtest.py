@@ -199,7 +199,7 @@ class BacktestSystem(AbstractSystem):
         out_lookback = None if verify else Lookback.from_raw(out_sample + verify_sample)
 
         logger.info(
-            f"Backtest: generation={generation}, strategy={symbol}_{timeframe}{strategy}, in_lookback={in_lookback}, out_lookback={out_lookback}"
+            f"Backtest: gen={generation + 1}, strategy={symbol}_{timeframe}{strategy}, in_lookback={in_lookback}, out_lookback={out_lookback}"
         )
 
         await self.run(

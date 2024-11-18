@@ -126,9 +126,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
         risk_factor = RRR_MULTI * abs(position.entry_price - sl)
         tp = (
-            bar.high + risk_factor
+            price + risk_factor
             if position.side == PositionSide.LONG
-            else bar.low - risk_factor
+            else price - risk_factor
         )
 
         trade_duration = self.config.get("trade_duration", 20)
