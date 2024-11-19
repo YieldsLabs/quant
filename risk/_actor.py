@@ -199,8 +199,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         open_signal = position.signal
         cbar = next_risk.curr_bar
 
-        processed_timestamps = set()
-
         bars = await self._fetch_bars(event.bar.ohlcv, cbar)
 
         if not bars:
@@ -208,12 +206,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             return state
 
         for bar in bars:
-            if bar.timestamp in processed_timestamps:
-                logger.info(f"Duplicate bar skipped: {bar.timestamp}")
-                continue
-
-            processed_timestamps.add(bar.timestamp)
-
             if self._has_anomaly(bar.timestamp, next_risk.time_points):
                 logger.info(f"Anomalous bar skipped: {bar.timestamp}")
                 continue

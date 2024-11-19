@@ -161,7 +161,7 @@ class BacktestSystem(AbstractSystem):
         for data in all_strategy:
             await self._process_backtest(data, True)
 
-        await self.event_queue.put(Event.VERIFICATION_COMPLETE)
+        await self.event_queue.put(Event.RANKING_COMPLETE)
 
     async def _update_trading(self):
         logger.info("Deploy strategy for trading")
