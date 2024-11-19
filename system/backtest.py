@@ -133,6 +133,15 @@ class BacktestSystem(AbstractSystem):
     async def _run_optimization(self):
         logger.info("Run optimization")
 
+        max_gen = (
+            self.context.config_service.get("factor").get("max_generations", 5) - 1
+        )
+
+        population, generation = await self.query(GetGeneration())
+
+        if generation >= max_gen or len(population) < 3:
+            return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
+
         await self.execute(EnvolveGeneration(self.context.datasource, self.default_cap))
 
         await self.event_queue.put(Event.RUN_BACKTEST)
@@ -188,8 +197,8 @@ class BacktestSystem(AbstractSystem):
 
         _, generation = await self.query(GetGeneration())
 
-        max_gen = self.context.config_service.get("factor").get("max_generations")
-        window_size = self.context.config_service.get("backtest").get("window_size")
+        max_gen = self.context.config_service.get("factor").get("max_generations", 5)
+        window_size = self.context.config_service.get("backtest").get("window_size", 1)
 
         verify_sample = 2
         in_sample = window_size
