@@ -55,9 +55,9 @@ DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
 ANOMALY_CLIP_MULTIPLIER = 12.0
 LATENCY_GAP_THRESHOLD = 2.2
-SL_MULTI = 1.5
-RRR_MULTI = 2.0
-BAR_TIMEOUT = 15
+
+VOLATILITY_MULTY = 1.5
+RR_MULTY = 2.0
 
 
 def _ema(values, alpha=0.1):
@@ -112,6 +112,11 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             ta.volatility.tr, np.ones(rolling_window) / rolling_window, mode="valid"
         )[-1]
 
+        dmi = ta.trend.dmi[-1]
+        cci = ta.momentum.cci[-1]
+        vwap = ta.volume.vwap[-1]
+        rsi = ta.oscillator.srsi[-1]
+
         pt = ProfitTarget(side=side, entry=position.entry_price, volatility=volatility)
 
         performance = await self.ask(
@@ -120,20 +125,31 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             )
         )
 
-        price = bar.low if position.side == PositionSide.LONG else bar.high
-        volatility_factor = volatility * SL_MULTI
-        sl = (
-            price - volatility_factor
-            if position.side == PositionSide.LONG
-            else price + volatility_factor
-        )
+        sl_buffer = VOLATILITY_MULTY * volatility
 
-        risk_factor = RRR_MULTI * abs(position.entry_price - sl)
-        tp = (
-            price + risk_factor
-            if position.side == PositionSide.LONG
-            else price - risk_factor
-        )
+        if dmi > 25:
+            sl_buffer *= 1.2
+            tp_distance = RR_MULTY * sl_buffer
+        else:
+            sl_buffer *= 0.8
+            tp_distance = RR_MULTY * sl_buffer
+
+        if rsi > 70 or cci > 100:
+            tp_distance *= 0.8
+        elif rsi < 30 or cci < -100:
+            tp_distance *= 0.8
+
+        if (side == PositionSide.LONG and bar.low < vwap) or (
+            side == PositionSide.SHORT and bar.high > vwap
+        ):
+            sl_buffer *= 0.9
+
+        if side == PositionSide.LONG:
+            sl = bar.low - sl_buffer
+            tp = bar.high + tp_distance
+        elif side == PositionSide.SHORT:
+            sl = bar.high + sl_buffer
+            tp = bar.low - tp_distance
 
         trade_duration = self.config.get("trade_duration", 20)
 
@@ -229,6 +245,13 @@ class RiskActor(StrategyActor, EventHandlerMixin):
                 break
 
         next_price = (cbar.high + cbar.low + cbar.close) / 3.0
+        pnl = pt.context_factor * (next_price - position.entry_price) * position.size
+
+        ap = performance.next(pnl, position.fee)
+
+        msharpe = ap.modified_sharpe_ratio
+        rashev = ap.rachev_ratio
+        ir = ap.information_ratio
 
         if next_risk.has_risk:
             close_signal = Signal(
@@ -249,12 +272,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
             await self.tell(event)
 
-        pnl = pt.context_factor * (next_price - position.entry_price) * position.size
-        ap = performance.next(pnl, position.fee)
-
         logger.info(
             f"{cbar.timestamp}:{open_signal.symbol}:{side} -> "
-            f"PnL: {pnl:.4f}, VAR: {ap.mvar:.4f}, MDD: {ap.max_drawdown * 100:.4f}, H: {cbar.high}, L: {cbar.low}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
+            f"PnL: {pnl:.4f}, SHARPE: {msharpe:.4f}, IR: {ir:.4f}, RSH: {rashev:.4f}, H: {cbar.high}, L: {cbar.low}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
         )
 
         next_state = (next_risk, position, pt, performance)

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from enum import Enum, auto
 from typing import List, Tuple, Union
@@ -137,13 +138,19 @@ class FactorActor(BaseActor, EventHandlerMixin):
         )
 
     async def _evaluate_fitness(self, population: List[Individual]) -> None:
+        tasks = []
         for individual in population:
-            performance = await self.ask(
+            task = self.ask(
                 GetPortfolioPerformance(
                     individual.symbol, individual.timeframe, individual.strategy
                 )
             )
-            individual.update_fitness(performance.deflated_sharpe_ratio)
+            tasks.append(task)
+
+        results = await asyncio.gather(*tasks)
+        
+        for idx, ind in enumerate(population):
+            ind.update_fitness(results[idx].deflated_sharpe_ratio)
 
         population[:] = [ind for ind in population if ind.fitness > 0]
 

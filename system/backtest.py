@@ -219,3 +219,5 @@ class BacktestSystem(AbstractSystem):
 
         for actor in actors:
             actor.stop()
+
+        await self.wait()
