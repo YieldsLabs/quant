@@ -42,18 +42,18 @@ class MarketActor(BaseActor, EventHandlerMixin):
     async def _handle_batch_bars(self, event: BatchBars) -> list[OHLCV]:
         prev_bar = event.ohlcv
         n_bars = int(event.n)
-        bars = []
+        bars = [prev_bar]
 
-        for _ in range(n_bars):
+        for _ in range(n_bars - 1):
             next_bar = await self.ts.next_bar(event.symbol, event.timeframe, prev_bar)
 
             if next_bar is None:
-                next_bar = prev_bar
+                break
 
             bars.append(next_bar)
             prev_bar = next_bar
 
-        bars = sorted(set(bars), key=lambda x: x.timestamp)
+        bars = sorted(bars, key=lambda x: x.timestamp)
 
         while len(bars) < n_bars:
             first_valid_bar = bars[0]
@@ -66,7 +66,9 @@ class MarketActor(BaseActor, EventHandlerMixin):
 
             bars.insert(0, prev_bar)
 
-        return sorted(set(bars), key=lambda x: x.timestamp)
+        bars = sorted(bars, key=lambda x: x.timestamp)
+
+        return bars
 
     async def _handle_back_n_bars(self, event: BackNBars) -> OHLCV:
         return await self.ts.back_n_bars(

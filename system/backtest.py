@@ -216,8 +216,7 @@ class BacktestSystem(AbstractSystem):
         )
 
         await self.dispatch(BacktestEnded(symbol, timeframe, strategy))
+        await self.wait()
 
         for actor in actors:
             actor.stop()
-
-        await self.wait()

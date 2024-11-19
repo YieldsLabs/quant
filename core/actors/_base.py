@@ -69,7 +69,11 @@ class BaseActor(AbstractActor):
     def _run_hook(self, hook):
         if asyncio.iscoroutinefunction(hook):
             loop = asyncio.get_running_loop()
-            asyncio.run_coroutine_threadsafe(hook(), loop)
+
+            if loop.is_running():
+                asyncio.create_task(hook())
+            else:
+                asyncio.run_coroutine_threadsafe(hook(), loop)
         else:
             hook()
 

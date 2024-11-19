@@ -226,17 +226,17 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
         for bar in bars:
             if self._has_anomaly(bar.timestamp, next_risk.time_points):
-                logger.info(f"Anomalous bar skipped: {bar.timestamp}")
+                logger.debug(f"Anomalous bar skipped: {bar.timestamp}")
                 continue
 
             gap = bar.timestamp - cbar.timestamp
 
             if gap <= 0:
-                logger.info(f"Stale bar skipped: {bar.timestamp}")
+                logger.debug(f"Stale bar skipped: {bar.timestamp}")
                 continue
 
             if gap > LATENCY_GAP_THRESHOLD * open_signal.timeframe.to_milliseconds():
-                logger.info(f"Latency Gap: {gap} exceeds threshold.")
+                logger.debug(f"Latency Gap: {gap} exceeds threshold.")
                 continue
 
             next_risk = next_risk.next(bar)

@@ -37,17 +37,14 @@ class DataCollector:
         for task in self._tasks:
             task.cancel()
 
-        tasks_to_cancel = [task for task in self._tasks if not task.done()]
-
-        for task in tasks_to_cancel:
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
-            except Exception as e:
-                logger.error(f"Error during task completion: {e}")
-
-        self._tasks.clear()
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*self._tasks, return_exceptions=True), timeout=5
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Timeout while waiting for tasks to finish.")
+        except Exception as e:
+            logger.error(f"Unexpected error during task completion: {e}")
 
     async def wait_for_completion(self):
         try:
