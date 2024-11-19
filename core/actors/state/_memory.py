@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, Generic, Optional, TypeVar
 
 from ._rw import RWLock
@@ -16,6 +17,8 @@ class InMemory(Generic[K, V]):
 
         try:
             return self._data.get(key, fallback)
+        except asyncio.CancelledError:
+            raise
         finally:
             await self._lock.release_reader()
 

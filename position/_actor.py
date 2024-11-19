@@ -51,17 +51,19 @@ class PositionActor(StrategyActor):
         timeframe: Timeframe,
     ):
         super().__init__(symbol, timeframe)
-        self.long_sm = PositionStateMachine(self, TRANSITIONS)
-        self.short_sm = PositionStateMachine(self, TRANSITIONS)
+        self.sm = PositionStateMachine(self, TRANSITIONS)
         self._state = InMemory[PositionSide, Position]()
 
     async def on_receive(self, event: PositionEvent):
-        await asyncio.gather(
-            *[
-                self.long_sm.process_event(event, PositionSide.LONG),
-                self.short_sm.process_event(event, PositionSide.SHORT),
-            ]
-        )
+        if hasattr(event, "position"):
+            await self.sm.process_event(event, event.position.side)
+        else:
+            await asyncio.gather(
+                *[
+                    self.sm.process_event(event, PositionSide.LONG),
+                    self.sm.process_event(event, PositionSide.SHORT),
+                ]
+            )
 
     async def handle_signal_received(self, event: SignalEvent) -> bool:
         if self._is_stale_signal(event.meta):

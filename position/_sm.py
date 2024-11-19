@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from enum import Enum, auto
 from typing import Callable, Dict, Tuple, Type, Union
@@ -86,32 +85,27 @@ class PositionStateMachine:
         self._actor = actor
         self._transitions = transitions
         self._state = InMemory[Symbol, PositionState]()
-        self._locks = {
-            PositionSide.LONG: asyncio.Semaphore(3),
-            PositionSide.SHORT: asyncio.Semaphore(3),
-        }
 
     async def process_event(self, event: PositionEvent, side: PositionSide):
-        async with self._locks.get(side):
-            key = (self._actor.symbol, side)
+        key = (self._actor.symbol, self._actor.timeframe, side)
 
-            current_state = await self._state.get(key, PositionState.IDLE)
+        current_state = await self._state.get(key, PositionState.IDLE)
 
-            if not self._is_valid_state(self._transitions, current_state, event):
-                return
+        if not self._is_valid_state(self._transitions, current_state, event):
+            return
 
-            next_state, handler_name = self._transitions[(current_state, type(event))]
+        next_state, handler_name = self._transitions[(current_state, type(event))]
 
-            handler = getattr(self._actor, handler_name)
+        handler = getattr(self._actor, handler_name)
 
-            if not await handler(event):
-                return
+        if not await handler(event):
+            return
 
-            await self._state.set(key, next_state)
+        await self._state.set(key, next_state)
 
-            logger.debug(
-                f"SM: key={key}, event={event}, side: {side}, curr_state={current_state}, next_state={next_state}"
-            )
+        logger.debug(
+            f"SM: key={key}, event={event}, side: {side}, curr_state={current_state}, next_state={next_state}"
+        )
 
     @staticmethod
     def _is_valid_state(

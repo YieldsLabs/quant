@@ -39,6 +39,9 @@ class GeneticAttributes(Enum):
 
 
 class FactorActor(BaseActor, EventHandlerMixin):
+    POPULATION_KEY = "__population__"
+    GENERATION_KEY = "__generation__"
+
     def __init__(self, datasource: DataSourceFactory, config_service: AbstractConfig):
         super().__init__()
         EventHandlerMixin.__init__(self)
@@ -59,8 +62,8 @@ class FactorActor(BaseActor, EventHandlerMixin):
         generator = await self._get_generator(msg.datasource, msg.cap)
         population = list(generator)
 
-        await self.state.set("population", population)
-        await self.state.set("generation", 0)
+        await self.state.set(self.POPULATION_KEY, population)
+        await self.state.set(self.GENERATION_KEY, 0)
 
     async def _get_generator(self, datasource, cap):
         symbols = await self.ask(GetSymbols(datasource, cap))
@@ -77,14 +80,15 @@ class FactorActor(BaseActor, EventHandlerMixin):
     ) -> Tuple[list[Tuple[Symbol, Timeframe, Strategy]], float]:
         population = [
             (i.symbol, i.timeframe, i.strategy)
-            for i in await self.state.get("population", [])
+            for i in await self.state.get(self.POPULATION_KEY, [])
         ]
-        generation = await self.state.get("generation", 0)
+        generation = await self.state.get(self.GENERATION_KEY, 0)
 
         return population, generation
 
     async def _envolve_generation(self, msg: EnvolveGeneration):
-        population = await self.state.get("population", [])
+        population = await self.state.get(self.POPULATION_KEY, [])
+
         generator = await self._get_generator(msg.datasource, msg.cap)
 
         await self._evaluate_fitness(population)
@@ -96,10 +100,10 @@ class FactorActor(BaseActor, EventHandlerMixin):
         children = self._crossover_parents(parents)
 
         next_population = list(set(elite + children))
-        next_generation = (await self.state.get("generation", 0)) + 1
+        next_generation = (await self.state.get(self.GENERATION_KEY, 0)) + 1
 
-        await self.state.set("population", next_population)
-        await self.state.set("generation", next_generation)
+        await self.state.set(self.POPULATION_KEY, next_population)
+        await self.state.set(self.GENERATION_KEY, next_generation)
 
     async def _evaluate_fitness(self, population: List[Individual]) -> None:
         for individual in population:
@@ -109,6 +113,8 @@ class FactorActor(BaseActor, EventHandlerMixin):
                 )
             )
             individual.update_fitness(performance.deflated_sharpe_ratio)
+
+        population[:] = [ind for ind in population if ind.fitness > 0]
 
     def _select_elite_and_parents(
         self, population: List[Individual]
@@ -132,9 +138,11 @@ class FactorActor(BaseActor, EventHandlerMixin):
     def _tournament_selection(self, candidates: list[Individual]) -> list[Individual]:
         parents = []
 
+        tournament_size = min(len(candidates), self.config.get("tournament_size", 3))
+
         for _ in range(len(candidates)):
             contenders = np.random.choice(
-                candidates, size=self.config.get("tournament_size", 3), replace=False
+                candidates, size=tournament_size, replace=False
             )
             parents.append(max(contenders, key=lambda ind: ind.fitness))
 
