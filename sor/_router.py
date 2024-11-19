@@ -108,7 +108,7 @@ class SmartRouter(AbstractEventManager):
             logger.info(f"Position for {symbol} already exists.")
             return
 
-        pending_order = position.entry_order()
+        pending_order = position.entry_order
 
         order_size_generator = self._calculate_order_slices(symbol, pending_order.size)
 
@@ -165,7 +165,7 @@ class SmartRouter(AbstractEventManager):
             logger.warn(f"Position for {symbol} does not exist. No action taken.")
             return
 
-        exit_order = position.exit_order()
+        exit_order = position.exit_order
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = bid if position.side == PositionSide.LONG else ask
