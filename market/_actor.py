@@ -6,9 +6,9 @@ from core.interfaces.abstract_timeseries import AbstractTimeSeriesService
 from core.mixins import EventHandlerMixin
 from core.models.entity.ohlcv import OHLCV
 from core.models.ta import TechAnalysis
-from core.queries.ohlcv import TA, BackNBars, NextBar, PrevBar
+from core.queries.ohlcv import TA, BackNBars, BatchBars, NextBar, PrevBar
 
-MarketEvent = Union[IngestMarketData, NextBar, PrevBar, TA, BackNBars]
+MarketEvent = Union[IngestMarketData, NextBar, PrevBar, TA, BackNBars, BatchBars]
 
 
 class MarketActor(BaseActor, EventHandlerMixin):
@@ -25,6 +25,7 @@ class MarketActor(BaseActor, EventHandlerMixin):
         self.register_handler(IngestMarketData, self._ingest_market_data)
         self.register_handler(NextBar, self._handle_next_bar)
         self.register_handler(PrevBar, self._handle_prev_bar)
+        self.register_handler(BatchBars, self._handle_batch_bars)
         self.register_handler(BackNBars, self._handle_back_n_bars)
         self.register_handler(TA, self._handle_ta)
 
@@ -37,6 +38,35 @@ class MarketActor(BaseActor, EventHandlerMixin):
 
     async def _handle_prev_bar(self, event: PrevBar) -> OHLCV:
         return await self.ts.prev_bar(event.symbol, event.timeframe, event.ohlcv)
+
+    async def _handle_batch_bars(self, event: BatchBars) -> list[OHLCV]:
+        prev_bar = event.ohlcv
+        n_bars = int(event.n)
+        bars = []
+
+        for _ in range(n_bars):
+            next_bar = await self.ts.next_bar(event.symbol, event.timeframe, prev_bar)
+
+            if next_bar is None:
+                next_bar = prev_bar
+
+            bars.append(next_bar)
+            prev_bar = next_bar
+
+        bars = sorted(set(bars), key=lambda x: x.timestamp)
+
+        while len(bars) < n_bars:
+            first_valid_bar = bars[0]
+            prev_bar = await self.ts.prev_bar(
+                event.symbol, event.timeframe, first_valid_bar
+            )
+
+            if prev_bar is None:
+                break
+
+            bars.insert(0, prev_bar)
+
+        return sorted(set(bars), key=lambda x: x.timestamp)
 
     async def _handle_back_n_bars(self, event: BackNBars) -> OHLCV:
         return await self.ts.back_n_bars(

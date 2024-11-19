@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -23,7 +23,6 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
-from core.models.entity.ohlcv import OHLCV
 from core.models.entity.portfolio import Performance
 from core.models.entity.position import Position
 from core.models.entity.profit_target import ProfitTarget
@@ -32,7 +31,7 @@ from core.models.entity.signal import Signal
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.ohlcv import TA, NextBar, PrevBar
+from core.queries.ohlcv import TA, BatchBars
 from core.queries.portfolio import GetPortfolioPerformance
 
 TrailEvent = Union[
@@ -49,11 +48,12 @@ RiskEvent = Union[
 ]
 
 MAX_ATTEMPTS = 8
-DEFAULT_MAX_BARS = 12
+DEFAULT_MAX_BARS = 8
 MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
 ANOMALY_CLIP_MULTIPLIER = 12.0
+ANOMALY_CLIP = ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD
 LATENCY_GAP_THRESHOLD = 2.2
 
 VOLATILITY_MULTY = 1.5
@@ -61,10 +61,10 @@ RR_MULTY = 2.0
 
 
 def _ema(values, alpha=0.1):
-    ema = [values[0]]
-    for value in values[1:]:
-        ema.append(ema[-1] * (1 - alpha) + value * alpha)
-    return np.array(ema)
+    values = np.asarray(values)
+    weights = (1 - alpha) ** np.arange(len(values))[::-1]
+    weights /= weights.sum()
+    return np.convolve(values, weights, mode="full")[: len(values)]
 
 
 logger = logging.getLogger(__name__)
@@ -214,8 +214,11 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         next_risk = risk
         open_signal = position.signal
         cbar = next_risk.curr_bar
+        prev_bar = min(event.bar.ohlcv, cbar)
 
-        bars = await self._fetch_bars(event.bar.ohlcv, cbar)
+        bars = await self.ask(
+            BatchBars(self.symbol, self.timeframe, prev_bar, self.max_bars)
+        )
 
         if not bars:
             logger.warning("No bars fetched, skipping market processing.")
@@ -282,89 +285,33 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         await self._state.set(side, next_state)
 
     def _has_anomaly(self, bar_timestamp: float, time_points: list[float]) -> bool:
-        if len(time_points) <= 2:
+        if len(time_points) < 3:
             return False
 
         time_points = np.array(time_points)
 
-        ts_diff = _ema(np.diff(time_points))
-        mean, std = np.mean(ts_diff), max(np.std(ts_diff), np.finfo(float).eps)
+        ts_diff = np.diff(np.array(time_points))
+        ts_ema = _ema(ts_diff, alpha=0.1)
 
-        current_diff = abs(bar_timestamp - time_points[-1])
-        anomaly_score = (current_diff - mean) / std
+        mean_diff = np.mean(ts_ema)
+        std_diff = np.std(ts_ema)
+        threshold = max(std_diff, np.finfo(float).eps)
 
-        anomaly_score = np.clip(
-            anomaly_score,
-            -ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD,
-            ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD,
-        )
+        current_diff = bar_timestamp - time_points[-1]
 
-        if abs(anomaly_score) > self.anomaly_threshold:
+        anomaly_score = abs((current_diff - mean_diff) / threshold)
+        anomaly_score = np.clip(anomaly_score, -ANOMALY_CLIP, ANOMALY_CLIP)
+
+        if anomaly_score > self.anomaly_threshold:
             self.consc_anomaly_counter += 1
-
             if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
-                logger.warning(
-                    "Too many consecutive anomalies detected. "
-                    f"Increasing thresholds: anomaly_threshold={self.anomaly_threshold}, "
-                    f"max_bars={self.max_bars}"
-                )
                 self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
                 self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
                 self.consc_anomaly_counter = 0
-
             return True
 
         self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
         self.max_bars = DEFAULT_MAX_BARS
-        self.consc_anomaly_counter = 1
+        self.consc_anomaly_counter = 0
 
         return False
-
-    async def _fetch_bars(self, event_bar: OHLCV, risk_bar: OHLCV) -> List[OHLCV]:
-        bars = []
-        prev_bar = min(event_bar, risk_bar)
-        curr_bar = max(event_bar, risk_bar)
-
-        next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
-
-        attempts = 0
-
-        while (
-            next_bar
-            and next_bar.timestamp == curr_bar.timestamp
-            and attempts < MAX_ATTEMPTS
-        ):
-            next_bar = await self.ask(NextBar(self.symbol, self.timeframe, curr_bar))
-            attempts += 1
-
-        next_bar = next_bar or curr_bar
-
-        attempts = 0
-        diff = curr_bar.timestamp - next_bar.timestamp
-
-        while diff < 0 and attempts < MAX_ATTEMPTS:
-            new_prev_bar = await self.ask(
-                PrevBar(self.symbol, self.timeframe, prev_bar)
-            )
-
-            if new_prev_bar:
-                diff = curr_bar.timestamp - new_prev_bar.timestamp
-                prev_bar = new_prev_bar
-
-            attempts += 1
-
-        bars = [next_bar]
-
-        if diff > 0:
-            for _ in range(int(self.max_bars)):
-                next_bar = await self.ask(
-                    NextBar(self.symbol, self.timeframe, prev_bar)
-                )
-
-                if next_bar and next_bar.timestamp > bars[-1].timestamp:
-                    if next_bar.timestamp not in [bar.timestamp for bar in bars]:
-                        bars.append(next_bar)
-
-                    prev_bar = next_bar
-
-        return bars

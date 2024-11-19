@@ -103,8 +103,10 @@ class FactorActor(BaseActor, EventHandlerMixin):
             for ind in await self.state.get(self.POPULATION_KEY, [])
         ]
         generation = await self.state.get(self.GENERATION_KEY, 0)
-        
-        logger.info(f"Generation: {generation + 1} with {[f"{p[0]}_{p[1]}{p[2]}" for p in population]}")
+
+        logger.info(
+            f"Generation: {generation + 1} with {[f"{p[0]}_{p[1]}{p[2]}" for p in population]}"
+        )
 
         return population, generation
 
@@ -115,7 +117,7 @@ class FactorActor(BaseActor, EventHandlerMixin):
         if not population:
             logger.warning("Population is empty. Skipping evolution.")
             return
-        
+
         logger.info(f"Envolve generation: {generation + 1}")
 
         await self._evaluate_fitness(population)
@@ -148,7 +150,7 @@ class FactorActor(BaseActor, EventHandlerMixin):
             tasks.append(task)
 
         results = await asyncio.gather(*tasks)
-        
+
         for idx, ind in enumerate(population):
             ind.update_fitness(results[idx].deflated_sharpe_ratio)
 
