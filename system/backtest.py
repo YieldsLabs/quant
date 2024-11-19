@@ -99,7 +99,7 @@ class BacktestSystem(AbstractSystem):
             SystemState.GENERATE: self._generate,
             SystemState.BACKTEST: self._run_backtest,
             SystemState.OPTIMIZATION: self._run_optimization,
-            SystemState.RANKING: self._run_raking,
+            SystemState.RANKING: self._run_ranking,
             SystemState.TRADING: self._update_trading,
         }
 
@@ -118,13 +118,12 @@ class BacktestSystem(AbstractSystem):
     async def _run_backtest(self):
         population, generation = await self.query(GetGeneration())
 
-        total_steps = len(population)
-        logger.info(f"Run backtest for: {total_steps}, generation: {generation + 1}")
+        logger.info(f"Run backtest for generation: {generation + 1}")
 
-        estimator = Estimator(total_steps)
+        estimator = Estimator(len(population))
 
         for strategy in population:
-            await self._process_backtest(strategy)
+            await self._process_backtest(strategy, generation)
 
             logger.info(f"Remaining backtest time: {estimator.remaining_time()}")
 
@@ -133,11 +132,11 @@ class BacktestSystem(AbstractSystem):
     async def _run_optimization(self):
         logger.info("Run optimization")
 
+        population, generation = await self.query(GetGeneration())
+
         max_gen = (
             self.context.config_service.get("factor").get("max_generations", 5) - 1
         )
-
-        population, generation = await self.query(GetGeneration())
 
         if generation >= max_gen or len(population) < 3:
             return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
@@ -146,10 +145,10 @@ class BacktestSystem(AbstractSystem):
 
         await self.event_queue.put(Event.RUN_BACKTEST)
 
-    async def _run_raking(self):
+    async def _run_ranking(self):
         logger.info("Run ranking")
 
-        population, _ = await self.query(GetGeneration())
+        population, generation = await self.query(GetGeneration())
 
         if not len(population):
             return await self.event_queue.put(Event.REGENERATE)
@@ -159,7 +158,7 @@ class BacktestSystem(AbstractSystem):
         all_strategy = set(population)
 
         for data in all_strategy:
-            await self._process_backtest(data, True)
+            await self._process_backtest(data, generation, True)
 
         await self.event_queue.put(Event.RANKING_COMPLETE)
 
@@ -169,12 +168,13 @@ class BacktestSystem(AbstractSystem):
         population, _ = await self.query(GetGeneration())
 
         if not len(population):
+            logger.info("Regenerate population")
             return await self.event_queue.put(Event.REGENERATE)
 
         await self.dispatch(DeployStrategy(strategy=population))
 
     async def _process_backtest(
-        self, data: tuple[Symbol, Timeframe, Strategy], verify=False
+        self, data: tuple[Symbol, Timeframe, Strategy], generation: int, verify=False
     ):
         symbol, timeframe, strategy = data
 
@@ -194,8 +194,6 @@ class BacktestSystem(AbstractSystem):
                 self.context.datasource,
             ),
         ]
-
-        _, generation = await self.query(GetGeneration())
 
         max_gen = self.context.config_service.get("factor").get("max_generations", 5)
         window_size = self.context.config_service.get("backtest").get("window_size", 1)

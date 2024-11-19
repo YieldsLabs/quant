@@ -102,28 +102,32 @@ class FactorActor(BaseActor, EventHandlerMixin):
             for ind in await self.state.get(self.POPULATION_KEY, [])
         ]
         generation = await self.state.get(self.GENERATION_KEY, 0)
+        
+        logger.info(f"Generation: {generation + 1} with {[f"{p[0]}_{p[1]}{p[2]}" for p in population]}")
 
         return population, generation
 
     async def _envolve_generation(self, msg: EnvolveGeneration):
         population = await self.state.get(self.POPULATION_KEY, [])
+        generation = await self.state.get(self.GENERATION_KEY, 0)
 
         if not population:
             logger.warning("Population is empty. Skipping evolution.")
             return
-
-        generator = await self._get_generator(msg.datasource, msg.cap)
+        
+        logger.info(f"Envolve generation: {generation + 1}")
 
         await self._evaluate_fitness(population)
 
         elite, parents = self._select_elite_and_parents(population)
+        generator = await self._get_generator(msg.datasource, msg.cap)
 
         await self._mutate_parents(parents, generator)
 
         children = self._crossover_parents(parents)
 
         next_population = list(set(elite + children))
-        next_generation = (await self.state.get(self.GENERATION_KEY, 0)) + 1
+        next_generation = generation + 1
 
         await self.state.set(self.POPULATION_KEY, next_population)
         await self.state.set(self.GENERATION_KEY, next_generation)
