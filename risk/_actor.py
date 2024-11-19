@@ -103,6 +103,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         position = event.position
         side = position.side
         bar = position.open_bar
+        open_signal = position.signal
 
         ta = await self.ask(TA(self.symbol, self.timeframe, bar))
 
@@ -142,7 +143,28 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}"
         )
 
-        state = (risk, position, pt, performance)
+        state = None
+
+        if not risk.has_risk:
+            state = (risk, position, pt, performance)
+        else:
+            close_signal = Signal(
+                symbol=open_signal.symbol,
+                timeframe=open_signal.timeframe,
+                strategy=open_signal.strategy,
+                side=open_signal.side,
+                ohlcv=bar,
+                entry=open_signal.entry,
+                exit=bar.close,
+            )
+
+            event = (
+                RiskLongThresholdBreached(signal=close_signal)
+                if side == PositionSide.LONG
+                else RiskShortThresholdBreached(signal=close_signal)
+            )
+
+            await self.tell(event)
 
         await self._state.set(side, state)
 
