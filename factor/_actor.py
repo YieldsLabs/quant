@@ -1,3 +1,4 @@
+import logging
 from enum import Enum, auto
 from typing import List, Tuple, Union
 
@@ -38,6 +39,9 @@ class GeneticAttributes(Enum):
         return list(cls)
 
 
+logger = logging.getLogger(__name__)
+
+
 class FactorActor(BaseActor, EventHandlerMixin):
     POPULATION_KEY = "__population__"
     GENERATION_KEY = "__generation__"
@@ -49,6 +53,15 @@ class FactorActor(BaseActor, EventHandlerMixin):
         self.datasource = datasource
         self.config = config_service.get("factor")
         self.state = InMemory[str, Union[List[Individual], int]]()
+
+        self.default_timeframes = ["15m"]
+        self.default_n_samples = 2
+        self.elite_count = self.config.get("elite_count", 5)
+        self.tournament_size = self.config.get("tournament_size", 3)
+        self.mutation_rate = self.config.get("mutation_rate", 0.1)
+        self.crossover_rate = self.config.get("crossover_rate", 0.7)
+        self.reset_percentage = self.config.get("reset_percentage", 0.2)
+        self.stability_percentage = self.config.get("stability_percentage", 0.3)
 
     async def on_receive(self, event: FactorEvent):
         return await self.handle_event(event)
@@ -62,25 +75,31 @@ class FactorActor(BaseActor, EventHandlerMixin):
         generator = await self._get_generator(msg.datasource, msg.cap)
         population = list(generator)
 
+        if not population:
+            logger.warning("Initial population is empty.")
+            return
+
         await self.state.set(self.POPULATION_KEY, population)
         await self.state.set(self.GENERATION_KEY, 0)
 
+        logger.info(f"Initialized generation with {len(population)} individuals.")
+
     async def _get_generator(self, datasource, cap):
         symbols = await self.ask(GetSymbols(datasource, cap))
-
         timeframes = [
-            Timeframe.from_raw(timeframe)
-            for timeframe in self.config.get("timeframes", ["15m"])
+            Timeframe.from_raw(tf)
+            for tf in self.config.get("timeframes", self.default_timeframes)
         ]
-
-        return PopulationGenerator(symbols, timeframes, self.config.get("n_samples", 2))
+        return PopulationGenerator(
+            symbols, timeframes, self.config.get("n_samples", self.default_n_samples)
+        )
 
     async def _get_generation(
         self, _msg: GetGeneration
     ) -> Tuple[list[Tuple[Symbol, Timeframe, Strategy]], float]:
         population = [
-            (i.symbol, i.timeframe, i.strategy)
-            for i in await self.state.get(self.POPULATION_KEY, [])
+            (ind.symbol, ind.timeframe, ind.strategy)
+            for ind in await self.state.get(self.POPULATION_KEY, [])
         ]
         generation = await self.state.get(self.GENERATION_KEY, 0)
 
@@ -88,6 +107,10 @@ class FactorActor(BaseActor, EventHandlerMixin):
 
     async def _envolve_generation(self, msg: EnvolveGeneration):
         population = await self.state.get(self.POPULATION_KEY, [])
+
+        if not population:
+            logger.warning("Population is empty. Skipping evolution.")
+            return
 
         generator = await self._get_generator(msg.datasource, msg.cap)
 
@@ -104,6 +127,10 @@ class FactorActor(BaseActor, EventHandlerMixin):
 
         await self.state.set(self.POPULATION_KEY, next_population)
         await self.state.set(self.GENERATION_KEY, next_generation)
+
+        logger.info(
+            f"Evolved to generation {next_generation + 1} with {len(next_population)} individuals."
+        )
 
     async def _evaluate_fitness(self, population: List[Individual]) -> None:
         for individual in population:
@@ -122,11 +149,10 @@ class FactorActor(BaseActor, EventHandlerMixin):
         sorted_population = sorted(
             population, key=lambda ind: ind.fitness, reverse=True
         )
-        elite = sorted_population[: self.config.get("elite_count", 5)]
+        elite = sorted_population[: self.elite_count]
 
-        total_size = len(sorted_population)
-        reset_size = int(self.config.get("reset_percentage", 0.2) * total_size)
-        stability_size = int(self.config.get("stability_percentage", 0.3) * total_size)
+        reset_size = int(self.reset_percentage * len(sorted_population))
+        stability_size = int(self.stability_percentage * len(sorted_population))
 
         reset_parents = self._tournament_selection(sorted_population[:reset_size])
         stability_parents = self._tournament_selection(
@@ -136,6 +162,9 @@ class FactorActor(BaseActor, EventHandlerMixin):
         return elite, reset_parents + stability_parents
 
     def _tournament_selection(self, candidates: list[Individual]) -> list[Individual]:
+        if not candidates:
+            return []
+
         parents = []
 
         tournament_size = min(len(candidates), self.config.get("tournament_size", 3))
@@ -150,14 +179,14 @@ class FactorActor(BaseActor, EventHandlerMixin):
 
     async def _mutate_parents(self, parents: list[Individual], generator) -> None:
         for idx, _ in enumerate(parents):
-            if np.random.rand() < self.config.get("mutation_rate", 0.1):
+            if np.random.rand() < self.mutation_rate:
                 parents[idx] = next(generator)
 
     def _crossover_parents(self, parents: list[Individual]) -> list[Individual]:
         children = []
 
         for parent1, parent2 in zip(parents[::2], parents[1::2]):
-            if np.random.rand() < self.config.get("crossover_rate", 0.7):
+            if np.random.rand() < self.crossover_rate:
                 child1, child2 = self._crossover(parent1, parent2)
                 children.extend([child1, child2])
             else:
@@ -189,7 +218,7 @@ class FactorActor(BaseActor, EventHandlerMixin):
             }
         )
 
-        parent1 = Individual(parent1.symbol, parent1.timeframe, child1_strategy)
-        parent2 = Individual(parent2.symbol, parent2.timeframe, child2_strategy)
-
-        return parent1, parent2
+        return (
+            Individual(parent1.symbol, parent1.timeframe, child1_strategy),
+            Individual(parent2.symbol, parent2.timeframe, child2_strategy),
+        )

@@ -28,7 +28,7 @@ class SystemState(Enum):
     GENERATE = auto()
     BACKTEST = auto()
     OPTIMIZATION = auto()
-    VERIFICATION = auto()
+    RANKING = auto()
     TRADING = auto()
     STOPPED = auto()
 
@@ -39,7 +39,7 @@ class Event(Enum):
     REGENERATE = auto()
     BACKTEST_COMPLETE = auto()
     OPTIMIZATION_COMPLETE = auto()
-    VERIFICATION_COMPLETE = auto()
+    RANKING_COMPLETE = auto()
     SYSTEM_STOP = auto()
 
 
@@ -67,13 +67,13 @@ class BacktestSystem(AbstractSystem):
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
             SystemState.OPTIMIZATION: {
-                Event.OPTIMIZATION_COMPLETE: SystemState.VERIFICATION,
+                Event.OPTIMIZATION_COMPLETE: SystemState.RANKING,
                 Event.REGENERATE: SystemState.GENERATE,
                 Event.RUN_BACKTEST: SystemState.BACKTEST,
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
-            SystemState.VERIFICATION: {
-                Event.VERIFICATION_COMPLETE: SystemState.TRADING,
+            SystemState.RANKING: {
+                Event.RANKING_COMPLETE: SystemState.TRADING,
                 Event.REGENERATE: SystemState.GENERATE,
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
@@ -99,7 +99,7 @@ class BacktestSystem(AbstractSystem):
             SystemState.GENERATE: self._generate,
             SystemState.BACKTEST: self._run_backtest,
             SystemState.OPTIMIZATION: self._run_optimization,
-            SystemState.VERIFICATION: self._run_verification,
+            SystemState.RANKING: self._run_raking,
             SystemState.TRADING: self._update_trading,
         }
 
@@ -146,8 +146,8 @@ class BacktestSystem(AbstractSystem):
 
         await self.event_queue.put(Event.RUN_BACKTEST)
 
-    async def _run_verification(self):
-        logger.info("Run verification")
+    async def _run_raking(self):
+        logger.info("Run ranking")
 
         population, _ = await self.query(GetGeneration())
 
