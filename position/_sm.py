@@ -16,6 +16,7 @@ from core.events.signal import (
 )
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
+from core.models.timeframe import Timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -79,12 +80,13 @@ TRANSITIONS: Transitions = {
     ),
 }
 
+SMKey = Tuple[Symbol, Timeframe, PositionSide]
 
 class PositionStateMachine:
     def __init__(self, actor: Type[StrategyActor], transitions: Transitions):
         self._actor = actor
         self._transitions = transitions
-        self._state = InMemory[Symbol, PositionState]()
+        self._state = InMemory[SMKey, PositionState]()
 
     async def process_event(self, event: PositionEvent, side: PositionSide):
         key = (self._actor.symbol, self._actor.timeframe, side)
