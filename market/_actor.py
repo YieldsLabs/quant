@@ -53,22 +53,32 @@ class MarketActor(BaseActor, EventHandlerMixin):
             bars.append(next_bar)
             prev_bar = next_bar
 
-        bars = sorted(bars, key=lambda x: x.timestamp)
-
-        while len(bars) < n_bars:
+        if len(bars) < n_bars:
             first_valid_bar = bars[0]
-            prev_bar = await self.ts.prev_bar(
-                event.symbol, event.timeframe, first_valid_bar
-            )
 
-            if prev_bar is None:
-                break
+            async def fetch_past_bars(starting_bar, count):
+                past_bars = []
+                current_bar = starting_bar
 
-            bars.insert(0, prev_bar)
+                for _ in range(count):
+                    prev_bar = await self.ts.prev_bar(
+                        event.symbol, event.timeframe, current_bar
+                    )
+
+                    if prev_bar is None:
+                        break
+
+                    past_bars.append(prev_bar)
+                    current_bar = prev_bar
+                return past_bars
+
+            remaining = n_bars - len(bars)
+            past_bars = await fetch_past_bars(first_valid_bar, remaining)
+            bars.extend(past_bars)
 
         bars = sorted(bars, key=lambda x: x.timestamp)
 
-        return bars
+        return bars[:n_bars]
 
     async def _handle_back_n_bars(self, event: BackNBars) -> OHLCV:
         return await self.ts.back_n_bars(
