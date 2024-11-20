@@ -30,7 +30,7 @@ from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.portfolio import GetPortfolioPerformance
 
-from ._sm import TRANSITIONS, PositionStateMachine
+from ._sm import TRANSITIONS, PositionStateMachine, SMKey
 
 SignalEvent = Union[GoLongSignalReceived, GoShortSignalReceived]
 BrokerPositionEvent = Union[BrokerPositionOpened, BrokerPositionClosed]
@@ -179,5 +179,5 @@ class PositionActor(StrategyActor):
     def _is_stale_signal(meta: EventMeta) -> bool:
         return int(meta.timestamp) < int(time.time()) - TIME_BUFF
 
-    def _get_key(self, side: PositionSide) -> Tuple[Symbol, Timeframe, PositionSide]:
+    def _get_key(self, side: PositionSide) -> SMKey:
         return self.symbol, self.timeframe, side
