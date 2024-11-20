@@ -82,6 +82,7 @@ TRANSITIONS: Transitions = {
 
 SMKey = Tuple[Symbol, Timeframe, PositionSide]
 
+
 class PositionStateMachine:
     def __init__(self, actor: Type[StrategyActor], transitions: Transitions):
         self._actor = actor
