@@ -1,4 +1,4 @@
-import asyncio
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Dict, Generic, Optional, TypeVar
 
@@ -19,46 +19,50 @@ class InMemory(Generic[K, V]):
     on_reset: Signal = field(default_factory=Signal)
 
     async def get(self, key: K, fallback: Optional[V] = None) -> Optional[V]:
-        await self._lock.acquire_reader()
-
-        try:
+        async with self._reader():
             return self._data.get(key, fallback)
-        except asyncio.CancelledError:
-            raise
-        finally:
-            await self._lock.release_reader()
 
     async def set(self, key: K, value: V) -> None:
-        await self._lock.acquire_writer()
-
-        try:
+        async with self._writer():
+            old_value = self._data.get(key)
             self._data[key] = value
-        finally:
-            await self._lock.release_writer()
+            self.on_set.emit(key=key, old_value=old_value, new_value=value)
 
     async def delete(self, key: K) -> bool:
-        await self._lock.acquire_writer()
+        async with self._writer():
+            old_value = self._data.pop(key, None)
 
-        try:
-            return self._data.pop(key, None) is not None
-        finally:
-            await self._lock.release_writer()
+            if old_value is not None:
+                self.on_delete.emit(key=key, old_value=old_value)
+
+            return old_value is not None
 
     async def reset(self):
-        await self._lock.acquire_writer()
-
-        try:
+        async with self._writer():
+            cleared_data = dict(self._data)
             self._data.clear()
-        finally:
-            await self._lock.release_writer()
+            self.on_reset.emit(cleared_data=cleared_data)
 
     async def exists(self, key: K) -> bool:
-        return await self.get(key) is not None
+        async with self._reader():
+            return key in self._data
 
     async def size(self) -> int:
-        await self._lock.acquire_reader()
-
-        try:
+        async with self._reader():
             return len(self._data)
+
+    @asynccontextmanager
+    async def _reader(self):
+        await self._lock.acquire_reader()
+        try:
+            yield
         finally:
             await self._lock.release_reader()
+
+    @asynccontextmanager
+    async def _writer(self):
+        await self._lock.acquire_writer()
+        try:
+            yield
+        finally:
+            await self._lock.release_writer()
