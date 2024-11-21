@@ -2,16 +2,16 @@ from functools import cached_property
 
 import numpy as np
 
-from core.models.side import SignalSide
+from core.models.side import PositionSide
 
 from ._base import Entity
 
 
 @Entity
 class ProfitTarget:
-    _side: SignalSide
+    side: PositionSide
     entry: float
-    _volatility: float
+    volatility: float
     _noise_sigma: float = 0.001
 
     @cached_property
@@ -107,25 +107,26 @@ class ProfitTarget:
             }
         )
 
-        reverse = self._context_factor() == -1
+        reverse = self.context_factor == -1
         return levels if not reverse else levels[::-1]
 
     @cached_property
     def last(self):
         return self.targets[-1]
 
-    def _context_factor(self):
-        return 1.0 if self._side == SignalSide.BUY else -1.0
+    @cached_property
+    def context_factor(self):
+        return 1.0 if self.side == PositionSide.LONG else -1.0
 
     def _pt(self, min_scale: float, max_scale: float) -> float:
         scale = np.random.uniform(min_scale, max_scale)
         noise = np.random.lognormal(mean=0, sigma=self._noise_sigma) - 1
         target_price = self.entry * (
-            1 + self._volatility * self._context_factor() * scale + noise
+            1 + self.volatility * self.context_factor * scale + noise
         )
 
         return (
             max(target_price, self.entry)
-            if self._context_factor() == 1
+            if self.context_factor == 1
             else min(target_price, self.entry)
         )

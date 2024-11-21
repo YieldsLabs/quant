@@ -1,4 +1,4 @@
-import asyncio
+import logging
 
 from core.models.datasource_type import DataSourceType
 from core.models.symbol import Symbol
@@ -7,6 +7,8 @@ from core.models.timeframe import Timeframe
 from ._base import BaseActor
 from .collector import DataCollector
 from .policy.feed import FeedPolicy
+
+logger = logging.getLogger(__name__)
 
 
 class FeedActor(BaseActor):
@@ -43,10 +45,8 @@ class FeedActor(BaseActor):
     def collector(self) -> "DataCollector":
         return self._collector
 
-    def on_stop(self):
-        stop_task = asyncio.create_task(self.collector.stop())
-        self._tasks.add(stop_task)
-        stop_task.add_done_callback(self._tasks.discard)
+    async def on_stop(self):
+        await self.collector.stop()
 
     def pre_receive(self, msg) -> bool:
         return FeedPolicy.should_process(self, msg)

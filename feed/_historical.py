@@ -29,9 +29,7 @@ class HistoricalActor(FeedActor):
     ):
         super().__init__(symbol, timeframe, datasource)
         self.datasource_factory = datasource_factory
-        self.config_service = config_service.get("backtest")
-        self.batch_size = self.config_service["batch_size"]
-        self.buff_size = self.config_service["buff_size"]
+        self.config = config_service.get("feed")
 
     async def on_receive(self, msg: StartHistoricalFeed):
         await self.collector.start(msg)
@@ -45,10 +43,10 @@ class HistoricalActor(FeedActor):
             self.timeframe,
             msg.in_sample,
             msg.out_sample,
-            self.batch_size,
+            self.config.get("batch_size", 100),
             lambda data: Bar(OHLCV.from_list(data), True),
         ) as stream:
-            async for batch in self.batched(stream, self.buff_size):
+            async for batch in self.batched(stream, self.config.get("buff_size", 8)):
                 yield batch
 
     @Consumer
@@ -84,8 +82,10 @@ class HistoricalActor(FeedActor):
         batch = []
         async for bar in stream:
             batch.append(bar)
+
             if len(batch) >= batch_size:
                 yield batch
                 batch = []
+
         if batch:
             yield batch

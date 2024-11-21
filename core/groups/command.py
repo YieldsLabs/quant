@@ -7,6 +7,7 @@ class CommandGroup(Enum):
     portfolio = auto()
     market = auto()
     position = auto()
+    factor = auto()
 
     def __str__(self):
         return self.name

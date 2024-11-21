@@ -60,6 +60,13 @@ class WorkerPool:
         return self.workers[group_start:group_end]
 
     def _choose_worker(self, group_workers: List[EventWorker]) -> EventWorker:
+        not_busy_workers = [
+            worker for worker in group_workers if worker.queue_size == 0
+        ]
+
+        if not_busy_workers:
+            return np.random.choice(not_busy_workers)
+
         weights = np.array([1 / (worker.queue_size + 1) for worker in group_workers])
         total_weight = sum(weights)
 

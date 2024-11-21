@@ -63,13 +63,6 @@ class StrategyRef:
 
         action = Action.from_raw(raw_action)
 
-        long_stop_loss, short_stop_loss = 0.0, 0.0
-
-        if action in (Action.GO_LONG, Action.GO_SHORT):
-            long_stop_loss, short_stop_loss = self.exports["strategy_stop_loss"](
-                *strategy_args
-            )
-
         side = (
             SignalSide.BUY
             if action in (Action.GO_LONG, Action.EXIT_SHORT)
@@ -85,7 +78,6 @@ class StrategyRef:
                     side,
                     ohlcv,
                     entry=price,
-                    stop_loss=long_stop_loss,
                 ),
             ),
             Action.GO_SHORT: GoShortSignalReceived(
@@ -96,7 +88,6 @@ class StrategyRef:
                     side,
                     ohlcv,
                     entry=price,
-                    stop_loss=short_stop_loss,
                 ),
             ),
             Action.EXIT_LONG: ExitLongSignalReceived(

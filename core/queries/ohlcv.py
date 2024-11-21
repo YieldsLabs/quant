@@ -34,6 +34,18 @@ class PrevBar(Query[OHLCV]):
 
 
 @dataclass(frozen=True)
+class BatchBars(Query[List[OHLCV]]):
+    symbol: Symbol
+    timeframe: Timeframe
+    ohlcv: OHLCV
+    n: int
+    meta: EventMeta = field(
+        default_factory=lambda: EventMeta(priority=4, group=QueryGroup.market),
+        init=False,
+    )
+
+
+@dataclass(frozen=True)
 class BackNBars(Query[List[OHLCV]]):
     symbol: Symbol
     timeframe: Timeframe

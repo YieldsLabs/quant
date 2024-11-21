@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from core.commands._base import Command
+from core.commands.market import IngestMarketData
 from core.events.backtest import BacktestEnded
 from core.events.market import NewMarketDataReceived, NewMarketOrderReceived
 from core.events.position import (
@@ -12,7 +13,7 @@ from core.events.position import (
     PositionInitialized,
     PositionOpened,
 )
-from core.events.risk import RiskThresholdBreached
+from core.events.risk import RiskLongThresholdBreached, RiskShortThresholdBreached
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -20,6 +21,7 @@ from core.events.signal import (
     GoShortSignalReceived,
 )
 from core.queries._base import Query
+from core.queries.ohlcv import TA, BackNBars, BatchBars, NextBar, PrevBar
 from core.tasks.feed import StartHistoricalFeed, StartRealtimeFeed
 
 Message = Union[
@@ -36,9 +38,16 @@ Message = Union[
     GoShortSignalReceived,
     ExitLongSignalReceived,
     ExitShortSignalReceived,
-    RiskThresholdBreached,
+    RiskLongThresholdBreached,
+    RiskShortThresholdBreached,
     StartHistoricalFeed,
     StartRealtimeFeed,
+    IngestMarketData,
+    NextBar,
+    PrevBar,
+    BatchBars,
+    BackNBars,
+    TA,
 ]
 
 Ask = Union[Command, Query]

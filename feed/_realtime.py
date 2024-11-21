@@ -6,6 +6,7 @@ from core.actors import FeedActor
 from core.actors.decorators import Consumer, Producer
 from core.commands.market import IngestMarketData
 from core.events.market import NewMarketDataReceived, NewMarketOrderReceived
+from core.interfaces.abstract_config import AbstractConfig
 from core.models.datasource_type import DataSourceType
 from core.models.entity.bar import Bar
 from core.models.entity.order import Order
@@ -34,10 +35,11 @@ class RealtimeActor(FeedActor):
         timeframe: Timeframe,
         datasource: DataSourceType,
         datasource_factory: DataSourceFactory,
+        config_service: AbstractConfig,
     ):
         super().__init__(symbol, timeframe, datasource)
         self.datasource_factory = datasource_factory
-        self.depth = 50
+        self.config = config_service.get("feed")
 
     async def on_receive(self, msg: StartRealtimeFeed):
         await self.collector.start(msg)
@@ -60,7 +62,7 @@ class RealtimeActor(FeedActor):
             self.datasource_factory.create(
                 msg.datasource, ProtocolType.WS, WSType.PUBLIC
             ),
-            OrderBookStreamStrategy(self.symbol, self.depth),
+            OrderBookStreamStrategy(self.symbol, self.config.get("dom", 15)),
         ) as stream:
             async for orders in stream:
                 yield orders

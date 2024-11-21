@@ -47,7 +47,7 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         logger.debug(f"New Position: {current_position}")
 
-        entry_order = current_position.entry_order()
+        entry_order = current_position.entry_order
 
         price = self._find_open_price(current_position, entry_order)
         size = entry_order.size
@@ -82,10 +82,10 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         logger.debug(f"To Close Position: {current_position}")
 
-        exit_order = current_position.exit_order()
+        exit_order = current_position.exit_order
 
         next_bar = await self.ask(
-            NextBar(self.symbol, self.timeframe, current_position.risk_bar)
+            NextBar(self.symbol, self.timeframe, current_position.close_bar)
         )
 
         price = self._find_close_price(current_position, exit_order, next_bar)
@@ -125,13 +125,13 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
         self, position: Position, order: Order, bar: Optional[OHLCV] = None
     ) -> float:
         if bar is None:
-            bar = position.signal_bar
+            bar = position.open_bar
 
-        diff = bar.timestamp - position.signal_bar.timestamp
+        diff = bar.timestamp - position.open_bar.timestamp
 
         if diff > position.signal.timeframe.to_milliseconds():
             logger.warn("The open of the next bar is too far from the previous one.")
-            bar = position.signal_bar
+            bar = position.open_bar
 
         return self._find_fill_price(position.side, bar, order.price)
 
@@ -139,13 +139,13 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
         self, position: Position, order: Order, bar: Optional[OHLCV] = None
     ) -> float:
         if bar is None:
-            bar = position.risk_bar
+            bar = position.close_bar
 
-        diff = bar.timestamp - position.risk_bar.timestamp
+        diff = bar.timestamp - position.close_bar.timestamp
 
         if diff > position.signal.timeframe.to_milliseconds():
             logger.warn("The close of the next bar is too far from the previous one.")
-            bar = position.risk_bar
+            bar = position.close_bar
 
         return self._find_fill_price(position.side, bar, order.price)
 

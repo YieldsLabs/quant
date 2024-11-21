@@ -1,19 +1,20 @@
 import asyncio
 import logging
-import random
-from typing import Optional, Union
+from typing import Tuple, Union
 
 import numpy as np
 
 from core.actors import StrategyActor
+from core.actors.state import InMemory
 from core.events.market import NewMarketDataReceived
-from core.events.meta import EventMeta
 from core.events.position import (
-    PositionAdjusted,
     PositionClosed,
     PositionOpened,
 )
-from core.events.risk import RiskThresholdBreached
+from core.events.risk import (
+    RiskLongThresholdBreached,
+    RiskShortThresholdBreached,
+)
 from core.events.signal import (
     ExitLongSignalReceived,
     ExitShortSignalReceived,
@@ -22,13 +23,16 @@ from core.events.signal import (
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
-from core.models.entity.ohlcv import OHLCV
+from core.models.entity.portfolio import Performance
 from core.models.entity.position import Position
+from core.models.entity.profit_target import ProfitTarget
+from core.models.entity.risk import Risk
+from core.models.entity.signal import Signal
 from core.models.side import PositionSide
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.copilot import EvaluateSession
-from core.queries.ohlcv import TA, NextBar, PrevBar
+from core.queries.ohlcv import TA, BatchBars
+from core.queries.portfolio import GetPortfolioPerformance
 
 TrailEvent = Union[
     GoLongSignalReceived,
@@ -40,26 +44,32 @@ TrailEvent = Union[
 RiskEvent = Union[
     NewMarketDataReceived,
     PositionOpened,
-    PositionAdjusted,
     PositionClosed,
-    TrailEvent,
 ]
 
-MAX_ATTEMPTS = 16
-DEFAULT_MAX_BARS = 16
+MAX_ATTEMPTS = 8
+DEFAULT_MAX_BARS = 8
 MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
+ANOMALY_CLIP_MULTIPLIER = 12.0
+ANOMALY_CLIP = ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD
+LATENCY_GAP_THRESHOLD = 2.2
+
+VOLATILITY_MULTY = 1.5
+RR_MULTY = 2.0
 
 
 def _ema(values, alpha=0.1):
-    ema = [values[0]]
-    for value in values[1:]:
-        ema.append(ema[-1] * (1 - alpha) + value * alpha)
-    return np.array(ema)
+    values = np.asarray(values)
+    weights = (1 - alpha) ** np.arange(len(values))[::-1]
+    weights /= weights.sum()
+    return np.convolve(values, weights, mode="full")[: len(values)]
 
 
 logger = logging.getLogger(__name__)
+
+RiskState = Tuple[Risk, Position, ProfitTarget, Performance]
 
 
 class RiskActor(StrategyActor, EventHandlerMixin):
@@ -69,8 +79,13 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         super().__init__(symbol, timeframe)
         EventHandlerMixin.__init__(self)
         self._register_event_handlers()
-        self._lock = asyncio.Lock()
-        self._position = (None, None)
+
+        self._state = InMemory[PositionSide, RiskState]()
+        self._locks = {
+            PositionSide.LONG: asyncio.Semaphore(1),
+            PositionSide.SHORT: asyncio.Semaphore(1),
+        }
+
         self.config = config_service.get("position")
         self.max_bars = DEFAULT_MAX_BARS
         self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
@@ -80,156 +95,223 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         return await self.handle_event(event)
 
     def _register_event_handlers(self):
-        self.register_handler(NewMarketDataReceived, self._handle_position_risk)
+        self.register_handler(NewMarketDataReceived, self._handle_risk)
         self.register_handler(PositionOpened, self._open_position)
         self.register_handler(PositionClosed, self._close_position)
-        self.register_handler(ExitLongSignalReceived, self._trail_position)
-        self.register_handler(ExitShortSignalReceived, self._trail_position)
-        self.register_handler(GoLongSignalReceived, self._trail_position)
-        self.register_handler(GoShortSignalReceived, self._trail_position)
 
     async def _open_position(self, event: PositionOpened):
-        async with self._lock:
-            match event.position.side:
-                case PositionSide.LONG:
-                    self._position = (event.position, self._position[1])
-                case PositionSide.SHORT:
-                    self._position = (self._position[0], event.position)
+        position = event.position
+        side = position.side
+        bar = position.open_bar
+        open_signal = position.signal
+
+        ta = await self.ask(TA(self.symbol, self.timeframe, bar))
+
+        rolling_window = 8
+        volatility = np.convolve(
+            ta.volatility.tr, np.ones(rolling_window) / rolling_window, mode="valid"
+        )[-1]
+
+        dmi = ta.trend.dmi[-1]
+        cci = ta.momentum.cci[-1]
+        vwap = ta.volume.vwap[-1]
+        rsi = ta.oscillator.srsi[-1]
+
+        pt = ProfitTarget(side=side, entry=position.entry_price, volatility=volatility)
+
+        performance = await self.ask(
+            GetPortfolioPerformance(
+                self.symbol, self.timeframe, position.signal.strategy
+            )
+        )
+
+        sl_buffer = VOLATILITY_MULTY * volatility
+
+        if dmi > 25:
+            sl_buffer *= 1.2
+            tp_distance = RR_MULTY * sl_buffer
+        else:
+            sl_buffer *= 0.8
+            tp_distance = RR_MULTY * sl_buffer
+
+        if rsi > 70 or cci > 100:
+            tp_distance *= 0.8
+        elif rsi < 30 or cci < -100:
+            tp_distance *= 0.8
+
+        if (side == PositionSide.LONG and bar.low < vwap) or (
+            side == PositionSide.SHORT and bar.high > vwap
+        ):
+            sl_buffer *= 0.9
+
+        if side == PositionSide.LONG:
+            sl = bar.low - sl_buffer
+            tp = bar.high + tp_distance
+        elif side == PositionSide.SHORT:
+            sl = bar.high + sl_buffer
+            tp = bar.low - tp_distance
+
+        trade_duration = self.config.get("trade_duration", 20)
+
+        risk = Risk(side=side, tp=tp, sl=sl, duration=trade_duration).next(bar)
+
+        logger.info(
+            f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}"
+        )
+
+        state = None
+
+        if not risk.has_risk:
+            state = (risk, position, pt, performance)
+        else:
+            close_signal = Signal(
+                symbol=open_signal.symbol,
+                timeframe=open_signal.timeframe,
+                strategy=open_signal.strategy,
+                side=open_signal.side,
+                ohlcv=bar,
+                entry=open_signal.entry,
+                exit=bar.close,
+            )
+
+            event = (
+                RiskLongThresholdBreached(signal=close_signal)
+                if side == PositionSide.LONG
+                else RiskShortThresholdBreached(signal=close_signal)
+            )
+
+            await self.tell(event)
+
+        await self._state.set(side, state)
 
     async def _close_position(self, event: PositionClosed):
-        async with self._lock:
-            match event.position.side:
-                case PositionSide.LONG:
-                    self._position = (None, self._position[1])
-                case PositionSide.SHORT:
-                    self._position = (self._position[0], None)
+        await self._state.delete(event.position.side)
 
-    async def _handle_position_risk(self, event: NewMarketDataReceived):
-        async with self._lock:
-            processed_positions = list(self._position)
-            num_positions = len(self._position)
+    async def _handle_risk(self, event: NewMarketDataReceived):
+        sides = list(PositionSide)
+        tasks = [self._process_side(side, event) for side in sides]
+        await asyncio.gather(*tasks)
 
-            indexes = list(range(num_positions))
-            random.shuffle(indexes)
-
-            for shuffled_index in indexes:
-                processed_positions[shuffled_index] = await self._process_market(
-                    event, self._position[shuffled_index]
-                )
-
-            self._position = tuple(processed_positions)
-
-    async def _trail_position(self, event: TrailEvent):
-        async with self._lock:
-
-            async def handle_trail(position: Position, risk_bar: OHLCV):
-                logger.info(f"Trail event for side: {position.side}, bar: {risk_bar}")
-
-                ta = await self.ask(TA(self.symbol, self.timeframe, risk_bar))
-                return position.trail(ta)
-
-            async def process_trail(position: Position, event_meta: EventMeta):
-                if (
-                    position
-                    and not position.has_risk
-                    and position.last_modified < event_meta.timestamp
-                ):
-                    return await handle_trail(position, position.risk_bar)
-                return position
-
-            long_position, short_position = self._position
-
-            if isinstance(event, (ExitLongSignalReceived, GoShortSignalReceived)):
-                long_position = await process_trail(long_position, event.meta)
-
-            elif isinstance(event, (ExitShortSignalReceived, GoLongSignalReceived)):
-                short_position = await process_trail(short_position, event.meta)
-
-            self._position = (long_position, short_position)
+    async def _process_side(self, side, event):
+        async with self._locks.get(side):
+            await self._process_market(event, side)
 
     async def _process_market(
-        self, event: NewMarketDataReceived, position: Optional[Position]
+        self,
+        event: NewMarketDataReceived,
+        side: PositionSide,
     ):
-        next_position = position
-        curr_bar = event.bar.ohlcv
+        state = await self._state.get(side)
 
-        if position and not position.has_risk:
-            prev_bar = next_position.risk_bar
-            next_bar = await self.ask(NextBar(self.symbol, self.timeframe, prev_bar))
+        if not state:
+            return
 
-            next_bar = next_bar or curr_bar
+        risk, position, pt, performance = state
 
-            attempts = 0
-            diff = curr_bar.timestamp - next_bar.timestamp
+        if risk.has_risk:
+            return
 
-            while diff < 0 and attempts < MAX_ATTEMPTS:
-                new_prev_bar = await self.ask(
-                    PrevBar(self.symbol, self.timeframe, prev_bar)
-                )
+        next_risk = risk
+        open_signal = position.signal
+        cbar = next_risk.curr_bar
+        prev_bar = min(event.bar.ohlcv, cbar)
 
-                if new_prev_bar:
-                    diff = curr_bar.timestamp - new_prev_bar.timestamp
-                    prev_bar = new_prev_bar
+        bars = await self.ask(
+            BatchBars(self.symbol, self.timeframe, prev_bar, self.max_bars)
+        )
 
-                attempts += 1
+        if not bars:
+            logger.warning("No bars fetched, skipping market processing.")
+            return state
 
-            bars = [next_bar]
+        for bar in bars:
+            if self._has_anomaly(bar.timestamp, next_risk.time_points):
+                logger.debug(f"Anomalous bar skipped: {bar.timestamp}")
+                continue
 
-            if diff > 0:
-                for _ in range(int(self.max_bars)):
-                    next_bar = await self.ask(
-                        NextBar(self.symbol, self.timeframe, prev_bar)
-                    )
+            gap = bar.timestamp - cbar.timestamp
 
-                    if not next_bar:
-                        break
+            if gap <= 0:
+                logger.debug(f"Stale bar skipped: {bar.timestamp}")
+                continue
 
-                    bars.append(next_bar)
-                    prev_bar = next_bar
+            if gap > LATENCY_GAP_THRESHOLD * open_signal.timeframe.to_milliseconds():
+                logger.debug(f"Latency Gap: {gap} exceeds threshold.")
+                continue
 
-            for bar in sorted(bars, key=lambda x: x.timestamp):
-                risk = next_position.position_risk
-                ts = np.array(risk.time_points)
+            next_risk = next_risk.next(bar)
 
-                if len(ts) > 2:
-                    ts_diff = _ema(np.diff(ts))
-                    mean, std = np.mean(ts_diff), max(
-                        np.std(ts_diff), np.finfo(float).eps
-                    )
+            cbar = next_risk.curr_bar
 
-                    current_diff = abs(bar.timestamp - ts[-1])
-                    anomaly = (current_diff - mean) / std
-                    anomaly = np.clip(
-                        anomaly,
-                        -12.0 * DEFAULT_ANOMALY_THRESHOLD,
-                        12.0 * DEFAULT_ANOMALY_THRESHOLD,
-                    )
+            if next_risk.has_risk:
+                logger.info("Risk threshold breached, triggering position close.")
+                break
 
-                    if abs(anomaly) > self.anomaly_threshold:
-                        self.consc_anomaly_counter += 1
+        next_price = (cbar.high + cbar.low + cbar.close) / 3.0
+        pnl = pt.context_factor * (next_price - position.entry_price) * position.size
 
-                        if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
-                            logger.warn(
-                                "Too many consecutive anomalies, increasing threshold temporarily"
-                            )
-                            self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
-                            self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
-                            self.consc_anomaly_counter = 1
-                        continue
-                    else:
-                        self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
-                        self.max_bars = DEFAULT_MAX_BARS
-                        self.consc_anomaly_counter = 1
+        ap = performance.next(pnl, position.fee)
 
-                ta = await self.ask(TA(self.symbol, self.timeframe, bar))
-                session_risk = await self.ask(
-                    EvaluateSession(next_position.side, risk.session, ta)
-                )
+        msharpe = ap.modified_sharpe_ratio
+        rashev = ap.rachev_ratio
+        ir = ap.information_ratio
 
-                next_position = next_position.next(bar, ta, session_risk)
+        if next_risk.has_risk:
+            close_signal = Signal(
+                symbol=open_signal.symbol,
+                timeframe=open_signal.timeframe,
+                strategy=open_signal.strategy,
+                side=open_signal.side,
+                ohlcv=cbar,
+                entry=open_signal.entry,
+                exit=next_price,
+            )
 
-                if next_position.has_risk:
-                    await self.tell(RiskThresholdBreached(next_position))
-                    break
+            event = (
+                RiskLongThresholdBreached(signal=close_signal)
+                if side == PositionSide.LONG
+                else RiskShortThresholdBreached(signal=close_signal)
+            )
 
-        return next_position
+            await self.tell(event)
+
+        logger.info(
+            f"{cbar.timestamp}:{open_signal.symbol}:{side} -> "
+            f"PnL: {pnl:.4f}, SHARPE: {msharpe:.4f}, IR: {ir:.4f}, RSH: {rashev:.4f}, H: {cbar.high}, L: {cbar.low}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
+        )
+
+        next_state = (next_risk, position, pt, performance)
+
+        await self._state.set(side, next_state)
+
+    def _has_anomaly(self, bar_timestamp: float, time_points: list[float]) -> bool:
+        if len(time_points) < 3:
+            return False
+
+        time_points = np.array(time_points)
+
+        ts_diff = np.diff(np.array(time_points))
+        ts_ema = _ema(ts_diff, alpha=0.1)
+
+        mean_diff = np.mean(ts_ema)
+        std_diff = np.std(ts_ema)
+        threshold = max(std_diff, np.finfo(float).eps)
+
+        current_diff = bar_timestamp - time_points[-1]
+
+        anomaly_score = abs((current_diff - mean_diff) / threshold)
+        anomaly_score = np.clip(anomaly_score, -ANOMALY_CLIP, ANOMALY_CLIP)
+
+        if anomaly_score > self.anomaly_threshold:
+            self.consc_anomaly_counter += 1
+            if self.consc_anomaly_counter > MAX_CONSECUTIVE_ANOMALIES:
+                self.anomaly_threshold *= DYNAMIC_THRESHOLD_MULTIPLIER
+                self.max_bars *= DYNAMIC_THRESHOLD_MULTIPLIER
+                self.consc_anomaly_counter = 0
+            return True
+
+        self.anomaly_threshold = DEFAULT_ANOMALY_THRESHOLD
+        self.max_bars = DEFAULT_MAX_BARS
+        self.consc_anomaly_counter = 0
+
+        return False

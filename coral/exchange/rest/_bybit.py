@@ -58,6 +58,7 @@ class Bybit(AbstractRestExchange):
             except Exception as e:
                 logger.error(f"{symbol}: {e}")
 
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def has_filled_order(self, order_id: str, symbol: Symbol):
         try:
             orders = self.connector.fetch_closed_orders(symbol.name)
@@ -66,6 +67,7 @@ class Bybit(AbstractRestExchange):
             logger.error(f"{symbol}: {e}")
             return
 
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def has_open_orders(
         self, symbol: Symbol, side: PositionSide, is_reduced: bool = False
     ):
@@ -88,6 +90,7 @@ class Bybit(AbstractRestExchange):
             logger.error(f"{symbol}: {e}")
             return
 
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def fetch_all_open_orders(self):
         try:
             return [
@@ -108,6 +111,7 @@ class Bybit(AbstractRestExchange):
             logger.error(f"{symbol}: {e}")
             return
 
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def fetch_trade(self, symbol: Symbol, side: PositionSide, since: int, size: float):
         last_trades = (
             trade
@@ -155,6 +159,7 @@ class Bybit(AbstractRestExchange):
 
         return next(iter(aggregated_trades.values()), None)
 
+    @retry(max_retries=MAX_RETRIES, handled_exceptions=EXCEPTIONS)
     def fetch_order_book(self, symbol: Symbol, depth: int = 30):
         book = self.connector.fetch_order_book(symbol.name, limit=depth)
         return book["bids"], book["asks"], book["timestamp"]
@@ -165,7 +170,7 @@ class Bybit(AbstractRestExchange):
                 "market",
                 "buy" if side == PositionSide.LONG else "sell",
                 symbol.name,
-                round(size, symbol.position_precision),
+                max(round(size, symbol.position_precision), symbol.min_position_size),
                 extra_params=self._create_order_extra_params(side),
             )
 
@@ -182,8 +187,8 @@ class Bybit(AbstractRestExchange):
                 "limit",
                 "buy" if side == PositionSide.LONG else "sell",
                 symbol.name,
-                round(size, symbol.position_precision),
-                round(price, symbol.price_precision),
+                max(round(size, symbol.position_precision), symbol.min_position_size),
+                max(round(price, symbol.price_precision), symbol.min_price_size),
                 extra_params=self._create_order_extra_params(side),
             )
 
@@ -200,8 +205,8 @@ class Bybit(AbstractRestExchange):
                 "limit",
                 "sell" if side == PositionSide.LONG else "buy",
                 symbol.name,
-                round(size, symbol.position_precision),
-                round(price, symbol.price_precision),
+                max(round(size, symbol.position_precision), symbol.min_position_size),
+                max(round(price, symbol.price_precision), symbol.min_price_size),
                 extra_params=self._create_order_extra_params(side, reduce=True),
             )
 
@@ -239,7 +244,10 @@ class Bybit(AbstractRestExchange):
                 "market",
                 "sell" if position["position_side"] == PositionSide.LONG else "buy",
                 symbol.name,
-                round(position["position_size"] // 2, symbol.position_precision),
+                max(
+                    round(position["position_size"] // 2, symbol.position_precision),
+                    symbol.min_position_size,
+                ),
                 extra_params=self._create_order_extra_params(side),
             )
         except Exception as e:

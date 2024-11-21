@@ -18,7 +18,6 @@ class Signal:
     ohlcv: OHLCV
     entry: float = field(default_factory=lambda: 0.0)
     exit: float = field(default_factory=lambda: 0.0)
-    stop_loss: float = field(default_factory=lambda: 0.0)
 
     def __hash__(self) -> int:
         return hash((self.symbol, self.timeframe, self.strategy, self.side))

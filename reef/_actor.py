@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
@@ -28,6 +28,9 @@ class PQOrder:
         compare=False,
     )
 
+    def copy(self) -> "PQOrder":
+        return replace(self, ttl=np.mean(np.random.exponential(3, size=1000)))
+
 
 class ReefActor(BaseActor):
     def __init__(
@@ -41,20 +44,23 @@ class ReefActor(BaseActor):
         self._stop_event = asyncio.Event()
 
     def on_start(self):
+        self._stop_event.clear()
+
         worker_task = asyncio.create_task(self._process_orders())
-        worker_task.add_done_callback(self._tasks.discard)
         self._tasks.add(worker_task)
+        worker_task.add_done_callback(lambda t: self._tasks.discard(t))
 
         poll_task = asyncio.create_task(self._fetch_open_orders())
-        poll_task.add_done_callback(self._tasks.discard)
         self._tasks.add(poll_task)
+        poll_task.add_done_callback(lambda t: self._tasks.discard(t))
 
     def on_stop(self):
         self._stop_event.set()
 
-        for task in list(self._tasks):
-            if not task.done():
-                task.cancel()
+        tasks_to_cancel = [task for task in self._tasks if not task.done()]
+
+        for task in tasks_to_cancel:
+            task.cancel()
 
         self._tasks.clear()
 

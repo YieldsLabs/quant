@@ -2,22 +2,19 @@ import asyncio
 import logging
 from enum import Enum, auto
 
-from core.commands.account import UpdateAccountSize
-from core.commands.portfolio import StrategyReset
+from core.commands.factor import EnvolveGeneration, InitGeneration
+from core.commands.portfolio import PortfolioReset
 from core.events.backtest import BacktestEnded, BacktestStarted
 from core.events.system import DeployStrategy
 from core.interfaces.abstract_system import AbstractSystem
 from core.models.cap import CapType
 from core.models.feed import FeedType
 from core.models.lookback import Lookback
-from core.models.optimizer import Optimizer
 from core.models.order_type import OrderType
 from core.models.strategy import Strategy
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
-from core.queries.account import GetBalance
-from core.queries.broker import GetSymbols
-from core.queries.portfolio import GetTopStrategy
+from core.queries.factor import GetGeneration
 from core.tasks.feed import StartHistoricalFeed
 from infrastructure.estimator import Estimator
 
@@ -31,7 +28,7 @@ class SystemState(Enum):
     GENERATE = auto()
     BACKTEST = auto()
     OPTIMIZATION = auto()
-    VERIFICATION = auto()
+    RANKING = auto()
     TRADING = auto()
     STOPPED = auto()
 
@@ -42,7 +39,7 @@ class Event(Enum):
     REGENERATE = auto()
     BACKTEST_COMPLETE = auto()
     OPTIMIZATION_COMPLETE = auto()
-    VERIFICATION_COMPLETE = auto()
+    RANKING_COMPLETE = auto()
     SYSTEM_STOP = auto()
 
 
@@ -52,8 +49,6 @@ class BacktestSystem(AbstractSystem):
         self.context = context
         self.state = SystemState.INIT
         self.event_queue = asyncio.Queue()
-        self.optimizer = None
-        self.config = self.context.config_service.get("system")
         self.active_strategy = set()
         self.default_cap = CapType.A
 
@@ -72,13 +67,13 @@ class BacktestSystem(AbstractSystem):
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
             SystemState.OPTIMIZATION: {
-                Event.OPTIMIZATION_COMPLETE: SystemState.VERIFICATION,
+                Event.OPTIMIZATION_COMPLETE: SystemState.RANKING,
                 Event.REGENERATE: SystemState.GENERATE,
                 Event.RUN_BACKTEST: SystemState.BACKTEST,
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
-            SystemState.VERIFICATION: {
-                Event.VERIFICATION_COMPLETE: SystemState.TRADING,
+            SystemState.RANKING: {
+                Event.RANKING_COMPLETE: SystemState.TRADING,
                 Event.REGENERATE: SystemState.GENERATE,
                 Event.SYSTEM_STOP: SystemState.STOPPED,
             },
@@ -104,7 +99,7 @@ class BacktestSystem(AbstractSystem):
             SystemState.GENERATE: self._generate,
             SystemState.BACKTEST: self._run_backtest,
             SystemState.OPTIMIZATION: self._run_optimization,
-            SystemState.VERIFICATION: self._run_verification,
+            SystemState.RANKING: self._run_ranking,
             SystemState.TRADING: self._update_trading,
         }
 
@@ -116,35 +111,19 @@ class BacktestSystem(AbstractSystem):
     async def _generate(self):
         logger.info("Generate a new population")
 
-        futures_symbols = await self.query(
-            GetSymbols(self.context.datasource, self.default_cap)
-        )
-
-        generator = self.context.strategy_generator_factory.create(futures_symbols)
-
-        self.optimizer = self.context.strategy_optimizer_factory.create(
-            Optimizer.GENETIC,
-            generator,
-        )
-
-        self.optimizer.init()
+        await self.execute(InitGeneration(self.context.datasource, self.default_cap))
 
         await self.event_queue.put(Event.GENERATE_COMPLETE)
 
     async def _run_backtest(self):
-        population = self.optimizer.population
-        total_steps = len(population)
-        generation = self.optimizer.generation
+        population, generation = await self.query(GetGeneration())
 
-        logger.info(f"Run backtest for: {total_steps}, generation: {generation + 1}")
+        logger.info(f"Run backtest for generation: {generation + 1}")
 
-        estimator = Estimator(total_steps)
+        estimator = Estimator(len(population))
 
         for strategy in population:
-            account_size = await self.query(GetBalance())
-            await self.execute(UpdateAccountSize(account_size))
-
-            await self._process_backtest(strategy)
+            await self._process_backtest(strategy, generation)
 
             logger.info(f"Remaining backtest time: {estimator.remaining_time()}")
 
@@ -153,49 +132,49 @@ class BacktestSystem(AbstractSystem):
     async def _run_optimization(self):
         logger.info("Run optimization")
 
-        if self.optimizer.done:
+        population, generation = await self.query(GetGeneration())
+
+        max_gen = (
+            self.context.config_service.get("factor").get("max_generations", 5) - 1
+        )
+
+        if generation >= max_gen or len(population) < 3:
             return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
 
-        await self.optimizer.optimize()
+        await self.execute(EnvolveGeneration(self.context.datasource, self.default_cap))
 
         await self.event_queue.put(Event.RUN_BACKTEST)
 
-    async def _run_verification(self):
-        logger.info("Run verification")
+    async def _run_ranking(self):
+        logger.info("Run ranking")
 
-        strategies = await self.query(
-            GetTopStrategy(num=self.config["verify_strategy_num"])
-        )
+        population, generation = await self.query(GetGeneration())
 
-        if not len(strategies):
+        if not len(population):
             return await self.event_queue.put(Event.REGENERATE)
 
-        await self.execute(StrategyReset())
+        await self.execute(PortfolioReset())
 
-        all_strategy = set(strategies + self.optimizer.population)
+        all_strategy = set(population)
 
         for data in all_strategy:
-            account_size = await self.query(GetBalance())
-            await self.execute(UpdateAccountSize(account_size))
+            await self._process_backtest(data, generation, True)
 
-            await self._process_backtest(data, True)
-
-        await self.event_queue.put(Event.VERIFICATION_COMPLETE)
+        await self.event_queue.put(Event.RANKING_COMPLETE)
 
     async def _update_trading(self):
         logger.info("Deploy strategy for trading")
 
-        strategies = await self.query(
-            GetTopStrategy(num=self.config["active_strategy_num"], positive_pnl=True)
-        )
+        population, _ = await self.query(GetGeneration())
 
-        if not len(strategies):
+        if not len(population):
+            logger.info("Regenerate population")
             return await self.event_queue.put(Event.REGENERATE)
 
-        await self.dispatch(DeployStrategy(strategy=strategies))
+        await self.dispatch(DeployStrategy(strategy=population))
 
     async def _process_backtest(
-        self, data: tuple[Symbol, Timeframe, Strategy], verify=False
+        self, data: tuple[Symbol, Timeframe, Strategy], generation: int, verify=False
     ):
         symbol, timeframe, strategy = data
 
@@ -216,19 +195,18 @@ class BacktestSystem(AbstractSystem):
             ),
         ]
 
-        curr_gen = self.optimizer.generation
-        max_gen = self.context.config_service.get("optimization")["max_generations"]
-        window_size = self.context.config_service.get("backtest")["window_size"]
+        max_gen = self.context.config_service.get("factor").get("max_generations", 5)
+        window_size = self.context.config_service.get("backtest").get("window_size", 1)
 
         verify_sample = 2
         in_sample = window_size
-        out_sample = max((max_gen - curr_gen) * window_size - in_sample, 0)
+        out_sample = max((max_gen - generation) * window_size - in_sample, 0)
 
         in_lookback = Lookback.from_raw(verify_sample if verify else in_sample)
         out_lookback = None if verify else Lookback.from_raw(out_sample + verify_sample)
 
         logger.info(
-            f"Backtest: strategy={symbol}_{timeframe}{strategy}, in_lookback={in_lookback}, out_lookback={out_lookback}"
+            f"Backtest: gen={generation + 1}, strategy={symbol}_{timeframe}{strategy}, in_lookback={in_lookback}, out_lookback={out_lookback}"
         )
 
         await self.run(
@@ -238,7 +216,6 @@ class BacktestSystem(AbstractSystem):
         )
 
         await self.dispatch(BacktestEnded(symbol, timeframe, strategy))
-
         await self.wait()
 
         for actor in actors:

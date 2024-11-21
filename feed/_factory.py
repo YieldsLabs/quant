@@ -40,6 +40,7 @@ class FeedActorFactory(AbstractFeedActorFactory):
                 timeframe,
                 datasource,
                 self.datasource_factory,
+                self.config_service,
             )
         )
         actor.start()

@@ -108,39 +108,17 @@ class SmartRouter(AbstractEventManager):
             logger.info(f"Position for {symbol} already exists.")
             return
 
-        pending_order = position.entry_order()
-
-        entry_price = pending_order.price
-
-        num_order_breach = 0
+        pending_order = position.entry_order
 
         order_size_generator = self._calculate_order_slices(symbol, pending_order.size)
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = ask if position.side == PositionSide.LONG else bid
-            stop_loss = position.stop_loss
 
-            current_distance_to_stop_loss = abs(stop_loss - price)
-            distance_to_stop_loss = self.config.get("stop_loss_threshold") * abs(
-                entry_price - stop_loss
+            existing_position = await asyncio.to_thread(
+                self.exchange.fetch_position, symbol, position_side
             )
 
-            if distance_to_stop_loss > current_distance_to_stop_loss:
-                logger.warn(
-                    f"Order risk breached for {symbol}: Entry Price={entry_price}, "
-                    f"Stop Loss={stop_loss}, Distance to Stop Loss={distance_to_stop_loss}, "
-                    f"Current Distance={current_distance_to_stop_loss}"
-                )
-
-                num_order_breach += 1
-
-                if num_order_breach >= self.config.get("max_order_breach"):
-                    logger.warn(
-                        f"Max stop-loss breaches reached for {symbol}. Stopping order placement."
-                    )
-                    break
-
-            existing_position = self.exchange.fetch_position(symbol, position_side)
             current_position_size = (
                 existing_position.get("position_size", 0) if existing_position else 0
             )
@@ -155,13 +133,24 @@ class SmartRouter(AbstractEventManager):
 
             order_size = min(next(order_size_generator), remaining_size)
 
-            logger.info(
-                f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
-            )
+            if not await asyncio.to_thread(
+                self.exchange.has_open_orders,
+                symbol,
+                position_side,
+            ):
+                logger.info(
+                    f"Placing limit order for {symbol}: size={order_size}, price={price}, remaining size={remaining_size}"
+                )
 
-            self.exchange.create_limit_order(symbol, position_side, order_size, price)
+                await asyncio.to_thread(
+                    self.exchange.create_limit_order,
+                    symbol,
+                    position_side,
+                    order_size,
+                    price,
+                )
 
-            await asyncio.sleep(np.random.exponential(0.5))
+            await asyncio.sleep(np.random.exponential(0.1))
 
     @command_handler(ClosePosition)
     async def close_position(self, command: ClosePosition):
@@ -176,7 +165,7 @@ class SmartRouter(AbstractEventManager):
             logger.warn(f"Position for {symbol} does not exist. No action taken.")
             return
 
-        exit_order = position.exit_order()
+        exit_order = position.exit_order
 
         async for bid, ask in self.algo_price.next_value(symbol, self.exchange):
             price = bid if position.side == PositionSide.LONG else ask
@@ -186,7 +175,9 @@ class SmartRouter(AbstractEventManager):
                 f"Theoretical Exit Price: {exit_order.price}"
             )
 
-            existing_position = self.exchange.fetch_position(symbol, position_side)
+            existing_position = await asyncio.to_thread(
+                self.exchange.fetch_position, symbol, position_side
+            )
 
             if not existing_position:
                 logger.info(f"Position for {symbol} already closed.")
@@ -203,7 +194,13 @@ class SmartRouter(AbstractEventManager):
                 f"Remaining Position Size={current_position_size}"
             )
 
-            self.exchange.create_reduce_order(symbol, position_side, order_size, price)
+            await asyncio.to_thread(
+                self.exchange.create_reduce_order,
+                symbol,
+                position_side,
+                order_size,
+                price,
+            )
 
             await asyncio.sleep(np.random.exponential(0.5))
 
