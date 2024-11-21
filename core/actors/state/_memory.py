@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass, field
 from typing import Dict, Generic, Optional, TypeVar
 
 from ._rw import RWLock
@@ -7,10 +8,10 @@ K = TypeVar("K")
 V = TypeVar("V")
 
 
+@dataclass(repr=False, eq=False, slots=True)
 class InMemory(Generic[K, V]):
-    def __init__(self):
-        self._data: Dict[K, V] = {}
-        self._lock = RWLock()
+    _data: Dict[K, V] = field(default_factory=dict)
+    _lock: RWLock = field(default_factory=RWLock)
 
     async def get(self, key: K, fallback: Optional[V] = None) -> Optional[V]:
         await self._lock.acquire_reader()
