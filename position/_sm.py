@@ -90,7 +90,7 @@ class PositionStateMachine:
         self._state = InMemory[SMKey, PositionState]()
 
     async def process_event(self, event: PositionEvent, side: PositionSide):
-        key = (self._actor.symbol, self._actor.timeframe, side)
+        key = self._get_key(side)
 
         current_state = await self._state.get(key, PositionState.IDLE)
 
@@ -109,6 +109,9 @@ class PositionStateMachine:
         logger.debug(
             f"SM: key={key}, event={event}, side: {side}, curr_state={current_state}, next_state={next_state}"
         )
+
+    def _get_key(self, side: PositionSide) -> SMKey:
+        return self._actor.symbol, self._actor.timeframe, side
 
     @staticmethod
     def _is_valid_state(
