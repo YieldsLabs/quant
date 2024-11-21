@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Generic, Optional, TypeVar
 
 from ._rw import RWLock
+from ._signal import Signal
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -12,6 +13,10 @@ V = TypeVar("V")
 class InMemory(Generic[K, V]):
     _data: Dict[K, V] = field(default_factory=dict)
     _lock: RWLock = field(default_factory=RWLock)
+
+    on_set: Signal = field(default_factory=Signal)
+    on_delete: Signal = field(default_factory=Signal)
+    on_reset: Signal = field(default_factory=Signal)
 
     async def get(self, key: K, fallback: Optional[V] = None) -> Optional[V]:
         await self._lock.acquire_reader()
