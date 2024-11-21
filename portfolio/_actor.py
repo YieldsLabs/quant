@@ -54,7 +54,7 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         self.register_handler(GetPortfolioPerformance, self._get_performance)
 
     async def _init_state(self, event: Union[BacktestStarted, TradeStarted]):
-        key = self._performance_key(event.symbol, event.timeframe, event.strategy)
+        key = self._perf_key(event.symbol, event.timeframe, event.strategy)
         performance = await self._init_performance()
 
         await self.state.set(key, performance)
@@ -62,7 +62,7 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
     async def _get_performance(
         self, event: GetPortfolioPerformance
     ) -> Optional[Performance]:
-        key = self._performance_key(event.symbol, event.timeframe, event.strategy)
+        key = self._perf_key(event.symbol, event.timeframe, event.strategy)
         performance = await self.state.get(key)
 
         if not performance:
@@ -118,7 +118,5 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         )
 
     @staticmethod
-    def _perf_key(
-        symbol: Symbol, timeframe: Timeframe, strategy: Strategy
-    ) -> PerfKey:
+    def _perf_key(symbol: Symbol, timeframe: Timeframe, strategy: Strategy) -> PerfKey:
         return symbol, timeframe, strategy
