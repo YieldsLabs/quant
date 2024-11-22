@@ -247,7 +247,7 @@ class PopulationGenerator(AbstractStrategyGenerator):
             symbol, timeframe, strategy = next(self.iter)
             return Individual(symbol, timeframe, strategy)
         except StopIteration:
-            raise StopIteration
+            raise StopIteration from None
 
     def _init(self) -> Iterator:
         sampled_symbols = self._generate_symbols()

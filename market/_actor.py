@@ -47,9 +47,7 @@ class MarketActor(BaseActor, EventHandlerMixin):
         n_bars = int(event.n)
 
         for _ in range(n_bars):
-            next_bar = await self.ts.next_bar(
-                event.symbol, event.timeframe, curr_bar
-            )
+            next_bar = await self.ts.next_bar(event.symbol, event.timeframe, curr_bar)
 
             if not next_bar:
                 break
