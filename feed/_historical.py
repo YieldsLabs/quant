@@ -30,6 +30,7 @@ class HistoricalActor(FeedActor):
         super().__init__(symbol, timeframe, datasource)
         self.datasource_factory = datasource_factory
         self.config = config_service.get("feed")
+        self.bp = asyncio.Semaphore(10)
 
     async def on_receive(self, msg: StartHistoricalFeed):
         await self.collector.start(msg)
@@ -64,18 +65,18 @@ class HistoricalActor(FeedActor):
             await self.tell(
                 NewMarketDataReceived(self.symbol, self.timeframe, self.datasource, bar)
             )
-        await asyncio.sleep(0.0001)
 
     async def _outbox(self, batch: List[Bar]) -> None:
-        tasks = [
-            self.ask(
-                IngestMarketData(self.symbol, self.timeframe, self.datasource, bar)
-            )
-            for bar in batch
-            if bar.closed
-        ]
+        async with self.bp:
+            tasks = [
+                self.ask(
+                    IngestMarketData(self.symbol, self.timeframe, self.datasource, bar)
+                )
+                for bar in batch
+                if bar.closed
+            ]
 
-        await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks)
 
     @staticmethod
     async def batched(stream: AsyncIterator[Bar], batch_size: int):

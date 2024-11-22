@@ -68,44 +68,6 @@ class OHLCV:
         return cls.from_list([data[key] for key in ohlcv_keys])
 
     @property
-    def real_body(self) -> float:
-        return abs(self.open - self.close)
-
-    @property
-    def upper_shadow(self) -> float:
-        return self.high - max(self.open, self.close)
-
-    @property
-    def lower_shadow(self) -> float:
-        return min(self.open, self.close) - self.low
-
-    @property
-    def price_range(self) -> float:
-        return self.high - self.low
-
-    @property
-    def price_movement(self) -> float:
-        return self.close - self.open
-
-    @property
-    def body_range_ratio(self) -> float:
-        return self.real_body / self.price_range if self.price_range != 0 else 0
-
-    @property
-    def body_shadow_ratio(self) -> float:
-        total_shadow = self.upper_shadow + self.lower_shadow
-        return self.real_body / total_shadow if total_shadow != 0 else 0
-
-    @property
-    def shadow_range_ratio(self) -> float:
-        total_shadow = self.upper_shadow + self.lower_shadow
-        return total_shadow / self.price_range if self.price_range != 0 else 0
-
-    @property
-    def real_body_normalized(self) -> float:
-        return self.real_body / self.price_range if self.price_range != 0 else 0
-
-    @property
     def type(self) -> CandleType:
         if self.price_movement > 0:
             return CandleType.BULLISH
