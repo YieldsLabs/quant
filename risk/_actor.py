@@ -159,13 +159,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             f"SIDE: {side}, BAR: {bar}, TP: {tp}, SL: {sl}, RISK: {risk.has_risk}"
         )
 
-        state = None
-
-        if not risk.has_risk:
-            state = (risk, position, pt, performance)
-        else:
+        if risk.has_risk:
             await self._close_position(open_signal, side, bar)
 
+        state = (risk, position, pt, performance)
         await self._state.set(side, state)
 
     async def _handle_closed_position(self, event: PositionClosed):
