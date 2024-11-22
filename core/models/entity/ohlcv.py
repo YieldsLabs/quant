@@ -68,6 +68,10 @@ class OHLCV:
         return cls.from_list([data[key] for key in ohlcv_keys])
 
     @property
+    def price_movement(self) -> float:
+        return self.close - self.open
+
+    @property
     def type(self) -> CandleType:
         if self.price_movement > 0:
             return CandleType.BULLISH
