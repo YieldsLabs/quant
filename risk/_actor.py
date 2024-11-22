@@ -171,9 +171,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
     async def _handle_closed_position(self, event: PositionClosed):
         await self._state.delete(event.position.side)
 
-    async def _handle_risk(self, event: NewMarketDataReceived):
+    async def _handle_risk(self, _event: NewMarketDataReceived):
         sides = list(PositionSide)
-        tasks = [self._process_side(side, event) for side in sides]
+        tasks = [self._process_side(side) for side in sides]
         await asyncio.gather(*tasks)
 
     async def _process_side(self, side, event):
@@ -182,7 +182,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     async def _process_market(
         self,
-        event: NewMarketDataReceived,
         side: PositionSide,
     ):
         state = await self._state.get(side)
