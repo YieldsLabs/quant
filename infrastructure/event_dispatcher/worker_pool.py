@@ -18,6 +18,8 @@ class WorkerPool:
         num_piority_groups: int,
         event_handler: EventHandler,
         cancel_event: asyncio.Event,
+        alpha: float = 0.7,
+        beta: float = 0.3
     ):
         self.workers = []
         self.load_balancer = LoadBalancer(num_piority_groups)
@@ -26,6 +28,8 @@ class WorkerPool:
         self.cancel_event = cancel_event
         self._num_priority_groups = num_piority_groups
         self._initialize_workers(num_workers)
+        self.alpha = alpha
+        self.beta = beta
 
     async def dispatch_to_worker(self, event: Event, *args, **kwargs) -> None:
         priority_group = self.load_balancer.determine_priority_group(
@@ -60,7 +64,19 @@ class WorkerPool:
         return self.workers[group_start:group_end]
 
     def _choose_worker(self, group_workers: List[EventWorker]) -> EventWorker:
-        weights = np.array([1 / (worker.queue_size + 1) for worker in group_workers])
+        scores = np.array([worker.score for worker in group_workers])
+        queue_sizes, median_times = scores[:, 0], scores[:, 1]
+
+        norm_queue_sizes = (queue_sizes - queue_sizes.min() + 1) / (
+            queue_sizes.max() - queue_sizes.min() + 1
+        )
+        norm_median_times = (median_times - median_times.min() + 1) / (
+            median_times.max() - median_times.min() + 1
+        )
+
+        combined_scores = self.alpha * norm_queue_sizes + self.beta * norm_median_times
+
+        weights = 1 / (combined_scores + 1e-6)
         total_weight = sum(weights)
 
         choice_point = np.random.uniform(0, total_weight)
