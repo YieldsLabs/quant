@@ -96,10 +96,10 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     def _register_event_handlers(self):
         self.register_handler(NewMarketDataReceived, self._handle_risk)
-        self.register_handler(PositionOpened, self._open_position)
-        self.register_handler(PositionClosed, self._close_position)
+        self.register_handler(PositionOpened, self._handle_opened_position)
+        self.register_handler(PositionClosed, self._handle_closed_position)
 
-    async def _open_position(self, event: PositionOpened):
+    async def _handle_opened_position(self, event: PositionOpened):
         position = event.position
         side = position.side
         bar = position.open_bar
@@ -164,27 +164,11 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         if not risk.has_risk:
             state = (risk, position, pt, performance)
         else:
-            close_signal = Signal(
-                symbol=open_signal.symbol,
-                timeframe=open_signal.timeframe,
-                strategy=open_signal.strategy,
-                side=open_signal.side,
-                ohlcv=bar,
-                entry=open_signal.entry,
-                exit=bar.close,
-            )
-
-            event = (
-                RiskLongThresholdBreached(signal=close_signal)
-                if side == PositionSide.LONG
-                else RiskShortThresholdBreached(signal=close_signal)
-            )
-
-            await self.tell(event)
+            await self._close_position(open_signal, side, bar)
 
         await self._state.set(side, state)
 
-    async def _close_position(self, event: PositionClosed):
+    async def _handle_closed_position(self, event: PositionClosed):
         await self._state.delete(event.position.side)
 
     async def _handle_risk(self, event: NewMarketDataReceived):
@@ -214,17 +198,14 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         next_risk = risk
         open_signal = position.signal
         cbar = next_risk.curr_bar
-        prev_bar = min(event.bar.ohlcv, cbar)
 
         bars = await self.ask(
-            BatchBars(self.symbol, self.timeframe, prev_bar, self.max_bars)
+            BatchBars(self.symbol, self.timeframe, cbar, self.max_bars)
         )
 
         if not bars:
             logger.warning("No bars fetched, skipping market processing.")
             return state
-
-        next_price = (cbar.high + cbar.low + cbar.close) / 3.0
 
         for bar in bars:
             if self._has_anomaly(bar.timestamp, next_risk.time_points):
@@ -243,14 +224,12 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
             next_risk = next_risk.next(bar)
 
-            if next_risk.curr_bar != cbar:
-                cbar = next_risk.curr_bar
-                next_price = (cbar.high + cbar.low + cbar.close) / 3.0
-
             if next_risk.has_risk:
                 logger.info("Risk threshold breached, triggering position close.")
+                await self._close_position(open_signal, side, cbar)
                 break
 
+        cbar = next_risk.curr_bar
         next_price = (cbar.high + cbar.low + cbar.close) / 3.0
         pnl = pt.context_factor * (next_price - position.entry_price) * position.size
 
@@ -260,25 +239,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         rashev = ap.rachev_ratio
         ir = ap.information_ratio
 
-        if next_risk.has_risk:
-            close_signal = Signal(
-                symbol=open_signal.symbol,
-                timeframe=open_signal.timeframe,
-                strategy=open_signal.strategy,
-                side=open_signal.side,
-                ohlcv=cbar,
-                entry=open_signal.entry,
-                exit=next_price,
-            )
-
-            event = (
-                RiskLongThresholdBreached(signal=close_signal)
-                if side == PositionSide.LONG
-                else RiskShortThresholdBreached(signal=close_signal)
-            )
-
-            await self.tell(event)
-
         logger.info(
             f"{cbar.timestamp}:{open_signal.symbol}:{side} -> "
             f"PnL: {pnl:.4f}, SHARPE: {msharpe:.4f}, IR: {ir:.4f}, RSH: {rashev:.4f}, H: {cbar.high}, L: {cbar.low}, CPR: {next_price:.4f}, TP: {next_risk.tp:.4f}, SL: {next_risk.sl:.4f}"
@@ -287,6 +247,27 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         next_state = (next_risk, position, pt, performance)
 
         await self._state.set(side, next_state)
+
+    async def _close_position(self, open_signal, side, bar):
+        next_price = (bar.high + bar.low + bar.close) / 3.0
+
+        close_signal = Signal(
+            symbol=open_signal.symbol,
+            timeframe=open_signal.timeframe,
+            strategy=open_signal.strategy,
+            side=open_signal.side,
+            ohlcv=bar,
+            entry=open_signal.entry,
+            exit=next_price,
+        )
+
+        event = (
+            RiskLongThresholdBreached(signal=close_signal)
+            if side == PositionSide.LONG
+            else RiskShortThresholdBreached(signal=close_signal)
+        )
+
+        await self.tell(event)
 
     def _has_anomaly(self, bar_timestamp: float, time_points: list[float]) -> bool:
         if len(time_points) < 3:
