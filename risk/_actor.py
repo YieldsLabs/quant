@@ -176,9 +176,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         tasks = [self._process_side(side) for side in sides]
         await asyncio.gather(*tasks)
 
-    async def _process_side(self, side, event):
+    async def _process_side(self, side):
         async with self._locks.get(side):
-            await self._process_market(event, side)
+            await self._process_market(side)
 
     async def _process_market(
         self,
