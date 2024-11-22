@@ -94,8 +94,8 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
     async def _init_performance(self):
         account_size = await self.ask(GetBalance())
         risk_per_trade = self.config.get("risk_per_trade", 0.0001)
-        performance = Performance(account_size, risk_per_trade)
-        return performance
+
+        return Performance(account_size, risk_per_trade)
 
     async def _notify_update(
         self, key: PerfKey, old_value: Performance, new_value: Performance
