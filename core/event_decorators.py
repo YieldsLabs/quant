@@ -42,8 +42,10 @@ def eda(cls: Type):
             return await self._dispatcher.run(task, *args, **kwargs)
 
         async def wait(self):
-            await asyncio.sleep(1)
-            await self._dispatcher.wait()
+            try:
+                await asyncio.wait_for(self._dispatcher.wait(), timeout=10)
+            except asyncio.TimeoutError:
+                pass
 
         def _unregister(self):
             for event_type, handler in self._registered_handlers:
