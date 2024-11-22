@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Callable, List
 
 
@@ -9,5 +10,17 @@ class Signal:
         self._subscribers.append(subscriber)
 
     def emit(self, *args, **kwargs) -> None:
+        tasks = []
+
         for subscriber in self._subscribers:
-            subscriber(*args, **kwargs)
+            if asyncio.iscoroutinefunction(subscriber):
+                tasks.append(subscriber(*args, **kwargs))
+            else:
+                subscriber(*args, **kwargs)
+
+        if tasks:
+            asyncio.create_task(self._run_async_subscribers(tasks))
+
+    @staticmethod
+    async def _run_async_subscribers(tasks: List[asyncio.Future]) -> None:
+        await asyncio.gather(*tasks)

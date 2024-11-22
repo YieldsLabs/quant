@@ -1,3 +1,4 @@
+import asyncio
 from typing import Union
 
 from core.actors import BaseActor
@@ -40,45 +41,34 @@ class MarketActor(BaseActor, EventHandlerMixin):
         return await self.ts.prev_bar(event.symbol, event.timeframe, event.ohlcv)
 
     async def _handle_batch_bars(self, event: BatchBars) -> list[OHLCV]:
-        prev_bar = event.ohlcv
+        bars = []
+
+        curr_bar = event.ohlcv
         n_bars = int(event.n)
-        bars = [prev_bar]
 
-        for _ in range(n_bars - 1):
-            next_bar = await self.ts.next_bar(event.symbol, event.timeframe, prev_bar)
+        for _ in range(n_bars):
+            next_bar = await self.ts.next_bar(event.symbol, event.timeframe, curr_bar)
 
-            if next_bar is None:
+            if not next_bar:
                 break
 
             bars.append(next_bar)
-            prev_bar = next_bar
 
-        if len(bars) < n_bars:
-            first_valid_bar = bars[0]
+        remaining = n_bars - len(bars)
 
-            async def fetch_past_bars(starting_bar, count):
-                past_bars = []
-                current_bar = starting_bar
+        if remaining > 0:
+            past_bars = await asyncio.gather(
+                *[
+                    self.ts.prev_bar(event.symbol, event.timeframe, bar)
+                    for bar in bars[:remaining]
+                ]
+            )
 
-                for _ in range(count):
-                    prev_bar = await self.ts.prev_bar(
-                        event.symbol, event.timeframe, current_bar
-                    )
-
-                    if prev_bar is None:
-                        break
-
-                    past_bars.append(prev_bar)
-                    current_bar = prev_bar
-                return past_bars
-
-            remaining = n_bars - len(bars)
-            past_bars = await fetch_past_bars(first_valid_bar, remaining)
-            bars.extend(past_bars)
+            bars.extend(filter(None, past_bars))
 
         bars = sorted(bars, key=lambda x: x.timestamp)
 
-        return bars[:n_bars]
+        return bars
 
     async def _handle_back_n_bars(self, event: BackNBars) -> OHLCV:
         return await self.ts.back_n_bars(

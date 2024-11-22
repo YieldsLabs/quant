@@ -157,7 +157,8 @@ class PositionActor(StrategyActor):
         return True
 
     async def _process_backtest_close(self, side: PositionSide):
-        position = await self._state.get(self._get_key(side))
+        key = self._get_key(side)
+        position = await self._state.get(key)
 
         if position:
             open_signal = position.signal
@@ -172,7 +173,7 @@ class PositionActor(StrategyActor):
             )
 
             closed_position = position.close_position(close_signal)
-
+            await self._state.set(key, closed_position)
             await self.tell(PositionCloseRequested(closed_position))
 
     @staticmethod

@@ -40,6 +40,9 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         self.config = config_service.get("portfolio")
         self.state = InMemory[PerfKey, Performance]()
 
+        self.state.on_set.connect(self._notify_update)
+        self.state.on_set.connect(self._log_update)
+
     async def on_receive(self, event: PortfolioEvent):
         return await self.handle_event(event)
 
@@ -51,7 +54,7 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
         self.register_handler(GetPortfolioPerformance, self._get_performance)
 
     async def _init_state(self, event: Union[BacktestStarted, TradeStarted]):
-        key = self._performance_key(event.symbol, event.timeframe, event.strategy)
+        key = self._perf_key(event.symbol, event.timeframe, event.strategy)
         performance = await self._init_performance()
 
         await self.state.set(key, performance)
@@ -59,7 +62,7 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
     async def _get_performance(
         self, event: GetPortfolioPerformance
     ) -> Optional[Performance]:
-        key = self._performance_key(event.symbol, event.timeframe, event.strategy)
+        key = self._perf_key(event.symbol, event.timeframe, event.strategy)
         performance = await self.state.get(key)
 
         if not performance:
@@ -74,7 +77,7 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
     async def _update_state(self, event: PositionClosed):
         position = event.position
 
-        key = self._performance_key(
+        key = self._perf_key(
             position.signal.symbol,
             position.signal.timeframe,
             position.signal.strategy,
@@ -84,36 +87,36 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
 
         if performance and position.is_valid:
             next_performance = performance.next(position.pnl, position.fee)
-
             await self.state.set(key, next_performance)
-
-            logger.info(
-                f"{position.signal.symbol}_{position.signal.timeframe}:{position.side}{position.signal.strategy}: "
-                f"Trades={performance.total_trades}, Hit={performance.hit_ratio:.0%}, IR={performance.information_ratio:.4f}, "
-                f"CAGR={performance.cagr:.2%}, Return={performance.expected_return:.2%}, "
-                f"Volatility={performance.ann_volatility:.2%}, Sharpe={performance.smart_sharpe_ratio:.4f}, "
-                f"Sortino={performance.sortino_ratio:.4f}, Omega={performance.omega_ratio:.2f}, PnL={performance.total_pnl:.4f}, Fee={performance.total_fee:.4f}"
-            )
-
-            await self.tell(
-                PortfolioPerformanceUpdated(
-                    position.signal.symbol,
-                    position.signal.timeframe,
-                    position.signal.strategy,
-                    next_performance,
-                )
-            )
         else:
             logger.warning(f"Invalid position: {position}")
 
     async def _init_performance(self):
         account_size = await self.ask(GetBalance())
         risk_per_trade = self.config.get("risk_per_trade", 0.0001)
-        performance = Performance(account_size, risk_per_trade)
-        return performance
+
+        return Performance(account_size, risk_per_trade)
+
+    async def _notify_update(
+        self, key: PerfKey, old_value: Performance, new_value: Performance
+    ):
+        symbol, timeframe, strategy = key
+
+        await self.tell(
+            PortfolioPerformanceUpdated(symbol, timeframe, strategy, new_value)
+        )
+
+    def _log_update(self, key: PerfKey, old_value: Performance, new_value: Performance):
+        symbol, timeframe, strategy = key
+
+        logger.info(
+            f"{symbol}_{timeframe}{strategy}, "
+            f"Trades={new_value.total_trades}, Hit={new_value.hit_ratio:.0%}, IR={new_value.information_ratio:.4f}, "
+            f"CAGR={new_value.cagr:.2%}, Return={new_value.expected_return:.2%}, "
+            f"Volatility={new_value.ann_volatility:.2%}, Sharpe={new_value.smart_sharpe_ratio:.4f}, "
+            f"Sortino={new_value.sortino_ratio:.4f}, Omega={new_value.omega_ratio:.2f}, PnL={new_value.total_pnl:.4f}, Fee={new_value.total_fee:.4f}"
+        )
 
     @staticmethod
-    def _performance_key(
-        symbol: Symbol, timeframe: Timeframe, strategy: Strategy
-    ) -> PerfKey:
+    def _perf_key(symbol: Symbol, timeframe: Timeframe, strategy: Strategy) -> PerfKey:
         return symbol, timeframe, strategy
