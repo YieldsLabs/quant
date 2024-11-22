@@ -224,6 +224,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             logger.warning("No bars fetched, skipping market processing.")
             return state
 
+        next_price = (cbar.high + cbar.low + cbar.close) / 3.0
+
         for bar in bars:
             if self._has_anomaly(bar.timestamp, next_risk.time_points):
                 logger.debug(f"Anomalous bar skipped: {bar.timestamp}")
@@ -241,7 +243,9 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
             next_risk = next_risk.next(bar)
 
-            cbar = next_risk.curr_bar
+            if next_risk.curr_bar != cbar:
+                cbar = next_risk.curr_bar
+                next_price = (cbar.high + cbar.low + cbar.close) / 3.0
 
             if next_risk.has_risk:
                 logger.info("Risk threshold breached, triggering position close.")
