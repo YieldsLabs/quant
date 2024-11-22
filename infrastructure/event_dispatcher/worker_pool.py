@@ -76,7 +76,7 @@ class WorkerPool:
 
         combined_scores = self.alpha * norm_queue_sizes + self.beta * norm_median_times
 
-        weights = 1 / (combined_scores + 1e-6)
+        weights = 1 / (combined_scores + np.finfo(float).eps)
         total_weight = sum(weights)
 
         choice_point = np.random.uniform(0, total_weight)
