@@ -70,7 +70,7 @@ class MarketActor(BaseActor, EventHandlerMixin):
 
         bars = sorted(bars, key=lambda x: x.timestamp)
 
-        return bars[:n_bars]
+        return bars
 
     async def _handle_back_n_bars(self, event: BackNBars) -> OHLCV:
         return await self.ts.back_n_bars(
