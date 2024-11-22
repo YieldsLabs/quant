@@ -178,7 +178,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
     async def _process_side(self, side, event):
         async with self._locks.get(side):
-            await self._process_market(event, side)
+            await self._process_market(side)
 
     async def _process_market(
         self,
