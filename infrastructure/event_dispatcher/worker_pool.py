@@ -19,7 +19,7 @@ class WorkerPool:
         event_handler: EventHandler,
         cancel_event: asyncio.Event,
         alpha: float = 0.7,
-        beta: float = 0.3
+        beta: float = 0.3,
     ):
         self.workers = []
         self.load_balancer = LoadBalancer(num_piority_groups)

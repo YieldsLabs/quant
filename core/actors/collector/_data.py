@@ -32,14 +32,16 @@ class DataCollector:
 
     async def stop(self):
         self._stop_event.set()
-        self._queue.put_nowait(STOP)
+        await self._queue.put(STOP)
 
         for task in self._tasks:
             task.cancel()
 
+        tasks_to_cancel = [task for task in self._tasks if not task.done()]
+
         try:
             await asyncio.wait_for(
-                asyncio.gather(*self._tasks, return_exceptions=True), timeout=5
+                asyncio.gather(*tasks_to_cancel, return_exceptions=True), timeout=5
             )
         except asyncio.TimeoutError:
             logger.warning("Timeout while waiting for tasks to finish.")
@@ -74,6 +76,7 @@ class DataCollector:
             while not self._stop_event.is_set():
                 data = await self._queue.get()
                 if data is STOP:
+                    self._queue.task_done()
                     break
                 try:
                     await consumer(data)
