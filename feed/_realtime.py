@@ -47,58 +47,53 @@ class RealtimeActor(FeedActor):
 
     @Producer
     async def _kline_producer(self, msg: StartRealtimeFeed):
-        async with AsyncRealTimeData(
-            self.datasource_factory.create(
-                msg.datasource, ProtocolType.WS, WSType.PUBLIC
-            ),
+        async for bars in self._stream_producer(
             KlineStreamStrategy(self.timeframe, self.symbol),
-        ) as stream:
-            async for bars in stream:
-                yield bars
+            ProtocolType.WS,
+            WSType.PUBLIC,
+            msg,
+        ):
+            yield bars
 
     @Producer
     async def _ob_producer(self, msg: StartRealtimeFeed):
-        async with AsyncRealTimeData(
-            self.datasource_factory.create(
-                msg.datasource, ProtocolType.WS, WSType.PUBLIC
-            ),
+        async for orders in self._stream_producer(
             OrderBookStreamStrategy(self.symbol, self.config.get("dom", 15)),
-        ) as stream:
-            async for orders in stream:
-                yield orders
+            ProtocolType.WS,
+            WSType.PUBLIC,
+            msg,
+        ):
+            yield orders
 
     @Producer
     async def _liquidation_producer(self, msg: StartRealtimeFeed):
-        async with AsyncRealTimeData(
-            self.datasource_factory.create(
-                msg.datasource, ProtocolType.WS, WSType.PUBLIC
-            ),
+        async for liquidations in self._stream_producer(
             LiquidationStreamStrategy(self.symbol),
-        ) as stream:
-            async for liquidations in stream:
-                yield liquidations
+            ProtocolType.WS,
+            WSType.PUBLIC,
+            msg,
+        ):
+            yield liquidations
 
     @Producer
     async def _order_producer(self, msg: StartRealtimeFeed):
-        async with AsyncRealTimeData(
-            self.datasource_factory.create(
-                msg.datasource, ProtocolType.WS, WSType.PRIVATE
-            ),
+        async for order in self._stream_producer(
             OrderStreamStrategy(self.symbol),
-        ) as stream:
-            async for order in stream:
-                yield order
+            ProtocolType.WS,
+            WSType.PRIVATE,
+            msg,
+        ):
+            yield order
 
     @Producer
     async def _position_producer(self, msg: StartRealtimeFeed):
-        async with AsyncRealTimeData(
-            self.datasource_factory.create(
-                msg.datasource, ProtocolType.WS, WSType.PRIVATE
-            ),
+        async for position in self._stream_producer(
             PositionStreamStrategy(self.symbol),
-        ) as stream:
-            async for position in stream:
-                yield position
+            ProtocolType.WS,
+            WSType.PRIVATE,
+            msg,
+        ):
+            yield position
 
     @Consumer
     async def _consumer(self, data: List[Bar]):
@@ -129,3 +124,11 @@ class RealtimeActor(FeedActor):
                 )
             )
             logger.info(f"{self.symbol}_{self.timeframe}:{order}")
+
+    async def _stream_producer(self, strategy, protocol_type, ws_type, msg):
+        async with AsyncRealTimeData(
+            self.datasource_factory.create(msg.datasource, protocol_type, ws_type),
+            strategy,
+        ) as stream:
+            async for data in stream:
+                yield data
