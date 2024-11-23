@@ -63,7 +63,7 @@ class StrategyRef:
 
         action = Action.from_raw(raw_action)
 
-        side = SignalSide.BUY if action in Action.GO_LONG else SignalSide.SELL
+        side = SignalSide.BUY if action == Action.GO_LONG else SignalSide.SELL
 
         action_event_map = {
             Action.GO_LONG: GoLongSignalReceived(
