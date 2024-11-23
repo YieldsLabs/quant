@@ -90,26 +90,6 @@ class StrategyRef:
                     entry=price,
                 ),
             ),
-            Action.EXIT_LONG: ExitLongSignalReceived(
-                signal=Signal(
-                    symbol,
-                    timeframe,
-                    strategy,
-                    side,
-                    ohlcv,
-                    exit=price,
-                ),
-            ),
-            Action.EXIT_SHORT: ExitShortSignalReceived(
-                signal=Signal(
-                    symbol,
-                    timeframe,
-                    strategy,
-                    side,
-                    ohlcv,
-                    exit=price,
-                ),
-            ),
         }
 
         return action_event_map.get(action)

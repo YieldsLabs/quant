@@ -22,10 +22,6 @@ from factor.confirm.eom import EomConfirm
 from factor.confirm.rsi_signalline import RsiSignalLineConfirm
 from factor.confirm.stc import StcConfirm
 from factor.confirm.wpr import WprConfirm
-from factor.exit.highlow import HighLowExit
-from factor.exit.mad import MadExit
-from factor.exit.rex import RexExit
-from factor.exit.trix import TrixExit
 from factor.pulse.adx import AdxPulse
 from factor.pulse.chop import ChopPulse
 from factor.pulse.dumb import DumbPulse
@@ -226,14 +222,6 @@ class PopulationGenerator(AbstractStrategyGenerator):
             DumbPulse(),
         ]
 
-    def exit(self):
-        return [
-            HighLowExit(),
-            TrixExit(),
-            RexExit(),
-            MadExit(),
-        ]
-
     def __iter__(self):
         return self
 
@@ -285,7 +273,6 @@ class PopulationGenerator(AbstractStrategyGenerator):
                         confirm=np.random.choice(self.confirm()),
                         pulse=np.random.choice(self.pulse()),
                         baseline=np.random.choice(self.baseline()),
-                        exit=np.random.choice(self.exit()),
                     )
                 )
             if len(strategies) >= self.n_samples:
@@ -305,7 +292,6 @@ class PopulationGenerator(AbstractStrategyGenerator):
                     confirm=np.random.choice(self.confirm()),
                     pulse=np.random.choice(self.pulse()),
                     baseline=np.random.choice(self.baseline()),
-                    exit=np.random.choice(self.exit()),
                 )
             )
 

@@ -15,7 +15,6 @@ class Strategy:
     confirm: Indicator
     pulse: Indicator
     baseline: Indicator
-    exit: Indicator
 
     @property
     def parameters(self):
@@ -24,7 +23,6 @@ class Strategy:
             self.confirm.to_dict(),
             self.pulse.to_dict(),
             self.baseline.to_dict(),
-            self.exit.to_dict(),
         )
 
     def _format_parameters(self, indicator):
@@ -49,9 +47,7 @@ class Strategy:
         baseline_ = (
             f"_BSLN{self.baseline.type}:{self._format_parameters(self.baseline)}"
         )
-        exit_ = f"_EXT{self.exit.type}:{self._format_parameters(self.exit)}"
-
-        return f"{signal_}{confirm_}{pulse_}{baseline_}{exit_}"
+        return f"{signal_}{confirm_}{pulse_}{baseline_}"
 
     def __hash__(self) -> int:
         return hash(str(self))

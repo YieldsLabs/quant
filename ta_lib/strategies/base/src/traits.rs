@@ -23,11 +23,6 @@ pub trait BaseLine: Send + Sync {
     fn close(&self, data: &OHLCVSeries) -> (Rule, Rule);
 }
 
-pub trait Exit: Send + Sync {
-    fn lookback(&self) -> usize;
-    fn close(&self, data: &OHLCVSeries) -> (Rule, Rule);
-}
-
 pub trait Strategy {
     fn next(&mut self, bar: &OHLCV) -> TradeAction;
 }

@@ -29,8 +29,6 @@ class GeneticAttributes(Enum):
     CONFIRM = auto()
     PULSE = auto()
     BASELINE = auto()
-    STOP_LOSS = auto()
-    EXIT = auto()
 
     def __str__(self):
         return self.name.lower()

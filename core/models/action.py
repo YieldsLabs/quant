@@ -4,8 +4,6 @@ from enum import Enum
 class Action(Enum):
     GO_LONG = 1
     GO_SHORT = 2
-    EXIT_LONG = 3
-    EXIT_SHORT = 4
     DO_NOTHING = 0
 
     @classmethod
