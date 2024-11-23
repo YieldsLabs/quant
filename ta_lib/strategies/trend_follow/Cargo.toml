@@ -13,7 +13,6 @@ repository.workspace = true
 core = { path = "../../core" }
 timeseries = { path = "../../timeseries" }
 base = { path = "../base" }
-stop_loss = { path = "../stop_loss" }
 signal = { path = "../signal" }
 confirm = { path = "../confirm" }
 pulse = { path = "../pulse" }

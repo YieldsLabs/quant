@@ -1,10 +1,9 @@
 use crate::source::{Source, SourceType};
-use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
+use crate::{BaseLine, Confirm, Exit, Pulse, Signal, Strategy};
 use core::prelude::*;
 use timeseries::prelude::*;
 
 const DEFAULT_LOOKBACK: Period = 16;
-const DEFAULT_STOP_LEVEL: Scalar = -1.0;
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {
@@ -15,19 +14,12 @@ pub enum TradeAction {
     DoNothing,
 }
 
-#[derive(Debug)]
-pub struct StopLossLevels {
-    pub long: Scalar,
-    pub short: Scalar,
-}
-
 pub struct BaseStrategy {
     timeseries: Box<dyn TimeSeries>,
     signal: Box<dyn Signal>,
     confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
-    stop_loss: Box<dyn StopLoss>,
     exit: Box<dyn Exit>,
     lookback_period: usize,
 }
@@ -39,7 +31,6 @@ impl BaseStrategy {
         confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
         base_line: Box<dyn BaseLine>,
-        stop_loss: Box<dyn StopLoss>,
         exit: Box<dyn Exit>,
     ) -> Self {
         let lookbacks = [
@@ -47,7 +38,6 @@ impl BaseStrategy {
             confirm.lookback(),
             pulse.lookback(),
             base_line.lookback(),
-            stop_loss.lookback(),
             exit.lookback(),
             DEFAULT_LOOKBACK,
         ];
@@ -59,7 +49,6 @@ impl BaseStrategy {
             confirm,
             pulse,
             base_line,
-            stop_loss,
             exit,
             lookback_period,
         }
@@ -100,24 +89,6 @@ impl Strategy for BaseStrategy {
             _ => TradeAction::DoNothing,
         }
     }
-
-    fn stop_loss(&self, bar: &OHLCV) -> StopLossLevels {
-        if !self.can_process() {
-            return StopLossLevels {
-                long: DEFAULT_STOP_LEVEL,
-                short: DEFAULT_STOP_LEVEL,
-            };
-        }
-
-        let ohlcv = self.ohlcv();
-        let bar_index = ohlcv.bar_index(bar);
-        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&ohlcv, bar_index);
-
-        StopLossLevels {
-            long: stop_loss_long,
-            short: stop_loss_short,
-        }
-    }
 }
 
 impl BaseStrategy {
@@ -156,20 +127,11 @@ impl BaseStrategy {
             .get(bar_index)
             .unwrap_or(NAN)
     }
-
-    fn stop_loss_levels(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (Scalar, Scalar) {
-        let (sl_long_find, sl_short_find) = self.stop_loss.find(ohlcv);
-
-        let stop_loss_long = sl_long_find.get(bar_index).unwrap_or(NAN);
-        let stop_loss_short = sl_short_find.get(bar_index).unwrap_or(NAN);
-
-        (stop_loss_long, stop_loss_short)
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss};
+    use crate::{BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal};
     use core::Series;
     use timeseries::{BaseTimeSeries, OHLCVSeries};
 
@@ -238,25 +200,6 @@ mod tests {
         }
     }
 
-    struct MockStopLoss {
-        period: usize,
-        multi: f32,
-    }
-
-    impl StopLoss for MockStopLoss {
-        fn lookback(&self) -> usize {
-            self.period
-        }
-
-        fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-            let len = data.len();
-            (
-                Series::from(vec![5.0; len]) * self.multi,
-                Series::from(vec![6.0; len]) * self.multi,
-            )
-        }
-    }
-
     struct MockExit {}
 
     impl Exit for MockExit {
@@ -278,10 +221,6 @@ mod tests {
             Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
-            Box::new(MockStopLoss {
-                period: 2,
-                multi: 2.0,
-            }),
             Box::new(MockExit {}),
         );
         assert_eq!(strategy.lookback_period, 16);

@@ -15,7 +15,6 @@ class Strategy:
     confirm: Indicator
     pulse: Indicator
     baseline: Indicator
-    stop_loss: Indicator
     exit: Indicator
 
     @property
@@ -25,7 +24,6 @@ class Strategy:
             self.confirm.to_dict(),
             self.pulse.to_dict(),
             self.baseline.to_dict(),
-            self.stop_loss.to_dict(),
             self.exit.to_dict(),
         )
 
@@ -51,12 +49,9 @@ class Strategy:
         baseline_ = (
             f"_BSLN{self.baseline.type}:{self._format_parameters(self.baseline)}"
         )
-        stop_loss = (
-            f"_STPLSS{self.stop_loss.type}:{self._format_parameters(self.stop_loss)}"
-        )
         exit_ = f"_EXT{self.exit.type}:{self._format_parameters(self.exit)}"
 
-        return f"{signal_}{confirm_}{pulse_}{baseline_}{stop_loss}{exit_}"
+        return f"{signal_}{confirm_}{pulse_}{baseline_}{exit_}"
 
     def __hash__(self) -> int:
         return hash(str(self))

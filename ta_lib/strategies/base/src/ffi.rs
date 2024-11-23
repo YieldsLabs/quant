@@ -1,6 +1,4 @@
-use crate::{
-    BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss, Strategy, TradeAction,
-};
+use crate::{BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, Strategy, TradeAction};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -22,7 +20,6 @@ pub fn register_strategy(
     confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
-    stop_loss: Box<dyn StopLoss>,
     exit: Box<dyn Exit>,
 ) -> i32 {
     let mut strategies = STRATEGIES.write().unwrap();
@@ -30,7 +27,7 @@ pub fn register_strategy(
     let strategy_id = generate_strategy_id();
 
     let strategy = Box::new(BaseStrategy::new(
-        timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
+        timeseries, signal, confirm, pulse, base_line, exit,
     ));
 
     strategies.insert(strategy_id, strategy);
@@ -78,34 +75,6 @@ pub fn strategy_next(
         }
     } else {
         (-1, 0.0)
-    }
-}
-
-#[no_mangle]
-pub fn strategy_stop_loss(
-    strategy_id: i32,
-    ts: i64,
-    open: f32,
-    high: f32,
-    low: f32,
-    close: f32,
-    volume: f32,
-) -> (f32, f32) {
-    let strategies = STRATEGIES.read().unwrap();
-
-    if let Some(strategy) = strategies.get(&strategy_id) {
-        let bar = OHLCV {
-            ts,
-            open,
-            high,
-            low,
-            close,
-            volume,
-        };
-        let stop_loss_levels = strategy.stop_loss(&bar);
-        (stop_loss_levels.long, stop_loss_levels.short)
-    } else {
-        (-1.0, -1.0)
     }
 }
 
@@ -177,18 +146,6 @@ mod tests {
         }
     }
 
-    struct MockStopLoss;
-    impl StopLoss for MockStopLoss {
-        fn lookback(&self) -> usize {
-            PERIOD
-        }
-
-        fn find(&self, bar: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-            let len = bar.len();
-            (Series::zero(len), Series::zero(len))
-        }
-    }
-
     struct MockExit;
     impl Exit for MockExit {
         fn lookback(&self) -> usize {
@@ -208,12 +165,9 @@ mod tests {
         let confirm = Box::new(MockConfirm);
         let pulse = Box::new(MockPulse);
         let base_line = Box::new(MockBaseLine);
-        let stop_loss = Box::new(MockStopLoss);
         let exit = Box::new(MockExit);
 
-        let strategy_id = register_strategy(
-            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
-        );
+        let strategy_id = register_strategy(timeseries, signal, confirm, pulse, base_line, exit);
 
         assert!(strategy_id >= 0);
     }
@@ -225,12 +179,9 @@ mod tests {
         let confirm = Box::new(MockConfirm);
         let pulse = Box::new(MockPulse);
         let base_line = Box::new(MockBaseLine);
-        let stop_loss = Box::new(MockStopLoss);
         let exit = Box::new(MockExit);
 
-        let strategy_id = register_strategy(
-            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
-        );
+        let strategy_id = register_strategy(timeseries, signal, confirm, pulse, base_line, exit);
 
         assert_eq!(strategy_unregister(strategy_id), 1);
     }
@@ -242,7 +193,6 @@ mod tests {
         let confirm = Box::new(MockConfirm);
         let pulse = Box::new(MockPulse);
         let base_line = Box::new(MockBaseLine);
-        let stop_loss = Box::new(MockStopLoss);
         let exit = Box::new(MockExit);
         let ohlcv: Vec<OHLCV> = vec![
             OHLCV {
@@ -415,9 +365,7 @@ mod tests {
             },
         ];
 
-        let strategy_id = register_strategy(
-            timeseries, signal, confirm, pulse, base_line, stop_loss, exit,
-        );
+        let strategy_id = register_strategy(timeseries, signal, confirm, pulse, base_line, exit);
 
         let mut res = vec![];
         for bar in &ohlcv {
