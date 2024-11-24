@@ -92,7 +92,13 @@ class PortfolioActor(BaseActor, EventHandlerMixin):
             logger.warning(f"Invalid position: {position}")
 
     async def _init_performance(self):
-        account_size = await self.ask(GetBalance())
+        result = await self.ask(GetBalance())
+
+        account_size = (
+            self.config.get("account_size", 1000)
+            if result.is_err()
+            else result.unwrap()
+        )
         risk_per_trade = self.config.get("risk_per_trade", 0.0001)
 
         return Performance(account_size, risk_per_trade)

@@ -10,6 +10,8 @@ from core.events.position import (
     PositionInitialized,
 )
 from core.mixins import EventHandlerMixin
+from core.models.entity.order import Order
+from core.models.order_type import OrderStatus, OrderType
 from core.models.symbol import Symbol
 from core.models.timeframe import Timeframe
 from core.queries.position import GetClosePosition, GetOpenPosition, HasPosition
@@ -40,9 +42,15 @@ class MarketOrderActor(StrategyActor, EventHandlerMixin):
 
         await self.ask(OpenPosition(current_position))
 
-        filled_order = await self.ask(GetOpenPosition(current_position))
+        result = await self.ask(GetOpenPosition(current_position))
 
-        current_position = current_position.fill_order(filled_order)
+        order = (
+            Order(status=OrderStatus.FAILED, type=OrderType.PAPER, price=0, size=0)
+            if result.is_err()
+            else result.unwrap()
+        )
+
+        current_position = current_position.fill_order(order)
 
         logger.info(f"Position to Open: {current_position}")
 
@@ -56,10 +64,40 @@ class MarketOrderActor(StrategyActor, EventHandlerMixin):
 
         logger.debug(f"To Close Position: {current_position}")
 
-        while await self.ask(HasPosition(current_position)):
-            await self.ask(ClosePosition(current_position))
+        max_attempts = 10
+        attempts = 0
 
-        order = await self.ask(GetClosePosition(current_position))
+        while attempts < max_attempts:
+            result = await self.ask(HasPosition(current_position))
+
+            if result.is_err():
+                break
+
+            has_position = result.unwrap()
+
+            if not has_position:
+                break
+
+            result = await self.ask(ClosePosition(current_position))
+
+            if result.is_err():
+                break
+
+            order = result.unwrap()
+            current_position = current_position.fill_order(order)
+            logger.debug(
+                f"Position after close attempt {attempts + 1}: {current_position}"
+            )
+
+            attempts += 1
+
+        result = await self.ask(GetClosePosition(current_position))
+
+        order = (
+            Order(status=OrderStatus.FAILED, type=OrderType.PAPER, price=0, size=0)
+            if result.is_err()
+            else result.unwrap()
+        )
 
         current_position = current_position.fill_order(order)
 

@@ -1,12 +1,13 @@
 import asyncio
-from typing import Any, Callable, Optional, Type, Union
+from typing import Callable, Optional, Type, Union
 
 from core.commands._base import Command
 from core.events._base import Event, EventEnded
 from core.interfaces.abstract_config import AbstractConfig
 from core.queries._base import Query
+from core.result import Result
 from core.tasks._base import Task
-from infrastructure.event_store.event_store import EventStore
+from infrastructure.event_store import EventStore
 
 from .event_handler import EventHandler
 from .worker_pool import WorkerPool
@@ -61,15 +62,15 @@ class EventDispatcher(metaclass=SingletonMeta):
     def unregister(self, event_class: Type[Event], handler: Callable) -> None:
         self._event_handler.unregister(event_class, handler)
 
-    async def execute(self, command: Command, *args, **kwargs) -> None:
+    async def execute(self, command: Command, *args, **kwargs) -> Result:
         await self._dispatch_to_poll(command, self.command_worker_pool, *args, **kwargs)
-        await command.wait_for_execution()
+        return await command.wait_for_execution()
 
-    async def query(self, query: Query, *args, **kwargs) -> Any:
+    async def query(self, query: Query, *args, **kwargs) -> Result:
         await self._dispatch_to_poll(query, self.query_worker_pool, *args, **kwargs)
         return await query.wait_for_response()
 
-    async def run(self, task: Task, *args, **kwargs) -> Any:
+    async def run(self, task: Task, *args, **kwargs) -> None:
         await self._dispatch_to_poll(task, self.task_worker_pool, *args, **kwargs)
         await task.wait_for_finishing()
 

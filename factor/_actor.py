@@ -84,7 +84,10 @@ class FactorActor(BaseActor, EventHandlerMixin):
         logger.info(f"Initialized generation with {len(population)} individuals.")
 
     async def _get_generator(self, datasource, cap):
-        symbols = await self.ask(GetSymbols(datasource, cap))
+        result = await self.ask(GetSymbols(datasource, cap))
+
+        symbols = [] if result.is_err() else result.unwrap()
+
         timeframes = [
             Timeframe.from_raw(tf)
             for tf in self.config.get("timeframes", self.default_timeframes)
@@ -138,19 +141,24 @@ class FactorActor(BaseActor, EventHandlerMixin):
         )
 
     async def _evaluate_fitness(self, population: List[Individual]) -> None:
-        tasks = []
-        for individual in population:
-            task = self.ask(
-                GetPortfolioPerformance(
-                    individual.symbol, individual.timeframe, individual.strategy
-                )
-            )
-            tasks.append(task)
+        tasks = [
+            self.ask(GetPortfolioPerformance(ind.symbol, ind.timeframe, ind.strategy))
+            for ind in population
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        results = await asyncio.gather(*tasks)
+        for idx, result in enumerate(results):
+            ind = population[idx]
 
-        for idx, ind in enumerate(population):
-            ind.update_fitness(results[idx].deflated_sharpe_ratio)
+            if isinstance(result, Exception):
+                continue
+
+            if result.is_err():
+                continue
+
+            portfolio = result.unwrap()
+
+            ind.update_fitness(portfolio.deflated_sharpe_ratio)
 
         population[:] = [ind for ind in population if ind.fitness > 0]
 

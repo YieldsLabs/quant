@@ -105,9 +105,15 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         bar = position.open_bar
         open_signal = position.signal
 
-        ta = await self.ask(TA(self.symbol, self.timeframe, bar))
+        result = await self.ask(TA(self.symbol, self.timeframe, bar))
+
+        if result.is_err():
+            await self._close_position(open_signal, side, bar)
+            return
 
         rolling_window = 8
+
+        ta = result.unwrap()
         volatility = np.convolve(
             ta.volatility.tr, np.ones(rolling_window) / rolling_window, mode="valid"
         )[-1]
@@ -119,11 +125,17 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
         pt = ProfitTarget(side=side, entry=position.entry_price, volatility=volatility)
 
-        performance = await self.ask(
+        result = await self.ask(
             GetPortfolioPerformance(
                 self.symbol, self.timeframe, position.signal.strategy
             )
         )
+
+        if result.is_err():
+            await self._close_position(open_signal, side, bar)
+            return
+
+        performance = result.unwrap()
 
         sl_buffer = VOLATILITY_MULTY * volatility
 
@@ -161,6 +173,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
 
         if risk.has_risk:
             await self._close_position(open_signal, side, bar)
+            return
 
         state = (risk, position, pt, performance)
         await self._state.set(side, state)
@@ -195,9 +208,14 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         open_signal = position.signal
         cbar = next_risk.curr_bar
 
-        bars = await self.ask(
+        result = await self.ask(
             BatchBars(self.symbol, self.timeframe, cbar, self.max_bars)
         )
+
+        if result.is_err():
+            return
+
+        bars = result.unwrap()
 
         if not bars:
             logger.warning("No bars fetched, skipping market processing.")
