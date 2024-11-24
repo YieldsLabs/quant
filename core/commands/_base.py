@@ -22,8 +22,8 @@ class Command(Event):
     meta: EventMeta = field(default_factory=lambda: EventMeta(priority=1), init=False)
 
     def executed(self, status: Result):
-        self._execution_event.set()
         object.__setattr__(self, "_status", status)
+        self._execution_event.set()
 
     async def wait_for_execution(self) -> Result:
         await self._execution_event.wait()
