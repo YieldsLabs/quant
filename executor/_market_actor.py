@@ -83,12 +83,6 @@ class MarketOrderActor(StrategyActor, EventHandlerMixin):
             if result.is_err():
                 break
 
-            order = result.unwrap()
-            current_position = current_position.fill_order(order)
-            logger.debug(
-                f"Position after close attempt {attempts + 1}: {current_position}"
-            )
-
             attempts += 1
 
         result = await self.ask(GetClosePosition(current_position))
