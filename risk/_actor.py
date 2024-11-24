@@ -48,7 +48,7 @@ RiskEvent = Union[
 ]
 
 MAX_ATTEMPTS = 8
-DEFAULT_MAX_BARS = 8
+DEFAULT_MAX_BARS = 18
 MAX_CONSECUTIVE_ANOMALIES = 3
 DYNAMIC_THRESHOLD_MULTIPLIER = 8.0
 DEFAULT_ANOMALY_THRESHOLD = 6.0
@@ -105,15 +105,24 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         bar = position.open_bar
         open_signal = position.signal
 
-        result = await self.ask(TA(self.symbol, self.timeframe, bar))
+        ta_result, perf_result = await asyncio.gather(
+            self.ask(TA(self.symbol, self.timeframe, bar)),
+            self.ask(
+                GetPortfolioPerformance(
+                    self.symbol, self.timeframe, position.signal.strategy
+                )
+            ),
+        )
 
-        if result.is_err():
+        if ta_result.is_err() or perf_result.is_err():
             await self._close_position(open_signal, side, bar)
             return
 
+        ta = ta_result.unwrap()
+        performance = perf_result.unwrap()
+
         rolling_window = 8
 
-        ta = result.unwrap()
         volatility = np.convolve(
             ta.volatility.tr, np.ones(rolling_window) / rolling_window, mode="valid"
         )[-1]
@@ -122,20 +131,6 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         cci = ta.momentum.cci[-1]
         vwap = ta.volume.vwap[-1]
         rsi = ta.oscillator.srsi[-1]
-
-        pt = ProfitTarget(side=side, entry=position.entry_price, volatility=volatility)
-
-        result = await self.ask(
-            GetPortfolioPerformance(
-                self.symbol, self.timeframe, position.signal.strategy
-            )
-        )
-
-        if result.is_err():
-            await self._close_position(open_signal, side, bar)
-            return
-
-        performance = result.unwrap()
 
         sl_buffer = VOLATILITY_MULTY * volatility
 
@@ -174,6 +169,8 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         if risk.has_risk:
             await self._close_position(open_signal, side, bar)
             return
+
+        pt = ProfitTarget(side=side, entry=position.entry_price, volatility=volatility)
 
         state = (risk, position, pt, performance)
         await self._state.set(side, state)
