@@ -26,7 +26,7 @@ class EventDispatcher(metaclass=SingletonMeta):
     def __init__(self, config_service: AbstractConfig):
         self.config = config_service.get("bus")
 
-        self._event_handler = EventHandler()
+        self._event_handler = EventHandler(self.config.get("timeout", 10))
         self._cancel_event = asyncio.Event()
         self._store = EventStore(config_service)
 

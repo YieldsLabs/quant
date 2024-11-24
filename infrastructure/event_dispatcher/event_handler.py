@@ -17,9 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class EventHandler:
-    def __init__(self):
+    def __init__(self, timeout: int = 15):
         self._event_handlers: Dict[Type[Event], List[HandlerType]] = defaultdict(list)
         self._dlq: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
+        self.timeout = timeout
 
     @property
     def dlq(self):
@@ -56,7 +57,10 @@ class EventHandler:
                     self._execute_handler(handler, event, *args, **kwargs)
                 )
             else:
-                response = await self._execute_handler(handler, event, *args, **kwargs)
+                response = await asyncio.wait_for(
+                    self._execute_handler(handler, event, *args, **kwargs),
+                    timeout=self.timeout,
+                )
 
             self._handle_event_response(event, response)
         except Exception as e:
