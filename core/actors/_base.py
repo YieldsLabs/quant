@@ -7,6 +7,7 @@ from core.commands._base import Command
 from core.events._base import Event
 from core.interfaces.abstract_actor import AbstractActor, Ask, Message
 from core.queries._base import Query
+from core.result import Result
 from core.tasks._base import Task
 from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 
@@ -58,7 +59,7 @@ class BaseActor(AbstractActor):
     async def tell(self, msg: Message, *args, **kwrgs):
         await self._mailbox.dispatch(msg, *args, **kwrgs)
 
-    async def ask(self, msg: Ask, *args, **kwrgs):
+    async def ask(self, msg: Ask, *args, **kwrgs) -> Union[Result, None]:
         if isinstance(msg, Query):
             return await self._mailbox.query(msg, *args, **kwrgs)
         if isinstance(msg, Command):

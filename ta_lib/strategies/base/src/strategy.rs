@@ -1,24 +1,15 @@
 use crate::source::{Source, SourceType};
-use crate::{BaseLine, Confirm, Exit, Pulse, Signal, StopLoss, Strategy};
+use crate::{BaseLine, Confirm, Pulse, Signal, Strategy};
 use core::prelude::*;
 use timeseries::prelude::*;
 
 const DEFAULT_LOOKBACK: Period = 16;
-const DEFAULT_STOP_LEVEL: Scalar = -1.0;
 
 #[derive(Debug, PartialEq)]
 pub enum TradeAction {
     GoLong(Scalar),
     GoShort(Scalar),
-    ExitLong(Scalar),
-    ExitShort(Scalar),
     DoNothing,
-}
-
-#[derive(Debug)]
-pub struct StopLossLevels {
-    pub long: Scalar,
-    pub short: Scalar,
 }
 
 pub struct BaseStrategy {
@@ -27,8 +18,6 @@ pub struct BaseStrategy {
     confirm: Box<dyn Confirm>,
     pulse: Box<dyn Pulse>,
     base_line: Box<dyn BaseLine>,
-    stop_loss: Box<dyn StopLoss>,
-    exit: Box<dyn Exit>,
     lookback_period: usize,
 }
 
@@ -39,16 +28,12 @@ impl BaseStrategy {
         confirm: Box<dyn Confirm>,
         pulse: Box<dyn Pulse>,
         base_line: Box<dyn BaseLine>,
-        stop_loss: Box<dyn StopLoss>,
-        exit: Box<dyn Exit>,
     ) -> Self {
         let lookbacks = [
             signal.lookback(),
             confirm.lookback(),
             pulse.lookback(),
             base_line.lookback(),
-            stop_loss.lookback(),
-            exit.lookback(),
             DEFAULT_LOOKBACK,
         ];
         let lookback_period = lookbacks.into_iter().max().unwrap_or(DEFAULT_LOOKBACK);
@@ -59,8 +44,6 @@ impl BaseStrategy {
             confirm,
             pulse,
             base_line,
-            stop_loss,
-            exit,
             lookback_period,
         }
     }
@@ -93,43 +76,20 @@ impl Strategy for BaseStrategy {
         let theo_price = self.suggested_entry(&ohlcv, bar_index);
 
         match self.trade_signals(&ohlcv, bar_index) {
-            (true, _, _, _) => TradeAction::GoLong(theo_price),
-            (_, true, _, _) => TradeAction::GoShort(theo_price),
-            (_, _, true, _) => TradeAction::ExitLong(theo_price),
-            (_, _, _, true) => TradeAction::ExitShort(theo_price),
+            (true, _) => TradeAction::GoLong(theo_price),
+            (_, true) => TradeAction::GoShort(theo_price),
             _ => TradeAction::DoNothing,
-        }
-    }
-
-    fn stop_loss(&self, bar: &OHLCV) -> StopLossLevels {
-        if !self.can_process() {
-            return StopLossLevels {
-                long: DEFAULT_STOP_LEVEL,
-                short: DEFAULT_STOP_LEVEL,
-            };
-        }
-
-        let ohlcv = self.ohlcv();
-        let bar_index = ohlcv.bar_index(bar);
-        let (stop_loss_long, stop_loss_short) = self.stop_loss_levels(&ohlcv, bar_index);
-
-        StopLossLevels {
-            long: stop_loss_long,
-            short: stop_loss_short,
         }
     }
 }
 
 impl BaseStrategy {
-    fn trade_signals(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (bool, bool, bool, bool) {
+    fn trade_signals(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (bool, bool) {
         let (signal_go_long, signal_go_short) = self.signal.trigger(ohlcv);
 
         let (baseline_confirm_long, baseline_confirm_short) = self.base_line.filter(ohlcv);
         let (primary_confirm_long, primary_confirm_short) = self.confirm.filter(ohlcv);
         let (pulse_confirm_long, pulse_confirm_short) = self.pulse.assess(ohlcv);
-
-        let (exit_close_long, exit_close_short) = self.exit.close(ohlcv);
-        let (baseline_close_long, baseline_close_short) = self.base_line.close(ohlcv);
 
         let confirm_long = primary_confirm_long & pulse_confirm_long;
         let confirm_short = primary_confirm_short & pulse_confirm_short;
@@ -140,14 +100,7 @@ impl BaseStrategy {
         let go_long = base_go_long.get(bar_index).unwrap_or(false);
         let go_short = base_go_short.get(bar_index).unwrap_or(false);
 
-        let exit_long = (exit_close_long | baseline_close_long)
-            .get(bar_index)
-            .unwrap_or(false);
-        let exit_short = (exit_close_short | baseline_close_short)
-            .get(bar_index)
-            .unwrap_or(false);
-
-        (go_long, go_short, exit_long, exit_short)
+        (go_long, go_short)
     }
 
     fn suggested_entry(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> Scalar {
@@ -156,20 +109,11 @@ impl BaseStrategy {
             .get(bar_index)
             .unwrap_or(NAN)
     }
-
-    fn stop_loss_levels(&self, ohlcv: &OHLCVSeries, bar_index: usize) -> (Scalar, Scalar) {
-        let (sl_long_find, sl_short_find) = self.stop_loss.find(ohlcv);
-
-        let stop_loss_long = sl_long_find.get(bar_index).unwrap_or(NAN);
-        let stop_loss_short = sl_short_find.get(bar_index).unwrap_or(NAN);
-
-        (stop_loss_long, stop_loss_short)
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{BaseLine, BaseStrategy, Confirm, Exit, Pulse, Signal, StopLoss};
+    use crate::{BaseLine, BaseStrategy, Confirm, Pulse, Signal};
     use core::Series;
     use timeseries::{BaseTimeSeries, OHLCVSeries};
 
@@ -238,38 +182,6 @@ mod tests {
         }
     }
 
-    struct MockStopLoss {
-        period: usize,
-        multi: f32,
-    }
-
-    impl StopLoss for MockStopLoss {
-        fn lookback(&self) -> usize {
-            self.period
-        }
-
-        fn find(&self, data: &OHLCVSeries) -> (Series<f32>, Series<f32>) {
-            let len = data.len();
-            (
-                Series::from(vec![5.0; len]) * self.multi,
-                Series::from(vec![6.0; len]) * self.multi,
-            )
-        }
-    }
-
-    struct MockExit {}
-
-    impl Exit for MockExit {
-        fn lookback(&self) -> usize {
-            0
-        }
-
-        fn close(&self, data: &OHLCVSeries) -> (Series<bool>, Series<bool>) {
-            let len = data.len();
-            (Series::one(len).into(), Series::zero(len).into())
-        }
-    }
-
     #[test]
     fn test_base_strategy_lookback() {
         let strategy = BaseStrategy::new(
@@ -278,11 +190,6 @@ mod tests {
             Box::new(MockConfirm { period: 1 }),
             Box::new(MockPulse { period: 7 }),
             Box::new(MockBaseLine { period: 15 }),
-            Box::new(MockStopLoss {
-                period: 2,
-                multi: 2.0,
-            }),
-            Box::new(MockExit {}),
         );
         assert_eq!(strategy.lookback_period, 16);
     }

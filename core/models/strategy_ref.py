@@ -63,11 +63,7 @@ class StrategyRef:
 
         action = Action.from_raw(raw_action)
 
-        side = (
-            SignalSide.BUY
-            if action in (Action.GO_LONG, Action.EXIT_SHORT)
-            else SignalSide.SELL
-        )
+        side = SignalSide.BUY if action == Action.GO_LONG else SignalSide.SELL
 
         action_event_map = {
             Action.GO_LONG: GoLongSignalReceived(
@@ -88,26 +84,6 @@ class StrategyRef:
                     side,
                     ohlcv,
                     entry=price,
-                ),
-            ),
-            Action.EXIT_LONG: ExitLongSignalReceived(
-                signal=Signal(
-                    symbol,
-                    timeframe,
-                    strategy,
-                    side,
-                    ohlcv,
-                    exit=price,
-                ),
-            ),
-            Action.EXIT_SHORT: ExitShortSignalReceived(
-                signal=Signal(
-                    symbol,
-                    timeframe,
-                    strategy,
-                    side,
-                    ohlcv,
-                    exit=price,
                 ),
             ),
         }

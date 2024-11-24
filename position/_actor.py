@@ -76,11 +76,16 @@ class PositionActor(StrategyActor):
             if await self._state.exists(key):
                 return False
 
-            performance = await self.ask(
+            result = await self.ask(
                 GetPortfolioPerformance(
                     self.symbol, self.timeframe, event.signal.strategy
                 )
             )
+
+            if result.is_err():
+                return False
+
+            performance = result.unwrap()
 
             initial_size = performance.equity[-1] * performance.risk_per_trade
             initial_size = max(initial_size, self.symbol.min_position_size)

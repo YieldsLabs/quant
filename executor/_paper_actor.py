@@ -84,9 +84,11 @@ class PaperOrderActor(StrategyActor, EventHandlerMixin):
 
         exit_order = current_position.exit_order
 
-        next_bar = await self.ask(
+        result = await self.ask(
             NextBar(self.symbol, self.timeframe, current_position.close_bar)
         )
+
+        next_bar = None if result.is_err() else result.unwrap()
 
         price = self._find_close_price(current_position, exit_order, next_bar)
         size = exit_order.size

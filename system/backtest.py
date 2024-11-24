@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from enum import Enum, auto
+from typing import Tuple
 
 from core.commands.factor import EnvolveGeneration, InitGeneration
 from core.commands.portfolio import PortfolioReset
@@ -111,12 +112,24 @@ class BacktestSystem(AbstractSystem):
     async def _generate(self):
         logger.info("Generate a new population")
 
-        await self.execute(InitGeneration(self.context.datasource, self.default_cap))
+        result = await self.execute(
+            InitGeneration(self.context.datasource, self.default_cap)
+        )
+
+        if result.is_err():
+            await self.event_queue.put(Event.SYSTEM_STOP)
+            return
 
         await self.event_queue.put(Event.GENERATE_COMPLETE)
 
     async def _run_backtest(self):
-        population, generation = await self.query(GetGeneration())
+        result = await self.query(GetGeneration())
+
+        if result.is_err():
+            await self.event_queue.put(Event.SYSTEM_STOP)
+            return
+
+        population, generation = result.unwrap()
 
         logger.info(f"Run backtest for generation: {generation + 1}")
 
@@ -132,7 +145,13 @@ class BacktestSystem(AbstractSystem):
     async def _run_optimization(self):
         logger.info("Run optimization")
 
-        population, generation = await self.query(GetGeneration())
+        result = await self.query(GetGeneration())
+
+        if result.is_err():
+            await self.event_queue.put(Event.SYSTEM_STOP)
+            return
+
+        population, generation = result.unwrap()
 
         max_gen = (
             self.context.config_service.get("factor").get("max_generations", 5) - 1
@@ -141,19 +160,35 @@ class BacktestSystem(AbstractSystem):
         if generation >= max_gen or len(population) < 3:
             return await self.event_queue.put(Event.OPTIMIZATION_COMPLETE)
 
-        await self.execute(EnvolveGeneration(self.context.datasource, self.default_cap))
+        result = await self.execute(
+            EnvolveGeneration(self.context.datasource, self.default_cap)
+        )
+
+        if result.is_err():
+            await self.event_queue.put(Event.SYSTEM_STOP)
+            return
 
         await self.event_queue.put(Event.RUN_BACKTEST)
 
     async def _run_ranking(self):
         logger.info("Run ranking")
 
-        population, generation = await self.query(GetGeneration())
+        result = await self.query(GetGeneration())
+
+        if result.is_err():
+            await self.event_queue.put(Event.SYSTEM_STOP)
+            return
+
+        population, generation = result.unwrap()
 
         if not len(population):
             return await self.event_queue.put(Event.REGENERATE)
 
-        await self.execute(PortfolioReset())
+        result = await self.execute(PortfolioReset())
+
+        if result.is_err():
+            await self.event_queue.put(Event.SYSTEM_STOP)
+            return
 
         all_strategy = set(population)
 
@@ -165,7 +200,13 @@ class BacktestSystem(AbstractSystem):
     async def _update_trading(self):
         logger.info("Deploy strategy for trading")
 
-        population, _ = await self.query(GetGeneration())
+        result = await self.query(GetGeneration())
+
+        if result.is_err():
+            await self.event_queue.put(Event.SYSTEM_STOP)
+            return
+
+        population, _ = result.unwrap()
 
         if not len(population):
             logger.info("Regenerate population")
@@ -174,7 +215,7 @@ class BacktestSystem(AbstractSystem):
         await self.dispatch(DeployStrategy(strategy=population))
 
     async def _process_backtest(
-        self, data: tuple[Symbol, Timeframe, Strategy], generation: int, verify=False
+        self, data: Tuple[Symbol, Timeframe, Strategy], generation: int, verify=False
     ):
         symbol, timeframe, strategy = data
 

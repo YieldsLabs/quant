@@ -8,6 +8,7 @@ from infrastructure.event_dispatcher.event_dispatcher import EventDispatcher
 from .commands._base import Command
 from .events._base import Event
 from .queries._base import Query
+from .result import Result
 
 
 def eda(cls: Type):
@@ -32,10 +33,10 @@ def eda(cls: Type):
         async def dispatch(self, event, *args, **kwargs):
             await self._dispatcher.dispatch(event, *args, **kwargs)
 
-        async def query(self, query, *args, **kwargs):
+        async def query(self, query, *args, **kwargs) -> Result:
             return await self._dispatcher.query(query, *args, **kwargs)
 
-        async def execute(self, command, *args, **kwargs):
+        async def execute(self, command, *args, **kwargs) -> Result:
             return await self._dispatcher.execute(command, *args, **kwargs)
 
         async def run(self, task, *args, **kwargs):

@@ -18,12 +18,14 @@ members = [
 "price",
 "strategies/base",
 "strategies/trend_follow",
-"strategies/stop_loss",
 "strategies/signal",
 "strategies/confirm",
 "strategies/pulse",
 "strategies/baseline",
-"strategies/indicator", "timeseries", "ffi", "patterns/osc",
+"strategies/indicator",
+"timeseries",
+"ffi",
+"patterns/osc",
 ]
 
 [workspace.package]

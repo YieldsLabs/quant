@@ -4,9 +4,10 @@ from collections import defaultdict, deque
 from functools import partial
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple, Type, Union
 
-from core.commands._base import Command
+from core.commands._base import Command, Status
 from core.events._base import Event
 from core.queries._base import Query
+from core.result import Result
 from core.tasks._base import Task
 
 HandlerType = Union[partial, Callable[..., Any]]
@@ -16,9 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class EventHandler:
-    def __init__(self):
+    def __init__(self, timeout: int = 15):
         self._event_handlers: Dict[Type[Event], List[HandlerType]] = defaultdict(list)
         self._dlq: Deque[Tuple[Event, Exception]] = deque(maxlen=100)
+        self.timeout = timeout
 
     @property
     def dlq(self):
@@ -55,7 +57,10 @@ class EventHandler:
                     self._execute_handler(handler, event, *args, **kwargs)
                 )
             else:
-                response = await self._execute_handler(handler, event, *args, **kwargs)
+                response = await asyncio.wait_for(
+                    self._execute_handler(handler, event, *args, **kwargs),
+                    timeout=self.timeout,
+                )
 
             self._handle_event_response(event, response)
         except Exception as e:
@@ -70,9 +75,9 @@ class EventHandler:
 
     def _handle_event_response(self, event: Event, response: Any) -> None:
         if isinstance(event, Query):
-            event.set_response(response)
+            event.set_response(Result.Ok(response))
         elif isinstance(event, Command):
-            event.executed()
+            event.executed(Result.Ok(Status.SUCCESS))
         elif isinstance(event, Task):
             event.set_task(response)
 
@@ -80,9 +85,9 @@ class EventHandler:
         self, handler: HandlerType, event: Event, error: Exception
     ) -> None:
         if isinstance(event, Query):
-            event.set_response(None)
+            event.set_response(Result.Err(error))
         elif isinstance(event, Command):
-            event.executed()
+            event.executed(Result(Status.FAIL, error))
         elif isinstance(event, Task):
             event.set_task(asyncio.create_task(asyncio.sleep(0.00001)))
 
