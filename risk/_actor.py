@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from typing import Tuple, Union
-
+from scipy.optimize import linprog
 import numpy as np
 
 from core.actors import StrategyActor
@@ -14,12 +14,6 @@ from core.events.position import (
 from core.events.risk import (
     RiskLongThresholdBreached,
     RiskShortThresholdBreached,
-)
-from core.events.signal import (
-    ExitLongSignalReceived,
-    ExitShortSignalReceived,
-    GoLongSignalReceived,
-    GoShortSignalReceived,
 )
 from core.interfaces.abstract_config import AbstractConfig
 from core.mixins import EventHandlerMixin
@@ -34,12 +28,6 @@ from core.models.timeframe import Timeframe
 from core.queries.ohlcv import TA, BatchBars
 from core.queries.portfolio import GetPortfolioPerformance
 
-TrailEvent = Union[
-    GoLongSignalReceived,
-    GoShortSignalReceived,
-    ExitLongSignalReceived,
-    ExitShortSignalReceived,
-]
 
 RiskEvent = Union[
     NewMarketDataReceived,
@@ -56,8 +44,8 @@ ANOMALY_CLIP_MULTIPLIER = 12.0
 ANOMALY_CLIP = ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD
 LATENCY_GAP_THRESHOLD = 2.2
 
-VOLATILITY_MULTY = 1.5
-RR_MULTY = 2.0
+VOLATILITY_MULTY = 2.0
+RR_MULTY = 3.0
 
 
 def _ema(values, alpha=0.1):
@@ -126,37 +114,39 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         volatility = np.convolve(
             ta.volatility.tr, np.ones(rolling_window) / rolling_window, mode="valid"
         )[-1]
-
         dmi = ta.trend.dmi[-1]
         cci = ta.momentum.cci[-1]
         vwap = ta.volume.vwap[-1]
         rsi = ta.oscillator.srsi[-1]
 
-        sl_buffer = VOLATILITY_MULTY * volatility
+        w_rsi, w_cci, w_dmi = 0.4, 0.3, 0.3
 
-        if dmi > 25:
-            sl_buffer *= 1.2
-            tp_distance = RR_MULTY * sl_buffer
-        else:
-            sl_buffer *= 0.8
-            tp_distance = RR_MULTY * sl_buffer
+        rsi_norm = max(0, min((rsi - 30) / (70 - 30), 1))
+        cci_norm = max(0, min((cci + 100) / (200), 1))
+        dmi_norm = max(0, min(dmi / 50, 1)) 
 
-        if rsi > 70 or cci > 100:
-            tp_distance *= 0.8
-        elif rsi < 30 or cci < -100:
-            tp_distance *= 0.8
+        score = w_rsi * rsi_norm + w_cci * cci_norm + w_dmi * dmi_norm
 
-        if (side == PositionSide.LONG and bar.low < vwap) or (
-            side == PositionSide.SHORT and bar.high > vwap
-        ):
-            sl_buffer *= 0.9
+        base_sl = VOLATILITY_MULTY * volatility
+        base_tp = RR_MULTY * base_sl
+
+        sl_adjustment = 1 + (score - 0.5) * 0.4
+        tp_adjustment = 1 - abs(score - 0.5) * 0.3
+
+        sl_final = base_sl * sl_adjustment
+        tp_final = base_tp * tp_adjustment
+
+        if side == PositionSide.LONG and bar.low < vwap:
+            sl_final *= 0.9
+        if side == PositionSide.SHORT and bar.high > vwap:
+            sl_final *= 0.9
 
         if side == PositionSide.LONG:
-            sl = bar.low - sl_buffer
-            tp = bar.high + tp_distance
+            sl = bar.low - sl_final
+            tp = bar.high + tp_final
         elif side == PositionSide.SHORT:
-            sl = bar.high + sl_buffer
-            tp = bar.low - tp_distance
+            sl = bar.high + sl_final
+            tp = bar.low - tp_final
 
         trade_duration = self.config.get("trade_duration", 20)
 
@@ -178,17 +168,18 @@ class RiskActor(StrategyActor, EventHandlerMixin):
     async def _handle_closed_position(self, event: PositionClosed):
         await self._state.delete(event.position.side)
 
-    async def _handle_risk(self, _event: NewMarketDataReceived):
+    async def _handle_risk(self, event: NewMarketDataReceived):
         sides = list(PositionSide)
-        tasks = [self._process_side(side) for side in sides]
+        tasks = [self._process_side(event, side) for side in sides]
         await asyncio.gather(*tasks)
 
-    async def _process_side(self, side):
+    async def _process_side(self, event, side):
         async with self._locks.get(side):
-            await self._process_market(side)
+            await self._process_market(event, side)
 
     async def _process_market(
         self,
+        event: NewMarketDataReceived,
         side: PositionSide,
     ):
         state = await self._state.get(side)
@@ -215,8 +206,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         bars = result.unwrap()
 
         if not bars:
-            logger.warning("No bars fetched, skipping market processing.")
-            return state
+            bars = [event.bar.ohlcv]
 
         for bar in bars:
             if self._has_anomaly(bar.timestamp, next_risk.time_points):
@@ -260,7 +250,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         await self._state.set(side, next_state)
 
     async def _close_position(self, open_signal, side, bar):
-        next_price = (bar.high + bar.low + bar.close) / 3.0
+        exit_price = (bar.high + bar.low + bar.close) / 3.0
 
         close_signal = Signal(
             symbol=open_signal.symbol,
@@ -269,7 +259,7 @@ class RiskActor(StrategyActor, EventHandlerMixin):
             side=open_signal.side,
             ohlcv=bar,
             entry=open_signal.entry,
-            exit=next_price,
+            exit=exit_price,
         )
 
         event = (
