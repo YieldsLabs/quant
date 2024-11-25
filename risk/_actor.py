@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from typing import Tuple, Union
-
+from scipy.optimize import linprog
 import numpy as np
 from scipy.optimize import linprog
 
@@ -29,6 +29,7 @@ from core.models.timeframe import Timeframe
 from core.queries.ohlcv import TA, BatchBars
 from core.queries.portfolio import GetPortfolioPerformance
 
+
 RiskEvent = Union[
     NewMarketDataReceived,
     PositionOpened,
@@ -44,8 +45,8 @@ ANOMALY_CLIP_MULTIPLIER = 12.0
 ANOMALY_CLIP = ANOMALY_CLIP_MULTIPLIER * DEFAULT_ANOMALY_THRESHOLD
 LATENCY_GAP_THRESHOLD = 2.2
 
-VOLATILITY_MULTY = 1.5
-RR_MULTY = 2.0
+VOLATILITY_MULTY = 2.0
+RR_MULTY = 3.0
 
 
 def _ema(values, alpha=0.1):
