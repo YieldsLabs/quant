@@ -18,5 +18,9 @@ class PQOrder:
         compare=False,
     )
 
+    @property
+    def is_expired(self) -> bool:
+        return time.time() - self.timestamp > self.ttl
+
     def copy(self) -> "PQOrder":
         return replace(self, ttl=np.mean(np.random.exponential(3, size=1000)))
