@@ -3,6 +3,7 @@ import logging
 from typing import Tuple, Union
 from scipy.optimize import linprog
 import numpy as np
+from scipy.optimize import linprog
 
 from core.actors import StrategyActor
 from core.actors.state import InMemory
@@ -114,32 +115,55 @@ class RiskActor(StrategyActor, EventHandlerMixin):
         volatility = np.convolve(
             ta.volatility.tr, np.ones(rolling_window) / rolling_window, mode="valid"
         )[-1]
-        dmi = ta.trend.dmi[-1]
-        cci = ta.momentum.cci[-1]
-        vwap = ta.volume.vwap[-1]
-        rsi = ta.oscillator.srsi[-1]
-
-        w_rsi, w_cci, w_dmi = 0.4, 0.3, 0.3
-
-        rsi_norm = max(0, min((rsi - 30) / (70 - 30), 1))
-        cci_norm = max(0, min((cci + 100) / (200), 1))
-        dmi_norm = max(0, min(dmi / 50, 1)) 
-
-        score = w_rsi * rsi_norm + w_cci * cci_norm + w_dmi * dmi_norm
 
         base_sl = VOLATILITY_MULTY * volatility
         base_tp = RR_MULTY * base_sl
 
-        sl_adjustment = 1 + (score - 0.5) * 0.4
-        tp_adjustment = 1 - abs(score - 0.5) * 0.3
+        dmi = ta.trend.dmi[-1]
+        cci = ta.momentum.cci[-1]
+        vwap = ta.volume.vwap[-1]
+        vo = ta.volume.vo[-1]
+        rsi = ta.oscillator.srsi[-1]
 
-        sl_final = base_sl * sl_adjustment
-        tp_final = base_tp * tp_adjustment
+        w_rsi, w_cci, w_dmi, w_vwap, w_vo = 0.25, 0.2, 0.2, 0.2, 0.15
 
-        if side == PositionSide.LONG and bar.low < vwap:
-            sl_final *= 0.9
-        if side == PositionSide.SHORT and bar.high > vwap:
-            sl_final *= 0.9
+        rsi_norm = max(0, min((rsi - 30) / (70 - 30), 1))
+        cci_norm = max(0, min((cci + 100) / (200), 1))
+        dmi_norm = max(0, min(dmi / 50, 1))
+        distance_vwap = abs(bar.close - vwap)
+        max_distance = 10
+        vwap_norm = max(0, min(distance_vwap / max_distance, 1))
+        vo_norm = max(0, min(vo / 100, 1))
+
+        score = (
+            w_rsi * rsi_norm
+            + w_cci * cci_norm
+            + w_dmi * dmi_norm
+            + w_vwap * (1 - vwap_norm)
+            + w_vo * vo_norm
+        )
+
+        sl_ad_coeff = 0.4
+        tp_ad_coeff = 0.3
+
+        c = [1, -1]
+        A = [[-1, 0], [0, 1]]
+        b = [
+            -(base_sl * (1 + (score - 0.5) * sl_ad_coeff)),
+            base_tp * (1 - abs(score - 0.5) * tp_ad_coeff),
+        ]
+
+        bounds = [(0, None), (0, None)]
+
+        result = linprog(c, A_ub=A, b_ub=b, bounds=bounds, method="highs")
+
+        if result.success:
+            sl_final = result.x[0]
+            tp_final = result.x[1]
+        else:
+            logger.warn("LP optimization failed, used fallback")
+            sl_final = base_sl
+            tp_final = base_tp
 
         if side == PositionSide.LONG:
             sl = bar.low - sl_final

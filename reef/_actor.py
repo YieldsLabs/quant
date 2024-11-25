@@ -66,14 +66,13 @@ class ReefActor(BaseActor):
         try:
             while not self._stop_event.is_set():
                 pq_order = await self._order_queue.get()
-                current_time = time.time()
 
-                if current_time - pq_order.timestamp > pq_order.ttl:
+                if pq_order.is_expired:
                     await self._cancel_order(
                         pq_order.order_id, pq_order.symbol, pq_order.datasource
                     )
                 else:
-                    sleep_time = pq_order.ttl - (current_time - pq_order.timestamp)
+                    sleep_time = pq_order.ttl - (time.time() - pq_order.timestamp)
 
                     if sleep_time > 0:
                         await asyncio.sleep(sleep_time)
